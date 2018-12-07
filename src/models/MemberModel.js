@@ -7,11 +7,7 @@ export default class MemberModel extends ModelObject {
     super(...args);
 
     this.table_name = 'member';
-    this.selectable_fields = [
-      'seq', 'regist_date', 'user_name', 'email_address', 
-      'cellphone', 'hospital_code', 'branch_code', 'custom_hospital', 
-      'custom_branch', 'position', 'license_no', 'etc',
-    ];
+    this.selectable_fields = ['*'];
   }
 
   async create(params) {

@@ -2,7 +2,9 @@ import { Router } from 'express';
 import wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
-import DoctorModel from '@/models/doctor.model';
+import DoctorModel from '@/models/DoctorModel';
+import auth from '@/middlewares/auth.middleware';
+import role from "@/config/role";
 
 const routes = Router();
 

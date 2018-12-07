@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import auth from '@/middlewares/auth.middleware';
 
 require('babel-plugin-require-context-hook/register')();
 
@@ -11,7 +12,7 @@ const files = require.context('.', true, /\/[^.]+\.js$/);
 
 files.keys().forEach((key) => {
   if (key === './index.js') return;
-  
+
   routes.use(key.replace(/(\.)|(js)/g, ''), files(key).default);
 });
 
