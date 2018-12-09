@@ -4,15 +4,29 @@ import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import auth from '@/middlewares/auth.middleware';
-import role from "@/config/role";
+import roles from "@/config/roles";
 
 const routes = Router();
 
-routes.get('/', auth.isAuthenticated(role.LOGIN_USER), wrap(async(req, res) => {
-  const member_seq = req.member_info.getSeq();
+routes.get('/:id', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = req.params.id;
+
+  if(token_info.getId() != member_seq){
+    if(token_info.getRole() == roles.MEMBER){
+      return res.json(new StdObject(-1, "잘못된 요청입니다.", 400));
+    }
+  }
 
   const member_model = new MemberModel({database});
   const member_info = await member_model.findOne({seq: member_seq});
+
+  // 메니저 권한 도입 시 예시. 병원 또는 부서가 동일한지 체크..
+  if(token_info.getRole() == roles.MANAGER){
+    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.branch_code) {
+      return res.json(new StdObject(-1, "권한이 없습니다.", 401));
+    }
+  }
 
   const output = new StdObject();
 

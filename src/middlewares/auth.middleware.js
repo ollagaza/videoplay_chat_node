@@ -1,9 +1,9 @@
+import jwt from 'jsonwebtoken';
 import StdObject from '@/classes/StdObject';
+import TokenInfo from '@/classes/TokenInfo';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
-import role from "@/config/role";
-import jwt from 'jsonwebtoken';
-import MemberInfo from '@/models/MemberInfo';
+import roles from "@/config/roles";
 
 const TOKEN_SECRET = "dpxldlwlTjwlqnr";
 const IS_DEV = process.env.NODE_ENV === 'development';
@@ -22,30 +22,32 @@ const getToken = (req) => {
   return null;
 };
 
-const generateToken = (member_seq) => {
+const generateToken = async (id) => {
   const member_model = new MemberModel({database});
-  const member_info = member_model.findOne({seq: member_seq});
+  const member_info = await member_model.findOne({seq: id});
 
   return generateTokenByMemberInfo(member_info);
 };
 
 const generateTokenByMemberInfo = (member_info) => {
   const expire = 24 * HOUR;
-  const data = {
-    "seq": member_info.seq,
-    "role": role.MEMBER
-  };
-  const token = jwt.sign(data, TOKEN_SECRET, {
+  const token_info = new TokenInfo();
+  token_info.setTokenByMemberInfo(member_info);
+
+  const token = jwt.sign({"info": token_info}, TOKEN_SECRET, {
     algorithm: 'HS384',
     expiresIn: expire
   });
 
-  return token;
+  return {
+    "token_info": token_info,
+    "token": token
+  };
 };
 
-const isAuthenticated = (roles) => {
+const isAuthenticated = (require_roles) => {
   return function (req, res, next) {
-    if (roles == null || roles == role.ALL) {
+    if (require_roles == null || require_roles == roles.ALL) {
       return next();
     }
 
@@ -57,7 +59,7 @@ const isAuthenticated = (roles) => {
 
     req.headers.authorization = 'Bearer ' + token;
 
-    jwt.verify(token, TOKEN_SECRET, (error, member_info) => {
+    jwt.verify(token, TOKEN_SECRET, async (error, decoded) => {
       const output = new StdObject(-1, '로그인 후 이용 가능합니다.', 403);
 
       if (error) {
@@ -67,11 +69,12 @@ const isAuthenticated = (roles) => {
         }
         return res.status(output.getHttpStatusCode()).json(output);
       } else {
-        const expire = new Date(member_info.exp * 1000);
+        const expire = new Date(decoded.exp * 1000);
         const now = Date.now();
 
-        const member_role = member_info.role;
-        const member_seq = member_info.seq;
+        const token_info = decoded.info;
+        const role = token_info.role;
+        const id = token_info.id;
 
         if (expire < now) {
           if (IS_DEV) {
@@ -82,28 +85,31 @@ const isAuthenticated = (roles) => {
         }
 
         let has_role = true;
-        if (roles != null) {
-          if (Array.isArray(roles)) {
-            has_role = roles.find(role => role === member_role);
+        if (require_roles != null) {
+          if (Array.isArray(require_roles)) {
+            has_role = require_roles.find(role => role === role);
           } else {
-            has_role = member_role >= roles;
+            has_role = role >= require_roles;
           }
         }
 
         if (!has_role) {
           output.setMessage('사용 권한이 없습니다.');
           if (IS_DEV) {
-            output.stack = {"userRole": member_role, "roles": roles};
+            output.stack = {"userRole": role, "roles": require_roles};
           }
           return res.status(output.getHttpStatusCode()).json(output);
         }
 
         if (expire < now + (2 * HOUR)) {
-          const newToken = generateToken(member_seq);
-          setAuthHeader(res, newToken);
-        }
+          const refresh_token_info = await generateToken(id);
+          setAuthHeader(res, refresh_token_info.token);
 
-        req.member_info = new MemberInfo(member_seq, member_role);
+          req.token_info = refresh_token_info.token_info;
+        }
+        else {
+          req.token_info = new TokenInfo(token_info);
+        }
 
         next();
       }

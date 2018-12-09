@@ -4,7 +4,7 @@ import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
 import DoctorModel from '@/models/DoctorModel';
 import auth from '@/middlewares/auth.middleware';
-import role from "@/config/role";
+import roles from "@/config/roles";
 
 const routes = Router();
 

@@ -43,12 +43,12 @@ routes.post('/', Wrap(async(req, res) => {
     return res.json(output);
   }
 
-  const token = Auth.generateTokenByMemberInfo(member_info);
+  const token_result = await Auth.generateTokenByMemberInfo(member_info);
 
   const output = new StdObject();
-  if (token != null) {
-    output.add("token", Auth.generateTokenByMemberInfo(member_info));
-    Auth.setAuthHeader(res, token);
+  if (token_result != null && token_result.token != null) {
+    output.add("token", token_result.token);
+    Auth.setAuthHeader(res, token_result.token);
   }
   else {
     output.setError(-1);

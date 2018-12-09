@@ -17,12 +17,12 @@ export default class ModelObject {
     return result.shift();
   }
 
-  async update(seq, params) {
+  async update(filters, params) {
 
     const result = await this.database
       .update(_.omit(params, 'seq'))
-      .from(this.selectable_fields)
-      .where({ seq });
+      .from(this.table_name)
+      .where(filters);
 
     return result;
   }

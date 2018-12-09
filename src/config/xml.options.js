@@ -1,14 +1,14 @@
 import he from 'he'
 
 export default {
-  attributeNamePrefix : "@_",
-  attrNodeName: "attr", //default is 'false'
-  textNodeName : "#text",
-  ignoreAttributes : true,
+  attributeNamePrefix : "",
+  attrNodeName: "node_attr", //default is 'false'
+  textNodeName : "node_text",
+  ignoreAttributes : false,
   ignoreNameSpace : false,
   allowBooleanAttributes : false,
   parseNodeValue : true,
-  parseAttributeValue : false,
+  parseAttributeValue : true,
   trimValues: true,
   cdataTagName: "__cdata", //default is 'false'
   cdataPositionChar: "\\c",
