@@ -1,72 +1,87 @@
 import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import DoctorModel from '@/models/DoctorModel';
+import StdObject from "../StdObject";
 
 export default class Media {
-  #media_root;
-  #media_path;
-  #media_directory;
-  #video_name;
-  #video_source;
-
   constructor(media_id) {
     this.media_id = media_id;
   }
 
-  async init(options={}) {
-    const doctor_model = await new DoctorModel( {database} ).findOne({"ID": this.media_id});
-    this.#media_root =  doctor_model.MediaRoot;
-    this.#media_path =  doctor_model.MediaPath;
-    this.#media_directory = Util.getMediaDirectory(this.#media_root, this.#media_path);
-    this.media_url_prefix = Util.getUrlPrefix(this.#media_root, this.#media_path);
+  async getMedia(options={}) {
+    const doctor_info = await new DoctorModel( {database} ).findOne({"ID": this.media_id});
 
-    const media_xml = await Util.loadXmlFile(this.media_root, this.media_path, 'Media');
+    const _media_root =  doctor_info.MediaRoot;
+    const _media_path =  doctor_info.MediaPath;
+    const _media_directory = Util.getMediaDirectory(_media_root, _media_path);
+    this.url_prefix = Util.getUrlPrefix(_media_root, _media_path);
+
+    const media_xml = await Util.loadXmlFile(_media_directory, 'Media');
     const media_xml_info = media_xml.MediaInfo.Media;
 
-    this.#video_name = media_xml_info.node_text;
+    const _video_name = media_xml_info.node_text;
     this.fps =  media_xml_info.node_attr.FPS;
     this.width =  media_xml_info.node_attr.Width;
     this.height =  media_xml_info.node_attr.Height;
     this.total_time =  media_xml_info.node_attr.RunTime;
     this.total_frame =  media_xml_info.node_attr.FrameNo;
 
-    this.video_url = this.media_url_prefix + this.#video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
-    this.#video_source = this.#media_directory + this.#video_name.replace(/^[a-zA-Z]+_/, 'Trans_');
+    this.video_url = this.url_prefix + "SEQ/" + _video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
+    const _video_source = _media_directory + "SEQ\\" + _video_name.replace(/^[a-zA-Z]+_/, 'Trans_');
 
-    if (options.is_set_patient_info === true) {
-      this.pid = doctor_model.PID;
-      this.patient_name = doctor_model.PName;
-      this.patient_age = doctor_model.Age;
-      this.patient_sex = doctor_model.Sex;
-      this.patient_race = doctor_model.Race;
-      this.operation_date = doctor_model.OpDate;
-      this.operation_name = doctor_model.OpName;
-      this.pre_operation = doctor_model.PreOperative;
-      this.post_operation = doctor_model.PostOperative;
+    if (options.patient === true) {
+      this.pid = doctor_info.PID;
+      this.patient_name = doctor_info.PName;
+      this.patient_age = doctor_info.Age;
+      this.patient_sex = doctor_info.Sex;
+      this.patient_race = doctor_info.Race;
+      this.operation_date = doctor_info.OpDate;
+      this.operation_name = doctor_info.OpName;
+      this.pre_operation = doctor_info.PreOperative;
+      this.post_operation = doctor_info.PostOperative;
     }
+
+    Object.assign(this, {
+      getMediaRoot() {
+        return _media_root;
+      },
+      getMediaPath() {
+        return _media_path;
+      },
+      getMediaDirectory() {
+        return _media_directory;
+      },
+      getVideoName() {
+        return _video_name;
+      },
+      getVideoSource() {
+        return _video_source;
+      }
+    });
+
+    return this;
   }
 
-  getMediaRoot() {
-    return this.#media_root;
-  }
+  updateOperationInfo = async (operation_info) => {
+    const update_params = {
+      "PID": operation_info.pid,
+      "PName": operation_info.patient_name,
+      "Age": operation_info.patient_age,
+      "Sex": operation_info.patient_sex,
+      "Race": operation_info.patient_race,
+      "OpDate": operation_info.operation_date,
+      "OpName": operation_info.operation_name,
+      "PreOperative": operation_info.pre_operation,
+      "PostOperative": operation_info.post_operation
+    };
 
-  getMediaPath() {
-    return this.#media_path;
-  }
+    let result = null;
 
-  getMediaDirectory() {
-    return this.#media_directory;
-  }
+    await database.transaction(async(trx) => {
+      const doctor_model = new DoctorModel( { database: trx } );
+      result = await doctor_model.update({"ID": this.media_id}, update_params);
+    });
 
-  getVideoName() {
-    return this.#video_name;
-  }
-
-  getVideoSource() {
-    return this.#video_source;
-  }
-
-  getUrlPrefix() {
-    return this.media_url_prefix;
+    return result;
   }
 }
