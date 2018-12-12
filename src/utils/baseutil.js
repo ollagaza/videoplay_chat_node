@@ -4,6 +4,7 @@ import Iconv from 'iconv';
 import xmlOptions from '@/config/xml.options';
 import IndexFileInfo from '@/classes/surgbook/IndexFileInfo';
 import dateFormat from 'dateformat';
+import { promisify } from 'util';
 
 const index_file_regexp = /(.+\.[a-z0-9]+)_([0-9]+)_([0-9]+)_(0x[0-9]+)_0\.jpg$/i;
 const timezone_offset = new Date().getTimezoneOffset() * 60000;
@@ -51,12 +52,10 @@ const timeStrToSecond = (time_str) => {
   let sec = 0;
   let multi = 1;
   const time_list = time_str.split(':');
-  console.log(time_list);
   const list_length = time_list.length;
 
   for(let i = list_length-1; i >= 0; i--){
     sec += parseInt(time_list[i], 10) * multi;
-    console.log(time_list[i] + " / " + sec);
     multi *= 60;
   }
 
@@ -80,12 +79,12 @@ export default {
 
   "secondToTimeStr": secondToTimeStr,
 
-  "loadXmlFile": (directory, xml_file_name) => {
+  "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name + '.xml';
 
     let context = null;
     try {
-      context = fs.readFileSync(xml_file_path);
+      context = await promisify(fs.readFile)(xml_file_path);
     } catch (e) {
       console.log(e);
       return {};

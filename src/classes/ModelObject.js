@@ -27,11 +27,8 @@ export default class ModelObject {
     return result;
   }
 
-  async findPaginated({ list_count = 20, page = 1, page_count = 10, ...filters }) {
-    const oKnex = this.database
-      .select(this.selectable_fields)
-      .from(this.table_name)
-      .where(filters);
+  async findPaginated({ list_count = 20, page = 1, page_count = 10, ...filters }, columns=null, order=null) {
+    const oKnex = this.queryBuilder(filters, columns, order);
 
     const result = await this.queryPaginated(oKnex, list_count, page, page_count);
 
@@ -67,23 +64,39 @@ export default class ModelObject {
     return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count) }
   }
 
-  async find(filters) {
-    const result = await this.database
-      .select(this.selectable_fields)
-      .from(this.table_name)
-      .where(filters);
+  async find(filters, columns=null, order=null) {
+    const oKnex = this.queryBuilder(filters, columns, order);
 
-    return result;
+    return await oKnex;
   }
 
-  async findOne(filters) {
-    const result = await this.database
-      .select(this.selectable_fields)
-      .from(this.table_name)
-      .where(filters)
-      .first();
+  async findOne(filters, columns=null, order=null) {
+    const oKnex = this.queryBuilder(filters, columns, order);
+    oKnex.first();
 
-    return result;
+    return await oKnex;
+  }
+
+  queryBuilder(filters, columns=null, order=null) {
+    let oKnex = null;
+    if (columns == null) {
+      oKnex = this.database.select(this.selectable_fields);
+    }
+    else {
+      const select = new Array();
+      for(const key in columns) {
+        select.push(this.database.raw(columns[key]));
+      }
+      oKnex = this.database.select(select);
+    }
+    oKnex.from(this.table_name)
+      .where(filters);
+
+    if (order != null){
+      oKnex.orderBy(order.name, order.direction);
+    }
+
+    return oKnex;
   }
 
   async findBySeq(seq) {

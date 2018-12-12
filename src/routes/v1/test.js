@@ -2,26 +2,32 @@ import { Router } from 'express';
 import wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
 import Util from '@/utils/baseutil';
-import Media from '@/classes/surgbook/Media';
+import DoctorModel from '@/models/DoctorModel';
+import database from '@/config/database';
 
 const routes = Router();
 
+let aa = 0;
+
 routes.get('/media/:media_id', wrap(async(req, res) => {
-  const media = await new Media(req.params.media_id).getMedia({patient: true});
+  const media_info = await new DoctorModel({ database }).getMediaInfo(req.params.media_id, true);
 
   const output = new StdObject();
 
-  output.add('media', media);
-  output.add('videosource', media.getVideoSource());
+  output.add('media', media_info.toJson());
 
   res.json(output);
+}));
+
+routes.get('/add', wrap(async(req, res) => {
+  aa++;
+  res.send({'aa': aa});
 }));
 
 routes.post('/media/operation/:media_id', wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const media = new Media(req.params.media_id);
-  const result = await media.updateOperationInfo(req.body);
+  const result = await new DoctorModel({ database }).updateOperationInfo(req.params.media_id, req.body);
   console.log(result);
 
   const output = new StdObject();
@@ -51,10 +57,10 @@ routes.get('/checkutils', wrap(async(req, res) => {
   output.add('sec', sec);
   output.add('timeStr', Util.secondToTimeStr(sec));
 
-  //const json = await Util.loadXmlFile(media_root, media_path, 'Custom');
-  //output.add('xml', json);
+  const json = await Util.loadXmlFile(media_root, media_path, 'Custom');
+  output.add('xml', json);
 
-  //Util.writeXmlFile(media_root, media_path, 'Custom2', json);
+  Util.writeXmlFile(media_root, media_path, 'Custom2', json);
 
   res.json(output);
 }));

@@ -57,7 +57,7 @@ routes.post('/', wrap(async(req, res) => {
     output.adds({ seq });
 
     res.json(output);
-  })
+  });
 }));
 
 

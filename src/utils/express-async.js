@@ -19,6 +19,7 @@ export default (fn) => {
           output.stack = error.stack;
           output.setMessage(error.message);
         }
+        console.error(error);
 
         return next(output);
       }
