@@ -35,7 +35,7 @@ const generateTokenByMemberInfo = (member_info) => {
   token_info.setTokenByMemberInfo(member_info);
 
   const token = jwt.sign({"info": token_info}, TOKEN_SECRET, {
-    algorithm: 'HS384',
+    algorithm: 'HS256',
     expiresIn: expire
   });
 
@@ -101,7 +101,7 @@ const isAuthenticated = (require_roles) => {
           return res.status(output.getHttpStatusCode()).json(output);
         }
 
-        if (expire < now + (2 * HOUR)) {
+        if (expire < now + HOUR) {
           const refresh_token_info = await generateToken(id);
           setAuthHeader(res, refresh_token_info.token);
 

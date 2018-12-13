@@ -9,7 +9,35 @@ import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import Auth from '@/middlewares/auth.middleware';
 
 const routes = Router();
-
+/**
+ * @api {post} /auth 회원 인증토큰 생성
+ * @apiName Authentication
+ * @apiGroup Auth
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {String} email 회원등록 시 입력한 이메일 주소
+ * @apiParam {String} password 회원등록 시 입력한 비밀번호
+ *
+ * @apiParamExample {json} 회원 로그인 정보
+ * {
+ *	"email": "test@mteg.com",
+ *	"password": "1111"
+ * }
+ *
+ * @apiSuccess {String} token 인증토큰
+ *
+ * @apiSuccessExample 회원 인증 성공
+ * HTTP/1.1 200 OK
+ * {
+ *  "error": 0,
+ *  "message": "success",
+ *  "variables": {
+ *    "token": "인증토큰"
+ *  },
+ *  "httpStatusCode": 200
+ * }
+ *
+ */
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 

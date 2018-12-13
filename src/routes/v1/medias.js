@@ -28,7 +28,7 @@ const getMemberQuery = async (token_info) => {
   return member_query;
 }
 
-routes.get('/list', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+routes.get('/', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
   const token_info = req.token_info;
   let member_query = {};
   if (token_info.getRole() == roles.MEMBER) {

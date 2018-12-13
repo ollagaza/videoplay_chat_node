@@ -17,7 +17,8 @@
     "clean": "rimraf dist",
     "build": "npm run clean && mkdir dist && babel src -s -D -d dist",
     "test": "jest --watch",
-    "lint": "esw -w src test"
+    "lint": "esw -w src test",
+    "apidoc": "apidoc -i src/routes -o public/apidoc"
   },
   "keywords": [],
   "dependencies": {
@@ -109,5 +110,10 @@
   },
   "jest": {
     "testEnvironment": "node"
+  },
+  "apidoc": {
+    "title": "Surgbook API",
+    "description": "Surgbook API Document",
+    "url": "/api/v1"
   }
 }
