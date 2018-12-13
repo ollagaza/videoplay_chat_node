@@ -24,7 +24,7 @@ export default class JsonWrapper {
     return this.is_empty;
   }
 
-  toJson = () => {
+  toJSON = () => {
     const result = {};
 
     for (let index in this.json_keys) {

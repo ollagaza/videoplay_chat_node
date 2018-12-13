@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
+import SendMail from '@/classes/SendMail';
 import Util from '@/utils/baseutil';
 import DoctorModel from '@/models/DoctorModel';
 import database from '@/config/database';
@@ -9,8 +10,8 @@ const routes = Router();
 
 let aa = 0;
 
-routes.get('/media/:media_id', wrap(async(req, res) => {
-  const media_info = await new DoctorModel({ database }).getMediaInfo(req.params.media_id, true);
+routes.get('/media/:media_id', wrap(async (req, res) => {
+  const media_info = await new DoctorModel({database}).getMediaInfo(req.params.media_id, true);
 
   const output = new StdObject();
 
@@ -19,15 +20,15 @@ routes.get('/media/:media_id', wrap(async(req, res) => {
   res.json(output);
 }));
 
-routes.get('/add', wrap(async(req, res) => {
+routes.get('/add', wrap(async (req, res) => {
   aa++;
   res.send({'aa': aa});
 }));
 
-routes.post('/media/operation/:media_id', wrap(async(req, res) => {
+routes.post('/media/operation/:media_id', wrap(async (req, res) => {
   req.accepts('application/json');
 
-  const result = await new DoctorModel({ database }).updateOperationInfo(req.params.media_id, req.body);
+  const result = await new DoctorModel({database}).updateOperationInfo(req.params.media_id, req.body);
   console.log(result);
 
   const output = new StdObject();
@@ -37,7 +38,7 @@ routes.post('/media/operation/:media_id', wrap(async(req, res) => {
 }));
 
 
-routes.get('/checkutils', wrap(async(req, res) => {
+routes.get('/checkutils', wrap(async (req, res) => {
 
   const media_root = "C:\\surgbook";
   const media_path = "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\SEQ\\";
@@ -65,6 +66,9 @@ routes.get('/checkutils', wrap(async(req, res) => {
   res.json(output);
 }));
 
-
+routes.get('/mail', wrap(async (req, res) => {
+  await new SendMail().test();
+  res.send('ok');
+}));
 
 export default routes;

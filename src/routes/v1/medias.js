@@ -80,11 +80,11 @@ routes.get('/:media_id', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req,
   }
 
   const output = new StdObject();
-  output.adds(media_info.toJson());
+  output.adds(media_info);
   res.json(output);
 }));
 
-routes.put('/operation/:media_id', wrap(async(req, res) => {
+routes.put('/operation/:media_id', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
   req.accepts('application/json');
 
   const result = await new DoctorModel({ database }).updateOperationInfo(req.params.media_id, req.body);

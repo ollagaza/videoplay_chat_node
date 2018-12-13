@@ -19,7 +19,6 @@ export default class DoctorModel extends ModelObject {
       query = {"ID": media_id};
     }
 
-    console.log(query);
     const doctor_info = await this.findOne(query);
 
     return await this.toMediaInfoWithXML(doctor_info, true, import_patient);
@@ -33,7 +32,7 @@ export default class DoctorModel extends ModelObject {
     if (doctor_info_list !== null) {
       for (const key in doctor_info_list) {
         let doctor_info = doctor_info_list[key];
-        result.push(this.toMediaInfo(doctor_info).toJson());
+        result.push(this.toMediaInfo(doctor_info));
       }
     }
 
@@ -48,7 +47,7 @@ export default class DoctorModel extends ModelObject {
     if (doctor_info_list !== null && doctor_info_list.data != null) {
       for (const key in doctor_info_list.data) {
         let doctor_info = doctor_info_list.data[key];
-        result.push(this.toMediaInfo(doctor_info).toJson());
+        result.push(this.toMediaInfo(doctor_info));
       }
     }
 
@@ -117,8 +116,6 @@ export default class DoctorModel extends ModelObject {
     if (doctor_info == null) {
       return new MediaInfo(null);
     }
-
-    console.log(doctor_info);
 
     const result_data = this.getBaseResult(doctor_info);
 
