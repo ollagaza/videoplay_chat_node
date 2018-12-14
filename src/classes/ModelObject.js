@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import PageHandler from '@/classes/PageHandler';
 
 export default class ModelObject {
@@ -11,7 +10,7 @@ export default class ModelObject {
   async create(params) {
 
     const result = await this.database
-      .insert(_.omit(params, 'seq'))
+      .insert(params)
       .into(this.table_name);
 
     return result.shift();
@@ -20,9 +19,19 @@ export default class ModelObject {
   async update(filters, params) {
 
     const result = await this.database
-      .update(_.omit(params, 'seq'))
+      .update(params)
       .from(this.table_name)
       .where(filters);
+
+    return result;
+  }
+
+  async delete(filters) {
+
+    const result = await this.database
+      .from(this.table_name)
+      .where(filters)
+      .del();
 
     return result;
   }
@@ -77,15 +86,21 @@ export default class ModelObject {
     return await oKnex;
   }
 
-  queryBuilder(filters, columns=null, order=null) {
+  queryBuilder = (filters, columns=null, order=null) => {
     let oKnex = null;
     if (columns == null) {
       oKnex = this.database.select(this.selectable_fields);
     }
     else {
       const select = new Array();
+      const function_column = /\(.+\)/i;
       for(const key in columns) {
-        select.push(this.database.raw(columns[key]));
+        const column = columns[key];
+        if (function_column.test(column)) {
+          select.push(this.database.raw(columns[key]));
+        } else {
+          select.push(columns[key]);
+        }
       }
       oKnex = this.database.select(select);
     }
@@ -103,5 +118,14 @@ export default class ModelObject {
     const result = await this.findOne({ seq });
 
     return result;
+  }
+
+  getTotalCount = async (filters) => {
+    const result = await this.database.count('* as total_count').from(this.table_name).where(filters).first();
+    if (!result || !result.total_count) {
+      return 0;
+    } else {
+      return result.total_count;
+    }
   }
 }

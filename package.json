@@ -44,7 +44,8 @@
     "rimraf": "^2.6.2",
     "socketio-sticky-session": "^0.4.3",
     "to": "^0.2.9",
-    "update": "^0.7.4"
+    "update": "^0.7.4",
+    "string-template": "^1.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

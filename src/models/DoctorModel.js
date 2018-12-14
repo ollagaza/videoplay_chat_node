@@ -8,6 +8,7 @@ export default class DoctorModel extends ModelObject {
 
     this.table_name = 'doctor';
     this.selectable_fields = ['*'];
+    this.private_keys = ['media_root', 'media_path', 'media_directory', 'video_source'];
   }
 
   getMediaInfo = async (media_id, member_query=null, import_patient=false) => {
@@ -24,22 +25,7 @@ export default class DoctorModel extends ModelObject {
     return await this.toMediaInfoWithXML(doctor_info, true, import_patient);
   }
 
-  getMediaInfoList = async (query, columns=null) => {
-    const doctor_info_list = await this.find(query, columns);
-
-    const result = new Array();
-
-    if (doctor_info_list !== null) {
-      for (const key in doctor_info_list) {
-        let doctor_info = doctor_info_list[key];
-        result.push(this.toMediaInfo(doctor_info));
-      }
-    }
-
-    return result;
-  }
-
-  getMediaInfoListPage = async (query, columns=null, orderby=null)  => {
+  getMediaInfoListPage = async (query, columns=null, orderby={})  => {
     const doctor_info_list = await this.findPaginated(query, columns, orderby);
 
     const result = new Array();
@@ -78,16 +64,16 @@ export default class DoctorModel extends ModelObject {
 
     result_data.media_id = doctor_info.ID;
 
-    result_data._media_root =  doctor_info.MediaRoot;
-    result_data._media_path =  doctor_info.MediaPath;
+    result_data.media_root =  doctor_info.MediaRoot;
+    result_data.media_path =  doctor_info.MediaPath;
 
-    result_data.is_operation = doctor_info.Operation;
-    result_data.is_file_no = doctor_info.FileNo;
-    result_data.is_file_size = doctor_info.FileSize;
-    result_data.is_runtime = doctor_info.RunTime;
-    result_data.is_clip_no = doctor_info.ClipNo;
-    result_data.is_video_no = doctor_info.VideoNo;
-    result_data.is_report_no = doctor_info.ReportNo;
+    result_data.operation = doctor_info.Operation;
+    result_data.file_no = doctor_info.FileNo;
+    result_data.file_size = doctor_info.FileSize;
+    result_data.runtime = doctor_info.RunTime;
+    result_data.clip_no = doctor_info.ClipNo;
+    result_data.video_no = doctor_info.VideoNo;
+    result_data.report_no = doctor_info.ReportNo;
 
     result_data.is_analysis = doctor_info.Analysis === 'Y';
     result_data.is_request = doctor_info.Request === 'Y';
@@ -98,8 +84,8 @@ export default class DoctorModel extends ModelObject {
       result_data.no = doctor_info._no;
     }
 
-    result_data._media_directory = Util.getMediaDirectory(result_data._media_root, result_data._media_path);
-    result_data.url_prefix = Util.getUrlPrefix(result_data._media_root, result_data._media_path);
+    result_data.media_directory = Util.getMediaDirectory(result_data.media_root, result_data.media_path);
+    result_data.url_prefix = Util.getUrlPrefix(result_data.media_root, result_data.media_path);
 
     return result_data;
   }
@@ -109,10 +95,10 @@ export default class DoctorModel extends ModelObject {
       return new MediaInfo(null);
     }
 
-    return new MediaInfo(this.getBaseResult(doctor_info));
+    return new MediaInfo(this.getBaseResult(doctor_info), this.private_keys);
   }
 
-  toMediaInfoWithXML = async (doctor_info, import_xml, import_patient=false) => {
+  toMediaInfoWithXML = async (doctor_info, import_xml=false, import_patient=false) => {
     if (doctor_info == null) {
       return new MediaInfo(null);
     }
@@ -133,7 +119,7 @@ export default class DoctorModel extends ModelObject {
     }
 
     if (import_xml === true) {
-      const media_xml = await Util.loadXmlFile(result_data._media_directory, 'Media');
+      const media_xml = await Util.loadXmlFile(result_data.media_directory, 'Media');
       const media_xml_info = media_xml.MediaInfo.Media;
 
       result_data.video_info = {};
@@ -144,10 +130,11 @@ export default class DoctorModel extends ModelObject {
       result_data.video_info.total_time = media_xml_info.node_attr.RunTime;
       result_data.video_info.total_frame = media_xml_info.node_attr.FrameNo;
 
-      result_data.video_url = result_data.url_prefix + "SEQ/" + result_data.video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
-      result_data._video_source = result_data._media_directory + "SEQ\\" + result_data.video_info.video_name.replace(/^[a-zA-Z]+_/, 'Trans_');
+      result_data.origin_video_url = result_data.url_prefix + "SEQ/" + result_data.video_info.video_name;
+      result_data.proxy_video_url = result_data.url_prefix + "SEQ/" + result_data.video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
+      result_data.video_source = result_data.media_directory + "SEQ\\" + result_data.video_info.video_name;
     }
 
-    return new MediaInfo(result_data);
+    return new MediaInfo(result_data, this.private_keys);
   }
 }

@@ -1,10 +1,11 @@
 import fs from 'fs';
 import xmlParser from 'fast-xml-parser';
 import Iconv from 'iconv';
-import xmlOptions from '@/config/xml.options';
-import IndexFileInfo from '@/classes/surgbook/IndexFileInfo';
 import dateFormat from 'dateformat';
 import { promisify } from 'util';
+import _ from 'lodash';
+import xmlOptions from '@/config/xml.options';
+import IndexFileInfo from '@/classes/surgbook/IndexFileInfo';
 
 const index_file_regexp = /(.+\.[a-z0-9]+)_([0-9]+)_([0-9]+)_(0x[0-9]+)_0\.jpg$/i;
 const timezone_offset = new Date().getTimezoneOffset() * 60000;
@@ -62,12 +63,15 @@ const timeStrToSecond = (time_str) => {
   return sec;
 };
 
-const secondToTimeStr = (second, format='HH:MM:ss') => {
-  return dateFormat(second*1000 + timezone_offset, format);
+const dateFormatter = (timestamp, format='HH:MM:ss', use_offset) => {
+  if (use_offset) {
+    timestamp += timezone_offset;
+  }
+  return dateFormat(timestamp, format);
 };
 
 export default {
-  "iconv": convert,
+  "convert": convert,
 
   "getMediaDirectory": getMediaDirectory,
 
@@ -77,7 +81,11 @@ export default {
 
   "timeStrToSecond": timeStrToSecond,
 
-  "secondToTimeStr": secondToTimeStr,
+  "secondToTimeStr": (second, format='HH:MM:ss') => { return dateFormatter(second*1000, format, true); },
+
+  "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
+
+  "currentFormattedDate": (format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(new Date().getTime(), format); },
 
   "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name + '.xml';
@@ -121,5 +129,26 @@ export default {
     }
 
     return new IndexFileInfo(matchs[1], matchs[2], matchs[3], matchs[4]);
+  },
+
+  "isEmpty": (value) => {
+    if (value === undefined || value === null) {
+      return true;
+    }
+    if (_.isNumber(value)) {
+      return false;
+    }
+    if (_.isString(value)) {
+      return _.trim(value) == '';
+    }
+    return _.isEmpty(value);
+  },
+
+  "trim": (value) => {
+    if (value === undefined || value === null) {
+      return '';
+    }
+
+    return _.trim(value);
   }
 };

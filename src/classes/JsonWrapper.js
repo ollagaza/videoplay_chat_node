@@ -1,5 +1,5 @@
 export default class JsonWrapper {
-  constructor(data) {
+  constructor(data, private_keys=[]) {
     this.json_keys = [];
 
     if (data === null) {
@@ -7,11 +7,20 @@ export default class JsonWrapper {
       return;
     }
 
+    const private_key_map = {};
+    if (private_keys) {
+      for (let i = 0; i < private_keys.length; i++) {
+        private_key_map[private_keys[i]] = private_keys[i];
+      }
+    }
+
     this.is_empty = false;
     const key_check_regexp = /^_/;
 
     for (let key in data) {
-      if (key_check_regexp.test(key) === false) {
+      if (private_key_map[key]) {
+        this[key] = data[key];
+      } else if (key_check_regexp.test(key) === false) {
         this.json_keys.push(key);
         this[key] = data[key];
       } else {
