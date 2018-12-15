@@ -13,28 +13,59 @@ export default class MemberModel extends ModelObject {
     this.private_fields = ['password'];
   }
 
-  create = async (params) => {
-    params = {...params, password: php.md5(params.password)};
-
+  createMember = async (params) => {
     // 이메일이 중복되는 경우 409 CONFLICT를 뱉음
     if (await this.findOne({email_address: params.email_address})) {
       throw new StdObject(-1, '중복된 이메일 주소입니다.', 409);
     }
 
     const member = {
-      "user_name": params.user_name,
-      "email_address": params.email_address,
-      "password": params.password,
-      "cellphone": params.cellphone,
-      "hospital_code": params.hospital_code,
-      "branch_code": params.branch_code,
-      "custom_hospital": params.custom_hospital,
-      "custom_branch": params.custom_branch,
-      "position": params.position,
-      "license_no": params.license_no,
-      "etc": params.etc
+      "user_name": Util.trim(params.user_name),
+      "email_address": Util.trim(params.email_address),
+      "password": php.md5(params.password),
+      "cellphone": Util.trim(params.cellphone),
+      "hospital_code": Util.trim(params.hospital_code),
+      "branch_code": Util.trim(params.branch_code),
+      "custom_hospital": Util.trim(params.custom_hospital),
+      "custom_branch": Util.trim(params.custom_branch),
+      "position": Util.trim(params.position),
+      "license_no": Util.trim(params.license_no)
     };
+
+    if (Util.isEmpty(params.etc) == false) {
+      member.etc = params.etc;
+    }
+
     const result = await super.create(member);
+
+    return result;
+  }
+
+  modifyMember = async (member_seq, params) => {
+    const member = {
+      "cellphone": Util.trim(params.cellphone),
+      "hospital_code": Util.trim(params.hospital_code),
+      "branch_code": Util.trim(params.branch_code),
+      "custom_hospital": Util.trim(params.custom_hospital),
+      "custom_branch": Util.trim(params.custom_branch),
+      "position": Util.trim(params.position),
+      "license_no": Util.trim(params.license_no)
+    };
+
+    if (Util.isEmpty(params.user_name) == false) {
+      member.user_name = params.user_name;
+    }
+    if (Util.isEmpty(params.email_address) == false) {
+      member.email_address = params.email_address;
+    }
+    if (Util.isEmpty(params.password) == false) {
+      member.password = php.md5(params.password);
+    }
+    if (Util.isEmpty(params.etc) == false) {
+      member.etc = params.etc;
+    }
+
+    const result = await super.update({seq: member_seq}, member);
 
     return result;
   }

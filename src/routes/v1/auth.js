@@ -10,33 +10,70 @@ import Auth from '@/middlewares/auth.middleware';
 
 const routes = Router();
 /**
- * @api {post} /auth 회원 인증
- * @apiName AuthenticationUser
- * @apiGroup Auth
- * @apiVersion 1.0.0
- *
- * @apiHeader {String} Content-Type=application/json json content type
- *
- * @apiParam {String} email 회원등록 시 입력한 이메일 주소
- * @apiParam {String} password 회원등록 시 입력한 비밀번호
- *
- * @apiParamExample {json} 회원 로그인 정보
- * {
- *  "email": "test@mteg.com",
- *  "password": "1111"
- * }
- *
- * @apiSuccess {String} token 인증토큰
- *
- * @apiSuccessExample 회원 인증 성공
- * HTTP/1.1 200 OK
- * {
- *  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbmZvIjp7ImlkIjoyNSwicm9sZSI6NSwiaG9zcGl0YWwiOiJFSE1EIiwiYnJhbmNoIjoiT0JHIn0sImlhdCI6MTU0NDc2Mjg2OCwiZXhwIjoxNTQ0ODQ5MjY4fQ.ZZN2gdxdv8iLZolEj0ttYUQd0gj_wH3Uw476MCIIEBw"
- * }
+ * @swagger
+ * tags:
+ *  name: Auth
+ *  description: 회원, 이메일 인증
+ * definitions:
+ *  AuthLogin:
+ *    type: "object"
+ *    properties:
+ *      email:
+ *        type: "string"
+ *        description: "이메일 주소"
+ *      password:
+ *        type: "string"
+ *        description: "비밀번호"
+ *    required:
+ *      - email
+ *      - password
+ *  AuthEmail:
+ *    type: "object"
+ *    properties:
+ *      auth_key:
+ *        type: "string"
+ *        description: "이메일 인증용 랜덤키"
+ *      member_seq:
+ *        type: "integer"
+ *        description: "회원 고유번호"
+ *    required:
+ *      - auth_key
+ *      - member_seq
+ *  AuthAccessToken:
+ *    type: "object"
+ *    properties:
+ *      token:
+ *        type: "string"
+ *        description: "api access token"
+ */
+
+/**
+ * @swagger
+ * /auth:
+ *  post:
+ *    summary: "아이디, 비밀번호로 회원 인증 후 토큰발급"
+ *    tags: [Auth]
+ *    consumes:
+ *    - "application/json"
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "body"
+ *      in: "body"
+ *      description: "회원 아이디, 비밀번호"
+ *      required: true
+ *      schema:
+ *         $ref: "#/definitions/AuthLogin"
+ *    responses:
+ *      200:
+ *        description: "인증토큰"
+ *        schema:
+ *           $ref: "#/definitions/AuthAccessToken"
  *
  */
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
+  console.log(req.body);
 
   if (!req.body || !req.body.email || !req.body.password) {
     const output = new StdObject(-1, "이메일과 패스워드를 정확하게 입력해 주세요.");
@@ -79,25 +116,28 @@ routes.post('/', Wrap(async(req, res) => {
   return res.json(output);
 }));
 
-
 /**
- * @api {post} /auth/email 이메일 인증
- * @apiName AuthenticationMail
- * @apiGroup Auth
- * @apiVersion 1.0.0
- *
- * @apiHeader {String} Content-Type=application/json json content type
- *
- * @apiParam {String} member_seq 인증메일로 발송한 회원 고유 번호
- * @apiParam {String} auth_key 인증메일로 이메일 인증 키
- *
- * @apiParamExample {json} 이메일 인증 정보
- * {
- *  "auth_key": "a9830839569fd5d1778c6a4661a620c8",
- *  "member_seq": "54"
- * }
- *
- * @apiSuccess {Boolean} success 회원가입 성공 true
+ * @swagger
+ * /email:
+ *  post:
+ *    summary: "회원 이메일 인증"
+ *    tags: [Auth]
+ *    consumes:
+ *    - "application/json"
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "body"
+ *      in: "body"
+ *      description: "회원 고유번호, 이메일 인증 키"
+ *      required: true
+ *      schema:
+ *         $ref: "#/definitions/AuthEmail"
+ *    responses:
+ *      200:
+ *        description: "성공여부"
+ *        schema:
+ *           $ref: "#/definitions/DefaultResponse"
  *
  */
 routes.post('/email', Wrap(async(req, res) => {

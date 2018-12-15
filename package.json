@@ -17,8 +17,7 @@
     "clean": "rimraf dist",
     "build": "npm run clean && mkdir dist && babel src -s -D -d dist",
     "test": "jest --watch",
-    "lint": "esw -w src test",
-    "apidoc": "apidoc -i src/routes -o public/apidoc"
+    "lint": "esw -w src test"
   },
   "keywords": [],
   "dependencies": {
@@ -60,7 +59,9 @@
     "eslint-watch": "^3.1.3",
     "jest": "^23.6.0",
     "nodemon": "^1.12.1",
-    "supertest": "^3.0.0"
+    "supertest": "^3.0.0",
+    "swagger-ui-express": "^4.0.2",
+    "swagger-jsdoc": "^3.2.6"
   },
   "babel": {
     "presets": [
@@ -111,10 +112,5 @@
   },
   "jest": {
     "testEnvironment": "node"
-  },
-  "apidoc": {
-    "title": "Surgbook API",
-    "description": "Surgbook API Document",
-    "url": "/api/v1"
   }
 }
