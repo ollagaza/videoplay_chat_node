@@ -9,6 +9,7 @@ import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import Util from '@/utils/baseutil';
 import member_template from '@/template/mail/member.template';
+import MemberInfo from "@/classes/surgbook/MemberInfo";
 
 const routes = Router();
 
@@ -19,27 +20,6 @@ const routes = Router();
  *  description: 회원정보 조회, 수정
  *
  */
-
-const checkUserParams = (params) => {
-  if (Util.isEmpty(params)) {
-    throw new StdObject(-1, '잘못된 요청입니다.', 400);
-  }
-  if (Util.isEmpty(params.position)) {
-    throw new StdObject(-1, '핸드폰 번호를 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.license_no)) {
-    throw new StdObject(-1, '면허번호을(를) 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.hospital_code)) {
-    throw new StdObject(-1, '병원명을 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.branch_code)) {
-    throw new StdObject(-1, '진료분야를 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.position)) {
-    throw new StdObject(-1, '직위를 입력해 주세요.', 400);
-  }
-}
 
 /**
  * @swagger
@@ -59,7 +39,26 @@ const checkUserParams = (params) => {
  *      200:
  *        description: "회원정보"
  *        schema:
- *           $ref: "#/definitions/UserInfo"
+ *          type: "object"
+ *          properties:
+ *            error:
+ *              type: "integer"
+ *              description: "에러코드"
+ *              default: 0
+ *            message:
+ *              type: "string"
+ *              description: "에러 메시지"
+ *              default: ""
+ *            httpStatusCode:
+ *              type: "integer"
+ *              description: "HTTP Status Code"
+ *              default: 200
+ *            variables:
+ *              type: "object"
+ *              description: "결과 정보"
+ *              properties:
+ *                member_info:
+ *                  $ref: "#definitions/UserInfo"
  *    security:
  *    - access_token: []
  */
@@ -83,7 +82,7 @@ routes.get('/:member_seq(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(as
   }
 
   const output = new StdObject();
-  output.adds(member_info);
+  output.add('member_info', member_info);
   res.json(output);
 }));
 
@@ -114,30 +113,11 @@ routes.get('/:member_seq(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(as
 routes.post('/', wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const params = req.body;
-
-  checkUserParams(params);
-  if (Util.isEmpty(params.user_name)) {
-    throw new StdObject(-1, '성명을 입력해 주세요.', 400);
-  }
-  if (params.user_name.length > 10) {
-    return new StdObject(-1, '이름은 열자 이하로 입력하셔야 합니다.', 400);
-  }
-  if (Util.isEmpty(params.email_address)) {
-    throw new StdObject(-1, '아이디를 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.password)) {
-    throw new StdObject(-1, '암호를 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.password_confirm)) {
-    throw new StdObject(-1, '암호확인을 입력해 주세요.', 400);
-  }
-
-  params.password = Util.trim(params.password);
-  params.password_confirm = Util.trim(params.password_confirm);
-  if (params.password != params.password_confirm) {
-    throw new StdObject(-1, '입력하신 암호화 암호확인이 일치하지 않습니다.', 400);
-  }
+  const member_info = new MemberInfo(req.body, ['password_confirm']);
+  member_info.checkDefaultParams();
+  member_info.checkUserName();
+  member_info.checkEmailAddress();
+  member_info.checkPassword();
 
   // 커밋과 롤백은 자동임
   await database.transaction(async(trx) => {
@@ -145,12 +125,12 @@ routes.post('/', wrap(async(req, res) => {
     const oMemberModel = new MemberModel({ database: trx });
 
     // 사용자 삽입
-    const member_seq = await oMemberModel.createMember(params);
+    const member_seq = await oMemberModel.createMember(member_info);
     if (member_seq <= 0){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
 
-    const email_address = params.email_address;
+    const email_address = member_info.email_address;
 
     const mail_auth_key = await new MemberAuthMailModel({ database: trx }).getMailAuthKey(member_seq, email_address);
     if (mail_auth_key == null) {
@@ -158,11 +138,11 @@ routes.post('/', wrap(async(req, res) => {
     }
 
     const template_data = {
-      "user_name": params.user_name,
+      "user_name": member_info.user_name,
       "auth_key": mail_auth_key,
       "member_seq": member_seq
     };
-    const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', member_template.create(template_data));
+    const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', member_template.createUser(template_data));
 
     if (send_mail_result.isSuccess()) {
       res.json(new StdObject());
@@ -215,32 +195,16 @@ routes.put('/:member_seq(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async
     }
   }
 
-  const params = req.body;
-  checkUserParams(params);
-
-  if (Util.isEmpty(params.user_name) == false) {
-    if (params.user_name.length > 10) {
-      return new StdObject(-1, '이름은 열자 이하로 입력하셔야 합니다.', 400);
-    }
-  }
-
-  if (Util.isEmpty(params.password) == false) {
-    if (Util.isEmpty(params.password_confirm)) {
-      throw new StdObject(-1, '암호확인을 입력해 주세요.', 400);
-    }
-  }
-
-  params.password = Util.trim(params.password);
-  params.password_confirm = Util.trim(params.password_confirm);
-  if (params.password != params.password_confirm) {
-    throw new StdObject(-1, '입력하신 암호화 암호확인이 일치하지 않습니다.', 400);
-  }
+  const member_info = new MemberInfo(req.body, ['seq', 'password_confirm']);
+  member_info.checkDefaultParams();
+  member_info.checkUserName();
+  member_info.checkPassword(false);
 
   await database.transaction(async(trx) => {
     const oMemberModel = new MemberModel({ database: trx });
 
     // 사용자 정보 수정
-    const result = await oMemberModel.modifyMember(member_seq, params);
+    const result = await oMemberModel.modifyMember(member_seq, member_info);
     if (!result) {
       throw new StdObject(-1, '회원정보 수정 실패', 400);
     }
@@ -252,9 +216,9 @@ routes.put('/:member_seq(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async
 
 /**
  * @swagger
- * /users/reset/password:
- *  put:
- *    summary: "회원의 비밀번호를 무작위로 재 설정하고 이메일을 발송한다."
+ * /users/find:
+ *  post:
+ *    summary: "회원정보검색 후 비밀번호를 재설정하고 이메일 발송"
  *    tags: [Users]
  *    consumes:
  *    - "application/json"
@@ -274,29 +238,35 @@ routes.put('/:member_seq(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.put('/reset/password', wrap(async(req, res) => {
+routes.post('/find', wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const params = req.body;
-
-  if (Util.isEmpty(params.user_name) == false) {
-    throw new StdObject(-1, '성명을 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.email_address) == false) {
-    throw new StdObject(-1, '아이디를 입력해 주세요.', 400);
-  }
-  if (Util.isEmpty(params.cellphone) == false) {
-    throw new StdObject(-1, '핸드폰 번호를 입력해 주세요.', 400);
-  }
+  const member_info = new MemberInfo(req.body);
+  member_info.setKeys(['user_name', 'email_address', 'cellphone']);
+  member_info.checkUserName();
+  member_info.checkEmailAddress();
+  member_info.checkCellphone();
 
   await database.transaction(async(trx) => {
     const oMemberModel = new MemberModel({ database: trx });
-
-    // 사용자 정보 수정
-    const result = await oMemberModel.resetPassword(member_seq, params);
-    if (!result) {
-      throw new StdObject(-1, '회원정보 수정 실패', 400);
+    const find_info = await oMemberModel.findMember(member_info);
+    const temp_password = Util.getRandomString();
+    const update_result = await oMemberModel.updateTempPassword(find_info.seq, temp_password);
+    if (!update_result) {
+      throw new StdObject(-1, '비밀번호 재설정 실패', 400);
     }
+
+    const template_data = {
+      "user_name": find_info.user_name,
+      "email_address": find_info.email_address,
+      "tmp_password": temp_password
+    };
+
+    const send_mail_result = await new SendMail().sendMailHtml([find_info.email_address], 'MTEG 계정정보 찾기를 요청하셨습니다.', member_template.findUserInfo(template_data));
+    if (send_mail_result.isSuccess() == false) {
+      throw send_mail_result;
+    }
+
     const output = new StdObject();
     res.json(output);
   });

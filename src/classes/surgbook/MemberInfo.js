@@ -1,4 +1,6 @@
 import JsonWrapper from '@/classes/JsonWrapper';
+import Util from '@/utils/baseutil';
+
 /**
  * @swagger
  * definitions:
@@ -159,7 +161,91 @@ import JsonWrapper from '@/classes/JsonWrapper';
  */
 
 export default class MemberInfo extends JsonWrapper {
-  constructor(data, private_keys=[]) {
+  constructor(data=null, private_keys=[]) {
     super(data, private_keys);
+  }
+
+  checkEmpty = () => {
+    if (this.isEmpty()) {
+      return super.returnBoolean(-1, '잘못된 요청입니다.', 400);
+    }
+
+    return true;
+  }
+
+  checkDefaultParams = () => {
+    this.checkEmpty();
+    this.checkCellphone();
+
+    if (Util.isEmpty(this.license_no)) {
+      return super.returnBoolean(-1, '면허번호을(를) 입력해 주세요.', 400);
+    }
+    if (Util.isEmpty(this.hospital_code)) {
+      return super.returnBoolean(-1, '병원명을 입력해 주세요.', 400);
+    }
+    if (Util.isEmpty(this.branch_code)) {
+      return super.returnBoolean(-1, '진료분야를 입력해 주세요.', 400);
+    }
+    if (Util.isEmpty(this.position)) {
+      return super.returnBoolean(-1, '직위를 입력해 주세요.', 400);
+    }
+  }
+
+  checkUserName = () => {
+    this.checkEmpty();
+
+    if (Util.isEmpty(this.user_name)) {
+      return super.returnBoolean(-1, '성명을 입력해 주세요.', 400);
+    }
+    if (this.user_name.length > 10) {
+      return super.returnBoolean(-1, '이름은 열자 이하로 입력하셔야 합니다.', 400);
+    }
+  }
+
+  checkEmailAddress = () => {
+    this.checkEmpty();
+
+    if (Util.isEmpty(this.email_address)) {
+      return super.returnBoolean(-1, '아이디를 입력해 주세요.', 400);
+    }
+  }
+
+  checkPassword = (check_empty=true) => {
+    if (check_empty) {
+      this.checkEmpty();
+    }
+
+    if (check_empty) {
+      if (Util.isEmpty(this.password)) {
+        return super.returnBoolean(-1, '암호를 입력해 주세요.', 400);
+      }
+      if (Util.isEmpty(this.password_confirm)) {
+        return super.returnBoolean(-1, '암호확인을 입력해 주세요.', 400);
+      }
+    }
+    else {
+      if (Util.isEmpty(this.password) === false) {
+        if (Util.isEmpty(this.password_confirm)) {
+          return super.returnBoolean(-1, '암호확인을 입력해 주세요.', 400);
+        }
+      }
+      else {
+        return true;
+      }
+    }
+
+    this.password = Util.trim(this.password);
+    this.password_confirm = Util.trim(this.password_confirm);
+    if (this.password != this.password_confirm) {
+      return super.returnBoolean(-1, '입력하신 암호화 암호확인이 일치하지 않습니다.', 400);
+    }
+  }
+
+  checkCellphone = () => {
+    this.checkEmpty();
+
+    if (Util.isEmpty(this.cellphone)) {
+      return super.returnBoolean(-1, '핸드폰 번호를 입력해 주세요.', 400);
+    }
   }
 }

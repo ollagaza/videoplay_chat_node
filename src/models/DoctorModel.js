@@ -1,6 +1,8 @@
 import ModelObject from '@/classes/ModelObject';
 import Util from '@/utils/baseutil';
 import MediaInfo from '@/classes/surgbook/MediaInfo';
+import OperationInfo from '@/classes/surgbook/OperationInfo';
+import VideoInfo from '@/classes/surgbook/VideoInfo';
 
 export default class DoctorModel extends ModelObject {
   constructor(...args) {
@@ -8,10 +10,10 @@ export default class DoctorModel extends ModelObject {
 
     this.table_name = 'doctor';
     this.selectable_fields = ['*'];
-    this.private_keys = ['media_root', 'media_path', 'media_directory', 'video_source'];
+    this.private_keys = ['media_root', 'media_path', 'media_directory', 'url_prefix', 'video_source'];
   }
 
-  getMediaInfo = async (media_id, member_query=null, import_patient=false) => {
+  getMediaInfo = async (media_id, member_query=null) => {
     let query = null;
     if (member_query != null) {
       query = member_query;
@@ -22,11 +24,15 @@ export default class DoctorModel extends ModelObject {
 
     const doctor_info = await this.findOne(query);
 
-    return await this.toMediaInfoWithXML(doctor_info, true, import_patient);
+    return await this.toMediaInfoWithXML(doctor_info, true);
   }
 
-  getMediaInfoListPage = async (query, columns=null, orderby={})  => {
-    const doctor_info_list = await this.findPaginated(query, columns, orderby);
+  getMediaInfoListPage = async (query, asc=false)  => {
+    let order_by = {name:'ID', direction: 'DESC'};
+    if (asc) {
+      order_by.direction = 'ASC';
+    }
+    const doctor_info_list = await this.findPaginated(query, null, order_by);
 
     const result = new Array();
 
@@ -41,22 +47,17 @@ export default class DoctorModel extends ModelObject {
     return doctor_info_list;
   }
 
+  getOperationInfo = async (media_id) => {
+    const doctor_info = await this.findOne({"ID": media_id});
+
+    const operation_info = new OperationInfo();
+    operation_info.setByDoctorInfo(doctor_info);
+
+    return operation_info;
+  }
+
   updateOperationInfo = async (media_id, operation_info) => {
-    const update_params = {
-      "PID": operation_info.pid,
-      "PName": operation_info.patient_name,
-      "Age": operation_info.patient_age,
-      "Sex": operation_info.patient_sex,
-      "Race": operation_info.patient_race,
-      "OpDate": operation_info.operation_date,
-      "OpName": operation_info.operation_name,
-      "PreOperative": operation_info.pre_operation,
-      "PostOperative": operation_info.post_operation
-    };
-
-    const result = await this.update({"ID": media_id}, update_params);
-
-    return result;
+    return await this.update({"ID": media_id}, operation_info.getQueryJson());
   }
 
   getBaseResult = (doctor_info) => {
@@ -81,7 +82,7 @@ export default class DoctorModel extends ModelObject {
     result_data.is_sharing = doctor_info.Sharing === 'Y';
 
     if (doctor_info._no) {
-      result_data.no = doctor_info._no;
+      result_data.list_no = doctor_info._no;
     }
 
     result_data.media_directory = Util.getMediaDirectory(result_data.media_root, result_data.media_path);
@@ -98,41 +99,24 @@ export default class DoctorModel extends ModelObject {
     return new MediaInfo(this.getBaseResult(doctor_info), this.private_keys);
   }
 
-  toMediaInfoWithXML = async (doctor_info, import_xml=false, import_patient=false) => {
+  toMediaInfoWithXML = async (doctor_info, import_xml=false) => {
     if (doctor_info == null) {
       return new MediaInfo(null);
     }
 
     const result_data = this.getBaseResult(doctor_info);
 
-    if (import_patient === true) {
-      result_data.operation_info = {};
-      result_data.operation_info.pid = doctor_info.PID;
-      result_data.operation_info.patient_name = doctor_info.PName;
-      result_data.operation_info.patient_age = doctor_info.Age;
-      result_data.operation_info.patient_sex = doctor_info.Sex;
-      result_data.operation_info.patient_race = doctor_info.Race;
-      result_data.operation_info.operation_date = doctor_info.OpDate;
-      result_data.operation_info.operation_name = doctor_info.OpName;
-      result_data.operation_info.pre_operation = doctor_info.PreOperative;
-      result_data.operation_info.post_operation = doctor_info.PostOperative;
-    }
-
     if (import_xml === true) {
       const media_xml = await Util.loadXmlFile(result_data.media_directory, 'Media');
       const media_xml_info = media_xml.MediaInfo.Media;
 
-      result_data.video_info = {};
-      result_data.video_info.video_name = media_xml_info.node_text;
-      result_data.video_info.fps = media_xml_info.node_attr.FPS;
-      result_data.video_info.width = media_xml_info.node_attr.Width;
-      result_data.video_info.height = media_xml_info.node_attr.Height;
-      result_data.video_info.total_time = media_xml_info.node_attr.RunTime;
-      result_data.video_info.total_frame = media_xml_info.node_attr.FrameNo;
+      const video_info = new VideoInfo();
+      video_info.setByMediaXML(media_xml_info);
+      result_data.video_info = video_info;
 
-      result_data.origin_video_url = result_data.url_prefix + "SEQ/" + result_data.video_info.video_name;
-      result_data.proxy_video_url = result_data.url_prefix + "SEQ/" + result_data.video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
-      result_data.video_source = result_data.media_directory + "SEQ\\" + result_data.video_info.video_name;
+      result_data.origin_video_url = result_data.url_prefix + "SEQ/" + video_info.video_name;
+      result_data.proxy_video_url = result_data.url_prefix + "SEQ/" + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
+      result_data.video_source = result_data.media_directory + "SEQ\\" + video_info.video_name;
     }
 
     return new MediaInfo(result_data, this.private_keys);

@@ -73,7 +73,6 @@ const routes = Router();
  */
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
-  console.log(req.body);
 
   if (!req.body || !req.body.email || !req.body.password) {
     const output = new StdObject(-1, "이메일과 패스워드를 정확하게 입력해 주세요.");

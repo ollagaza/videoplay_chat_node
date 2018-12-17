@@ -121,15 +121,15 @@ export default class StdObject {
   }
 
   toJSON = () => {
-    if (this.isSuccess() === true) {
-      if (_.isEmpty(this.variables)) {
-        return {"success": true};
-      }
-      else {
-        return this.variables;
-      }
-    } else {
+    // if (this.isSuccess() === true) {
+    //   if (_.isEmpty(this.variables)) {
+    //     return {"success": true};
+    //   }
+    //   else {
+    //     return this.variables;
+    //   }
+    // } else {
       return this;
-    }
+    // }
   }
 }

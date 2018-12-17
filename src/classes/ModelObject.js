@@ -92,17 +92,7 @@ export default class ModelObject {
       oKnex = this.database.select(this.selectable_fields);
     }
     else {
-      const select = new Array();
-      const function_column = /\(.+\)/i;
-      for(const key in columns) {
-        const column = columns[key];
-        if (function_column.test(column)) {
-          select.push(this.database.raw(columns[key]));
-        } else {
-          select.push(columns[key]);
-        }
-      }
-      oKnex = this.database.select(select);
+     oKnex = this.database.select(this.arrayToSafeQuery(columns));
     }
     oKnex.from(this.table_name)
       .where(filters);
@@ -127,5 +117,20 @@ export default class ModelObject {
     } else {
       return result.total_count;
     }
+  }
+
+  arrayToSafeQuery = (columns) => {
+    const select = new Array();
+    const function_column = /\(.+\)/i;
+    for(const key in columns) {
+      const column = columns[key];
+      if (function_column.test(column)) {
+        select.push(this.database.raw(columns[key]));
+      } else {
+        select.push(columns[key]);
+      }
+    }
+
+    return select;
   }
 }

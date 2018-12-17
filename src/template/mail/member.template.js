@@ -6,7 +6,7 @@ const env = process.env.NODE_ENV;
 
 const service_info = service_config[env];
 
-const create_form = `
+const create_user_form = `
 <div style="width: 100%;background: #fff;padding-top: 50px;">
 	<div style="width: 430px;background: #fff;border-top: 10px solid #3061a5;border-bottom: 1px solid #3061a5;margin: auto;">
         <h1 style="width: 430px;text-align: center;border-bottom: 1px solid #999;color: #7fa2d3;margin: auto;padding: 20px 0;">{service_name} 인증메일</h1>
@@ -28,7 +28,7 @@ const create_form = `
 </div>
 `;
 
-const forgot_form = `
+const find_user_info_form = `
 <div style="width: 100%; background: #fff;padding-top: 50px;">
   <div style="width: 600px; background: #fff;border-top: 10px solid #3061a5;border-bottom: 1px solid #3061a5;margin: auto;padding: 30px 30px;">
     <h1 style="width: 100%;text-align: center;border-bottom: 1px solid #999;color: #7fa2d3;margin: auto;padding-bottom: 20px;">{service_name} 계정정보 안내</h1>
@@ -65,11 +65,11 @@ const forgot_form = `
 `;
 
 export default {
-  "create": (template_data={}) => {
+  "createUser": (template_data={}) => {
     console.log(service_info);
-    return formatter(create_form, _.merge(template_data, service_info));
+    return formatter(create_user_form, _.merge(template_data, service_info));
   },
-  "forgot": (template_data={}) => {
-    return formatter(forgot_form, _.merge(template_data, service_info));
+  "findUserInfo": (template_data={}) => {
+    return formatter(find_user_info_form, _.merge(template_data, service_info));
   },
 };

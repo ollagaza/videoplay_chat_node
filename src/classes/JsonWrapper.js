@@ -1,5 +1,8 @@
+import StdObject from '@/classes/StdObject';
+import Util from '@/utils/baseutil';
+
 export default class JsonWrapper {
-  constructor(data, private_keys=[]) {
+  constructor(data=null, private_keys=[]) {
     this.json_keys = [];
 
     if (data === null) {
@@ -27,10 +30,34 @@ export default class JsonWrapper {
         this[key.replace(key_check_regexp, '')] = data[key];
       }
     }
+
+    this.thorw_exception = true;
+    this.ignore_empty = false;
+    this.auto_trim = false;
+  }
+
+  setThorwException = (value) => {
+    this.thorw_exception = value;
+  }
+
+  setIgnoreEmpty = (value) => {
+    this.ignore_empty = value;
+  }
+
+  setAutoTrim = (value) => {
+    this.auto_trim = value;
+  }
+
+  setKeys = (keys=[]) => {
+    this.json_keys = keys;
   }
 
   isEmpty = () => {
     return this.is_empty;
+  }
+
+  hasValue = (key) => {
+    return Util.isEmpty(this[key]) === false;
   }
 
   toJSON = () => {
@@ -38,6 +65,13 @@ export default class JsonWrapper {
 
     for (let index in this.json_keys) {
       const key = this.json_keys[index];
+      let value = this[key];
+      if (this.ignore_empty && Util.isEmpty(value)) {
+        continue;
+      }
+      if (this.auto_trim) {
+        value = Util.trim(value);
+      }
       result[key] = this[key];
     }
 
@@ -46,5 +80,15 @@ export default class JsonWrapper {
 
   toString = () => {
     return JSON.stringify(this.toJson());
+  }
+
+  returnBoolean = (result_code=0, message='', http_status_code=200) => {
+    if (result_code === 0) {
+      return true;
+    }
+    if (this.thorw_exception) {
+      throw new StdObject(result_code, message, http_status_code);
+    }
+    return false;
   }
 }

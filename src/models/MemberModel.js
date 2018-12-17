@@ -13,68 +13,77 @@ export default class MemberModel extends ModelObject {
     this.private_fields = ['password'];
   }
 
-  createMember = async (params) => {
+  encryptPassword = (password) => {
+    if (Util.isEmpty(password)) {
+      return null;
+    }
+    else {
+      return php.md5(password);
+    }
+  }
+
+  getMemberInfo = async (member_seq) => {
+    const query_result = await this.findOne({seq: member_seq});
+    if (query_result && query_result.regist_date) {
+      query_result.regist_date = Util.dateFormat(query_result.regist_date.getTime());
+    }
+    return new MemberInfo(query_result, this.private_fields);
+  }
+
+  createMember = async (member_info) => {
     // 이메일이 중복되는 경우 409 CONFLICT를 뱉음
-    if (await this.findOne({email_address: params.email_address})) {
+    if (await this.findOne({email_address: member_info.email_address})) {
       throw new StdObject(-1, '중복된 이메일 주소입니다.', 409);
     }
 
-    const member = {
-      "user_name": Util.trim(params.user_name),
-      "email_address": Util.trim(params.email_address),
-      "password": php.md5(params.password),
-      "cellphone": Util.trim(params.cellphone),
-      "hospital_code": Util.trim(params.hospital_code),
-      "branch_code": Util.trim(params.branch_code),
-      "custom_hospital": Util.trim(params.custom_hospital),
-      "custom_branch": Util.trim(params.custom_branch),
-      "position": Util.trim(params.position),
-      "license_no": Util.trim(params.license_no)
-    };
+    member_info.setAutoTrim(true);
+    member_info.password = this.encryptPassword(member_info.password);
 
-    if (Util.isEmpty(params.etc) == false) {
-      member.etc = params.etc;
-    }
+    const member = member_info.toJSON();
 
     const result = await super.create(member);
 
     return result;
   }
 
-  modifyMember = async (member_seq, params) => {
-    const member = {
-      "cellphone": Util.trim(params.cellphone),
-      "hospital_code": Util.trim(params.hospital_code),
-      "branch_code": Util.trim(params.branch_code),
-      "custom_hospital": Util.trim(params.custom_hospital),
-      "custom_branch": Util.trim(params.custom_branch),
-      "position": Util.trim(params.position),
-      "license_no": Util.trim(params.license_no)
-    };
-
-    if (Util.isEmpty(params.user_name) == false) {
-      member.user_name = params.user_name;
-    }
-    if (Util.isEmpty(params.email_address) == false) {
-      member.email_address = params.email_address;
-    }
-    if (Util.isEmpty(params.password) == false) {
-      member.password = php.md5(params.password);
-    }
-    if (Util.isEmpty(params.etc) == false) {
-      member.etc = params.etc;
-    }
-
+  modifyMember = async (member_seq, member_info) => {
+    member_info.setIgnoreEmpty(true);
+    member_info.setAutoTrim(true);
+    member_info.password = this.encryptPassword(member_info.password);
+    const member = member_info.toJSON();
     const result = await super.update({seq: member_seq}, member);
 
     return result;
   }
 
-  getMemberInfo = async (member_seq) => {
-    const member_info = await this.findOne({seq: member_seq});
-    if (member_info && member_info.regist_date) {
-      member_info.regist_date = Util.dateFormat(member_info.regist_date.getTime());
+  findMember = async (member_info) => {
+    member_info.setAutoTrim(true);
+    const member = member_info.toJSON();
+    const find_user_result = await this.findOne({user_name: member.user_name, email_address: member.email_address, cellphone: member.cellphone});
+    if (!find_user_result || !find_user_result.seq) {
+      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
-    return new MemberInfo(member_info, this.private_fields);
+    return new MemberInfo(find_user_result);
+  }
+
+  updateTempPassword = async (member_seq, temp_password) => {
+    return await this.update({seq: member_seq}, {password: this.encryptPassword(temp_password)});
+  }
+
+  getBannerNewUserList = async (list_count) => {
+    const columns = [
+      "member.user_name", "member.hospital_code", "member.branch_code"
+      , "if(member.hospital_code = 'XXXX', member.custom_hospital, hospital.name) as hostital_name"
+      , "if(member.branch_code = 'ZZZ', member.custom_branch, depart.name) as depart_name"
+    ];
+    const oKnex = this.database.select(this.arrayToSafeQuery(columns));
+    oKnex.from(this.table_name);
+    oKnex.innerJoin("hospital", "hospital.code", "member.hospital_code");
+    oKnex.innerJoin("depart", "depart.code", "member.branch_code");
+    oKnex.where(this.database.raw("email_address not like '%@mteg%' and email_address not LIKE '%test%'"));
+    oKnex.orderBy('member.seq', 'desc');
+    oKnex.limit(list_count);
+
+    return await oKnex;
   }
 }
