@@ -27,6 +27,8 @@ const routes = Router();
  *  get:
  *    summary: "회원 고유번호로 회원정보 찾기"
  *    tags: [Users]
+ *    security:
+ *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
@@ -59,8 +61,7 @@ const routes = Router();
  *              properties:
  *                member_info:
  *                  $ref: "#definitions/UserInfo"
- *    security:
- *    - access_token: []
+ *
  */
 routes.get('/:member_seq(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
   const token_info = req.token_info;
@@ -158,6 +159,8 @@ routes.post('/', wrap(async(req, res) => {
  *  put:
  *    summary: "회원정보를 수정한다"
  *    tags: [Users]
+ *    security:
+ *    - access_token: []
  *    consumes:
  *    - "application/json"
  *    produces:
@@ -179,8 +182,6 @@ routes.post('/', wrap(async(req, res) => {
  *        description: "성공여부"
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
- *    security:
- *    - access_token: []
  *
  */
 routes.put('/:member_seq(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async(req, res) => {

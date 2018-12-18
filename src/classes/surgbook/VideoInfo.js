@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import JsonWrapper from '@/classes/JsonWrapper';
 
 /**
@@ -33,23 +34,29 @@ export default class VideoInfo extends JsonWrapper {
     this.setKeys(['video_name', 'fps', 'width', 'height', 'total_time', 'total_frame']);
   }
 
-  setByMediaXML = (media_xml_info) => {
+  setByXML = (media_xml_info) => {
     if (!media_xml_info) {
-      return;
+      return this;
     }
 
-    this.video_name = media_xml_info.node_text;
-    this.fps = media_xml_info.node_attr.FPS;
-    this.width = media_xml_info.node_attr.Width;
-    this.height = media_xml_info.node_attr.Height;
-    this.total_time = media_xml_info.node_attr.RunTime;
-    this.total_frame = media_xml_info.node_attr.FrameNo;
+    if (_.isArray(media_xml_info)) {
+      media_xml_info = media_xml_info[0];
+    }
+
+    this.video_name = media_xml_info._;
+    this.fps = media_xml_info.$.FPS;
+    this.width = media_xml_info.$.Width;
+    this.height = media_xml_info.$.Height;
+    this.total_time = media_xml_info.$.RunTime;
+    this.total_frame = media_xml_info.$.FrameNo;
+
+    return this;
   }
 
-  getMediaXml = () => {
+  getXmlInfo = () => {
     return {
-      "node_text": this.video_name,
-      "node_attr": {
+      "_": this.video_name,
+      "$": {
         "FPS": this.fps,
         "Width": this.width,
         "Height": this.height,

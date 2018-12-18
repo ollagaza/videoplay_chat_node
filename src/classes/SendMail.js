@@ -9,52 +9,74 @@ const config = smtp_config[env];
 
 export default class SendMail {
   test = async () => {
-    const transport = this.getTransport();
-
     const mail_options = {
-      from: config.sender,
-      to: 'weather8128@gmail.com',
-      subject: 'Nodemailer 테스트444',
       text: '평문 보내기 테스트 444'
     };
+    const mail_to = 'weather8128@gmail.com';
+    const subject = 'Nodemailer 테스트444';
 
-    return await this.send(transport, mail_options);
+    return await this.send(mail_to, subject, mail_options);
   }
 
-  sendMailHtml = async (mail_to, subject, html) => {
-
-    const transport = this.getTransport();
-
+  sendMailHtml = async (mail_to, subject, html, attachments=null) => {
     const mail_options = {
-      from: config.sender,
-      to: _.join(mail_to, ', '),
-      subject: subject,
       html: html
     };
 
-    return await this.send(transport, mail_options);
+    return await this.send(mail_to, subject, mail_options, attachments);
+  }
+
+  sendMailText = async (mail_to, subject, text, attachments=null) => {
+    const mail_options = {
+      text: text
+    };
+
+    return await this.send(mail_to, subject, mail_options, attachments);
   }
 
   getTransport = () => {
     return nodemailer.createTransport(config.transporter);
   }
 
-  send = async (transport, mailOptions) => {
+  send = async (mail_to, subject, mail_options, attachments=null) => {
     const result = new StdObject();
+    const transport = this.getTransport();
+
     try {
-      result.adds(await transport.sendMail(mailOptions));
+      mail_options.from = config.sender;
+      if (_.isArray(mail_to)) {
+        mail_options.to = _.join(mail_to, ', ');
+      }
+      else {
+        mail_options.to = mail_to;
+      }
+      mail_options.subject = subject;
+
+      if (attachments) {
+        mail_options.attachments = attachments;
+      }
+      result.adds(await transport.sendMail(mail_options));
     } catch (e) {
       result.setError(-1);
       result.setHttpStatusCode(500);
       if (IS_DEV) {
         result.stack = e.stack;
       }
-
-      console.log(e);
     } finally {
       await transport.close();
     }
 
     return result;
+  }
+
+  getAttachObject = (file_path, file_name=null, content_type=null) => {
+    const attach = {path: file_path};
+    if (file_name) {
+      attach.filename = file_name;
+    }
+    if (content_type) {
+      attach.contentType = content_type;
+    }
+    return attach;
   }
 }

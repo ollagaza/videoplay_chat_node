@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import StdObject from '@/classes/StdObject';
 import Util from '@/utils/baseutil';
 
@@ -90,5 +91,18 @@ export default class JsonWrapper {
       throw new StdObject(result_code, message, http_status_code);
     }
     return false;
+  }
+
+  getXmlText = (element) => {
+    if (!element) {
+      return "";
+    }
+    if (element._) {
+      return element._;
+    }
+    if (_.isArray(element)) {
+      return element[0];
+    }
+    return element;
   }
 }

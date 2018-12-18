@@ -1,12 +1,24 @@
+const index_file_regexp = /(.+\.[a-z0-9]+)_([0-9]+)_([0-9]+)_(0x[0-9]+)_0\.jpg$/i;
+
 export default class IndexFileInfo {
-  constructor(video_name, job_id, frame, index_type) {
-    this.video_name = video_name; // member table seq
-    this.job_id = job_id; // 권한 코드. 나중에 쓸지도 모름.
-    this.frame = frame;
-    if (index_type === '0x80000000') {
+  constructor(file_name) {
+    if (!file_name) {
+      return;
+    }
+
+    const matches = file_name.match(index_file_regexp);
+    if (matches == null || matches.length == 0) {
+      return;
+    }
+
+    this.video_name = matches[1]; // member table seq
+    this.job_id = matches[2]; // 권한 코드. 나중에 쓸지도 모름.
+    this.frame = parseInt(matches[3]);
+    this.suffix = matches[4];
+    if (this.suffix === '0x80000000') {
       this.index_type = 1;
       this.index_name = 'INX1';
-    } else if (index_type === '0x00000004') {
+    } else if (this.suffix === '0x00000004') {
       this.index_type = 2;
       this.index_name = 'INX2';
     } else {
@@ -25,6 +37,10 @@ export default class IndexFileInfo {
 
   getFrame() {
     return this.frame;
+  }
+
+  getSuffix() {
+    return this.suffix;
   }
 
   getIndexType() {

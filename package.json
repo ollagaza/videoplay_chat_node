@@ -28,8 +28,6 @@
     "body-parser": "^1.18.2",
     "dateformat": "^3.0.3",
     "express": "^4.16.2",
-    "fast-xml-parser": "^3.12.10",
-    "he": "^1.2.0",
     "iconv": "^2.3.1",
     "jsonwebtoken": "^8.4.0",
     "knex": "^0.15.2",
@@ -44,7 +42,8 @@
     "socketio-sticky-session": "^0.4.3",
     "to": "^0.2.9",
     "update": "^0.7.4",
-    "string-template": "^1.0.0"
+    "string-template": "^1.0.0",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

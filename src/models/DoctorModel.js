@@ -107,11 +107,10 @@ export default class DoctorModel extends ModelObject {
     const result_data = this.getBaseResult(doctor_info);
 
     if (import_xml === true) {
-      const media_xml = await Util.loadXmlFile(result_data.media_directory, 'Media');
+      const media_xml = await Util.loadXmlFile(result_data.media_directory, 'Media.xml');
       const media_xml_info = media_xml.MediaInfo.Media;
 
-      const video_info = new VideoInfo();
-      video_info.setByMediaXML(media_xml_info);
+      const video_info = new VideoInfo().setByXML(media_xml_info);
       result_data.video_info = video_info;
 
       result_data.origin_video_url = result_data.url_prefix + "SEQ/" + video_info.video_name;

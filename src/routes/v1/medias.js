@@ -1,14 +1,16 @@
-import { Router } from 'express';
 import _ from 'lodash';
+import { Router } from 'express';
 import wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import DoctorModel from '@/models/DoctorModel';
-import database from '@/config/database';
-import roles from "@/config/roles";
-import MemberModel from '@/models/MemberModel';
-import auth from '@/middlewares/auth.middleware';
-import OperationInfo from "@/classes/surgbook/OperationInfo";
 import Util from '@/utils/baseutil';
+import auth from '@/middlewares/auth.middleware';
+import roles from "@/config/roles";
+import database from '@/config/database';
+import StdObject from '@/classes/StdObject';
+import OperationInfo from "@/classes/surgbook/OperationInfo";
+import MemberModel from '@/models/MemberModel';
+import DoctorModel from '@/models/DoctorModel';
+import IndexModel from '@/models/xmlmodel/IndexModel';
+import ClipModel from '@/models/xmlmodel/ClipModel';
 
 const routes = Router();
 
@@ -28,6 +30,22 @@ const getMemberQuery = async (token_info) => {
   }
 
   return member_query;
+}
+
+const getMediaInfo = async (media_id, token_info) => {
+  let member_query = {};
+  if (token_info.getRole() == roles.MEMBER) {
+    member_query = await getMemberQuery(token_info);
+  }
+
+  const doctor_model = new DoctorModel({ database });
+  const media_info = await doctor_model.getMediaInfo(media_id, member_query);
+
+  if (media_info == null || media_info.isEmpty()) {
+    throw new StdObject(-1, '미디어 정보가 존재하지 않습니다.');
+  }
+
+  return { media_info, doctor_model };
 }
 
 /**
@@ -57,6 +75,8 @@ const getMemberQuery = async (token_info) => {
  *  get:
  *    summary: "회원이 등록한 동영상의 목록. 관리자는 전체 목록"
  *    tags: [Medias]
+ *    security:
+ *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
@@ -117,8 +137,7 @@ const getMemberQuery = async (token_info) => {
  *                  $ref: "#definitions/PageNavigation"
  *                summary_info:
  *                  $ref: "#definitions/VideoSummaryInfo"
- *    security:
- *    - access_token: []
+ *
  */
 routes.get('/', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
   const token_info = req.token_info;
@@ -161,6 +180,8 @@ routes.get('/', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => 
  *  get:
  *    summary: "동영상의 상세 정보"
  *    tags: [Medias]
+ *    security:
+ *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
@@ -195,25 +216,13 @@ routes.get('/', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => 
  *                  $ref: "#definitions/MediaInfo"
  *                operation_info:
  *                  $ref: "#definitions/OperationInfo"
- *    security:
- *    - access_token: []
+ *
  */
-routes.get('/:media_id', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+routes.get('/:media_id(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
   const token_info = req.token_info;
-  let member_query = {};
-  if (token_info.getRole() == roles.MEMBER) {
-    member_query = await getMemberQuery(token_info);
-  }
-
-  const doctor_model = new DoctorModel({ database });
-
   const media_id = req.params.media_id;
-  const media_info = await doctor_model.getMediaInfo(media_id, member_query);
 
-  if (media_info == null || media_info.isEmpty()) {
-    throw new StdObject(-1, '미디어 정보가 존재하지 않습니다.');
-  }
-
+  const {media_info, doctor_model} = await getMediaInfo(media_id, token_info);
   const operation_info = await doctor_model.getOperationInfo(media_id);
 
   const output = new StdObject();
@@ -225,10 +234,167 @@ routes.get('/:media_id', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req,
 
 /**
  * @swagger
- * /medias/operation/{media_id}:
- *  put:
- *    summary: "동영상의 상세 정보"
+ * /medias/{media_id}/indexes/{index_type}:
+ *  get:
+ *    summary: "동영상의 인덱스 목록"
  *    tags: [Medias]
+ *    security:
+ *    - access_token: []
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "media_id"
+ *      in: "path"
+ *      description: "동영상 고유번호"
+ *      type: "integer"
+ *      require: true
+ *    - name: "index_type"
+ *      in: "path"
+ *      description: "인덱스 종류 (1 or 2)"
+ *      type: "integer"
+ *      require: true
+ *    responses:
+ *      200:
+ *        description: "인덱스 목록 정보"
+ *        schema:
+ *          type: "object"
+ *          properties:
+ *            error:
+ *              type: "integer"
+ *              description: "에러코드"
+ *              default: 0
+ *            message:
+ *              type: "string"
+ *              description: "에러 메시지"
+ *              default: ""
+ *            httpStatusCode:
+ *              type: "integer"
+ *              description: "HTTP Status Code"
+ *              default: 200
+ *            variables:
+ *              type: "object"
+ *              properties:
+ *                index_info_list:
+ *                  type: "array"
+ *                  description: "인덱스 목록"
+ *                  items:
+ *                    $ref: "#definitions/IndexInfo"
+ *
+ */
+routes.get('/:media_id(\\d+)/indexes/:index_type(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+  const token_info = req.token_info;
+  const media_id = req.params.media_id;
+  const index_type = req.params.index_type;
+
+  const {media_info} = await getMediaInfo(media_id, token_info);
+
+  const index_info_list = await new IndexModel().getIndexlist(media_info, index_type);
+
+  const output = new StdObject();
+  output.add("index_info_list", index_info_list);
+
+  res.json(output);
+}));
+
+/**
+ * @swagger
+ * /medias/{media_id}/indexes/{second}:
+ *  post:
+ *    summary: "동영상에서 지정 시간의 썸네일을 추출하고 인덱스2에 추가"
+ *    tags: [Medias]
+ *    security:
+ *    - access_token: []
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "media_id"
+ *      in: "path"
+ *      description: "동영상 고유번호"
+ *      type: "integer"
+ *      require: true
+ *    - name: "second"
+ *      in: "path"
+ *      description: "인덱스를 추출할 대상 시간 (sec) "
+ *      type: "number"
+ *      require: true
+ *    responses:
+ *      200:
+ *        description: "추가된 인덱스의 정보"
+ *        schema:
+ *          type: "object"
+ *          properties:
+ *            error:
+ *              type: "integer"
+ *              description: "에러코드"
+ *              default: 0
+ *            message:
+ *              type: "string"
+ *              description: "에러 메시지"
+ *              default: ""
+ *            httpStatusCode:
+ *              type: "integer"
+ *              description: "HTTP Status Code"
+ *              default: 200
+ *            variables:
+ *              type: "object"
+ *              properties:
+ *                add_index_info:
+ *                  $ref: "#definitions/IndexInfo"
+ *
+ */
+routes.post('/:media_id(\\d+)/indexes/:second([\\d.]+)', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+  const token_info = req.token_info;
+  const media_id = req.params.media_id;
+  const second = req.params.second;
+
+  const {media_info} = await getMediaInfo(media_id, token_info);
+
+  const add_index_info = await new IndexModel().addIndex(media_info, second);
+
+  const output = new StdObject();
+  output.add("add_index_info", add_index_info);
+
+  res.json(output);
+}));
+
+routes.get('/:media_id(\\d+)/clips', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+  const token_info = req.token_info;
+  const media_id = req.params.media_id;
+
+  const {media_info} = await getMediaInfo(media_id, token_info);
+
+  const clip_info = await new ClipModel({ database }).getClipList(media_info);
+
+  const output = new StdObject();
+  output.add("clip_list", clip_info.clip_list);
+  output.add("clip_seq_list", clip_info.clip_seq_list);
+
+  res.json(output);
+}));
+
+routes.put('/:media_id(\\d+)/clips', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+  const token_info = req.token_info;
+  const media_id = req.params.media_id;
+  const index_type = req.params.index_type;
+
+  const {media_info} = await getMediaInfo(media_id, token_info);
+
+  const index_info_list = await new IndexModel({ database }).getIndexlist(media_info, index_type);
+
+  const output = new StdObject();
+  output.add("index_info_list", index_info_list);
+
+  res.json(output);
+}));
+
+/**
+ * @swagger
+ * /medias/{media_id}/operation:
+ *  put:
+ *    summary: "동영상의 수술정보 수정"
+ *    tags: [Medias]
+ *    security:
+ *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
@@ -248,10 +414,8 @@ routes.get('/:media_id', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req,
  *        description: "성공여부"
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
- *    security:
- *    - access_token: []
  */
-routes.put('/operation/:media_id', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+routes.put('/:media_id(\\d+)/operation', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
   req.accepts('application/json');
 
   const media_id = req.params.media_id;

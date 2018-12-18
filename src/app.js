@@ -46,10 +46,9 @@ if (process.env.NODE_ENV === 'development') {
     apis: ['./src/routes/*.js', './src/routes/v1/*.js', './src/classes/surgbook/*.js']
   };
 
-
   // Initialize swagger-jsdoc -> returns validated swagger spec in json format
   const swaggerSpec = swaggerJSDoc(options);
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {}));
 }
 
 // Routes
