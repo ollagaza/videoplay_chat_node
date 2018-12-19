@@ -83,11 +83,8 @@ export default class ClipInfo extends JsonWrapper {
       "_": this.clip_num,
       "Source": [this.source],
       "Index": [this.unique_id],
-      "Seq": []
+      "Seq": this.seq_list
     };
-    this.seq_list.forEach((seq_info) => {
-      xml_info.Seq.push(seq_info.getXmlJson());
-    });
 
     return xml_info;
   }

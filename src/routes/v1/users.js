@@ -23,6 +23,59 @@ const routes = Router();
 
 /**
  * @swagger
+ * /users/me:
+ *  get:
+ *    summary: "토큰에 저장된 정보로 본인의 정보 확인"
+ *    tags: [Users]
+ *    security:
+ *    - access_token: []
+ *    produces:
+ *    - "application/json"
+ *    responses:
+ *      200:
+ *        description: "회원정보"
+ *        schema:
+ *          type: "object"
+ *          properties:
+ *            error:
+ *              type: "integer"
+ *              description: "에러코드"
+ *              default: 0
+ *            message:
+ *              type: "string"
+ *              description: "에러 메시지"
+ *              default: ""
+ *            httpStatusCode:
+ *              type: "integer"
+ *              description: "HTTP Status Code"
+ *              default: 200
+ *            variables:
+ *              type: "object"
+ *              description: "결과 정보"
+ *              properties:
+ *                member_info:
+ *                  $ref: "#definitions/UserInfo"
+ *
+ */
+routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+  const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
+
+  // 메니저 권한 도입 시 예시. 병원 또는 부서가 동일한지 체크..
+  if(token_info.getRole() == roles.MANAGER){
+    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.branch_code) {
+      throw new StdObject(-1, "권한이 없습니다.", 403);
+    }
+  }
+
+  const output = new StdObject();
+  output.add('member_info', member_info);
+  res.json(output);
+}));
+
+/**
+ * @swagger
  * /users/{member_seq}:
  *  get:
  *    summary: "회원 고유번호로 회원정보 찾기"

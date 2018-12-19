@@ -16,7 +16,12 @@ export default class ClipModel extends ModelObject {
     const clip_list = new Array();
     let clip_seq_list = new Array();
 
-    if (clip_xml_info && clip_xml_info.ClipInfo && clip_xml_info.ClipInfo.Clip) {
+    if (clip_xml_info
+        && clip_xml_info.ClipInfo
+        && clip_xml_info.ClipInfo.$
+        && clip_xml_info.ClipInfo.$.doc_version
+        && clip_xml_info.ClipInfo.Clip) {
+
       const clip_xml_list = clip_xml_info.ClipInfo.Clip;
       clip_xml_list.forEach((clip_xml) => {
         const clip_info = new ClipInfo().getFromXML(clip_xml, media_info);
@@ -25,7 +30,7 @@ export default class ClipModel extends ModelObject {
       });
     }
 
-    return {"clip_list": clip_list, "clip_seq_list": clip_seq_list}
+    return {"clip_list": clip_list, "clip_seq_list": clip_seq_list};
   }
 
   saveClipInfo = async (media_info, clip_info) => {
@@ -41,14 +46,18 @@ export default class ClipModel extends ModelObject {
       clip_map[clip_info.unique_id] = clip_info;
     });
 
+    let clip_count = 0;
     clip_info.clip_seq_list.forEach((clip_seq_info_json) => {
       const clip_seq_info = new ClipSeqInfo(clip_seq_info_json);
       const clip_info = clip_map[clip_seq_info.unique_id];
 
-      clip_seq_info.setExportXml(true);
-      clip_seq_info.setDest(clip_info.source, fps);
+      if (clip_info) {
+        clip_seq_info.setExportXml(true);
+        clip_seq_info.setDest(clip_info.source, fps);
 
-      clip_info.addSeqInfo(clip_seq_info);
+        clip_info.addSeqInfo(clip_seq_info);
+        clip_count++;
+      }
     });
 
     const clip_xml_json = {
@@ -61,5 +70,7 @@ export default class ClipModel extends ModelObject {
     };
 
     await Util.writeXmlFile(media_info.media_directory, 'Clip.xml', clip_xml_json);
+
+    return clip_count;
   }
 }

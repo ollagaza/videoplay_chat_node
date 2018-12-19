@@ -134,7 +134,7 @@ export default {
     let str = '';
     const space_length = random_key_space.length;
     for (let i = 0; i < length; i++) {
-      str += random_key_space[Math.ceil(Math.random()*space_length)];
+      str += random_key_space[Math.floor(Math.random()*space_length)];
     }
     return str;
   },

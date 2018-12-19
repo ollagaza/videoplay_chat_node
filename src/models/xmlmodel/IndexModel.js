@@ -168,7 +168,7 @@ export default class IndexModel extends ModelObject {
 
     await this.saveIndexList(media_directory, index2_info_list);
 
-    new HistoryModel().addHistory(media_directory, 'add', [add_index_info]);
+    new HistoryModel({ database: this.database }).addHistory(media_directory, 'add', [add_index_info]);
 
     return add_index_info;
   }

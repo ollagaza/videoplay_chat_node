@@ -11,7 +11,7 @@ export default class MemberAuthMailModel extends ModelObject {
   }
 
   getMailAuthKey = async (member_seq, member_email) => {
-    const random_val = 10000000 + Math.ceil(Math.random() * 90000000);
+    const random_val = 10000000 + Math.floor(Math.random() * 90000000);
     const auth_key = php.md5(random_val);
 
     const params = {

@@ -64,11 +64,13 @@ export default class DoctorModel extends ModelObject {
     const result_data = {};
 
     result_data.media_id = doctor_info.ID;
+    result_data.doctor_name = doctor_info.Name;
 
     result_data.media_root =  doctor_info.MediaRoot;
     result_data.media_path =  doctor_info.MediaPath;
 
     result_data.operation = doctor_info.Operation;
+    result_data.operation_name = doctor_info.OpName;
     result_data.file_no = doctor_info.FileNo;
     result_data.file_size = doctor_info.FileSize;
     result_data.runtime = doctor_info.RunTime;
@@ -116,5 +118,17 @@ export default class DoctorModel extends ModelObject {
     }
 
     return new MediaInfo(result_data, this.private_keys);
+  }
+
+  updateClipCount = async (media_id, clip_count) => {
+    await this.update({ID: media_id}, {ClipNo: clip_count});
+  }
+
+  updateReportCount = async (media_id, report_count) => {
+    await this.update({ID: media_id}, {ReportNo: report_count});
+  }
+
+  updateRequestStatus = async (media_id, status) => {
+    await this.update({ID: media_id}, {Request: status.toLowerCase() == 'y' ? 'Y' : 'N'});
   }
 }

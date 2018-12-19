@@ -8,16 +8,16 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 const HOUR = 60 * 60;
 
 const setAuthHeader = (res, token, remain) => {
-  res.setHeader('Authorization', 'Bearer ' + token);
-  res.setHeader('ExpireAfter', '' + remain);
+  res.setHeader('authorization', 'Bearer ' + token);
+  res.setHeader('token-remain', '' + remain);
 };
 
 const setResponseHeader = (res, token_info) => {
   if (!res || !token_info) {
     return;
   }
-  res.setHeader('Authorization', 'Bearer ' + token_info.getToken());
-  res.setHeader('ExpireAfter', '' + token_info.getRemainTime());
+  res.setHeader('authorization', 'Bearer ' + token_info.getToken());
+  res.setHeader('token-remain', '' + token_info.getRemainTime());
 };
 
 const getToken = (req) => {
@@ -75,7 +75,7 @@ const verifyToken = async (req, require_roles=null) => {
     const verify_result = await jwt.verify(token, TOKEN_SECRET);
     const expire = verify_result.exp * 1000;
     const now = Date.now();
-    const remain_time = Math.ceil((expire - now) / 1000);
+    const remain_time = Math.floor((expire - now) / 1000);
 
     const token_info = verify_result.info;
     const role = token_info.role;

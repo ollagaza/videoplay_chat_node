@@ -51,23 +51,11 @@ let depart_list = null;
  *                timestamp:
  *                  type: "integer"
  *                  description: "서버시간 timestamp"
- *                total_page:
- *                  type: "integer"
- *                  description: "전체 페이지 개수"
- *                data:
- *                  type: "array"
- *                  description: "동영상 정보 목록"
- *                  items:
- *                    $ref: "#definitions/MediaInfo"
- *                page_navigation:
- *                  $ref: "#definitions/PageNavigation"
- *                summary_info:
- *                  $ref: "#definitions/VideoSummaryInfo"
  *
  */
 routes.get('/timestamp', Wrap(async(req, res) => {
   const output = new StdObject();
-  output.add('timestamp', Date.now());
+  output.add('timestamp', Math.floor(Date.now() / 1000));
   res.json(output);
 }));
 

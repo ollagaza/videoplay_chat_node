@@ -6,6 +6,7 @@ import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
+import SendMail from '@/classes/SendMail';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
 import MemberModel from '@/models/MemberModel';
 import DoctorModel from '@/models/DoctorModel';
@@ -443,11 +444,16 @@ routes.get('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
  *
  */
 routes.put('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  if (!req.body || !req.body.clip_list || !req.body.clip_seq_list) {
+    throw new StdObject(-1, "잘못된 요청입니다.", 400);
+  }
+
   const token_info = req.token_info;
   const media_id = req.params.media_id;
 
-  const {media_info} = await getMediaInfo(media_id, token_info);
-  await new ClipModel({ database }).saveClipInfo(media_info, req.body);
+  const {media_info, doctor_model} = await getMediaInfo(media_id, token_info);
+  const clip_count = await new ClipModel({ database }).saveClipInfo(media_info, req.body);
+  await doctor_model.updateClipCount(media_id, clip_count);
 
   const output = new StdObject();
   res.json(output);
@@ -461,6 +467,8 @@ routes.put('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
  *    tags: [Medias]
  *    security:
  *    - access_token: []
+ *    consume:
+ *    - "application/json"
  *    produces:
  *    - "application/json"
  *    parameters:
@@ -496,6 +504,49 @@ routes.put('/:media_id(\\d+)/operation', Auth.isAuthenticated(roles.LOGIN_USER),
   output.add('result', result);
 
   res.json(output);
+}));
+
+/**
+ * @swagger
+ * /medias/{media_id}/request/service:
+ *  post:
+ *    summary: "요약비디오 제작 요청"
+ *    tags: [Medias]
+ *    security:
+ *    - access_token: []
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "media_id"
+ *      in: "path"
+ *      description: "동영상 고유번호"
+ *      type: "integer"
+ *      require: true
+ *    responses:
+ *      200:
+ *        description: "성공여부"
+ *        schema:
+ *           $ref: "#/definitions/DefaultResponse"
+ */
+routes.post('/:media_id(\\d+)/request/service', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const token_info = req.token_info;
+  const media_id = req.params.media_id;
+
+  const {media_info, doctor_model} = await getMediaInfo(media_id, token_info);
+
+  const send_mail = new SendMail();
+
+  const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
+  const subject = media_info.doctor_name + " 선생님으로부터 서비스 요청이 있습니다.";
+  const attachments = [send_mail.getAttachObject(media_info.media_directory + "Clip.xml", "Clip.xml")];
+  const send_mail_result = await send_mail.sendMailText(mail_to, subject, "첨부한 Clip.xml 파일을 확인하세요.", attachments);
+
+  if (send_mail_result.isSuccess()) {
+    await doctor_model.updateRequestStatus(media_id, 'Y');
+    res.json(new StdObject());
+  } else {
+    throw send_mail_result;
+  }
 }));
 
 export default routes;

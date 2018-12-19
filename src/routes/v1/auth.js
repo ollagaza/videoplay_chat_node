@@ -18,7 +18,7 @@ const routes = Router();
  *  AuthLogin:
  *    type: "object"
  *    properties:
- *      email:
+ *      email_address:
  *        type: "string"
  *        description: "이메일 주소"
  *      password:
@@ -45,6 +45,12 @@ const routes = Router();
  *      token:
  *        type: "string"
  *        description: "api access token"
+ *      remain_time:
+ *        type: "integer"
+ *        description: "토큰 만료까지 남은 시간"
+ *      member_seq:
+ *        type: "integer"
+ *        description: "회원 고유번호"
  */
 
 /**
@@ -74,12 +80,12 @@ const routes = Router();
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  if (!req.body || !req.body.email || !req.body.password) {
+  if (!req.body || !req.body.email_address || !req.body.password) {
     const output = new StdObject(-1, "이메일과 패스워드를 정확하게 입력해 주세요.");
     return res.json(output);
   }
 
-  const email = req.body.email;
+  const email = req.body.email_address;
   const password = req.body.password;
 
   const member_model = new MemberModel({ database });
@@ -105,6 +111,8 @@ routes.post('/', Wrap(async(req, res) => {
   const output = new StdObject();
   if (token_result != null && token_result.token != null) {
     output.add("token", token_result.token);
+    output.add("remain_time", token_result.remain);
+    output.add("member_seq", member_seq);
     Auth.setAuthHeader(res, token_result.token, token_result.remain);
   }
   else {
@@ -190,6 +198,8 @@ routes.post('/token/refresh', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async
   const output = new StdObject();
   if (token_result != null && token_result.token != null) {
     output.add("token", token_result.token);
+    output.add("remain_time", token_result.remain);
+    output.add("member_seq", member_seq);
     Auth.setAuthHeader(res, token_result.token, token_result.remain);
   }
   else {
