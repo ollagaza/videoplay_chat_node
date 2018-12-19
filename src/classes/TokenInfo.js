@@ -1,12 +1,14 @@
 import role from "@/config/roles";
 
 export default class TokenInfo {
-  constructor(tonek_info) {
-    if(tonek_info != null){
-      this.id = tonek_info.id; // member table seq
-      this.role = tonek_info.role; // 권한 코드. 나중에 쓸지도 모름.
-      this.hospital = tonek_info.hospital;
-      this.branch = tonek_info.branch;
+  constructor(token_info, token, remain_time) {
+    if(token_info != null){
+      this.id = token_info.id; // member table seq
+      this.role = token_info.role; // 권한 코드. 나중에 쓸지도 모름.
+      this.hospital = token_info.hospital;
+      this.branch = token_info.branch;
+      this.token = token;
+      this.remain_time = remain_time;
     }
   }
 
@@ -31,5 +33,13 @@ export default class TokenInfo {
 
   getBranch() {
     return this.branch;
+  }
+
+  getToken() {
+    return this.token;
+  }
+
+  getRemainTime() {
+    return this.remain_time;
   }
 }

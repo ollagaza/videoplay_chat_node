@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import wrap from '@/utils/express-async';
-import auth from '@/middlewares/auth.middleware';
+import Wrap from '@/utils/express-async';
+import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
@@ -63,7 +63,7 @@ const routes = Router();
  *                  $ref: "#definitions/UserInfo"
  *
  */
-routes.get('/:member_seq(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = req.params.member_seq;
 
@@ -111,7 +111,7 @@ routes.get('/:member_seq(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(as
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.post('/', wrap(async(req, res) => {
+routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const member_info = new MemberInfo(req.body, ['password_confirm']);
@@ -184,7 +184,7 @@ routes.post('/', wrap(async(req, res) => {
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.put('/:member_seq(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async(req, res) => {
+routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const token_info = req.token_info;
@@ -239,7 +239,7 @@ routes.put('/:member_seq(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.post('/find', wrap(async(req, res) => {
+routes.post('/find', Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const member_info = new MemberInfo(req.body);

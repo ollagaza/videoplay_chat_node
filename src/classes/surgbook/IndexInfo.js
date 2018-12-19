@@ -5,6 +5,7 @@ import JsonWrapper from '@/classes/JsonWrapper';
  * definitions:
  *  IndexInfo:
  *    type: "object"
+ *    description: "추출된 인덱스 정보"
  *    properties:
  *      unique_id:
  *        type: "string"
@@ -34,7 +35,7 @@ export default class IndexInfo extends JsonWrapper {
     this.setKeys(['unique_id', 'video_name', 'create_type', 'url', 'start_time', 'end_time']);
   }
 
-  getXmlInfo = () => {
+  getXmlJson = () => {
     return {
       "_": this.id,
       "$": {

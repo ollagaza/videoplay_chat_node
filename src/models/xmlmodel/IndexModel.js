@@ -1,11 +1,13 @@
-import _ from 'lodash';
+import ModelObject from '@/classes/ModelObject';
 import IndexInfo from '@/classes/surgbook/IndexInfo';
 import IndexFileInfo from '@/classes/surgbook/IndexFileInfo';
 import StdObject from "@/classes/StdObject";
 import Util from '@/utils/baseutil';
+import HistoryModel from '@/models/xmlmodel/HistoryModel';
 
-export default class IndexModel {
-  constructor() {
+export default class IndexModel extends ModelObject {
+  constructor(...args) {
+    super(...args);
   }
 
   loadIndexXML = async (media_info, index_type) => {
@@ -166,7 +168,7 @@ export default class IndexModel {
 
     await this.saveIndexList(media_directory, index2_info_list);
 
-    this.addHistory(media_directory, 'add', [add_index_info]);
+    new HistoryModel().addHistory(media_directory, 'add', [add_index_info]);
 
     return add_index_info;
   }
@@ -175,7 +177,7 @@ export default class IndexModel {
     const index_node_list = new Array();
     const list_length = index_info_list.length;
     for (let i = 0; i < list_length; i++) {
-      index_node_list.push(index_info_list[i].getXmlInfo());
+      index_node_list.push(index_info_list[i].getXmlJson());
     }
 
     const index_xml_info = {
@@ -185,41 +187,5 @@ export default class IndexModel {
     };
 
     await Util.writeXmlFile(media_directory, "Custom.xml", index_xml_info);
-  }
-
-  addHistory = async (media_directory, action_type, change_index_list) => {
-    if (!change_index_list || change_index_list.length <= 0) {
-      return;
-    }
-
-    const history_id = new Date().getTime();
-    const index_list_length = change_index_list.length;
-    const index_list = new Array();
-    for (const key in change_index_list) {
-      index_list.push(change_index_list[key].id);
-    }
-    const new_history = {
-      "$": {
-        "id": history_id,
-        "action": action_type,
-        "cursor": "y"
-      },
-      "firstIndex": [change_index_list[0].id],
-      "startFrame": [change_index_list[0].start_frame],
-      "endFrame": [change_index_list[index_list_length - 1].end_frame],
-      "indexList": [
-        {
-          "index": index_list
-        }
-      ]
-    };
-
-    const history_xml_info = await Util.loadXmlFile(media_directory, 'History.xml');
-    if (history_xml_info && history_xml_info.historyInfo && history_xml_info.historyInfo.history) {
-      let history_list = history_xml_info.historyInfo.history;
-      history_list.push(new_history);
-    }
-
-    Util.writeXmlFile(media_directory, 'History.xml', history_xml_info);
   }
 }

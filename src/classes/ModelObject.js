@@ -73,29 +73,32 @@ export default class ModelObject {
     return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count) }
   }
 
-  async find(filters, columns=null, order=null) {
+  async find(filters=null, columns=null, order=null) {
     const oKnex = this.queryBuilder(filters, columns, order);
 
     return await oKnex;
   }
 
-  async findOne(filters, columns=null, order=null) {
+  async findOne(filters=null, columns=null, order=null) {
     const oKnex = this.queryBuilder(filters, columns, order);
     oKnex.first();
 
     return await oKnex;
   }
 
-  queryBuilder = (filters, columns=null, order=null) => {
+  queryBuilder = (filters=null, columns=null, order=null) => {
     let oKnex = null;
-    if (columns == null) {
+    if (!columns) {
       oKnex = this.database.select(this.selectable_fields);
     }
     else {
      oKnex = this.database.select(this.arrayToSafeQuery(columns));
     }
-    oKnex.from(this.table_name)
-      .where(filters);
+    oKnex.from(this.table_name);
+
+    if (filters) {
+      oKnex.where(filters);
+    }
 
     if (order != null){
       oKnex.orderBy(order.name, order.direction);
@@ -120,6 +123,10 @@ export default class ModelObject {
   }
 
   arrayToSafeQuery = (columns) => {
+    if (!columns) {
+      return ["*"];
+    }
+
     const select = new Array();
     const function_column = /\(.+\)/i;
     for(const key in columns) {

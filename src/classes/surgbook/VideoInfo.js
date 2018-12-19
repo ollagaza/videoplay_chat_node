@@ -6,6 +6,7 @@ import JsonWrapper from '@/classes/JsonWrapper';
  * definitions:
  *  VideoInfo:
  *    type: "object"
+ *    description: "비디오의 메타 데이터"
  *    properties:
  *      video_name:
  *        type: "string"
@@ -34,7 +35,7 @@ export default class VideoInfo extends JsonWrapper {
     this.setKeys(['video_name', 'fps', 'width', 'height', 'total_time', 'total_frame']);
   }
 
-  setByXML = (media_xml_info) => {
+  getFromXML = (media_xml_info) => {
     if (!media_xml_info) {
       return this;
     }
@@ -53,7 +54,7 @@ export default class VideoInfo extends JsonWrapper {
     return this;
   }
 
-  getXmlInfo = () => {
+  getXmlJson = () => {
     return {
       "_": this.video_name,
       "$": {

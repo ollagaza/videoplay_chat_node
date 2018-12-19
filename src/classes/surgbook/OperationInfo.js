@@ -5,6 +5,7 @@ import JsonWrapper from '@/classes/JsonWrapper';
  * definitions:
  *  OperationInfo:
  *    type: "object"
+ *    description: "수술, 환자 정보"
  *    properties:
  *      pid:
  *        type: "string"

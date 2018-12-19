@@ -5,6 +5,7 @@ import JsonWrapper from '@/classes/JsonWrapper';
  * definitions:
  *  MediaInfo:
  *    type: "object"
+ *    description: "동영상 정보"
  *    properties:
  *      media_id:
  *        type: "integer"

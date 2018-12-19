@@ -7,8 +7,8 @@ import _ from 'lodash';
 import StdObject from "@/classes/StdObject";
 import xml2js from 'xml2js';
 
-const parser = new xml2js.Parser();
-const builder = new xml2js.Builder();
+const parser = new xml2js.Parser({trim: true});
+const builder = new xml2js.Builder({trim: true});
 
 const random_key_space = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const timezone_offset = new Date().getTimezoneOffset() * 60000;
@@ -104,7 +104,7 @@ export default {
   "writeXmlFile": async (directory, xml_file_name, context_json) => {
     const xml_file_path = directory + xml_file_name;
 
-    var xml = builder.buildObject(context_json);
+    const xml = builder.buildObject(JSON.parse(JSON.stringify(context_json)));
     await saveToFile(xml_file_path, xml);
     return true;
   },

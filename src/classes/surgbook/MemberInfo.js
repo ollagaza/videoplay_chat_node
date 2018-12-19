@@ -6,6 +6,7 @@ import Util from '@/utils/baseutil';
  * definitions:
  *  UserInfo:
  *    type: "object"
+ *    description: "회원 정보"
  *    properties:
  *      seq:
  *        type: "integer"
@@ -45,6 +46,7 @@ import Util from '@/utils/baseutil';
  *        description: "기타 정보"
  *  UserCreateInfo:
  *    type: "object"
+ *    description: "회원 가입 정보"
  *    required:
  *    - "user_name"
  *    - "email_address"
@@ -96,6 +98,7 @@ import Util from '@/utils/baseutil';
  *        description: "기타 정보"
  *  UserModifyInfo:
  *    type: "object"
+ *    description: "변경된 회원정보"
  *    required:
  *    - "cellphone"
  *    - "hospital_code"
@@ -143,6 +146,7 @@ import Util from '@/utils/baseutil';
  *        description: "기타 정보"
  *  UserResetPasswordInfo:
  *    type: "object"
+ *    description: "회원정보 찾기를 위한 필수정보"
  *    required:
  *    - "user_name"
  *    - "email_address"

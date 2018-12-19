@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import php from 'phpjs';
-
+import Auth from '@/middlewares/auth.middleware';
+import roles from "@/config/roles";
 import Wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
-import Auth from '@/middlewares/auth.middleware';
 
 const routes = Router();
 /**
@@ -105,11 +105,12 @@ routes.post('/', Wrap(async(req, res) => {
   const output = new StdObject();
   if (token_result != null && token_result.token != null) {
     output.add("token", token_result.token);
-    Auth.setAuthHeader(res, token_result.token);
+    Auth.setAuthHeader(res, token_result.token, token_result.remain);
   }
   else {
     output.setError(-1);
     output.setMessage("인증토큰 생성 실패");
+    output.httpStatusCode = 500;
   }
 
   return res.json(output);
@@ -158,6 +159,46 @@ routes.post('/email', Wrap(async(req, res) => {
   member_auth_mail_model.deleteAuthMail(member_seq);
 
   res.json(new StdObject());
+}));
+
+/**
+ * @swagger
+ * /auth/token/refresh:
+ *  post:
+ *    summary: "토큰 재발급"
+ *    tags: [Auth]
+ *    security:
+ *    - access_token: []
+ *    produces:
+ *    - "application/json"
+ *    responses:
+ *      200:
+ *        description: "인증토큰"
+ *        schema:
+ *           $ref: "#/definitions/AuthAccessToken"
+ *
+ */
+routes.post('/token/refresh', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+
+  const member_model = new MemberModel({ database });
+  const member_info = await member_model.findOne({"seq": member_seq});
+
+  const token_result = await Auth.generateTokenByMemberInfo(member_info);
+
+  const output = new StdObject();
+  if (token_result != null && token_result.token != null) {
+    output.add("token", token_result.token);
+    Auth.setAuthHeader(res, token_result.token, token_result.remain);
+  }
+  else {
+    output.setError(-1);
+    output.setMessage("인증토큰 생성 실패");
+    output.httpStatusCode = 500;
+  }
+
+  return res.json(output);
 }));
 
 export default routes;

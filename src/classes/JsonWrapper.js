@@ -35,6 +35,7 @@ export default class JsonWrapper {
     this.thorw_exception = true;
     this.ignore_empty = false;
     this.auto_trim = false;
+    this.export_xml = false;
   }
 
   setThorwException = (value) => {
@@ -61,7 +62,18 @@ export default class JsonWrapper {
     return Util.isEmpty(this[key]) === false;
   }
 
+  setExportXml = (value) => {
+    this.export_xml = value;
+  }
+
   toJSON = () => {
+    if (this.export_xml) {
+      return this.getXmlJson();
+    }
+    return this.getObjectJson();
+  }
+
+  getObjectJson = () => {
     const result = {};
 
     for (let index in this.json_keys) {
@@ -79,8 +91,12 @@ export default class JsonWrapper {
     return result;
   }
 
+  getXmlJson = () => {
+    return {};
+  }
+
   toString = () => {
-    return JSON.stringify(this.toJson());
+    return JSON.stringify(this.toJSON());
   }
 
   returnBoolean = (result_code=0, message='', http_status_code=200) => {

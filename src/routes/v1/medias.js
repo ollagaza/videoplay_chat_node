@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import { Router } from 'express';
-import wrap from '@/utils/express-async';
+import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
-import auth from '@/middlewares/auth.middleware';
+import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
@@ -139,7 +139,7 @@ const getMediaInfo = async (media_id, token_info) => {
  *                  $ref: "#definitions/VideoSummaryInfo"
  *
  */
-routes.get('/', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   let member_query = {};
   if (token_info.getRole() == roles.MEMBER) {
@@ -218,7 +218,7 @@ routes.get('/', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => 
  *                  $ref: "#definitions/OperationInfo"
  *
  */
-routes.get('/:media_id(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+routes.get('/:media_id(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const media_id = req.params.media_id;
 
@@ -281,14 +281,14 @@ routes.get('/:media_id(\\d+)', auth.isAuthenticated(roles.LOGIN_USER), wrap(asyn
  *                    $ref: "#definitions/IndexInfo"
  *
  */
-routes.get('/:media_id(\\d+)/indexes/:index_type(\\d+)', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+routes.get('/:media_id(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const media_id = req.params.media_id;
   const index_type = req.params.index_type;
 
   const {media_info} = await getMediaInfo(media_id, token_info);
 
-  const index_info_list = await new IndexModel().getIndexlist(media_info, index_type);
+  const index_info_list = await new IndexModel({ database }).getIndexlist(media_info, index_type);
 
   const output = new StdObject();
   output.add("index_info_list", index_info_list);
@@ -342,14 +342,14 @@ routes.get('/:media_id(\\d+)/indexes/:index_type(\\d+)', auth.isAuthenticated(ro
  *                  $ref: "#definitions/IndexInfo"
  *
  */
-routes.post('/:media_id(\\d+)/indexes/:second([\\d.]+)', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+routes.post('/:media_id(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const media_id = req.params.media_id;
   const second = req.params.second;
 
   const {media_info} = await getMediaInfo(media_id, token_info);
 
-  const add_index_info = await new IndexModel().addIndex(media_info, second);
+  const add_index_info = await new IndexModel({ database }).addIndex(media_info, second);
 
   const output = new StdObject();
   output.add("add_index_info", add_index_info);
@@ -357,13 +357,50 @@ routes.post('/:media_id(\\d+)/indexes/:second([\\d.]+)', auth.isAuthenticated(ro
   res.json(output);
 }));
 
-routes.get('/:media_id(\\d+)/clips', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+/**
+ * @swagger
+ * /medias/{media_id}/clips:
+ *  get:
+ *    summary: "동영상의 클립 목록"
+ *    tags: [Medias]
+ *    security:
+ *    - access_token: []
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "media_id"
+ *      in: "path"
+ *      description: "동영상 고유번호"
+ *      type: "integer"
+ *      require: true
+ *    responses:
+ *      200:
+ *        description: "동영상의 클립 정보"
+ *        schema:
+ *          type: "object"
+ *          properties:
+ *            error:
+ *              type: "integer"
+ *              description: "에러코드"
+ *              default: 0
+ *            message:
+ *              type: "string"
+ *              description: "에러 메시지"
+ *              default: ""
+ *            httpStatusCode:
+ *              type: "integer"
+ *              description: "HTTP Status Code"
+ *              default: 200
+ *            variables:
+ *              $ref: "#definitions/Clip"
+ *
+ */
+routes.get('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const media_id = req.params.media_id;
 
   const {media_info} = await getMediaInfo(media_id, token_info);
-
-  const clip_info = await new ClipModel({ database }).getClipList(media_info);
+  const clip_info = await new ClipModel({ database }).getClipInfo(media_info);
 
   const output = new StdObject();
   output.add("clip_list", clip_info.clip_list);
@@ -372,18 +409,47 @@ routes.get('/:media_id(\\d+)/clips', auth.isAuthenticated(roles.DEFAULT), wrap(a
   res.json(output);
 }));
 
-routes.put('/:media_id(\\d+)/clips', auth.isAuthenticated(roles.DEFAULT), wrap(async (req, res) => {
+
+/**
+ * @swagger
+ * /medias/{media_id}/clips:
+ *  put:
+ *    summary: "수정한 클립 정보 저장"
+ *    tags: [Medias]
+ *    security:
+ *    - access_token: []
+ *    consume:
+ *    - "application/json"
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "media_id"
+ *      in: "path"
+ *      description: "동영상 고유번호"
+ *      type: "integer"
+ *      require: true
+ *    - name: "body"
+ *      in: "body"
+ *      description: "수정된 클립 정보"
+ *      require: true
+ *      type: "object"
+ *      schema:
+ *        $ref: "#definitions/Clip"
+ *    responses:
+ *      200:
+ *        description: "성공여부"
+ *        schema:
+ *           $ref: "#/definitions/DefaultResponse"
+ *
+ */
+routes.put('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const media_id = req.params.media_id;
-  const index_type = req.params.index_type;
 
   const {media_info} = await getMediaInfo(media_id, token_info);
-
-  const index_info_list = await new IndexModel({ database }).getIndexlist(media_info, index_type);
+  await new ClipModel({ database }).saveClipInfo(media_info, req.body);
 
   const output = new StdObject();
-  output.add("index_info_list", index_info_list);
-
   res.json(output);
 }));
 
@@ -415,7 +481,7 @@ routes.put('/:media_id(\\d+)/clips', auth.isAuthenticated(roles.DEFAULT), wrap(a
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
  */
-routes.put('/:media_id(\\d+)/operation', auth.isAuthenticated(roles.LOGIN_USER), wrap(async(req, res) => {
+routes.put('/:media_id(\\d+)/operation', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const media_id = req.params.media_id;
