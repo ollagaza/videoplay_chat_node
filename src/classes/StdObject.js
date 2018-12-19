@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 export default class StdObject {
   constructor(error, message, httpStatusCode) {
     this.error = 0; ///< 에러 코드 (0이면 에러 아님)
@@ -69,6 +71,10 @@ export default class StdObject {
   }
 
   adds (object) {
+    if(object.toJSON) {
+      object = object.toJSON();
+    }
+
     for (const key in object) {
       let val = object[key];
       this.variables[key] = val;
@@ -80,9 +86,8 @@ export default class StdObject {
   }
 
   gets(...args) {
-
     const output = {};
-    for (let argKey in args) {      
+    for (let argKey in args) {
       let arg = args[argKey];
       output[arg] = this.get(arg);
     }
@@ -109,5 +114,22 @@ export default class StdObject {
 
   toBoolean() {
     return this.toBool();
+  }
+
+  isSuccess() {
+    return this.error === 0;
+  }
+
+  toJSON = () => {
+    // if (this.isSuccess() === true) {
+    //   if (_.isEmpty(this.variables)) {
+    //     return {"success": true};
+    //   }
+    //   else {
+    //     return this.variables;
+    //   }
+    // } else {
+      return this;
+    // }
   }
 }

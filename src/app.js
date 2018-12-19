@@ -5,6 +5,8 @@ import bodyParser from 'body-parser';
 import headerMiddleware from '@/middlewares/header.middleware';
 import StdObject from '@/classes/StdObject';
 import routes from '@/routes';
+import swaggerJSDoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 const app = express();
 
@@ -28,6 +30,26 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // 기본 헤더 셋팅
 app.use(headerMiddleware);
+
+if (process.env.NODE_ENV === 'development') {
+  const swaggerDefinition = {
+    info: { // API informations (required)
+      title: 'SurgBook Api Doc', // Title (required)
+      version: '1.0.0', // Version (required)
+    },
+    basePath: '/api/v1/' // Base path (optional)
+  };
+
+  // Options for the swagger docs
+  const options = {
+    swaggerDefinition: swaggerDefinition,
+    apis: ['./src/routes/*.js', './src/routes/v1/*.js', './src/classes/surgbook/*.js']
+  };
+
+  // Initialize swagger-jsdoc -> returns validated swagger spec in json format
+  const swaggerSpec = swaggerJSDoc(options);
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {}));
+}
 
 // Routes
 app.use('/api', routes);

@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import PageHandler from '@/classes/PageHandler';
 
 export default class ModelObject {
@@ -11,27 +10,34 @@ export default class ModelObject {
   async create(params) {
 
     const result = await this.database
-      .insert(_.omit(params, 'seq'))
+      .insert(params)
       .into(this.table_name);
 
     return result.shift();
   }
 
-  async update(seq, params) {
+  async update(filters, params) {
 
     const result = await this.database
-      .update(_.omit(params, 'seq'))
-      .from(this.selectable_fields)
-      .where({ seq });
+      .update(params)
+      .from(this.table_name)
+      .where(filters);
 
     return result;
   }
 
-  async findPaginated({ list_count = 20, page = 1, page_count = 10, ...filters }) {
-    const oKnex = this.database
-      .select(this.selectable_fields)
+  async delete(filters) {
+
+    const result = await this.database
       .from(this.table_name)
-      .where(filters);
+      .where(filters)
+      .del();
+
+    return result;
+  }
+
+  async findPaginated({ list_count = 20, page = 1, page_count = 10, ...filters }, columns=null, order=null) {
+    const oKnex = this.queryBuilder(filters, columns, order);
 
     const result = await this.queryPaginated(oKnex, list_count, page, page_count);
 
@@ -67,28 +73,71 @@ export default class ModelObject {
     return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count) }
   }
 
-  async find(filters) {
-    const result = await this.database
-      .select(this.selectable_fields)
-      .from(this.table_name)
-      .where(filters);
+  async find(filters=null, columns=null, order=null) {
+    const oKnex = this.queryBuilder(filters, columns, order);
 
-    return result;
+    return await oKnex;
   }
 
-  async findOne(filters) {
-    const result = await this.database
-      .select(this.selectable_fields)
-      .from(this.table_name)
-      .where(filters)
-      .first();
+  async findOne(filters=null, columns=null, order=null) {
+    const oKnex = this.queryBuilder(filters, columns, order);
+    oKnex.first();
 
-    return result;
+    return await oKnex;
+  }
+
+  queryBuilder = (filters=null, columns=null, order=null) => {
+    let oKnex = null;
+    if (!columns) {
+      oKnex = this.database.select(this.selectable_fields);
+    }
+    else {
+     oKnex = this.database.select(this.arrayToSafeQuery(columns));
+    }
+    oKnex.from(this.table_name);
+
+    if (filters) {
+      oKnex.where(filters);
+    }
+
+    if (order != null){
+      oKnex.orderBy(order.name, order.direction);
+    }
+
+    return oKnex;
   }
 
   async findBySeq(seq) {
     const result = await this.findOne({ seq });
 
     return result;
+  }
+
+  getTotalCount = async (filters) => {
+    const result = await this.database.count('* as total_count').from(this.table_name).where(filters).first();
+    if (!result || !result.total_count) {
+      return 0;
+    } else {
+      return result.total_count;
+    }
+  }
+
+  arrayToSafeQuery = (columns) => {
+    if (!columns) {
+      return ["*"];
+    }
+
+    const select = new Array();
+    const function_column = /\(.+\)/i;
+    for(const key in columns) {
+      const column = columns[key];
+      if (function_column.test(column)) {
+        select.push(this.database.raw(columns[key]));
+      } else {
+        select.push(columns[key]);
+      }
+    }
+
+    return select;
   }
 }

@@ -63,3 +63,6 @@ typings/
 # Custom
 .idea
 dist
+
+public/apidoc
+public/apidoc/*
