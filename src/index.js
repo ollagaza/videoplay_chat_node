@@ -7,7 +7,7 @@ if (process.env.NODE_ENV !== 'development') {
   process.env.NODE_ENV = 'production';
 }
 
-const { PORT = 8080 } = process.env;
+const { PORT = 3000 } = process.env;
 const options = {
   proxy: true,
   header: 'x-forwarded-for',
