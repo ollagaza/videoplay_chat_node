@@ -1,7 +1,7 @@
 import mkdirp from 'mkdirp';
 import path from 'path';
 import util from 'util';
-import multer from 'multer';
+import multer from 'sb-multer';
 import { Router } from 'express';
 import wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
@@ -33,7 +33,6 @@ routes.get('/', wrap(async(req, res) => {
  * @brief 파일 업로드
  */
 routes.post('/', wrap(async(req, res) => {
-  console.log('up start');
   await upload(req, res);
   console.log(req.file);
 
