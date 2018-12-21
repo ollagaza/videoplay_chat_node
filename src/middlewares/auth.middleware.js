@@ -7,17 +7,13 @@ const TOKEN_SECRET = "dpxldlwlTjwlqnr";
 const IS_DEV = process.env.NODE_ENV === 'development';
 const HOUR = 60 * 60;
 
-const setAuthHeader = (res, token, remain) => {
-  res.setHeader('authorization', 'Bearer ' + token);
-  res.setHeader('token-remain', '' + remain);
-};
-
 const setResponseHeader = (res, token_info) => {
   if (!res || !token_info) {
     return;
   }
   res.setHeader('authorization', 'Bearer ' + token_info.getToken());
-  res.setHeader('token-remain', '' + token_info.getRemainTime());
+  res.setHeader('auth-remain', '' + token_info.getRemainTime());
+  res.setHeader('auth-role', '' + token_info.getRole());
 };
 
 const getToken = (req) => {
@@ -38,6 +34,8 @@ const generateTokenByMemberInfo = (member_info) => {
     algorithm: 'HS256',
     expiresIn: expire
   });
+
+  token_info.token = token;
 
   return {
     "token_info": token_info,
@@ -130,7 +128,7 @@ const verifyToken = async (req, require_roles=null) => {
 }
 
 export default {
-  "setAuthHeader": setAuthHeader,
+  "setResponseHeader": setResponseHeader,
   "generateTokenByMemberInfo": generateTokenByMemberInfo,
   "isAuthenticated": isAuthenticated,
   "verifyToken": verifyToken

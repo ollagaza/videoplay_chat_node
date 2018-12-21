@@ -113,7 +113,8 @@ routes.post('/', Wrap(async(req, res) => {
     output.add("token", token_result.token);
     output.add("remain_time", token_result.remain);
     output.add("member_seq", member_seq);
-    Auth.setAuthHeader(res, token_result.token, token_result.remain);
+    output.add("role", token_result.token_info.getRole());
+    Auth.setResponseHeader(res, token_result.token_info);
   }
   else {
     output.setError(-1);
@@ -200,7 +201,8 @@ routes.post('/token/refresh', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async
     output.add("token", token_result.token);
     output.add("remain_time", token_result.remain);
     output.add("member_seq", member_seq);
-    Auth.setAuthHeader(res, token_result.token, token_result.remain);
+    output.add("role", token_result.token_info.getRole());
+    Auth.setResponseHeader(res, token_result.token_info);
   }
   else {
     output.setError(-1);
