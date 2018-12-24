@@ -54,12 +54,12 @@ export default class ClipInfo extends JsonWrapper {
     this.seq_list = new Array();
   }
 
-  getFromXML = (xml_info, media_info) => {
+  getFromXML = (xml_info, operation_info) => {
     if (!xml_info) {
       return this;
     }
 
-    this.url_prefix = media_info.url_prefix;
+    this.url_prefix = operation_info.url_prefix;
 
     this.clip_num = xml_info._;
     this.source = this.getXmlText(xml_info.Source);

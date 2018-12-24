@@ -72,14 +72,14 @@ export default class MemberModel extends ModelObject {
 
   getBannerNewUserList = async (list_count) => {
     const columns = [
-      "member.user_name", "member.hospital_code", "member.branch_code"
+      "member.user_name", "member.hospital_code", "member.depart_code"
       , "if(member.hospital_code = 'XXXX', member.custom_hospital, hospital.name) as hostital_name"
-      , "if(member.branch_code = 'ZZZ', member.custom_branch, depart.name) as depart_name"
+      , "if(member.depart_code = 'ZZZ', member.custom_branch, depart.name) as depart_name"
     ];
     const oKnex = this.database.select(this.arrayToSafeQuery(columns));
     oKnex.from(this.table_name);
     oKnex.innerJoin("hospital", "hospital.code", "member.hospital_code");
-    oKnex.innerJoin("depart", "depart.code", "member.branch_code");
+    oKnex.innerJoin("depart", "depart.code", "member.depart_code");
     oKnex.where(this.database.raw("email_address not like '%@mteg%' and email_address not LIKE '%test%'"));
     oKnex.orderBy('member.seq', 'desc');
     oKnex.limit(list_count);

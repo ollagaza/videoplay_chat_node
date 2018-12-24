@@ -17,6 +17,7 @@ const routes = Router();
  * definitions:
  *  AuthLogin:
  *    type: "object"
+ *    description: "로그인을 위한 회원 정보"
  *    properties:
  *      email_address:
  *        type: "string"
@@ -25,10 +26,11 @@ const routes = Router();
  *        type: "string"
  *        description: "비밀번호"
  *    required:
- *      - email
+ *      - email_address
  *      - password
  *  AuthEmail:
  *    type: "object"
+ *    description: "이메일 인증 정보"
  *    properties:
  *      auth_key:
  *        type: "string"
@@ -41,6 +43,7 @@ const routes = Router();
  *      - member_seq
  *  AuthAccessToken:
  *    type: "object"
+ *    description: "인증 토큰 정보"
  *    properties:
  *      token:
  *        type: "string"
@@ -51,6 +54,9 @@ const routes = Router();
  *      member_seq:
  *        type: "integer"
  *        description: "회원 고유번호"
+ *      role:
+ *        type: "integer"
+ *        description: "회원 권한 (5: 의사, 8: 매니저, 99: 관리자)"
  */
 
 /**
@@ -72,9 +78,24 @@ const routes = Router();
  *         $ref: "#/definitions/AuthLogin"
  *    responses:
  *      200:
- *        description: "인증토큰"
+ *        description: "인증 토큰 정보"
  *        schema:
- *           $ref: "#/definitions/AuthAccessToken"
+ *          type: "object"
+ *          properties:
+ *            error:
+ *              type: "integer"
+ *              description: "에러코드"
+ *              default: 0
+ *            message:
+ *              type: "string"
+ *              description: "에러 메시지"
+ *              default: ""
+ *            httpStatusCode:
+ *              type: "integer"
+ *              description: "HTTP Status Code"
+ *              default: 200
+ *            variables:
+ *              $ref: "#/definitions/AuthAccessToken"
  *
  */
 routes.post('/', Wrap(async(req, res) => {
@@ -182,9 +203,24 @@ routes.post('/email', Wrap(async(req, res) => {
  *    - "application/json"
  *    responses:
  *      200:
- *        description: "인증토큰"
+ *        description: "인증 토큰 정보"
  *        schema:
- *           $ref: "#/definitions/AuthAccessToken"
+ *          type: "object"
+ *          properties:
+ *            error:
+ *              type: "integer"
+ *              description: "에러코드"
+ *              default: 0
+ *            message:
+ *              type: "string"
+ *              description: "에러 메시지"
+ *              default: ""
+ *            httpStatusCode:
+ *              type: "integer"
+ *              description: "HTTP Status Code"
+ *              default: 200
+ *            variables:
+ *              $ref: "#/definitions/AuthAccessToken"
  *
  */
 routes.post('/token/refresh', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {

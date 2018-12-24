@@ -49,9 +49,9 @@ export default class ReportEntryInfo extends JsonWrapper {
     }
   }
 
-  getFromXML = (xml_info, media_info) => {
+  getFromXML = (xml_info, operation_info) => {
     if (xml_info) {
-      const url_prefix = media_info.url_prefix;
+      const url_prefix = operation_info.url_prefix;
 
       this.desc = this.getXmlText(xml_info);
       if (xml_info.Index) {

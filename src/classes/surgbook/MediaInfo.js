@@ -10,10 +10,7 @@ import JsonWrapper from '@/classes/JsonWrapper';
  *      media_id:
  *        type: "integer"
  *        description: "동영상 고유번호"
- *      operation:
- *        type: "string"
- *        description: "수술 케이스명"
- *      file_no:
+ *      file_count:
  *        type: "integer"
  *        description: "파일 개수"
  *      file_size:
@@ -22,43 +19,26 @@ import JsonWrapper from '@/classes/JsonWrapper';
  *      runtime:
  *        type: "integer"
  *        description: "동영상 길이 (sec)"
- *      clip_no:
- *        type: "integer"
- *        description: "클립 개수"
- *      video_no:
- *        type: "integer"
- *        description: "비디오 파일 개수"
- *      report_no:
- *        type: "integer"
- *        description: "레포트 개수"
- *      is_analysis:
- *        type: "boolean"
- *        description: "분석 여부"
- *      is_request:
- *        type: "boolean"
- *        description: "요약비디오 요청 여부"
- *      is_review:
- *        type: "boolean"
- *        description: "검토 여부"
- *      is_sharing:
- *        type: "boolean"
- *        description: "공유 여부"
- *      origin_video_url:
- *        type: "string"
- *        description: "원본 비디오 URL"
- *      proxy_video_url:
- *        type: "string"
- *        description: "편집기용 비디오 URL"
- *      list_no:
- *        type: "integer"
- *        description: "리스트 인련번호"
- *      video_info:
- *        $ref: "#definitions/VideoInfo"
  *
  */
 
 export default class MediaInfo extends JsonWrapper {
   constructor(data=null, private_keys=[]) {
     super(data, private_keys);
+
+    this.setKeys(['media_id', 'file_count', 'file_size', 'runtime']);
+  }
+
+  getByOperationInfo = (operation_info) => {
+    if (operation_info != null) {
+      this.media_id = operation_info.ID;
+      this.file_count = operation_info.FileNo;
+      this.file_size = operation_info.FileSize;
+      this.runtime = operation_info.RunTime;
+      this.media_root = operation_info.MediaRoot;
+      this.doctor_name = operation_info.Name;
+    }
+
+    return this;
   }
 }

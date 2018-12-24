@@ -10,9 +10,9 @@ export default class IndexModel extends ModelObject {
     super(...args);
   }
 
-  loadIndexXML = async (media_info, index_type) => {
+  loadIndexXML = async (operation_info, index_type) => {
     // index1, index2, media xml은 readonly이기 때문에 _change에 내용을 복사하고 _change xml만 수정한다.
-    const media_directory = media_info.media_directory;
+    const media_directory = operation_info.media_directory;
     const origin_file_name = 'Index' + index_type + '.xml';
     let file_name;
     if(index_type == 1){
@@ -28,16 +28,16 @@ export default class IndexModel extends ModelObject {
     return await Util.loadXmlFile(media_directory, file_name);
   }
 
-  getIndexlist = async (media_info, index_type) => {
-    const index_xml_info = await this.loadIndexXML(media_info, index_type);
+  getIndexlist = async (operation_info, index_type) => {
+    const index_xml_info = await this.loadIndexXML(operation_info, index_type);
     const index_info_list = new Array();
 
     if (!Util.isEmpty(index_xml_info) && !Util.isEmpty(index_xml_info.IndexInfo)) {
-      const video_info = media_info.video_info;
+      const video_info = operation_info.video_info;
       const total_time = video_info.total_time;
       const total_frame = video_info.total_frame;
       const fps = video_info.fps;
-      const url_prefix = media_info.url_prefix;
+      const url_prefix = operation_info.url_prefix;
       const default_directory = 'INX' + index_type;
       let index_xml_list = index_xml_info.IndexInfo.Index;
       const list_length = index_xml_list.length;
@@ -93,12 +93,12 @@ export default class IndexModel extends ModelObject {
     return index_info_list;
   }
 
-  addIndex = async (media_info, second) => {
-    const video_info = media_info.video_info;
+  addIndex = async (operation_info, second) => {
+    const video_info = operation_info.video_info;
     const fps = video_info.fps;
     const target_frame = Math.round(second * fps);
 
-    const index2_info_list = await this.getIndexlist(media_info, 2);
+    const index2_info_list = await this.getIndexlist(operation_info, 2);
     const total_count = index2_info_list.length;
     let insert_index = -1;
     let copy_index_info = null;
@@ -142,7 +142,7 @@ export default class IndexModel extends ModelObject {
     add_index.create_type = 'M';
     add_index.start_time = second;
     add_index.end_time = copy_index_info.start_time;
-    add_index.url = media_info.url_prefix + 'Custom/' + add_index_file_name;
+    add_index.url = operation_info.url_prefix + 'Custom/' + add_index_file_name;
 
     const add_index_info = new IndexInfo(add_index);
 
@@ -152,8 +152,8 @@ export default class IndexModel extends ModelObject {
       index2_info_list.push(add_index_info);
     }
 
-    const media_directory = media_info.media_directory;
-    const video_source = media_info.video_source;
+    const media_directory = operation_info.media_directory;
+    const video_source = operation_info.video_source;
     const target_time_str = Util.secondToTimeStr(second);
     const save_directory = media_directory + 'Custom';
     if (!Util.fileExists(save_directory)) {
@@ -170,7 +170,7 @@ export default class IndexModel extends ModelObject {
 
     new HistoryModel({ database: this.database }).addHistory(media_directory, 'add', [add_index_info]);
 
-    return add_index_info;
+    return {add_index_info: add_index_info, total_index_count: index2_info_list.length};
   }
 
   saveIndexList = async (media_directory, index_info_list) => {

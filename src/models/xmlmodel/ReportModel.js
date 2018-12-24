@@ -9,8 +9,8 @@ export default class ReportModel extends ModelObject {
     super(...args);
   }
 
-  getReportInfo = async (media_info) => {
-    const report_xml_info = await Util.loadXmlFile(media_info.media_directory, 'Report.xml');
+  getReportInfo = async (operation_info) => {
+    const report_xml_info = await Util.loadXmlFile(operation_info.media_directory, 'Report.xml');
     const entry_list = new Array();
 
     if (report_xml_info
@@ -22,7 +22,7 @@ export default class ReportModel extends ModelObject {
         && report_xml_info.OperativeReport.Service[0].Operation[0].Entry ) {
       const entry_xml_list = report_xml_info.OperativeReport.Service[0].Operation[0].Entry;
       entry_xml_list.forEach((entry_xml_xml) => {
-        const entry_info = new ReportEntryInfo().getFromXML(entry_xml_xml, media_info);
+        const entry_info = new ReportEntryInfo().getFromXML(entry_xml_xml, operation_info);
         entry_list.push(entry_info);
       });
     }
@@ -30,7 +30,7 @@ export default class ReportModel extends ModelObject {
     return entry_list;
   }
 
-  saveReportInfo = async (media_info, operation_info, report_info) => {
+  saveReportInfo = async (operation_info, report_info) => {
     const entry_list = new Array();
     report_info.sheet_list.forEach((entry) => {
       const entry_info = new ReportEntryInfo(entry);
@@ -46,8 +46,8 @@ export default class ReportModel extends ModelObject {
         "Date": [ Util.currentFormattedDate('yyyy-mm-dd') ],
         "Patient": [
           {
-            "_": "환자명11",
-            "Id": [ operation_info.pid ],
+            "_": "환자명",
+            "Id": [ operation_info.patient_id ],
             "Birth": [ "" ],
             "Age": [ operation_info.patient_age ],
             "Sex": [ operation_info.patient_sex ],
@@ -56,7 +56,7 @@ export default class ReportModel extends ModelObject {
         ],
         "Department": [
           {
-            "Surgeon": [ media_info.doctor_name ],
+            "Surgeon": [ operation_info.doctor_name ],
             "Doctor": [ "" ],
             "Anesthesia": [ "" ],
           }
@@ -77,7 +77,7 @@ export default class ReportModel extends ModelObject {
       }
     };
 
-    await Util.writeXmlFile(media_info.media_directory, 'Report.xml', report_xml_json);
+    await Util.writeXmlFile(operation_info.media_directory, 'Report.xml', report_xml_json);
 
     return entry_list.length;
   }

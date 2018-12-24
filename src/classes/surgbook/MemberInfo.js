@@ -26,7 +26,7 @@ import Util from '@/utils/baseutil';
  *      hospital_code:
  *        type: "string"
  *        description: "병원 코드"
- *      branch_code:
+ *      depart_code:
  *        type: "string"
  *        description: "진료과목 코드"
  *      custom_hospital:
@@ -54,7 +54,7 @@ import Util from '@/utils/baseutil';
  *    - "password_confirm"
  *    - "cellphone"
  *    - "hospital_code"
- *    - "branch_code"
+ *    - "depart_code"
  *    - "custom_hospital"
  *    - "custom_branch"
  *    - "position"
@@ -78,7 +78,7 @@ import Util from '@/utils/baseutil';
  *      hospital_code:
  *        type: "string"
  *        description: "병원 코드"
- *      branch_code:
+ *      depart_code:
  *        type: "string"
  *        description: "진료과목 코드"
  *      custom_hospital:
@@ -102,7 +102,7 @@ import Util from '@/utils/baseutil';
  *    required:
  *    - "cellphone"
  *    - "hospital_code"
- *    - "branch_code"
+ *    - "depart_code"
  *    - "custom_hospital"
  *    - "custom_branch"
  *    - "position"
@@ -126,7 +126,7 @@ import Util from '@/utils/baseutil';
  *      hospital_code:
  *        type: "string"
  *        description: "병원 코드"
- *      branch_code:
+ *      depart_code:
  *        type: "string"
  *        description: "진료과목 코드"
  *      custom_hospital:
@@ -187,7 +187,7 @@ export default class MemberInfo extends JsonWrapper {
     if (Util.isEmpty(this.hospital_code)) {
       return super.returnBoolean(-1, '병원명을 입력해 주세요.', 400);
     }
-    if (Util.isEmpty(this.branch_code)) {
+    if (Util.isEmpty(this.depart_code)) {
       return super.returnBoolean(-1, '진료분야를 입력해 주세요.', 400);
     }
     if (Util.isEmpty(this.position)) {

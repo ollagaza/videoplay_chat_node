@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { Router } from 'express';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
@@ -9,50 +8,39 @@ import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
 import MemberModel from '@/models/MemberModel';
-import DoctorModel from '@/models/DoctorModel';
+import OperationModel from '@/models/OperationModel';
 import IndexModel from '@/models/xmlmodel/IndexModel';
 import ClipModel from '@/models/xmlmodel/ClipModel';
 
 const routes = Router();
 
-const getMemberQuery = async (token_info) => {
-  const member_query = {};
+const checkRole = async (token_info) => {
   const member_seq = token_info.getId();
-
   if (token_info.getRole() == roles.MEMBER) {
     const member_info = await new MemberModel({ database }).findOne({seq: member_seq});
     if (member_info === null) {
       throw new StdObject(-99, '회원 가입 후 사용 가능합니다.');
     }
-
-    member_query.Name = member_info.user_name;
-    member_query.Hospital = member_info.hospital_code;
-    member_query.Depart = member_info.branch_code;
   }
-
-  return member_query;
 }
 
-const getMediaInfo = async (media_id, token_info) => {
-  let member_query = {};
-  if (token_info.getRole() == roles.MEMBER) {
-    member_query = await getMemberQuery(token_info);
+const getOperationInfo = async (operation_seq, token_info) => {
+  await checkRole(token_info);
+
+  const operation_model = new OperationModel({ database });
+  const operation_info = await operation_model.getOperationInfo(operation_seq, token_info);
+
+  if (operation_info == null || operation_info.isEmpty()) {
+    throw new StdObject(-1, '수술 정보가 존재하지 않습니다.');
   }
 
-  const doctor_model = new DoctorModel({ database });
-  const media_info = await doctor_model.getMediaInfo(media_id, member_query);
-
-  if (media_info == null || media_info.isEmpty()) {
-    throw new StdObject(-1, '미디어 정보가 존재하지 않습니다.');
-  }
-
-  return { media_info, doctor_model };
+  return { operation_info, operation_model };
 }
 
 /**
  * @swagger
  * tags:
- *  name: Medias
+ *  name: Operations
  *  description: 동영상 정보 조회
  * definitions:
  *  VideoSummaryInfo:
@@ -72,10 +60,10 @@ const getMediaInfo = async (media_id, token_info) => {
 
 /**
  * @swagger
- * /medias:
+ * /operations:
  *  get:
  *    summary: "회원이 등록한 동영상의 목록. 관리자는 전체 목록"
- *    tags: [Medias]
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    produces:
@@ -131,9 +119,9 @@ const getMediaInfo = async (media_id, token_info) => {
  *                  description: "전체 페이지 개수"
  *                data:
  *                  type: "array"
- *                  description: "동영상 정보 목록"
+ *                  description: "수술 정보 목록"
  *                  items:
- *                    $ref: "#definitions/MediaInfo"
+ *                    $ref: "#definitions/OperationInfo"
  *                page_navigation:
  *                  $ref: "#definitions/PageNavigation"
  *                summary_info:
@@ -142,10 +130,7 @@ const getMediaInfo = async (media_id, token_info) => {
  */
 routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  let member_query = {};
-  if (token_info.getRole() == roles.MEMBER) {
-    member_query = await getMemberQuery(token_info);
-  }
+  await checkRole(token_info);
 
   const page_query = {};
   if (req.query.page != null) {
@@ -160,13 +145,13 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
 
   const output = new StdObject();
 
-  const doctor_model = new DoctorModel({ database });
-  const media_info_page = await doctor_model.getMediaInfoListPage(_.merge(page_query, member_query));
-  output.adds(media_info_page);
+  const operation_model = new OperationModel({ database });
+  const operation_info_page = await operation_model.getOperationInfoListPage(page_query, token_info);
+
+  output.adds(operation_info_page);
 
   if (Util.equals(req.query.summary, 'y')) {
-    const columns = ["sum(FileNo) as total_file_count", "sum(FileSize) as total_file_size", "sum(RunTime) as total_run_time"];
-    const summary_info = await doctor_model.findOne(member_query, columns);
+    const summary_info = await operation_model.getStorageSummary(token_info);
     if (summary_info !== null) {
       output.add('summary_info', summary_info);
     }
@@ -177,23 +162,23 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
 
 /**
  * @swagger
- * /medias/{media_id}:
+ * /operations/{operation_seq}:
  *  get:
- *    summary: "동영상의 상세 정보"
- *    tags: [Medias]
+ *    summary: "수술의 상세 정보"
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
- *    - name: "media_id"
+ *    - name: "operation_seq"
  *      in: "path"
- *      description: "동영상 고유번호"
+ *      description: "수술정보 고유번호"
  *      type: "integer"
  *      require: true
  *    responses:
  *      200:
- *        description: "비디오 정보"
+ *        description: "수술 상세 정보"
  *        schema:
  *          type: "object"
  *          properties:
@@ -213,21 +198,16 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
  *              type: "object"
  *              description: "비디오 정보"
  *              properties:
- *                media_info:
- *                  $ref: "#definitions/MediaInfo"
  *                operation_info:
  *                  $ref: "#definitions/OperationInfo"
  *
  */
-routes.get('/:media_id(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  const media_id = req.params.media_id;
+  const operation_seq = req.params.operation_seq;
 
-  const {media_info, doctor_model} = await getMediaInfo(media_id, token_info);
-  const operation_info = await doctor_model.getOperationInfo(media_id);
-
+  const {operation_info} = await getOperationInfo(operation_seq, token_info);
   const output = new StdObject();
-  output.add('media_info', media_info);
   output.add('operation_info', operation_info);
 
   res.json(output);
@@ -235,18 +215,18 @@ routes.get('/:media_id(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(asyn
 
 /**
  * @swagger
- * /medias/{media_id}/indexes/{index_type}:
+ * /operations/{operation_seq}/indexes/{index_type}:
  *  get:
  *    summary: "동영상의 인덱스 목록"
- *    tags: [Medias]
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
- *    - name: "media_id"
+ *    - name: "operation_seq"
  *      in: "path"
- *      description: "동영상 고유번호"
+ *      description: "수술정보 고유번호"
  *      type: "integer"
  *      require: true
  *    - name: "index_type"
@@ -282,14 +262,14 @@ routes.get('/:media_id(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(asyn
  *                    $ref: "#definitions/IndexInfo"
  *
  */
-routes.get('/:media_id(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
-  const media_id = req.params.media_id;
+  const operation_seq = req.params.operation_seq;
   const index_type = req.params.index_type;
 
-  const {media_info} = await getMediaInfo(media_id, token_info);
+  const {operation_info} = await getOperationInfo(operation_seq, token_info);
 
-  const index_info_list = await new IndexModel({ database }).getIndexlist(media_info, index_type);
+  const index_info_list = await new IndexModel({ database }).getIndexlist(operation_info, index_type);
 
   const output = new StdObject();
   output.add("index_info_list", index_info_list);
@@ -299,18 +279,18 @@ routes.get('/:media_id(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(ro
 
 /**
  * @swagger
- * /medias/{media_id}/indexes/{second}:
+ * /operations/{operation_seq}/indexes/{second}:
  *  post:
  *    summary: "동영상에서 지정 시간의 썸네일을 추출하고 인덱스2에 추가"
- *    tags: [Medias]
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
- *    - name: "media_id"
+ *    - name: "operation_seq"
  *      in: "path"
- *      description: "동영상 고유번호"
+ *      description: "수술정보 고유번호"
  *      type: "integer"
  *      require: true
  *    - name: "second"
@@ -343,14 +323,14 @@ routes.get('/:media_id(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(ro
  *                  $ref: "#definitions/IndexInfo"
  *
  */
-routes.post('/:media_id(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
-  const media_id = req.params.media_id;
+  const operation_seq = req.params.operation_seq;
   const second = req.params.second;
 
-  const {media_info} = await getMediaInfo(media_id, token_info);
-
-  const add_index_info = await new IndexModel({ database }).addIndex(media_info, second);
+  const {operation_info, operation_model} = await getOperationInfo(operation_seq, token_info);
+  const {add_index_info, total_index_count} = await new IndexModel({ database }).addIndex(operation_info, second);
+  await operation_model.updateIndexCount(operation_seq, 2, total_index_count);
 
   const output = new StdObject();
   output.add("add_index_info", add_index_info);
@@ -360,23 +340,23 @@ routes.post('/:media_id(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticated(ro
 
 /**
  * @swagger
- * /medias/{media_id}/clips:
+ * /operations/{operation_seq}/clips:
  *  get:
- *    summary: "동영상의 클립 목록"
- *    tags: [Medias]
+ *    summary: "수술의 클립 목록"
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
- *    - name: "media_id"
+ *    - name: "operation_seq"
  *      in: "path"
- *      description: "동영상 고유번호"
+ *      description: "수술정보 고유번호"
  *      type: "integer"
  *      require: true
  *    responses:
  *      200:
- *        description: "동영상의 클립 정보"
+ *        description: "수술의 클립 정보"
  *        schema:
  *          type: "object"
  *          properties:
@@ -396,12 +376,12 @@ routes.post('/:media_id(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticated(ro
  *              $ref: "#definitions/Clip"
  *
  */
-routes.get('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
-  const media_id = req.params.media_id;
+  const operation_seq = req.params.operation_seq;
 
-  const {media_info} = await getMediaInfo(media_id, token_info);
-  const clip_info = await new ClipModel({ database }).getClipInfo(media_info);
+  const {operation_info} = await getOperationInfo(operation_seq, token_info);
+  const clip_info = await new ClipModel({ database }).getClipInfo(operation_info);
 
   const output = new StdObject();
   output.add("clip_list", clip_info.clip_list);
@@ -413,10 +393,10 @@ routes.get('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
 
 /**
  * @swagger
- * /medias/{media_id}/clips:
+ * /operations/{operation_seq}/clips:
  *  put:
  *    summary: "수정한 클립 정보 저장"
- *    tags: [Medias]
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    consume:
@@ -424,9 +404,9 @@ routes.get('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
  *    produces:
  *    - "application/json"
  *    parameters:
- *    - name: "media_id"
+ *    - name: "operation_seq"
  *      in: "path"
- *      description: "동영상 고유번호"
+ *      description: "수술정보 고유번호"
  *      type: "integer"
  *      require: true
  *    - name: "body"
@@ -443,17 +423,17 @@ routes.get('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.put('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   if (!req.body || !req.body.clip_list || !req.body.clip_seq_list) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
   }
 
   const token_info = req.token_info;
-  const media_id = req.params.media_id;
+  const operation_seq = req.params.operation_seq;
 
-  const {media_info, doctor_model} = await getMediaInfo(media_id, token_info);
-  const clip_count = await new ClipModel({ database }).saveClipInfo(media_info, req.body);
-  await doctor_model.updateClipCount(media_id, clip_count);
+  const {operation_info, doctor_model} = await getOperationInfo(operation_seq, token_info);
+  const clip_count = await new ClipModel({ database }).saveClipInfo(operation_info, req.body);
+  await doctor_model.updateClipCount(operation_seq, clip_count);
 
   const output = new StdObject();
   res.json(output);
@@ -461,10 +441,10 @@ routes.put('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
 
 /**
  * @swagger
- * /medias/{media_id}/operation:
+ * /operations/{operation_seq}/operation:
  *  put:
  *    summary: "동영상의 수술정보 수정"
- *    tags: [Medias]
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    consume:
@@ -472,9 +452,9 @@ routes.put('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
  *    produces:
  *    - "application/json"
  *    parameters:
- *    - name: "media_id"
+ *    - name: "operation_seq"
  *      in: "path"
- *      description: "동영상 고유번호"
+ *      description: "수술정보 고유번호"
  *      type: "integer"
  *      require: true
  *    - name: "body"
@@ -489,16 +469,16 @@ routes.put('/:media_id(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(a
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
  */
-routes.put('/:media_id(\\d+)/operation', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const media_id = req.params.media_id;
+  const operation_seq = req.params.operation_seq;
   const operation_info = new OperationInfo(req.body);
   if (operation_info.isEmpty()) {
     throw new StdObject(-1, '잘못된 요청입니다.', 400);
   }
 
-  const result = await new DoctorModel({ database }).updateOperationInfo(media_id, operation_info);
+  const result = await new OperationModel({ database }).updateOperationInfo(operation_seq, operation_info);
 
   const output = new StdObject();
   output.add('result', result);
@@ -508,18 +488,18 @@ routes.put('/:media_id(\\d+)/operation', Auth.isAuthenticated(roles.LOGIN_USER),
 
 /**
  * @swagger
- * /medias/{media_id}/request/service:
+ * /operations/{operation_seq}/request/service:
  *  post:
  *    summary: "요약비디오 제작 요청"
- *    tags: [Medias]
+ *    tags: [Operations]
  *    security:
  *    - access_token: []
  *    produces:
  *    - "application/json"
  *    parameters:
- *    - name: "media_id"
+ *    - name: "operation_seq"
  *      in: "path"
- *      description: "동영상 고유번호"
+ *      description: "수술정보 고유번호"
  *      type: "integer"
  *      require: true
  *    responses:
@@ -528,21 +508,21 @@ routes.put('/:media_id(\\d+)/operation', Auth.isAuthenticated(roles.LOGIN_USER),
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
  */
-routes.post('/:media_id(\\d+)/request/service', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
-  const media_id = req.params.media_id;
+  const operation_seq = req.params.operation_seq;
 
-  const {media_info, doctor_model} = await getMediaInfo(media_id, token_info);
+  const {operation_info, doctor_model} = await getOperationInfo(operation_seq, token_info);
 
   const send_mail = new SendMail();
 
   const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
-  const subject = media_info.doctor_name + " 선생님으로부터 서비스 요청이 있습니다.";
-  const attachments = [send_mail.getAttachObject(media_info.media_directory + "Clip.xml", "Clip.xml")];
+  const subject = operation_info.doctor_name + " 선생님으로부터 서비스 요청이 있습니다.";
+  const attachments = [send_mail.getAttachObject(operation_info.media_directory + "Clip.xml", "Clip.xml")];
   const send_mail_result = await send_mail.sendMailText(mail_to, subject, "첨부한 Clip.xml 파일을 확인하세요.", attachments);
 
   if (send_mail_result.isSuccess()) {
-    await doctor_model.updateRequestStatus(media_id, 'Y');
+    await doctor_model.updateRequestStatus(operation_seq, 'R');
     res.json(new StdObject());
   } else {
     throw send_mail_result;

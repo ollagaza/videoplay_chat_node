@@ -6,7 +6,7 @@
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
   <style>
-    form {
+    .dragdrop {
       display: block;
       height: 400px;
       width: 400px;
@@ -16,7 +16,6 @@
       margin: auto;
       margin-top: 40px;
       text-align: center;
-      line-height: 400px;
       border-radius: 4px;
     }
 
@@ -35,22 +34,17 @@
 </head>
 <body>
   <div id="app">
-      <form ref="form">
-          <span class="drop-zone">여기에 드래그하세요</span>
-      </form>
+      <div class='dragdrop' ref="form">
+        <ul>
+          <li v-for="(file, idx) in files">
+            {{ file.name }}
+            <template v-if="current_idx === idx">
+              {{ current_progress }}%
+            </template>
+          </li>
+        </ul>
+      </div>
       <a class="button" @click="handleSubmit()" v-if="files.length > 0">제출</a>
-      <ul>
-        <li v-for="(file, idx) in files">
-          {{ file.name }}
-          <template v-if="current_idx === idx">
-            {{ current_progress }}%
-          </template>
-        </li>
-      </ul>
-      <form action="/api/v1/file" method="post" enctype="multipart/form-data">
-        <input type="file" name="target" />
-        <input type="submit">
-      </form>
   </div>
 <script>
 //<![CDATA[
@@ -89,9 +83,14 @@ var app = new Vue({
         }, false);
       });
 
+      var file_type_regexp = /^image|video/i;
+
       this.$refs.form.addEventListener('drop', e => {
         for (const file of e.dataTransfer.files){
-          this.files.push(file);
+          if (file_type_regexp.test(file.type)) {
+            this.files.push(file);
+          }
+          console.log(file);
         }
       });
     },

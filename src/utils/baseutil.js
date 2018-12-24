@@ -187,5 +187,11 @@ export default {
 
   "createDirectory": (dir_path) => {
     return fs.mkdirSync(dir_path);
+  },
+
+  "hourDifference": (target_date) => {
+    const time_diff = Math.abs(target_date.getTime() - Date.now());
+    const diff_hours = Math.ceil(time_diff / (1000 * 3600));
+    return diff_hours;
   }
 };

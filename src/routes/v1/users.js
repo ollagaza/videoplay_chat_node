@@ -64,7 +64,7 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
 
   // 메니저 권한 도입 시 예시. 병원 또는 부서가 동일한지 체크..
   if(token_info.getRole() == roles.MANAGER){
-    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.branch_code) {
+    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.depart_code) {
       throw new StdObject(-1, "권한이 없습니다.", 403);
     }
   }
@@ -130,7 +130,7 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(as
 
   // 메니저 권한 도입 시 예시. 병원 또는 부서가 동일한지 체크..
   if(token_info.getRole() == roles.MANAGER){
-    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.branch_code) {
+    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.depart_code) {
       throw new StdObject(-1, "권한이 없습니다.", 403);
     }
   }
