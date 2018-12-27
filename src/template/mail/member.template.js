@@ -66,7 +66,6 @@ const find_user_info_form = `
 
 export default {
   "createUser": (template_data={}) => {
-    console.log(service_info);
     return formatter(create_user_form, _.merge(template_data, service_info));
   },
   "findUserInfo": (template_data={}) => {

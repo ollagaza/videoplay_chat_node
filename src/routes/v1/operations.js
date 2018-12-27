@@ -7,26 +7,79 @@ import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
-import MemberModel from '@/models/MemberModel';
 import OperationModel from '@/models/OperationModel';
 import IndexModel from '@/models/xmlmodel/IndexModel';
 import ClipModel from '@/models/xmlmodel/ClipModel';
+import VideoFileModel from '@/models/VideoFileModel';
+import ReferFileModel from '@/models/ReferFileModel';
+import service_config from '@/service.config';
+import path from 'path';
+import util from 'util';
+import multer from 'sb-multer';
 
 const routes = Router();
 
-const checkRole = async (token_info) => {
-  const member_seq = token_info.getId();
-  if (token_info.getRole() == roles.MEMBER) {
-    const member_info = await new MemberModel({ database }).findOne({seq: member_seq});
-    if (member_info === null) {
-      throw new StdObject(-99, '회원 가입 후 사용 가능합니다.');
-    }
+const env = process.env.NODE_ENV;
+const service_info = service_config[env];
+const media_root = service_info.media_root;
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.resolve(req.media_directory))
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
+  },
+});
+
+const upload = util.promisify(multer({
+  storage,
+  limits: {
+    fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
   }
-}
+}).single('target'));
+
+routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+  const operation_seq = req.params.operation_seq;
+  const file_type = req.params.file_type;
+
+  const {operation_info} = await getOperationInfo(operation_seq, token_info);
+  let media_directory = media_root + operation_info.media_path;
+  if (file_type !== 'refer') {
+    media_directory += '\\SEQ';
+  } else {
+    media_directory += '\\Ref';
+  }
+
+  if (!Util.fileExists(media_directory)) {
+    Util.createDirectory(media_directory);
+  }
+  req.media_directory = media_directory;
+
+  await upload(req, res);
+
+  const upload_file_info = req.file;
+
+  let upload_seq = null;
+  if (file_type !== 'refer') {
+    upload_seq = await new VideoFileModel({ database }).createVideoFile(upload_file_info, operation_seq, member_seq);
+  } else {
+    upload_seq = await new ReferFileModel({ database }).createReferFile(upload_file_info, operation_seq, member_seq);
+  }
+
+  if (!upload_seq) {
+    throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+  }
+
+  const output = new StdObject();
+  output.add('upload_seq', upload_seq);
+
+  res.json(output);
+}));
 
 const getOperationInfo = async (operation_seq, token_info) => {
-  await checkRole(token_info);
-
   const operation_model = new OperationModel({ database });
   const operation_info = await operation_model.getOperationInfo(operation_seq, token_info);
 
@@ -130,7 +183,6 @@ const getOperationInfo = async (operation_seq, token_info) => {
  */
 routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  await checkRole(token_info);
 
   const page_query = {};
   if (req.query.page != null) {
@@ -157,6 +209,28 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
     }
   }
 
+  res.json(output);
+}));
+
+routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  let member_seq;
+  if (token_info.getRole() <= roles.MEMBER) {
+    member_seq = token_info.getId();
+  }
+  else {
+    member_seq = req.body.member_seq;
+  }
+
+  const operation_model = new OperationModel({ database });
+  const operation_seq = await operation_model.createOperation(req.body, member_seq);
+
+  if (!operation_seq) {
+    throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
+  }
+
+  const output = new StdObject();
+  output.add('operation_seq', operation_seq);
   res.json(output);
 }));
 

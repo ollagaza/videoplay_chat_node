@@ -109,9 +109,9 @@ export default class OperationInfo extends JsonWrapper {
       , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'reg_date', 'reg_diff_hour'
     ]);
 
-    this.media_info = new MediaInfo().getByOperationInfo(data);
-
     if (data) {
+      this.media_info = new MediaInfo().getByOperationInfo(data);
+
       if (data._no) {
         this.list_no = data._no;
       }
@@ -134,6 +134,25 @@ export default class OperationInfo extends JsonWrapper {
         this.doctor_name = this.media_info.doctor_name;
       }
     }
+  }
+
+  getByRequestBody = (body) => {
+    this.setKeys([
+      'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
+      , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'media_path'
+    ]);
+
+    this.setIgnoreEmpty(true);
+
+    if (body != null) {
+      this.json_keys.forEach((key) => {
+        if (body[key]) {
+          this[key] = body[key];
+        }
+      });
+    }
+
+    return this;
   }
 
   setVideoInfo = (video_info) => {

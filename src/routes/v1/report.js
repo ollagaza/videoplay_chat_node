@@ -4,25 +4,12 @@ import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
-import MemberModel from '@/models/MemberModel';
 import OperationModel from '@/models/OperationModel';
 import ReportModel from "@/models/xmlmodel/ReportModel";
 
 const routes = Router();
 
-const checkRole = async (token_info) => {
-  const member_seq = token_info.getId();
-  if (token_info.getRole() == roles.MEMBER) {
-    const member_info = await new MemberModel({ database }).findOne({seq: member_seq});
-    if (member_info === null) {
-      throw new StdObject(-99, '회원 가입 후 사용 가능합니다.');
-    }
-  }
-}
-
 const getOperationInfo = async (operation_seq, token_info) => {
-  await checkRole(token_info);
-
   const operation_model = new OperationModel({ database });
   const operation_info = await operation_model.getOperationInfo(operation_seq, token_info);
 

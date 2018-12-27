@@ -3,6 +3,8 @@ import role from '@/config/roles';
 import Util from '@/utils/baseutil';
 import OperationInfo from '@/classes/surgbook/OperationInfo';
 import VideoModel from "@/models/xmlmodel/VideoModel";
+import MemberModel from '@/models/MemberModel';
+import StdObject from "../classes/StdObject";
 
 export default class OperationModel extends ModelObject {
   constructor(...args) {
@@ -71,8 +73,10 @@ export default class OperationModel extends ModelObject {
   getOperationInfoByResult = (query_result) => {
     const operation_info = new OperationInfo(query_result);
 
-    operation_info.media_directory = Util.getMediaDirectory(operation_info.media_root, operation_info.media_path);
-    operation_info.url_prefix = Util.getUrlPrefix(operation_info.media_root, operation_info.media_path);
+    if (operation_info.media_root) {
+      operation_info.media_directory = Util.getMediaDirectory(operation_info.media_root, operation_info.media_path);
+      operation_info.url_prefix = Util.getUrlPrefix(operation_info.media_root, operation_info.media_path);
+    }
 
     return operation_info;
   }
@@ -84,13 +88,15 @@ export default class OperationModel extends ModelObject {
 
     const operation_info = this.getOperationInfoByResult(query_result);
 
-    if (import_xml === true) {
+    if (import_xml === true && operation_info.media_directory) {
       const video_info = await new VideoModel({ "database": this.database }).getVideoInfo(operation_info.media_directory);
       operation_info.setVideoInfo(video_info);
 
-      operation_info.origin_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name;
-      operation_info.proxy_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
-      operation_info.video_source = operation_info.media_directory + "SEQ\\" + video_info.video_name;
+      if (video_info.video_name) {
+        operation_info.origin_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name;
+        operation_info.proxy_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
+        operation_info.video_source = operation_info.media_directory + "SEQ\\" + video_info.video_name;
+      }
     }
 
     return operation_info;
@@ -127,5 +133,18 @@ export default class OperationModel extends ModelObject {
     return await oKnex;
   }
 
+  createOperation = async (body, member_seq) => {
+    const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
+    const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);
+    if (!member_info || member_info.isEmpty()) {
+      throw new StdObject(-1, '회원정보가 없습니다.', 401)
+    }
+    const user_media_path = member_info.user_media_path;
+    operation_info.member_seq = member_seq;
+    operation_info.media_path = user_media_path + operation_info.operation_code;
+    operation_info.hospital_code = member_info.hospital_code;
+    operation_info.depart_code = member_info.depart_code;
 
+    return await this.create(operation_info, 'seq');
+  }
 }

@@ -113,7 +113,7 @@ var app = new Vue({
 
         this.current_idx = idx * 1;
         this.current_progress = 0;
-        const { data } = await axios.post('/api/v1/file', oFormData, {
+        const { data } = await axios.post('http://localhost/api/v1/file', oFormData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },

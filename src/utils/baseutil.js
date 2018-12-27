@@ -186,7 +186,7 @@ export default {
   },
 
   "createDirectory": (dir_path) => {
-    return fs.mkdirSync(dir_path);
+    return fs.mkdirSync(dir_path, { recursive: true });
   },
 
   "hourDifference": (target_date) => {

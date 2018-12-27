@@ -7,11 +7,19 @@ export default class ModelObject {
     this.selectable_fields = [];
   }
 
-  async create(params) {
+  async create(params, returning=null) {
+    let oKnex = null;
+    if (returning) {
+      oKnex = this.database
+        .returning(returning)
+        .insert(params);
+    } else {
+      oKnex = this.database
+        .insert(params);
+    }
+    oKnex.into(this.table_name);
 
-    const result = await this.database
-      .insert(params)
-      .into(this.table_name);
+    const result = await oKnex;
 
     return result.shift();
   }
