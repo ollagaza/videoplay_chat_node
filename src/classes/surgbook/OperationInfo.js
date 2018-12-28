@@ -84,6 +84,9 @@ import Util from '@/utils/baseutil';
  *      proxy_video_url:
  *        type: "string"
  *        description: "편집기용 비디오 URL"
+ *      status:
+ *        type: "string"
+ *        description: "레코드 상태 값. Y: 사용가능, T: 휴지통, D: 완전 삭제"
  *      reg_date:
  *        type: "string"
  *        description: "수술정보 등록일자"
@@ -106,7 +109,7 @@ export default class OperationInfo extends JsonWrapper {
       , 'patient_id', 'patient_name', 'patient_age', 'patient_sex'
       , 'index1_count', 'index2_count', 'index3_count', 'clip_count', 'video_count', 'report_count'
       , 'request_status', 'is_analysis', 'is_review', 'is_sharing', 'is_favorite'
-      , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'reg_date', 'reg_diff_hour'
+      , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'status', 'reg_date', 'reg_diff_hour'
     ]);
 
     if (data) {

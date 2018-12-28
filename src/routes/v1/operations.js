@@ -39,6 +39,66 @@ const upload = util.promisify(multer({
   }
 }).single('target'));
 
+routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_model} = await getOperationInfo(operation_seq, token_info);
+  const result = await operation_model.updateStatusDelete(operation_seq);
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
+routes.put('/:operation_seq(\\d+)/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_model} = await getOperationInfo(operation_seq, token_info);
+  const result = await operation_model.updateStatusTrash(operation_seq, false);
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
+routes.delete('/:operation_seq(\\d+)/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_model} = await getOperationInfo(operation_seq, token_info);
+  const result = await operation_model.updateStatusTrash(operation_seq, true);
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
+routes.put('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_model} = await getOperationInfo(operation_seq, token_info);
+  const result = await operation_model.updateStatusFavorite(operation_seq, false);
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
+routes.delete('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_model} = await getOperationInfo(operation_seq, token_info);
+  const result = await operation_model.updateStatusFavorite(operation_seq, true);
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
 routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = token_info.getId();
@@ -50,7 +110,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   if (file_type !== 'refer') {
     media_directory += '\\SEQ';
   } else {
-    media_directory += '\\Ref';
+    media_directory += '\\REF';
   }
 
   if (!Util.fileExists(media_directory)) {
@@ -59,8 +119,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   req.media_directory = media_directory;
 
   await upload(req, res);
-
   const upload_file_info = req.file;
+  if (Util.isEmpty(upload_file_info)) {
+    throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+  }
 
   let upload_seq = null;
   if (file_type !== 'refer') {
@@ -70,7 +132,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   }
 
   if (!upload_seq) {
-    throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+    throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500);
   }
 
   const output = new StdObject();

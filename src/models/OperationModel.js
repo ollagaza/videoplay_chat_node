@@ -32,15 +32,6 @@ export default class OperationModel extends ModelObject {
   }
 
   getOperationInfoListPage = async (params, token_info, asc=false)  => {
-    const where = {};
-    if (token_info.getRole() <= role.MEMBER) {
-      where.member_seq = token_info.getId();
-    }
-
-    const order_by = {name:'seq', direction: 'DESC'};
-    if (asc) {
-      order_by.direction = 'ASC';
-    }
     const page = params && params.page ? params.page : 1;
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
@@ -48,7 +39,15 @@ export default class OperationModel extends ModelObject {
     const oKnex = this.database.select(['*']);
     oKnex.from('operation');
     oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
-    oKnex.where(where);
+    oKnex.whereIn('status', ['Y', 'T']);
+    if (token_info.getRole() <= role.MEMBER) {
+      oKnex.andWhere('member_seq', token_info.getId());
+    }
+
+    const order_by = {name:'seq', direction: 'DESC'};
+    if (asc) {
+      order_by.direction = 'ASC';
+    }
     oKnex.orderBy(order_by.name, order_by.direction);
 
     const paging_result = await await this.queryPaginated(oKnex, list_count, page, page_count);
@@ -100,6 +99,18 @@ export default class OperationModel extends ModelObject {
     }
 
     return operation_info;
+  }
+
+  updateStatusDelete = async (operation_seq) => {
+    return await this.update({"seq": operation_seq}, {status: 'D'});
+  }
+
+  updateStatusTrash = async (operation_seq, is_delete) => {
+    return await this.update({"seq": operation_seq}, {status: is_delete ? 'D' : 'T'});
+  }
+
+  updateStatusFavorite = async (operation_seq, is_delete) => {
+    return await this.update({"seq": operation_seq}, {is_favorite: is_delete ? 0 : 1});
   }
 
   updateClipCount = async (operation_seq, clip_count) => {
