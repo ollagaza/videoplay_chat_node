@@ -10,8 +10,8 @@ import Util from '@/utils/baseutil';
  *    description: "수술, 환자 상세 정보"
  *    properties:
  *      seq:
- *        type: "string"
- *        description: "수술 케이스명"
+ *        type: "integer"
+ *        description: "수술 고유 번호"
  *      list_no:
  *        type: "integer"
  *        description: "리스트 인련번호"
@@ -84,6 +84,9 @@ import Util from '@/utils/baseutil';
  *      proxy_video_url:
  *        type: "string"
  *        description: "편집기용 비디오 URL"
+ *      video_source:
+ *        type: "string"
+ *        description: "비디오 소스 경로"
  *      status:
  *        type: "string"
  *        description: "레코드 상태 값. Y: 사용가능, T: 휴지통, D: 완전 삭제"
@@ -98,6 +101,41 @@ import Util from '@/utils/baseutil';
  *      video_info:
  *        $ref: "#definitions/VideoInfo"
  *
+ *  OperationEditInfo:
+ *    type: "object"
+ *    description: "수술, 환자 입력, 수정 정보"
+ *    properties:
+ *      operation_code:
+ *        type: "string"
+ *        description: "수술 케이스명"
+ *      operation_name:
+ *        type: "string"
+ *        description: "수술 명"
+ *      operation_date:
+ *        type: "string"
+ *        description: "수술 일자"
+ *      pre_operation:
+ *        type: "string"
+ *        description: "수술 전 진단"
+ *      post_operation:
+ *        type: "string"
+ *        description: "수술 후 진단"
+ *      patient_id:
+ *        type: "string"
+ *        description: "환자 구분 ID"
+ *      patient_name:
+ *        type: "string"
+ *        description: "환자 이름"
+ *      patient_age:
+ *        type: "integer"
+ *        description: "환자 나이"
+ *      patient_sex:
+ *        type: "string"
+ *        description: "환자 성별"
+ *      patient_race:
+ *        type: "string"
+ *        description: "환자 인종"
+ *
  */
 
 export default class OperationInfo extends JsonWrapper {
@@ -106,10 +144,11 @@ export default class OperationInfo extends JsonWrapper {
 
     this.setKeys([
       'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
-      , 'patient_id', 'patient_name', 'patient_age', 'patient_sex'
+      , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
       , 'index1_count', 'index2_count', 'index3_count', 'clip_count', 'video_count', 'report_count'
       , 'request_status', 'is_analysis', 'is_review', 'is_sharing', 'is_favorite'
-      , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'status', 'reg_date', 'reg_diff_hour'
+      , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'video_source'
+      , 'status', 'reg_date', 'reg_diff_hour'
     ]);
 
     if (data) {
@@ -142,7 +181,7 @@ export default class OperationInfo extends JsonWrapper {
   getByRequestBody = (body) => {
     this.setKeys([
       'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
-      , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'media_path'
+      , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race', 'media_path'
     ]);
 
     this.setIgnoreEmpty(true);
@@ -156,23 +195,9 @@ export default class OperationInfo extends JsonWrapper {
     }
 
     return this;
-  }
+  };
 
   setVideoInfo = (video_info) => {
     this.video_info = video_info;
-  }
-
-  getUpdateQueryJson = () => {
-    return {
-      "PID": this.pid,
-      "PName": this.patient_name,
-      "Age": this.patient_age,
-      "Sex": this.patient_sex,
-      "Race": this.patient_race,
-      "OpDate": this.operation_date,
-      "OpName": this.operation_name,
-      "PreOperative": this.pre_operation,
-      "PostOperative": this.post_operation
-    }
-  }
+  };
 }

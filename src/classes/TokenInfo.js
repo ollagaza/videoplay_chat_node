@@ -1,4 +1,4 @@
-import role from "@/config/roles";
+import roles from "@/config/roles";
 
 export default class TokenInfo {
   constructor(token_info, token, remain_time) {
@@ -14,7 +14,7 @@ export default class TokenInfo {
 
   setTokenByMemberInfo(member_info) {
     this.id = member_info.seq; // member table seq
-    this.role = role.MEMBER; // 권한 코드. 나중에 쓸지도 모름.
+    this.role = roles.MEMBER; // 권한 코드. 나중에 쓸지도 모름.
     this.hospital = member_info.hospital_code;
     this.branch = member_info.depart_code;
   }
@@ -42,4 +42,12 @@ export default class TokenInfo {
   getRemainTime() {
     return this.remain_time;
   }
+
+  isAdmin = () => {
+    return this.getRole() == roles.ADMIN;
+  };
+
+  isMember = () => {
+    return this.getRole() == roles.ADMIN;
+  };
 }

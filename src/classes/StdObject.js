@@ -29,6 +29,8 @@ export default class StdObject {
     }
 
     this.error = error;
+
+    return this;
   }
 
   getError() {
@@ -41,6 +43,8 @@ export default class StdObject {
     }
 
     this.httpStatusCode = code;
+
+    return this;
   }
 
   getHttpStatusCode() {
@@ -58,8 +62,7 @@ export default class StdObject {
 
     this.message = message;
 
-    // TODO This method always returns True. We'd better remove it
-    return true;
+    return this;
   }
 
   getMessage () {
@@ -68,6 +71,8 @@ export default class StdObject {
 
   add(key, val) {
     this.variables[key] = val;
+
+    return this;
   }
 
   adds (object) {
@@ -79,6 +84,8 @@ export default class StdObject {
       let val = object[key];
       this.variables[key] = val;
     }
+
+    return this;
   }
 
   get(key) {

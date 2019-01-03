@@ -6,12 +6,20 @@ import { exec } from 'child_process';
 import _ from 'lodash';
 import StdObject from "@/classes/StdObject";
 import xml2js from 'xml2js';
+import crypto from 'crypto';
+import aes256 from 'nodejs-aes256';
+import service_config from '@/service.config';
+import  base64url from 'base64-url';
 
-const parser = new xml2js.Parser({trim: true});
-const builder = new xml2js.Builder({trim: true});
+const env = process.env.NODE_ENV;
 
-const random_key_space = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-const timezone_offset = new Date().getTimezoneOffset() * 60000;
+const XML_PARSER = new xml2js.Parser({trim: true});
+const XML_BUILDER = new xml2js.Builder({trim: true});
+
+const RANDOM_KEY_SPACE = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000;
+const CRYPTO_KEY = service_config[env].crypto_key;
+const NEW_LINE_REGEXP = /\r?\n/g;
 
 const convert = (from_charset, to_charset, str) => {
   const iconv = new Iconv.Iconv(from_charset, to_charset);
@@ -58,7 +66,7 @@ const timeStrToSecond = (time_str) => {
 
 const dateFormatter = (timestamp, format='HH:MM:ss', use_offset) => {
   if (use_offset) {
-    timestamp += timezone_offset;
+    timestamp += TIMEZONE_OFFSET;
   }
   return dateFormat(timestamp, format);
 };
@@ -97,14 +105,14 @@ export default {
 
     context = context.toString();
 
-    const result = await promisify(parser.parseString.bind(parser))(context);
+    const result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
     return result;
   },
 
   "writeXmlFile": async (directory, xml_file_name, context_json) => {
     const xml_file_path = directory + xml_file_name;
 
-    const xml = builder.buildObject(JSON.parse(JSON.stringify(context_json)));
+    const xml = XML_BUILDER.buildObject(JSON.parse(JSON.stringify(context_json)));
     await saveToFile(xml_file_path, xml);
     return true;
   },
@@ -132,9 +140,9 @@ export default {
 
   "getRandomString": (length=10) => {
     let str = '';
-    const space_length = random_key_space.length;
+    const space_length = RANDOM_KEY_SPACE.length;
     for (let i = 0; i < length; i++) {
-      str += random_key_space[Math.floor(Math.random()*space_length)];
+      str += RANDOM_KEY_SPACE[Math.floor(Math.random()*space_length)];
     }
     return str;
   },
@@ -154,10 +162,12 @@ export default {
   "execute": async (command) => {
     const output = new StdObject();
     try {
-      const result = await exec(command);
+      const result = await promisify(exec)(command);
+      console.log(result);
       output.add('result', result)
     }
     catch(e) {
+      console.log(e);
       output.error = -1;
       output.stack = e;
     }
@@ -193,5 +203,37 @@ export default {
     const time_diff = Math.abs(target_date.getTime() - Date.now());
     const diff_hours = Math.ceil(time_diff / (1000 * 3600));
     return diff_hours;
+  },
+
+  "hash": (text, hash_algorithm='sha256') => {
+    return crypto.createHash(hash_algorithm).update(text).digest('base64');
+  },
+
+  "encrypt": (plain_data) => {
+    let plain_text;
+    if (_.isObject(plain_data)) {
+      plain_text = JSON.stringify(plain_data);
+    } else {
+      plain_text = plain_data;
+    }
+
+    return base64url.encode(aes256.encrypt(CRYPTO_KEY, plain_text), 'utf-8');
+  },
+
+  "decrypt": (encrypted_data) => {
+    try{
+      console.log(base64url.decode(encrypted_data, 'utf-8'));
+      return aes256.decrypt(CRYPTO_KEY, base64url.decode(encrypted_data, 'utf-8'));
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
+  },
+
+  "nlToBr": (text) => {
+    if (!text) {
+      return "";
+    }
+    return text.replace(NEW_LINE_REGEXP, "<br>\n");
   }
 };

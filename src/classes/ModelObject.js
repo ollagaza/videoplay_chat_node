@@ -44,30 +44,41 @@ export default class ModelObject {
     return result;
   }
 
-  async findPaginated({ list_count = 20, page = 1, page_count = 10, ...filters }, columns=null, order=null) {
+  async findPaginated({ list_count = 20, page = 1, page_count = 10, no_paging = 'n', ...filters }, columns=null, order=null) {
     const oKnex = this.queryBuilder(filters, columns, order);
 
-    const result = await this.queryPaginated(oKnex, list_count, page, page_count);
+    const result = await this.queryPaginated(oKnex, list_count, page, page_count, no_paging);
 
     return result;
   }
 
-  async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10) {
+  async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
     // 강제 형변환
     list_count = list_count * 1;
     cur_page = cur_page * 1;
     page_count = page_count * 1;
 
-    const oCountKnex = this.database.from(oKnex.clone().as('list'))
+    const use_paging = (!no_paging || no_paging.toLowerCase() !== 'y');
+
+    const oCountKnex = this.database.from(oKnex.clone().as('list'));
+    const oDataListKnex = oKnex.clone();
+    if (use_paging) {
+      oDataListKnex
+        .limit(list_count)
+        .offset(list_count * (cur_page - 1));
+    }
 
     // 갯수와 데이터를 동시에 얻기
     const [{ total_count }, data] = await Promise.all([
       oCountKnex.count('* as total_count').first(),
-      oKnex
-        .clone()
-        .limit(list_count)
-        .offset(list_count * (cur_page - 1))
-    ])
+      oDataListKnex
+    ]);
+
+
+    if (use_paging) {
+      list_count = total_count;
+      cur_page = 1;
+    }
 
     // 번호 매기기
     let virtual_no = total_count - (cur_page - 1) * list_count;

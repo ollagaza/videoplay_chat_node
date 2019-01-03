@@ -46,7 +46,9 @@ const generateTokenByMemberInfo = (member_info) => {
 
 const isAuthenticated = (require_roles) => {
   return async (req, res, next) => {
-    if (require_roles == null || require_roles == roles.ALL) {
+    const token = getToken(req);
+
+    if (!token && (require_roles == null || require_roles == roles.ALL)) {
       return next();
     }
 

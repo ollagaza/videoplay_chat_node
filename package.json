@@ -45,7 +45,9 @@
     "string-template": "^1.0.0",
     "to": "^0.2.9",
     "update": "^0.7.4",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "nodejs-aes256": "^1.0.1",
+    "base64-url": "^2.2.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

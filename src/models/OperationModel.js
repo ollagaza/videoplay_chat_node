@@ -4,7 +4,7 @@ import Util from '@/utils/baseutil';
 import OperationInfo from '@/classes/surgbook/OperationInfo';
 import VideoModel from "@/models/xmlmodel/VideoModel";
 import MemberModel from '@/models/MemberModel';
-import StdObject from "../classes/StdObject";
+import StdObject from "@/classes/StdObject";
 
 export default class OperationModel extends ModelObject {
   constructor(...args) {
@@ -14,9 +14,9 @@ export default class OperationModel extends ModelObject {
     this.selectable_fields = ['*'];
   }
 
-  getOperationInfo = async (operation_seq, token_info) => {
+  getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
     const where = {"seq": operation_seq};
-    if (token_info.getRole() <= role.MEMBER) {
+    if (check_owner && token_info.getRole() <= role.MEMBER) {
       where.member_seq = token_info.getId();
     }
 
@@ -49,8 +49,9 @@ export default class OperationModel extends ModelObject {
       order_by.direction = 'ASC';
     }
     oKnex.orderBy(order_by.name, order_by.direction);
+    console.log(params);
 
-    const paging_result = await await this.queryPaginated(oKnex, list_count, page, page_count);
+    const paging_result = await await this.queryPaginated(oKnex, list_count, page, page_count, params.no_paging);
 
     const result = new Array();
 
@@ -66,7 +67,7 @@ export default class OperationModel extends ModelObject {
   }
 
   updateOperationInfo = async (operation_seq, operation_info) => {
-    return await this.update({"seq": operation_seq}, operation_info.getQueryJson());
+    return await this.update({"seq": operation_seq}, operation_info.toJSON());
   }
 
   getOperationInfoByResult = (query_result) => {
@@ -94,7 +95,8 @@ export default class OperationModel extends ModelObject {
       if (video_info.video_name) {
         operation_info.origin_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name;
         operation_info.proxy_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
-        operation_info.video_source = operation_info.media_directory + "SEQ\\" + video_info.video_name;
+        operation_info.video_source = "SEQ\\" + video_info.video_name;
+        operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
       }
     }
 
@@ -123,6 +125,10 @@ export default class OperationModel extends ModelObject {
 
   updateRequestStatus = async (operation_seq, status) => {
     return await this.update({"seq": operation_seq}, {request_status: status ? status.toUpperCase() : 'N'});
+  }
+
+  updateSharingStatus = async (operation_seq, status) => {
+    return await this.update({"seq": operation_seq}, {is_sharing: status ? 1 : 0});
   }
 
   updateIndexCount = async (operation_seq, index_type, count) => {

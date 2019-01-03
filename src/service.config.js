@@ -8,7 +8,8 @@ export default {
     "address_en": "330, Seongam-ro, Mapo-gu, Seoul, Republic of Korea",
     "main_domain": "www.mteg.co.kr",
     "main_telephone": "02.859.3585",
-    "media_root": "C:\\surgbook"
+    "media_root": "C:\\surgbook",
+    "crypto_key": "dev_dpaxldlwl"
   },
 
   production: {
@@ -18,6 +19,7 @@ export default {
     "address_en": "330, Seongam-ro, Mapo-gu, Seoul, Republic of Korea",
     "main_domain": "www.mteg.co.kr",
     "main_telephone": "02.859.3585",
-    "media_root": "\\\\192.168.0.51\\surgbook"
+    "media_root": "\\\\192.168.0.51\\surgbook",
+    "crypto_key": "service_dpaxldlwl"
   },
 };

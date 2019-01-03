@@ -153,14 +153,14 @@ export default class IndexModel extends ModelObject {
     }
 
     const media_directory = operation_info.media_directory;
-    const video_source = operation_info.video_source;
+    const origin_video_path = operation_info.origin_video_path;
     const target_time_str = Util.secondToTimeStr(second);
     const save_directory = media_directory + 'Custom';
     if (!Util.fileExists(save_directory)) {
       Util.createDirectory(save_directory);
     }
     const add_index_image_path = save_directory + '\\' + add_index_file_name;
-    const command = 'ffmpeg -ss ' + target_time_str + ' -i "' + video_source + '" -y -vframes 1 -an "' + add_index_image_path + '"';
+    const command = 'ffmpeg -ss ' + target_time_str + ' -i "' + origin_video_path + '" -y -vframes 1 -an "' + add_index_image_path + '"';
     const execute_result = await Util.execute(command);
     if (execute_result.isSuccess() == false) {
       throw new StdObject(-1, '인덱스 추출 실패', 400);

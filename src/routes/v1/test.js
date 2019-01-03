@@ -7,6 +7,22 @@ import Auth from '@/middlewares/auth.middleware';
 
 const routes = Router();
 
+routes.get('/crypto', wrap(async (req, res) => {
+  const data = {
+    r: Util.getRandomString(5),
+    s: 155
+  };
+
+  const enc_text = Util.encrypt(data);
+  const dec = JSON.parse(Util.decrypt(enc_text));
+
+  const output = new StdObject();
+  output.add("enc", enc_text);
+  output.add("dec", dec);
+
+  res.json(output);
+}));
+
 routes.get('/xml/:xml_name', wrap(async (req, res) => {
   const xml_name = req.params.xml_name;
   const media_path = "C:\\surgbook\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\";

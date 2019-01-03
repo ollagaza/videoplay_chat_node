@@ -8,7 +8,7 @@ import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import Util from '@/utils/baseutil';
-import member_template from '@/template/mail/member.template';
+import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 
 const routes = Router();
@@ -196,7 +196,7 @@ routes.post('/', Wrap(async(req, res) => {
       "auth_key": mail_auth_key,
       "member_seq": member_seq
     };
-    const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', member_template.createUser(template_data));
+    const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', MemberTemplate.createUser(template_data));
 
     if (send_mail_result.isSuccess()) {
       res.json(new StdObject());
@@ -316,7 +316,7 @@ routes.post('/find', Wrap(async(req, res) => {
       "tmp_password": temp_password
     };
 
-    const send_mail_result = await new SendMail().sendMailHtml([find_info.email_address], 'MTEG 계정정보 찾기를 요청하셨습니다.', member_template.findUserInfo(template_data));
+    const send_mail_result = await new SendMail().sendMailHtml([find_info.email_address], 'MTEG 계정정보 찾기를 요청하셨습니다.', MemberTemplate.findUserInfo(template_data));
     if (send_mail_result.isSuccess() == false) {
       throw send_mail_result;
     }

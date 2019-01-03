@@ -12,10 +12,9 @@ export default class VideoFileModel extends ModelObject {
     this.selectable_fields = ['*'];
   }
 
-  createVideoFile = async (upload_file_info, operation_seq, member_seq) => {
+  createVideoFile = async (upload_file_info, operation_seq) => {
     const file_info = new FileInfo().getByUploadFileInfo(upload_file_info).toJSON();
     file_info.operation_seq = operation_seq;
-    file_info.member_seq = member_seq;
 
     return await this.create(file_info, 'seq');
   }
