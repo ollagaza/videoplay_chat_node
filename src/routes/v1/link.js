@@ -25,7 +25,7 @@ routes.get('/verify/:link_key', Auth.isAuthenticated(), Wrap(async(req, res) => 
 
   const output = new StdObject();
 
-  if (link_type === 'share') {
+  if (link_type === 'operation') {
     const share_info = await new OperationShareModel({ database }).getShareInfoByDecryptedInfo(link_key_info);
     if (!share_info || share_info.isEmpty()) {
       throw new StdObject(-4, '잘못된 접근입니다.', 400);

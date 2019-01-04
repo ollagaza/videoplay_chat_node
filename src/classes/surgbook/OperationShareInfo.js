@@ -3,9 +3,9 @@ import JsonWrapper from '@/classes/JsonWrapper';
 /**
  * @swagger
  * definitions:
- *  ShareInfo:
+ *  OperationShareInfo:
  *    type: "object"
- *    description: "수술, 환자 상세 정보"
+ *    description: ""
  *    properties:
  *      seq:
  *        type: "integer"
@@ -46,7 +46,7 @@ import JsonWrapper from '@/classes/JsonWrapper';
  *
  */
 
-export default class ShareInfo extends JsonWrapper {
+export default class OperationShareInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
     this.setKeys(['seq', 'share_user_count', 'view_count', 'comment_count', 'like_count', 'dislike_count', 'reg_date', 'modify_date', 'share_key', 'stream_url', 'download_url']);

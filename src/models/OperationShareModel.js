@@ -1,7 +1,7 @@
 import ModelObject from '@/classes/ModelObject';
-import ShareInfo from '@/classes/surgbook/ShareInfo';
 import Util from '@/utils/baseutil';
 import StdObject from "@/classes/StdObject";
+import OperationShareInfo from '@/classes/surgbook/OperationShareInfo';
 import OperationShareUserModel from "@/models/OperationShareUserModel";
 
 export default class OperationShareModel extends ModelObject {
@@ -14,7 +14,7 @@ export default class OperationShareModel extends ModelObject {
 
   getShareInfoBySeq = async  (share_seq) => {
     const query_result = await this.findOne({"seq": share_seq});
-    return new ShareInfo(query_result);
+    return new OperationShareInfo(query_result);
   };
 
   getShareInfoByShareKey = async  (share_key) => {
@@ -23,7 +23,7 @@ export default class OperationShareModel extends ModelObject {
       throw new StdObject(-1, '잘못된 접근입니다.', 400);
     }
     share_key_info = JSON.parse(share_key_info);
-    if (share_key_info.t !== 'share') {
+    if (share_key_info.t !== 'operation') {
       throw new StdObject(-2, '잘못된 접근입니다.', 400);
     }
     return await this.getShareInfoByDecryptedInfo(share_key_info);
@@ -31,14 +31,14 @@ export default class OperationShareModel extends ModelObject {
 
   getShareInfoByDecryptedInfo = async (decrypted_Info) => {
     const query_result = await this.findOne({"operation_seq": decrypted_Info.s, "random_key": decrypted_Info.r});
-    return new ShareInfo(query_result);
+    return new OperationShareInfo(query_result);
   }
 
   getShareInfo = async (operation_info) => {
     const query_result = await this.findOne({"operation_seq": operation_info.seq});
     let share_info;
     if (query_result && query_result.seq) {
-      share_info = new ShareInfo(query_result);
+      share_info = new OperationShareInfo(query_result);
     } else {
       share_info = await this.createShareInfo(operation_info);
     }
@@ -49,7 +49,7 @@ export default class OperationShareModel extends ModelObject {
     const random_key = Util.getRandomString(5);
     const share_key_data = {
       r: random_key,
-      t: 'share',
+      t: 'operation',
       s: operation_info.seq
     };
     const share_key = Util.encrypt(share_key_data);
@@ -64,7 +64,7 @@ export default class OperationShareModel extends ModelObject {
       throw new StdObject(-1, '공유정보 생성 실패', 400);
     }
     create_params.seq = share_seq;
-    return new ShareInfo(create_params);
+    return new OperationShareInfo(create_params);
   };
 
   increaseSendCount = async (share_seq, send_count=1) => {
