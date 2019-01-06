@@ -713,7 +713,6 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
       };
       console.log(template_data);
       await new SendMail().sendMailHtml(req.body.email_list, title, ShareTemplate.invite(template_data));
-
     }
   });
 
@@ -795,7 +794,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   const operation_seq = req.params.operation_seq;
   const file_type = req.params.file_type;
 
-  const {operation_info} = await getOperationInfo(operation_seq, token_info);
+  const {operation_info, operation_model} = await getOperationInfo(operation_seq, token_info);
   let media_directory = media_root + operation_info.media_path;
   if (file_type !== 'refer') {
     media_directory += '\\SEQ';
@@ -824,6 +823,14 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   if (!upload_seq) {
     throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500);
   }
+
+  const video_file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
+  const refer_file_summary = await new ReferFileModel({ database }).referFileSummary(operation_seq);
+  let total_file_size = (video_file_summary.total_size ? parseInt(video_file_summary.total_size) : 0);
+  total_file_size += (refer_file_summary.total_size ? parseInt(refer_file_summary.total_size) : 0);
+  total_file_size = Math.ceil(total_file_size / 1024 / 1024);
+  let total_file_count = (video_file_summary.total_count ? parseInt(video_file_summary.total_count) : 0) + (refer_file_summary.total_count ? parseInt(refer_file_summary.total_count) : 0);
+  await operation_model.updateFileInfo(operation_seq, total_file_size, total_file_count);
 
   const output = new StdObject();
   output.add('upload_seq', upload_seq);

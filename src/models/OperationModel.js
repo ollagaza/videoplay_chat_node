@@ -150,7 +150,7 @@ export default class OperationModel extends ModelObject {
   };
 
   getStorageSummary = async  (token_info) => {
-    const columns = ["sum(FileNo) as total_file_count", "sum(FileSize) as total_file_size", "sum(RunTime) as total_run_time"];
+    const columns = ["sum(operation.file_count) as total_file_count", "sum(operation.file_size) as total_file_size", "sum(doctor.RunTime) as total_run_time"];
     const oKnex = this.database.select(this.arrayToSafeQuery(columns));
     oKnex.from('operation');
     oKnex.innerJoin("doctor", "doctor.MediaPath", "operation.media_path");
@@ -182,5 +182,9 @@ export default class OperationModel extends ModelObject {
     const total_count = await this.getTotalCount(where);
 
     return total_count > 0;
+  };
+
+  updateFileInfo = async (operation_seq, file_size, file_count) => {
+    return await this.update({"seq": operation_seq}, {file_size: file_size, file_count: file_count});
   };
 }

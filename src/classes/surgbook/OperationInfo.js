@@ -135,6 +135,12 @@ import Util from '@/utils/baseutil';
  *      patient_race:
  *        type: "string"
  *        description: "환자 인종"
+ *      file_size:
+ *        type: "integer"
+ *        description: "전체 파일 용량"
+ *      file_count:
+ *        type: "integer"
+ *        description: "전체 파일 개수"
  *
  */
 
@@ -148,7 +154,7 @@ export default class OperationInfo extends JsonWrapper {
       , 'index1_count', 'index2_count', 'index3_count', 'clip_count', 'video_count', 'report_count'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
       , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'video_source'
-      , 'reg_date', 'reg_diff_hour'
+      , 'reg_date', 'reg_diff_hour', 'file_size', 'file_count'
     ]);
 
     if (data) {

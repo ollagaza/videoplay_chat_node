@@ -18,4 +18,9 @@ export default class ReferFileModel extends ModelObject {
 
     return await this.create(file_info, 'seq');
   }
+
+  referFileSummary = async (operation_seq) => {
+    const select = ['COUNT(*) AS total_count', 'SUM(file_size) AS total_size'];
+    return await this.findOne({operation_seq: operation_seq}, select);
+  };
 }
