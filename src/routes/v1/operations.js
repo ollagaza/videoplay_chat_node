@@ -600,6 +600,67 @@ routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.
 
 /**
  * @swagger
+ * /operations/{operation_seq}/request/analysis:
+ *  post:
+ *    summary: "비디오 분석 요청"
+ *    tags: [Operations]
+ *    security:
+ *    - access_token: []
+ *    produces:
+ *    - "application/json"
+ *    parameters:
+ *    - name: "operation_seq"
+ *      in: "path"
+ *      description: "수술정보 고유번호"
+ *      type: "integer"
+ *      require: true
+ *    responses:
+ *      200:
+ *        description: "성공여부"
+ *        schema:
+ *           $ref: "#/definitions/DefaultResponse"
+ */
+routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_info, operation_model} = await getOperationInfo(operation_seq, token_info);
+  const file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
+  const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
+
+  const media_directory = media_root + operation_info.media_path + '\\SEQ';
+  const command = `${service_info.trans_exe_path} -ip="${service_info.trans_ip_address}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
+  const execute_result = await Util.execute(command);
+  const is_execute_success = execute_result.isSuccess();
+  let is_send_mail_success = false;
+
+  try {
+    const send_mail = new SendMail();
+    // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
+    const mail_to = ["hwj@mteg.co.kr"];
+    const subject = member_info.user_name + " 선생님으로부터 비디오 분석 요청이 있습니다.";
+    let context = "";
+    context += `파일 경로: ${operation_info.media_path}<br/>\n`;
+    context += `파일 개수: ${file_summary.total_count}<br/>\n`;
+    context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
+    context += `Command: ${command}<br/>\n`;
+    context += `실행결과: ${Util.nlToBr(execute_result.variables.result)}<br/>\n`;
+    const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
+    is_send_mail_success = send_mail_result.isSuccess();
+  } catch (e) {
+    console.log(e);
+  }
+
+  if (is_execute_success || is_send_mail_success) {
+    await operation_model.updateAnalysisStatus(operation_seq, 'R');
+    res.json(new StdObject());
+  } else {
+    throw new StdObject(-1, '비디오 분석 요청 실패', 500);
+  }
+}));
+
+/**
+ * @swagger
  * /operations/{operation_seq}/share:
  *  post:
  *    summary: "수술영상 공유"
@@ -755,9 +816,9 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
 
   let upload_seq = null;
   if (file_type !== 'refer') {
-    upload_seq = await new VideoFileModel({ database }).createVideoFile(upload_file_info, operation_seq);
+    upload_seq = await new VideoFileModel({ database }).createVideoFile(upload_file_info, operation_seq, operation_info.media_path);
   } else {
-    upload_seq = await new ReferFileModel({ database }).createReferFile(upload_file_info, operation_seq);
+    upload_seq = await new ReferFileModel({ database }).createReferFile(upload_file_info, operation_seq, operation_info.media_path);
   }
 
   if (!upload_seq) {
@@ -766,6 +827,27 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
 
   const output = new StdObject();
   output.add('upload_seq', upload_seq);
+
+  res.json(output);
+}));
+
+routes.get('/verify/operation_code/:operation_code', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const operation_code = req.params.operation_code;
+  const is_duplicate = await new OperationModel({ database }).isDuplicateOperationCode(operation_code);
+
+  const output = new StdObject();
+  output.add('verify', !is_duplicate);
+
+  res.json(output);
+}));
+
+routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_info} = await getOperationInfo(operation_seq, token_info);
+  const output = new StdObject();
+  output.add('download_url', operation_info.origin_video_url);
 
   res.json(output);
 }));

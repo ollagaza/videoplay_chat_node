@@ -163,8 +163,8 @@ export default {
     const output = new StdObject();
     try {
       const result = await promisify(exec)(command);
-      console.log(result);
-      output.add('result', result)
+      console.log(result.stdout);
+      output.add('result', result.stdout)
     }
     catch(e) {
       console.log(e);

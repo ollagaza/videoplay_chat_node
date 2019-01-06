@@ -9,7 +9,11 @@ export default {
     "main_domain": "www.mteg.co.kr",
     "main_telephone": "02.859.3585",
     "media_root": "C:\\surgbook",
-    "crypto_key": "dev_dpaxldlwl"
+    "crypto_key": "dev_dpaxldlwl",
+    "trans_exe_path": "C:\\MTEG\\Util.AddTrans\\AddTrans.exe",
+    "trans_ip_address": "127.0.0.1",
+    "trans_port": "8090",
+    "trans_root": "surgbook"
   },
 
   production: {
@@ -20,6 +24,10 @@ export default {
     "main_domain": "www.mteg.co.kr",
     "main_telephone": "02.859.3585",
     "media_root": "\\\\192.168.0.51\\surgbook",
-    "crypto_key": "service_dpaxldlwl"
+    "crypto_key": "service_dpaxldlwl",
+    "trans_exe_path": "C:\\MTEG\\Util.AddTrans\\AddTrans.exe",
+    "trans_ip_address": "127.0.0.1",
+    "trans_port": "8090",
+    "trans_root": "surgbook"
   },
 };

@@ -29,7 +29,7 @@ export default class OperationModel extends ModelObject {
     const query_result = await oKnex;
 
     return await this.getOperationInfoWithXML(query_result, true);
-  }
+  };
 
   getOperationInfoListPage = async (params, token_info, asc=false)  => {
     const page = params && params.page ? params.page : 1;
@@ -49,7 +49,6 @@ export default class OperationModel extends ModelObject {
       order_by.direction = 'ASC';
     }
     oKnex.orderBy(order_by.name, order_by.direction);
-    console.log(params);
 
     const paging_result = await await this.queryPaginated(oKnex, list_count, page, page_count, params.no_paging);
 
@@ -64,11 +63,12 @@ export default class OperationModel extends ModelObject {
 
     paging_result.data = result;
     return paging_result;
-  }
+  };
 
   updateOperationInfo = async (operation_seq, operation_info) => {
+    operation_info.modify_date = this.database.raw('NOW()');
     return await this.update({"seq": operation_seq}, operation_info.toJSON());
-  }
+  };
 
   getOperationInfoByResult = (query_result) => {
     const operation_info = new OperationInfo(query_result);
@@ -79,7 +79,7 @@ export default class OperationModel extends ModelObject {
     }
 
     return operation_info;
-  }
+  };
 
   getOperationInfoWithXML = async (query_result, import_xml=false) => {
     if (query_result == null) {
@@ -101,41 +101,53 @@ export default class OperationModel extends ModelObject {
     }
 
     return operation_info;
-  }
+  };
 
   updateStatusDelete = async (operation_seq) => {
-    return await this.update({"seq": operation_seq}, {status: 'D'});
-  }
+    const delete_suffix = '__D_' + Math.floor(Date.now() / 1000);
+    const update_params = {
+      status: 'D'
+      , "modify_date": this.database.raw('NOW()')
+      , "operation_code": this.database.raw(`CONCAT(operation_code, '${delete_suffix}')`)
+      , "media_path": this.database.raw(`CONCAT(media_path, '${delete_suffix}')`)
+    };
+    return await this.update({"seq": operation_seq}, update_params);
+  };
 
   updateStatusTrash = async (operation_seq, is_delete) => {
-    return await this.update({"seq": operation_seq}, {status: is_delete ? 'Y' : 'T'});
-  }
+    return await this.update({"seq": operation_seq}, {status: is_delete ? 'Y' : 'T', "modify_date": this.database.raw('NOW()')});
+  };
 
   updateStatusFavorite = async (operation_seq, is_delete) => {
-    return await this.update({"seq": operation_seq}, {is_favorite: is_delete ? 0 : 1});
-  }
+    return await this.update({"seq": operation_seq}, {is_favorite: is_delete ? 0 : 1, "modify_date": this.database.raw('NOW()')});
+  };
 
   updateClipCount = async (operation_seq, clip_count) => {
-    return await this.update({"seq": operation_seq}, {clip_count: clip_count});
-  }
+    return await this.update({"seq": operation_seq}, {clip_count: clip_count, "modify_date": this.database.raw('NOW()')});
+  };
 
   updateReportCount = async (operation_seq, report_count) => {
-    return await this.update({"seq": operation_seq}, {report_count: report_count});
-  }
+    return await this.update({"seq": operation_seq}, {report_count: report_count, "modify_date": this.database.raw('NOW()')});
+  };
 
   updateRequestStatus = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {request_status: status ? status.toUpperCase() : 'N'});
-  }
+    return await this.update({"seq": operation_seq}, {request_status: status ? status.toUpperCase() : 'N', "modify_date": this.database.raw('NOW()')});
+  };
+
+  updateAnalysisStatus = async (operation_seq, status) => {
+    return await this.update({"seq": operation_seq}, {analysis_status: status ? status.toUpperCase() : 'N', "modify_date": this.database.raw('NOW()')});
+  };
 
   updateSharingStatus = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {is_sharing: status ? 1 : 0});
-  }
+    return await this.update({"seq": operation_seq}, {is_sharing: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
+  };
 
   updateIndexCount = async (operation_seq, index_type, count) => {
     const params = {};
     params['index' + index_type + '_count'] = count;
+    params.modify_date = this.database.raw('NOW()');
     return await this.update({"seq": operation_seq}, params);
-  }
+  };
 
   getStorageSummary = async  (token_info) => {
     const columns = ["sum(FileNo) as total_file_count", "sum(FileSize) as total_file_size", "sum(RunTime) as total_run_time"];
@@ -148,7 +160,7 @@ export default class OperationModel extends ModelObject {
     oKnex.first();
 
     return await oKnex;
-  }
+  };
 
   createOperation = async (body, member_seq) => {
     const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
@@ -163,5 +175,12 @@ export default class OperationModel extends ModelObject {
     operation_info.depart_code = member_info.depart_code;
 
     return await this.create(operation_info, 'seq');
-  }
+  };
+
+  isDuplicateOperationCode = async (operation_code) => {
+    const where = {"operation_code": operation_code};
+    const total_count = await this.getTotalCount(where);
+
+    return total_count > 0;
+  };
 }

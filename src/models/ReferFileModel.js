@@ -12,8 +12,8 @@ export default class ReferFileModel extends ModelObject {
     this.selectable_fields = ['*'];
   }
 
-  createReferFile = async (upload_file_info, operation_seq) => {
-    const file_info = new FileInfo().getByUploadFileInfo(upload_file_info).toJSON();
+  createReferFile = async (upload_file_info, operation_seq, media_path) => {
+    const file_info = new FileInfo().getByUploadFileInfo(upload_file_info, media_path).toJSON();
     file_info.operation_seq = operation_seq;
 
     return await this.create(file_info, 'seq');

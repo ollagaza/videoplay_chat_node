@@ -37,7 +37,7 @@ export default class FileInfo extends JsonWrapper {
     super(data, private_keys);
   }
 
-  getByUploadFileInfo = (upload_file_info) => {
+  getByUploadFileInfo = (upload_file_info, media_path) => {
     this.setIgnoreEmpty(true);
 
     this.setKeys([
@@ -45,9 +45,9 @@ export default class FileInfo extends JsonWrapper {
     ]);
 
     this.file_name = upload_file_info.originalname;
-    this.file_size = Math.ceil(upload_file_info.size / 1024);
+    this.file_size = upload_file_info.size;
     this.file_type = upload_file_info.mimetype;
-    this.file_path = upload_file_info.path;
+    this.file_path = media_path + '\\' + this.file_name;
 
     return this;
   }

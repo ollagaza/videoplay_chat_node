@@ -63,12 +63,15 @@ import Util from '@/utils/baseutil';
  *      report_count:
  *        type: "integer"
  *        description: "레포트 개수"
+ *      status:
+ *        type: "string"
+ *        description: "레코드 상태 값. Y: 사용가능, T: 휴지통, D: 완전 삭제"
  *      request_status:
  *        type: "string"
- *        description: "요약비디오 요청 상태"
- *      is_analysis:
+ *        description: "요약비디오 요청 상태. Y: 요약비디오 제작 완료, R: 제작요청, N: 요청 안함"
+ *      analysis_status:
  *        type: "boolean"
- *        description: "분석 여부"
+ *        description: "분석 상태 값. Y: 분석완료, R: 분석요청, P: 분석중, N: 분석요청 안함"
  *      is_review:
  *        type: "boolean"
  *        description: "검토 여부"
@@ -87,9 +90,6 @@ import Util from '@/utils/baseutil';
  *      video_source:
  *        type: "string"
  *        description: "비디오 소스 경로"
- *      status:
- *        type: "string"
- *        description: "레코드 상태 값. Y: 사용가능, T: 휴지통, D: 완전 삭제"
  *      reg_date:
  *        type: "string"
  *        description: "수술정보 등록일자"
@@ -146,9 +146,9 @@ export default class OperationInfo extends JsonWrapper {
       'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
       , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
       , 'index1_count', 'index2_count', 'index3_count', 'clip_count', 'video_count', 'report_count'
-      , 'request_status', 'is_analysis', 'is_review', 'is_sharing', 'is_favorite'
+      , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
       , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'video_source'
-      , 'status', 'reg_date', 'reg_diff_hour'
+      , 'reg_date', 'reg_diff_hour'
     ]);
 
     if (data) {
@@ -158,7 +158,6 @@ export default class OperationInfo extends JsonWrapper {
         this.list_no = data._no;
       }
 
-      this.is_analysis = parseInt(data.is_analysis) > 0;
       this.is_review = parseInt(data.is_review) > 0;
       this.is_sharing = parseInt(data.is_sharing) > 0;
       this.is_favorite = parseInt(data.is_favorite) > 0;
