@@ -7,6 +7,7 @@ import StdObject from '@/classes/StdObject';
 import routes from '@/routes';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import service_config from '@/config/service.config';
 
 const app = express();
 
@@ -51,19 +52,22 @@ if (process.env.NODE_ENV === 'development') {
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {}));
 }
 
-// Routes
-app.use('/api', routes);
+// config db에서 로드
+service_config.load(() => {
+  // Routes
+  app.use('/api', routes);
 
-// Catch 404 and forward to error handler
-app.use((req, res, next) => {
-  next(new StdObject(-1, '요청하신 API Endpoint가 존재하지 않습니다.', 404));
-});
+  // Catch 404 and forward to error handler
+  app.use((req, res, next) => {
+    next(new StdObject(-1, '요청하신 API Endpoint가 존재하지 않습니다.', 404));
+  });
 
-// Error handler
-app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
-  console.log(err);
-  res.status(err.getHttpStatusCode())
-    .json(err)
+  // Error handler
+  app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+    console.log(err);
+    res.status(err.getHttpStatusCode())
+      .json(err)
+  });
 });
 
 export default app;

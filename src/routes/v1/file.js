@@ -1,4 +1,3 @@
-import mkdirp from 'mkdirp';
 import path from 'path';
 import util from 'util';
 import multer from 'sb-multer';

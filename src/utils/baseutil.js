@@ -8,17 +8,14 @@ import StdObject from "@/classes/StdObject";
 import xml2js from 'xml2js';
 import crypto from 'crypto';
 import aes256 from 'nodejs-aes256';
-import service_config from '@/service.config';
+import service_config from '@/config/service.config';
 import  base64url from 'base64-url';
-
-const env = process.env.NODE_ENV;
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true});
 
 const RANDOM_KEY_SPACE = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000;
-const CRYPTO_KEY = service_config[env].crypto_key;
 const NEW_LINE_REGEXP = /\r?\n/g;
 
 const convert = (from_charset, to_charset, str) => {
@@ -217,13 +214,13 @@ export default {
       plain_text = plain_data;
     }
 
-    return base64url.encode(aes256.encrypt(CRYPTO_KEY, plain_text), 'utf-8');
+    return base64url.encode(aes256.encrypt(service_config.get('crypto_key'), plain_text), 'utf-8');
   },
 
   "decrypt": (encrypted_data) => {
     try{
       console.log(base64url.decode(encrypted_data, 'utf-8'));
-      return aes256.decrypt(CRYPTO_KEY, base64url.decode(encrypted_data, 'utf-8'));
+      return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
     } catch (e) {
       console.log(e);
       return null;

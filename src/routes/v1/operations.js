@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import service_config from '@/service.config';
+import service_config from '@/config/service.config';
 import path from 'path';
 import util from 'util';
 import multer from 'sb-multer';
@@ -22,10 +22,6 @@ import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
 
 const routes = Router();
-
-const env = process.env.NODE_ENV;
-const service_info = service_config[env];
-const media_root = service_info.media_root;
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -157,8 +153,6 @@ const getOperationInfo = async (operation_seq, token_info) => {
  */
 routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-
-  console.log(req.query);
   const page_query = {};
   page_query.page = req.query.page;
   page_query.list_count = req.query.list_count;
@@ -628,8 +622,9 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   const file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
   const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
 
+  const media_root = service_config.get('media_root');
   const media_directory = media_root + operation_info.media_path + '\\SEQ';
-  const command = `${service_info.trans_exe_path} -ip="${service_info.trans_ip_address}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
+  const command = `${service_config.get('trans_exe_path')} -ip="${service_config.get('trans_ip_address')}" -path="${media_directory}" -port="${service_config.get('trans_port')}" -root="${service_config.get('trans_root')}"`;
   const execute_result = await Util.execute(command);
   const is_execute_success = execute_result.isSuccess();
   let is_send_mail_success = false;
