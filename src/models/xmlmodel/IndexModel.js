@@ -165,6 +165,9 @@ export default class IndexModel extends ModelObject {
     if (execute_result.isSuccess() == false) {
       throw new StdObject(-1, '인덱스 추출 실패', 400);
     }
+    if (Util.fileExists(add_index_image_path)) {
+      throw new StdObject(-1, '인덱스 파일 저장 실패', 400);
+    }
 
     await this.saveIndexList(media_directory, index2_info_list);
 

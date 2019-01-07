@@ -189,11 +189,29 @@ export default {
   },
 
   "fileExists": (file_path) => {
-    return fs.existsSync(file_path);
+    try{
+      return fs.existsSync(file_path);
+    } catch (error) {
+      return false;
+    }
   },
 
   "createDirectory": (dir_path) => {
-    return fs.mkdirSync(dir_path, { recursive: true });
+    try{
+      fs.mkdirSync(dir_path, { recursive: true });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  "rename": (target_path, dest_path) => {
+    try{
+      fs.renameSync(target_path, dest_path);
+      return true;
+    } catch (error) {
+      return false;
+    }
   },
 
   "hourDifference": (target_date) => {
@@ -219,7 +237,6 @@ export default {
 
   "decrypt": (encrypted_data) => {
     try{
-      console.log(base64url.decode(encrypted_data, 'utf-8'));
       return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
     } catch (e) {
       console.log(e);
@@ -232,5 +249,12 @@ export default {
       return "";
     }
     return text.replace(NEW_LINE_REGEXP, "<br>\n");
+  },
+
+  "pathToUrl": (path) => {
+    path = path.replace(/\\/g, '/');
+    path = path.replace(/^\/+/g, '');
+
+    return '/' + path;
   }
 };

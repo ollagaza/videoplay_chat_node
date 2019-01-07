@@ -265,11 +265,20 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
   }
 
   const operation_model = new OperationModel({ database });
-  const operation_seq = await operation_model.createOperation(req.body, member_seq);
-
-  if (!operation_seq) {
+  const operation_info = await operation_model.createOperation(req.body, member_seq);
+  if (!operation_info || !operation_info.operation_seq) {
     throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
   }
+  const operation_seq = operation_info.operation_seq;
+
+  const service_info = service_config.getServiceInfo();
+  const media_root = service_info.media_root;
+  const media_directory = media_root + operation_info.media_path;
+
+  Util.createDirectory(media_directory + "\\SEQ");
+  Util.createDirectory(media_directory + "\\Custom");
+  Util.createDirectory(media_directory + "\\REF");
+  Util.createDirectory(media_directory + "\\Thumb");
 
   const output = new StdObject();
   output.add('operation_seq', operation_seq);
@@ -622,9 +631,10 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   const file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
   const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
 
-  const media_root = service_config.get('media_root');
+  const service_info = service_config.getServiceInfo();
+  const media_root = service_info.media_root;
   const media_directory = media_root + operation_info.media_path + '\\SEQ';
-  const command = `${service_config.get('trans_exe_path')} -ip="${service_config.get('trans_ip_address')}" -path="${media_directory}" -port="${service_config.get('trans_port')}" -root="${service_config.get('trans_root')}"`;
+  const command = `${service_info.trans_exe_path} -ip="${service_info.trans_ip_address}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
   const execute_result = await Util.execute(command);
   const is_execute_success = execute_result.isSuccess();
   let is_send_mail_success = false;
@@ -790,6 +800,9 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   const file_type = req.params.file_type;
 
   const {operation_info, operation_model} = await getOperationInfo(operation_seq, token_info);
+
+  const service_info = service_config.getServiceInfo();
+  const media_root = service_info.media_root;
   let media_directory = media_root + operation_info.media_path;
   if (file_type !== 'refer') {
     media_directory += '\\SEQ';
@@ -809,14 +822,32 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   }
 
   let upload_seq = null;
+  let file_model = null;
   if (file_type !== 'refer') {
-    upload_seq = await new VideoFileModel({ database }).createVideoFile(upload_file_info, operation_seq, operation_info.media_path);
+    file_model = new VideoFileModel({ database });
+    upload_seq = await file_model.createVideoFile(upload_file_info, operation_seq, operation_info.media_path + '\\SEQ');
   } else {
-    upload_seq = await new ReferFileModel({ database }).createReferFile(upload_file_info, operation_seq, operation_info.media_path);
+    file_model = new ReferFileModel({ database });
+    upload_seq = await file_model.createReferFile(upload_file_info, operation_seq, operation_info.media_path + '\\REF');
   }
 
   if (!upload_seq) {
     throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500);
+  }
+
+  if (file_type !== 'refer') {
+    const origin_video_path = upload_file_info.path;
+    const thumbnail_path = operation_info.media_path + '\\Thumb\\' + Date.now() + '.jpg';
+    const thumbnail_full_path = media_root + thumbnail_path;
+    const command = 'ffmpeg -ss 00:00:30 -i "' + origin_video_path + '" -y -vframes 1 -filter:v scale=320:-1 -an "' + thumbnail_full_path + '"';
+    const execute_result = await Util.execute(command);
+    if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
+      try {
+        await file_model.updateThumb(upload_seq, thumbnail_path);
+      } catch (e) {
+        console(e);
+      }
+    }
   }
 
   const video_file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
@@ -850,6 +881,19 @@ routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(roles.LOGIN_U
   const {operation_info} = await getOperationInfo(operation_seq, token_info);
   const output = new StdObject();
   output.add('download_url', operation_info.origin_video_url);
+
+  res.json(output);
+}));
+
+routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  await getOperationInfo(operation_seq, token_info);
+
+  const output = new StdObject();
+  output.add('video_files', await new VideoFileModel({ database }).videoFileList(operation_seq));
+  output.add('refer_files', await new ReferFileModel({ database }).referFileList(operation_seq));
 
   res.json(output);
 }));

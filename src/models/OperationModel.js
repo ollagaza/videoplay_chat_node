@@ -174,7 +174,10 @@ export default class OperationModel extends ModelObject {
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
 
-    return await this.create(operation_info, 'seq');
+    const operation_seq = await this.create(operation_info, 'seq');
+    operation_info.operation_seq = operation_seq;
+
+    return operation_info;
   };
 
   isDuplicateOperationCode = async (operation_code) => {

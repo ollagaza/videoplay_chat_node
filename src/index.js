@@ -3,6 +3,7 @@ import cluster from 'cluster';
 import os from 'os';
 import sticky from 'socketio-sticky-session'; // socketio 사용 대비
 import app from './app';
+import service_config from '@/config/service.config';
 
 if (process.env.NODE_ENV !== 'development') {
   process.env.NODE_ENV = 'production';
@@ -41,3 +42,4 @@ else {
 // // 리스닝 시작
 // server.listen(PORT, () => console.log(`Listening on port ${PORT}`)); // eslint-disable-line no-console
 
+service_config.load();
