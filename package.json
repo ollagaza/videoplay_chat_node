@@ -47,7 +47,8 @@
     "update": "^0.7.4",
     "xml2js": "^0.4.19",
     "nodejs-aes256": "^1.0.1",
-    "base64-url": "^2.2.0"
+    "base64-url": "^2.2.0",
+    "fs-extra": "^7.0.1"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

@@ -177,7 +177,6 @@ export default class OperationInfo extends JsonWrapper {
       }
 
       if (!this.media_info.isEmpty()) {
-        this.media_root = this.media_info.media_root;
         this.doctor_name = this.media_info.doctor_name;
       }
     }

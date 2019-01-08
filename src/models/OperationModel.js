@@ -5,6 +5,7 @@ import OperationInfo from '@/classes/surgbook/OperationInfo';
 import VideoModel from "@/models/xmlmodel/VideoModel";
 import MemberModel from '@/models/MemberModel';
 import StdObject from "@/classes/StdObject";
+import service_config from '@/config/service.config';
 
 export default class OperationModel extends ModelObject {
   constructor(...args) {
@@ -14,12 +15,7 @@ export default class OperationModel extends ModelObject {
     this.selectable_fields = ['*'];
   }
 
-  getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
-    const where = {"seq": operation_seq};
-    if (check_owner && token_info.getRole() <= role.MEMBER) {
-      where.member_seq = token_info.getId();
-    }
-
+  getOperation = async (where, import_xml) => {
     const oKnex = this.database.select(['*']);
     oKnex.from('operation');
     oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
@@ -28,10 +24,19 @@ export default class OperationModel extends ModelObject {
 
     const query_result = await oKnex;
 
-    return await this.getOperationInfoWithXML(query_result, true);
+    return await this.getOperationInfoWithXML(query_result, import_xml);
+  }
+
+  getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
+    const where = {"seq": operation_seq};
+    if (check_owner && token_info.getRole() <= role.MEMBER) {
+      where.member_seq = token_info.getId();
+    }
+
+    return await this.getOperation(where, true);
   };
 
-  getOperationInfoListPage = async (params, token_info, asc=false)  => {
+  getOperationInfoListPage = async (params, token_info, search, asc=false)  => {
     const page = params && params.page ? params.page : 1;
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
@@ -42,6 +47,9 @@ export default class OperationModel extends ModelObject {
     oKnex.whereIn('status', ['Y', 'T']);
     if (token_info.getRole() <= role.MEMBER) {
       oKnex.andWhere('member_seq', token_info.getId());
+    }
+    if (search) {
+      oKnex.andWhere(this.database.raw(`(operation_code LIKE '%${search}%' OR operation_name LIKE '%${search}%')`));
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
@@ -71,6 +79,10 @@ export default class OperationModel extends ModelObject {
   };
 
   getOperationInfoByResult = (query_result) => {
+    const service_info = service_config.getServiceInfo();
+    const media_root = service_info.media_root;
+    query_result.media_root = media_root;
+
     const operation_info = new OperationInfo(query_result);
 
     if (operation_info.media_root) {
@@ -103,15 +115,31 @@ export default class OperationModel extends ModelObject {
     return operation_info;
   };
 
-  updateStatusDelete = async (operation_seq) => {
-    const delete_suffix = '__D_' + Math.floor(Date.now() / 1000);
+  updateStatusDelete = async (operation_info, member_seq) => {
+    const operation_seq = operation_info.seq;
+    const delete_suffix = Math.floor(Date.now() / 1000) + '_' + operation_seq + '_' + member_seq + '_';
+
+    const where = {"seq": operation_seq};
+    const trash_path = delete_suffix + operation_info.operation_code;
+
     const update_params = {
-      status: 'D'
+      "status": 'D'
       , "modify_date": this.database.raw('NOW()')
-      , "operation_code": this.database.raw(`CONCAT(operation_code, '${delete_suffix}')`)
-      , "media_path": this.database.raw(`CONCAT(media_path, '${delete_suffix}')`)
+      , "operation_code": this.database.raw(`CONCAT('${delete_suffix}', operation_code)`)
+      , "media_path": trash_path
     };
-    return await this.update({"seq": operation_seq}, update_params);
+    await this.update(where, update_params);
+
+    const service_info = service_config.getServiceInfo();
+    const trash_root = service_info.trash_root;
+    if (!Util.fileExists(trash_root)) {
+      Util.createDirectory(trash_root);
+    }
+    if (!Util.rename(operation_info.media_directory, trash_root + '\\' + trash_path)){
+      throw new StdObject(-1, '파일 삭제 실패', 500);
+    }
+
+    return trash_path;
   };
 
   updateStatusTrash = async (operation_seq, is_delete) => {
@@ -153,13 +181,19 @@ export default class OperationModel extends ModelObject {
     const columns = ["sum(operation.file_count) as total_file_count", "sum(operation.file_size) as total_file_size", "sum(doctor.RunTime) as total_run_time"];
     const oKnex = this.database.select(this.arrayToSafeQuery(columns));
     oKnex.from('operation');
-    oKnex.innerJoin("doctor", "doctor.MediaPath", "operation.media_path");
+    oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
     if (token_info.getRole() <= role.MEMBER) {
       oKnex.where({member_seq: token_info.getId()});
     }
     oKnex.first();
 
-    return await oKnex;
+    const result = await oKnex;
+    const output = {};
+    output.total_file_count = result.total_file_count ? result.total_file_count : 0;
+    output.total_file_size = result.total_file_size ? result.total_file_size : 0;
+    output.total_run_time = result.total_run_time ? result.total_run_time : 0;
+
+    return output;
   };
 
   createOperation = async (body, member_seq) => {
@@ -170,7 +204,7 @@ export default class OperationModel extends ModelObject {
     }
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
-    operation_info.media_path = user_media_path + operation_info.operation_code;
+    operation_info.media_path = user_media_path + operation_info.operation_code + '\\SEQ\\';
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
 

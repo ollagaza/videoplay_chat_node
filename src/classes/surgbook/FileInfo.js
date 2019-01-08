@@ -11,6 +11,9 @@ import Util from '@/utils/baseutil';
  *      seq:
  *        type: "integer"
  *        description: "파일 고유 번호"
+ *      operation_seq:
+ *        type: "integer"
+ *        description: "수술 고유 번호"
  *      file_name:
  *        type: "string"
  *        description: "파일 이름"
@@ -46,7 +49,7 @@ export default class FileInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
     this.setKeys([
-      'seq', 'file_name', 'file_size', 'file_type', 'url', 'thumbnail_url'
+      'seq', 'operation_seq', 'file_name', 'file_size', 'file_type', 'url', 'thumbnail_url'
     ]);
   }
 
@@ -68,9 +71,41 @@ export default class FileInfo extends JsonWrapper {
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
+    let mimetype = upload_file_info.mimetype;
+    if (Util.isEmpty(mimetype)) {
+      mimetype = 'etc';
+    } else {
+      mimetype = mimetype.toLowerCase();
+      if (mimetype === 'application/octet-stream') {
+        mimetype = 'bin';
+      } else if (mimetype.startsWith('video')) {
+        mimetype = 'video';
+      } else if (mimetype.startsWith('image')) {
+        mimetype = 'image';
+      }  else if (mimetype.indexOf('text') >= 0) {
+        mimetype = 'text';
+      } else if (mimetype.indexOf('ms-excel') >= 0 || mimetype.indexOf('spreadsheetml') >= 0) {
+        mimetype = 'excel';
+      } else if (mimetype.indexOf('word') >= 0) {
+        mimetype = 'word';
+      } else if (mimetype.indexOf('powerpoint') >= 0 || mimetype.indexOf('presentationml') >= 0) {
+        mimetype = 'powerpoint';
+      } else if (mimetype.indexOf('pdf') >= 0) {
+        mimetype = 'pdf';
+      } else if (mimetype.indexOf('audio') >= 0) {
+        mimetype = 'audio';
+      } else if (mimetype.indexOf('compressed') >= 0 || mimetype.indexOf('zip') >= 0 || mimetype.indexOf('tar') >= 0) {
+        mimetype = 'archive ';
+      } else if (mimetype.indexOf('hwp') >= 0) {
+        mimetype = 'hwp ';
+      } else {
+        mimetype = 'etc';
+      }
+    }
+
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
-    this.file_type = upload_file_info.mimetype;
+    this.file_type = mimetype;
     this.file_path = media_path + '\\' + this.file_name;
 
     return this;

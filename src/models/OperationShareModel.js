@@ -13,7 +13,7 @@ export default class OperationShareModel extends ModelObject {
   }
 
   getShareInfoBySeq = async  (share_seq) => {
-    const query_result = await this.findOne({"seq": share_seq});
+    const query_result = await this.findOne({"seq": share_seq, "status": "Y"});
     return new OperationShareInfo(query_result);
   };
 
@@ -30,12 +30,12 @@ export default class OperationShareModel extends ModelObject {
   };
 
   getShareInfoByDecryptedInfo = async (decrypted_Info) => {
-    const query_result = await this.findOne({"operation_seq": decrypted_Info.s, "random_key": decrypted_Info.r});
+    const query_result = await this.findOne({"operation_seq": decrypted_Info.s, "random_key": decrypted_Info.r, "status": "Y"});
     return new OperationShareInfo(query_result);
   }
 
   getShareInfo = async (operation_info) => {
-    const query_result = await this.findOne({"operation_seq": operation_info.seq});
+    const query_result = await this.findOne({"operation_seq": operation_info.seq, "status": "Y"});
     let share_info;
     if (query_result && query_result.seq) {
       share_info = new OperationShareInfo(query_result);
@@ -78,29 +78,6 @@ export default class OperationShareModel extends ModelObject {
     return await this.update(where, update_data);
   };
 
-  increaseViewUserCount = async (share_seq) => {
-    const view_user_count = new OperationShareUserModel({ database: this.database }).getViewUserCount(share_seq);
-    const where = {
-      "seq": share_seq
-    };
-    const update_data = {
-      "view_user_count": view_user_count,
-      "modify_date": this.database.raw('NOW()')
-    };
-    return await this.update(where, update_data);
-  };
-
-  increaseShareUserCount = async (share_seq) => {
-    const where = {
-      "seq": share_seq
-    };
-    const update_data = {
-      "view_count": this.database.raw('send_count + 1'),
-      "modify_date": this.database.raw('NOW()')
-    };
-    return await this.update(where, update_data);
-  };
-
   increaseViewCount = async (share_seq) => {
     const where = {
       "seq": share_seq
@@ -122,4 +99,8 @@ export default class OperationShareModel extends ModelObject {
     };
     return await this.update(where, update_data);
   };
+
+  deleteShareInfo = async (operation_seq) => {
+    return await this.update({"operation_seq": operation_seq}, {"status": "D"});
+  }
 }

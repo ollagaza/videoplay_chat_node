@@ -1,4 +1,5 @@
 import fs from 'fs';
+import fse from 'fs-extra';
 import Iconv from 'iconv';
 import dateFormat from 'dateformat';
 import { promisify } from 'util';
@@ -42,9 +43,13 @@ const getUrlPrefix = (media_root, media_path) => {
 };
 
 const saveToFile = async (file_path, context) => {
-  fs.writeFileSync(file_path, context, 'utf8');
-
-  return true;
+  try{
+    await promisify(fs.writeFile)(file_path, context, 'utf8');
+    return true;
+  } catch(error) {
+    console.log(error);
+    return false;
+  }
 };
 
 const timeStrToSecond = (time_str) => {
@@ -163,8 +168,8 @@ export default {
       console.log(result.stdout);
       output.add('result', result.stdout)
     }
-    catch(e) {
-      console.log(e);
+    catch(error) {
+      console.error(error);
       output.error = -1;
       output.stack = e;
     }
@@ -201,6 +206,7 @@ export default {
       fs.mkdirSync(dir_path, { recursive: true });
       return true;
     } catch (error) {
+      console.error(error);
       return false;
     }
   },
@@ -210,6 +216,17 @@ export default {
       fs.renameSync(target_path, dest_path);
       return true;
     } catch (error) {
+      console.error(error);
+      return false;
+    }
+  },
+
+  "delete": (target_path) => {
+    try{
+      fse.removeSync(target_path);
+      return true;
+    } catch (error) {
+      console.error(error);
       return false;
     }
   },
