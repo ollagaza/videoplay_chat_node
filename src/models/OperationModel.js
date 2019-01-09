@@ -218,8 +218,8 @@ export default class OperationModel extends ModelObject {
     return operation_info;
   };
 
-  isDuplicateOperationCode = async (operation_code) => {
-    const where = {"operation_code": operation_code};
+  isDuplicateOperationCode = async (member_seq, operation_code) => {
+    const where = {"member_seq": member_seq, "operation_code": operation_code};
     const total_count = await this.getTotalCount(where);
 
     return total_count > 0;
