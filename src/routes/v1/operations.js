@@ -749,12 +749,7 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), W
   await database.transaction(async(trx) => {
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
     trash_path = await operation_model.updateStatusDelete(operation_info, token_info.getId());
-
-    const summary_info = await operation_model.getStorageSummary(token_info);
-    if (summary_info !== null) {
-      output.add('summary_info', summary_info);
-    }
-  })
+  });
 
   try {
     await new VideoFileModel({ database }).deleteAll(operation_seq, trash_path);
@@ -944,10 +939,6 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
     await updateOperationFileSize(operation_model, operation_seq);
 
     const output = new StdObject();
-    const summary_info = await operation_model.getStorageSummary(token_info);
-    if (summary_info !== null) {
-      output.add('summary_info', summary_info);
-    }
     res.json(output);
   });
 }));
