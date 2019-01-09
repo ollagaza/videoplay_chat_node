@@ -639,7 +639,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
 
   const service_info = service_config.getServiceInfo();
-  const media_directory = operation_info.media_directory;
+  const media_directory = operation_info.media_directory + "\\SEQ";
   const command = `${service_info.trans_exe_path} -ip="${service_info.trans_ip_address}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
   const execute_result = await Util.execute(command);
   const is_execute_success = execute_result.isSuccess();
