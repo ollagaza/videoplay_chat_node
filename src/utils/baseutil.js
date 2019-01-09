@@ -76,6 +76,8 @@ const dateFormatter = (timestamp, format='HH:MM:ss', use_offset) => {
 export default {
   "convert": convert,
 
+  "removePathSEQ": removePathSEQ,
+
   "getMediaDirectory": getMediaDirectory,
 
   "getUrlPrefix": getUrlPrefix,

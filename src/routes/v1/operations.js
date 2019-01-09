@@ -270,10 +270,7 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
   }
   const operation_seq = operation_info.operation_seq;
-
-  const service_info = service_config.getServiceInfo();
-  const media_root = service_info.media_root;
-  const media_directory = media_root + operation_info.media_path;
+  const media_directory = operation_info.media_directory;
 
   Util.createDirectory(media_directory + "\\SEQ");
   Util.createDirectory(media_directory + "\\Custom");
@@ -859,10 +856,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
 
   await database.transaction(async(trx) => {
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
-
-    const service_info = service_config.getServiceInfo();
-    const media_root = service_info.media_root;
-    let media_directory = media_root + operation_info.media_path;
+    let media_directory = operation_info.media_directory;
     if (file_type !== 'refer') {
       media_directory += 'SEQ';
     } else {
@@ -896,8 +890,8 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
 
     if (file_type !== 'refer') {
       const origin_video_path = upload_file_info.path;
-      const thumbnail_path = operation_info.media_path + '\\Thumb\\' + Date.now() + '.jpg';
-      const thumbnail_full_path = media_root + thumbnail_path;
+      const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
+      const thumbnail_full_path = operation_info.media_root + thumbnail_path;
       const command = 'ffmpeg -ss 00:00:30 -i "' + origin_video_path + '" -y -vframes 1 -filter:v scale=320:-1 -an "' + thumbnail_full_path + '"';
       const execute_result = await Util.execute(command);
       if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
