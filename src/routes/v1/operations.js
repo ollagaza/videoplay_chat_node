@@ -636,7 +636,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
 
   const service_info = service_config.getServiceInfo();
-  const media_directory = operation_info.media_directory + "\\SEQ";
+  const media_directory = operation_info.media_directory + "SEQ";
   const command = `${service_info.trans_exe_path} -ip="${service_info.trans_ip_address}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
   const execute_result = await Util.execute(command);
   const is_execute_success = execute_result.isSuccess();
@@ -649,7 +649,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     const subject = member_info.user_name + " 선생님으로부터 비디오 분석 요청이 있습니다.";
     let context = "";
     context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
-    context += `파일 경로: ${operation_info.media_path}<br/>\n`;
+    context += `파일 경로: ${media_directory}<br/>\n`;
     context += `파일 개수: ${file_summary.total_count}<br/>\n`;
     context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
     context += `Command: ${command}<br/>\n`;
