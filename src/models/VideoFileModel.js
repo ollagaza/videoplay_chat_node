@@ -45,7 +45,7 @@ export default class VideoFileModel extends ModelObject {
      await this.update({"operation_seq": operation_seq}, {"status": "D", "file_path": trash_path, "modify_date": this.database.raw('NOW()')});
    };
 
-   deleteSelectedFiles = async (file_seq_list, media_path) => {
+   deleteSelectedFiles = async (file_seq_list, media_directory) => {
      const oKnex = this.database
        .select(this.selectable_fields)
        .from(this.table_name)
@@ -68,7 +68,7 @@ export default class VideoFileModel extends ModelObject {
 
      const service_info = service_config.getServiceInfo();
      const media_root = service_info.media_root;
-     const trash_directory = media_root + media_path + 'Trash\\';
+     const trash_directory = media_directory + 'Trash\\';
      if (!Util.fileExists(trash_directory)) {
        Util.createDirectory(trash_directory);
      }

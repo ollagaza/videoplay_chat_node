@@ -41,6 +41,20 @@ export default class MemberModel extends ModelObject {
 
     const member = member_info.toJSON();
 
+    let user_media_path = "\\";
+    if (!member_info.hospital_code || member_info.hospital_code === 'XXXX') {
+      user_media_path += "C_" + Util.getRandomString(5).toUpperCase() + "\\";
+    } else {
+      user_media_path += member_info.hospital_code.toUpperCase() + "\\";
+    }
+    if (!member_info.depart_code || member_info.depart_code === 'ZZZ') {
+      user_media_path += "C_" + Util.getRandomString(4).toUpperCase() + "\\";
+    } else {
+      user_media_path += member_info.depart_code.toUpperCase() + "\\";
+    }
+    user_media_path += member_info.user_name + "\\";
+    member.user_media_path = user_media_path;
+
     const result = await super.create(member);
 
     return result;

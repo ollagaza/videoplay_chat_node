@@ -204,6 +204,7 @@ export default {
   },
 
   "createDirectory": (dir_path) => {
+    console.log('createDirectory -> ' + dir_path);
     try{
       fs.mkdirSync(dir_path, { recursive: true });
       return true;

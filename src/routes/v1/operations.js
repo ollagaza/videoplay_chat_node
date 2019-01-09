@@ -272,11 +272,11 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
   const operation_seq = operation_info.operation_seq;
   const media_directory = operation_info.media_directory;
 
-  Util.createDirectory(media_directory + "\\SEQ");
-  Util.createDirectory(media_directory + "\\Custom");
-  Util.createDirectory(media_directory + "\\REF");
-  Util.createDirectory(media_directory + "\\Thumb");
-  Util.createDirectory(media_directory + "\\Trash");
+  Util.createDirectory(media_directory + "SEQ");
+  Util.createDirectory(media_directory + "Custom");
+  Util.createDirectory(media_directory + "REF");
+  Util.createDirectory(media_directory + "Thumb");
+  Util.createDirectory(media_directory + "Trash");
 
   const output = new StdObject();
   output.add('operation_seq', operation_seq);
@@ -878,10 +878,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
     let file_model = null;
     if (file_type !== 'refer') {
       file_model = new VideoFileModel({database: trx});
-      upload_seq = await file_model.createVideoFile(upload_file_info, operation_seq, operation_info.media_path + '\\SEQ');
+      upload_seq = await file_model.createVideoFile(upload_file_info, operation_seq, Util.removePathSEQ(operation_info.media_path) + 'SEQ');
     } else {
       file_model = new ReferFileModel({database: trx});
-      upload_seq = await file_model.createReferFile(upload_file_info, operation_seq, operation_info.media_path + '\\REF');
+      upload_seq = await file_model.createReferFile(upload_file_info, operation_seq, Util.removePathSEQ(operation_info.media_path) + 'REF');
     }
 
     if (!upload_seq) {
@@ -925,7 +925,7 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
   await database.transaction(async(trx) => {
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
     if (file_type !== 'refer') {
-      await new VideoFileModel({database: trx}).deleteSelectedFiles(file_seq_list, operation_info.media_path);
+      await new VideoFileModel({database: trx}).deleteSelectedFiles(file_seq_list, operation_info.media_directory);
     } else {
       await new ReferFileModel({database: trx}).deleteSelectedFiles(file_seq_list);
     }

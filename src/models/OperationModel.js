@@ -211,6 +211,10 @@ export default class OperationModel extends ModelObject {
     const operation_seq = await this.create(operation_info, 'seq');
     operation_info.operation_seq = operation_seq;
 
+    const service_info = service_config.getServiceInfo();
+    const media_root = service_info.media_root;
+    operation_info.media_directory = Util.getMediaDirectory(media_root, operation_info.media_path);
+
     return operation_info;
   };
 
