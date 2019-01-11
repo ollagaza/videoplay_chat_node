@@ -19,8 +19,8 @@ const invite_form = `
     	<div>서울특별시 마포구 성암로 330 DMC첨단산업센터 516호 (주)엠티이지</div>
       <div>330, Seongam-ro, Mapo-gu, Seoul, Republic of Korea</div>
 			<div style="margin-top: 5px;">
-    		<img src="{service_url}/img/mail_dot.png" style="border: 0; margin-right: 5px;"><a href="http://www.mteg.co.kr" each="_blank" target="_blank" style="text-decoration: none;"><span style="font-size: 12px;color: #333;">www.mteg.co.kr</span></a>
-				<img src="{service_url}/img/mail_dot.png" style="border: 0; margin: 0 5px 0 15px;"><span style="font-size: 12px;color: #333;">02.859.3585</span>
+    		<img src="{request_domain}/img/mail_dot.png" style="border: 0; margin-right: 5px;"><a href="http://www.mteg.co.kr" each="_blank" target="_blank" style="text-decoration: none;"><span style="font-size: 12px;color: #333;">www.mteg.co.kr</span></a>
+				<img src="{request_domain}/img/mail_dot.png" style="border: 0; margin: 0 5px 0 15px;"><span style="font-size: 12px;color: #333;">02.859.3585</span>
 			</div>
 		</div>
   </div>

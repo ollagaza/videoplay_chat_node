@@ -10,15 +10,15 @@ const create_user_form = `
 서지북 계정을 등록해 주셔서 감사합니다. <br>
 계정을 활성화하려면 확인버튼을 클릭하세요.<br>
 확인 버튼을 클릭해도 아무 반응이 없으면 링크를 복사해 <br>
-브라우저 주소 입력 창에 붙여 넣거나 직접 입력해 주세요.<br>{service_url}/v2/signup?auth_key={auth_key}&amp;member_seq={member_seq}</p>
+브라우저 주소 입력 창에 붙여 넣거나 직접 입력해 주세요.<br>{url_prefix}?auth_key={auth_key}&amp;member_seq={member_seq}</p>
         <div class="table_btn4" style="width: 430px;text-align: center;">
-        	<a href="{service_url}/v2/signup/email?auth_key={auth_key}&member_seq={member_seq}" style="text-decoration: none;"><button type="submit" class="info_btn1" style="cursor: pointer;width: 200px;height: 43px;border-radius: 5px;background: #252a37;font-size: 18px;color: #fff;">확인</button></a>
+        	<a href="{url_prefix}?auth_key={auth_key}&member_seq={member_seq}" style="text-decoration: none;"><button type="submit" class="info_btn1" style="cursor: pointer;width: 200px;height: 43px;border-radius: 5px;background: #252a37;font-size: 18px;color: #fff;">확인</button></a>
         </div>
         <div class="copy" style="margin-top: 30px;background: #fff;text-align: center;padding-bottom: 20px;">
-        	<img src="{service_url}/img/mail_sent.png" style="border: 0;">
+        	<img src="{request_domain}/img/mail_sent.png" style="border: 0;">
         	<p>{address_kor}</p>
         	<p>{address_en}</p>
-        	<img src="{service_url}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_domain}</span> <img src="{service_url}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_telephone}</span>
+        	<img src="{request_domain}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_domain}</span> <img src="{request_domain}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_telephone}</span>
         </div>
      </div>
 </div>
@@ -48,13 +48,13 @@ const find_user_info_form = `
   		</tbody></table>
   	</div>
     <div class="table_btn4" style="width: 100%; text-align: center; padding-top: 20px;">
-    	<a href="{service_url}/" style="text-decoration: none;"><button class="info_btn1" style="cursor: pointer;width: 200px;height: 43px;border-radius: 5px;background: #252a37;font-size: 18px;color: #fff;">로그인 하러가기</button></a>
+    	<a href="{request_domain}/" style="text-decoration: none;"><button class="info_btn1" style="cursor: pointer;width: 200px;height: 43px;border-radius: 5px;background: #252a37;font-size: 18px;color: #fff;">로그인 하러가기</button></a>
     </div>
     <div class="copy" style="margin-top: 30px;background: #fff;text-align: center;">
-    	<img src="{service_url}/img/mail_sent.png" style="border: 0;">
+    	<img src="{request_domain}/img/mail_sent.png" style="border: 0;">
     	<p>{address_kor}</p>
         	<p>{address_en}</p>
-    	<img src="{service_url}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_domain}</span> <img src="{service_url}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_telephone}</span>
+    	<img src="{request_domain}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_domain}</span> <img src="{request_domain}/img/mail_dot.png" style="border: 0;"><span style="font-size: 12px;color: #999;">{main_telephone}</span>
     </div>
   </div>
 </div>

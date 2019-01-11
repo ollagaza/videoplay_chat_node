@@ -717,6 +717,7 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
         "share_key": share_info.share_key,
         "comment": Util.nlToBr(req.body.comment),
         "url_prefix": req.body.url_prefix,
+        "request_domain": req.body.request_domain,
         "operation_name": operation_info.operation_name ? `"${operation_info.operation_name}"` : ''
       };
       console.log(template_data);

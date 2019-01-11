@@ -167,7 +167,7 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(as
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const member_info = new MemberInfo(req.body, ['password_confirm']);
+  const member_info = new MemberInfo(req.body, ['password_confirm', 'url_prefix', 'request_domain']);
   member_info.checkDefaultParams();
   member_info.checkUserName();
   member_info.checkEmailAddress();
@@ -194,7 +194,9 @@ routes.post('/', Wrap(async(req, res) => {
     const template_data = {
       "user_name": member_info.user_name,
       "auth_key": mail_auth_key,
-      "member_seq": member_seq
+      "member_seq": member_seq,
+      "url_prefix": req.body.url_prefix,
+      "request_domain": req.body.request_domain
     };
     const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', MemberTemplate.createUser(template_data));
 
@@ -313,7 +315,9 @@ routes.post('/find', Wrap(async(req, res) => {
     const template_data = {
       "user_name": find_info.user_name,
       "email_address": find_info.email_address,
-      "tmp_password": temp_password
+      "tmp_password": temp_password,
+      "url_prefix": req.body.url_prefix,
+      "request_domain": req.body.request_domain
     };
 
     const send_mail_result = await new SendMail().sendMailHtml([find_info.email_address], 'MTEG 계정정보 찾기를 요청하셨습니다.', MemberTemplate.findUserInfo(template_data));
