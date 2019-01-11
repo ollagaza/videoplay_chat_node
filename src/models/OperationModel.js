@@ -136,7 +136,7 @@ export default class OperationModel extends ModelObject {
       Util.createDirectory(trash_root);
     }
     if (!Util.rename(operation_info.media_directory, trash_root + '\\' + trash_path)){
-      throw new StdObject(-1, '파일 삭제 실패', 500);
+      // throw new StdObject(-1, '파일 삭제 실패', 500);
     }
 
     return trash_path;
