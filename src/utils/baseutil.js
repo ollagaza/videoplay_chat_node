@@ -276,5 +276,20 @@ export default {
     path = path.replace(/^\/+/g, '');
 
     return '/' + path;
+  },
+
+
+
+  "getXmlText": (element) => {
+    if (!element) {
+      return "";
+    }
+    if (element._) {
+      return element._;
+    }
+    if (_.isArray(element)) {
+      return element[0];
+    }
+    return element;
   }
 };

@@ -40,38 +40,38 @@ export default class JsonWrapper {
 
   setThorwException = (value) => {
     this.thorw_exception = value;
-  }
+  };
 
   setIgnoreEmpty = (value) => {
     this.ignore_empty = value;
-  }
+  };
 
   setAutoTrim = (value) => {
     this.auto_trim = value;
-  }
+  };
 
   setKeys = (keys=[]) => {
     this.json_keys = keys;
-  }
+  };
 
   isEmpty = () => {
     return this.is_empty;
-  }
+  };
 
   hasValue = (key) => {
     return Util.isEmpty(this[key]) === false;
-  }
+  };
 
   setExportXml = (value) => {
     this.export_xml = value;
-  }
+  };
 
   toJSON = () => {
     if (this.export_xml) {
       return this.getXmlJson();
     }
     return this.getObjectJson();
-  }
+  };
 
   getObjectJson = () => {
     const result = {};
@@ -89,15 +89,15 @@ export default class JsonWrapper {
     }
 
     return result;
-  }
+  };
 
   getXmlJson = () => {
     return {};
-  }
+  };
 
   toString = () => {
     return JSON.stringify(this.toJSON());
-  }
+  };
 
   returnBoolean = (result_code=0, message='', http_status_code=200) => {
     if (result_code === 0) {
@@ -107,7 +107,7 @@ export default class JsonWrapper {
       throw new StdObject(result_code, message, http_status_code);
     }
     return false;
-  }
+  };
 
   getXmlText = (element) => {
     if (!element) {
@@ -120,5 +120,5 @@ export default class JsonWrapper {
       return element[0];
     }
     return element;
-  }
+  };
 }

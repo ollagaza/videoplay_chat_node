@@ -51,7 +51,7 @@ export default class IndexModel extends ModelObject {
         const xml_attr = xml_info.$ ? xml_info.$ : {};
         const index_info = {};
 
-        const index_name = xml_info._;
+        const index_name = Util.getXmlText(xml_info);
         const file_info = new IndexFileInfo(index_name);
         const frame = file_info.getFrame();
         const directory = xml_attr.directory || default_directory;
