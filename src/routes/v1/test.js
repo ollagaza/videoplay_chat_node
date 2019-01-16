@@ -54,4 +54,12 @@ routes.get('/token', wrap(async (req, res) => {
   res.json(result);
 }));
 
+routes.get('/uuid', wrap(async (req, res) => {
+  const uuid = await Util.getUuid();
+  const output = new StdObject();
+  output.add('uuid', uuid);
+
+  res.json(output);
+}));
+
 export default routes;

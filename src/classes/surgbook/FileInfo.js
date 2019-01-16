@@ -11,9 +11,9 @@ import Util from '@/utils/baseutil';
  *      seq:
  *        type: "integer"
  *        description: "파일 고유 번호"
- *      operation_seq:
+ *      storage_seq:
  *        type: "integer"
- *        description: "수술 고유 번호"
+ *        description: "저장공간 정보 번호"
  *      file_name:
  *        type: "string"
  *        description: "파일 이름"
@@ -49,7 +49,7 @@ export default class FileInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
     this.setKeys([
-      'seq', 'operation_seq', 'file_name', 'file_size', 'file_type', 'url', 'thumbnail_url'
+      'seq', 'storage_seq', 'file_name', 'file_size', 'file_type', 'url', 'thumbnail_url'
     ]);
   }
 

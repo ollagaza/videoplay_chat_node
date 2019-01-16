@@ -10,7 +10,10 @@ import xml2js from 'xml2js';
 import crypto from 'crypto';
 import aes256 from 'nodejs-aes256';
 import service_config from '@/config/service.config';
-import  base64url from 'base64-url';
+import base64url from 'base64-url';
+import uuidv1 from 'uuid/v1';
+import http from 'http';
+import https from 'https';
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true});
@@ -73,6 +76,14 @@ const dateFormatter = (timestamp, format='HH:MM:ss', use_offset) => {
   return dateFormat(timestamp, format);
 };
 
+const fileExists = (file_path) => {
+  try{
+    return fs.existsSync(file_path);
+  } catch (error) {
+    return false;
+  }
+};
+
 export default {
   "convert": convert,
 
@@ -96,6 +107,10 @@ export default {
     const xml_file_path = directory + xml_file_name;
 
     let context = null;
+    if (!fileExists(xml_file_path)) {
+      return {};
+    }
+
     try {
       context = await promisify(fs.readFile)(xml_file_path);
     } catch (e) {
@@ -167,13 +182,12 @@ export default {
     const output = new StdObject();
     try {
       const result = await promisify(exec)(command);
-      console.log(result.stdout);
       output.add('result', result.stdout)
     }
     catch(error) {
       console.error(error);
       output.error = -1;
-      output.stack = e;
+      output.stack = error;
     }
     return output;
   },
@@ -195,16 +209,9 @@ export default {
     return output;
   },
 
-  "fileExists": (file_path) => {
-    try{
-      return fs.existsSync(file_path);
-    } catch (error) {
-      return false;
-    }
-  },
+  "fileExists": fileExists,
 
   "createDirectory": (dir_path) => {
-    console.log('createDirectory -> ' + dir_path);
     try{
       fs.mkdirSync(dir_path, { recursive: true });
       return true;
@@ -291,5 +298,28 @@ export default {
       return element[0];
     }
     return element;
+  },
+
+  "getUuid": () => {
+    return uuidv1();
+  },
+
+  "httpRequest": (options, is_https=false) => {
+    return new Promise((resolve, reject) => {
+      let req;
+      if (is_https) {
+        req = https.request(options);
+      } else {
+        req = http.request(options);
+      }
+
+      req.on('response', res => {
+        resolve(res);
+      });
+
+      req.on('error', err => {
+        reject(err);
+      });
+    });
   }
 };

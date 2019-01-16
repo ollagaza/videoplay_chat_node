@@ -45,24 +45,6 @@ import Util from '@/utils/baseutil';
  *      patient_race:
  *        type: "string"
  *        description: "환자 인종"
- *      index1_count:
- *        type: "integer"
- *        description: "인덱스1 파일 개수"
- *      index2_count:
- *        type: "integer"
- *        description: "인덱스2 파일 개수"
- *      index3_count:
- *        type: "integer"
- *        description: "인덱스3 파일 개수"
- *      clip_count:
- *        type: "integer"
- *        description: "클립 개수"
- *      video_count:
- *        type: "integer"
- *        description: "비디오 파일 개수"
- *      report_count:
- *        type: "integer"
- *        description: "레포트 개수"
  *      status:
  *        type: "string"
  *        description: "레코드 상태 값. Y: 사용가능, T: 휴지통, D: 완전 삭제"
@@ -135,12 +117,6 @@ import Util from '@/utils/baseutil';
  *      patient_race:
  *        type: "string"
  *        description: "환자 인종"
- *      file_size:
- *        type: "integer"
- *        description: "전체 파일 용량"
- *      file_count:
- *        type: "integer"
- *        description: "전체 파일 개수"
  *
  */
 
@@ -151,10 +127,9 @@ export default class OperationInfo extends JsonWrapper {
     this.setKeys([
       'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
       , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
-      , 'index1_count', 'index2_count', 'index3_count', 'clip_count', 'video_count', 'report_count'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
       , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'video_source'
-      , 'reg_date', 'reg_diff_hour', 'file_size', 'file_count'
+      , 'reg_date', 'reg_diff_hour'
     ]);
 
     if (data) {
