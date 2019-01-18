@@ -1,5 +1,4 @@
 import JsonWrapper from '@/classes/JsonWrapper';
-import MediaInfo from '@/classes/surgbook/MediaInfo';
 import Util from '@/utils/baseutil';
 
 /**
@@ -63,25 +62,23 @@ import Util from '@/utils/baseutil';
  *      is_favorite:
  *        type: "boolean"
  *        description: "즐겨찾기 여부"
- *      origin_video_url:
- *        type: "string"
- *        description: "원본 비디오 URL"
- *      proxy_video_url:
- *        type: "string"
- *        description: "편집기용 비디오 URL"
- *      video_source:
- *        type: "string"
- *        description: "비디오 소스 경로"
  *      reg_date:
  *        type: "string"
  *        description: "수술정보 등록일자"
  *      reg_diff_hour:
  *        type: "integer"
  *        description: "등록 후 지난 시간"
+ *      total_file_size:
+ *        type: "integer"
+ *        description: "저장공간 사용 량"
+ *      total_file_count:
+ *        type: "integer"
+ *        description: "저장된 파일 개수"
+ *      storage_seq:
+ *        type: "integer"
+ *        description: "저장공간 고유 번호"
  *      media_info:
- *        $ref: "#definitions/MediaInfo"
- *      video_info:
- *        $ref: "#definitions/VideoInfo"
+ *        $ref: "#definitions/OperationMediaInfo"
  *
  *  OperationEditInfo:
  *    type: "object"
@@ -128,13 +125,10 @@ export default class OperationInfo extends JsonWrapper {
       'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
       , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
-      , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'video_source'
       , 'reg_date', 'reg_diff_hour'
     ]);
 
     if (data) {
-      this.media_info = new MediaInfo().getByOperationInfo(data);
-
       if (data._no) {
         this.list_no = data._no;
       }
@@ -149,10 +143,6 @@ export default class OperationInfo extends JsonWrapper {
       }
       if (this.modify_date) {
         this.modify_date = Util.dateFormat(this.modify_date.getTime());
-      }
-
-      if (!this.media_info.isEmpty()) {
-        this.doctor_name = this.media_info.doctor_name;
       }
     }
   }
@@ -176,7 +166,7 @@ export default class OperationInfo extends JsonWrapper {
     return this;
   };
 
-  setVideoInfo = (video_info) => {
-    this.video_info = video_info;
+  setMediaInfo = (media_info) => {
+    this.media_info = media_info;
   };
 }

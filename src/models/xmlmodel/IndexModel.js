@@ -153,7 +153,7 @@ export default class IndexModel extends ModelObject {
     }
 
     const media_directory = operation_info.media_directory;
-    const origin_video_path = operation_info.origin_video_path;
+    const origin_video_path = operation_info.media_info.origin_video_path;
     const target_time_str = Util.secondToTimeStr(second);
     const save_directory = media_directory + 'Custom';
     if (!Util.fileExists(save_directory)) {

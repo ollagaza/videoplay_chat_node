@@ -13,6 +13,8 @@ import SendMail from '@/classes/SendMail';
 import MemberModel from '@/models/MemberModel';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
 import OperationModel from '@/models/OperationModel';
+import OperationMediaModel from '@/models/OperationMediaModel';
+import OperationStorageModel from '@/models/OperationStorageModel';
 import OperationShareModel from '@/models/OperationShareModel';
 import OperationShareUserModel from '@/models/OperationShareUserModel';
 import IndexModel from '@/models/xmlmodel/IndexModel';
@@ -167,7 +169,7 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
   output.adds(operation_info_page);
 
   if (Util.equals(req.query.summary, 'y')) {
-    const summary_info = await operation_model.getStorageSummary(token_info);
+    const summary_info = await new OperationStorageModel({ database }).getStorageSummary(token_info);
     if (summary_info !== null) {
       output.add('summary_info', summary_info);
     }
@@ -264,23 +266,28 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     member_seq = req.body.member_seq;
   }
 
-  const operation_model = new OperationModel({ database });
-  const operation_info = await operation_model.createOperation(req.body, member_seq);
-  if (!operation_info || !operation_info.operation_seq) {
-    throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
-  }
-  const operation_seq = operation_info.operation_seq;
-  const media_directory = operation_info.media_directory;
+  await database.transaction(async(trx) => {
+    const operation_model = new OperationModel({ database: trx });
+    const operation_info = await operation_model.createOperation(req.body, member_seq);
+    if (!operation_info || !operation_info.operation_seq) {
+      throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
+    }
+    const operation_seq = operation_info.operation_seq;
+    const media_directory = operation_info.media_directory;
 
-  Util.createDirectory(media_directory + "SEQ");
-  Util.createDirectory(media_directory + "Custom");
-  Util.createDirectory(media_directory + "REF");
-  Util.createDirectory(media_directory + "Thumb");
-  Util.createDirectory(media_directory + "Trash");
+    await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
+    await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
 
-  const output = new StdObject();
-  output.add('operation_seq', operation_seq);
-  res.json(output);
+    Util.createDirectory(media_directory + "SEQ");
+    Util.createDirectory(media_directory + "Custom");
+    Util.createDirectory(media_directory + "REF");
+    Util.createDirectory(media_directory + "Thumb");
+    Util.createDirectory(media_directory + "Trash");
+
+    const output = new StdObject();
+    output.add('operation_seq', operation_seq);
+    res.json(output);
+  });
 }));
 
 /**
@@ -592,7 +599,7 @@ routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.
     const send_mail = new SendMail();
 
     const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
-    const subject = operation_info.doctor_name + " 선생님으로부터 서비스 요청이 있습니다.";
+    const subject = operation_info.user_name + " 선생님으로부터 서비스 요청이 있습니다.";
     const attachments = [send_mail.getAttachObject(operation_info.media_directory + "Clip.xml", "Clip.xml")];
     const send_mail_result = await send_mail.sendMailText(mail_to, subject, "첨부한 Clip.xml 파일을 확인하세요.", attachments);
 
@@ -632,7 +639,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   const operation_seq = req.params.operation_seq;
 
   const {operation_info, operation_model} = await getOperationInfo(database, operation_seq, token_info);
-  const file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
+  const file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_info.storage_seq);
   const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
 
   const service_info = service_config.getServiceInfo();
@@ -743,21 +750,25 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), W
   const operation_seq = req.params.operation_seq;
   const output = new StdObject();
   let trash_path = null;
+  let storage_seq = null;
 
   await database.transaction(async(trx) => {
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
     trash_path = await operation_model.updateStatusDelete(operation_info, token_info.getId());
+    storage_seq = operation_info.storage_seq;
   });
 
-  try {
-    await new VideoFileModel({ database }).deleteAll(operation_seq, trash_path);
-  } catch (e) {
-    console.error(e);
-  }
-  try {
-    await new ReferFileModel({ database }).deleteAll(operation_seq);
-  } catch (e) {
-    console.error(e);
+  if (storage_seq) {
+    try {
+      await new VideoFileModel({ database }).deleteAll(operation_seq, trash_path);
+    } catch (e) {
+      console.error(e);
+    }
+    try {
+      await new ReferFileModel({ database }).deleteAll(operation_seq);
+    } catch (e) {
+      console.error(e);
+    }
   }
   try {
     await new OperationShareModel({ database }).deleteShareInfo(operation_seq);
@@ -842,11 +853,12 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(roles.LOGIN_USER)
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  await getOperationInfo(database, operation_seq, token_info);
+  const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
+  const storage_seq = operation_info.storage_seq
 
   const output = new StdObject();
-  output.add('video_files', await new VideoFileModel({ database }).videoFileList(operation_seq));
-  output.add('refer_files', await new ReferFileModel({ database }).referFileList(operation_seq));
+  output.add('video_files', await new VideoFileModel({ database }).videoFileList(storage_seq));
+  output.add('refer_files', await new ReferFileModel({ database }).referFileList(storage_seq));
 
   res.json(output);
 }));
@@ -857,7 +869,8 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   const file_type = req.params.file_type;
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
+    const storage_seq = operation_info.storage_seq;
     let media_directory = operation_info.media_directory;
     if (file_type !== 'refer') {
       media_directory += 'SEQ';
@@ -880,10 +893,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
     let file_model = null;
     if (file_type !== 'refer') {
       file_model = new VideoFileModel({database: trx});
-      upload_seq = await file_model.createVideoFile(upload_file_info, operation_seq, Util.removePathSEQ(operation_info.media_path) + 'SEQ');
+      upload_seq = await file_model.createVideoFile(upload_file_info, storage_seq, Util.removePathSEQ(operation_info.media_path) + 'SEQ');
     } else {
       file_model = new ReferFileModel({database: trx});
-      upload_seq = await file_model.createReferFile(upload_file_info, operation_seq, Util.removePathSEQ(operation_info.media_path) + 'REF');
+      upload_seq = await file_model.createReferFile(upload_file_info, storage_seq, Util.removePathSEQ(operation_info.media_path) + 'REF');
     }
 
     if (!upload_seq) {
@@ -905,7 +918,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
       }
     }
 
-    await updateOperationFileSize(operation_model, operation_seq);
+    await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
 
     const output = new StdObject();
     output.add('upload_seq', upload_seq);
@@ -925,14 +938,15 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
   }
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
+    const storage_seq = operation_info.storage_seq;
     if (file_type !== 'refer') {
       await new VideoFileModel({database: trx}).deleteSelectedFiles(file_seq_list, operation_info.media_directory);
     } else {
       await new ReferFileModel({database: trx}).deleteSelectedFiles(file_seq_list);
     }
 
-    await updateOperationFileSize(operation_model, operation_seq);
+    await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
 
     const output = new StdObject();
     res.json(output);
@@ -944,21 +958,11 @@ routes.get('/storage/summary', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(asyn
   const token_info = req.token_info;
 
   const output = new StdObject();
-  const summary_info = await new OperationModel({ database }).getStorageSummary(token_info);
+  const summary_info = await new OperationStorageModel({ database }).getStorageSummary(token_info);
   if (summary_info !== null) {
     output.add('summary_info', summary_info);
   }
   res.json(output);
 }));
-
-const updateOperationFileSize = async (operation_model, operation_seq) => {
-  const video_file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
-  const refer_file_summary = await new ReferFileModel({ database }).referFileSummary(operation_seq);
-  let total_file_size = (video_file_summary.total_size ? parseInt(video_file_summary.total_size) : 0);
-  total_file_size += (refer_file_summary.total_size ? parseInt(refer_file_summary.total_size) : 0);
-  total_file_size = Math.ceil(total_file_size / 1024 / 1024);
-  let total_file_count = (video_file_summary.total_count ? parseInt(video_file_summary.total_count) : 0) + (refer_file_summary.total_count ? parseInt(refer_file_summary.total_count) : 0);
-  await operation_model.updateFileInfo(operation_seq, total_file_size, total_file_count);
-};
 
 export default routes;

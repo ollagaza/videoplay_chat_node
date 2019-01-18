@@ -13,7 +13,7 @@ import Util from '@/utils/baseutil';
  *        description: "파일 고유 번호"
  *      storage_seq:
  *        type: "integer"
- *        description: "저장공간 정보 번호"
+ *        description: "저장공간 고유 번호"
  *      file_name:
  *        type: "string"
  *        description: "파일 이름"

@@ -56,7 +56,7 @@ export default class ReportModel extends ModelObject {
         ],
         "Department": [
           {
-            "Surgeon": [ operation_info.doctor_name ],
+            "Surgeon": [ operation_info.user_name ],
             "Doctor": [ "" ],
             "Anesthesia": [ "" ],
           }

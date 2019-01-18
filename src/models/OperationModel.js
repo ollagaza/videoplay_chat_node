@@ -2,8 +2,8 @@ import ModelObject from '@/classes/ModelObject';
 import role from '@/config/roles';
 import Util from '@/utils/baseutil';
 import OperationInfo from '@/classes/surgbook/OperationInfo';
-import VideoModel from "@/models/xmlmodel/VideoModel";
 import MemberModel from '@/models/MemberModel';
+import OperationMediaModel from '@/models/OperationMediaModel';
 import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
 
@@ -15,17 +15,18 @@ export default class OperationModel extends ModelObject {
     this.selectable_fields = ['*'];
   }
 
-  getOperation = async (where, import_xml) => {
-    const oKnex = this.database.select(['*']);
+  getOperation = async (where, import_media_info) => {
+    const oKnex = this.database.select(['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq']);
     oKnex.from('operation');
-    oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
+    oKnex.innerJoin("member", "member.seq", "operation.member_seq");
+    oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     oKnex.where(where);
     oKnex.first();
 
     const query_result = await oKnex;
 
-    return await this.getOperationInfoWithXML(query_result, import_xml);
-  }
+    return await this.getOperationInfoWithMediaInfo(query_result, import_media_info);
+  };
 
   getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
     const where = {"seq": operation_seq};
@@ -41,15 +42,16 @@ export default class OperationModel extends ModelObject {
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
 
-    const oKnex = this.database.select(['*']);
+    const oKnex = this.database.select(['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq']);
     oKnex.from('operation');
-    oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
+    oKnex.innerJoin("member", "member.seq", "operation.member_seq");
+    oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     oKnex.whereIn('status', ['Y', 'T']);
     if (token_info.getRole() <= role.MEMBER) {
       oKnex.andWhere('member_seq', token_info.getId());
     }
     if (search) {
-      oKnex.andWhere(this.database.raw(`(operation_code LIKE '%${search}%' OR operation_name LIKE '%${search}%')`));
+      oKnex.andWhere(this.database.raw(`(operation.operation_code LIKE '%${search}%' OR operation.operation_name LIKE '%${search}%')`));
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
@@ -93,23 +95,17 @@ export default class OperationModel extends ModelObject {
     return operation_info;
   };
 
-  getOperationInfoWithXML = async (query_result, import_xml=false) => {
+  getOperationInfoWithMediaInfo = async (query_result, import_media_info=false) => {
     if (query_result == null) {
       return new OperationInfo(null);
     }
 
     const operation_info = this.getOperationInfoByResult(query_result);
 
-    if (import_xml === true && operation_info.media_directory) {
-      const video_info = await new VideoModel({ "database": this.database }).getVideoInfo(operation_info.media_directory);
-      operation_info.setVideoInfo(video_info);
-
-      if (video_info.video_name) {
-        operation_info.origin_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name;
-        operation_info.proxy_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
-        operation_info.video_source = "SEQ\\" + video_info.video_name;
+    if (import_media_info === true) {
+      const media_info = await new OperationMediaModel({ "database": this.database }).getOperationMediaInfo(operation_info);
+      operation_info.setMediaInfo(media_info);
         operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
-      }
     }
 
     return operation_info;
@@ -177,25 +173,6 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, params);
   };
 
-  getStorageSummary = async  (token_info) => {
-    const columns = ["sum(operation.file_count) as total_file_count", "sum(operation.file_size) as total_file_size", "sum(doctor.RunTime) as total_run_time"];
-    const oKnex = this.database.select(this.arrayToSafeQuery(columns));
-    oKnex.from('operation');
-    oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
-    if (token_info.getRole() <= role.MEMBER) {
-      oKnex.where({member_seq: token_info.getId()});
-    }
-    oKnex.first();
-
-    const result = await oKnex;
-    const output = {};
-    output.total_file_count = result.total_file_count ? result.total_file_count : 0;
-    output.total_file_size = result.total_file_size ? result.total_file_size : 0;
-    output.total_run_time = result.total_run_time ? result.total_run_time : 0;
-
-    return output;
-  };
-
   createOperation = async (body, member_seq) => {
     const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
     const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);
@@ -205,6 +182,7 @@ export default class OperationModel extends ModelObject {
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
     operation_info.media_path = user_media_path + operation_info.operation_code + '\\SEQ\\';
+    operation_info.content_id = Util.getUuid();
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
 
@@ -225,7 +203,8 @@ export default class OperationModel extends ModelObject {
     return total_count > 0;
   };
 
-  updateFileInfo = async (operation_seq, file_size, file_count) => {
-    return await this.update({"seq": operation_seq}, {file_size: file_size, file_count: file_count});
+  getOperationInfoByContentId = async (content_id) => {
+    const where = {"content_id": content_id};
+    return await this.getOperation(where, false);
   };
 }

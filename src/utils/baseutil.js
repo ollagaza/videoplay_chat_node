@@ -285,8 +285,6 @@ export default {
     return '/' + path;
   },
 
-
-
   "getXmlText": (element) => {
     if (!element) {
       return "";

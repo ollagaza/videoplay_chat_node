@@ -11,23 +11,23 @@ export default class VideoFileModel extends ModelObject {
     this.selectable_fields = ['*'];
   }
 
-  createVideoFile = async (upload_file_info, operation_seq, media_path) => {
+  createVideoFile = async (upload_file_info, storage_seq, media_path) => {
     const file_info = new FileInfo().getByUploadFileInfo(upload_file_info, media_path).toJSON();
-    file_info.operation_seq = operation_seq;
+    file_info.storage_seq = storage_seq;
 
     return await this.create(file_info, 'seq');
   };
 
-  videoFileSummary = async (operation_seq) => {
+  videoFileSummary = async (storage_seq) => {
     const select = ['COUNT(*) AS total_count', 'SUM(file_size) AS total_size'];
-    return await this.findOne({operation_seq: operation_seq, status: 'Y'}, select);
+    return await this.findOne({storage_seq: storage_seq, status: 'Y'}, select);
   };
 
-  videoFileList = async (operation_seq) => {
+  videoFileList = async (storage_seq) => {
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
 
-    const result_list = await this.find({operation_seq: operation_seq, status: 'Y'});
+    const result_list = await this.find({storage_seq: storage_seq, status: 'Y'});
     const list = [];
     if (result_list) {
       for (let i = 0; i < result_list.length; i++) {
@@ -41,8 +41,8 @@ export default class VideoFileModel extends ModelObject {
      await this.update({seq: file_seq}, {thumbnail: thumbnail_path})
    };
 
-   deleteAll = async (operation_seq, trash_path) => {
-     await this.update({"operation_seq": operation_seq}, {"status": "D", "file_path": trash_path, "modify_date": this.database.raw('NOW()')});
+   deleteAll = async (storage_seq, trash_path) => {
+     await this.update({"storage_seq": storage_seq}, {"status": "D", "file_path": trash_path, "modify_date": this.database.raw('NOW()')});
    };
 
    deleteSelectedFiles = async (file_seq_list, media_directory) => {
