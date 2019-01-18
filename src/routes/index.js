@@ -37,7 +37,7 @@ const routes = Router();
  *    properties:
  *      error:
  *        type: "integer"
- *        description: "에러코드"
+ *        description: "에러코드. 0이면 요청 성공"
  *      message:
  *        type: "string"
  *        description: "에러 메시지"
