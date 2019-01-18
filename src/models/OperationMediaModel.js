@@ -47,11 +47,11 @@ export default class OperationMediaModel extends ModelObject {
 
   updateTransComplete = async (operation_info, trans_info) => {
     const update_params = {
-      video_file_name: trans_info.video_file_name,
-      smil_file_name: trans_info.smil_file_name,
+      "video_file_name": trans_info.video_file_name,
+      "smil_file_name": trans_info.smil_file_name,
       "modify_date": this.database.raw('NOW()')
     };
-    return await this.update({operation_seq: operation_info.operation_seq}, update_params);
+    return await this.update({operation_seq: operation_info.seq}, update_params);
   };
 
   updateOperationMediaInfoByXML = async (operation_info) => {

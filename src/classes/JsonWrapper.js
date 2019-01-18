@@ -7,7 +7,7 @@ export default class JsonWrapper {
     this.json_keys = [];
 
     if (data === null) {
-      this.is_empty = false;
+      this.is_empty = true;
       return;
     }
 
