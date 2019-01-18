@@ -7,6 +7,8 @@ import OperationMediaModel from '@/models/OperationMediaModel';
 import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
 
+const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
+
 export default class OperationModel extends ModelObject {
   constructor(...args) {
     super(...args);
@@ -16,7 +18,7 @@ export default class OperationModel extends ModelObject {
   }
 
   getOperation = async (where, import_media_info) => {
-    const oKnex = this.database.select(['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq']);
+    const oKnex = this.database.select(join_select);
     oKnex.from('operation');
     oKnex.innerJoin("member", "member.seq", "operation.member_seq");
     oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
@@ -29,7 +31,7 @@ export default class OperationModel extends ModelObject {
   };
 
   getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
-    const where = {"seq": operation_seq};
+    const where = {"operation.seq": operation_seq};
     if (check_owner && token_info.getRole() <= role.MEMBER) {
       where.member_seq = token_info.getId();
     }
@@ -42,7 +44,7 @@ export default class OperationModel extends ModelObject {
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
 
-    const oKnex = this.database.select(['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq']);
+    const oKnex = this.database.select(join_select);
     oKnex.from('operation');
     oKnex.innerJoin("member", "member.seq", "operation.member_seq");
     oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
@@ -105,7 +107,7 @@ export default class OperationModel extends ModelObject {
     if (import_media_info === true) {
       const media_info = await new OperationMediaModel({ "database": this.database }).getOperationMediaInfo(operation_info);
       operation_info.setMediaInfo(media_info);
-        operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
+      operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
     }
 
     return operation_info;

@@ -644,10 +644,21 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
 
   const service_info = service_config.getServiceInfo();
   const media_directory = operation_info.media_directory + "SEQ";
-  const command = `${service_info.trans_exe_path} -ip="${service_info.trans_ip_address}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
+  const command = `${service_info.trans_exe_path} -ip="${service_info.trans_domain}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
   const execute_result = await Util.execute(command);
   const is_execute_success = execute_result.isSuccess();
   let is_send_mail_success = false;
+
+  const request_options = {
+    hostname: service_info.trans_domain,
+    port: service_info.trans_port,
+    path: '/',
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
 
   try {
     const send_mail = new SendMail();

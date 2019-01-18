@@ -18,7 +18,7 @@ export default class OperationStorageModel extends ModelObject {
 
   createOperationStorageInfo = async (operation_info) => {
     const create_params = {
-      operation_seq: operation_info.operation_seq
+      operation_seq: operation_info.seq
     };
     return await this.create(create_params, 'seq');
   };

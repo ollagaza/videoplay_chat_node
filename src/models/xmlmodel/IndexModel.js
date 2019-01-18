@@ -33,10 +33,10 @@ export default class IndexModel extends ModelObject {
     const index_info_list = new Array();
 
     if (!Util.isEmpty(index_xml_info) && !Util.isEmpty(index_xml_info.IndexInfo)) {
-      const video_info = operation_info.video_info;
-      const total_time = video_info.total_time;
-      const total_frame = video_info.total_frame;
-      const fps = video_info.fps;
+      const media_info = operation_info.media_info;
+      const total_time = media_info.total_time;
+      const total_frame = media_info.total_frame;
+      const fps = media_info.fps;
       const url_prefix = operation_info.url_prefix;
       const default_directory = 'INX' + index_type;
       let index_xml_list = index_xml_info.IndexInfo.Index;
@@ -94,8 +94,8 @@ export default class IndexModel extends ModelObject {
   }
 
   addIndex = async (operation_info, second) => {
-    const video_info = operation_info.video_info;
-    const fps = video_info.fps;
+    const media_info = operation_info.media_info;
+    const fps = media_info.fps;
     const target_frame = Math.round(second * fps);
 
     const index2_info_list = await this.getIndexlist(operation_info, 2);
@@ -125,7 +125,7 @@ export default class IndexModel extends ModelObject {
     add_index.start_frame = target_frame;
     if (null === copy_index_info) {
       copy_index_info = index2_info_list[total_count - 1];
-      add_index.end_frame = video_info.total_frame;
+      add_index.end_frame = media_info.total_frame;
     }
     else {
       add_index.end_frame = copy_index_info.end_frame - 1;

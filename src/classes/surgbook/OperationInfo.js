@@ -74,9 +74,15 @@ import Util from '@/utils/baseutil';
  *      total_file_count:
  *        type: "integer"
  *        description: "저장된 파일 개수"
- *      storage_seq:
+ *      clip_count:
  *        type: "integer"
- *        description: "저장공간 고유 번호"
+ *        description: "저장공간 사용 량"
+ *      service_video_count:
+ *        type: "integer"
+ *        description: "저장된 파일 개수"
+ *      report_count:
+ *        type: "integer"
+ *        description: "저장공간 사용 량"
  *      media_info:
  *        $ref: "#definitions/OperationMediaInfo"
  *
@@ -125,7 +131,8 @@ export default class OperationInfo extends JsonWrapper {
       'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
       , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
-      , 'reg_date', 'reg_diff_hour'
+      , 'reg_date', 'reg_diff_hour', 'media_info'
+      , 'total_file_size', 'total_file_count', 'clip_count', 'service_video_count', 'report_count'
     ]);
 
     if (data) {
