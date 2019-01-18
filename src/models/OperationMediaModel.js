@@ -48,6 +48,7 @@ export default class OperationMediaModel extends ModelObject {
   updateTransComplete = async (operation_info, trans_info) => {
     const update_params = {
       "video_file_name": trans_info.video_file_name,
+      "proxy_file_name": trans_info.video_file_name.replace(/^[a-zA-Z]+_/, 'Proxy_'),
       "smil_file_name": trans_info.smil_file_name,
       "modify_date": this.database.raw('NOW()')
     };

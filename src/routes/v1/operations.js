@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import service_config from '@/config/service.config';
 import path from 'path';
+import querystring from 'querystring';
 import { promisify } from 'util';
 import multer from 'sb-multer';
 import Wrap from '@/utils/express-async';
@@ -644,21 +645,34 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
 
   const service_info = service_config.getServiceInfo();
   const media_directory = operation_info.media_directory + "SEQ";
-  const command = `${service_info.trans_exe_path} -ip="${service_info.trans_domain}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
-  const execute_result = await Util.execute(command);
-  const is_execute_success = execute_result.isSuccess();
+  // const command = `${service_info.trans_exe_path} -ip="${service_info.trans_domain}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
+  // const execute_result = await Util.execute(command);
+  // const is_execute_success = execute_result.isSuccess();
+  let is_execute_success = false;
   let is_send_mail_success = false;
+
+  const query_data = {
+    "DirPath": operation_info.media_directory + "\\SEQ",
+    "ContentID": operation_info.content_id
+  };
+  const query_str = querystring.stringify(query_data);
 
   const request_options = {
     hostname: service_info.trans_domain,
     port: service_info.trans_port,
-    path: '/',
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': Buffer.byteLength(postData)
-    }
+    path: '/?' + query_str,
+    method: 'GET'
   };
+
+  let api_request_result = null;
+  try {
+    api_request_result = await Util.httpRequest(request_options, false);
+    is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+  } catch (e) {
+    console.error(e);
+    api_request_result = e.message;
+  }
+  const api_url = 'http://' + service_info.trans_domain + ':' + service_info.trans_port + '/?' + query_str;
 
   try {
     const send_mail = new SendMail();
@@ -670,8 +684,8 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     context += `파일 경로: ${media_directory}<br/>\n`;
     context += `파일 개수: ${file_summary.total_count}<br/>\n`;
     context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
-    context += `Command: ${command}<br/>\n`;
-    context += `실행결과: ${Util.nlToBr(execute_result.variables.result)}<br/>\n`;
+    context += `Api URL: ${api_url}<br/>\n`;
+    context += `실행결과: ${Util.nlToBr(api_request_result)}<br/>\n`;
     const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
     is_send_mail_success = send_mail_result.isSuccess();
   } catch (e) {

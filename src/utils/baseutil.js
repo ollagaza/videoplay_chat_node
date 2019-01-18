@@ -266,7 +266,7 @@ export default {
     try{
       return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
     } catch (e) {
-      console.log(e);
+      console.error(e);
       return null;
     }
   },
