@@ -66,4 +66,31 @@ export default class ReferFileModel extends ModelObject {
 
     return true;
   };
+
+  syncReferFiles = async (operation_info, storage_seq) => {
+    const refer_directory = operation_info.media_directory + 'REF\\';
+    const media_path = Util.removePathSEQ(operation_info.media_path) + 'REF';
+
+    let refer_file_size = 0;
+    let refer_file_count = 0;
+
+    await this.delete({storage_seq: storage_seq});
+    const file_list = Util.getDirectoryFileList(refer_directory);
+    for (let i = 0; i < file_list.length; i++) {
+      const file = file_list[i];
+      if (file.isFile()) {
+        const file_name = file.name;
+        const refer_file_path = refer_directory + file_name;
+        const file_info = new FileInfo().getByFilePath(refer_file_path, media_path, file_name).toJSON();
+        file_info.storage_seq = storage_seq;
+
+        refer_file_count++;
+        refer_file_size += file_info.file_size;
+
+        await this.create(file_info, 'seq');
+      }
+    }
+
+    return {refer_file_size, refer_file_count};
+  };
 }

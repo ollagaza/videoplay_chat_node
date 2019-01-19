@@ -162,10 +162,11 @@ export default class IndexModel extends ModelObject {
     const add_index_image_path = save_directory + '\\' + add_index_file_name;
     const command = 'ffmpeg -ss ' + target_time_str + ' -i "' + origin_video_path + '" -y -vframes 1 -an "' + add_index_image_path + '"';
     const execute_result = await Util.execute(command);
-    if (execute_result.isSuccess() == false) {
+
+    if (execute_result && execute_result.isSuccess() == false) {
       throw new StdObject(-1, '인덱스 추출 실패', 400);
     }
-    if (Util.fileExists(add_index_image_path)) {
+    if (!Util.fileExists(add_index_image_path)) {
       throw new StdObject(-1, '인덱스 파일 저장 실패', 400);
     }
 

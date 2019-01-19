@@ -20,18 +20,37 @@ export default class OperationMediaModel extends ModelObject {
 
   createOperationMediaInfo = async (operation_info) => {
     const create_params = {
-      operation_seq: operation_info.operation_seq
+      operation_seq: operation_info.seq
     };
     return await this.create(create_params, 'seq');
   };
 
+  syncMediaInfoByXml = async (operation_info) => {
+    const media_info = await this.getOperationMediaInfo(operation_info);
+    const is_exist = media_info.isEmpty() === false;
+    const video_info = await new VideoModel({"database": this.database}).getVideoInfo(operation_info.media_directory);
+    if (video_info.isEmpty()) {
+      if (!is_exist) {
+        await this.createOperationMediaInfo(operation_info);
+      }
+      return 0;
+    }
+    if (!is_exist) {
+      return await this.createOperationMediaInfoByXML(operation_info);
+    } else {
+      return await this.updateOperationMediaInfoByXML(operation_info);
+    }
+  };
+
   createOperationMediaInfoByXML = async (operation_info) => {
     const video_info = await new VideoModel({ "database": this.database }).getVideoInfo(operation_info.media_directory);
+
+    console.log(video_info);
     if (video_info.isEmpty()) {
       return await this.createOperationMediaInfo(operation_info);
     } else {
       const create_params = {
-        operation_seq: operation_info.operation_seq,
+        operation_seq: operation_info.seq,
         video_file_name: video_info.video_name,
         proxy_file_name: video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_'),
         fps: video_info.fps,
@@ -58,7 +77,7 @@ export default class OperationMediaModel extends ModelObject {
   updateOperationMediaInfoByXML = async (operation_info) => {
     const video_info = await new VideoModel({ "database": this.database }).getVideoInfo(operation_info.media_directory);
     if (video_info.isEmpty()) {
-      return await this.createOperationMediaInfo(operation_info);
+      return 0;
     } else {
       const update_params = {
         video_file_name: video_info.video_name,
@@ -71,7 +90,7 @@ export default class OperationMediaModel extends ModelObject {
         is_active: 1
       };
 
-      return await this.update({operation_seq: operation_info.operation_seq}, update_params);
+      return await this.update({operation_seq: operation_info.seq}, update_params);
     }
   };
 }

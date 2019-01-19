@@ -37,6 +37,8 @@ export default class MediaInfo extends JsonWrapper {
       this.runtime = operation_info.RunTime;
       this.media_root = operation_info.MediaRoot;
       this.doctor_name = operation_info.Name;
+
+      this.is_empty = false;
     }
 
     return this;

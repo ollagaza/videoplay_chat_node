@@ -2,6 +2,7 @@ import {Router} from 'express';
 import wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
+import FileInfo from '@/classes/surgbook/FileInfo';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
 
@@ -59,6 +60,23 @@ routes.get('/uuid', wrap(async (req, res) => {
   const output = new StdObject();
   output.add('uuid', uuid);
 
+  res.json(output);
+}));
+
+routes.get('/meta', wrap(async (req, res) => {
+  const dir = "\\\\192.168.0.54\\surgbook\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\SEQ";
+  const file_list = Util.getDirectoryFileList(dir);
+  for (let i = 0; i < file_list.length; i++) {
+    const file = file_list[i];
+    if (file.isFile()) {
+      const file_path = dir + "\\" + file.name;
+      const file_info = new FileInfo().getByFilePath(file_path, "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\", file.name);
+      console.log(file_info.toJSON());
+    }
+
+  }
+  const output = new StdObject();
+  output.add('size', Util.getDirectoryFileSize(dir));
   res.json(output);
 }));
 

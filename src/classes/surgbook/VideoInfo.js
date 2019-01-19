@@ -51,6 +51,8 @@ export default class VideoInfo extends JsonWrapper {
     this.total_time = media_xml_info.$.RunTime;
     this.total_frame = media_xml_info.$.FrameNo;
 
+    this.is_empty = false;
+
     return this;
   }
 

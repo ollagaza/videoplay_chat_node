@@ -84,6 +84,22 @@ const fileExists = (file_path) => {
   }
 };
 
+const getDirectoryFileList = (directory_path) => {
+  if (fileExists(directory_path)) {
+    return fs.readdirSync(directory_path, {withFileTypes: true});
+  } else {
+    return [];
+  }
+};
+
+const getFileStat = (file_path) => {
+  if (fileExists(file_path)) {
+    return fs.statSync(file_path);
+  } else {
+    return null;
+  }
+};
+
 export default {
   "convert": convert,
 
@@ -108,7 +124,10 @@ export default {
 
     let context = null;
     if (!fileExists(xml_file_path)) {
+      console.log(`${xml_file_path} not exists`);
       return {};
+    } else {
+      console.log(`${xml_file_path} load`);
     }
 
     try {
@@ -213,7 +232,9 @@ export default {
 
   "createDirectory": (dir_path) => {
     try{
-      fs.mkdirSync(dir_path, { recursive: true });
+      if (!fileExists(dir_path)) {
+        fs.mkdirSync(dir_path, { recursive: true });
+      }
       return true;
     } catch (error) {
       console.error(error);
@@ -319,5 +340,26 @@ export default {
         reject(err);
       });
     });
+  },
+
+  "getDirectoryFileList": getDirectoryFileList,
+
+  "getDirectoryFileSize": (directory_path) => {
+    const file_list = getDirectoryFileList(directory_path);
+    let file_size = 0;
+    for (let i = 0; i < file_list.length; i++) {
+      const file = file_list[i];
+      if (file.isFile()) {
+        const file_info = getFileStat(directory_path + "\\" + file.name);
+        file_size += file_info.size;
+      }
+    }
+    return file_size;
+  },
+
+  "getFileStat": getFileStat,
+
+  "byteToMB": (byte) => {
+    return Math.ceil(byte/1024/1024);
   }
 };

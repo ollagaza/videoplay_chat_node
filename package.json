@@ -49,7 +49,8 @@
     "nodejs-aes256": "^1.0.1",
     "base64-url": "^2.2.0",
     "fs-extra": "^7.0.1",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "mime-types": "^2.1.21"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

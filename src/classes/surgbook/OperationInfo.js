@@ -168,6 +168,8 @@ export default class OperationInfo extends JsonWrapper {
           this[key] = body[key];
         }
       });
+
+      this.is_empty = false;
     }
 
     return this;

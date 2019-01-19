@@ -37,6 +37,8 @@ export default class ReportEntryItemInfo extends JsonWrapper {
       this.unique_id = src;
       this.start_time = Util.timeStrToSecond(xml_info.$.Time);
       this.url = url_prefix + src.replace("\\", "/");
+
+      this.is_empty = false;
     }
 
     return this;

@@ -5,6 +5,7 @@ import roles from "@/config/roles";
 import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
 import OperationModel from '@/models/OperationModel';
+import OperationStorageModel from '@/models/OperationStorageModel';
 import ReportModel from "@/models/xmlmodel/ReportModel";
 
 const routes = Router();
@@ -127,6 +128,7 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
   const {operation_info, operation_model} = await getOperationInfo(operation_seq, token_info);
   const report_count = await new ReportModel({ database }).saveReportInfo(operation_info, req.body);
   await operation_model.updateReportCount(operation_seq, report_count);
+  await new OperationStorageModel({database}).updateReportCount(operation_seq, report_count);
 
   const output = new StdObject();
   res.json(output);

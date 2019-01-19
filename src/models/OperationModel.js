@@ -148,14 +148,6 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_favorite: is_delete ? 0 : 1, "modify_date": this.database.raw('NOW()')});
   };
 
-  updateClipCount = async (operation_seq, clip_count) => {
-    return await this.update({"seq": operation_seq}, {clip_count: clip_count, "modify_date": this.database.raw('NOW()')});
-  };
-
-  updateReportCount = async (operation_seq, report_count) => {
-    return await this.update({"seq": operation_seq}, {report_count: report_count, "modify_date": this.database.raw('NOW()')});
-  };
-
   updateRequestStatus = async (operation_seq, status) => {
     return await this.update({"seq": operation_seq}, {request_status: status ? status.toUpperCase() : 'N', "modify_date": this.database.raw('NOW()')});
   };
@@ -166,13 +158,6 @@ export default class OperationModel extends ModelObject {
 
   updateSharingStatus = async (operation_seq, status) => {
     return await this.update({"seq": operation_seq}, {is_sharing: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
-  };
-
-  updateIndexCount = async (operation_seq, index_type, count) => {
-    const params = {};
-    params['index' + index_type + '_count'] = count;
-    params.modify_date = this.database.raw('NOW()');
-    return await this.update({"seq": operation_seq}, params);
   };
 
   createOperation = async (body, member_seq) => {
@@ -189,7 +174,7 @@ export default class OperationModel extends ModelObject {
     operation_info.depart_code = member_info.depart_code;
 
     const operation_seq = await this.create(operation_info, 'seq');
-    operation_info.operation_seq = operation_seq;
+    operation_info.seq = operation_seq;
 
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;

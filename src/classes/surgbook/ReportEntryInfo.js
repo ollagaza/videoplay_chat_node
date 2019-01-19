@@ -59,6 +59,9 @@ export default class ReportEntryInfo extends JsonWrapper {
           this.item_list.push(new ReportEntryItemInfo().getFromXML(item, url_prefix));
         });
       }
+
+      this.is_empty = false;
+
     }
 
     return this;

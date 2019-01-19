@@ -270,10 +270,10 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
     const operation_info = await operation_model.createOperation(req.body, member_seq);
-    if (!operation_info || !operation_info.operation_seq) {
+    if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
-    const operation_seq = operation_info.operation_seq;
+    const operation_seq = operation_info.seq;
     const media_directory = operation_info.media_directory;
 
     await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
@@ -454,9 +454,9 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
   const second = req.params.second;
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
     const {add_index_info, total_index_count} = await new IndexModel({database}).addIndex(operation_info, second);
-    await operation_model.updateIndexCount(operation_seq, 2, total_index_count);
+    await new OperationStorageModel({database: trx}).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
 
     const output = new StdObject();
     output.add("add_index_info", add_index_info);
@@ -559,9 +559,9 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
   const operation_seq = req.params.operation_seq;
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
-    const clip_count = await new ClipModel({database}).saveClipInfo(operation_info, req.body);
-    await operation_model.updateClipCount(operation_seq, clip_count);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
+    const clip_count = await new ClipModel({database: trx}).saveClipInfo(operation_info, req.body);
+    await new OperationStorageModel({database: trx}).updateClipCount(operation_info.storage_seq, clip_count);
 
     const output = new StdObject();
     res.json(output);
@@ -930,17 +930,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
 
     if (file_type !== 'refer') {
       const origin_video_path = upload_file_info.path;
-      const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
-      const thumbnail_full_path = operation_info.media_root + thumbnail_path;
-      const command = 'ffmpeg -ss 00:00:30 -i "' + origin_video_path + '" -y -vframes 1 -filter:v scale=320:-1 -an "' + thumbnail_full_path + '"';
-      const execute_result = await Util.execute(command);
-      if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
-        try {
-          await file_model.updateThumb(upload_seq, thumbnail_path);
-        } catch (e) {
-          console(e);
-        }
-      }
+      await file_model.createVideoThumbnail(origin_video_path, operation_info, upload_seq);
     }
 
     await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
