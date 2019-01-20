@@ -144,8 +144,8 @@ export default class OperationInfo extends JsonWrapper {
       this.is_sharing = parseInt(data.is_sharing) > 0;
       this.is_favorite = parseInt(data.is_favorite) > 0;
 
-      this.reg_diff_hour =  Util.hourDifference(this.reg_date, 'Y-m-d');
       if (this.reg_date) {
+        this.reg_diff_hour =  Util.hourDifference(this.reg_date, 'Y-m-d');
         this.reg_date = Util.dateFormat(this.reg_date.getTime());
       }
       if (this.modify_date) {

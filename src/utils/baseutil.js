@@ -100,6 +100,31 @@ const getFileStat = (file_path) => {
   }
 };
 
+const loadXmlString = async (context) => {
+  let result = {};
+  if (!isEmpty(context)) {
+    try {
+      result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return result;
+};
+
+const isEmpty = (value) => {
+  if (value === undefined || value === null) {
+    return true;
+  }
+  if (_.isNumber(value)) {
+    return false;
+  }
+  if (_.isString(value)) {
+    return _.trim(value) === '';
+  }
+  return _.isEmpty(value);
+};
+
 export default {
   "convert": convert,
 
@@ -122,30 +147,29 @@ export default {
   "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name;
 
+    let result = {};
     let context = null;
     if (!fileExists(xml_file_path)) {
       console.log(`${xml_file_path} not exists`);
-      return {};
-    } else {
-      console.log(`${xml_file_path} load`);
+      return result;
     }
 
     try {
       context = await promisify(fs.readFile)(xml_file_path);
     } catch (e) {
       console.log(e);
-      return {};
+      return result;
     }
     if (context == null) {
       console.log(xml_file_path + ' context is empty');
-      return {};
+      return result;
     }
 
     context = context.toString();
-
-    const result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
-    return result;
+    return await loadXmlString(context);
   },
+
+  "loadXmlString": loadXmlString,
 
   "writeXmlFile": async (directory, xml_file_name, context_json) => {
     const xml_file_path = directory + xml_file_name;
@@ -155,18 +179,7 @@ export default {
     return true;
   },
 
-  "isEmpty": (value) => {
-    if (value === undefined || value === null) {
-      return true;
-    }
-    if (_.isNumber(value)) {
-      return false;
-    }
-    if (_.isString(value)) {
-      return _.trim(value) == '';
-    }
-    return _.isEmpty(value);
-  },
+  "isEmpty": isEmpty,
 
   "trim": (value) => {
     if (value === undefined || value === null) {
@@ -323,7 +336,7 @@ export default {
     return uuidv1();
   },
 
-  "httpRequest": (options, is_https=false) => {
+  "httpRequest": (options, post_data, is_https=false) => {
     return new Promise((resolve, reject) => {
       let req;
       if (is_https) {
@@ -333,12 +346,29 @@ export default {
       }
 
       req.on('response', res => {
-        resolve(res);
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          return reject(new Error('statusCode=' + res.statusCode));
+        }
+
+        const body = [];
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          body.push(Buffer.from(chunk));
+        });
+        res.on('end', () => {
+          resolve(Buffer.concat(body).toString());
+        });
       });
 
       req.on('error', err => {
+        console.log(err);
         reject(err);
       });
+
+      if (post_data) {
+        req.write(post_data);
+      }
+      req.end();
     });
   },
 

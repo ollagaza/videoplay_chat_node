@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import JsonWrapper from '@/classes/JsonWrapper';
+import Util from '@/utils/baseutil';
 
 /**
  * @swagger
@@ -44,7 +45,7 @@ export default class VideoInfo extends JsonWrapper {
       media_xml_info = media_xml_info[0];
     }
 
-    this.video_name = media_xml_info._;
+    this.video_name = Util.getXmlText(media_xml_info);
     this.fps = media_xml_info.$.FPS;
     this.width = media_xml_info.$.Width;
     this.height = media_xml_info.$.Height;
@@ -54,7 +55,51 @@ export default class VideoInfo extends JsonWrapper {
     this.is_empty = false;
 
     return this;
-  }
+  };
+
+  getFromHawkEyeXML = (hawkeye_xml_info) => {
+    if (!hawkeye_xml_info || !hawkeye_xml_info.errorreport || !hawkeye_xml_info.errorreport.mediainfo) {
+      return this;
+    }
+
+    let media_xml_info = hawkeye_xml_info.errorreport.mediainfo;
+    if (_.isArray(media_xml_info)) {
+      media_xml_info = media_xml_info[0];
+    }
+
+    /*
+    <mediaid>3e00f368-1569-11e9-aec9-e0d55ea5fcab</mediaid>
+<title>Trans_Merged_SEQ.mp4</title>
+<type>mp4</type>
+<state>5</state>
+<errorcode>0x00000000</errorcode>
+<msg>Disqualified</msg>
+<totalframe>164147</totalframe>
+<totaltime>5477</totaltime>
+<start>2019-01-11 16:43:06</start>
+<end>2019-01-11 16:52:19</end>
+<progress>100</progress>
+<movieflag>3</movieflag>
+<mediapath>\EHMD\OBG\강소라\test7\SEQ\</mediapath>
+<videoframerate>29.97</videoframerate>
+     */
+    const state = '' + Util.getXmlText(media_xml_info.state);
+    const progress = parseInt(Util.getXmlText(media_xml_info.progress), 10);
+
+    if (state === '5' && progress >= 100) {
+      this.video_name = Util.getXmlText(media_xml_info.title);
+      this.fps = Util.getXmlText(media_xml_info.videoframerate);
+      this.total_time = Util.getXmlText(media_xml_info.totaltime);
+      this.total_frame = Util.getXmlText(media_xml_info.totalframe);
+
+      this.is_empty = false;
+    } else {
+      this.error_code = state;
+      this.message = Util.getXmlText(media_xml_info.msg);
+    }
+
+    return this;
+  };
 
   getXmlJson = () => {
     return {
@@ -67,5 +112,5 @@ export default class VideoInfo extends JsonWrapper {
         "FrameNo": this.total_frame
       }
     }
-  }
+  };
 }

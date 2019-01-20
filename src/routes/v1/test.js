@@ -5,6 +5,8 @@ import SendMail from '@/classes/SendMail';
 import FileInfo from '@/classes/surgbook/FileInfo';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
+import service_config from '@/config/service.config';
+import querystring from 'querystring';
 
 const routes = Router();
 
@@ -77,6 +79,39 @@ routes.get('/meta', wrap(async (req, res) => {
   }
   const output = new StdObject();
   output.add('size', Util.getDirectoryFileSize(dir));
+  res.json(output);
+}));
+
+routes.get('/request', wrap(async (req, res) => {
+  const service_info = service_config.getServiceInfo();
+  const dir = "\\\\192.168.0.54\\surgbook\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\SEQ";
+  const query_data = {
+    "DirPath": dir,
+    "ContentID": "b50d2f70-1c37-11e9-b69d-b94419138e86"
+  };
+  const query_str = querystring.stringify(query_data);
+
+  const request_options = {
+    hostname: service_info.trans_server_domain,
+    port: service_info.trans_server_port,
+    path: service_info.hawkeye_index_list_api + '?' + query_str,
+    method: 'GET'
+  };
+  const api_url = 'http://' + service_info.trans_server_domain + ':' + service_info.trans_server_port + service_info.hawkeye_index_list_api + '?' + query_str;
+  console.log(api_url);
+
+  let api_request_result = null;
+  let is_execute_success = false;
+  try {
+    api_request_result = await Util.httpRequest(request_options, false);
+    is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+  } catch (e) {
+    console.error(e);
+    api_request_result = e.message;
+  }
+  const output = new StdObject();
+  output.add('api_request_result', api_request_result);
+  output.add('is_execute_success', is_execute_success);
   res.json(output);
 }));
 

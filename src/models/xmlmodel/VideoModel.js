@@ -1,6 +1,6 @@
 import ModelObject from '@/classes/ModelObject';
 import Util from '@/utils/baseutil';
-import VideoInfo from "../../classes/surgbook/VideoInfo";
+import VideoInfo from "@/classes/surgbook/VideoInfo";
 
 export default class VideoModel extends ModelObject {
   constructor(...args) {
@@ -18,5 +18,5 @@ export default class VideoModel extends ModelObject {
     }
 
     return video_info;
-  }
+  };
 }

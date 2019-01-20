@@ -42,10 +42,24 @@ export default class OperationMediaModel extends ModelObject {
     }
   };
 
+  syncMediaInfoByHawkEyeXml = async (operation_info, video_info) => {
+    const media_info = await this.getOperationMediaInfo(operation_info);
+    const is_exist = media_info.isEmpty() === false;
+    if (video_info.isEmpty()) {
+      if (!is_exist) {
+        await this.createOperationMediaInfo(operation_info);
+      }
+      return 0;
+    }
+    if (!is_exist) {
+      return await this.createOperationMediaInfoByXML(operation_info);
+    } else {
+      return await this.updateOperationMediaInfoByXML(operation_info);
+    }
+  };
+
   createOperationMediaInfoByXML = async (operation_info) => {
     const video_info = await new VideoModel({ "database": this.database }).getVideoInfo(operation_info.media_directory);
-
-    console.log(video_info);
     if (video_info.isEmpty()) {
       return await this.createOperationMediaInfo(operation_info);
     } else {
@@ -93,4 +107,6 @@ export default class OperationMediaModel extends ModelObject {
       return await this.update({operation_seq: operation_info.seq}, update_params);
     }
   };
+
+
 }

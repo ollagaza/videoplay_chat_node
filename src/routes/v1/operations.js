@@ -639,65 +639,79 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info, operation_model} = await getOperationInfo(database, operation_seq, token_info);
-  const file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_info.storage_seq);
-  const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
+  await database.transaction(async(trx) => {
 
-  const service_info = service_config.getServiceInfo();
-  const media_directory = operation_info.media_directory + "SEQ";
-  // const command = `${service_info.trans_exe_path} -ip="${service_info.trans_domain}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
-  // const execute_result = await Util.execute(command);
-  // const is_execute_success = execute_result.isSuccess();
-  let is_execute_success = false;
-  let is_send_mail_success = false;
+    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const file_summary = await new VideoFileModel({database: trx}).videoFileSummary(operation_info.storage_seq);
+    const member_info = await new MemberModel({database: trx}).getMemberInfo(token_info.getId());
 
-  const query_data = {
-    "DirPath": operation_info.media_directory + "\\SEQ",
-    "ContentID": operation_info.content_id
-  };
-  const query_str = querystring.stringify(query_data);
+    const service_info = service_config.getServiceInfo();
+    const media_directory = operation_info.media_directory + "SEQ";
+    // const command = `${service_info.trans_exe_path} -ip="${service_info.trans_domain}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
+    // const execute_result = await Util.execute(command);
+    // const is_execute_success = execute_result.isSuccess();
+    let is_execute_success = false;
+    let is_send_mail_success = false;
 
-  const request_options = {
-    hostname: service_info.trans_domain,
-    port: service_info.trans_port,
-    path: '/?' + query_str,
-    method: 'GET'
-  };
+    const operation_update_param = {};
+    operation_update_param.analysis_status = 'Y';
 
-  let api_request_result = null;
-  try {
-    api_request_result = await Util.httpRequest(request_options, false);
-    is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
-  } catch (e) {
-    console.error(e);
-    api_request_result = e.message;
-  }
-  const api_url = 'http://' + service_info.trans_domain + ':' + service_info.trans_port + '/?' + query_str;
+    let content_id = operation_info.content_id;
+    if (Util.isEmpty(content_id)) {
+      content_id = Util.getUuid();
+      operation_update_param.content_id = content_id;
+    }
 
-  try {
-    const send_mail = new SendMail();
-    // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
-    const mail_to = ["hwj@mteg.co.kr"];
-    const subject = member_info.user_name + " 선생님으로부터 비디오 분석 요청이 있습니다.";
-    let context = "";
-    context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
-    context += `파일 경로: ${media_directory}<br/>\n`;
-    context += `파일 개수: ${file_summary.total_count}<br/>\n`;
-    context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
-    context += `Api URL: ${api_url}<br/>\n`;
-    context += `실행결과: ${Util.nlToBr(api_request_result)}<br/>\n`;
-    const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
-    is_send_mail_success = send_mail_result.isSuccess();
-  } catch (e) {
-    console.log(e);
-  }
+    const query_data = {
+      "DirPath": operation_info.media_directory + "\\SEQ",
+      "ContentID": content_id
+    };
+    const query_str = querystring.stringify(query_data);
 
-  if (is_execute_success || is_send_mail_success) {
-    await operation_model.updateAnalysisStatus(operation_seq, 'R');
-    res.json(new StdObject());
-  } else {
-    throw new StdObject(-1, '비디오 분석 요청 실패', 500);
-  }
+    const request_options = {
+      hostname: service_info.trans_server_domain,
+      port: service_info.trans_server_port,
+      path: service_info.trans_start_api + '?' + query_str,
+      method: 'GET'
+    };
+    const api_url = 'http://' + service_info.trans_server_domain + ':' + service_info.trans_server_port + service_info.trans_start_api + '?' + query_str;
+    console.log(api_url);
+
+    let api_request_result = null;
+    try {
+      api_request_result = await Util.httpRequest(request_options, false);
+      is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+    } catch (e) {
+      console.error(e);
+      api_request_result = e.message;
+    }
+
+
+    try {
+      const send_mail = new SendMail();
+      // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
+      const mail_to = ["hwj@mteg.co.kr"];
+      const subject = member_info.user_name + " 선생님으로부터 비디오 분석 요청이 있습니다.";
+      let context = "";
+      context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+      context += `파일 경로: ${media_directory}<br/>\n`;
+      context += `파일 개수: ${file_summary.total_count}<br/>\n`;
+      context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
+      context += `Api URL: ${api_url}<br/>\n`;
+      context += `실행결과: ${Util.nlToBr(api_request_result)}<br/>\n`;
+      const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
+      is_send_mail_success = send_mail_result.isSuccess();
+    } catch (e) {
+      console.log(e);
+    }
+
+    if (is_execute_success || is_send_mail_success) {
+      await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+      res.json(new StdObject());
+    } else {
+      throw new StdObject(-1, '비디오 분석 요청 실패', 500);
+    }
+  });
 }));
 
 /**

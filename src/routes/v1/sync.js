@@ -15,13 +15,11 @@ import ClipModel from '@/models/xmlmodel/ClipModel';
 import ReportModel from "@/models/xmlmodel/ReportModel";
 import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
+import OperationInfo from "@/classes/surgbook/OperationInfo";
 
 const routes = Router();
 
-routes.post('/operation/:operation_seq(\\d+)', Auth.isAuthenticated(), Wrap(async(req, res) => {
-  const token_info = req.token_info;
-  const operation_seq = req.params.operation_seq;
-
+const sync_one = async (token_info, operation_seq, content_id) => {
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
     const operation_media_model = new OperationMediaModel({ database: trx });
@@ -72,9 +70,27 @@ routes.post('/operation/:operation_seq(\\d+)', Auth.isAuthenticated(), Wrap(asyn
     await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info);
     await operation_storage_model.updateStorageSummary(storage_seq);
 
-    res.json(new StdObject());
-  });
+    const operation_update_param = {};
+    if (content_id) {
+      operation_update_param.content_id = content_id;
+    } else if (Util.isEmpty(operation_info.content_id)) {
+      operation_update_param.content_id = Util.getUuid();
+    }
+    if (index2_info_list.length > 0) {
+      operation_update_param.analysis_status = 'Y';
+    }
 
+    await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+  });
+};
+
+routes.post('/operation/:operation_seq(\\d+)', Auth.isAuthenticated(), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  await sync_one(token_info, operation_seq, null);
+  res.json(new StdObject());
 }));
 
 export default routes;
+export {sync_one};
