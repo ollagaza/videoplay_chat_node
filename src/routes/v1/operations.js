@@ -23,6 +23,7 @@ import ClipModel from '@/models/xmlmodel/ClipModel';
 import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -675,14 +676,14 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
       method: 'GET'
     };
     const api_url = 'http://' + service_info.trans_server_domain + ':' + service_info.trans_server_port + service_info.trans_start_api + '?' + query_str;
-    console.log(api_url);
+    log.d(api_url);
 
     let api_request_result = null;
     try {
       api_request_result = await Util.httpRequest(request_options, false);
       is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
     } catch (e) {
-      console.error(e);
+      log.e(e);
       api_request_result = e.message;
     }
 
@@ -702,7 +703,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
       const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
       is_send_mail_success = send_mail_result.isSuccess();
     } catch (e) {
-      console.log(e);
+      log.e(e);
     }
 
     if (is_execute_success || is_send_mail_success) {
@@ -766,7 +767,7 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
         "request_domain": req.body.request_domain,
         "operation_name": operation_info.operation_name ? `"${operation_info.operation_name}"` : ''
       };
-      console.log(template_data);
+      log.d(template_data);
       await new SendMail().sendMailHtml(req.body.email_list, title, ShareTemplate.invite(template_data));
     }
   });
@@ -776,7 +777,7 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
     await operation_model.updateSharingStatus(operation_seq, true);
     await share_model.increaseSendCount(share_seq, send_user_count);
   } catch (e) {
-    console.log(e);
+    log.e(e);
   }
 
   const output = new StdObject();
@@ -801,18 +802,18 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), W
     try {
       await new VideoFileModel({ database }).deleteAll(operation_seq, trash_path);
     } catch (e) {
-      console.error(e);
+      log.e(e);
     }
     try {
       await new ReferFileModel({ database }).deleteAll(operation_seq);
     } catch (e) {
-      console.error(e);
+      log.e(e);
     }
   }
   try {
     await new OperationShareModel({ database }).deleteShareInfo(operation_seq);
   } catch (e) {
-    console.error(e);
+    log.e(e);
   }
 
   res.json(output);

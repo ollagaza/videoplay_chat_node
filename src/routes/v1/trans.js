@@ -8,7 +8,7 @@ import StdObject from '@/classes/StdObject';
 import OperationModel from '@/models/OperationModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import SendMail from '@/classes/SendMail';
-
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -58,7 +58,7 @@ const routes = Router();
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
+const on_complate = Wrap(async(req, res) => {
   const query_str = querystring.stringify(req.query);
 
   const content_id = req.query.content_id;
@@ -90,15 +90,17 @@ routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
       message = req.query.error ? req.query.error : "트렌스코딩 실패";
       result = new StdObject(4, message, 400);
     }
-  } catch (e) {
+    log.e('GET trans/complete', result);
+  } catch (error) {
 
-    if(e instanceof StdObject) {
-      result = e;
-      message = e.message;
+    if(error instanceof StdObject) {
+      result = error;
+      message = error.message;
     } else {
-      result = new StdObject(3, e.message, 500);
-      message = e.stack;
+      result = new StdObject(3, error.message, 500);
+      message = error.message;
     }
+    log.e('GET trans/complete', error);
   }
 
   if (req.query.success != null) {
@@ -115,6 +117,9 @@ routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
   }
 
   res.json(result);
-}));
+});
+
+routes.get('/complete', Auth.isAuthenticated(), on_complate);
+routes.post('/complete', Auth.isAuthenticated(), on_complate);
 
 export default routes;

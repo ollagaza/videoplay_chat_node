@@ -55,7 +55,8 @@ const routes = Router();
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
+
+const on_complete = Wrap(async(req, res) => {
   const token_info = req.token_info;
   const query_str = querystring.stringify(req.query);
 
@@ -179,22 +180,27 @@ routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
     }
   }
 
-  const send_mail = new SendMail();
-  const mail_to = ["hwj@mteg.co.kr"];
-  const subject = "호크아이 분석 완료 요청";
-  let context = "";
-  context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
-  context += `content_id: ${content_id}<br/>\n`;
-  context += `요청 Params: ${query_str}<br/>\n`;
-  context += `동영상 정보 요청: ${media_info_api_url}<br/>\n`;
-  context += `동영상 정보 결과: ${media_info_api_result}<br/>\n`;
-  context += `인덱스 목록 요청: ${index_list_api_url}<br/>\n`;
-  context += `인덱스 목록 결과: ${index_list_api_result}<br/>\n`;
-  context += `처리 결과: ${is_complete}<br/>\n`;
-  context += `에러: ${Util.nlToBr(message)}<br/>\n`;
-  await send_mail.sendMailHtml(mail_to, subject, context);
+  if (req.query.success != null) {
+    const send_mail = new SendMail();
+    const mail_to = ["hwj@mteg.co.kr"];
+    const subject = "호크아이 분석 완료 요청";
+    let context = "";
+    context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+    context += `content_id: ${content_id}<br/>\n`;
+    context += `요청 Params: ${query_str}<br/>\n`;
+    context += `동영상 정보 요청: ${media_info_api_url}<br/>\n`;
+    context += `동영상 정보 결과: ${media_info_api_result}<br/>\n`;
+    context += `인덱스 목록 요청: ${index_list_api_url}<br/>\n`;
+    context += `인덱스 목록 결과: ${index_list_api_result}<br/>\n`;
+    context += `처리 결과: ${is_complete}<br/>\n`;
+    context += `에러: ${Util.nlToBr(message)}<br/>\n`;
+    await send_mail.sendMailHtml(mail_to, subject, context);
+  }
 
   res.json(result);
-}));
+});
+
+routes.get('/complete', Auth.isAuthenticated(), on_complete);
+routes.post('/complete', Auth.isAuthenticated(), on_complete);
 
 export default routes;

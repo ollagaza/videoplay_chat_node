@@ -14,6 +14,7 @@ import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
 import http from 'http';
 import https from 'https';
+import log from "@/classes/Logger";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true});
@@ -50,7 +51,7 @@ const saveToFile = async (file_path, context) => {
     await promisify(fs.writeFile)(file_path, context, 'utf8');
     return true;
   } catch(error) {
-    console.log(error);
+    log.e("Util.saveToFile", error);
     return false;
   }
 };
@@ -80,6 +81,7 @@ const fileExists = (file_path) => {
   try{
     return fs.existsSync(file_path);
   } catch (error) {
+    log.e('Util.fileExists', error);
     return false;
   }
 };
@@ -105,8 +107,8 @@ const loadXmlString = async (context) => {
   if (!isEmpty(context)) {
     try {
       result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      log.e('Util.loadXmlString', error);
     }
   }
   return result;
@@ -150,18 +152,18 @@ export default {
     let result = {};
     let context = null;
     if (!fileExists(xml_file_path)) {
-      console.log(`${xml_file_path} not exists`);
+      log.d(`${xml_file_path} not exists`);
       return result;
     }
 
     try {
       context = await promisify(fs.readFile)(xml_file_path);
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      log.e('Util.loadXmlFile', error);
       return result;
     }
     if (context == null) {
-      console.log(xml_file_path + ' context is empty');
+      log.d(xml_file_path + ' context is empty');
       return result;
     }
 
@@ -217,7 +219,7 @@ export default {
       output.add('result', result.stdout)
     }
     catch(error) {
-      console.error(error);
+      log.e('Util.execute', error);
       output.error = -1;
       output.stack = error;
     }
@@ -230,10 +232,11 @@ export default {
     try {
       result = await promisify(fs.copyFile)(source, destination);
       output.add("copy_result", result);
-    } catch (e) {
+    } catch (error) {
+      log.e('Util.copyFile', error);
       output.error = -1;
       output.message = "파일복사 오류";
-      output.stack = e;
+      output.stack = error;
       output.source = source;
       output.destination = destination;
     }
@@ -250,7 +253,7 @@ export default {
       }
       return true;
     } catch (error) {
-      console.error(error);
+      log.e('Util.createDirectory', error);
       return false;
     }
   },
@@ -260,7 +263,7 @@ export default {
       fs.renameSync(target_path, dest_path);
       return true;
     } catch (error) {
-      console.error(error);
+      log.e('Util.rename', error);
       return false;
     }
   },
@@ -270,15 +273,14 @@ export default {
       fse.removeSync(target_path);
       return true;
     } catch (error) {
-      console.error(error);
+      log.e('Util.delete', error);
       return false;
     }
   },
 
   "hourDifference": (target_date) => {
     const time_diff = Math.abs(target_date.getTime() - Date.now());
-    const diff_hours = Math.ceil(time_diff / (1000 * 3600));
-    return diff_hours;
+    return Math.ceil(time_diff / (1000 * 3600));
   },
 
   "hash": (text, hash_algorithm='sha256') => {
@@ -299,8 +301,8 @@ export default {
   "decrypt": (encrypted_data) => {
     try{
       return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      log.e('Util.decrypt', error);
       return null;
     }
   },
@@ -361,7 +363,7 @@ export default {
       });
 
       req.on('error', err => {
-        console.log(err);
+        log.d(err);
         reject(err);
       });
 
