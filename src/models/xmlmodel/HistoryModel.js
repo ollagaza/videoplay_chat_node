@@ -1,5 +1,6 @@
 import ModelObject from '@/classes/ModelObject';
 import Util from '@/utils/baseutil';
+import log from "@/classes/Logger";
 
 const MAX_HISTORY_COUNT = 3;
 
@@ -60,8 +61,8 @@ export default class HistoryModel extends ModelObject {
 
       Util.writeXmlFile(media_directory, 'History.xml', history_xml_info);
     }
-    catch(e) {
-      console.log(e);
+    catch(error) {
+      log.e(null, 'HistoryModel.addHistory', error);
     }
   }
 }

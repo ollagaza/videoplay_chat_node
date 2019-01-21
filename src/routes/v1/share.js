@@ -8,6 +8,7 @@ import MemberModel from '@/models/MemberModel';
 import OperationModel from '@/models/OperationModel';
 import OperationShareModel from '@/models/OperationShareModel';
 import OperationShareUserModel from '@/models/OperationShareUserModel';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -70,8 +71,8 @@ routes.put('/:share_seq/view', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(asyn
     // 시청 횟수 증가. 에러나도 무시
     await new OperationShareUserModel({ database }).increaseViewCount(share_seq, member_info.email_address);
     await new OperationShareModel({ database }).increaseViewCount(share_seq);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    log.e(req, error);
   }
 
   res.json(new StdObject());

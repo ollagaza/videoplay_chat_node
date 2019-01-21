@@ -152,7 +152,7 @@ export default {
     let result = {};
     let context = null;
     if (!fileExists(xml_file_path)) {
-      log.d(null, `${xml_file_path} not exists`);
+      log.d(null, "Util.loadXmlFile", `${xml_file_path} not exists`);
       return result;
     }
 
@@ -163,7 +163,7 @@ export default {
       return result;
     }
     if (context == null) {
-      log.d(null, xml_file_path + ' context is empty');
+      log.d(null, "Util.loadXmlFile", xml_file_path + ' context is empty');
       return result;
     }
 
@@ -363,7 +363,7 @@ export default {
       });
 
       req.on('error', err => {
-        log.d(null, err);
+        log.d(null, "Util.httpRequest", err);
         reject(err);
       });
 

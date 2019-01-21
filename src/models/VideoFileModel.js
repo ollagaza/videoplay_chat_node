@@ -2,6 +2,7 @@ import ModelObject from '@/classes/ModelObject';
 import FileInfo from "@/classes/surgbook/FileInfo";
 import service_config from '@/config/service.config';
 import Util from '@/utils/baseutil';
+import log from "@/classes/Logger";
 
 export default class VideoFileModel extends ModelObject {
   constructor(...args) {
@@ -102,8 +103,6 @@ export default class VideoFileModel extends ModelObject {
 
     await this.delete({storage_seq: storage_seq});
     const file_list = Util.getDirectoryFileList(video_directory);
-    console.log(video_directory);
-    console.log(file_list);
     for (let i = 0; i < file_list.length; i++) {
       const file = file_list[i];
       if (file.isFile()) {
@@ -139,8 +138,8 @@ export default class VideoFileModel extends ModelObject {
     if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
       try {
         await this.updateThumb(upload_seq, thumbnail_path);
-      } catch (e) {
-        console.log(e);
+      } catch (error) {
+        log.e(null, 'VideoFileModel.createVideoThumbnail', error);
       }
     }
   }
