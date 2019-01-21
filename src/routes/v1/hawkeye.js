@@ -13,7 +13,7 @@ import SendMail from '@/classes/SendMail';
 import {sync_one} from '@/routes/v1/sync';
 import service_config from '@/config/service.config';
 import VideoInfo from "@/classes/surgbook/VideoInfo";
-
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -27,7 +27,7 @@ const routes = Router();
 
 /**
  * @swagger
- * /trans/complete:
+ * /hawkeye/complete:
  *  get:
  *    summary: "호크아이 분석 완료 상태 업데이트"
  *    tags: [Hawkeye]
@@ -59,6 +59,7 @@ const routes = Router();
 const on_complete = Wrap(async(req, res) => {
   const token_info = req.token_info;
   const query_str = querystring.stringify(req.query);
+  log.d(req, 'api 호출', query_str);
 
   const content_id = req.query.content_id;
   const success = ("" + req.query.success).toLowerCase();
@@ -98,7 +99,7 @@ const on_complete = Wrap(async(req, res) => {
         method: 'GET'
       };
       media_info_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + service_info.hawkeye_content_info_api + '?' + media_info_api_params;
-      console.log(media_info_api_url);
+      log.d(req, 'call hawkeye content info api', media_info_api_url);
 
       const media_info_request_reuslt = await Util.httpRequest(media_info_api_options, false);
       const video_info = new VideoInfo().getFromHawkEyeXML(await Util.loadXmlString(media_info_request_reuslt));
@@ -130,11 +131,10 @@ const on_complete = Wrap(async(req, res) => {
         method: 'GET'
       };
       index_list_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + service_info.hawkeye_index_list_api + '?' + index_list_api_params;
-      console.log(index_list_api_url);
+      log.d(req, 'call hawkeye index list api', index_list_api_url);
 
       const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
       const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
-      console.log(index_list_xml_info);
       if (!index_list_xml_info || !index_list_xml_info.errorimage || index_list_xml_info.errorimage.error) {
         if (index_list_xml_info.errorimage && index_list_xml_info.errorimage.error) {
           throw new StdObject(Util.getXmlText(index_list_xml_info.errorimage.error), Util.getXmlText(index_list_xml_info.errorimage.msg), 500);
@@ -169,15 +169,16 @@ const on_complete = Wrap(async(req, res) => {
       message = req.query.error ? req.query.error : '호크아이 에러 발생';
       result = new StdObject(4, message, 400);
     }
-  } catch (e) {
-    console.error(e);
-    if(e instanceof StdObject) {
-      result = e;
-      message = e.message;
+    log.d(req, '완료', result);
+  } catch (error) {
+    if(error instanceof StdObject) {
+      result = error;
+      message = error.message;
     } else {
-      result = new StdObject(3, e.message, 500);
-      message = e.stack;
+      result = new StdObject(3, error.message, 500);
+      message = error.stack;
     }
+    log.e(req, error);
   }
 
   if (req.query.success != null) {

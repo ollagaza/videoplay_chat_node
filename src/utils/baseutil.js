@@ -51,7 +51,7 @@ const saveToFile = async (file_path, context) => {
     await promisify(fs.writeFile)(file_path, context, 'utf8');
     return true;
   } catch(error) {
-    log.e("Util.saveToFile", error);
+    log.e(null, "Util.saveToFile", error);
     return false;
   }
 };
@@ -81,7 +81,7 @@ const fileExists = (file_path) => {
   try{
     return fs.existsSync(file_path);
   } catch (error) {
-    log.e('Util.fileExists', error);
+    log.e(null, 'Util.fileExists', error);
     return false;
   }
 };
@@ -108,7 +108,7 @@ const loadXmlString = async (context) => {
     try {
       result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
     } catch (error) {
-      log.e('Util.loadXmlString', error);
+      log.e(null, 'Util.loadXmlString', error);
     }
   }
   return result;
@@ -152,18 +152,18 @@ export default {
     let result = {};
     let context = null;
     if (!fileExists(xml_file_path)) {
-      log.d(`${xml_file_path} not exists`);
+      log.d(null, `${xml_file_path} not exists`);
       return result;
     }
 
     try {
       context = await promisify(fs.readFile)(xml_file_path);
     } catch (error) {
-      log.e('Util.loadXmlFile', error);
+      log.e(null, 'Util.loadXmlFile', error);
       return result;
     }
     if (context == null) {
-      log.d(xml_file_path + ' context is empty');
+      log.d(null, xml_file_path + ' context is empty');
       return result;
     }
 
@@ -219,7 +219,7 @@ export default {
       output.add('result', result.stdout)
     }
     catch(error) {
-      log.e('Util.execute', error);
+      log.e(null, 'Util.execute', error);
       output.error = -1;
       output.stack = error;
     }
@@ -233,7 +233,7 @@ export default {
       result = await promisify(fs.copyFile)(source, destination);
       output.add("copy_result", result);
     } catch (error) {
-      log.e('Util.copyFile', error);
+      log.e(null, 'Util.copyFile', error);
       output.error = -1;
       output.message = "파일복사 오류";
       output.stack = error;
@@ -253,7 +253,7 @@ export default {
       }
       return true;
     } catch (error) {
-      log.e('Util.createDirectory', error);
+      log.e(null, 'Util.createDirectory', error);
       return false;
     }
   },
@@ -263,7 +263,7 @@ export default {
       fs.renameSync(target_path, dest_path);
       return true;
     } catch (error) {
-      log.e('Util.rename', error);
+      log.e(null, 'Util.rename', error);
       return false;
     }
   },
@@ -273,7 +273,7 @@ export default {
       fse.removeSync(target_path);
       return true;
     } catch (error) {
-      log.e('Util.delete', error);
+      log.e(null, 'Util.delete', error);
       return false;
     }
   },
@@ -302,7 +302,7 @@ export default {
     try{
       return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
     } catch (error) {
-      log.e('Util.decrypt', error);
+      log.e(null, 'Util.decrypt', error);
       return null;
     }
   },
@@ -363,7 +363,7 @@ export default {
       });
 
       req.on('error', err => {
-        log.d(err);
+        log.d(null, err);
         reject(err);
       });
 

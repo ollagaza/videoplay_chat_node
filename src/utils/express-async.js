@@ -9,7 +9,7 @@ export default (fn) => {
 
     return fn(...args).catch((error) => {
 
-      log.e('Wrap.catch', error);
+      log.e(req, 'Wrap.catch', error);
 
       // 일반적인 에러
       if(error instanceof StdObject) {

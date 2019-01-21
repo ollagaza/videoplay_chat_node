@@ -60,6 +60,7 @@ const routes = Router();
  */
 const on_complate = Wrap(async(req, res) => {
   const query_str = querystring.stringify(req.query);
+  log.d(req, 'api 호출', query_str);
 
   const content_id = req.query.content_id;
   const success = ("" + req.query.success).toLowerCase();
@@ -90,9 +91,8 @@ const on_complate = Wrap(async(req, res) => {
       message = req.query.error ? req.query.error : "트렌스코딩 실패";
       result = new StdObject(4, message, 400);
     }
-    log.e('GET trans/complete', result);
+    log.d(req, '완료', result);
   } catch (error) {
-
     if(error instanceof StdObject) {
       result = error;
       message = error.message;
@@ -100,7 +100,7 @@ const on_complate = Wrap(async(req, res) => {
       result = new StdObject(3, error.message, 500);
       message = error.message;
     }
-    log.e('GET trans/complete', error);
+    log.e(req, error);
   }
 
   if (req.query.success != null) {
