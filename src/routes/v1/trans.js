@@ -101,16 +101,18 @@ routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
     }
   }
 
-  const send_mail = new SendMail();
-  const mail_to = ["hwj@mteg.co.kr"];
-  const subject = "트랜스코딩 완료 요청";
-  let context = "";
-  context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
-  context += `content_id: ${content_id}<br/>\n`;
-  context += `요청 Params: ${query_str}<br/>\n`;
-  context += `결과: ${is_complete}<br/>\n`;
-  context += `에러: ${Util.nlToBr(message)}<br/>\n`;
-  await send_mail.sendMailHtml(mail_to, subject, context);
+  if (req.query.success) {
+    const send_mail = new SendMail();
+    const mail_to = ["hwj@mteg.co.kr"];
+    const subject = "트랜스코딩 완료 요청";
+    let context = "";
+    context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+    context += `content_id: ${content_id}<br/>\n`;
+    context += `요청 Params: ${query_str}<br/>\n`;
+    context += `결과: ${is_complete}<br/>\n`;
+    context += `에러: ${Util.nlToBr(message)}<br/>\n`;
+    await send_mail.sendMailHtml(mail_to, subject, context);
+  }
 
   res.json(result);
 }));
