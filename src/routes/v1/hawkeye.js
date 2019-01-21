@@ -164,6 +164,8 @@ routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
       await sync_one(token_info, operation_seq, content_id);
       is_complete = true;
       result = new StdObject();
+    } else {
+      message = req.query.error ? req.query.error : '호크아이 에러 발생';
     }
   } catch (e) {
     console.error(e);
