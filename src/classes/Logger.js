@@ -26,6 +26,14 @@ export default {
     }
   },
 
+  "w": (request, ...args) => {
+    if (request){
+      logger.warn(getRequestUri(request), ...args);
+    } else {
+      logger.warn(...args);
+    }
+  },
+
   "i": (request, ...args) => {
     if (request){
       logger.info(getRequestUri(request), ...args);

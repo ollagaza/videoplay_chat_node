@@ -15,8 +15,7 @@ export default {
     },
     migrations: {
       tableName: 'knex_migrations'
-    },
-    debug: true
+    }
   },
 
   production: {
