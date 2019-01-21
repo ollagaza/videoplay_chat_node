@@ -88,6 +88,7 @@ routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
       result = new StdObject();
     } else {
       message = req.query.error ? req.query.error : "트렌스코딩 실패";
+      result = new StdObject(4, message, 400);
     }
   } catch (e) {
 
