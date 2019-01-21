@@ -101,7 +101,7 @@ routes.get('/complete', Auth.isAuthenticated(), Wrap(async(req, res) => {
     }
   }
 
-  if (req.query.success) {
+  if (req.query.success != null) {
     const send_mail = new SendMail();
     const mail_to = ["hwj@mteg.co.kr"];
     const subject = "트랜스코딩 완료 요청";
