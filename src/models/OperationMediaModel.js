@@ -13,7 +13,7 @@ export default class OperationMediaModel extends ModelObject {
   getOperationMediaInfo = async (operation_info) => {
     const media_info = new OperationMediaInfo(await this.findOne({operation_seq: operation_info.seq}));
     if (!media_info.isEmpty()) {
-      media_info.setUrl(operation_info.media_directory, operation_info.url_prefix);
+      media_info.setUrl(operation_info);
     }
     return media_info;
   };

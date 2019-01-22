@@ -112,7 +112,7 @@ export default class FileInfo extends JsonWrapper {
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
     this.file_type = file_type;
-    this.file_path = media_path + '\\' + this.file_name;
+    this.file_path = media_path + '\\' + upload_file_info.filename;
 
     this.is_empty = false;
 
