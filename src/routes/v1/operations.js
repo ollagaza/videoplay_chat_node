@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
     cb(null, path.resolve(req.media_directory))
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, 'upload_' + file.originalname)
   },
 });
 

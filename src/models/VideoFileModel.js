@@ -1,5 +1,6 @@
 import ModelObject from '@/classes/ModelObject';
 import FileInfo from "@/classes/surgbook/FileInfo";
+import SmilInfo from '@/classes/surgbook/SmilInfo';
 import service_config from '@/config/service.config';
 import Util from '@/utils/baseutil';
 import log from "@/classes/Logger";
@@ -88,45 +89,40 @@ export default class VideoFileModel extends ModelObject {
   };
 
   syncVideoFiles = async (operation_info, operation_media_info, storage_seq) => {
-    const video_directory = operation_info.media_directory + 'SEQ\\';
-    const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
-    let video_file_name = null;
-    let proxy_file_name = null;
-    if (operation_media_info && !operation_media_info.isEmpty()) {
-      video_file_name = operation_media_info.video_file_name;
-      proxy_file_name = operation_media_info.proxy_file_name;
-    }
+    const smil_info = new SmilInfo().loadFromXml(operation_info.media_directory, operation_media_info.smil_file_name);
+
     let origin_video_size = 0;
     let origin_video_count = 0;
     let trans_video_size = 0;
     let trans_video_count = 0;
 
-    await this.delete({storage_seq: storage_seq});
-    const file_list = Util.getDirectoryFileList(video_directory);
-    for (let i = 0; i < file_list.length; i++) {
-      const file = file_list[i];
-      if (file.isFile()) {
-        const file_name = file.name;
-        const video_file_path = video_directory + file_name;
-        const file_info = new FileInfo().getByFilePath(video_file_path, media_path, file_name).toJSON();
-
-        if (file_name === video_file_name || file_name === proxy_file_name) {
-          trans_video_count++;
-          trans_video_size += file_info.file_size;
-          continue;
-        }
-        file_info.storage_seq = storage_seq;
-        origin_video_count++;
-        origin_video_size += file_info.file_size;
-
-        const upload_seq = await this.create(file_info, 'seq');
-
-        if (file_info.file_type === 'video') {
-          await this.createVideoThumbnail(video_file_path, operation_info, upload_seq);
+    if (!smil_info.isEmpty()) {
+      const video_directory = operation_info.media_directory + 'SEQ\\';
+      const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
+      await this.delete({storage_seq: storage_seq});
+      const file_list = Util.getDirectoryFileList(video_directory);
+      for (let i = 0; i < file_list.length; i++) {
+        const file = file_list[i];
+        if (file.isFile()) {
+          const file_name = file.name;
+          const video_file_path = video_directory + file_name;
+          const file_info = new FileInfo().getByFilePath(video_file_path, media_path, file_name).toJSON();
+          if (file_info.file_type === 'video') {
+            if (smil_info.isTransVideo(file_name)) {
+              trans_video_count++;
+              trans_video_size += file_info.file_size;
+              continue;
+            }
+            file_info.storage_seq = storage_seq;
+            origin_video_count++;
+            origin_video_size += file_info.file_size;
+  
+            const upload_seq = await this.create(file_info, 'seq');
+            await this.createVideoThumbnail(video_file_path, operation_info, upload_seq);
+          }
         }
       }
     }
-
     return {origin_video_size, origin_video_count, trans_video_size, trans_video_count};
   };
 

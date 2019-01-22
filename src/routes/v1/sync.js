@@ -76,8 +76,10 @@ const sync_one = async (token_info, operation_seq, content_id) => {
     } else if (Util.isEmpty(operation_info.content_id)) {
       operation_update_param.content_id = Util.getUuid();
     }
-    if (index2_info_list.length > 0) {
+    if (operation_info.is_analysis_complete > 0 && operation_media_info.is_trans_complete) {
       operation_update_param.analysis_status = 'Y';
+    } else {
+      operation_update_param.analysis_status = operation_info.analysis_status === 'R' ? 'R' : 'N';
     }
 
     await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));

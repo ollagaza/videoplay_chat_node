@@ -9,6 +9,7 @@ import OperationModel from '@/models/OperationModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import SendMail from '@/classes/SendMail';
 import log from "@/classes/Logger";
+import {sync_one} from '@/routes/v1/sync';
 
 const routes = Router();
 
@@ -59,38 +60,34 @@ const routes = Router();
  *
  */
 const on_complate = Wrap(async(req, res) => {
+  const token_info = req.token_info;
   const query_str = querystring.stringify(req.query);
   log.d(req, 'api 호출', query_str);
 
   const content_id = req.query.content_id;
-  const success = ("" + req.query.success).toLowerCase();
   const trans_info = {
     video_file_name: req.query.video_file_name,
     smil_file_name: req.query.smil_file_name,
     error: req.query.error,
   };
 
-  const is_success = success === 'true' || success === '1';
   let is_complete = false;
   let message = '';
   let result = null;
   try {
-    if (is_success) {
-      if (Util.isEmpty(content_id) || Util.isEmpty(trans_info.video_file_name) || Util.isEmpty(trans_info.smil_file_name)) {
-        throw new StdObject(1, '잘못된 파라미터', 400);
-      }
-
-      const operation_info = await new OperationModel({ database }).getOperationInfoByContentId(content_id);
-      if (!operation_info || operation_info.isEmpty()) {
-        throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
-      }
-      await new OperationMediaModel({ database }).updateTransComplete(operation_info, trans_info);
-      is_complete = true;
-      result = new StdObject();
-    } else {
-      message = req.query.error ? req.query.error : "트렌스코딩 실패";
-      result = new StdObject(4, message, 400);
+    if (Util.isEmpty(content_id) || Util.isEmpty(trans_info.video_file_name) || Util.isEmpty(trans_info.smil_file_name)) {
+      throw new StdObject(1, '잘못된 파라미터', 400);
     }
+
+    const operation_info = await new OperationModel({ database }).getOperationInfoByContentId(content_id);
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
+    }
+    await new OperationMediaModel({ database }).updateTransComplete(operation_info, trans_info);
+
+    await sync_one(token_info, operation_info.seq, content_id);
+    is_complete = true;
+    result = new StdObject();
     log.d(req, '완료', result);
   } catch (error) {
     if(error instanceof StdObject) {

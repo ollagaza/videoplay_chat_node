@@ -160,6 +160,10 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_sharing: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
+  updateAnalysisComplete = async (operation_seq, status) => {
+    return await this.update({"seq": operation_seq}, {is_analysis_complete: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
+  };
+
   createOperation = async (body, member_seq) => {
     const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
     const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);
@@ -169,7 +173,6 @@ export default class OperationModel extends ModelObject {
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
     operation_info.media_path = user_media_path + operation_info.operation_code + '\\SEQ\\';
-    operation_info.content_id = Util.getUuid();
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
 

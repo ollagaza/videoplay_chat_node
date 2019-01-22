@@ -8,7 +8,6 @@ import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import OperationModel from '@/models/OperationModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
 import SendMail from '@/classes/SendMail';
 import {sync_one} from '@/routes/v1/sync';
 import service_config from '@/config/service.config';
@@ -78,7 +77,8 @@ const on_complete = Wrap(async(req, res) => {
         throw new StdObject(1, '잘못된 파라미터', 400);
       }
 
-      const operation_info = await new OperationModel({ database }).getOperationInfoByContentId(content_id);
+      const operation_model = new OperationModel({ database });
+      const operation_info = await operation_model.getOperationInfoByContentId(content_id);
       if (!operation_info || operation_info.isEmpty()) {
         throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
       }
@@ -142,17 +142,22 @@ const on_complete = Wrap(async(req, res) => {
           throw new StdObject(3, "XML 파싱 오류", 500);
         }
       }
-      let frameinfo = index_list_xml_info.errorimage.frameinfo;
-      if (_.isArray(frameinfo)) {
-        frameinfo = frameinfo[0];
-      }
-      const index_xml_list = frameinfo.item;
+
       const index_file_list = [];
-      for (let i = 0; i < index_xml_list.length; i++) {
-        const index_xml_info = index_xml_list[i];
-        const image_path = Util.getXmlText(index_xml_info.orithumb);
-        const image_file_name = path.basename(image_path);
-        index_file_list.push(video_file_name + "_" + image_file_name);
+      let frame_info = index_list_xml_info.errorimage.frameinfo;
+      if (frame_info) {
+        if (_.isArray(frame_info)) {
+          frame_info = frame_info[0];
+        }
+        const index_xml_list = frame_info.item;
+        if (index_xml_list) {
+          for (let i = 0; i < index_xml_list.length; i++) {
+            const index_xml_info = index_xml_list[i];
+            const image_path = Util.getXmlText(index_xml_info.orithumb);
+            const image_file_name = path.basename(image_path);
+            index_file_list.push(video_file_name + "_" + image_file_name);
+          }
+        }
       }
       const index_xml_info = {
         "IndexInfo": {
@@ -162,7 +167,9 @@ const on_complete = Wrap(async(req, res) => {
       await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index_xml_info);
       index_list_api_result = "인덱스 개수: " + (index_file_list.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
 
+      await operation_model.updateAnalysisComplete(operation_seq,true);
       await sync_one(token_info, operation_seq, content_id);
+
       is_complete = true;
       result = new StdObject();
     } else {

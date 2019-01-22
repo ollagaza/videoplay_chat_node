@@ -36,6 +36,9 @@ import Util from '@/utils/baseutil';
  *      video_source:
  *        type: "string"
  *        description: "비디오의 총 프레임 수"
+ *      is_trans_complete:
+ *        type: "boolean"
+ *        description: "트랜스코딩 완료 여부. 완료상태에서만 공유와 큐레이션 가능"
  *      hls_streaming_url:
  *        type: "string"
  *        description: "hls 스트리밍 url"
@@ -54,13 +57,18 @@ export default class OperationMediaInfo extends JsonWrapper {
 
     this.setKeys([
       'video_file_name', 'fps', 'width', 'height', 'total_frame', 'total_time',
-      'origin_video_url', 'proxy_video_url', 'video_source',
+      'origin_video_url', 'proxy_video_url', 'video_source', ' is_trans_complete',
       'hls_streaming_url', 'rtmp_streaming_server', 'rtmp_streaming_name'
     ]);
+
+    this.is_trans_complete = false;
+    if (data) {
+      this.is_trans_complete = parseInt(data.is_trans_complete) > 0;
+    }
   }
 
   setUrl = (operation_info) => {
-    if (this.is_active == 1) {
+    if (this.is_trans_complete) {
       const media_directory = operation_info.media_directory;
       const url_prefix = operation_info.url_prefix;
       const url_media_path = Util.pathToUrl(operation_info.media_path);
