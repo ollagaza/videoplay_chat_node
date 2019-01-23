@@ -96,7 +96,7 @@ export default class VideoFileModel extends ModelObject {
     let trans_video_size = 0;
     let trans_video_count = 0;
 
-    if (!smil_info.isEmpty()) {
+    if (operation_info.created_by_user === false || !smil_info.isEmpty()) {
       const video_directory = operation_info.media_directory + 'SEQ\\';
       const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
       await this.delete({storage_seq: storage_seq});
@@ -108,7 +108,7 @@ export default class VideoFileModel extends ModelObject {
           const video_file_path = video_directory + file_name;
           const file_info = new FileInfo().getByFilePath(video_file_path, media_path, file_name).toJSON();
           if (file_info.file_type === 'video') {
-            if (smil_info.isTransVideo(file_name)) {
+            if (smil_info.isTransVideo(file_name) || file_name == operation_media_info.video_file_name) {
               trans_video_count++;
               trans_video_size += file_info.file_size;
               continue;

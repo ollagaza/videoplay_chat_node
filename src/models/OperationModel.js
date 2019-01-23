@@ -179,6 +179,7 @@ export default class OperationModel extends ModelObject {
     operation_info.media_path = user_media_path + operation_info.operation_code + '\\SEQ\\';
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
+    operation_info.created_by_user = 1;
 
     const operation_seq = await this.create(operation_info, 'seq');
     operation_info.seq = operation_seq;
