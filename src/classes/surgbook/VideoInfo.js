@@ -87,6 +87,10 @@ export default class VideoInfo extends JsonWrapper {
     let progress = Util.getXmlText(media_xml_info.progress);
     progress = _.isInteger(progress) ? parseInt(progress, 10) : progress;
     console.log(progress);
+    console.log(_.isInteger(state));
+    console.log(parseInt(state, 10));
+    console.log(parseInt(state, 10) <= 6);
+    console.log(progress >= 100);
 
     if (_.isInteger(state) && parseInt(state, 10) <= 6 && progress >= 100) {
       const total_time = Util.getXmlText(media_xml_info.totaltime);
