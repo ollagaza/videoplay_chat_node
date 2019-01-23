@@ -44,11 +44,11 @@ export default class OperationMediaModel extends ModelObject {
     }
   };
 
-  getProxyVideoFileName = (operation_info, origin_file_name, smil_file_name) => {
+  getProxyVideoFileName = async (operation_info, origin_file_name, smil_file_name) => {
     if (!smil_file_name) {
       smil_file_name = service_config.get('default_smil_file_name');
     }
-    const smil_info = new SmilInfo().loadFromXml(operation_info.media_directory, smil_file_name);
+    const smil_info = await new SmilInfo().loadFromXml(operation_info.media_directory, smil_file_name);
     return smil_info.isEmpty() ? null : smil_info.findProxyVideoFile();
   };
 
@@ -57,7 +57,7 @@ export default class OperationMediaModel extends ModelObject {
     if (video_info.isEmpty()) {
       return await this.createOperationMediaInfo(operation_info);
     } else {
-      const proxy_file_name = this.getProxyVideoFileName(operation_info, video_info.video_name, null);
+      const proxy_file_name = await this.getProxyVideoFileName(operation_info, video_info.video_name, null);
       const create_params = {
         "operation_seq": operation_info.seq,
         "video_file_name": video_info.video_name,
@@ -78,7 +78,7 @@ export default class OperationMediaModel extends ModelObject {
     if (video_info.isEmpty()) {
       return 0;
     } else {
-      const proxy_file_name = this.getProxyVideoFileName(operation_info, video_info.video_name, null);
+      const proxy_file_name = await this.getProxyVideoFileName(operation_info, video_info.video_name, null);
       const update_params = {
         "video_file_name": video_info.video_name,
         "proxy_file_name": proxy_file_name,
@@ -95,7 +95,7 @@ export default class OperationMediaModel extends ModelObject {
   };
 
   updateTransComplete = async (operation_info, trans_info) => {
-    let proxy_file_name = this.getProxyVideoFileName(operation_info, trans_info.video_file_name, trans_info.smil_file_name);
+    let proxy_file_name = await this.getProxyVideoFileName(operation_info, trans_info.video_file_name, trans_info.smil_file_name);
     const update_params = {
       "video_file_name": trans_info.video_file_name,
       "proxy_file_name": proxy_file_name,
