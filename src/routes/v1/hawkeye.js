@@ -61,6 +61,7 @@ const on_complete = Wrap(async(req, res) => {
   log.d(req, 'api 호출', query_str);
 
   const content_id = req.query.content_id;
+  const cid = req.query.cid;
   const success = ("" + req.query.success).toLowerCase();
   const is_success = success === 'true' || success === '1';
   let is_update_progress = false;
@@ -82,17 +83,17 @@ const on_complete = Wrap(async(req, res) => {
   let index_list_api_url = null;
   let index_list_api_result = null;
   try {
-    const operation_model = new OperationModel({ database });
-    const operation_info = await operation_model.getOperationInfoByContentId(content_id);
-    if (!operation_info || operation_info.isEmpty()) {
-      throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
-    }
-    const operation_seq = operation_info.seq;
-
     if (is_success) {
       if (Util.isEmpty(content_id)) {
         throw new StdObject(1, '잘못된 파라미터', 400);
       }
+
+      const operation_model = new OperationModel({ database });
+      const operation_info = await operation_model.getOperationInfoByContentId(content_id);
+      if (!operation_info || operation_info.isEmpty()) {
+        throw new StdObject(2, `등록된 컨텐츠가 없습니다. [content_id=${content_id}]`, 400);
+      }
+      const operation_seq = operation_info.seq;
 
       const service_info = service_config.getServiceInfo();
       const media_info_data = {
@@ -182,6 +183,17 @@ const on_complete = Wrap(async(req, res) => {
       is_complete = true;
       result = new StdObject();
     } else if (is_update_progress) {
+      if (Util.isEmpty(cid)) {
+        throw new StdObject(1, '잘못된 파라미터', 400);
+      }
+
+      const operation_model = new OperationModel({ database });
+      const operation_info = await operation_model.getOperationInfoByContentId(cid);
+      if (!operation_info || operation_info.isEmpty()) {
+        throw new StdObject(2, `등록된 컨텐츠가 없습니다. [cid=${cid}]`, 400);
+      }
+      const operation_seq = operation_info.seq;
+
       await operation_model.updateAnalysisProgress(operation_seq, progress);
       message = `호크아이 진행상태 업데이트 : Progress = ${progress}`;
       result = new StdObject();
