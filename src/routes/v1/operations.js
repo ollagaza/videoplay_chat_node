@@ -653,7 +653,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     let is_send_mail_success = false;
 
     const operation_update_param = {};
-    operation_update_param.analysis_status = 'Y';
+    operation_update_param.analysis_status = 'R';
 
     let content_id = operation_info.content_id;
     if (Util.isEmpty(content_id)) {
