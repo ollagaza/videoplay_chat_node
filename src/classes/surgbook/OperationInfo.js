@@ -68,6 +68,9 @@ import Util from '@/utils/baseutil';
  *      reg_diff_hour:
  *        type: "integer"
  *        description: "등록 후 지난 시간"
+ *      content_id:
+ *        type: "string"
+ *        description: "컨텐츠 아이디"
  *      total_file_size:
  *        type: "integer"
  *        description: "저장공간 사용 량"
@@ -131,7 +134,7 @@ export default class OperationInfo extends JsonWrapper {
       'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
       , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
-      , 'reg_date', 'reg_diff_hour', 'media_info'
+      , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id'
       , 'total_file_size', 'total_file_count', 'clip_count', 'service_video_count', 'report_count'
     ]);
 
