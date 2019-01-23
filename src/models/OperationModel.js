@@ -164,6 +164,10 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_analysis_complete: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
+  updateAnalysisProgress = async (operation_seq, progress) => {
+    return await this.update({"seq": operation_seq}, {progress: progress, "modify_date": this.database.raw('NOW()')});
+  };
+
   createOperation = async (body, member_seq) => {
     const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
     const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);

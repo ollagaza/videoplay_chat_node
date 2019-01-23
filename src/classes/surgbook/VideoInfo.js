@@ -83,10 +83,11 @@ export default class VideoInfo extends JsonWrapper {
 <mediapath>\EHMD\OBG\강소라\test7\SEQ\</mediapath>
 <videoframerate>29.97</videoframerate>
      */
-    const state = '' + Util.getXmlText(media_xml_info.state);
-    const progress = parseInt(Util.getXmlText(media_xml_info.progress), 10);
+    const state = Util.getXmlText(media_xml_info.state);
+    let progress = Util.getXmlText(media_xml_info.progress);
+    progress = _.isInteger(progress) ? parseInt(progress, 10) : 0;
 
-    if (state <= 6) {
+    if (_.isInteger(state) && parseInt(state, 10) <= 6 && progress >= 100) {
       const total_time = Util.getXmlText(media_xml_info.totaltime);
       const total_frame = Util.getXmlText(media_xml_info.totalframe);
       const width = Util.getXmlText(media_xml_info.videowidth);

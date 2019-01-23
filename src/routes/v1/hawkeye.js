@@ -63,6 +63,16 @@ const on_complete = Wrap(async(req, res) => {
   const content_id = req.query.content_id;
   const success = ("" + req.query.success).toLowerCase();
   const is_success = success === 'true' || success === '1';
+  let is_update_progress = false;
+  let progress = req.query.progress;
+  let state = req.query.State;
+  if (_.isInteger(state) && _.isInteger(progress)) {
+    if (parseInt(state) <= 6) {
+      is_update_progress = true;
+      progress = parseInt(progress, 10);
+    }
+  }
+
 
   let is_complete = false;
   let message = '';
@@ -72,20 +82,19 @@ const on_complete = Wrap(async(req, res) => {
   let index_list_api_url = null;
   let index_list_api_result = null;
   try {
+    const operation_model = new OperationModel({ database });
+    const operation_info = await operation_model.getOperationInfoByContentId(content_id);
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
+    }
+    const operation_seq = operation_info.seq;
+
     if (is_success) {
       if (Util.isEmpty(content_id)) {
         throw new StdObject(1, '잘못된 파라미터', 400);
       }
 
-      const operation_model = new OperationModel({ database });
-      const operation_info = await operation_model.getOperationInfoByContentId(content_id);
-      if (!operation_info || operation_info.isEmpty()) {
-        throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
-      }
-
-      const operation_seq = operation_info.seq;
       const service_info = service_config.getServiceInfo();
-
       const media_info_data = {
         "ContentID": content_id,
         "EndCheck": "false"
@@ -172,11 +181,15 @@ const on_complete = Wrap(async(req, res) => {
 
       is_complete = true;
       result = new StdObject();
+    } else if (is_update_progress) {
+      await operation_model.updateAnalysisProgress(operation_seq, progress);
+      message = `호크아이 진행상태 업데이트 : Progress = ${progress}`;
+      result = new StdObject();
     } else {
       message = req.query.error ? req.query.error : '호크아이 에러 발생';
       result = new StdObject(4, message, 400);
     }
-    log.d(req, '완료', result);
+    log.d(req, message);
   } catch (error) {
     if(error instanceof StdObject) {
       result = error;
