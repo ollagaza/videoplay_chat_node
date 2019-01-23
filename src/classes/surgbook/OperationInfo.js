@@ -146,9 +146,15 @@ export default class OperationInfo extends JsonWrapper {
         this.list_no = data._no;
       }
 
-      this.is_review = parseInt(data.is_review) > 0;
-      this.is_sharing = parseInt(data.is_sharing) > 0;
-      this.is_favorite = parseInt(data.is_favorite) > 0;
+      if (data.is_review) {
+        this.is_review = parseInt(data.is_review) > 0;
+      }
+      if (data.is_sharing) {
+        this.is_sharing = parseInt(data.is_sharing) > 0;
+      }
+      if (data.is_favorite) {
+        this.is_favorite = parseInt(data.is_favorite) > 0;
+      }
 
       if (this.reg_date) {
         this.reg_diff_hour =  Util.hourDifference(this.reg_date, 'Y-m-d');
