@@ -29,17 +29,11 @@ export default class SmilInfo extends JsonWrapper {
 
   loadFromXml = async (media_directory, smil_file_name) => {
     const smil_xml_info = await Util.loadXmlFile(media_directory + 'SEQ\\', smil_file_name);
-    console.log(smil_xml_info.body);
-    if (smil_xml_info && smil_xml_info.body) {
-      const body_node = _.isArray(smil_xml_info.body) ? smil_xml_info.body[0] : smil_xml_info.body;
+    if (smil_xml_info && smil_xml_info.smil && smil_xml_info.smil.body) {
+      const body_node = _.isArray(smil_xml_info.smil.body) ? smil_xml_info.smil.body[0] : smil_xml_info.smil.body;
       const switch_node = _.isArray(body_node.switch) ? body_node.switch[0] : body_node.switch;
       const video_node_list = switch_node.video;
-
-
-      console.log('step 1');
-
       if (video_node_list) {
-        console.log('step 2');
         for (let i = 0; i < video_node_list.length; i++) {
           const video_info = new SmilVideoInfo(video_node_list[i]);
           this.video_info_map[video_info.file_name] = video_info;
@@ -49,8 +43,6 @@ export default class SmilInfo extends JsonWrapper {
         this.is_empty = false;
       }
     }
-    console.log(this.video_info_map);
-    console.log(this.video_info_list);
 
     return this;
   };
