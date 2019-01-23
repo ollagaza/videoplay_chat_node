@@ -7,6 +7,7 @@ import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
+import ContentIdManager from '@/classes/ContentIdManager';
 import OperationModel from '@/models/OperationModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import OperationStorageModel from '@/models/OperationStorageModel';
@@ -74,7 +75,7 @@ const sync_one = async (token_info, operation_seq, content_id) => {
     if (content_id) {
       operation_update_param.content_id = content_id;
     } else if (Util.isEmpty(operation_info.content_id)) {
-      operation_update_param.content_id = Util.getUuid();
+      operation_update_param.content_id = await ContentIdManager.getContentId();
     }
     if (operation_info.is_analysis_complete > 0 && operation_media_info.is_trans_complete) {
       operation_update_param.analysis_status = 'Y';

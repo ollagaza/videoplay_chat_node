@@ -11,6 +11,7 @@ import roles from "@/config/roles";
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
+import ContentIdManager from '@/classes/ContentIdManager';
 import MemberModel from '@/models/MemberModel';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
 import OperationModel from '@/models/OperationModel';
@@ -659,7 +660,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
 
     let content_id = operation_info.content_id;
     if (Util.isEmpty(content_id)) {
-      content_id = Util.getUuid();
+      content_id = await ContentIdManager.getContentId();
       operation_update_param.content_id = content_id;
     }
 
