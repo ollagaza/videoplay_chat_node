@@ -102,7 +102,7 @@ export default class VideoInfo extends JsonWrapper {
       this.is_empty = false;
     } else {
       this.error_code = state;
-      this.message = Util.getXmlText(media_xml_info.msg);
+      this.message = `progress: ${progress}, msg: ${Util.getXmlText(media_xml_info.msg)}`;
     }
 
     return this;
