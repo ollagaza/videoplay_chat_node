@@ -78,7 +78,11 @@ export default class OperationMediaInfo extends JsonWrapper {
       this.video_source = "SEQ\\" + this.video_file_name;
       this.origin_video_path = media_directory + this.video_source;
 
-      this.hls_streaming_url = service_config.get('hls_streaming_url') + url_media_path + this.video_file_name + '/playlist.m3u8';
+      if (Util.isEmpty(this.smil_file_name)){
+        this.hls_streaming_url = service_config.get('hls_streaming_url') + url_media_path + this.video_file_name + '/playlist.m3u8';
+      } else {
+        this.hls_streaming_url = service_config.get('hls_streaming_url') + url_media_path + this.smil_file_name + '/playlist.m3u8';
+      }
       this.rtmp_streaming_server = service_config.get('rtmp_streaming_url');
       this.rtmp_streaming_name = url_media_path + this.video_file_name;
     }
