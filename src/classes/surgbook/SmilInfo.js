@@ -28,7 +28,7 @@ export default class SmilInfo extends JsonWrapper {
   }
 
   loadFromXml = (media_directory, smil_file_name) => {
-    const smil_xml_info = Util.loadXmlFile(media_directory + 'SEQ', smil_file_name);
+    const smil_xml_info = Util.loadXmlFile(media_directory + 'SEQ\\', smil_file_name);
     if (smil_xml_info && smil_xml_info.body) {
 
       const body_node = _.isArray(smil_xml_info.body) ? smil_xml_info.body[0] : smil_xml_info.body;
