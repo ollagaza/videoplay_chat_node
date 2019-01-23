@@ -67,7 +67,7 @@ const on_complete = Wrap(async(req, res) => {
   let is_update_progress = false;
   let progress = req.query.progress;
   let state = req.query.State;
-  if (_.isInteger(state) && _.isInteger(progress)) {
+  if (Util.isNumber(state) && Util.isNumber(progress)) {
     if (parseInt(state) <= 6) {
       is_update_progress = true;
       progress = parseInt(progress, 10);

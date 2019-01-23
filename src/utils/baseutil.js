@@ -114,11 +114,20 @@ const loadXmlString = async (context) => {
   return result;
 };
 
+const isNumber = (str) => {
+  try {
+    return !isNaN(parseFloat(str)) && isFinite(str);
+  } catch (e) {
+    log.e(null, 'Util.isNumber', e);
+    return false;
+  }
+};
+
 const isEmpty = (value) => {
   if (value === undefined || value === null) {
     return true;
   }
-  if (_.isNumber(value)) {
+  if (isNumber(value)) {
     return false;
   }
   if (_.isString(value)) {
@@ -393,5 +402,7 @@ export default {
 
   "byteToMB": (byte) => {
     return Math.ceil(byte/1024/1024);
-  }
+  },
+
+  "isNumber": isNumber
 };
