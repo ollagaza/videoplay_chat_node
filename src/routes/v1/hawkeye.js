@@ -2,6 +2,7 @@ import { Router } from 'express';
 import _ from 'lodash';
 import path from 'path';
 import querystring from 'querystring';
+import natsort from 'natsort';
 import Wrap from '@/utils/express-async';
 import Auth from '@/middlewares/auth.middleware';
 import Util from '@/utils/baseutil';
@@ -153,7 +154,7 @@ const on_complete = Wrap(async(req, res) => {
         }
       }
 
-      const index_file_list = [];
+      let index_file_list = [];
       let frame_info = index_list_xml_info.errorimage.frameinfo;
       if (frame_info) {
         if (_.isArray(frame_info)) {
@@ -168,6 +169,7 @@ const on_complete = Wrap(async(req, res) => {
             index_file_list.push(video_file_name + "_" + image_file_name);
           }
         }
+        index_file_list.sort(natsort());
       }
       const index_xml_info = {
         "IndexInfo": {

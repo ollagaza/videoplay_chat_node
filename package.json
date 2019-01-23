@@ -51,7 +51,8 @@
     "fs-extra": "^7.0.1",
     "uuid": "^3.3.2",
     "mime-types": "^2.1.21",
-    "log4js": "^3.0.6"
+    "log4js": "^3.0.6",
+    "natsort": "^2.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

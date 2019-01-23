@@ -1,4 +1,8 @@
 import {Router} from 'express';
+import _ from 'lodash';
+import natsort from 'natsort';
+import path from 'path';
+import querystring from 'querystring';
 import wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
@@ -6,9 +10,7 @@ import FileInfo from '@/classes/surgbook/FileInfo';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
 import service_config from '@/config/service.config';
-import querystring from 'querystring';
 import log from "@/classes/Logger";
-
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 
@@ -68,6 +70,63 @@ if (IS_DEV) {
     output.add('uuid', uuid);
 
     res.json(output);
+  }));
+
+  routes.get('/sort', wrap(async (req, res) => {
+    const service_info = service_config.getServiceInfo();
+    const content_id = 'aaa';
+    const video_file_name = 'test.mp4';
+    const index_list_data = {
+      "ContentID": content_id,
+      "PageNum": 1,
+      "CountOfPage": 1000,
+      "Type": 1,
+      "PassItem": "false"
+    };
+    const index_list_api_params = querystring.stringify(index_list_data);
+
+    const index_list_api_options = {
+      hostname: service_info.hawkeye_server_domain,
+      port: service_info.hawkeye_server_port,
+      path: service_info.hawkeye_index_list_api + '?' + index_list_api_params,
+      method: 'GET'
+    };
+    const index_list_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + service_info.hawkeye_index_list_api + '?' + index_list_api_params;
+    log.d(req, 'call hawkeye index list api', index_list_api_url);
+
+    const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
+    const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
+    if (!index_list_xml_info || !index_list_xml_info.errorimage || index_list_xml_info.errorimage.error) {
+      if (index_list_xml_info.errorimage && index_list_xml_info.errorimage.error) {
+        throw new StdObject(Util.getXmlText(index_list_xml_info.errorimage.error), Util.getXmlText(index_list_xml_info.errorimage.msg), 500);
+      } else {
+        throw new StdObject(3, "XML 파싱 오류", 500);
+      }
+    }
+
+    let index_file_list = [];
+    let frame_info = index_list_xml_info.errorimage.frameinfo;
+    if (frame_info) {
+      if (_.isArray(frame_info)) {
+        frame_info = frame_info[0];
+      }
+      const index_xml_list = frame_info.item;
+      if (index_xml_list) {
+        for (let i = 0; i < index_xml_list.length; i++) {
+          const index_xml_info = index_xml_list[i];
+          const image_path = Util.getXmlText(index_xml_info.orithumb);
+          const image_file_name = path.basename(image_path);
+          index_file_list.push(video_file_name + "_" + image_file_name);
+        }
+      }
+      index_file_list.sort(natsort());
+    }
+    const index_xml_info = {
+      "IndexInfo": {
+        "Index": index_file_list
+      }
+    };
+    res.json(index_xml_info);
   }));
 
   routes.get('/meta', wrap(async (req, res) => {
