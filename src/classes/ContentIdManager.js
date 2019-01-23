@@ -16,10 +16,11 @@ const getContentId = async () => {
   log.d(null, 'ContentIdManager.getContentId - call getContentId', api_url);
   try {
     const api_request_result = await Util.httpRequest(request_options, false);
-    if (Util.isEmpty()) {
+    log.d(null, 'ContentIdManager.getContentId - result', api_url, api_request_result);
+    if (Util.isEmpty(api_request_result)) {
       return null;
     } else {
-      _.trim(api_request_result);
+      return _.trim(api_request_result);
     }
   } catch (e) {
     log.e(null, 'ContentIdManager.getContentId', api_url, e);
