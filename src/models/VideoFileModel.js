@@ -89,7 +89,7 @@ export default class VideoFileModel extends ModelObject {
   };
 
   syncVideoFiles = async (operation_info, operation_media_info, storage_seq) => {
-    const smil_info = new SmilInfo().loadFromXml(operation_info.media_directory, operation_media_info.smil_file_name);
+    const smil_info = await new SmilInfo().loadFromXml(operation_info.media_directory, operation_media_info.smil_file_name);
 
     let origin_video_size = 0;
     let origin_video_count = 0;
@@ -116,7 +116,7 @@ export default class VideoFileModel extends ModelObject {
             file_info.storage_seq = storage_seq;
             origin_video_count++;
             origin_video_size += file_info.file_size;
-  
+
             const upload_seq = await this.create(file_info, 'seq');
             await this.createVideoThumbnail(video_file_path, operation_info, upload_seq);
           }
