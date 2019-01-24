@@ -146,19 +146,19 @@ export default class OperationInfo extends JsonWrapper {
         this.list_no = data._no;
       }
 
-      if (data.is_review) {
+      if (data.is_review != null) {
         this.is_review = parseInt(data.is_review) > 0;
       }
-      if (data.is_sharing) {
+      if (data.is_sharing != null) {
         this.is_sharing = parseInt(data.is_sharing) > 0;
       }
-      if (data.is_favorite) {
+      if (data.is_favorite != null) {
         this.is_favorite = parseInt(data.is_favorite) > 0;
       }
-      if (data.created_by_user) {
+      if (data.created_by_user != null) {
         this.created_by_user = parseInt(data.created_by_user) > 0;
       }
-      if (data.is_analysis_complete) {
+      if (data.is_analysis_complete != null) {
         this.is_analysis_complete = parseInt(data.is_analysis_complete) > 0;
       }
 
