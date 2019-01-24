@@ -5,6 +5,7 @@ import Auth from '@/middlewares/auth.middleware';
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import OperationShareModel from '@/models/OperationShareModel';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -21,7 +22,7 @@ routes.get('/verify/:link_key', Auth.isAuthenticated(), Wrap(async(req, res) => 
 
   link_key_info = JSON.parse(link_key_info);
   const link_type = link_key_info.t;
-  console.log(link_key_info);
+  log.d(req, 'parse_link_info', link_key_info);
 
   const output = new StdObject();
 

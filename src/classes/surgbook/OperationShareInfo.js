@@ -37,18 +37,17 @@ import JsonWrapper from '@/classes/JsonWrapper';
  *      auth_type:
  *        type: "integer"
  *        description: "권한 정보"
- *      stream_url:
- *        type: "string"
- *        description: "동영상 시청 url"
  *      download_url:
  *        type: "string"
  *        description: "동영상 다운로드 url"
+ *      media_info:
+ *        $ref: "#definitions/OperationMediaInfo"
  *
  */
 
 export default class OperationShareInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
-    this.setKeys(['seq', 'share_user_count', 'view_count', 'comment_count', 'like_count', 'dislike_count', 'reg_date', 'modify_date', 'share_key', 'stream_url', 'download_url']);
+    this.setKeys(['seq', 'share_user_count', 'view_count', 'comment_count', 'like_count', 'dislike_count', 'reg_date', 'modify_date', 'share_key', 'download_url', 'media_info']);
   }
 }

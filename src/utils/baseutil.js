@@ -10,7 +10,11 @@ import xml2js from 'xml2js';
 import crypto from 'crypto';
 import aes256 from 'nodejs-aes256';
 import service_config from '@/config/service.config';
-import  base64url from 'base64-url';
+import base64url from 'base64-url';
+import uuidv1 from 'uuid/v1';
+import http from 'http';
+import https from 'https';
+import log from "@/classes/Logger";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true});
@@ -47,7 +51,7 @@ const saveToFile = async (file_path, context) => {
     await promisify(fs.writeFile)(file_path, context, 'utf8');
     return true;
   } catch(error) {
-    console.log(error);
+    log.e(null, "Util.saveToFile", error);
     return false;
   }
 };
@@ -73,6 +77,65 @@ const dateFormatter = (timestamp, format='HH:MM:ss', use_offset) => {
   return dateFormat(timestamp, format);
 };
 
+const fileExists = (file_path) => {
+  try{
+    return fs.existsSync(file_path);
+  } catch (error) {
+    log.e(null, 'Util.fileExists', error);
+    return false;
+  }
+};
+
+const getDirectoryFileList = (directory_path) => {
+  if (fileExists(directory_path)) {
+    return fs.readdirSync(directory_path, {withFileTypes: true});
+  } else {
+    return [];
+  }
+};
+
+const getFileStat = (file_path) => {
+  if (fileExists(file_path)) {
+    return fs.statSync(file_path);
+  } else {
+    return null;
+  }
+};
+
+const loadXmlString = async (context) => {
+  let result = {};
+  if (!isEmpty(context)) {
+    try {
+      result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
+    } catch (error) {
+      log.e(null, 'Util.loadXmlString', error);
+    }
+  }
+  return result;
+};
+
+const isNumber = (str) => {
+  try {
+    return !isNaN(parseFloat(str)) && isFinite(str);
+  } catch (e) {
+    log.e(null, 'Util.isNumber', e);
+    return false;
+  }
+};
+
+const isEmpty = (value) => {
+  if (value === undefined || value === null) {
+    return true;
+  }
+  if (isNumber(value)) {
+    return false;
+  }
+  if (_.isString(value)) {
+    return _.trim(value) === '';
+  }
+  return _.isEmpty(value);
+};
+
 export default {
   "convert": convert,
 
@@ -95,23 +158,29 @@ export default {
   "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name;
 
+    let result = {};
     let context = null;
+    if (!fileExists(xml_file_path)) {
+      log.d(null, "Util.loadXmlFile", `${xml_file_path} not exists`);
+      return result;
+    }
+
     try {
       context = await promisify(fs.readFile)(xml_file_path);
-    } catch (e) {
-      console.log(e);
-      return {};
+    } catch (error) {
+      log.e(null, 'Util.loadXmlFile', error);
+      return result;
     }
     if (context == null) {
-      console.log(xml_file_path + ' context is empty');
-      return {};
+      log.d(null, "Util.loadXmlFile", xml_file_path + ' context is empty');
+      return result;
     }
 
     context = context.toString();
-
-    const result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
-    return result;
+    return await loadXmlString(context);
   },
+
+  "loadXmlString": loadXmlString,
 
   "writeXmlFile": async (directory, xml_file_name, context_json) => {
     const xml_file_path = directory + xml_file_name;
@@ -121,18 +190,7 @@ export default {
     return true;
   },
 
-  "isEmpty": (value) => {
-    if (value === undefined || value === null) {
-      return true;
-    }
-    if (_.isNumber(value)) {
-      return false;
-    }
-    if (_.isString(value)) {
-      return _.trim(value) == '';
-    }
-    return _.isEmpty(value);
-  },
+  "isEmpty": isEmpty,
 
   "trim": (value) => {
     if (value === undefined || value === null) {
@@ -167,13 +225,12 @@ export default {
     const output = new StdObject();
     try {
       const result = await promisify(exec)(command);
-      console.log(result.stdout);
       output.add('result', result.stdout)
     }
     catch(error) {
-      console.error(error);
+      log.e(null, 'Util.execute', error);
       output.error = -1;
-      output.stack = e;
+      output.stack = error;
     }
     return output;
   },
@@ -184,10 +241,11 @@ export default {
     try {
       result = await promisify(fs.copyFile)(source, destination);
       output.add("copy_result", result);
-    } catch (e) {
+    } catch (error) {
+      log.e(null, 'Util.copyFile', error);
       output.error = -1;
       output.message = "파일복사 오류";
-      output.stack = e;
+      output.stack = error;
       output.source = source;
       output.destination = destination;
     }
@@ -195,21 +253,16 @@ export default {
     return output;
   },
 
-  "fileExists": (file_path) => {
-    try{
-      return fs.existsSync(file_path);
-    } catch (error) {
-      return false;
-    }
-  },
+  "fileExists": fileExists,
 
   "createDirectory": (dir_path) => {
-    console.log('createDirectory -> ' + dir_path);
     try{
-      fs.mkdirSync(dir_path, { recursive: true });
+      if (!fileExists(dir_path)) {
+        fs.mkdirSync(dir_path, { recursive: true });
+      }
       return true;
     } catch (error) {
-      console.error(error);
+      log.e(null, 'Util.createDirectory', error);
       return false;
     }
   },
@@ -219,7 +272,7 @@ export default {
       fs.renameSync(target_path, dest_path);
       return true;
     } catch (error) {
-      console.error(error);
+      log.e(null, 'Util.rename', error);
       return false;
     }
   },
@@ -229,15 +282,14 @@ export default {
       fse.removeSync(target_path);
       return true;
     } catch (error) {
-      console.error(error);
+      log.e(null, 'Util.delete', error);
       return false;
     }
   },
 
   "hourDifference": (target_date) => {
     const time_diff = Math.abs(target_date.getTime() - Date.now());
-    const diff_hours = Math.ceil(time_diff / (1000 * 3600));
-    return diff_hours;
+    return Math.ceil(time_diff / (1000 * 3600));
   },
 
   "hash": (text, hash_algorithm='sha256') => {
@@ -258,8 +310,8 @@ export default {
   "decrypt": (encrypted_data) => {
     try{
       return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      log.e(null, 'Util.decrypt', error);
       return null;
     }
   },
@@ -278,8 +330,6 @@ export default {
     return '/' + path;
   },
 
-
-
   "getXmlText": (element) => {
     if (!element) {
       return "";
@@ -291,5 +341,68 @@ export default {
       return element[0];
     }
     return element;
-  }
+  },
+
+  "getUuid": () => {
+    return uuidv1();
+  },
+
+  "httpRequest": (options, post_data, is_https=false) => {
+    return new Promise((resolve, reject) => {
+      let req;
+      if (is_https) {
+        req = https.request(options);
+      } else {
+        req = http.request(options);
+      }
+
+      req.on('response', res => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          return reject(new Error('statusCode=' + res.statusCode));
+        }
+
+        const body = [];
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          body.push(Buffer.from(chunk));
+        });
+        res.on('end', () => {
+          resolve(Buffer.concat(body).toString());
+        });
+      });
+
+      req.on('error', err => {
+        log.d(null, "Util.httpRequest", err);
+        reject(err);
+      });
+
+      if (post_data) {
+        req.write(post_data);
+      }
+      req.end();
+    });
+  },
+
+  "getDirectoryFileList": getDirectoryFileList,
+
+  "getDirectoryFileSize": (directory_path) => {
+    const file_list = getDirectoryFileList(directory_path);
+    let file_size = 0;
+    for (let i = 0; i < file_list.length; i++) {
+      const file = file_list[i];
+      if (file.isFile()) {
+        const file_info = getFileStat(directory_path + "\\" + file.name);
+        file_size += file_info.size;
+      }
+    }
+    return file_size;
+  },
+
+  "getFileStat": getFileStat,
+
+  "byteToMB": (byte) => {
+    return Math.ceil(byte/1024/1024);
+  },
+
+  "isNumber": isNumber
 };

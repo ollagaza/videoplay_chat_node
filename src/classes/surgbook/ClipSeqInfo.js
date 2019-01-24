@@ -71,6 +71,8 @@ export default class ClipSeqInfo extends JsonWrapper {
     this.dest = clip_info.url_prefix + this.getXmlText(xml_info.Dest).replace("\\", "/");
     this.desc = this.getXmlText(xml_info.Desc);
 
+    this.is_empty = false;
+
     return this;
   }
 

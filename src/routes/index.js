@@ -37,7 +37,7 @@ const routes = Router();
  *    properties:
  *      error:
  *        type: "integer"
- *        description: "에러코드"
+ *        description: "에러코드. 0이면 요청 성공"
  *      message:
  *        type: "string"
  *        description: "에러 메시지"
@@ -74,15 +74,14 @@ const routes = Router();
  *
  */
 
-/**
- * in a one-shot manner. There should not be any reason to edit this file.
- */
 const files = require.context('.', true, /\/[^.]+\.js$/);
 
 files.keys().forEach((key) => {
   if (key === './index.js') return;
 
-  routes.use(key.replace(/(\.)|(js)/g, ''), files(key).default);
+  if (files(key).default) {
+    routes.use(key.replace(/(\.)|(js)/g, ''), files(key).default);
+  }
 });
 
 export default routes;

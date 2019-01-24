@@ -4,6 +4,7 @@ import os from 'os';
 import sticky from 'socketio-sticky-session'; // socketio 사용 대비
 import app from './app';
 import service_config from '@/config/service.config';
+import log from "@/classes/Logger";
 
 if (process.env.NODE_ENV !== 'development') {
   process.env.NODE_ENV = 'production';
@@ -27,11 +28,11 @@ const options = {
 //
 //   // 자식이 죽었을 때 로그 기록
 //   cluster.on('death', function(worker) {
-//       console.log('worker ' + worker.pid + ' died'); // eslint-disable-line no-console
+//       log.e(null, 'worker ' + worker.pid + ' died'); // eslint-disable-line no-console
 //   });
 // }
 // else {
-  app.listen(PORT, () => console.log(`Listening on port ${PORT} -> PID: ${process.pid }`));
+  app.listen(PORT, () => log.d(null, `Listening on port ${PORT} -> PID: ${process.pid }`));
 // }
 
 // 멀티프로세스 서버 시작
@@ -40,6 +41,6 @@ const options = {
 // const server = Server(app);
 //
 // // 리스닝 시작
-// server.listen(PORT, () => console.log(`Listening on port ${PORT}`)); // eslint-disable-line no-console
+// server.listen(PORT, () => log.d(null, `Listening on port ${PORT}`)); // eslint-disable-line no-console
 
 service_config.load();

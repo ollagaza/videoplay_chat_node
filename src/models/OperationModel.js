@@ -2,10 +2,12 @@ import ModelObject from '@/classes/ModelObject';
 import role from '@/config/roles';
 import Util from '@/utils/baseutil';
 import OperationInfo from '@/classes/surgbook/OperationInfo';
-import VideoModel from "@/models/xmlmodel/VideoModel";
 import MemberModel from '@/models/MemberModel';
+import OperationMediaModel from '@/models/OperationMediaModel';
 import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
+
+const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
 
 export default class OperationModel extends ModelObject {
   constructor(...args) {
@@ -15,20 +17,21 @@ export default class OperationModel extends ModelObject {
     this.selectable_fields = ['*'];
   }
 
-  getOperation = async (where, import_xml) => {
-    const oKnex = this.database.select(['*']);
+  getOperation = async (where, import_media_info) => {
+    const oKnex = this.database.select(join_select);
     oKnex.from('operation');
-    oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
+    oKnex.innerJoin("member", "member.seq", "operation.member_seq");
+    oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     oKnex.where(where);
     oKnex.first();
 
     const query_result = await oKnex;
 
-    return await this.getOperationInfoWithXML(query_result, import_xml);
-  }
+    return await this.getOperationInfoWithMediaInfo(query_result, import_media_info);
+  };
 
   getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
-    const where = {"seq": operation_seq};
+    const where = {"operation.seq": operation_seq};
     if (check_owner && token_info.getRole() <= role.MEMBER) {
       where.member_seq = token_info.getId();
     }
@@ -41,15 +44,16 @@ export default class OperationModel extends ModelObject {
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
 
-    const oKnex = this.database.select(['*']);
+    const oKnex = this.database.select(join_select);
     oKnex.from('operation');
-    oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
+    oKnex.innerJoin("member", "member.seq", "operation.member_seq");
+    oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     oKnex.whereIn('status', ['Y', 'T']);
     if (token_info.getRole() <= role.MEMBER) {
       oKnex.andWhere('member_seq', token_info.getId());
     }
     if (search) {
-      oKnex.andWhere(this.database.raw(`(operation_code LIKE '%${search}%' OR operation_name LIKE '%${search}%')`));
+      oKnex.andWhere(this.database.raw(`(operation.operation_code LIKE '%${search}%' OR operation.operation_name LIKE '%${search}%')`));
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
@@ -93,23 +97,17 @@ export default class OperationModel extends ModelObject {
     return operation_info;
   };
 
-  getOperationInfoWithXML = async (query_result, import_xml=false) => {
+  getOperationInfoWithMediaInfo = async (query_result, import_media_info=false) => {
     if (query_result == null) {
       return new OperationInfo(null);
     }
 
     const operation_info = this.getOperationInfoByResult(query_result);
 
-    if (import_xml === true && operation_info.media_directory) {
-      const video_info = await new VideoModel({ "database": this.database }).getVideoInfo(operation_info.media_directory);
-      operation_info.setVideoInfo(video_info);
-
-      if (video_info.video_name) {
-        operation_info.origin_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name;
-        operation_info.proxy_video_url = operation_info.url_prefix + "SEQ/" + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_');
-        operation_info.video_source = "SEQ\\" + video_info.video_name;
-        operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
-      }
+    if (import_media_info === true) {
+      const media_info = await new OperationMediaModel({ "database": this.database }).getOperationMediaInfo(operation_info);
+      operation_info.setMediaInfo(media_info);
+      operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
     }
 
     return operation_info;
@@ -150,14 +148,6 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_favorite: is_delete ? 0 : 1, "modify_date": this.database.raw('NOW()')});
   };
 
-  updateClipCount = async (operation_seq, clip_count) => {
-    return await this.update({"seq": operation_seq}, {clip_count: clip_count, "modify_date": this.database.raw('NOW()')});
-  };
-
-  updateReportCount = async (operation_seq, report_count) => {
-    return await this.update({"seq": operation_seq}, {report_count: report_count, "modify_date": this.database.raw('NOW()')});
-  };
-
   updateRequestStatus = async (operation_seq, status) => {
     return await this.update({"seq": operation_seq}, {request_status: status ? status.toUpperCase() : 'N', "modify_date": this.database.raw('NOW()')});
   };
@@ -170,30 +160,12 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_sharing: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
-  updateIndexCount = async (operation_seq, index_type, count) => {
-    const params = {};
-    params['index' + index_type + '_count'] = count;
-    params.modify_date = this.database.raw('NOW()');
-    return await this.update({"seq": operation_seq}, params);
+  updateAnalysisComplete = async (operation_seq, status) => {
+    return await this.update({"seq": operation_seq}, {is_analysis_complete: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
-  getStorageSummary = async  (token_info) => {
-    const columns = ["sum(operation.file_count) as total_file_count", "sum(operation.file_size) as total_file_size", "sum(doctor.RunTime) as total_run_time"];
-    const oKnex = this.database.select(this.arrayToSafeQuery(columns));
-    oKnex.from('operation');
-    oKnex.leftOuterJoin("doctor", "doctor.MediaPath", "operation.media_path");
-    if (token_info.getRole() <= role.MEMBER) {
-      oKnex.where({member_seq: token_info.getId()});
-    }
-    oKnex.first();
-
-    const result = await oKnex;
-    const output = {};
-    output.total_file_count = result.total_file_count ? result.total_file_count : 0;
-    output.total_file_size = result.total_file_size ? result.total_file_size : 0;
-    output.total_run_time = result.total_run_time ? result.total_run_time : 0;
-
-    return output;
+  updateAnalysisProgress = async (operation_seq, progress) => {
+    return await this.update({"seq": operation_seq}, {progress: progress, "modify_date": this.database.raw('NOW()')});
   };
 
   createOperation = async (body, member_seq) => {
@@ -207,9 +179,10 @@ export default class OperationModel extends ModelObject {
     operation_info.media_path = user_media_path + operation_info.operation_code + '\\SEQ\\';
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
+    operation_info.created_by_user = 1;
 
     const operation_seq = await this.create(operation_info, 'seq');
-    operation_info.operation_seq = operation_seq;
+    operation_info.seq = operation_seq;
 
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
@@ -225,7 +198,8 @@ export default class OperationModel extends ModelObject {
     return total_count > 0;
   };
 
-  updateFileInfo = async (operation_seq, file_size, file_count) => {
-    return await this.update({"seq": operation_seq}, {file_size: file_size, file_count: file_count});
+  getOperationInfoByContentId = async (content_id) => {
+    const where = {"content_id": content_id};
+    return await this.getOperation(where, false);
   };
 }

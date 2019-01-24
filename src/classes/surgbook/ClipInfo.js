@@ -71,6 +71,8 @@ export default class ClipInfo extends JsonWrapper {
       this.seq_list.push(new ClipSeqInfo().getFromXML(xml_info.Seq[i], this))
     }
 
+    this.is_empty = false;
+
     return this;
   }
 

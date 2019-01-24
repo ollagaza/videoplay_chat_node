@@ -1,4 +1,6 @@
 import StdObject from '@/classes/StdObject';
+import log from "@/classes/Logger";
+
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 export default (fn) => {
@@ -6,6 +8,8 @@ export default (fn) => {
     const [req, res, next] = args;
 
     return fn(...args).catch((error) => {
+
+      log.e(req, 'Wrap.catch', error);
 
       // 일반적인 에러
       if(error instanceof StdObject) {
@@ -23,8 +27,6 @@ export default (fn) => {
           output.stack = error.stack;
           output.setMessage(error.message);
         }
-        console.error(error);
-
         return next(output);
       }
     })

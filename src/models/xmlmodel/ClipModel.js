@@ -36,7 +36,7 @@ export default class ClipModel extends ModelObject {
   saveClipInfo = async (operation_info, clip_info) => {
     const clip_map = {};
     const clip_list = new Array();
-    const fps = operation_info.video_info.fps;
+    const fps = operation_info.media_info.fps;
 
     clip_info.clip_list.forEach((clip_info_json) => {
       const clip_info = new ClipInfo(clip_info_json);

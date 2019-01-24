@@ -1,5 +1,41 @@
 import JsonWrapper from '@/classes/JsonWrapper';
 import Util from '@/utils/baseutil';
+import mime from 'mime-types';
+
+const getFileType = (mime_type) => {
+  if (Util.isEmpty(mime_type)) {
+    mime_type = 'etc';
+  } else {
+    mime_type = mime_type.toLowerCase();
+    if (mime_type === 'application/octet-stream') {
+      mime_type = 'bin';
+    } else if (mime_type.startsWith('video')) {
+      mime_type = 'video';
+    } else if (mime_type.startsWith('image')) {
+      mime_type = 'image';
+    }  else if (mime_type.indexOf('text') >= 0) {
+      mime_type = 'text';
+    } else if (mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
+      mime_type = 'excel';
+    } else if (mime_type.indexOf('word') >= 0) {
+      mime_type = 'word';
+    } else if (mime_type.indexOf('powerpoint') >= 0 || mime_type.indexOf('presentationml') >= 0) {
+      mime_type = 'powerpoint';
+    } else if (mime_type.indexOf('pdf') >= 0) {
+      mime_type = 'pdf';
+    } else if (mime_type.indexOf('audio') >= 0) {
+      mime_type = 'audio';
+    } else if (mime_type.indexOf('compressed') >= 0 || mime_type.indexOf('zip') >= 0 || mime_type.indexOf('tar') >= 0) {
+      mime_type = 'archive ';
+    } else if (mime_type.indexOf('hwp') >= 0) {
+      mime_type = 'hwp ';
+    } else {
+      mime_type = 'etc';
+    }
+  }
+
+  return mime_type;
+};
 
 /**
  * @swagger
@@ -11,9 +47,9 @@ import Util from '@/utils/baseutil';
  *      seq:
  *        type: "integer"
  *        description: "파일 고유 번호"
- *      operation_seq:
+ *      storage_seq:
  *        type: "integer"
- *        description: "수술 고유 번호"
+ *        description: "저장공간 고유 번호"
  *      file_name:
  *        type: "string"
  *        description: "파일 이름"
@@ -49,7 +85,7 @@ export default class FileInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
     this.setKeys([
-      'seq', 'operation_seq', 'file_name', 'file_size', 'file_type', 'url', 'thumbnail_url'
+      'seq', 'storage_seq', 'file_name', 'file_size', 'file_type', 'url', 'thumbnail_url'
     ]);
   }
 
@@ -62,7 +98,7 @@ export default class FileInfo extends JsonWrapper {
     }
 
     return this;
-  }
+  };
 
   getByUploadFileInfo = (upload_file_info, media_path) => {
     this.setIgnoreEmpty(true);
@@ -71,43 +107,36 @@ export default class FileInfo extends JsonWrapper {
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    let mimetype = upload_file_info.mimetype;
-    if (Util.isEmpty(mimetype)) {
-      mimetype = 'etc';
-    } else {
-      mimetype = mimetype.toLowerCase();
-      if (mimetype === 'application/octet-stream') {
-        mimetype = 'bin';
-      } else if (mimetype.startsWith('video')) {
-        mimetype = 'video';
-      } else if (mimetype.startsWith('image')) {
-        mimetype = 'image';
-      }  else if (mimetype.indexOf('text') >= 0) {
-        mimetype = 'text';
-      } else if (mimetype.indexOf('ms-excel') >= 0 || mimetype.indexOf('spreadsheetml') >= 0) {
-        mimetype = 'excel';
-      } else if (mimetype.indexOf('word') >= 0) {
-        mimetype = 'word';
-      } else if (mimetype.indexOf('powerpoint') >= 0 || mimetype.indexOf('presentationml') >= 0) {
-        mimetype = 'powerpoint';
-      } else if (mimetype.indexOf('pdf') >= 0) {
-        mimetype = 'pdf';
-      } else if (mimetype.indexOf('audio') >= 0) {
-        mimetype = 'audio';
-      } else if (mimetype.indexOf('compressed') >= 0 || mimetype.indexOf('zip') >= 0 || mimetype.indexOf('tar') >= 0) {
-        mimetype = 'archive ';
-      } else if (mimetype.indexOf('hwp') >= 0) {
-        mimetype = 'hwp ';
-      } else {
-        mimetype = 'etc';
-      }
-    }
+    const file_type = getFileType(upload_file_info.mimetype);
 
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
-    this.file_type = mimetype;
-    this.file_path = media_path + '\\' + this.file_name;
+    this.file_type = file_type;
+    this.file_path = media_path + '\\' + upload_file_info.filename;
+
+    this.is_empty = false;
 
     return this;
-  }
+  };
+
+  getByFilePath = (file_path, media_path, file_name) => {
+    this.setIgnoreEmpty(true);
+
+    this.setKeys([
+      'file_name', 'file_size', 'file_type', 'file_path'
+    ]);
+
+    const file_type = getFileType(mime.lookup(file_path));
+    const file_stat = Util.getFileStat(file_path);
+    const file_size = file_stat ? file_stat.size : 0;
+
+    this.file_name = file_name;
+    this.file_size = file_size;
+    this.file_type = file_type;
+    this.file_path = media_path + '\\' + this.file_name;
+
+    this.is_empty = false;
+
+    return this;
+  };
 }

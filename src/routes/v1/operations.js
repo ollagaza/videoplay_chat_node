@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import service_config from '@/config/service.config';
 import path from 'path';
+import querystring from 'querystring';
 import { promisify } from 'util';
 import multer from 'sb-multer';
 import Wrap from '@/utils/express-async';
@@ -10,9 +11,12 @@ import roles from "@/config/roles";
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
+import ContentIdManager from '@/classes/ContentIdManager';
 import MemberModel from '@/models/MemberModel';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
 import OperationModel from '@/models/OperationModel';
+import OperationMediaModel from '@/models/OperationMediaModel';
+import OperationStorageModel from '@/models/OperationStorageModel';
 import OperationShareModel from '@/models/OperationShareModel';
 import OperationShareUserModel from '@/models/OperationShareUserModel';
 import IndexModel from '@/models/xmlmodel/IndexModel';
@@ -20,6 +24,7 @@ import ClipModel from '@/models/xmlmodel/ClipModel';
 import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -28,7 +33,7 @@ const storage = multer.diskStorage({
     cb(null, path.resolve(req.media_directory))
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, 'upload_' + file.originalname)
   },
 });
 
@@ -167,7 +172,7 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
   output.adds(operation_info_page);
 
   if (Util.equals(req.query.summary, 'y')) {
-    const summary_info = await operation_model.getStorageSummary(token_info);
+    const summary_info = await new OperationStorageModel({ database }).getStorageSummary(token_info);
     if (summary_info !== null) {
       output.add('summary_info', summary_info);
     }
@@ -264,23 +269,28 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     member_seq = req.body.member_seq;
   }
 
-  const operation_model = new OperationModel({ database });
-  const operation_info = await operation_model.createOperation(req.body, member_seq);
-  if (!operation_info || !operation_info.operation_seq) {
-    throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
-  }
-  const operation_seq = operation_info.operation_seq;
-  const media_directory = operation_info.media_directory;
+  await database.transaction(async(trx) => {
+    const operation_model = new OperationModel({ database: trx });
+    const operation_info = await operation_model.createOperation(req.body, member_seq);
+    if (!operation_info || !operation_info.seq) {
+      throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
+    }
+    const operation_seq = operation_info.seq;
+    const media_directory = operation_info.media_directory;
 
-  Util.createDirectory(media_directory + "SEQ");
-  Util.createDirectory(media_directory + "Custom");
-  Util.createDirectory(media_directory + "REF");
-  Util.createDirectory(media_directory + "Thumb");
-  Util.createDirectory(media_directory + "Trash");
+    await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
+    await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
 
-  const output = new StdObject();
-  output.add('operation_seq', operation_seq);
-  res.json(output);
+    Util.createDirectory(media_directory + "SEQ");
+    Util.createDirectory(media_directory + "Custom");
+    Util.createDirectory(media_directory + "REF");
+    Util.createDirectory(media_directory + "Thumb");
+    Util.createDirectory(media_directory + "Trash");
+
+    const output = new StdObject();
+    output.add('operation_seq', operation_seq);
+    res.json(output);
+  });
 }));
 
 /**
@@ -446,9 +456,9 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
   const second = req.params.second;
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
     const {add_index_info, total_index_count} = await new IndexModel({database}).addIndex(operation_info, second);
-    await operation_model.updateIndexCount(operation_seq, 2, total_index_count);
+    await new OperationStorageModel({database: trx}).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
 
     const output = new StdObject();
     output.add("add_index_info", add_index_info);
@@ -551,9 +561,9 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
   const operation_seq = req.params.operation_seq;
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
-    const clip_count = await new ClipModel({database}).saveClipInfo(operation_info, req.body);
-    await operation_model.updateClipCount(operation_seq, clip_count);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
+    const clip_count = await new ClipModel({database: trx}).saveClipInfo(operation_info, req.body);
+    await new OperationStorageModel({database: trx}).updateClipCount(operation_info.storage_seq, clip_count);
 
     const output = new StdObject();
     res.json(output);
@@ -592,7 +602,7 @@ routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.
     const send_mail = new SendMail();
 
     const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
-    const subject = operation_info.doctor_name + " 선생님으로부터 서비스 요청이 있습니다.";
+    const subject = operation_info.user_name + " 선생님으로부터 서비스 요청이 있습니다.";
     const attachments = [send_mail.getAttachObject(operation_info.media_directory + "Clip.xml", "Clip.xml")];
     const send_mail_result = await send_mail.sendMailText(mail_to, subject, "첨부한 Clip.xml 파일을 확인하세요.", attachments);
 
@@ -631,41 +641,76 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info, operation_model} = await getOperationInfo(database, operation_seq, token_info);
-  const file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
-  const member_info = await new MemberModel({ database }).getMemberInfo(token_info.getId());
+  await database.transaction(async(trx) => {
 
-  const service_info = service_config.getServiceInfo();
-  const media_directory = operation_info.media_directory + "SEQ";
-  const command = `${service_info.trans_exe_path} -ip="${service_info.trans_ip_address}" -path="${media_directory}" -port="${service_info.trans_port}" -root="${service_info.trans_root}"`;
-  const execute_result = await Util.execute(command);
-  const is_execute_success = execute_result.isSuccess();
-  let is_send_mail_success = false;
+    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const file_summary = await new VideoFileModel({database: trx}).videoFileSummary(operation_info.storage_seq);
+    const member_info = await new MemberModel({database: trx}).getMemberInfo(token_info.getId());
 
-  try {
-    const send_mail = new SendMail();
-    // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
-    const mail_to = ["hwj@mteg.co.kr"];
-    const subject = member_info.user_name + " 선생님으로부터 비디오 분석 요청이 있습니다.";
-    let context = "";
-    context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
-    context += `파일 경로: ${media_directory}<br/>\n`;
-    context += `파일 개수: ${file_summary.total_count}<br/>\n`;
-    context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
-    context += `Command: ${command}<br/>\n`;
-    context += `실행결과: ${Util.nlToBr(execute_result.variables.result)}<br/>\n`;
-    const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
-    is_send_mail_success = send_mail_result.isSuccess();
-  } catch (e) {
-    console.log(e);
-  }
+    const service_info = service_config.getServiceInfo();
+    const media_directory = operation_info.media_directory + "SEQ";
+    let is_execute_success = false;
+    let is_send_mail_success = false;
 
-  if (is_execute_success || is_send_mail_success) {
-    await operation_model.updateAnalysisStatus(operation_seq, 'R');
-    res.json(new StdObject());
-  } else {
-    throw new StdObject(-1, '비디오 분석 요청 실패', 500);
-  }
+    const operation_update_param = {};
+    operation_update_param.analysis_status = 'R';
+
+    let content_id = operation_info.content_id;
+    if (Util.isEmpty(content_id)) {
+      content_id = await ContentIdManager.getContentId();
+      operation_update_param.content_id = content_id;
+    }
+
+    const query_data = {
+      "DirPath": operation_info.media_directory + "\\SEQ",
+      "ContentID": content_id
+    };
+    const query_str = querystring.stringify(query_data);
+
+    const request_options = {
+      hostname: service_info.trans_server_domain,
+      port: service_info.trans_server_port,
+      path: service_info.trans_start_api + '?' + query_str,
+      method: 'GET'
+    };
+    const api_url = 'http://' + service_info.trans_server_domain + ':' + service_info.trans_server_port + service_info.trans_start_api + '?' + query_str;
+    log.d(req, api_url);
+
+    let api_request_result = null;
+    try {
+      api_request_result = await Util.httpRequest(request_options, false);
+      is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+    } catch (e) {
+      log.e(req, e);
+      api_request_result = e.message;
+    }
+
+
+    try {
+      const send_mail = new SendMail();
+      // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
+      const mail_to = ["hwj@mteg.co.kr"];
+      const subject = member_info.user_name + " 선생님으로부터 비디오 분석 요청이 있습니다.";
+      let context = "";
+      context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+      context += `파일 경로: ${media_directory}<br/>\n`;
+      context += `파일 개수: ${file_summary.total_count}<br/>\n`;
+      context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
+      context += `Api URL: ${api_url}<br/>\n`;
+      context += `실행결과: ${Util.nlToBr(api_request_result)}<br/>\n`;
+      const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
+      is_send_mail_success = send_mail_result.isSuccess();
+    } catch (e) {
+      log.e(req, e);
+    }
+
+    if (is_execute_success || is_send_mail_success) {
+      await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+      res.json(new StdObject());
+    } else {
+      throw new StdObject(-1, '비디오 분석 요청 실패', 500);
+    }
+  });
 }));
 
 /**
@@ -720,7 +765,7 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
         "request_domain": req.body.request_domain,
         "operation_name": operation_info.operation_name ? `"${operation_info.operation_name}"` : ''
       };
-      console.log(template_data);
+      log.d(req, template_data);
       await new SendMail().sendMailHtml(req.body.email_list, title, ShareTemplate.invite(template_data));
     }
   });
@@ -730,7 +775,7 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
     await operation_model.updateSharingStatus(operation_seq, true);
     await share_model.increaseSendCount(share_seq, send_user_count);
   } catch (e) {
-    console.log(e);
+    log.e(req, e);
   }
 
   const output = new StdObject();
@@ -743,26 +788,30 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), W
   const operation_seq = req.params.operation_seq;
   const output = new StdObject();
   let trash_path = null;
+  let storage_seq = null;
 
   await database.transaction(async(trx) => {
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
     trash_path = await operation_model.updateStatusDelete(operation_info, token_info.getId());
+    storage_seq = operation_info.storage_seq;
   });
 
-  try {
-    await new VideoFileModel({ database }).deleteAll(operation_seq, trash_path);
-  } catch (e) {
-    console.error(e);
-  }
-  try {
-    await new ReferFileModel({ database }).deleteAll(operation_seq);
-  } catch (e) {
-    console.error(e);
+  if (storage_seq) {
+    try {
+      await new VideoFileModel({ database }).deleteAll(operation_seq, trash_path);
+    } catch (e) {
+      log.e(req, e);
+    }
+    try {
+      await new ReferFileModel({ database }).deleteAll(operation_seq);
+    } catch (e) {
+      log.e(req, e);
+    }
   }
   try {
     await new OperationShareModel({ database }).deleteShareInfo(operation_seq);
   } catch (e) {
-    console.error(e);
+    log.e(req, e);
   }
 
   res.json(output);
@@ -842,11 +891,12 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(roles.LOGIN_USER)
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  await getOperationInfo(database, operation_seq, token_info);
+  const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
+  const storage_seq = operation_info.storage_seq
 
   const output = new StdObject();
-  output.add('video_files', await new VideoFileModel({ database }).videoFileList(operation_seq));
-  output.add('refer_files', await new ReferFileModel({ database }).referFileList(operation_seq));
+  output.add('video_files', await new VideoFileModel({ database }).videoFileList(storage_seq));
+  output.add('refer_files', await new ReferFileModel({ database }).referFileList(storage_seq));
 
   res.json(output);
 }));
@@ -857,7 +907,8 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   const file_type = req.params.file_type;
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
+    const storage_seq = operation_info.storage_seq;
     let media_directory = operation_info.media_directory;
     if (file_type !== 'refer') {
       media_directory += 'SEQ';
@@ -880,10 +931,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
     let file_model = null;
     if (file_type !== 'refer') {
       file_model = new VideoFileModel({database: trx});
-      upload_seq = await file_model.createVideoFile(upload_file_info, operation_seq, Util.removePathSEQ(operation_info.media_path) + 'SEQ');
+      upload_seq = await file_model.createVideoFile(upload_file_info, storage_seq, Util.removePathSEQ(operation_info.media_path) + 'SEQ');
     } else {
       file_model = new ReferFileModel({database: trx});
-      upload_seq = await file_model.createReferFile(upload_file_info, operation_seq, Util.removePathSEQ(operation_info.media_path) + 'REF');
+      upload_seq = await file_model.createReferFile(upload_file_info, storage_seq, Util.removePathSEQ(operation_info.media_path) + 'REF');
     }
 
     if (!upload_seq) {
@@ -892,20 +943,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
 
     if (file_type !== 'refer') {
       const origin_video_path = upload_file_info.path;
-      const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
-      const thumbnail_full_path = operation_info.media_root + thumbnail_path;
-      const command = 'ffmpeg -ss 00:00:30 -i "' + origin_video_path + '" -y -vframes 1 -filter:v scale=320:-1 -an "' + thumbnail_full_path + '"';
-      const execute_result = await Util.execute(command);
-      if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
-        try {
-          await file_model.updateThumb(upload_seq, thumbnail_path);
-        } catch (e) {
-          console(e);
-        }
-      }
+      await file_model.createVideoThumbnail(origin_video_path, operation_info, upload_seq);
     }
 
-    await updateOperationFileSize(operation_model, operation_seq);
+    await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
 
     const output = new StdObject();
     output.add('upload_seq', upload_seq);
@@ -925,14 +966,15 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
   }
 
   await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
+    const storage_seq = operation_info.storage_seq;
     if (file_type !== 'refer') {
       await new VideoFileModel({database: trx}).deleteSelectedFiles(file_seq_list, operation_info.media_directory);
     } else {
       await new ReferFileModel({database: trx}).deleteSelectedFiles(file_seq_list);
     }
 
-    await updateOperationFileSize(operation_model, operation_seq);
+    await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
 
     const output = new StdObject();
     res.json(output);
@@ -944,21 +986,11 @@ routes.get('/storage/summary', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(asyn
   const token_info = req.token_info;
 
   const output = new StdObject();
-  const summary_info = await new OperationModel({ database }).getStorageSummary(token_info);
+  const summary_info = await new OperationStorageModel({ database }).getStorageSummary(token_info);
   if (summary_info !== null) {
     output.add('summary_info', summary_info);
   }
   res.json(output);
 }));
-
-const updateOperationFileSize = async (operation_model, operation_seq) => {
-  const video_file_summary = await new VideoFileModel({ database }).videoFileSummary(operation_seq);
-  const refer_file_summary = await new ReferFileModel({ database }).referFileSummary(operation_seq);
-  let total_file_size = (video_file_summary.total_size ? parseInt(video_file_summary.total_size) : 0);
-  total_file_size += (refer_file_summary.total_size ? parseInt(refer_file_summary.total_size) : 0);
-  total_file_size = Math.ceil(total_file_size / 1024 / 1024);
-  let total_file_count = (video_file_summary.total_count ? parseInt(video_file_summary.total_count) : 0) + (refer_file_summary.total_count ? parseInt(refer_file_summary.total_count) : 0);
-  await operation_model.updateFileInfo(operation_seq, total_file_size, total_file_count);
-};
 
 export default routes;

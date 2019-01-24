@@ -1,5 +1,4 @@
 import JsonWrapper from '@/classes/JsonWrapper';
-import MediaInfo from '@/classes/surgbook/MediaInfo';
 import Util from '@/utils/baseutil';
 
 /**
@@ -45,24 +44,6 @@ import Util from '@/utils/baseutil';
  *      patient_race:
  *        type: "string"
  *        description: "환자 인종"
- *      index1_count:
- *        type: "integer"
- *        description: "인덱스1 파일 개수"
- *      index2_count:
- *        type: "integer"
- *        description: "인덱스2 파일 개수"
- *      index3_count:
- *        type: "integer"
- *        description: "인덱스3 파일 개수"
- *      clip_count:
- *        type: "integer"
- *        description: "클립 개수"
- *      video_count:
- *        type: "integer"
- *        description: "비디오 파일 개수"
- *      report_count:
- *        type: "integer"
- *        description: "레포트 개수"
  *      status:
  *        type: "string"
  *        description: "레코드 상태 값. Y: 사용가능, T: 휴지통, D: 완전 삭제"
@@ -81,25 +62,35 @@ import Util from '@/utils/baseutil';
  *      is_favorite:
  *        type: "boolean"
  *        description: "즐겨찾기 여부"
- *      origin_video_url:
- *        type: "string"
- *        description: "원본 비디오 URL"
- *      proxy_video_url:
- *        type: "string"
- *        description: "편집기용 비디오 URL"
- *      video_source:
- *        type: "string"
- *        description: "비디오 소스 경로"
  *      reg_date:
  *        type: "string"
  *        description: "수술정보 등록일자"
  *      reg_diff_hour:
  *        type: "integer"
  *        description: "등록 후 지난 시간"
+ *      content_id:
+ *        type: "string"
+ *        description: "컨텐츠 아이디"
+ *      progress:
+ *        type: "integer"
+ *        description: "분석 진행률"
+ *      total_file_size:
+ *        type: "integer"
+ *        description: "저장공간 사용 량"
+ *      total_file_count:
+ *        type: "integer"
+ *        description: "저장된 파일 개수"
+ *      clip_count:
+ *        type: "integer"
+ *        description: "저장공간 사용 량"
+ *      service_video_count:
+ *        type: "integer"
+ *        description: "저장된 파일 개수"
+ *      report_count:
+ *        type: "integer"
+ *        description: "저장공간 사용 량"
  *      media_info:
- *        $ref: "#definitions/MediaInfo"
- *      video_info:
- *        $ref: "#definitions/VideoInfo"
+ *        $ref: "#definitions/OperationMediaInfo"
  *
  *  OperationEditInfo:
  *    type: "object"
@@ -135,12 +126,6 @@ import Util from '@/utils/baseutil';
  *      patient_race:
  *        type: "string"
  *        description: "환자 인종"
- *      file_size:
- *        type: "integer"
- *        description: "전체 파일 용량"
- *      file_count:
- *        type: "integer"
- *        description: "전체 파일 개수"
  *
  */
 
@@ -151,33 +136,38 @@ export default class OperationInfo extends JsonWrapper {
     this.setKeys([
       'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
       , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
-      , 'index1_count', 'index2_count', 'index3_count', 'clip_count', 'video_count', 'report_count'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
-      , 'media_info', 'video_info', 'origin_video_url', 'proxy_video_url', 'video_source'
-      , 'reg_date', 'reg_diff_hour', 'file_size', 'file_count'
+      , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress'
+      , 'total_file_size', 'total_file_count', 'clip_count', 'service_video_count', 'report_count'
     ]);
 
     if (data) {
-      this.media_info = new MediaInfo().getByOperationInfo(data);
-
       if (data._no) {
         this.list_no = data._no;
       }
 
-      this.is_review = parseInt(data.is_review) > 0;
-      this.is_sharing = parseInt(data.is_sharing) > 0;
-      this.is_favorite = parseInt(data.is_favorite) > 0;
+      if (data.is_review) {
+        this.is_review = parseInt(data.is_review) > 0;
+      }
+      if (data.is_sharing) {
+        this.is_sharing = parseInt(data.is_sharing) > 0;
+      }
+      if (data.is_favorite) {
+        this.is_favorite = parseInt(data.is_favorite) > 0;
+      }
+      if (data.created_by_user) {
+        this.created_by_user = parseInt(data.created_by_user) > 0;
+      }
+      if (data.is_analysis_complete) {
+        this.is_analysis_complete = parseInt(data.is_analysis_complete) > 0;
+      }
 
-      this.reg_diff_hour =  Util.hourDifference(this.reg_date, 'Y-m-d');
       if (this.reg_date) {
+        this.reg_diff_hour =  Util.hourDifference(this.reg_date, 'Y-m-d');
         this.reg_date = Util.dateFormat(this.reg_date.getTime());
       }
       if (this.modify_date) {
         this.modify_date = Util.dateFormat(this.modify_date.getTime());
-      }
-
-      if (!this.media_info.isEmpty()) {
-        this.doctor_name = this.media_info.doctor_name;
       }
     }
   }
@@ -196,12 +186,14 @@ export default class OperationInfo extends JsonWrapper {
           this[key] = body[key];
         }
       });
+
+      this.is_empty = false;
     }
 
     return this;
   };
 
-  setVideoInfo = (video_info) => {
-    this.video_info = video_info;
+  setMediaInfo = (media_info) => {
+    this.media_info = media_info;
   };
 }

@@ -8,6 +8,7 @@ import MemberModel from '@/models/MemberModel';
 import OperationModel from '@/models/OperationModel';
 import OperationShareModel from '@/models/OperationShareModel';
 import OperationShareUserModel from '@/models/OperationShareUserModel';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -30,8 +31,7 @@ const getShareObject = async (share_info, token_info) => {
   const operation_info = await new OperationModel({ database }).getOperationInfo(share_info.operation_seq, token_info, false);
 
   share_info.auth_type = auth_type;
-  share_info.stream_url = operation_info.origin_video_url;
-  share_info.download_url = operation_info.origin_video_url;
+  share_info.media_info = operation_info.media_info;
 
   return new StdObject().add('share_info', share_info);
 }
@@ -70,8 +70,8 @@ routes.put('/:share_seq/view', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(asyn
     // 시청 횟수 증가. 에러나도 무시
     await new OperationShareUserModel({ database }).increaseViewCount(share_seq, member_info.email_address);
     await new OperationShareModel({ database }).increaseViewCount(share_seq);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    log.e(req, error);
   }
 
   res.json(new StdObject());

@@ -33,10 +33,10 @@ export default class IndexModel extends ModelObject {
     const index_info_list = new Array();
 
     if (!Util.isEmpty(index_xml_info) && !Util.isEmpty(index_xml_info.IndexInfo)) {
-      const video_info = operation_info.video_info;
-      const total_time = video_info.total_time;
-      const total_frame = video_info.total_frame;
-      const fps = video_info.fps;
+      const media_info = operation_info.media_info;
+      const total_time = media_info.total_time;
+      const total_frame = media_info.total_frame;
+      const fps = media_info.fps;
       const url_prefix = operation_info.url_prefix;
       const default_directory = 'INX' + index_type;
       let index_xml_list = index_xml_info.IndexInfo.Index;
@@ -94,8 +94,8 @@ export default class IndexModel extends ModelObject {
   }
 
   addIndex = async (operation_info, second) => {
-    const video_info = operation_info.video_info;
-    const fps = video_info.fps;
+    const media_info = operation_info.media_info;
+    const fps = media_info.fps;
     const target_frame = Math.round(second * fps);
 
     const index2_info_list = await this.getIndexlist(operation_info, 2);
@@ -125,7 +125,7 @@ export default class IndexModel extends ModelObject {
     add_index.start_frame = target_frame;
     if (null === copy_index_info) {
       copy_index_info = index2_info_list[total_count - 1];
-      add_index.end_frame = video_info.total_frame;
+      add_index.end_frame = media_info.total_frame;
     }
     else {
       add_index.end_frame = copy_index_info.end_frame - 1;
@@ -153,7 +153,7 @@ export default class IndexModel extends ModelObject {
     }
 
     const media_directory = operation_info.media_directory;
-    const origin_video_path = operation_info.origin_video_path;
+    const origin_video_path = operation_info.media_info.origin_video_path;
     const target_time_str = Util.secondToTimeStr(second);
     const save_directory = media_directory + 'Custom';
     if (!Util.fileExists(save_directory)) {
@@ -162,10 +162,11 @@ export default class IndexModel extends ModelObject {
     const add_index_image_path = save_directory + '\\' + add_index_file_name;
     const command = 'ffmpeg -ss ' + target_time_str + ' -i "' + origin_video_path + '" -y -vframes 1 -an "' + add_index_image_path + '"';
     const execute_result = await Util.execute(command);
-    if (execute_result.isSuccess() == false) {
+
+    if (execute_result && execute_result.isSuccess() == false) {
       throw new StdObject(-1, '인덱스 추출 실패', 400);
     }
-    if (Util.fileExists(add_index_image_path)) {
+    if (!Util.fileExists(add_index_image_path)) {
       throw new StdObject(-1, '인덱스 파일 저장 실패', 400);
     }
 
