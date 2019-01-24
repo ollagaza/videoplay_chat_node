@@ -87,7 +87,11 @@ const sync_one = async (token_info, operation_seq, content_id) => {
   });
 };
 
-routes.post('/operation/:operation_seq(\\d+)', Auth.isAuthenticated(), Wrap(async(req, res) => {
+routes.post('/operation/:operation_seq(\\d+)/clear', Auth.isAuthenticated(), Wrap(async(req, res) => {
+
+}));
+
+routes.post('/operation/:operation_seq(\\d+)/execute', Auth.isAuthenticated(), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 

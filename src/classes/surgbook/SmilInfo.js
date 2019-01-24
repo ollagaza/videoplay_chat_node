@@ -38,7 +38,6 @@ export default class SmilInfo extends JsonWrapper {
           const video_info = new SmilVideoInfo(video_node_list[i]);
           this.video_info_map[video_info.file_name] = video_info;
           this.video_info_list.push(video_info);
-          console.log(video_info);
         }
         this.is_empty = false;
       }
