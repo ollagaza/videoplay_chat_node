@@ -99,7 +99,7 @@ export default class VideoFileModel extends ModelObject {
     if (!smil_info.isEmpty()) {
       const video_directory = operation_info.media_directory + 'SEQ\\';
       const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
-      if (operation_info.created_by_user === false) {
+      if (!operation_info.created_by_user || operation_info.created_by_user === false) {
         await this.delete({storage_seq: storage_seq});
       }
       const file_list = Util.getDirectoryFileList(video_directory);
@@ -119,7 +119,7 @@ export default class VideoFileModel extends ModelObject {
             origin_video_count++;
             origin_video_size += file_info.file_size;
 
-            if (operation_info.created_by_user === false) {
+            if (!operation_info.created_by_user || operation_info.created_by_user === false) {
               const upload_seq = await this.create(file_info, 'seq');
               await this.createVideoThumbnail(video_file_path, operation_info, upload_seq);
             }
