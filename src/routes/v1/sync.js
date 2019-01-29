@@ -122,7 +122,7 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
     operation_update_param.is_analysis_complete = 0;
     operation_update_param.analysis_status = 'N';
     await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
-    await operation_media_model.updateTransCompleteStatus(operation_seq, false);
+    await operation_media_model.updateTransCompleteStatus(operation_info, false);
 
     const media_directory = operation_info.media_directory;
 
