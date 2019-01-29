@@ -6,6 +6,7 @@ export default class StdObject {
     this.message = 'success'; ///< 에러 메세지 (success이면 에러 아님)
     this.variables = {}; ///< 추가 변수
     this.httpStatusCode = 200;
+    this.stack = null;
 
     error = typeof error !== 'undefined' ? error : 0;
     message = typeof message !== 'undefined' ? message : 'success';
@@ -128,15 +129,15 @@ export default class StdObject {
   }
 
   toJSON = () => {
-    // if (this.isSuccess() === true) {
-    //   if (_.isEmpty(this.variables)) {
-    //     return {"success": true};
-    //   }
-    //   else {
-    //     return this.variables;
-    //   }
-    // } else {
-      return this;
-    // }
+    const json = {
+      "error": this.error,
+      "message": this.message,
+      "variables": this.variables ? (this.variables.toJSON ? this.variables.toJSON() : this.variables) : {},
+      "httpStatusCode": this.httpStatusCode
+    };
+    if (this.stack) {
+      json.stack = this.stack;
+    }
+    return json;
   }
 }

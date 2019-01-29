@@ -645,7 +645,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
 
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
     const file_summary = await new VideoFileModel({database: trx}).videoFileSummary(operation_info.storage_seq);
-    const member_info = await new MemberModel({database: trx}).getMemberInfo(token_info.getId());
+    const member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
 
     const service_info = service_config.getServiceInfo();
     const media_directory = operation_info.media_directory + "SEQ";
@@ -658,6 +658,10 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     let content_id = operation_info.content_id;
     if (Util.isEmpty(content_id)) {
       content_id = await ContentIdManager.getContentId();
+      log.d(req, 'ContentIdManager.getContentId', content_id);
+      if (!content_id) {
+        throw new StdObject(-1, '컨텐츠 아이디 생성 실패', 500);
+      }
       operation_update_param.content_id = content_id;
     }
 

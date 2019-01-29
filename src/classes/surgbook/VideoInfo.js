@@ -67,22 +67,6 @@ export default class VideoInfo extends JsonWrapper {
       media_xml_info = media_xml_info[0];
     }
 
-    /*
-    <mediaid>3e00f368-1569-11e9-aec9-e0d55ea5fcab</mediaid>
-<title>Trans_Merged_SEQ.mp4</title>
-<type>mp4</type>
-<state>5</state>
-<errorcode>0x00000000</errorcode>
-<msg>Disqualified</msg>
-<totalframe>164147</totalframe>
-<totaltime>5477</totaltime>
-<start>2019-01-11 16:43:06</start>
-<end>2019-01-11 16:52:19</end>
-<progress>100</progress>
-<movieflag>3</movieflag>
-<mediapath>\EHMD\OBG\강소라\test7\SEQ\</mediapath>
-<videoframerate>29.97</videoframerate>
-     */
     const state = Util.getXmlText(media_xml_info.state);
     let progress = Util.getXmlText(media_xml_info.progress);
     progress = Util.isNumber(progress) ? parseInt(progress, 10) : progress;

@@ -11,6 +11,8 @@ import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
+import roles from "@/config/roles";
+import request from 'request-promise';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 
@@ -68,6 +70,21 @@ if (IS_DEV) {
     const uuid = await Util.getUuid();
     const output = new StdObject();
     output.add('uuid', uuid);
+
+    res.json(output);
+  }));
+
+  routes.get('/deletedir', wrap(async (req, res) => {
+    let result = null;
+    try{
+      result = await Util.deleteDirectory("C:\\trash\\1547023141_1032_39_test2");
+    } catch (e) {
+      result = e;
+      log.e(req, e);
+    }
+
+    const output = new StdObject();
+    output.add('result', result);
 
     res.json(output);
   }));
@@ -177,6 +194,19 @@ if (IS_DEV) {
     output.add('api_request_result', api_request_result);
     output.add('is_execute_success', is_execute_success);
     res.json(output);
+  }));
+
+  routes.get('/forward', wrap(async (req, res, next) => {
+    const url = 'http://localhost:3000/api/v1/operations/9/request/analysis';
+    const admin_member_info = {
+      seq: 0,
+      role: roles.ADMIN,
+      hospital_code: 'XXXX',
+      depart_code: 'ZZZ'
+    };
+    const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
+    const forward_result = await Util.forward(url, 'POST', token_result.token);
+    res.json(forward_result);
   }));
 }
 

@@ -63,8 +63,8 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
 
   // 메니저 권한 도입 시 예시. 병원 또는 부서가 동일한지 체크..
-  if(token_info.getRole() == roles.MANAGER){
-    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.depart_code) {
+  if(token_info.getRole() === roles.MANAGER){
+    if(token_info.getHospital() !== member_info.hospital_code || token_info.getDepart() !== member_info.depart_code) {
       throw new StdObject(-1, "권한이 없습니다.", 403);
     }
   }
@@ -120,8 +120,8 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(as
   const token_info = req.token_info;
   const member_seq = req.params.member_seq;
 
-  if (token_info.getId() != member_seq){
-    if(token_info.getRole() == roles.MEMBER){
+  if (token_info.getId() !== member_seq){
+    if(token_info.getRole() === roles.MEMBER){
       throw new StdObject(-1, "잘못된 요청입니다.", 403);
     }
   }
@@ -129,8 +129,8 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(as
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
 
   // 메니저 권한 도입 시 예시. 병원 또는 부서가 동일한지 체크..
-  if(token_info.getRole() == roles.MANAGER){
-    if(token_info.getHospital() != member_info.hospital_code || token_info.getBranch() != member_info.depart_code) {
+  if(token_info.getRole() === roles.MANAGER){
+    if(token_info.getHospital() !== member_info.hospital_code || token_info.getDepart() !== member_info.depart_code) {
       throw new StdObject(-1, "권한이 없습니다.", 403);
     }
   }

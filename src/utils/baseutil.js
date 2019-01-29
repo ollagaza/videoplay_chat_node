@@ -5,16 +5,18 @@ import dateFormat from 'dateformat';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import _ from 'lodash';
-import StdObject from "@/classes/StdObject";
 import xml2js from 'xml2js';
 import crypto from 'crypto';
 import aes256 from 'nodejs-aes256';
-import service_config from '@/config/service.config';
 import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
 import http from 'http';
 import https from 'https';
+import rimraf from 'rimraf';
+import request from 'request-promise';
+import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
+import StdObject from "@/classes/StdObject";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true});
@@ -269,7 +271,9 @@ export default {
 
   "rename": (target_path, dest_path) => {
     try{
-      fs.renameSync(target_path, dest_path);
+      if (fileExists(target_path)) {
+        fs.renameSync(target_path, dest_path);
+      }
       return true;
     } catch (error) {
       log.e(null, 'Util.rename', error);
@@ -277,9 +281,11 @@ export default {
     }
   },
 
-  "delete": (target_path) => {
+  "deleteFile": (target_path) => {
     try{
-      fse.removeSync(target_path);
+      if (fileExists(target_path)) {
+        fse.removeSync(target_path);
+      }
       return true;
     } catch (error) {
       log.e(null, 'Util.delete', error);
@@ -404,5 +410,62 @@ export default {
     return Math.ceil(byte/1024/1024);
   },
 
-  "isNumber": isNumber
+  "isNumber": isNumber,
+
+  "deleteDirectory": (path) => {
+    return new Promise((resolve, reject) => {
+      if (fileExists(path)) {
+        rimraf(path, fse, (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        });
+      } else {
+        resolve(true);
+      }
+    });
+  },
+
+  "parseInt": (str, on_error_result=0) => {
+    if (isNumber(str)) {
+      try {
+        return parseInt(str, 10);
+      } catch (e) {
+        return on_error_result;
+      }
+
+    } else {
+      return on_error_result;
+    }
+  },
+
+  "forward": async (url, method, token=null, data=null) => {
+    let request_params = {
+      "url": url,
+      "method": method
+    };
+    if (token) {
+      request_params.auth = {
+        "bearer": token
+      };
+    }
+    if (!isEmpty(data)) {
+      request_params = _.merge(request_params, data);
+    }
+
+    const forward = request(request_params);
+    try{
+      return await forward;
+    } catch (e) {
+      let error;
+      if (typeof e.error === 'string') {
+        error = JSON.parse(e.error);
+      } else {
+        error = e.error;
+      }
+      throw error;
+    }
+  }
 };

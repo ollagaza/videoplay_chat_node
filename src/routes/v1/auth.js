@@ -127,6 +127,8 @@ routes.post('/', Wrap(async(req, res) => {
     throw new StdObject(-1, "이메일 인증 후 사용 가능합니다.");
   }
 
+  member_info.role = roles.MEMBER;
+
   const token_result = await Auth.generateTokenByMemberInfo(member_info);
 
   const output = new StdObject();
@@ -229,6 +231,8 @@ routes.post('/token/refresh', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async
 
   const member_model = new MemberModel({ database });
   const member_info = await member_model.findOne({"seq": member_seq});
+
+  member_info.role = roles.MEMBER;
 
   const token_result = await Auth.generateTokenByMemberInfo(member_info);
 

@@ -61,7 +61,7 @@ export default class ReferFileModel extends ModelObject {
 
     result_list.forEach((file_info) => {
       const target_path = media_root + file_info.file_path;
-      Util.delete(target_path);
+      Util.deleteFile(target_path);
     });
 
     return true;

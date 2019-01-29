@@ -24,8 +24,18 @@ export default (fn) => {
 
         // 개발 모드일 때에만 콜스택과 에러 메세지 노출
         if (IS_DEV) {
-          output.stack = error.stack;
-          output.setMessage(error.message);
+          if (error.stack) {
+            output.stack = error.stack;
+          }
+          if (error.message) {
+            output.message = error.message;
+          }
+          if (error.variables && typeof error.variables === 'object') {
+            output.variables = error.variables;
+          }
+          if (error.httpStatusCode) {
+            output.httpStatusCode = error.httpStatusCode;
+          }
         }
         return next(output);
       }

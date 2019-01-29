@@ -78,8 +78,10 @@ export default class OperationModel extends ModelObject {
   };
 
   updateOperationInfo = async (operation_seq, operation_info) => {
-    operation_info.modify_date = this.database.raw('NOW()');
-    return await this.update({"seq": operation_seq}, operation_info.toJSON());
+    operation_info.setIgnoreEmpty(true);
+    const update_params = operation_info.toJSON();
+    update_params.modify_date = this.database.raw('NOW()');
+    return await this.update({"seq": operation_seq}, update_params);
   };
 
   getOperationInfoByResult = (query_result) => {

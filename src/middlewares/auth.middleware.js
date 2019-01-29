@@ -61,7 +61,7 @@ const isAuthenticated = (require_roles) => {
       return res.status(verify_result.httpStatusCode).send(verify_result);
     }
   }
-}
+};
 
 const verifyToken = async (req, require_roles=null) => {
   const token = getToken(req);
@@ -127,7 +127,7 @@ const verifyToken = async (req, require_roles=null) => {
   }
 
   return output;
-}
+};
 
 export default {
   "setResponseHeader": setResponseHeader,
