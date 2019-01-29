@@ -18,6 +18,7 @@ import ReferFileModel from '@/models/ReferFileModel';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
 import SmilInfo from "@/classes/surgbook/SmilInfo";
 import VideoModel from '@/models/xmlmodel/VideoModel';
+import log from "@/classes/Logger";
 
 
 
@@ -136,9 +137,12 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
 
     const seq_directory = media_directory + 'SEQ\\';
     const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
+    log.d(req, operation_media_info);
     if (!operation_media_info.isEmpty()){
       if (!Util.isEmpty(operation_media_info.smil_file_name)) {
-        const smil_info = new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
+        const smil_info = await new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
+
+        log.d(req, smil_info);
         if (smil_info.video_info_list) {
           for (let i = 0; i < smil_info.video_info_list.length; i++) {
             const smil_video_info = smil_info.video_info_list[i];

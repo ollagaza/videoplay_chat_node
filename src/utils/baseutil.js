@@ -241,7 +241,9 @@ export default {
     let result = null;
     const output = new StdObject();
     try {
-      result = await promisify(fs.copyFile)(source, destination);
+      if (!fileExists(source)) {
+        result = await promisify(fs.copyFile)(source, destination);
+      }
       output.add("copy_result", result);
     } catch (error) {
       log.e(null, 'Util.copyFile', error);
@@ -285,6 +287,9 @@ export default {
     try{
       if (fileExists(target_path)) {
         fse.removeSync(target_path);
+        log.d(null, 'Delete File', target_path);
+      } else {
+        log.d(null, 'Delete File not Exists', target_path);
       }
       return true;
     } catch (error) {
