@@ -112,9 +112,21 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
     if (operation_info.isEmpty()) {
       throw new StdObject(-1, '수술정보가 존재하지 않습니다.', 400);
     }
+    const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
     await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
+    if (operation_media_info.isEmpty()) {
+      await operation_media_model.createOperationMediaInfo(operation_info);
+    }
+
+    const operation_update_param = {};
+    operation_update_param.is_analysis_complete = 0;
+    operation_update_param.analysis_status = 'N';
+    await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+    await operation_media_model.updateAnalysisComplete(operation_seq, false);
+
     const media_directory = operation_info.media_directory;
 
+    // db 업데이트가 끝나면 기존 파일 정리.
     await Util.deleteDirectory(media_directory + "Custom");
     await Util.deleteDirectory(media_directory + "Trash");
     await Util.deleteDirectory(media_directory + "INX1");
@@ -136,13 +148,12 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
     Util.deleteFile(media_directory + "Report.xml");
 
     const seq_directory = media_directory + 'SEQ\\';
-    const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
+    let smil_info = null;
     log.d(req, operation_media_info);
     if (!operation_media_info.isEmpty()){
       if (!Util.isEmpty(operation_media_info.smil_file_name)) {
-        const smil_info = await new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
-
-        log.d(req, smil_info);
+        smil_info = await new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
+        log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info);
         if (smil_info.video_info_list) {
           for (let i = 0; i < smil_info.video_info_list.length; i++) {
             const smil_video_info = smil_info.video_info_list[i];
@@ -156,8 +167,18 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
       if (!Util.isEmpty(operation_media_info.proxy_file_name)) {
         Util.deleteFile(seq_directory + operation_media_info.proxy_file_name);
       }
-    } else {
-      await operation_media_model.createOperationMediaInfo(operation_info);
+    }
+
+    if (!smil_info) {
+      smil_info = await new SmilInfo().loadFromXml(media_directory, service_config.get('default_smil_file_name'));
+      log.d(req, `SmilInfo [config: ${service_config.get('default_smil_file_name')}]`, smil_info);
+    }
+
+    if (smil_info && smil_info.video_info_list) {
+      for (let i = 0; i < smil_info.video_info_list.length; i++) {
+        const smil_video_info = smil_info.video_info_list[i];
+        Util.deleteFile(seq_directory + smil_video_info.file_name);
+      }
     }
 
     const video_info = await new VideoModel({ database: trx }).getVideoInfo(media_directory);
@@ -171,7 +192,7 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
     Util.deleteFile(media_directory + "Media.xml");
   });
 
-  const url = `http://localhost:3000/api/v1/operations/${operation_seq}/request/analysis`;
+  const url = `${service_config.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
   const forward_result = await Util.forward(url, 'POST', token_info.token);
   res.json(forward_result);
 }));

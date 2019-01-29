@@ -162,11 +162,15 @@ const on_complete = Wrap(async(req, res) => {
         }
         const index_xml_list = frame_info.item;
         if (index_xml_list) {
+          const index_directory = operation_info.media_directory + 'INX2\\';
           for (let i = 0; i < index_xml_list.length; i++) {
             const index_xml_info = index_xml_list[i];
             const image_path = Util.getXmlText(index_xml_info.orithumb);
             const image_file_name = path.basename(image_path);
-            index_file_list.push(video_file_name + "_" + image_file_name);
+            const index_file_name = video_file_name + "_" + image_file_name;
+            if (Util.fileExists(index_directory + index_file_name)) {
+              index_file_list.push(index_file_name);
+            }
           }
         }
         index_file_list.sort(natsort());
