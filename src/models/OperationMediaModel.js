@@ -105,4 +105,8 @@ export default class OperationMediaModel extends ModelObject {
     };
     return await this.update({operation_seq: operation_info.seq}, update_params);
   };
+
+  updateTransCompleteStatus = async (operation_info, status) => {
+    return await this.update({operation_seq: operation_info.seq}, {is_trans_complete: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
+  }
 }
