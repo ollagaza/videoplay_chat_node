@@ -194,7 +194,11 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
 
   const url = `${service_config.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
   const forward_result = await Util.forward(url, 'POST', token_info.token);
-  res.json(forward_result);
+  if (typeof forward_result === 'string') {
+    res.json(JSON.parse(forward_result));
+  } else {
+    res.json(forward_result);
+  }
 }));
 
 routes.post('/operation/:operation_seq(\\d+)/execute', Auth.isAuthenticated(), Wrap(async(req, res) => {
