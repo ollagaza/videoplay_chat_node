@@ -666,7 +666,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     }
 
     const query_data = {
-      "DirPath": operation_info.media_directory + "\\SEQ",
+      "DirPath": media_directory,
       "ContentID": content_id
     };
     const query_str = querystring.stringify(query_data);
