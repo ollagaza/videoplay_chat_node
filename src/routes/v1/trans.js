@@ -85,7 +85,8 @@ const on_complate = Wrap(async(req, res) => {
     }
     await new OperationMediaModel({ database }).updateTransComplete(operation_info, trans_info);
 
-    await sync_one(token_info, operation_info.seq, content_id);
+    await sync_one(req, token_info, operation_info.seq);
+
     is_complete = true;
     result = new StdObject();
     log.d(req, '완료', result);

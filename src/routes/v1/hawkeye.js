@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import _ from 'lodash';
-import path from 'path';
 import querystring from 'querystring';
-import natsort from 'natsort';
 import Wrap from '@/utils/express-async';
 import Auth from '@/middlewares/auth.middleware';
 import Util from '@/utils/baseutil';
@@ -81,8 +78,6 @@ const on_complete = Wrap(async(req, res) => {
   let result = null;
   let media_info_api_url = null;
   let media_info_api_result = null;
-  let index_list_api_url = null;
-  let index_list_api_result = null;
   try {
     if (is_success) {
       if (Util.isEmpty(content_id)) {
@@ -126,65 +121,8 @@ const on_complete = Wrap(async(req, res) => {
       const video_file_name = video_info.video_name;
       media_info_api_result = "video_file_name: " + video_file_name + ", path: " + operation_info.media_directory + 'Media.xml';
 
-      const index_list_data = {
-        "ContentID": content_id,
-        "PageNum": 1,
-        "CountOfPage": 1000,
-        "Type": 1,
-        "PassItem": "false"
-      };
-      const index_list_api_params = querystring.stringify(index_list_data);
-
-      const index_list_api_options = {
-        hostname: service_info.hawkeye_server_domain,
-        port: service_info.hawkeye_server_port,
-        path: service_info.hawkeye_index_list_api + '?' + index_list_api_params,
-        method: 'GET'
-      };
-      index_list_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + service_info.hawkeye_index_list_api + '?' + index_list_api_params;
-      log.d(req, 'call hawkeye index list api', index_list_api_url);
-
-      const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
-      const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
-      if (!index_list_xml_info || !index_list_xml_info.errorimage || index_list_xml_info.errorimage.error) {
-        if (index_list_xml_info.errorimage && index_list_xml_info.errorimage.error) {
-          throw new StdObject(Util.getXmlText(index_list_xml_info.errorimage.error), Util.getXmlText(index_list_xml_info.errorimage.msg), 500);
-        } else {
-          throw new StdObject(3, "XML 파싱 오류", 500);
-        }
-      }
-
-      let index_file_list = [];
-      let frame_info = index_list_xml_info.errorimage.frameinfo;
-      if (frame_info) {
-        if (_.isArray(frame_info)) {
-          frame_info = frame_info[0];
-        }
-        const index_xml_list = frame_info.item;
-        if (index_xml_list) {
-          const index_directory = operation_info.media_directory + 'INX2\\';
-          for (let i = 0; i < index_xml_list.length; i++) {
-            const index_xml_info = index_xml_list[i];
-            const image_path = Util.getXmlText(index_xml_info.orithumb);
-            const image_file_name = path.basename(image_path);
-            const index_file_name = video_file_name + "_" + image_file_name;
-            if (Util.fileExists(index_directory + index_file_name)) {
-              index_file_list.push(index_file_name);
-            }
-          }
-        }
-        index_file_list.sort(natsort());
-      }
-      const index_xml_info = {
-        "IndexInfo": {
-          "Index": index_file_list
-        }
-      };
-      await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index_xml_info);
-      index_list_api_result = "인덱스 개수: " + (index_file_list.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
-
       await operation_model.updateAnalysisComplete(operation_seq,true);
-      await sync_one(token_info, operation_seq, content_id);
+      await sync_one(req, token_info, operation_seq);
 
       is_complete = true;
       result = new StdObject();
@@ -229,8 +167,6 @@ const on_complete = Wrap(async(req, res) => {
     context += `요청 Params: ${query_str}<br/>\n`;
     context += `동영상 정보 요청: ${media_info_api_url}<br/>\n`;
     context += `동영상 정보 결과: ${media_info_api_result}<br/>\n`;
-    context += `인덱스 목록 요청: ${index_list_api_url}<br/>\n`;
-    context += `인덱스 목록 결과: ${index_list_api_result}<br/>\n`;
     context += `처리 결과: ${is_complete}<br/>\n`;
     context += `에러: ${Util.nlToBr(message)}<br/>\n`;
     await send_mail.sendMailHtml(mail_to, subject, context);

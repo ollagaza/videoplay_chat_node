@@ -1,4 +1,8 @@
 import { Router } from 'express';
+import _ from 'lodash';
+import path from 'path';
+import natsort from "natsort";
+import querystring from 'querystring';
 import service_config from '@/config/service.config';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
@@ -20,18 +24,28 @@ import SmilInfo from "@/classes/surgbook/SmilInfo";
 import VideoModel from '@/models/xmlmodel/VideoModel';
 import log from "@/classes/Logger";
 
-
-
 const routes = Router();
 
-const sync_one = async (token_info, operation_seq, content_id) => {
+const sync_one = async (req, token_info, operation_seq) => {
+  log.d(req, `sync_one[seq: ${operation_seq}] start`);
   await database.transaction(async(trx) => {
+    const service_info = service_config.getServiceInfo();
+
     const operation_model = new OperationModel({ database: trx });
     const operation_media_model = new OperationMediaModel({ database: trx });
     const operation_storage_model = new OperationStorageModel({ database: trx });
 
     const operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400);
+    }
     const media_directory = operation_info.media_directory;
+    const content_id = operation_info.content_id;
+    if (Util.isEmpty(content_id)) {
+      throw new StdObject(2, '등록된 컨텐츠 아이디가 없습니다.', 400);
+    }
+
+    const log_prefix = `sync_one[seq: ${operation_seq}, content_id: ${content_id}]`;
 
     Util.createDirectory(media_directory + "SEQ");
     Util.createDirectory(media_directory + "Custom");
@@ -42,6 +56,73 @@ const sync_one = async (token_info, operation_seq, content_id) => {
     await operation_media_model.syncMediaInfoByXml(operation_info);
     const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
     const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
+
+    const is_sync_complete = operation_info.is_analysis_complete > 0 && operation_media_info.is_trans_complete;
+
+    log.d(req, `${log_prefix} load operation infos. [is_sync_complete: ${is_sync_complete}]`);
+
+    if (is_sync_complete) {
+      log.d(req, `${log_prefix} hawkeye index list api`);
+
+      const video_file_name = operation_media_info.video_file_name;
+      const index_list_data = {
+        "ContentID": content_id,
+        "PageNum": 1,
+        "CountOfPage": 1000,
+        "Type": 1,
+        "PassItem": "false"
+      };
+      const index_list_api_params = querystring.stringify(index_list_data);
+
+      const index_list_api_options = {
+        hostname: service_info.hawkeye_server_domain,
+        port: service_info.hawkeye_server_port,
+        path: service_info.hawkeye_index_list_api + '?' + index_list_api_params,
+        method: 'GET'
+      };
+      const index_list_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + service_info.hawkeye_index_list_api + '?' + index_list_api_params;
+      log.d(req, `${log_prefix} hawkeye index list api url: ${index_list_api_url}`);
+
+      const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
+      const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
+      if (!index_list_xml_info || !index_list_xml_info.errorimage || index_list_xml_info.errorimage.error) {
+        if (index_list_xml_info.errorimage && index_list_xml_info.errorimage.error) {
+          throw new StdObject(Util.getXmlText(index_list_xml_info.errorimage.error), Util.getXmlText(index_list_xml_info.errorimage.msg), 500);
+        } else {
+          throw new StdObject(3, "XML 파싱 오류", 500);
+        }
+      }
+
+      let index_file_list = [];
+      let frame_info = index_list_xml_info.errorimage.frameinfo;
+      if (frame_info) {
+        if (_.isArray(frame_info)) {
+          frame_info = frame_info[0];
+        }
+        const index_xml_list = frame_info.item;
+        if (index_xml_list) {
+          const index_directory = operation_info.media_directory + 'INX2\\';
+          for (let i = 0; i < index_xml_list.length; i++) {
+            const index_xml_info = index_xml_list[i];
+            const image_path = Util.getXmlText(index_xml_info.orithumb);
+            const image_file_name = path.basename(image_path);
+            const index_file_name = video_file_name + "_" + image_file_name;
+            if (Util.fileExists(index_directory + index_file_name)) {
+              index_file_list.push(index_file_name);
+            }
+          }
+        }
+        index_file_list.sort(natsort());
+      }
+      const index_xml_info = {
+        "IndexInfo": {
+          "Index": index_file_list
+        }
+      };
+      await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index_xml_info);
+      const index_list_api_result = "인덱스 개수: " + (index_file_list.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
+      log.d(req, `${log_prefix} hawkeye index list api result: [${index_list_api_result}]`);
+    }
 
     const storage_seq = operation_storage_info.seq;
     operation_info.storage_seq = storage_seq;
@@ -74,20 +155,18 @@ const sync_one = async (token_info, operation_seq, content_id) => {
 
     await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info);
     await operation_storage_model.updateStorageSummary(storage_seq);
+    log.d(req, `${log_prefix} update storage info complete`);
 
     const operation_update_param = {};
-    if (content_id) {
-      operation_update_param.content_id = content_id;
-    } else if (Util.isEmpty(operation_info.content_id)) {
-      operation_update_param.content_id = await ContentIdManager.getContentId();
-    }
-    if (operation_info.is_analysis_complete > 0 && operation_media_info.is_trans_complete) {
+    if (is_sync_complete) {
       operation_update_param.analysis_status = 'Y';
     } else {
       operation_update_param.analysis_status = operation_info.analysis_status === 'R' ? 'R' : 'N';
     }
 
     await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+
+    log.d(req, `${log_prefix} complete`);
   });
 };
 
@@ -201,11 +280,11 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
   }
 }));
 
-routes.post('/operation/:operation_seq(\\d+)/execute', Auth.isAuthenticated(), Wrap(async(req, res) => {
+routes.post('/operation/:operation_seq(\\d+)/refresh', Auth.isAuthenticated(), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  await sync_one(token_info, operation_seq, null);
+  await sync_one(req, token_info, operation_seq);
   res.json(new StdObject());
 }));
 
