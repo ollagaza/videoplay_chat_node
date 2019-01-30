@@ -241,7 +241,7 @@ export default {
     let result = null;
     const output = new StdObject();
     try {
-      if (!fileExists(source)) {
+      if (fileExists(source)) {
         result = await promisify(fs.copyFile)(source, destination);
       }
       output.add("copy_result", result);
