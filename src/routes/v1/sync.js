@@ -119,6 +119,10 @@ const sync_one = async (req, token_info, operation_seq) => {
           "Index": index_file_list
         }
       };
+
+      Util.deleteFile(media_directory + "Index2.xml");
+      Util.deleteFile(media_directory + "Custom.xml");
+      Util.deleteFile(media_directory + "History.xml");
       await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index_xml_info);
       const index_list_api_result = "인덱스 개수: " + (index_file_list.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
       log.d(req, `${log_prefix} hawkeye index list api result: [${index_list_api_result}]`);
