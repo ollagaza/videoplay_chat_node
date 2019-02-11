@@ -84,7 +84,7 @@ export default class OperationMediaInfo extends JsonWrapper {
         this.hls_streaming_url = service_config.get('hls_streaming_url') + url_media_path + this.smil_file_name + '/playlist.m3u8';
       }
       this.rtmp_streaming_server = service_config.get('rtmp_streaming_url');
-      this.rtmp_streaming_name = url_media_path + this.video_file_name;
+      this.rtmp_streaming_name = url_media_path + this.proxy_file_name;
     }
   };
 }

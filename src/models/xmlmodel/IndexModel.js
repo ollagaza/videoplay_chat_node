@@ -67,6 +67,7 @@ export default class IndexModel extends ModelObject {
           add_frames = current_frame;
         }
         current_frame = frame + add_frames;
+        prev_frame = frame;
 
         index_info.start_time = Math.round(current_frame * 1000 / fps)/1000;
         index_info.start_frame = current_frame;
