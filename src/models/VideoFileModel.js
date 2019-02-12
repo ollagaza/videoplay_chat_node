@@ -133,7 +133,7 @@ export default class VideoFileModel extends ModelObject {
   createVideoThumbnail = async (origin_video_path, operation_info, upload_seq) => {
     const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
     const thumbnail_full_path = operation_info.media_root + thumbnail_path;
-    const command = 'ffmpeg -ss 00:00:30 -i "' + origin_video_path + '" -y -vframes 1 -filter:v scale=320:-1 -an "' + thumbnail_full_path + '"';
+    const command = 'ffmpeg -ss 00:00:10 -i "' + origin_video_path + '" -y -vframes 1 -filter:v scale=-1:160 -an "' + thumbnail_full_path + '"';
     const execute_result = await Util.execute(command);
     if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
       try {

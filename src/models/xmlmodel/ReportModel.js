@@ -22,7 +22,7 @@ export default class ReportModel extends ModelObject {
         && report_xml_info.OperativeReport.Service[0].Operation[0].Entry ) {
       const entry_xml_list = report_xml_info.OperativeReport.Service[0].Operation[0].Entry;
       entry_xml_list.forEach((entry_xml_xml) => {
-        const entry_info = new ReportEntryInfo().getFromXML(entry_xml_xml, operation_info);
+        const entry_info = new ReportEntryInfo().getFromXML(entry_xml_xml);
         entry_list.push(entry_info);
       });
     }
@@ -31,7 +31,7 @@ export default class ReportModel extends ModelObject {
   }
 
   saveReportInfo = async (operation_info, report_info) => {
-    const entry_list = new Array();
+    const entry_list = [];
     report_info.sheet_list.forEach((entry) => {
       const entry_info = new ReportEntryInfo(entry);
       entry_info.setExportXml(true);
@@ -80,5 +80,5 @@ export default class ReportModel extends ModelObject {
     await Util.writeXmlFile(operation_info.media_directory, 'Report.xml', report_xml_json);
 
     return entry_list.length;
-  }
+  };
 }

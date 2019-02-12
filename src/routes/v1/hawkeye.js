@@ -7,7 +7,7 @@ import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import OperationModel from '@/models/OperationModel';
 import SendMail from '@/classes/SendMail';
-import {sync_one} from '@/routes/v1/sync';
+import {syncOne} from '@/routes/v1/sync';
 import service_config from '@/config/service.config';
 import VideoInfo from "@/classes/surgbook/VideoInfo";
 import log from "@/classes/Logger";
@@ -122,7 +122,7 @@ const on_complete = Wrap(async(req, res) => {
       media_info_api_result = "video_file_name: " + video_file_name + ", path: " + operation_info.media_directory + 'Media.xml';
 
       await operation_model.updateAnalysisComplete(operation_seq,true);
-      await sync_one(req, token_info, operation_seq);
+      await syncOne(req, token_info, operation_seq);
 
       is_complete = true;
       result = new StdObject();

@@ -9,7 +9,7 @@ import OperationModel from '@/models/OperationModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import SendMail from '@/classes/SendMail';
 import log from "@/classes/Logger";
-import {sync_one} from '@/routes/v1/sync';
+import {syncOne} from '@/routes/v1/sync';
 
 const routes = Router();
 
@@ -85,7 +85,7 @@ const on_complate = Wrap(async(req, res) => {
     }
     await new OperationMediaModel({ database }).updateTransComplete(operation_info, trans_info);
 
-    await sync_one(req, token_info, operation_info.seq);
+    await syncOne(req, token_info, operation_info.seq);
 
     is_complete = true;
     result = new StdObject();

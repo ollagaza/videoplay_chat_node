@@ -4,7 +4,7 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 const logger_config = {
   appenders: {
     out: { type: 'stdout', layout: { type: 'coloured' } },
-    surgbook: { type: 'dateFile', filename: 'logs/surgbook.log', pattern: '.yyyy-MM-dd', compress: false },
+    surgbook: { type: 'dateFile', filename: 'logs/surgbook.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 30 },
     access: { type: 'dateFile', filename: 'logs/access.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 7 }
   },
   categories: {

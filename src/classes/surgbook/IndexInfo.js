@@ -1,4 +1,8 @@
+import _ from 'lodash';
+import path from 'path';
 import JsonWrapper from '@/classes/JsonWrapper';
+import service_config from '@/config/service.config';
+import Util from '@/utils/baseutil';
 
 /**
  * @swagger
@@ -10,15 +14,15 @@ import JsonWrapper from '@/classes/JsonWrapper';
  *      unique_id:
  *        type: "string"
  *        description: "인덱스의 고유 아이디"
- *      video_name:
+ *      creator:
  *        type: "string"
- *        description: "인덱스가 만들어진 원본 동영상 파일명"
- *      create_type:
+ *        description: "인덱스 생성 주체"
+ *      original_url:
  *        type: "string"
- *        description: "인덱스 생성 방식 (A: 자동, M: 수동)"
- *      url:
+ *        description: "원본 인덱스 이미지 url"
+ *      thumbnail_url:
  *        type: "string"
- *        description: "인덱스 이미지 url"
+ *        description: "썸네일 인덱스 이미지 url"
  *      start_time:
  *        type: "number"
  *        description: "인덱스 구간의 시작시간"
@@ -32,16 +36,75 @@ export default class IndexInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
 
-    this.setKeys(['unique_id', 'video_name', 'create_type', 'url', 'start_time', 'end_time']);
+    this.setKeys(['unique_id', 'creator', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'start_frame']);
   }
+
+  getFromXML = (index_xml_info) => {
+    if (!index_xml_info) {
+      return this;
+    }
+
+    if (_.isArray(index_xml_info)) {
+      index_xml_info = index_xml_info[0];
+    }
+
+    this.original_url = Util.getXmlText(index_xml_info.Original);
+    this.thumbnail_url = Util.getXmlText(index_xml_info.Thumbnail);
+    this.creator = index_xml_info.$.Creator;
+    this.unique_id = index_xml_info.$.ID;
+    this.start_time = Util.parseFloat(index_xml_info.$.Time);
+    this.start_frame = Util.parseFloat(index_xml_info.$.Frame);
+    this.end_time = 0;
+    this.end_frame = 0;
+
+    this.is_empty = false;
+
+    return this;
+  };
+
+  getFromHawkeyeXML = (hawkeye_xml_info) => {
+    if (!hawkeye_xml_info) {
+      return this;
+    }
+
+    if (_.isArray(hawkeye_xml_info)) {
+      hawkeye_xml_info = hawkeye_xml_info[0];
+    }
+
+    const service_info = service_config.getServiceInfo();
+    const hawkeye_root_regex = new RegExp(`^.*${service_info.hwakeye_index_directory_root}`, 'i');
+    const index_directory = service_info.hawkeye_data_directory;
+
+    const origin_file = Util.getXmlText(hawkeye_xml_info.orithumb).replace(hawkeye_root_regex, '');
+    const thumb_file = Util.getXmlText(hawkeye_xml_info.thumb).replace(hawkeye_root_regex, '');
+    const image_file_name = path.basename(origin_file);
+    const frame = Util.getXmlText(hawkeye_xml_info.frame);
+    const time = Util.getXmlText(hawkeye_xml_info.time);
+    if (Util.fileExists(index_directory + origin_file) && Util.fileExists(index_directory + thumb_file)) {
+      this.original_url = this.url;
+      this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
+      this.creator = "system";
+      this.unique_id = "system/" + image_file_name;
+      this.start_time = Util.parseFloat(time);
+      this.start_frame = Util.parseFloat(frame);
+      this.end_time = 0;
+      this.end_frame = 0;
+      this.is_empty = false;
+    }
+
+    return this;
+  };
 
   getXmlJson = () => {
     return {
-      "_": this.id,
       "$": {
-        "type": this.create_type,
-        "directory": this.directory
-      }
-    }
+        "ID": this.unique_id,
+        "Creator": this.creator,
+        "Frame": this.start_frame,
+        "Time": this.start_time
+      },
+      "Original": this.original_url,
+      "Thumbnail": this.thumbnail_url
+    };
   }
 }

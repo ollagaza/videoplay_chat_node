@@ -1,4 +1,4 @@
-const index_file_regexp = /(.+\.[a-z0-9]+)_([0-9]+)_([0-9]+)_(0x[0-9]+)_0\.jpg$/i;
+const index_file_regexp = /(.+\.[a-z0-9]+)?_?([0-9]+)_([0-9]+)_(0x[0-9]+)_0\.jpg$/i;
 
 export default class IndexFileInfo {
   constructor(file_name) {
@@ -11,8 +11,8 @@ export default class IndexFileInfo {
       return;
     }
 
-    this.video_name = matches[1]; // member table seq
-    this.job_id = matches[2]; // 권한 코드. 나중에 쓸지도 모름.
+    this.video_name = matches[1];
+    this.job_id = matches[2];
     this.frame = parseInt(matches[3]);
     this.suffix = matches[4];
     if (this.suffix === '0x80000000') {

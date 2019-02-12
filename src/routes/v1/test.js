@@ -37,7 +37,7 @@ if (IS_DEV) {
 
   routes.get('/xml/:xml_name', wrap(async (req, res) => {
     const xml_name = req.params.xml_name;
-    const media_path = "C:\\surgbook\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\";
+    const media_path = "\\\\192.168.1.54\\dev\\data\\EHMD\\OBG\\강소라\\180504_000167275_W_385\\";
 
     const json = await Util.loadXmlFile(media_path, xml_name + '.xml');
     const output = new StdObject();

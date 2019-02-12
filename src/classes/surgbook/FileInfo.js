@@ -91,10 +91,10 @@ export default class FileInfo extends JsonWrapper {
 
   setUrl = (media_root) => {
     if (this.file_path) {
-      this.url = Util.pathToUrl(media_root + this.file_path);
+      this.url = Util.getUrlPrefix(media_root, this.file_path);
     }
     if (this.thumbnail) {
-      this.thumbnail_url = Util.pathToUrl(media_root + this.thumbnail);
+      this.thumbnail_url = Util.getUrlPrefix(media_root, this.thumbnail);
     }
 
     return this;

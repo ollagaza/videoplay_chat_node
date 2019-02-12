@@ -19,7 +19,7 @@ export default class HistoryModel extends ModelObject {
       const index_list_length = change_index_list.length;
       const index_list = new Array();
       for (const key in change_index_list) {
-        index_list.push(change_index_list[key].id);
+        index_list.push(change_index_list[key].unique_id);
       }
       const new_history = {
         "$": {
@@ -27,7 +27,7 @@ export default class HistoryModel extends ModelObject {
           "action": action_type,
           "cursor": "y"
         },
-        "firstIndex": [change_index_list[0].id],
+        "firstIndex": [change_index_list[0].unique_id],
         "startFrame": [change_index_list[0].start_frame],
         "endFrame": [change_index_list[index_list_length - 1].end_frame],
         "indexList": [

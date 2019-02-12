@@ -93,7 +93,7 @@ export default class OperationModel extends ModelObject {
 
     if (operation_info.media_root) {
       operation_info.media_directory = Util.getMediaDirectory(operation_info.media_root, operation_info.media_path);
-      operation_info.url_prefix = Util.getUrlPrefix(operation_info.media_root, operation_info.media_path);
+      operation_info.url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
     }
 
     return operation_info;

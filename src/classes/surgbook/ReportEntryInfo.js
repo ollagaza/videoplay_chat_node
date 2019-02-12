@@ -49,14 +49,12 @@ export default class ReportEntryInfo extends JsonWrapper {
     }
   }
 
-  getFromXML = (xml_info, operation_info) => {
+  getFromXML = (xml_info) => {
     if (xml_info) {
-      const url_prefix = operation_info.url_prefix;
-
       this.desc = this.getXmlText(xml_info);
       if (xml_info.Index) {
         xml_info.Index.forEach((item) => {
-          this.item_list.push(new ReportEntryItemInfo().getFromXML(item, url_prefix));
+          this.item_list.push(new ReportEntryItemInfo().getFromXML(item));
         });
       }
 
@@ -65,14 +63,12 @@ export default class ReportEntryInfo extends JsonWrapper {
     }
 
     return this;
-  }
+  };
 
   getXmlJson = () => {
-    const xml_info = {
+    return {
       "_": this.desc,
       "Index": this.item_list
     };
-
-    return xml_info;
   }
 }

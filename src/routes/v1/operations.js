@@ -396,7 +396,7 @@ routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticat
 
   const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
 
-  const index_info_list = await new IndexModel({ database }).getIndexlist(operation_info, index_type);
+  const index_info_list = await new IndexModel({ database }).getIndexList(operation_info, index_type);
 
   const output = new StdObject();
   output.add("index_info_list", index_info_list);

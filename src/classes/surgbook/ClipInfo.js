@@ -41,6 +41,12 @@ import ClipSeqInfo from "@/classes/surgbook/ClipSeqInfo";
  *      url:
  *        type: "string"
  *        description: "클립 인덱스 이미지의 URL"
+ *      original_url:
+ *        type: "string"
+ *        description: "클립 인덱스 이미지의 URL (원본크기)"
+ *      thumbnail_url:
+ *        type: "string"
+ *        description: "클립 인덱스 이미지의 URL (작은크기)"
  *      seq_count:
  *        type: "integer"
  *        description: "큐레이션에 연결된 시퀀스의 개수"
@@ -50,22 +56,20 @@ export default class ClipInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
 
-    this.setKeys(['clip_num', 'source', 'unique_id', 'url', 'seq_count']);
-    this.seq_list = new Array();
+    this.setKeys(['clip_num', 'source', 'unique_id', 'original_url', 'thumbnail_url', 'seq_count']);
+    this.seq_list = [];
   }
 
-  getFromXML = (xml_info, operation_info) => {
+  getFromXML = (xml_info) => {
     if (!xml_info) {
       return this;
     }
-
-    this.url_prefix = operation_info.url_prefix;
-
     this.clip_num = xml_info._;
     this.source = this.getXmlText(xml_info.Source);
-    this.unique_id = this.getXmlText(xml_info.Index);
+    this.unique_id = this.getXmlText(xml_info.ID);
+    this.original_url = this.getXmlText(xml_info.Original);
+    this.thumbnail_url = this.getXmlText(xml_info.Thumbnail);
     this.seq_count = xml_info.Seq ? xml_info.Seq.length : 0;
-    this.url = this.url_prefix + this.unique_id.replace("\\", "/");
 
     for (let i = 0; i < this.seq_count; i++) {
       this.seq_list.push(new ClipSeqInfo().getFromXML(xml_info.Seq[i], this))
@@ -74,20 +78,20 @@ export default class ClipInfo extends JsonWrapper {
     this.is_empty = false;
 
     return this;
-  }
+  };
 
   addSeqInfo = (seq_info) => {
     this.seq_list.push(seq_info);
-  }
+  };
 
   getXmlJson = () => {
-    const xml_info = {
+    return {
       "_": this.clip_num,
-      "Source": [this.source],
-      "Index": [this.unique_id],
+      "Source": this.source,
+      "ID": this.unique_id,
+      "Original": this.original_url,
+      "Thumbnail": this.thumbnail_url,
       "Seq": this.seq_list
     };
-
-    return xml_info;
-  }
+  };
 }

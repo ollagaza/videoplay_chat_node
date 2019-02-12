@@ -125,9 +125,8 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info, operation_model} = await getOperationInfo(operation_seq, token_info);
+  const {operation_info} = await getOperationInfo(operation_seq, token_info);
   const report_count = await new ReportModel({ database }).saveReportInfo(operation_info, req.body);
-  await operation_model.updateReportCount(operation_seq, report_count);
   await new OperationStorageModel({database}).updateReportCount(operation_seq, report_count);
 
   const output = new StdObject();

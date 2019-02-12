@@ -18,9 +18,12 @@ import Util from '@/utils/baseutil';
  *      start_time:
  *        type: "integer"
  *        description: "첨부 인덱스 시작시간"
- *      url:
+ *      original_url:
  *        type: "string"
- *        description: "첨부 인덱스 이미지 URL"
+ *        description: "클립 인덱스 이미지의 URL (원본크기)"
+ *      thumbnail_url:
+ *        type: "string"
+ *        description: "클립 인덱스 이미지의 URL (작은크기)"
  *
  */
 
@@ -28,15 +31,15 @@ export default class ReportEntryItemInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
 
-    this.setKeys(['unique_id', 'start_time', 'url']);
+    this.setKeys(['unique_id', 'start_time', 'original_url', 'thumbnail_url']);
   }
 
-  getFromXML = (xml_info, url_prefix) => {
+  getFromXML = (xml_info) => {
     if (xml_info) {
-      const src = xml_info.$.Src;
-      this.unique_id = src;
+      this.unique_id = xml_info.$.ID;
       this.start_time = Util.timeStrToSecond(xml_info.$.Time);
-      this.url = url_prefix + src.replace("\\", "/");
+      this.original_url = this.getXmlText(xml_info.Original);
+      this.thumbnail_url = this.getXmlText(xml_info.Thumbnail);
 
       this.is_empty = false;
     }
@@ -47,9 +50,11 @@ export default class ReportEntryItemInfo extends JsonWrapper {
   getXmlJson = () => {
     return {
       "$": {
-        "Src": this.unique_id,
+        "ID": this.unique_id,
         "Time": Util.secondToTimeStr(this.start_time)
-      }
+      },
+      "Original": this.original_url,
+      "Thumbnail": this.thumbnail_url
     }
   }
 }

@@ -28,9 +28,12 @@ import Util from '@/utils/baseutil';
  *      unique_id:
  *        type: "string"
  *        description: "클립 인덱스의 고유 아이디"
- *      url:
+ *      original_url:
  *        type: "string"
- *        description: "클립 인덱스 이미지의 URL"
+ *        description: "클립 인덱스 이미지의 URL (원본크기)"
+ *      thumbnail_url:
+ *        type: "string"
+ *        description: "클립 인덱스 이미지의 URL (작은크기)"
  *      start_time:
  *        type: "integer"
  *        description: "원본 영상에서 시퀀스 시작 시간"
@@ -53,7 +56,7 @@ export default class ClipSeqInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
 
-    this.setKeys(['seq_id', 'clip_num', 'seq_num', 'unique_id', 'url', 'start_time', 'end_time', 'dest', 'desc']);
+    this.setKeys(['seq_id', 'clip_num', 'seq_num', 'unique_id', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'dest', 'desc']);
   }
 
   getFromXML = (xml_info, clip_info) => {
@@ -65,7 +68,8 @@ export default class ClipSeqInfo extends JsonWrapper {
     this.clip_num = clip_info.clip_num;
     this.seq_num = xml_info._;
     this.unique_id = clip_info.unique_id;
-    this.url = clip_info.url;
+    this.original_url = clip_info.original_url;
+    this.thumbnail_url = clip_info.thumbnail_url;
     this.start_time = Util.timeStrToSecond(this.getXmlText(xml_info.StartTime));
     this.end_time = Util.timeStrToSecond(this.getXmlText(xml_info.EndTime));
     this.dest = clip_info.url_prefix + this.getXmlText(xml_info.Dest).replace("\\", "/");

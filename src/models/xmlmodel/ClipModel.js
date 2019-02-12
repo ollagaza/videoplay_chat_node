@@ -24,7 +24,7 @@ export default class ClipModel extends ModelObject {
 
       const clip_xml_list = clip_xml_info.ClipInfo.Clip;
       clip_xml_list.forEach((clip_xml) => {
-        const clip_info = new ClipInfo().getFromXML(clip_xml, operation_info);
+        const clip_info = new ClipInfo().getFromXML(clip_xml);
         clip_list.push(clip_info);
         clip_seq_list = clip_seq_list.concat(clip_info.seq_list);
       });
@@ -35,7 +35,7 @@ export default class ClipModel extends ModelObject {
 
   saveClipInfo = async (operation_info, clip_info) => {
     const clip_map = {};
-    const clip_list = new Array();
+    const clip_list = [];
     const fps = operation_info.media_info.fps;
 
     clip_info.clip_list.forEach((clip_info_json) => {
@@ -65,6 +65,7 @@ export default class ClipModel extends ModelObject {
         "$": {
           "doc_version": DOC_VERSION
         },
+        "Directory": operation_info.media_directory,
         "Clip": clip_list
       }
     };
