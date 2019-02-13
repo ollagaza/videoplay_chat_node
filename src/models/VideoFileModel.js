@@ -27,13 +27,11 @@ export default class VideoFileModel extends ModelObject {
 
   videoFileList = async (storage_seq) => {
     const service_info = service_config.getServiceInfo();
-    const media_root = service_info.media_root;
-
     const result_list = await this.find({storage_seq: storage_seq, status: 'Y'});
     const list = [];
     if (result_list) {
       for (let i = 0; i < result_list.length; i++) {
-        list.push(new FileInfo(result_list[i]).setUrl(media_root));
+        list.push(new FileInfo(result_list[i]).setUrl(service_info.static_storage_prefix));
       }
     }
     return list;
@@ -131,15 +129,33 @@ export default class VideoFileModel extends ModelObject {
   };
 
   createVideoThumbnail = async (origin_video_path, operation_info, upload_seq) => {
-    const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
-    const thumbnail_full_path = operation_info.media_root + thumbnail_path;
-    const command = 'ffmpeg -ss 00:00:10 -i "' + origin_video_path + '" -y -vframes 1 -filter:v scale=-1:160 -an "' + thumbnail_full_path + '"';
-    const execute_result = await Util.execute(command);
-    if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
-      try {
-        await this.updateThumb(upload_seq, thumbnail_path);
-      } catch (error) {
-        log.e(null, 'VideoFileModel.createVideoThumbnail', error);
+    const dimension = await Util.getVideoDimension(origin_video_path);
+    if (!dimension.error && dimension.width && dimension.height) {
+
+      const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
+      const thumbnail_full_path = operation_info.media_root + thumbnail_path;
+
+      const thumb_width = 212;
+      const thumb_height = 160;
+      const w_ratio = dimension.width / thumb_width;
+      const h_ratio = dimension.height / thumb_height;
+      let crop_option = '';
+      log.d('ratio', w_ratio, h_ratio);
+      if (w_ratio >= h_ratio) {
+        crop_option = 'crop=in_h*4/3:in_h';
+      } else {
+        crop_option = 'crop=in_w:in_w*3/4';
+      }
+      const scale_option = `scale=${thumb_width}:${thumb_height}`;
+
+      const command = `ffmpeg -ss 00:00:05 -i "${origin_video_path}" -y -vframes 1 -filter:v "${crop_option},${scale_option}" -an "${thumbnail_full_path}"`;
+      const execute_result = await Util.execute(command);
+      if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
+        try {
+          await this.updateThumb(upload_seq, thumbnail_path);
+        } catch (error) {
+          log.e(null, 'VideoFileModel.createVideoThumbnail', error);
+        }
       }
     }
   }

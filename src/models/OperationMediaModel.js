@@ -44,12 +44,12 @@ export default class OperationMediaModel extends ModelObject {
     }
   };
 
-  getProxyVideoFileName = async (operation_info, origin_file_name, smil_file_name) => {
+  getProxyVideoInfo = async (operation_info, origin_file_name, smil_file_name) => {
     if (!smil_file_name) {
       smil_file_name = service_config.get('default_smil_file_name');
     }
     const smil_info = await new SmilInfo().loadFromXml(operation_info.media_directory, smil_file_name);
-    return smil_info.isEmpty() ? null : smil_info.findProxyVideoFile();
+    return smil_info.isEmpty() ? { name: null, resolution: service_config.get('proxy_max_resolution') } : smil_info.findProxyVideoInfo();
   };
 
   createOperationMediaInfoByXML = async (operation_info) => {
@@ -57,17 +57,18 @@ export default class OperationMediaModel extends ModelObject {
     if (video_info.isEmpty()) {
       return await this.createOperationMediaInfo(operation_info);
     } else {
-      const proxy_file_name = await this.getProxyVideoFileName(operation_info, video_info.video_name, null);
+      const proxy_info = await this.getProxyVideoInfo(operation_info, video_info.video_name, null);
       const create_params = {
         "operation_seq": operation_info.seq,
         "video_file_name": video_info.video_name,
-        "proxy_file_name": proxy_file_name,
+        "proxy_file_name": proxy_info.name,
         "fps": video_info.fps,
         "width": video_info.width,
         "height": video_info.height,
+        "proxy_max_height": proxy_info.resolution,
         "total_time": Math.ceil(video_info.total_time),
         "total_frame": video_info.total_frame,
-        "is_trans_complete": proxy_file_name ? 1 : 0
+        "is_trans_complete": proxy_info.name ? 1 : 0
       };
       return await this.create(create_params, 'seq');
     }
@@ -78,16 +79,17 @@ export default class OperationMediaModel extends ModelObject {
     if (video_info.isEmpty()) {
       return 0;
     } else {
-      const proxy_file_name = await this.getProxyVideoFileName(operation_info, video_info.video_name, null);
+      const proxy_info = await this.getProxyVideoInfo(operation_info, video_info.video_name, null);
       const update_params = {
         "video_file_name": video_info.video_name,
-        "proxy_file_name": proxy_file_name,
+        "proxy_file_name": proxy_info.name,
         "fps": video_info.fps,
         "width": video_info.width,
         "height": video_info.height,
+        "proxy_max_height": proxy_info.resolution,
         "total_time": Math.ceil(video_info.total_time),
         "total_frame": video_info.total_frame,
-        "is_trans_complete": proxy_file_name ? 1 : 0
+        "is_trans_complete": proxy_info.name ? 1 : 0
       };
 
       return await this.update({operation_seq: operation_info.seq}, update_params);
@@ -95,12 +97,13 @@ export default class OperationMediaModel extends ModelObject {
   };
 
   updateTransComplete = async (operation_info, trans_info) => {
-    let proxy_file_name = await this.getProxyVideoFileName(operation_info, trans_info.video_file_name, trans_info.smil_file_name);
+    const proxy_info = await this.getProxyVideoInfo(operation_info, trans_info.video_file_name, trans_info.smil_file_name);
     const update_params = {
       "video_file_name": trans_info.video_file_name,
-      "proxy_file_name": proxy_file_name,
+      "proxy_file_name": proxy_info.name,
       "smil_file_name": trans_info.smil_file_name,
-      "is_trans_complete": proxy_file_name ? 1 : 0,
+      "proxy_max_height": proxy_info.resolution,
+      "is_trans_complete": proxy_info.name ? 1 : 0,
       "modify_date": this.database.raw('NOW()')
     };
     return await this.update({operation_seq: operation_info.seq}, update_params);

@@ -25,13 +25,11 @@ export default class ReferFileModel extends ModelObject {
 
   referFileList = async (storage_seq) => {
     const service_info = service_config.getServiceInfo();
-    const media_root = service_info.media_root;
-
     const result_list = await this.find({storage_seq: storage_seq, status: 'Y'});
     const list = [];
     if (result_list) {
       for (let i = 0; i < result_list.length; i++) {
-        list.push(new FileInfo(result_list[i]).setUrl(media_root));
+        list.push(new FileInfo(result_list[i]).setUrl(service_info.static_storage_prefix));
       }
     }
     return list;

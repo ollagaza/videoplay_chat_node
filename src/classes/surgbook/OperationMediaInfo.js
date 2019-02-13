@@ -48,6 +48,9 @@ import Util from '@/utils/baseutil';
  *      rtmp_streaming_name:
  *        type: "string"
  *        description: "rtmp 스트리밍 이름"
+ *      proxy_max_height:
+ *        type: "string"
+ *        description: "proxy 동영상의 최대 높이"
  *
  */
 
@@ -58,7 +61,7 @@ export default class OperationMediaInfo extends JsonWrapper {
     this.setKeys([
       'video_file_name', 'fps', 'width', 'height', 'total_frame', 'total_time',
       'origin_video_url', 'proxy_video_url', 'video_source', ' is_trans_complete',
-      'hls_streaming_url', 'rtmp_streaming_server', 'rtmp_streaming_name'
+      'hls_streaming_url', 'rtmp_streaming_server', 'rtmp_streaming_name', 'proxy_max_height'
     ]);
 
     this.is_trans_complete = false;

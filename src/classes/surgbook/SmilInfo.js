@@ -51,9 +51,10 @@ export default class SmilInfo extends JsonWrapper {
     return video_info && !video_info.isEmpty();
   };
 
-  findProxyVideoFile = () => {
+  findProxyVideoInfo = () => {
     const proxy_max_resolution = service_config.get('proxy_max_resolution') ? parseInt(service_config.get('proxy_max_resolution'), 10) : 360;
     let proxy_file_name = null;
+    let proxy_resolution = null;
     let max_resolution = 0;
     let min_resolution = 0;
     let min_file_name = null;
@@ -64,9 +65,10 @@ export default class SmilInfo extends JsonWrapper {
         if (resolution > max_resolution) {
           max_resolution = resolution;
           proxy_file_name = video_info.file_name;
+          proxy_resolution = resolution;
         }
       } else {
-        if (min_resolution == 0 || resolution < min_resolution) {
+        if (min_resolution === 0 || resolution < min_resolution) {
           min_resolution = resolution;
           min_file_name = video_info.file_name;
         }
@@ -75,7 +77,11 @@ export default class SmilInfo extends JsonWrapper {
 
     if (proxy_file_name == null) {
       proxy_file_name = min_file_name;
+      proxy_resolution = min_resolution;
     }
-    return proxy_file_name;
+    return {
+      name: proxy_file_name,
+      resolution: proxy_resolution
+    };
   };
 }

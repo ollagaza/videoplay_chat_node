@@ -14,6 +14,7 @@ import http from 'http';
 import https from 'https';
 import rimraf from 'rimraf';
 import request from 'request-promise';
+import getDimension from 'get-video-dimensions';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
 import StdObject from "@/classes/StdObject";
@@ -151,7 +152,20 @@ export default {
 
   "timeStrToSecond": timeStrToSecond,
 
-  "secondToTimeStr": (second, format='HH:MM:ss') => { return dateFormatter(second*1000, format, true); },
+  "secondToTimeStr": (second, format='HH:MM:ss', use_decimal_point=false) => {
+    let date_str = dateFormatter(second*1000, format, true);
+    if (use_decimal_point) {
+      const second_str = `${second}`;
+      const point_index = second_str.indexOf('.');
+      if (point_index >= 0) {
+        const decimal_str = second_str.substring(point_index + 1);
+        if (!isEmpty(decimal_str)) {
+          date_str += `.${decimal_str}`;
+        }
+      }
+    }
+    return date_str;
+  },
 
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
 
@@ -485,5 +499,22 @@ export default {
       }
       throw error;
     }
+  },
+
+  "getVideoDimension": async (video_path) => {
+    const result = {
+      error: true,
+      message: ''
+    };
+    try {
+      const dimensions = await getDimension(video_path);
+      result.width = dimensions.width;
+      result.height = dimensions.height;
+      result.error = false;
+    } catch(error) {
+      log.e(null, "getVideoDimension", error);
+      result.message = error.message;
+    }
+    return result;
   }
 };
