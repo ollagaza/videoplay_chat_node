@@ -247,7 +247,7 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
     if (!operation_media_info.isEmpty()){
       if (!Util.isEmpty(operation_media_info.smil_file_name)) {
         smil_info = await new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
-        log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info);
+        log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info.toJSON());
         if (smil_info.video_info_list) {
           for (let i = 0; i < smil_info.video_info_list.length; i++) {
             const smil_video_info = smil_info.video_info_list[i];
