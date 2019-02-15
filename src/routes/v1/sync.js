@@ -20,7 +20,7 @@ import OperationInfo from "@/classes/surgbook/OperationInfo";
 import SmilInfo from "@/classes/surgbook/SmilInfo";
 import VideoModel from '@/models/xmlmodel/VideoModel';
 import log from "@/classes/Logger";
-import IndexInfo from "../../classes/surgbook/IndexInfo";
+import IndexInfo from "@/classes/surgbook/IndexInfo";
 
 const routes = Router();
 
@@ -104,39 +104,41 @@ const syncOne = async (req, token_info, operation_seq) => {
 
     await operation_media_model.syncMediaInfoByXml(operation_info);
     const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
+
+    const is_sync_complete = operation_info.is_analysis_complete && operation_media_info.is_trans_complete;
+    log.d(req, `${log_prefix} load operation infos. [is_sync_complete: ${is_sync_complete}]`);
+    if (!is_sync_complete) {
+      log.d(req, `${log_prefix} sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_info.is_trans_complete}]. process end`);
+      return;
+    }
+
     const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
 
-    const is_sync_complete = operation_info.is_analysis_complete > 0 && operation_media_info.is_trans_complete;
+    log.d(req, `${log_prefix} hawkeye index list api`);
 
-    log.d(req, `${log_prefix} load operation infos. [is_sync_complete: ${is_sync_complete}]`);
+    const index2_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index2_list_api, req, log_prefix);
+    let index1_xml_info = null;
+    try {
+      index1_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index1_list_api, req, log_prefix);
+    } catch (error) {
+      log.e(req, `${log_prefix} hawkeye index1 list api`, error);
+    }
 
-    if (is_sync_complete) {
-      log.d(req, `${log_prefix} hawkeye index list api`);
+    Util.deleteFile(media_directory + "Index1.xml");
+    Util.deleteFile(media_directory + "Index2.xml");
+    Util.deleteFile(media_directory + "Custom.xml");
+    Util.deleteFile(media_directory + "History.xml");
+    Util.deleteFile(media_directory + "Report.xml");
+    Util.deleteFile(media_directory + "Clip.xml");
 
-      const index2_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index2_list_api, req, log_prefix);
-      let index1_xml_info = null;
-      try {
-        index1_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index1_list_api, req, log_prefix);
-      } catch (error) {
-        log.e(req, `${log_prefix} hawkeye index1 list api`, error);
-      }
+    await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index2_xml_info);
+    let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
+    log.d(req, `${log_prefix} hawkeye index2 list api result: [${index_list_api_result}]`);
 
-      Util.deleteFile(media_directory + "Index1.xml");
-      Util.deleteFile(media_directory + "Index2.xml");
-      Util.deleteFile(media_directory + "Custom.xml");
-      Util.deleteFile(media_directory + "History.xml");
-      Util.deleteFile(media_directory + "Report.xml");
-      Util.deleteFile(media_directory + "Clip.xml");
-
-      await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index2_xml_info);
-      let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
-      log.d(req, `${log_prefix} hawkeye index2 list api result: [${index_list_api_result}]`);
-
-      if (index1_xml_info) {
-        await Util.writeXmlFile(operation_info.media_directory, 'Index1.xml', index1_xml_info);
-        index_list_api_result = "인덱스1 개수: " + (index1_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index1.xml';
-        log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
-      }
+    if (index1_xml_info) {
+      await Util.writeXmlFile(operation_info.media_directory, 'Index1.xml', index1_xml_info);
+      index_list_api_result = "인덱스1 개수: " + (index1_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index1.xml';
+      log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
     }
 
     const storage_seq = operation_storage_info.seq;
@@ -185,8 +187,7 @@ const syncOne = async (req, token_info, operation_seq) => {
   });
 };
 
-routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wrap(async(req, res) => {
-  let token_info = req.token_info;
+const reSync = async (req) => {
   const operation_seq = req.params.operation_seq;
   const admin_member_info = {
     seq: 0,
@@ -195,7 +196,7 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
     depart_code: 'ZZZ'
   };
   const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
-  token_info = token_result.token_info;
+  const token_info = token_result.token_info;
 
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
@@ -247,7 +248,7 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
     if (!operation_media_info.isEmpty()){
       if (!Util.isEmpty(operation_media_info.smil_file_name)) {
         smil_info = await new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
-        log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info.toJSON());
+        log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info.video_info_list.length);
         if (smil_info.video_info_list) {
           for (let i = 0; i < smil_info.video_info_list.length; i++) {
             const smil_video_info = smil_info.video_info_list[i];
@@ -287,7 +288,11 @@ routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wr
   });
 
   const url = `${service_config.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
-  const forward_result = await Util.forward(url, 'POST', token_info.token);
+  return await Util.forward(url, 'POST', token_info.token);
+}
+
+routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wrap(async(req, res) => {
+  const forward_result = reSync(req);
   if (typeof forward_result === 'string') {
     res.json(JSON.parse(forward_result));
   } else {
