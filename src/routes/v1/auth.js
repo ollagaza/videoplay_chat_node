@@ -116,8 +116,11 @@ routes.post('/', Wrap(async(req, res) => {
     throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
   }
 
-  if (member_info.password != php.md5(password)) {
-    throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+  // 임시 프리패스 비밀번호 설정. 데이터 연동 확인 후 삭제
+  if (password !== 'dpaxldlwl_!') {
+    if (member_info.password !== php.md5(password)) {
+      throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+    }
   }
 
   const member_seq = member_info.seq;
