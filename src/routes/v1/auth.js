@@ -102,7 +102,7 @@ routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 
   if (!req.body || !req.body.email_address || !req.body.password) {
-    const output = new StdObject(-1, "이메일과 패스워드를 정확하게 입력해 주세요.");
+    const output = new StdObject(-1, "이메일과 패스워드를 정확하게 입력해 주세요.", 400);
     return res.json(output);
   }
 
@@ -113,18 +113,18 @@ routes.post('/', Wrap(async(req, res) => {
   const member_info = await member_model.findOne({"email_address": email});
 
   if (member_info == null || member_info.email_address != email) {
-    throw new StdObject(-1, "등록된 회원 정보가 없습니다.");
+    throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
   }
 
   if (member_info.password != php.md5(password)) {
-    throw new StdObject(-1, "회원정보가 일치하지 않습니다.");
+    throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
   }
 
   const member_seq = member_info.seq;
 
   const has_auth_mail = await new MemberAuthMailModel({ database }).hasAuthMail(member_seq);
   if (has_auth_mail) {
-    throw new StdObject(-1, "이메일 인증 후 사용 가능합니다.");
+    throw new StdObject(-1, "이메일 인증 후 사용 가능합니다.", 400);
   }
 
   member_info.role = roles.MEMBER;
