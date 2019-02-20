@@ -886,8 +886,7 @@ routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(roles.LOGIN_U
 
   const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
   const output = new StdObject();
-  output.add('download_url', operation_info.origin_video_url);
-
+  output.add('download_url', operation_info.media_info.origin_video_url);
   res.json(output);
 }));
 
