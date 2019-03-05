@@ -1,4 +1,5 @@
 import ModelObject from '@/classes/ModelObject';
+import Util from '@/utils/baseutil'
 
 export default class OperationShareUserModel extends ModelObject {
   constructor(...args) {
@@ -78,7 +79,7 @@ export default class OperationShareUserModel extends ModelObject {
     const where = {
       "share_seq": share_seq,
       "email_address": email_address
-    }
+    };
     const update_data = {
       "view_count": this.database.raw('comment_count + 1'),
       "modify_date": this.database.raw('NOW()')
@@ -99,5 +100,15 @@ export default class OperationShareUserModel extends ModelObject {
     } else {
       return result.total_count;
     }
-  }
+  };
+
+  getShareUserList = async (share_seq) => {
+    const result = await this.find({ "share_seq": share_seq }, [ 'seq', 'email_address' ], { name: 'email_address', direction: 'ASC' }, [ 'email_address' ] );
+
+    if (Util.isEmpty(result)) {
+      return [];
+    } else {
+      return result;
+    }
+  };
 }

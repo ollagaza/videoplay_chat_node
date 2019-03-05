@@ -92,20 +92,20 @@ export default class ModelObject {
     return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count) }
   }
 
-  async find(filters=null, columns=null, order=null) {
-    const oKnex = this.queryBuilder(filters, columns, order);
+  async find(filters=null, columns=null, order=null, group=null) {
+    const oKnex = this.queryBuilder(filters, columns, order, group);
 
     return await oKnex;
   }
 
-  async findOne(filters=null, columns=null, order=null) {
-    const oKnex = this.queryBuilder(filters, columns, order);
+  async findOne(filters=null, columns=null, order=null, group=null) {
+    const oKnex = this.queryBuilder(filters, columns, order, group);
     oKnex.first();
 
     return await oKnex;
   }
 
-  queryBuilder = (filters=null, columns=null, order=null) => {
+  queryBuilder = (filters=null, columns=null, order=null, group=null) => {
     let oKnex = null;
     if (!columns) {
       oKnex = this.database.select(this.selectable_fields);
@@ -119,18 +119,16 @@ export default class ModelObject {
       oKnex.where(filters);
     }
 
+    if (group != null){
+      oKnex.groupBy(group);
+    }
+
     if (order != null){
       oKnex.orderBy(order.name, order.direction);
     }
 
     return oKnex;
-  }
-
-  async findBySeq(seq) {
-    const result = await this.findOne({ seq });
-
-    return result;
-  }
+  };
 
   getTotalCount = async (filters) => {
     const result = await this.database.count('* as total_count').from(this.table_name).where(filters).first();
@@ -139,7 +137,7 @@ export default class ModelObject {
     } else {
       return result.total_count;
     }
-  }
+  };
 
   arrayToSafeQuery = (columns) => {
     if (!columns) {
@@ -158,5 +156,5 @@ export default class ModelObject {
     }
 
     return select;
-  }
+  };
 }

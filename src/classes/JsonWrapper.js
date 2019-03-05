@@ -38,7 +38,7 @@ export default class JsonWrapper {
     this.export_xml = false;
   }
 
-  setThorwException = (value) => {
+  setThrowException = (value) => {
     this.thorw_exception = value;
   };
 
