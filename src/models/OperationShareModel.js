@@ -32,7 +32,7 @@ export default class OperationShareModel extends ModelObject {
   getShareInfoByDecryptedInfo = async (decrypted_Info) => {
     const query_result = await this.findOne({"operation_seq": decrypted_Info.s, "random_key": decrypted_Info.r, "status": "Y"});
     return new OperationShareInfo(query_result);
-  }
+  };
 
   getShareInfo = async (operation_info) => {
     const query_result = await this.findOne({"operation_seq": operation_info.seq, "status": "Y"});
@@ -92,7 +92,7 @@ export default class OperationShareModel extends ModelObject {
   increaseCommentCount = async (share_seq) => {
     const where = {
       "seq": share_seq
-    }
+    };
     const update_data = {
       "view_count": this.database.raw('comment_count + 1'),
       "modify_date": this.database.raw('NOW()')

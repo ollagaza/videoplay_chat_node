@@ -787,6 +787,22 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
   res.json(output);
 }));
 
+routes.get('/:operation_seq(\\d+)/share/users', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+  const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
+  const share_model = new OperationShareModel({database});
+  const share_info = await share_model.getShareInfo(operation_info);
+
+  const output = new StdObject();
+  if (share_info && !share_info.isEmpty()) {
+    const share_user_model = new OperationShareUserModel({database});
+    const share_user_list = await share_user_model.getShareUserList(share_info.seq);
+    output.add('share_user_list', share_user_list);
+  }
+  res.json(output);
+}));
+
 routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
