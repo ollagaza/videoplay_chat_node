@@ -292,7 +292,7 @@ const reSync = async (req) => {
 }
 
 routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wrap(async(req, res) => {
-  const forward_result = reSync(req);
+  const forward_result = await reSync(req);
   if (typeof forward_result === 'string') {
     res.json(JSON.parse(forward_result));
   } else {
