@@ -92,13 +92,18 @@ const readFile = async (file_path) => {
       log.d(null, 'Util.readFile', `file not exists. path=${file_path}`);
       resolve(null);
     } else {
-      fs.readFile(file_path, (error, data) => {
-        if (error) {
-          log.e(null, 'Util.readFile', `path=${file_path}`, error);
-          resolve(null);
-        } else {
-          resolve(data);
-        }
+      const read_stream = fs.createReadStream(file_path);
+      const body = [];
+      read_stream.setEncoding('utf8');
+      read_stream.on('data', (chunk) => {
+        body.push(Buffer.from(chunk));
+      });
+      read_stream.on('end', () => {
+        resolve(Buffer.concat(body).toString());
+      });
+      read_stream.on('error', function(error){
+        log.e(null, 'Util.readFile', `path=${file_path}`, error);
+        resolve(null);
       });
     }
   });
@@ -108,14 +113,20 @@ const readFile = async (file_path) => {
 
 const writeFile = async (file_path, context) => {
   const async_func = new Promise( async resolve => {
-    fs.writeFile(file_path, context, { encoding: 'utf8' }, (error) => {
-      if (error) {
-        log.e(null, 'Util.writeFile', `path=${file_path}`, error);
-        resolve(false);
-      } else {
-        resolve(true);
-      }
+    // 쓰기를 위한 스트림 생성
+    const write_stream = fs.createWriteStream(file_path);
+
+    write_stream.on('finish', function() {
+      resolve(true);
     });
+
+    write_stream.on('error', function(error){
+      log.e(null, 'Util.writeFile', `path=${file_path}`, error);
+      resolve(false);
+    });
+
+    write_stream.write(context,'utf8');
+    write_stream.end();
   });
 
   return await async_func;

@@ -3,7 +3,7 @@ import service_config from '@/config/service.config';
 import path from 'path';
 import querystring from 'querystring';
 import { promisify } from 'util';
-import multer from 'sb-multer';
+import multer from 'multer';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
@@ -43,6 +43,28 @@ const upload = promisify(multer({
     fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
   }
 }).single('target'));
+
+const uploadByRequest = async (req, res) => {
+  const async_func = new Promise( (resolve, reject) => {
+    const uploader = multer({
+      storage,
+      limits: {
+        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+      }
+    }).single('target');
+    uploader(req, res, error => {
+      log.d(req, 'on multer job finished');
+      if (error) {
+        log.e(req, error)
+        reject(error);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+
+  return await async_func;
+};
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
   const operation_model = new OperationModel({ database });
@@ -946,7 +968,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
     }
     req.media_directory = media_directory;
 
-    await upload(req, res);
+    await uploadByRequest(req, res);
     const upload_file_info = req.file;
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
