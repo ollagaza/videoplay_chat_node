@@ -59,7 +59,7 @@ export default class HistoryModel extends ModelObject {
         };
       }
 
-      Util.writeXmlFile(media_directory, 'History.xml', history_xml_info);
+      await Util.writeXmlFile(media_directory, 'History.xml', history_xml_info);
     }
     catch(error) {
       log.e(null, 'HistoryModel.addHistory', error);

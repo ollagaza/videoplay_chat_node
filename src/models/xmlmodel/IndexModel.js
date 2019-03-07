@@ -107,8 +107,8 @@ export default class IndexModel extends ModelObject {
     const origin_video_path = operation_info.media_info.origin_video_path;
     const target_time_str = Util.secondToTimeStr(second, 'HH:MM:ss', true);
     const save_directory = media_directory + 'Thumb';
-    if (!Util.fileExists(save_directory)) {
-      Util.createDirectory(save_directory);
+    if ( !( await Util.fileExists(save_directory) ) ) {
+      await Util.createDirectory(save_directory);
     }
 
     const original_index_image_path = save_directory + '\\' + index_file_name;
@@ -119,7 +119,7 @@ export default class IndexModel extends ModelObject {
       log.e(null, `IndexModel.addIndex execute error [${command}]`, execute_result);
       throw new StdObject(-1, '인덱스 추출 실패', 400);
     }
-    if (!Util.fileExists(original_index_image_path)) {
+    if ( !( await Util.fileExists(original_index_image_path) ) ) {
       log.e(null, `IndexModel.addIndex file not exists [${command}]`, execute_result);
       throw new StdObject(-1, '인덱스 파일 저장 실패', 400);
     }
@@ -144,7 +144,7 @@ export default class IndexModel extends ModelObject {
 
       if (execute_result && !execute_result.isSuccess()) {
         log.e(null, `IndexModel.addIndex thumb execute error [${command}]`, execute_result);
-      } else if (!Util.fileExists(original_index_image_path)) {
+      } else if ( !( await Util.fileExists(original_index_image_path) ) ) {
         log.e(null, `IndexModel.addIndex thumb file not exists [${command}]`, execute_result);
       }
     } catch (error) {

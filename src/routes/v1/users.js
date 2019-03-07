@@ -200,12 +200,12 @@ routes.post('/', Wrap(async(req, res) => {
     };
     const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', MemberTemplate.createUser(template_data));
 
-    if (send_mail_result.isSuccess()) {
-      res.json(new StdObject());
-    } else {
+    if (!send_mail_result.isSuccess()) {
       throw send_mail_result;
     }
   });
+
+  res.json(new StdObject());
 }));
 
 /**
@@ -264,9 +264,9 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
     if (!result) {
       throw new StdObject(-1, '회원정보 수정 실패', 400);
     }
-    const output = new StdObject();
-    res.json(output);
   });
+
+  res.json(new StdObject());
 }));
 
 
@@ -324,10 +324,9 @@ routes.post('/find', Wrap(async(req, res) => {
     if (send_mail_result.isSuccess() == false) {
       throw send_mail_result;
     }
-
-    const output = new StdObject();
-    res.json(output);
   });
+
+  res.json(new StdObject());
 }));
 
 export default routes;

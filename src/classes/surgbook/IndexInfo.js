@@ -62,7 +62,7 @@ export default class IndexInfo extends JsonWrapper {
     return this;
   };
 
-  getFromHawkeyeXML = (hawkeye_xml_info) => {
+  getFromHawkeyeXML = async (hawkeye_xml_info) => {
     if (!hawkeye_xml_info) {
       return this;
     }
@@ -80,7 +80,7 @@ export default class IndexInfo extends JsonWrapper {
     const image_file_name = path.basename(origin_file);
     const frame = Util.getXmlText(hawkeye_xml_info.frame);
     const time = Util.getXmlText(hawkeye_xml_info.time);
-    if (Util.fileExists(index_directory + origin_file) && Util.fileExists(index_directory + thumb_file)) {
+    if ( ( await Util.fileExists(index_directory + origin_file) ) && ( await Util.fileExists(index_directory + thumb_file) ) ) {
       this.original_url = this.url;
       this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
       this.creator = "system";

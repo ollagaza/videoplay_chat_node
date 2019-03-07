@@ -132,10 +132,10 @@ export default class OperationModel extends ModelObject {
 
     const service_info = service_config.getServiceInfo();
     const trash_root = service_info.trash_root;
-    if (!Util.fileExists(trash_root)) {
-      Util.createDirectory(trash_root);
+    if ( !( await Util.fileExists(trash_root) ) ) {
+      await Util.createDirectory(trash_root);
     }
-    if (!Util.rename(operation_info.media_directory, trash_root + '\\' + trash_path)){
+    if ( !( await Util.renameFile(operation_info.media_directory, trash_root + '\\' + trash_path) ) ){
       // throw new StdObject(-1, '파일 삭제 실패', 500);
     }
 
