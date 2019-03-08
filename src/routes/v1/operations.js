@@ -2,8 +2,6 @@ import { Router } from 'express';
 import service_config from '@/config/service.config';
 import path from 'path';
 import querystring from 'querystring';
-import { promisify } from 'util';
-import multer from 'multer';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
@@ -27,44 +25,6 @@ import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
 
 const routes = Router();
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.resolve(req.media_directory))
-  },
-  filename: function (req, file, cb) {
-    cb(null, 'upload_' + file.originalname)
-  },
-});
-
-const upload = promisify(multer({
-  storage,
-  limits: {
-    fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
-  }
-}).single('target'));
-
-const uploadByRequest = async (req, res) => {
-  const async_func = new Promise( (resolve, reject) => {
-    const uploader = multer({
-      storage,
-      limits: {
-        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
-      }
-    }).single('target');
-    uploader(req, res, error => {
-      log.d(req, 'on multer job finished');
-      if (error) {
-        log.e(req, error)
-        reject(error);
-      } else {
-        resolve(true);
-      }
-    });
-  });
-
-  return await async_func;
-};
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
   const operation_model = new OperationModel({ database });
@@ -966,9 +926,8 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
     if ( !( await Util.fileExists(media_directory) ) ) {
       await Util.createDirectory(media_directory);
     }
-    req.media_directory = media_directory;
 
-    await uploadByRequest(req, res);
+    await Util.uploadByRequest(req, res, 'target', media_directory);
     const upload_file_info = req.file;
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);

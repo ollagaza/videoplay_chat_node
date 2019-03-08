@@ -13,6 +13,8 @@ import http from 'http';
 import https from 'https';
 import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
+import path from 'path';
+import multer from 'multer';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
 import StdObject from "@/classes/StdObject";
@@ -301,6 +303,90 @@ const isEmpty = (value) => {
   return _.isEmpty(value);
 };
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.resolve(req.upload_directory))
+  },
+  filename: function (req, file, cb) {
+    cb(null, 'upload_' + file.originalname)
+  },
+});
+
+const uploadByRequest = async (req, res, key, upload_directory) => {
+  const async_func = new Promise( (resolve, reject) => {
+    const uploader = multer({
+      storage,
+      limits: {
+        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+      }
+    }).single(key);
+    req.upload_directory = upload_directory;
+    uploader(req, res, error => {
+      if (error) {
+        log.e(req, error);
+        reject(error);
+      } else {
+        log.d(req, 'on upload job finished');
+        resolve(true);
+      }
+    });
+  });
+
+  return await async_func;
+};
+
+
+
+const execute = async (command) => {
+  const output = new StdObject();
+  try {
+    const result = await promisify(exec)(command);
+    output.add('result', result.stdout)
+  }
+  catch(error) {
+    log.e(null, 'Util.execute', error);
+    output.error = -1;
+    output.stack = error;
+  }
+  return output;
+};
+
+const getVideoDimension = async (video_path) => {
+  const result = {
+    error: true,
+    message: ''
+  };
+  try {
+    const dimensions = await getDimension(video_path);
+    result.width = dimensions.width;
+    result.height = dimensions.height;
+    result.error = 0;
+  } catch(error) {
+    log.e(null, "getVideoDimension", error);
+    result.message = error.message;
+  }
+  return result;
+};
+
+const resizeImage = async (origin_path, resize_path, width, height) => {
+  const dimension = await getVideoDimension(origin_path);
+  if (dimension.error) {
+    return dimension;
+  }
+  const w_ratio = dimension.width / width;
+  const h_ratio = dimension.height / height;
+  let crop_option = '';
+  if (w_ratio >= h_ratio) {
+    crop_option = `crop=in_h*${width}/${height}:in_h`;
+  } else {
+    crop_option = `crop=in_w:in_w*${height}/${width}`;
+  }
+  const scale_option = `scale=${width}:${height}`;
+
+  const command = `ffmpeg -i "${origin_path}" -y -vframes 1 -filter:v "${crop_option},${scale_option}" -an "${resize_path}"`;
+  return await execute(command);
+};
+
 export default {
   "convert": convert,
 
@@ -395,20 +481,6 @@ export default {
     else {
       return target === compare;
     }
-  },
-
-  "execute": async (command) => {
-    const output = new StdObject();
-    try {
-      const result = await promisify(exec)(command);
-      output.add('result', result.stdout)
-    }
-    catch(error) {
-      log.e(null, 'Util.execute', error);
-      output.error = -1;
-      output.stack = error;
-    }
-    return output;
   },
 
   "fileExists": fileExists,
@@ -591,20 +663,9 @@ export default {
     }
   },
 
-  "getVideoDimension": async (video_path) => {
-    const result = {
-      error: true,
-      message: ''
-    };
-    try {
-      const dimensions = await getDimension(video_path);
-      result.width = dimensions.width;
-      result.height = dimensions.height;
-      result.error = false;
-    } catch(error) {
-      log.e(null, "getVideoDimension", error);
-      result.message = error.message;
-    }
-    return result;
-  }
+  "uploadByRequest": uploadByRequest,
+
+  "execute": execute,
+  "getVideoDimension": getVideoDimension,
+  "resizeImage": resizeImage,
 };

@@ -208,6 +208,13 @@ if (IS_DEV) {
     const forward_result = await Util.forward(url, 'POST', token_result.token);
     res.json(forward_result);
   }));
+
+  routes.get('/dimension/:name', wrap(async (req, res, next) => {
+    const name = req.params.name;
+    const origin_video_path = '\\\\192.168.1.54\\dev\\data\\' + name;
+    const thumbnail_full_path = '\\\\192.168.1.54\\dev\\data\\' + Date.now() + '.png';
+    res.json(await Util.resizeImage(origin_video_path, thumbnail_full_path, 300, 400));
+  }));
 }
 
 export default routes;

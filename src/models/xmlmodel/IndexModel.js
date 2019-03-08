@@ -130,11 +130,10 @@ export default class IndexModel extends ModelObject {
       const w_ratio = media_info.width / thumb_width;
       const h_ratio = media_info.height / thumb_height;
       let crop_option = '';
-      log.d('ratio', w_ratio, h_ratio);
       if (w_ratio >= h_ratio) {
-        crop_option = 'crop=in_h*4/3:in_h';
+        crop_option = `crop=in_h*${thumb_width}/${thumb_height}:in_h`;
       } else {
-        crop_option = 'crop=in_w:in_w*3/4';
+        crop_option = `crop=in_w:in_w*${thumb_height}/${thumb_width}`;
       }
       const scale_option = `scale=${thumb_width}:${thumb_height}`;
 

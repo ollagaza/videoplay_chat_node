@@ -10,6 +10,8 @@ import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import Util from '@/utils/baseutil';
 import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
+import service_config from '@/config/service.config';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -62,12 +64,7 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
   const member_seq = token_info.getId();
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
 
-  // 메니저 권한 도입 시 예시. 병원 또는 부서가 동일한지 체크..
-  if(token_info.getRole() === roles.MANAGER){
-    if(token_info.getHospital() !== member_info.hospital_code || token_info.getDepart() !== member_info.depart_code) {
-      throw new StdObject(-1, "권한이 없습니다.", 403);
-    }
-  }
+  log.d(req, member_info);
 
   const output = new StdObject();
   output.add('member_info', member_info);
@@ -243,7 +240,7 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
   req.accepts('application/json');
 
   const token_info = req.token_info;
-  const member_seq = req.params.member_seq;
+  const member_seq = Util.parseInt(req.params.member_seq);
 
   if(token_info.getId() != member_seq){
     if(token_info.getRole() == roles.MEMBER){
@@ -327,6 +324,60 @@ routes.post('/find', Wrap(async(req, res) => {
   });
 
   res.json(new StdObject());
+}));
+
+routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = Util.parseInt(req.params.member_seq);
+  if (token_info.getId() !== member_seq){
+    if(token_info.getRole() === roles.MEMBER){
+      throw new StdObject(-1, "잘못된 요청입니다.", 403);
+    }
+  }
+
+  const output = new StdObject(-1, '프로필 업로드 실패');
+
+  await database.transaction(async(trx) => {
+    const member_model = new MemberModel({ database: trx });
+    const member_info = await member_model.getMemberInfo(member_seq);
+
+    const media_root = service_config.get('media_root');
+    const upload_path = member_info.user_media_path + "_upload_";
+    const upload_full_path = media_root + upload_path;
+    if (!(await Util.fileExists(upload_full_path))) {
+      await Util.createDirectory(upload_full_path);
+    }
+
+    await Util.uploadByRequest(req, res, 'profile', upload_full_path);
+    log.d(req, req.file);
+
+    const upload_file_info = req.file;
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+    }
+
+    const origin_image_path = upload_file_info.path;
+    const resize_image_path = upload_path + '\\' + Date.now() + '.png';
+    const resize_image_full_path = media_root + resize_image_path;
+    const resize_result = await Util.resizeImage(origin_image_path, resize_image_full_path, 300, 400);
+
+    await Util.deleteFile(origin_image_path);
+
+    if (resize_result.error === 0) {
+      const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
+      if (update_profile_result) {
+        output.error = 0;
+        output.message = '';
+        output.add('profile_image_url', Util.getUrlPrefix(service_config.get('static_storage_prefix'), resize_image_path));
+      } else {
+        output.error = -2;
+      }
+    } else {
+      output.error = -3;
+    }
+  });
+
+  res.json(output);
 }));
 
 export default routes;
