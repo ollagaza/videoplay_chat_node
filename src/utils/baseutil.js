@@ -17,7 +17,6 @@ import path from 'path';
 import multer from 'multer';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
-import StdObject from "@/classes/StdObject";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -335,32 +334,35 @@ const uploadByRequest = async (req, res, key, upload_directory) => {
   return await async_func;
 };
 
-
-
 const execute = async (command) => {
-  const output = new StdObject();
+  const result = {
+    success: false,
+    message: '',
+    out: null,
+    command: command
+  };
   try {
-    const result = await promisify(exec)(command);
-    output.add('result', result.stdout)
+    const exec_result = await promisify(exec)(command);
+    result.success = true;
+    result.out = exec_result.stdout;
   }
   catch(error) {
     log.e(null, 'Util.execute', error);
-    output.error = -1;
-    output.stack = error;
+    result.message = error.message;
   }
-  return output;
+  return result;
 };
 
 const getVideoDimension = async (video_path) => {
   const result = {
-    error: true,
+    success: false,
     message: ''
   };
   try {
     const dimensions = await getDimension(video_path);
+    result.success = true;
     result.width = dimensions.width;
     result.height = dimensions.height;
-    result.error = 0;
   } catch(error) {
     log.e(null, "getVideoDimension", error);
     result.message = error.message;
@@ -368,23 +370,47 @@ const getVideoDimension = async (video_path) => {
   return result;
 };
 
-const resizeImage = async (origin_path, resize_path, width, height) => {
-  const dimension = await getVideoDimension(origin_path);
-  if (dimension.error) {
-    return dimension;
-  }
-  const w_ratio = dimension.width / width;
-  const h_ratio = dimension.height / height;
-  let crop_option = '';
-  if (w_ratio >= h_ratio) {
-    crop_option = `crop=in_h*${width}/${height}:in_h`;
-  } else {
-    crop_option = `crop=in_w:in_w*${height}/${width}`;
-  }
-  const scale_option = `scale=${width}:${height}`;
+const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1) => {
+  let filter = '';
+  let time_option = '';
+  if (width > 0 && height > 0) {
+    const dimension = await getVideoDimension(origin_path);
+    if (!dimension.success) {
+      return dimension;
+    }
 
-  const command = `ffmpeg -i "${origin_path}" -y -vframes 1 -filter:v "${crop_option},${scale_option}" -an "${resize_path}"`;
+    const w_ratio = dimension.width / width;
+    const h_ratio = dimension.height / height;
+    let crop_option = '';
+    if (w_ratio >= h_ratio) {
+      crop_option = `crop=in_h*${width}/${height}:in_h`;
+    } else {
+      crop_option = `crop=in_w:in_w*${height}/${width}`;
+    }
+    const scale_option = `scale=${width}:${height}`;
+    filter = `-filter:v "${crop_option},${scale_option}"`;
+  }
+  if (second > 0) {
+    const time_str = secondToTimeStr(second, 'HH:MM:ss', true);
+    time_option = `-ss ${time_str}`;
+  }
+  const command = `ffmpeg ${time_option} -i "${origin_path}" -y -vframes 1 ${filter} -an "${resize_path}"`;
   return await execute(command);
+};
+
+const secondToTimeStr = (second, format='HH:MM:ss', use_decimal_point=false) => {
+  let date_str = dateFormatter(second*1000, format, true);
+  if (use_decimal_point) {
+    const second_str = `${second}`;
+    const point_index = second_str.indexOf('.');
+    if (point_index >= 0) {
+      const decimal_str = second_str.substring(point_index + 1);
+      if (!isEmpty(decimal_str)) {
+        date_str += `.${decimal_str}`;
+      }
+    }
+  }
+  return date_str;
 };
 
 export default {
@@ -398,20 +424,7 @@ export default {
 
   "timeStrToSecond": timeStrToSecond,
 
-  "secondToTimeStr": (second, format='HH:MM:ss', use_decimal_point=false) => {
-    let date_str = dateFormatter(second*1000, format, true);
-    if (use_decimal_point) {
-      const second_str = `${second}`;
-      const point_index = second_str.indexOf('.');
-      if (point_index >= 0) {
-        const decimal_str = second_str.substring(point_index + 1);
-        if (!isEmpty(decimal_str)) {
-          date_str += `.${decimal_str}`;
-        }
-      }
-    }
-    return date_str;
-  },
+  "secondToTimeStr": secondToTimeStr,
 
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
 
@@ -667,5 +680,5 @@ export default {
 
   "execute": execute,
   "getVideoDimension": getVideoDimension,
-  "resizeImage": resizeImage,
+  "getThumbnail": getThumbnail,
 };

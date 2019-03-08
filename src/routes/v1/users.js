@@ -359,11 +359,11 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     const origin_image_path = upload_file_info.path;
     const resize_image_path = upload_path + '\\' + Date.now() + '.png';
     const resize_image_full_path = media_root + resize_image_path;
-    const resize_result = await Util.resizeImage(origin_image_path, resize_image_full_path, 300, 400);
+    const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
 
     await Util.deleteFile(origin_image_path);
 
-    if (resize_result.error === 0) {
+    if (resize_result.success) {
       const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
       if (update_profile_result) {
         output.error = 0;

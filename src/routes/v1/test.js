@@ -213,7 +213,7 @@ if (IS_DEV) {
     const name = req.params.name;
     const origin_video_path = '\\\\192.168.1.54\\dev\\data\\' + name;
     const thumbnail_full_path = '\\\\192.168.1.54\\dev\\data\\' + Date.now() + '.png';
-    res.json(await Util.resizeImage(origin_video_path, thumbnail_full_path, 300, 400));
+    res.json(await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, 300, 400));
   }));
 }
 

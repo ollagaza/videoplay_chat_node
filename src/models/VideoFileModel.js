@@ -136,21 +136,11 @@ export default class VideoFileModel extends ModelObject {
       const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
       const thumbnail_full_path = operation_info.media_root + thumbnail_path;
 
-      const thumb_width = 212;
-      const thumb_height = 160;
-      const w_ratio = dimension.width / thumb_width;
-      const h_ratio = dimension.height / thumb_height;
-      let crop_option = '';
-      if (w_ratio >= h_ratio) {
-        crop_option = `crop=in_h*${thumb_width}/${thumb_height}:in_h`;
-      } else {
-        crop_option = `crop=in_w:in_w*${thumb_height}/${thumb_width}`;
-      }
-      const scale_option = `scale=${thumb_width}:${thumb_height}`;
+      const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
+      const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
 
-      const command = `ffmpeg -ss 00:00:05 -i "${origin_video_path}" -y -vframes 1 -filter:v "${crop_option},${scale_option}" -an "${thumbnail_full_path}"`;
-      const execute_result = await Util.execute(command);
-      if ( execute_result.isSuccess() && ( await Util.fileExists(thumbnail_full_path) ) ) {
+      const execute_result = await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, thumb_width, thumb_height);
+      if ( execute_result.success && ( await Util.fileExists(thumbnail_full_path) ) ) {
         try {
           await this.updateThumb(upload_seq, thumbnail_path);
         } catch (error) {
