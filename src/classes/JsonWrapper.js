@@ -54,6 +54,10 @@ export default class JsonWrapper {
     this.json_keys = keys;
   };
 
+  addKey = (key) => {
+    this.json_keys.push(key);
+  };
+
   isEmpty = () => {
     return this.is_empty;
   };

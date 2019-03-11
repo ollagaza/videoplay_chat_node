@@ -1,5 +1,4 @@
 import fs from 'fs';
-import fse from 'fs-extra';
 import Iconv from 'iconv';
 import dateFormat from 'dateformat';
 import { promisify } from 'util';
@@ -12,12 +11,12 @@ import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
 import http from 'http';
 import https from 'https';
-import rimraf from 'rimraf';
 import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
+import path from 'path';
+import multer from 'multer';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
-import StdObject from "@/classes/StdObject";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -49,16 +48,6 @@ const getUrlPrefix = (media_root, media_path) => {
   return '/' + path;
 };
 
-const saveToFile = async (file_path, context) => {
-  try{
-    await promisify(fs.writeFile)(file_path, context, 'utf8');
-    return true;
-  } catch(error) {
-    log.e(null, "Util.saveToFile", error);
-    return false;
-  }
-};
-
 const timeStrToSecond = (time_str) => {
   let sec = 0;
   let multi = 1;
@@ -80,29 +69,203 @@ const dateFormatter = (timestamp, format='HH:MM:ss', use_offset) => {
   return dateFormat(timestamp, format);
 };
 
-const fileExists = (file_path) => {
-  try{
-    return fs.existsSync(file_path);
-  } catch (error) {
-    log.e(null, 'Util.fileExists', error);
-    return false;
+const fileExists = async (file_path, permission=null) => {
+  const async_func = new Promise( resolve => {
+    if (!permission) {
+      permission = fs.constants.W_OK;
+    }
+    fs.access(file_path, permission, (error) => {
+      if (error) {
+        // log.e(null, 'Util.fileExists', error);
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+
+  return await async_func;
+};
+
+const readFile = async (file_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(file_path) ) ) {
+      log.d(null, 'Util.readFile', `file not exists. path=${file_path}`);
+      resolve(null);
+    } else {
+      const read_stream = fs.createReadStream(file_path);
+      const body = [];
+      read_stream.setEncoding('utf8');
+      read_stream.on('data', (chunk) => {
+        body.push(Buffer.from(chunk));
+      });
+      read_stream.on('end', () => {
+        resolve(Buffer.concat(body).toString());
+      });
+      read_stream.on('error', function(error){
+        log.e(null, 'Util.readFile', `path=${file_path}`, error);
+        resolve(null);
+      });
+    }
+  });
+
+  return await async_func;
+};
+
+const writeFile = async (file_path, context) => {
+  const async_func = new Promise( async resolve => {
+    // 쓰기를 위한 스트림 생성
+    const write_stream = fs.createWriteStream(file_path);
+
+    write_stream.on('finish', function() {
+      resolve(true);
+    });
+
+    write_stream.on('error', function(error){
+      log.e(null, 'Util.writeFile', `path=${file_path}`, error);
+      resolve(false);
+    });
+
+    write_stream.write(context,'utf8');
+    write_stream.end();
+  });
+
+  return await async_func;
+};
+
+const deleteFile = async (target_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(target_path) ) ) {
+      log.d(null, 'Util.deleteFile', `file not exists. path=${target_path}`);
+      resolve(true);
+    } else {
+      fs.unlink(target_path, (error) => {
+        if (error) {
+          log.e(null, 'Util.deleteFile', `path=${target_path}`, error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
+const renameFile = async (target_path, dest_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(target_path) ) ) {
+      log.d(null, 'Util.renameFile', `file not exists. target_path=${target_path}`);
+      resolve(false);
+    } else if ( ( await fileExists(dest_path) ) ) {
+      log.d(null, 'Util.renameFile', `file already exists. dest_path=${dest_path}`);
+      resolve(false);
+    } else {
+      fs.rename(target_path, dest_path, (error) => {
+        if (error) {
+          log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
+const copyFile = async (target_path, dest_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(target_path) ) ) {
+      log.d(null, 'Util.renameFile', `file not exists. target_path=${target_path}`);
+      resolve(false);
+    } else {
+      fs.copyFile(target_path, dest_path, (error) => {
+        if (error) {
+          log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
+const getFileStat = async (file_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(file_path) ) ) {
+      log.d(null, 'Util.getFileStat', `file not exists. path=${file_path}`);
+      resolve(null);
+    } else {
+      fs.stat(file_path, (error, stats) => {
+        if (error) {
+          log.e(null, 'Util.getFileStat', `path=${file_path}`, error);
+          resolve(null);
+        } else {
+          resolve(stats);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
+const createDirectory = async (dir_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( ( await fileExists(dir_path) ) ) {
+      log.d(null, 'Util.createDirectory', `directory already exists. path=${dir_path}`);
+      resolve(true);
+    } else {
+      fs.mkdir(dir_path, { recursive: true }, (error) => {
+        if (error) {
+          log.e(null, 'Util.createDirectory', `path=${dir_path}`, error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
+const deleteDirectory = async (path) => {
+  const file_list = await getDirectoryFileList(path);
+  for (let i = 0; i < file_list.length; i++) {
+    const file = file_list[i];
+    if (file.isDirectory()) {
+      await deleteDirectory( path + "\\" + file.name );
+    } else {
+      await deleteFile( path + "\\" + file.name );
+    }
   }
 };
 
-const getDirectoryFileList = (directory_path) => {
-  if (fileExists(directory_path)) {
-    return fs.readdirSync(directory_path, {withFileTypes: true});
-  } else {
-    return [];
-  }
-};
+const getDirectoryFileList = async (directory_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(directory_path) ) ) {
+      log.d(null, 'Util.getDirectoryFileList', `directory not exists. path=${directory_path}`);
+      resolve([]);
+    } else {
+      fs.readdir(directory_path, {withFileTypes: true}, (error, files) => {
+        if (error) {
+          log.e(null, 'Util.getDirectoryFileList', `path=${directory_path}`, error);
+          resolve([]);
+        } else {
+          resolve(files);
+        }
+      });
+    }
+  });
 
-const getFileStat = (file_path) => {
-  if (fileExists(file_path)) {
-    return fs.statSync(file_path);
-  } else {
-    return null;
-  }
+  return await async_func;
 };
 
 const loadXmlString = async (context) => {
@@ -139,6 +302,117 @@ const isEmpty = (value) => {
   return _.isEmpty(value);
 };
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.resolve(req.upload_directory))
+  },
+  filename: function (req, file, cb) {
+    cb(null, 'upload_' + file.originalname)
+  },
+});
+
+const uploadByRequest = async (req, res, key, upload_directory) => {
+  const async_func = new Promise( (resolve, reject) => {
+    const uploader = multer({
+      storage,
+      limits: {
+        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+      }
+    }).single(key);
+    req.upload_directory = upload_directory;
+    uploader(req, res, error => {
+      if (error) {
+        log.e(req, error);
+        reject(error);
+      } else {
+        log.d(req, 'on upload job finished');
+        resolve(true);
+      }
+    });
+  });
+
+  return await async_func;
+};
+
+const execute = async (command) => {
+  const result = {
+    success: false,
+    message: '',
+    out: null,
+    command: command
+  };
+  try {
+    const exec_result = await promisify(exec)(command);
+    result.success = true;
+    result.out = exec_result.stdout;
+  }
+  catch(error) {
+    log.e(null, 'Util.execute', error);
+    result.message = error.message;
+  }
+  return result;
+};
+
+const getVideoDimension = async (video_path) => {
+  const result = {
+    success: false,
+    message: ''
+  };
+  try {
+    const dimensions = await getDimension(video_path);
+    result.success = true;
+    result.width = dimensions.width;
+    result.height = dimensions.height;
+  } catch(error) {
+    log.e(null, "getVideoDimension", error);
+    result.message = error.message;
+  }
+  return result;
+};
+
+const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1) => {
+  let filter = '';
+  let time_option = '';
+  if (width > 0 && height > 0) {
+    const dimension = await getVideoDimension(origin_path);
+    if (!dimension.success) {
+      return dimension;
+    }
+
+    const w_ratio = dimension.width / width;
+    const h_ratio = dimension.height / height;
+    let crop_option = '';
+    if (w_ratio >= h_ratio) {
+      crop_option = `crop=in_h*${width}/${height}:in_h`;
+    } else {
+      crop_option = `crop=in_w:in_w*${height}/${width}`;
+    }
+    const scale_option = `scale=${width}:${height}`;
+    filter = `-filter:v "${crop_option},${scale_option}"`;
+  }
+  if (second > 0) {
+    const time_str = secondToTimeStr(second, 'HH:MM:ss', true);
+    time_option = `-ss ${time_str}`;
+  }
+  const command = `ffmpeg ${time_option} -i "${origin_path}" -y -vframes 1 ${filter} -an "${resize_path}"`;
+  return await execute(command);
+};
+
+const secondToTimeStr = (second, format='HH:MM:ss', use_decimal_point=false) => {
+  let date_str = dateFormatter(second*1000, format, true);
+  if (use_decimal_point) {
+    const second_str = `${second}`;
+    const point_index = second_str.indexOf('.');
+    if (point_index >= 0) {
+      const decimal_str = second_str.substring(point_index + 1);
+      if (!isEmpty(decimal_str)) {
+        date_str += `.${decimal_str}`;
+      }
+    }
+  }
+  return date_str;
+};
+
 export default {
   "convert": convert,
 
@@ -148,24 +422,9 @@ export default {
 
   "getUrlPrefix": getUrlPrefix,
 
-  "saveToFile": saveToFile,
-
   "timeStrToSecond": timeStrToSecond,
 
-  "secondToTimeStr": (second, format='HH:MM:ss', use_decimal_point=false) => {
-    let date_str = dateFormatter(second*1000, format, true);
-    if (use_decimal_point) {
-      const second_str = `${second}`;
-      const point_index = second_str.indexOf('.');
-      if (point_index >= 0) {
-        const decimal_str = second_str.substring(point_index + 1);
-        if (!isEmpty(decimal_str)) {
-          date_str += `.${decimal_str}`;
-        }
-      }
-    }
-    return date_str;
-  },
+  "secondToTimeStr": secondToTimeStr,
 
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
 
@@ -176,13 +435,13 @@ export default {
 
     let result = {};
     let context = null;
-    if (!fileExists(xml_file_path)) {
+    if ( !( await fileExists(xml_file_path) ) ) {
       log.d(null, "Util.loadXmlFile", `${xml_file_path} not exists`);
       return result;
     }
 
     try {
-      context = await promisify(fs.readFile)(xml_file_path);
+      context = await readFile(xml_file_path);
     } catch (error) {
       log.e(null, 'Util.loadXmlFile', error);
       return result;
@@ -202,7 +461,7 @@ export default {
     const xml_file_path = directory + xml_file_name;
 
     const xml = XML_BUILDER.buildObject(JSON.parse(JSON.stringify(context_json)));
-    await saveToFile(xml_file_path, xml);
+    await writeFile(xml_file_path, xml);
     return true;
   },
 
@@ -237,79 +496,28 @@ export default {
     }
   },
 
-  "execute": async (command) => {
-    const output = new StdObject();
-    try {
-      const result = await promisify(exec)(command);
-      output.add('result', result.stdout)
-    }
-    catch(error) {
-      log.e(null, 'Util.execute', error);
-      output.error = -1;
-      output.stack = error;
-    }
-    return output;
-  },
-
-  "copyFile": async (source, destination) => {
-    let result = null;
-    const output = new StdObject();
-    try {
-      if (fileExists(source)) {
-        result = await promisify(fs.copyFile)(source, destination);
-      }
-      output.add("copy_result", result);
-    } catch (error) {
-      log.e(null, 'Util.copyFile', error);
-      output.error = -1;
-      output.message = "파일복사 오류";
-      output.stack = error;
-      output.source = source;
-      output.destination = destination;
-    }
-
-    return output;
-  },
-
   "fileExists": fileExists,
+  "readFile": readFile,
+  "writeFile": writeFile,
+  "deleteFile": deleteFile,
+  "renameFile": renameFile,
+  "copyFile": copyFile,
+  "getFileStat": getFileStat,
+  "createDirectory": createDirectory,
+  "deleteDirectory": deleteDirectory,
+  "getDirectoryFileList": getDirectoryFileList,
 
-  "createDirectory": (dir_path) => {
-    try{
-      if (!fileExists(dir_path)) {
-        fs.mkdirSync(dir_path, { recursive: true });
+  "getDirectoryFileSize": async (directory_path) => {
+    const file_list = await getDirectoryFileList(directory_path);
+    let file_size = 0;
+    for (let i = 0; i < file_list.length; i++) {
+      const file = file_list[i];
+      if (file.isFile()) {
+        const file_info = await getFileStat(directory_path + "\\" + file.name);
+        file_size += file_info.size;
       }
-      return true;
-    } catch (error) {
-      log.e(null, 'Util.createDirectory', error);
-      return false;
     }
-  },
-
-  "rename": (target_path, dest_path) => {
-    try{
-      if (fileExists(target_path)) {
-        fs.renameSync(target_path, dest_path);
-      }
-      return true;
-    } catch (error) {
-      log.e(null, 'Util.rename', error);
-      return false;
-    }
-  },
-
-  "deleteFile": (target_path) => {
-    try{
-      if (fileExists(target_path)) {
-        fse.removeSync(target_path);
-        log.d(null, 'Delete File', target_path);
-      } else {
-        log.d(null, 'Delete File not Exists', target_path);
-      }
-      return true;
-    } catch (error) {
-      log.e(null, 'Util.delete', error);
-      return false;
-    }
+    return file_size;
   },
 
   "hourDifference": (target_date) => {
@@ -408,44 +616,11 @@ export default {
     });
   },
 
-  "getDirectoryFileList": getDirectoryFileList,
-
-  "getDirectoryFileSize": (directory_path) => {
-    const file_list = getDirectoryFileList(directory_path);
-    let file_size = 0;
-    for (let i = 0; i < file_list.length; i++) {
-      const file = file_list[i];
-      if (file.isFile()) {
-        const file_info = getFileStat(directory_path + "\\" + file.name);
-        file_size += file_info.size;
-      }
-    }
-    return file_size;
-  },
-
-  "getFileStat": getFileStat,
-
   "byteToMB": (byte) => {
     return Math.ceil(byte/1024/1024);
   },
 
   "isNumber": isNumber,
-
-  "deleteDirectory": (path) => {
-    return new Promise((resolve, reject) => {
-      if (fileExists(path)) {
-        rimraf(path, fse, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(true);
-          }
-        });
-      } else {
-        resolve(true);
-      }
-    });
-  },
 
   "parseInt": (str, on_error_result=0) => {
     if (isNumber(str)) {
@@ -501,20 +676,9 @@ export default {
     }
   },
 
-  "getVideoDimension": async (video_path) => {
-    const result = {
-      error: true,
-      message: ''
-    };
-    try {
-      const dimensions = await getDimension(video_path);
-      result.width = dimensions.width;
-      result.height = dimensions.height;
-      result.error = false;
-    } catch(error) {
-      log.e(null, "getVideoDimension", error);
-      result.message = error.message;
-    }
-    return result;
-  }
+  "uploadByRequest": uploadByRequest,
+
+  "execute": execute,
+  "getVideoDimension": getVideoDimension,
+  "getThumbnail": getThumbnail,
 };

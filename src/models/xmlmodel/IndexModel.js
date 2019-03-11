@@ -5,6 +5,7 @@ import Util from '@/utils/baseutil';
 import HistoryModel from '@/models/xmlmodel/HistoryModel';
 import log from "@/classes/Logger";
 import _ from 'lodash';
+import service_config from '@/config/service.config';
 
 export default class IndexModel extends ModelObject {
   constructor(...args) {
@@ -105,47 +106,33 @@ export default class IndexModel extends ModelObject {
 
     const media_directory = operation_info.media_directory;
     const origin_video_path = operation_info.media_info.origin_video_path;
-    const target_time_str = Util.secondToTimeStr(second, 'HH:MM:ss', true);
     const save_directory = media_directory + 'Thumb';
-    if (!Util.fileExists(save_directory)) {
-      Util.createDirectory(save_directory);
+    if ( !( await Util.fileExists(save_directory) ) ) {
+      await Util.createDirectory(save_directory);
     }
 
     const original_index_image_path = save_directory + '\\' + index_file_name;
-    let command = `ffmpeg -ss ${target_time_str} -i "${origin_video_path}" -y -vframes 1 -an "${original_index_image_path}"`;
-    let execute_result = await Util.execute(command);
+    let execute_result = await Util.getThumbnail(origin_video_path, original_index_image_path, second);
 
-    if (execute_result && !execute_result.isSuccess()) {
-      log.e(null, `IndexModel.addIndex execute error [${command}]`, execute_result);
+    if (!execute_result.success) {
+      log.e(null, `IndexModel.addIndex execute error [${execute_result.command}]`, execute_result);
       throw new StdObject(-1, '인덱스 추출 실패', 400);
     }
-    if (!Util.fileExists(original_index_image_path)) {
-      log.e(null, `IndexModel.addIndex file not exists [${command}]`, execute_result);
+    if ( !( await Util.fileExists(original_index_image_path) ) ) {
+      log.e(null, `IndexModel.addIndex file not exists [${execute_result.command}]`, execute_result);
       throw new StdObject(-1, '인덱스 파일 저장 실패', 400);
     }
 
     try {
-      const thumb_width = 212;
-      const thumb_height = 160;
-      const w_ratio = media_info.width / thumb_width;
-      const h_ratio = media_info.height / thumb_height;
-      let crop_option = '';
-      log.d('ratio', w_ratio, h_ratio);
-      if (w_ratio >= h_ratio) {
-        crop_option = 'crop=in_h*4/3:in_h';
-      } else {
-        crop_option = 'crop=in_w:in_w*3/4';
-      }
-      const scale_option = `scale=${thumb_width}:${thumb_height}`;
-
+      const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
+      const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
       const thumb_index_image_path = save_directory + '\\' + thumbnail_file_name;
-      command = `ffmpeg -ss ${target_time_str} -i "${origin_video_path}" -y -vframes 1 -filter:v "${crop_option},${scale_option}" -an "${thumb_index_image_path}"`;
-      execute_result = await Util.execute(command);
+      execute_result = await Util.getThumbnail(origin_video_path, thumb_index_image_path, second, thumb_width, thumb_height);
 
-      if (execute_result && !execute_result.isSuccess()) {
-        log.e(null, `IndexModel.addIndex thumb execute error [${command}]`, execute_result);
-      } else if (!Util.fileExists(original_index_image_path)) {
-        log.e(null, `IndexModel.addIndex thumb file not exists [${command}]`, execute_result);
+      if (!execute_result.success) {
+        log.e(null, `IndexModel.addIndex thumb execute error [${execute_result.command}]`, execute_result);
+      } else if ( !( await Util.fileExists(original_index_image_path) ) ) {
+        log.e(null, `IndexModel.addIndex thumb file not exists [${execute_result.command}]`, execute_result);
       }
     } catch (error) {
       add_index.thumbnail_url = add_index.original_url;

@@ -73,15 +73,16 @@ export default class VideoFileModel extends ModelObject {
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
     const trash_directory = media_directory + 'Trash\\';
-    if (!Util.fileExists(trash_directory)) {
-      Util.createDirectory(trash_directory);
+    if ( !( await Util.fileExists(trash_directory) ) ) {
+      await Util.createDirectory(trash_directory);
     }
 
-    result_list.forEach((file_info) => {
+    for (let i = 0; i < result_list.length; i++) {
+      const file_info = result_list[i];
       const target_path = media_root + file_info.file_path;
       const dest_path = trash_directory + file_info.file_name;
-      Util.rename(target_path, dest_path);
-    });
+      await Util.renameFile(target_path, dest_path);
+    }
 
     return true;
   };
@@ -100,13 +101,13 @@ export default class VideoFileModel extends ModelObject {
       if (!operation_info.created_by_user || operation_info.created_by_user === false) {
         await this.delete({storage_seq: storage_seq});
       }
-      const file_list = Util.getDirectoryFileList(video_directory);
+      const file_list = await Util.getDirectoryFileList(video_directory);
       for (let i = 0; i < file_list.length; i++) {
         const file = file_list[i];
         if (file.isFile()) {
           const file_name = file.name;
           const video_file_path = video_directory + file_name;
-          const file_info = new FileInfo().getByFilePath(video_file_path, media_path, file_name).toJSON();
+          const file_info = (await new FileInfo().getByFilePath(video_file_path, media_path, file_name)).toJSON();
           if (file_info.file_type === 'video') {
             if (smil_info.isTransVideo(file_name) || file_name == operation_media_info.video_file_name) {
               trans_video_count++;
@@ -135,22 +136,11 @@ export default class VideoFileModel extends ModelObject {
       const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
       const thumbnail_full_path = operation_info.media_root + thumbnail_path;
 
-      const thumb_width = 212;
-      const thumb_height = 160;
-      const w_ratio = dimension.width / thumb_width;
-      const h_ratio = dimension.height / thumb_height;
-      let crop_option = '';
-      log.d('ratio', w_ratio, h_ratio);
-      if (w_ratio >= h_ratio) {
-        crop_option = 'crop=in_h*4/3:in_h';
-      } else {
-        crop_option = 'crop=in_w:in_w*3/4';
-      }
-      const scale_option = `scale=${thumb_width}:${thumb_height}`;
+      const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
+      const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
 
-      const command = `ffmpeg -ss 00:00:05 -i "${origin_video_path}" -y -vframes 1 -filter:v "${crop_option},${scale_option}" -an "${thumbnail_full_path}"`;
-      const execute_result = await Util.execute(command);
-      if (execute_result.isSuccess() && Util.fileExists(thumbnail_full_path)) {
+      const execute_result = await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, thumb_width, thumb_height);
+      if ( execute_result.success && ( await Util.fileExists(thumbnail_full_path) ) ) {
         try {
           await this.updateThumb(upload_seq, thumbnail_path);
         } catch (error) {
