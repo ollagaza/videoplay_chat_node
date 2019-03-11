@@ -60,7 +60,7 @@ const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {
     const index_xml_list = frame_info.item;
     if (index_xml_list) {
       for (let i = 0; i < index_xml_list.length; i++) {
-        const index_info = new IndexInfo().getFromHawkeyeXML(index_xml_list[i]);
+        const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i]);
         if (!index_info.isEmpty()) {
           index_file_list.push(index_info.getXmlJson());
         }
@@ -96,11 +96,11 @@ const syncOne = async (req, token_info, operation_seq) => {
 
     const log_prefix = `sync_one[seq: ${operation_seq}, content_id: ${content_id}]`;
 
-    Util.createDirectory(media_directory + "SEQ");
-    Util.createDirectory(media_directory + "Custom");
-    Util.createDirectory(media_directory + "REF");
-    Util.createDirectory(media_directory + "Thumb");
-    Util.createDirectory(media_directory + "Trash");
+    await Util.createDirectory(media_directory + "SEQ");
+    await Util.createDirectory(media_directory + "Custom");
+    await Util.createDirectory(media_directory + "REF");
+    await Util.createDirectory(media_directory + "Thumb");
+    await Util.createDirectory(media_directory + "Trash");
 
     await operation_media_model.syncMediaInfoByXml(operation_info);
     const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
@@ -124,12 +124,12 @@ const syncOne = async (req, token_info, operation_seq) => {
       log.e(req, `${log_prefix} hawkeye index1 list api`, error);
     }
 
-    Util.deleteFile(media_directory + "Index1.xml");
-    Util.deleteFile(media_directory + "Index2.xml");
-    Util.deleteFile(media_directory + "Custom.xml");
-    Util.deleteFile(media_directory + "History.xml");
-    Util.deleteFile(media_directory + "Report.xml");
-    Util.deleteFile(media_directory + "Clip.xml");
+    await Util.deleteFile(media_directory + "Index1.xml");
+    await Util.deleteFile(media_directory + "Index2.xml");
+    await Util.deleteFile(media_directory + "Custom.xml");
+    await Util.deleteFile(media_directory + "History.xml");
+    await Util.deleteFile(media_directory + "Report.xml");
+    await Util.deleteFile(media_directory + "Clip.xml");
 
     await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index2_xml_info);
     let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
@@ -152,8 +152,8 @@ const syncOne = async (req, token_info, operation_seq) => {
     const clip_info = await new ClipModel({ database: trx }).getClipInfo(operation_info);
     const sheet_list = await new ReportModel({ database: trx }).getReportInfo(operation_info);
 
-    const index1_file_size = Util.getDirectoryFileSize(operation_info.media_directory + 'INX1');
-    const index2_file_size = Util.getDirectoryFileSize(operation_info.media_directory + 'INX2');
+    const index1_file_size = await Util.getDirectoryFileSize(operation_info.media_directory + 'INX1');
+    const index2_file_size = await Util.getDirectoryFileSize(operation_info.media_directory + 'INX2');
 
     const update_storage_info = {};
     update_storage_info.origin_video_size = Util.byteToMB(video_sync_result.origin_video_size);
@@ -228,19 +228,19 @@ const reSync = async (req) => {
     await Util.deleteDirectory(media_directory + "INX2");
     await Util.deleteDirectory(media_directory + "INX3");
 
-    Util.createDirectory(media_directory + "SEQ");
-    Util.createDirectory(media_directory + "Custom");
-    Util.createDirectory(media_directory + "REF");
-    Util.createDirectory(media_directory + "Thumb");
-    Util.createDirectory(media_directory + "Trash");
+    await Util.createDirectory(media_directory + "SEQ");
+    await Util.createDirectory(media_directory + "Custom");
+    await Util.createDirectory(media_directory + "REF");
+    await Util.createDirectory(media_directory + "Thumb");
+    await Util.createDirectory(media_directory + "Trash");
 
-    Util.deleteFile(media_directory + "Index.xml");
-    Util.deleteFile(media_directory + "Index1.xml");
-    Util.deleteFile(media_directory + "Index2.xml");
-    Util.deleteFile(media_directory + "Clip.xml");
-    Util.deleteFile(media_directory + "Custom.xml");
-    Util.deleteFile(media_directory + "History.xml");
-    Util.deleteFile(media_directory + "Report.xml");
+    await Util.deleteFile(media_directory + "Index.xml");
+    await Util.deleteFile(media_directory + "Index1.xml");
+    await Util.deleteFile(media_directory + "Index2.xml");
+    await Util.deleteFile(media_directory + "Clip.xml");
+    await Util.deleteFile(media_directory + "Custom.xml");
+    await Util.deleteFile(media_directory + "History.xml");
+    await Util.deleteFile(media_directory + "Report.xml");
 
     const seq_directory = media_directory + 'SEQ\\';
     let smil_info = null;
@@ -252,15 +252,15 @@ const reSync = async (req) => {
         if (smil_info.video_info_list) {
           for (let i = 0; i < smil_info.video_info_list.length; i++) {
             const smil_video_info = smil_info.video_info_list[i];
-            Util.deleteFile(seq_directory + smil_video_info.file_name);
+            await Util.deleteFile(seq_directory + smil_video_info.file_name);
           }
         }
       }
       if (!Util.isEmpty(operation_media_info.video_file_name)) {
-        Util.deleteFile(seq_directory + operation_media_info.video_file_name);
+        await Util.deleteFile(seq_directory + operation_media_info.video_file_name);
       }
       if (!Util.isEmpty(operation_media_info.proxy_file_name)) {
-        Util.deleteFile(seq_directory + operation_media_info.proxy_file_name);
+        await Util.deleteFile(seq_directory + operation_media_info.proxy_file_name);
       }
     }
 
@@ -272,19 +272,20 @@ const reSync = async (req) => {
     if (smil_info && smil_info.video_info_list) {
       for (let i = 0; i < smil_info.video_info_list.length; i++) {
         const smil_video_info = smil_info.video_info_list[i];
-        Util.deleteFile(seq_directory + smil_video_info.file_name);
+        await Util.deleteFile(seq_directory + smil_video_info.file_name);
       }
     }
 
     const video_info = await new VideoModel({ database: trx }).getVideoInfo(media_directory);
-    if (!video_info.isEmpty()) {
-      if (!Util.isEmpty(video_info.video_name)) {
-        Util.deleteFile(seq_directory + video_info.video_name);
-        Util.deleteFile(seq_directory + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_'));
-      }
+    if (!video_info.isEmpty() && !Util.isEmpty(video_info.video_name)) {
+      await Util.deleteFile(seq_directory + video_info.video_name);
+      await Util.deleteFile(seq_directory + video_info.video_name.replace(/^[a-zA-Z]+_/, 'Proxy_'));
+    } else {
+      await Util.deleteFile(seq_directory + 'Trans_Merged_SEQ.mp4');
+      await Util.deleteFile(seq_directory + 'Proxy_Merged_SEQ.mp4');
     }
-    Util.deleteFile(seq_directory + service_config.get('default_smil_file_name'));
-    Util.deleteFile(media_directory + "Media.xml");
+    await Util.deleteFile(seq_directory + service_config.get('default_smil_file_name'));
+    await Util.deleteFile(media_directory + "Media.xml");
   });
 
   const url = `${service_config.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;

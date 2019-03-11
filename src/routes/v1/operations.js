@@ -2,8 +2,6 @@ import { Router } from 'express';
 import service_config from '@/config/service.config';
 import path from 'path';
 import querystring from 'querystring';
-import { promisify } from 'util';
-import multer from 'sb-multer';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
@@ -27,22 +25,6 @@ import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
 
 const routes = Router();
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.resolve(req.media_directory))
-  },
-  filename: function (req, file, cb) {
-    cb(null, 'upload_' + file.originalname)
-  },
-});
-
-const upload = promisify(multer({
-  storage,
-  limits: {
-    fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
-  }
-}).single('target'));
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
   const operation_model = new OperationModel({ database });
@@ -269,6 +251,8 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     member_seq = req.body.member_seq;
   }
 
+  const output = new StdObject();
+
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
     const operation_info = await operation_model.createOperation(req.body, member_seq);
@@ -281,16 +265,16 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
     await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
 
-    Util.createDirectory(media_directory + "SEQ");
-    Util.createDirectory(media_directory + "Custom");
-    Util.createDirectory(media_directory + "REF");
-    Util.createDirectory(media_directory + "Thumb");
-    Util.createDirectory(media_directory + "Trash");
+    await Util.createDirectory(media_directory + "SEQ");
+    await Util.createDirectory(media_directory + "Custom");
+    await Util.createDirectory(media_directory + "REF");
+    await Util.createDirectory(media_directory + "Thumb");
+    await Util.createDirectory(media_directory + "Trash");
 
-    const output = new StdObject();
     output.add('operation_seq', operation_seq);
-    res.json(output);
   });
+
+  res.json(output);
 }));
 
 /**
@@ -455,16 +439,16 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
   const operation_seq = req.params.operation_seq;
   const second = req.params.second;
 
+  const output = new StdObject();
+
   await database.transaction(async(trx) => {
     const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
     const {add_index_info, total_index_count} = await new IndexModel({database}).addIndex(operation_info, second);
     await new OperationStorageModel({database: trx}).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
-
-    const output = new StdObject();
     output.add("add_index_info", add_index_info);
-
-    res.json(output);
   });
+
+  res.json(output);
 }));
 
 /**
@@ -564,10 +548,10 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
     const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
     const clip_count = await new ClipModel({database: trx}).saveClipInfo(operation_info, req.body);
     await new OperationStorageModel({database: trx}).updateClipCount(operation_info.storage_seq, clip_count);
-
-    const output = new StdObject();
-    res.json(output);
   });
+
+  const output = new StdObject();
+  res.json(output);
 }));
 
 /**
@@ -608,11 +592,12 @@ routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.
 
     if (send_mail_result.isSuccess()) {
       await operation_model.updateRequestStatus(operation_seq, 'R');
-      res.json(new StdObject());
     } else {
       throw send_mail_result;
     }
   });
+
+  res.json(new StdObject());
 }));
 
 /**
@@ -710,11 +695,12 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
 
     if (is_execute_success || is_send_mail_success) {
       await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
-      res.json(new StdObject());
     } else {
       throw new StdObject(-1, '비디오 분석 요청 실패', 500);
     }
   });
+
+  res.json(new StdObject());
 }));
 
 /**
@@ -925,6 +911,8 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
   const operation_seq = req.params.operation_seq;
   const file_type = req.params.file_type;
 
+  const output = new StdObject();
+
   await database.transaction(async(trx) => {
     const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
     const storage_seq = operation_info.storage_seq;
@@ -935,12 +923,11 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
       media_directory += 'REF';
     }
 
-    if (!Util.fileExists(media_directory)) {
-      Util.createDirectory(media_directory);
+    if ( !( await Util.fileExists(media_directory) ) ) {
+      await Util.createDirectory(media_directory);
     }
-    req.media_directory = media_directory;
 
-    await upload(req, res);
+    await Util.uploadByRequest(req, res, 'target', media_directory);
     const upload_file_info = req.file;
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
@@ -966,12 +953,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
     }
 
     await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
-
-    const output = new StdObject();
     output.add('upload_seq', upload_seq);
-
-    res.json(output);
   });
+
+  res.json(output);
 }));
 
 routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
@@ -984,6 +969,8 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
     throw new StdObject(-1, '대상파일 정보가 없습니다', 400);
   }
 
+  const output = new StdObject();
+
   await database.transaction(async(trx) => {
     const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
     const storage_seq = operation_info.storage_seq;
@@ -994,10 +981,9 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
     }
 
     await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
-
-    const output = new StdObject();
-    res.json(output);
   });
+
+  res.json(output);
 }));
 
 

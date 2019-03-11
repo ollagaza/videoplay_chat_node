@@ -153,13 +153,13 @@ if (IS_DEV) {
       const file = file_list[i];
       if (file.isFile()) {
         const file_path = dir + "\\" + file.name;
-        const file_info = new FileInfo().getByFilePath(file_path, "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\", file.name);
+        const file_info = await new FileInfo().getByFilePath(file_path, "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\", file.name);
         log.d(file_info.toJSON());
       }
 
     }
     const output = new StdObject();
-    output.add('size', Util.getDirectoryFileSize(dir));
+    output.add('size', await Util.getDirectoryFileSize(dir));
     res.json(output);
   }));
 
@@ -207,6 +207,13 @@ if (IS_DEV) {
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const forward_result = await Util.forward(url, 'POST', token_result.token);
     res.json(forward_result);
+  }));
+
+  routes.get('/dimension/:name', wrap(async (req, res, next) => {
+    const name = req.params.name;
+    const origin_video_path = '\\\\192.168.1.54\\dev\\data\\' + name;
+    const thumbnail_full_path = '\\\\192.168.1.54\\dev\\data\\' + Date.now() + '.png';
+    res.json(await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, 300, 400));
   }));
 }
 

@@ -44,6 +44,9 @@ import Util from '@/utils/baseutil';
  *      etc:
  *        type: "string"
  *        description: "기타 정보"
+ *      profile_image_url:
+ *        type: "string"
+ *        description: "프로필 이미지 URL"
  *  UserCreateInfo:
  *    type: "object"
  *    description: "회원 가입 정보"
@@ -175,7 +178,7 @@ export default class MemberInfo extends JsonWrapper {
     }
 
     return true;
-  }
+  };
 
   checkDefaultParams = () => {
     this.checkEmpty();
@@ -193,7 +196,7 @@ export default class MemberInfo extends JsonWrapper {
     if (Util.isEmpty(this.position)) {
       return super.returnBoolean(-1, '직위를 입력해 주세요.', 400);
     }
-  }
+  };
 
   checkUserName = () => {
     this.checkEmpty();
@@ -204,7 +207,7 @@ export default class MemberInfo extends JsonWrapper {
     if (this.user_name.length > 10) {
       return super.returnBoolean(-1, '이름은 열자 이하로 입력하셔야 합니다.', 400);
     }
-  }
+  };
 
   checkEmailAddress = () => {
     this.checkEmpty();
@@ -212,7 +215,7 @@ export default class MemberInfo extends JsonWrapper {
     if (Util.isEmpty(this.email_address)) {
       return super.returnBoolean(-1, '아이디를 입력해 주세요.', 400);
     }
-  }
+  };
 
   checkPassword = (check_empty=true) => {
     if (check_empty) {
@@ -243,7 +246,7 @@ export default class MemberInfo extends JsonWrapper {
     if (this.password != this.password_confirm) {
       return super.returnBoolean(-1, '입력하신 암호화 암호확인이 일치하지 않습니다.', 400);
     }
-  }
+  };
 
   checkCellphone = () => {
     this.checkEmpty();
@@ -251,5 +254,5 @@ export default class MemberInfo extends JsonWrapper {
     if (Util.isEmpty(this.cellphone)) {
       return super.returnBoolean(-1, '핸드폰 번호를 입력해 주세요.', 400);
     }
-  }
+  };
 }

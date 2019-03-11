@@ -119,7 +119,7 @@ export default class FileInfo extends JsonWrapper {
     return this;
   };
 
-  getByFilePath = (file_path, media_path, file_name) => {
+  getByFilePath = async (file_path, media_path, file_name) => {
     this.setIgnoreEmpty(true);
 
     this.setKeys([
@@ -127,7 +127,7 @@ export default class FileInfo extends JsonWrapper {
     ]);
 
     const file_type = getFileType(mime.lookup(file_path));
-    const file_stat = Util.getFileStat(file_path);
+    const file_stat = await Util.getFileStat(file_path);
     const file_size = file_stat ? file_stat.size : 0;
 
     this.file_name = file_name;

@@ -3,6 +3,7 @@ import StdObject from '@/classes/StdObject';
 import ModelObject from '@/classes/ModelObject';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 import Util from '@/utils/baseutil';
+import service_config from '@/config/service.config';
 
 export default class MemberModel extends ModelObject {
   constructor(...args) {
@@ -10,7 +11,7 @@ export default class MemberModel extends ModelObject {
 
     this.table_name = 'member';
     this.selectable_fields = ['*'];
-    this.private_fields = ['password'];
+    this.private_fields = ['password', 'user_media_path', 'profile_image_path'];
   }
 
   encryptPassword = (password) => {
@@ -20,15 +21,20 @@ export default class MemberModel extends ModelObject {
     else {
       return php.md5(password);
     }
-  }
+  };
 
   getMemberInfo = async (member_seq) => {
     const query_result = await this.findOne({seq: member_seq});
     if (query_result && query_result.regist_date) {
       query_result.regist_date = Util.dateFormat(query_result.regist_date.getTime());
     }
-    return new MemberInfo(query_result, this.private_fields);
-  }
+    const member_info = new MemberInfo(query_result, this.private_fields);
+    if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
+      member_info.addKey('profile_image_url');
+      member_info.profile_image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), member_info.profile_image_path);
+    }
+    return member_info;
+  };
 
   createMember = async (member_info) => {
     // 이메일이 중복되는 경우 409 CONFLICT를 뱉음
@@ -58,7 +64,7 @@ export default class MemberModel extends ModelObject {
     const result = await super.create(member);
 
     return result;
-  }
+  };
 
   modifyMember = async (member_seq, member_info) => {
     member_info.setIgnoreEmpty(true);
@@ -68,7 +74,7 @@ export default class MemberModel extends ModelObject {
     const result = await super.update({seq: member_seq}, member);
 
     return result;
-  }
+  };
 
   findMember = async (member_info) => {
     member_info.setAutoTrim(true);
@@ -78,11 +84,11 @@ export default class MemberModel extends ModelObject {
       throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
     return new MemberInfo(find_user_result);
-  }
+  };
 
   updateTempPassword = async (member_seq, temp_password) => {
     return await this.update({seq: member_seq}, {password: this.encryptPassword(temp_password)});
-  }
+  };
 
   getBannerNewUserList = async (list_count) => {
     const columns = [
@@ -99,5 +105,9 @@ export default class MemberModel extends ModelObject {
     oKnex.limit(list_count);
 
     return await oKnex;
-  }
+  };
+
+  updateProfileImage = async (member_seq, profile_image_path) => {
+    return await this.update( { seq: member_seq }, { profile_image_path: profile_image_path } );
+  };
 }

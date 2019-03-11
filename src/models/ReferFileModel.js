@@ -57,10 +57,11 @@ export default class ReferFileModel extends ModelObject {
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
 
-    result_list.forEach((file_info) => {
+    for (let i = 0; i < result_list.length; i++) {
+      const file_info = result_list[i];
       const target_path = media_root + file_info.file_path;
-      Util.deleteFile(target_path);
-    });
+      await Util.deleteFile(target_path);
+    }
 
     return true;
   };
@@ -73,13 +74,13 @@ export default class ReferFileModel extends ModelObject {
     let refer_file_count = 0;
 
     await this.delete({storage_seq: storage_seq});
-    const file_list = Util.getDirectoryFileList(refer_directory);
+    const file_list = await Util.getDirectoryFileList(refer_directory);
     for (let i = 0; i < file_list.length; i++) {
       const file = file_list[i];
       if (file.isFile()) {
         const file_name = file.name;
         const refer_file_path = refer_directory + file_name;
-        const file_info = new FileInfo().getByFilePath(refer_file_path, media_path, file_name).toJSON();
+        const file_info = (await new FileInfo().getByFilePath(refer_file_path, media_path, file_name)).toJSON();
         file_info.storage_seq = storage_seq;
 
         refer_file_count++;
