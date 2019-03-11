@@ -187,8 +187,7 @@ const syncOne = async (req, token_info, operation_seq) => {
   });
 };
 
-const reSync = async (req) => {
-  const operation_seq = req.params.operation_seq;
+const reSync = async (req, operation_seq) => {
   const admin_member_info = {
     seq: 0,
     role: roles.ADMIN,
@@ -244,16 +243,11 @@ const reSync = async (req) => {
 
     const seq_directory = media_directory + 'SEQ\\';
     let smil_info = null;
-    log.d(req, operation_media_info);
     if (!operation_media_info.isEmpty()){
       if (!Util.isEmpty(operation_media_info.smil_file_name)) {
         smil_info = await new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
-        log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info.video_info_list.length);
-        if (smil_info.video_info_list) {
-          for (let i = 0; i < smil_info.video_info_list.length; i++) {
-            const smil_video_info = smil_info.video_info_list[i];
-            await Util.deleteFile(seq_directory + smil_video_info.file_name);
-          }
+        if (smil_info && smil_info.video_info_list && smil_info.video_info_list.length) {
+          log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info.video_info_list.length);
         }
       }
       if (!Util.isEmpty(operation_media_info.video_file_name)) {
@@ -264,9 +258,11 @@ const reSync = async (req) => {
       }
     }
 
-    if (!smil_info) {
+    if (!smil_info || smil_info.isEmpty()) {
       smil_info = await new SmilInfo().loadFromXml(media_directory, service_config.get('default_smil_file_name'));
-      log.d(req, `SmilInfo [config: ${service_config.get('default_smil_file_name')}]`, smil_info);
+      if (smil_info && smil_info.video_info_list && smil_info.video_info_list.length) {
+        log.d(req, `SmilInfo [database: ${service_config.get('default_smil_file_name')}]`, smil_info.video_info_list.length);
+      }
     }
 
     if (smil_info && smil_info.video_info_list) {
@@ -293,7 +289,8 @@ const reSync = async (req) => {
 }
 
 routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wrap(async(req, res) => {
-  const forward_result = await reSync(req);
+  const operation_seq = req.params.operation_seq;
+  const forward_result = await reSync(req, operation_seq);
   if (typeof forward_result === 'string') {
     res.json(JSON.parse(forward_result));
   } else {
@@ -307,6 +304,44 @@ routes.post('/operation/:operation_seq(\\d+)/refresh', Auth.isAuthenticated(), W
 
   await syncOne(req, token_info, operation_seq);
   res.json(new StdObject());
+}));
+
+routes.post('/operation/resync/member/:member_seq(\\d+)', Auth.isAuthenticated(), Wrap(async(req, res) => {
+  const member_seq = req.params.member_seq;
+
+  res.json(new StdObject());
+
+  const operation_model = new OperationModel({ database });
+  let is_finish = false;
+  let sync_count = 0;
+
+  while (!is_finish) {
+    const operation_info = await operation_model.getUnSyncOperationInfo(member_seq);
+    if (!operation_info || operation_info.isEmpty()) {
+      is_finish = true;
+      break;
+    }
+    const operation_seq = operation_info.seq;
+    try {
+      const sync_result = await reSync(req, operation_seq);
+      let json_result = null;
+      if (typeof sync_result === 'string') {
+        json_result = JSON.parse(sync_result);
+      } else {
+        json_result = sync_result;
+      }
+      if (json_result.error !== 0) {
+        is_finish = true;
+        log.e(req, json_result);
+      } else {
+        sync_count++;
+        log.d(req, `[count: ${sync_count}, operation_seq: ${operation_seq}]`);
+      }
+    } catch (error) {
+      is_finish = true;
+      log.d(req, error);
+    }
+  }
 }));
 
 export default routes;

@@ -204,4 +204,9 @@ export default class OperationModel extends ModelObject {
     const where = {"content_id": content_id};
     return await this.getOperation(where, false);
   };
+
+  getUnSyncOperationInfo = async (member_seq) => {
+    const where = {"member_seq": member_seq, analysis_status: 'N', 'is_analysis_complete': 0, status: 'Y'};
+    return await this.getOperation(where, false);
+  };
 }
