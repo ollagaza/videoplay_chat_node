@@ -674,7 +674,6 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
       api_request_result = e.message;
     }
 
-
     try {
       const send_mail = new SendMail();
       // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
