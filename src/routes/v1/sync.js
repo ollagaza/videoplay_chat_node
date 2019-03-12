@@ -206,6 +206,11 @@ const reSync = async (req, operation_seq) => {
     if (operation_info.isEmpty()) {
       throw new StdObject(-1, '수술정보가 존재하지 않습니다.', 400);
     }
+    const media_directory = operation_info.media_directory;
+    if (!Util.fileExists(media_directory)) {
+      throw new StdObject(-1, '디렉터리가 존재하지 않습니다.', 400);
+    }
+
     const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
     await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
     if (operation_media_info.isEmpty()) {
@@ -217,8 +222,6 @@ const reSync = async (req, operation_seq) => {
     operation_update_param.analysis_status = 'N';
     await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
     await operation_media_model.reSetOperationMedia(operation_info, false);
-
-    const media_directory = operation_info.media_directory;
 
     // db 업데이트가 끝나면 기존 파일 정리.
     await Util.deleteDirectory(media_directory + "Custom");
@@ -286,7 +289,7 @@ const reSync = async (req, operation_seq) => {
 
   const url = `${service_config.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
   return await Util.forward(url, 'POST', token_info.token);
-}
+};
 
 routes.post('/operation/:operation_seq(\\d+)/resync', Auth.isAuthenticated(), Wrap(async(req, res) => {
   const operation_seq = req.params.operation_seq;
