@@ -128,29 +128,29 @@ const on_error = Wrap(async(req, res) => {
   if (Util.isEmpty(content_id)) {
     throw new StdObject(1, '잘못된 파라미터', 400);
   }
-  await database.transaction(async(trx) => {
-    const operation_model = new OperationModel({ database: trx });
-    const service_error_model = new ServiceErrorModel({ database: trx });
-    const operation_info = await operation_model.getOperationInfoByContentId(content_id);
-    let error_seq  = 0;
-    if (operation_info.isEmpty()) {
-      error_seq = await service_error_model.createServiceError('trans', null, content_id, message);
-    } else {
-      await operation_model.updateRequestStatus(operation_info.seq, 'E');
-      error_seq = await service_error_model.createServiceError('trans', operation_info.seq, content_id, message);
-    }
 
-    const send_mail = new SendMail();
-    const mail_to = ["hwj@mteg.co.kr"];
-    const subject = "[MTEG ERROR] 트랜스코딩 에러";
-    let context = "";
-    context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
-    context += `content_id: ${content_id}<br/>\n`;
-    context += `operation_seq : ${query_str}<br/>\n`;
-    context += `error_seq: ${error_seq}<br/>\n`;
-    context += `에러: ${Util.nlToBr(message)}<br/>\n`;
-    send_mail.sendMailHtml(mail_to, subject, context);
-  });
+  const operation_model = new OperationModel({ database });
+  const service_error_model = new ServiceErrorModel({ database });
+  const operation_info = await operation_model.getOperationInfoByContentId(content_id);
+  let error_seq  = 0;
+  if (operation_info.isEmpty()) {
+    error_seq = await service_error_model.createServiceError('trans', null, content_id, message);
+  } else {
+    await operation_model.updateRequestStatus(operation_info.seq, 'E');
+    error_seq = await service_error_model.createServiceError('trans', operation_info.seq, content_id, message);
+  }
+
+  const send_mail = new SendMail();
+  const mail_to = ["hwj@mteg.co.kr"];
+  const subject = "[MTEG ERROR] 트랜스코딩 에러";
+  let context = "";
+  context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+  context += `content_id: ${content_id}<br/>\n`;
+  context += `operation_seq : ${operation_info.seq}<br/>\n`;
+  context += `error_seq: ${error_seq}<br/>\n`;
+  context += `에러: ${Util.nlToBr(message)}<br/>\n`;
+  send_mail.sendMailHtml(mail_to, subject, context);
+
   res.json(new StdObject());
 });
 

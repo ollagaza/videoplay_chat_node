@@ -6,6 +6,7 @@ import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import OperationModel from '@/models/OperationModel';
+import ServiceErrorModel from '@/models/ServiceErrorModel';
 import SendMail from '@/classes/SendMail';
 import {syncOne} from '@/routes/v1/sync';
 import service_config from '@/config/service.config';
@@ -65,6 +66,11 @@ const on_complete = Wrap(async(req, res) => {
   let is_update_progress = false;
   let progress = req.query.progress;
   let state = req.query.State;
+  if (Util.isNumber(state) && parseInt(state) > 6) {
+    await on_error(cid, parseInt(state));
+    res.json(new StdObject());
+    return;
+  }
   if (Util.isNumber(state) && Util.isNumber(progress)) {
     if (parseInt(state) <= 6) {
       is_update_progress = true;
@@ -174,6 +180,31 @@ const on_complete = Wrap(async(req, res) => {
 
   res.json(result);
 });
+
+const on_error = async (content_id, state) => {
+  const operation_model = new OperationModel({ database });
+  const service_error_model = new ServiceErrorModel({ database });
+  const operation_info = await operation_model.getOperationInfoByContentId(content_id);
+  const message = `state: ${state}`;
+  let error_seq  = 0;
+  if (operation_info.isEmpty()) {
+    error_seq = await service_error_model.createServiceError('hawkeye', null, content_id, message);
+  } else {
+    await operation_model.updateRequestStatus(operation_info.seq, 'E');
+    error_seq = await service_error_model.createServiceError('hawkeye', operation_info.seq, content_id, message);
+  }
+
+  const send_mail = new SendMail();
+  const mail_to = ["hwj@mteg.co.kr"];
+  const subject = "[MTEG ERROR] 호크아이 에러";
+  let context = "";
+  context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+  context += `content_id: ${content_id}<br/>\n`;
+  context += `operation_seq : ${operation_info.seq}<br/>\n`;
+  context += `error_seq: ${error_seq}<br/>\n`;
+  context += `에러: ${Util.nlToBr(message)}<br/>\n`;
+  send_mail.sendMailHtml(mail_to, subject, context);
+};
 
 routes.get('/complete', Auth.isAuthenticated(), on_complete);
 routes.post('/complete', Auth.isAuthenticated(), on_complete);
