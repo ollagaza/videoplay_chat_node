@@ -7,6 +7,7 @@ import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import OperationModel from '@/models/OperationModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
+import ServiceErrorModel from '@/models/ServiceErrorModel';
 import SendMail from '@/classes/SendMail';
 import log from "@/classes/Logger";
 import {syncOne} from '@/routes/v1/sync';
@@ -59,7 +60,7 @@ const routes = Router();
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-const on_complate = Wrap(async(req, res) => {
+const on_complete = Wrap(async(req, res) => {
   const token_info = req.token_info;
   const query_str = querystring.stringify(req.query);
   log.d(req, 'api 호출', query_str);
@@ -117,7 +118,45 @@ const on_complate = Wrap(async(req, res) => {
   res.json(result);
 });
 
-routes.get('/complete', Auth.isAuthenticated(), on_complate);
-routes.post('/complete', Auth.isAuthenticated(), on_complate);
+const on_error = Wrap(async(req, res) => {
+  const query_str = querystring.stringify(req.query);
+  log.d(req, '트랜스코딩 에러', query_str);
+
+  const content_id = req.query.content_id;
+  const message = req.query.message;
+
+  if (Util.isEmpty(content_id)) {
+    throw new StdObject(1, '잘못된 파라미터', 400);
+  }
+  await database.transaction(async(trx) => {
+    const operation_model = new OperationModel({ database: trx });
+    const service_error_model = new ServiceErrorModel({ database: trx });
+    const operation_info = await operation_model.getOperationInfoByContentId(content_id);
+    let error_seq  = 0;
+    if (operation_info.isEmpty()) {
+      error_seq = await service_error_model.createServiceError('trans', null, content_id, message);
+    } else {
+      await operation_model.updateRequestStatus(operation_info.seq, 'E');
+      error_seq = await service_error_model.createServiceError('trans', operation_info.seq, content_id, message);
+    }
+
+    const send_mail = new SendMail();
+    const mail_to = ["hwj@mteg.co.kr"];
+    const subject = "[MTEG ERROR] 트랜스코딩 에러";
+    let context = "";
+    context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+    context += `content_id: ${content_id}<br/>\n`;
+    context += `operation_seq : ${query_str}<br/>\n`;
+    context += `error_seq: ${error_seq}<br/>\n`;
+    context += `에러: ${Util.nlToBr(message)}<br/>\n`;
+    send_mail.sendMailHtml(mail_to, subject, context);
+  });
+  res.json(new StdObject());
+});
+
+routes.get('/complete', Auth.isAuthenticated(), on_complete);
+routes.post('/complete', Auth.isAuthenticated(), on_complete);
+routes.get('/error', Auth.isAuthenticated(), on_error);
+routes.post('/error', Auth.isAuthenticated(), on_error);
 
 export default routes;
