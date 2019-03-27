@@ -13,6 +13,7 @@ import http from 'http';
 import https from 'https';
 import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
+import getDuration from 'get-video-duration';
 import path from 'path';
 import multer from 'multer';
 import service_config from '@/config/service.config';
@@ -370,6 +371,22 @@ const getVideoDimension = async (video_path) => {
   return result;
 };
 
+const getVideoDuration = async (video_path) => {
+  const result = {
+    success: false,
+    message: ''
+  };
+  try {
+    const duration = await getDuration.getVideoDurationInSeconds(video_path);
+    result.success = true;
+    result.duration = duration;
+  } catch(error) {
+    log.e(null, "getVideoDuration", error);
+    result.message = error.message;
+  }
+  return result;
+};
+
 const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1) => {
   let filter = '';
   let time_option = '';
@@ -680,5 +697,6 @@ export default {
 
   "execute": execute,
   "getVideoDimension": getVideoDimension,
+  "getVideoDuration": getVideoDuration,
   "getThumbnail": getThumbnail,
 };

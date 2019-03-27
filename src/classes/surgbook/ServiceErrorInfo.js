@@ -1,11 +1,9 @@
 import JsonWrapper from '@/classes/JsonWrapper';
 
-const CUSTOM_CODE = 'XXXX';
-
 /**
  * @swagger
  * definitions:
- *  HospitalInfo:
+ *  VideoInfo:
  *    type: "object"
  *    required:
  *    - "code"
@@ -36,14 +34,14 @@ const CUSTOM_CODE = 'XXXX';
  *
  */
 
-export default class HospitalInfo extends JsonWrapper {
+export default class ServiceErrorInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
     this.ignore_empty = true;
-    this.is_custom = data.code == CUSTOM_CODE;
+    this.is_checked = data ? data.is_checked === 1 : false;
   }
 
   isCustom = () => {
-    return this.is_custom;
+    return this.is_checked;
   }
 }

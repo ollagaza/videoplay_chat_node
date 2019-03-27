@@ -17,6 +17,7 @@ import OperationMediaModel from '@/models/OperationMediaModel';
 import OperationStorageModel from '@/models/OperationStorageModel';
 import OperationShareModel from '@/models/OperationShareModel';
 import OperationShareUserModel from '@/models/OperationShareUserModel';
+import OperationServiceVideoModel from '@/models/OperationServiceVideoModel';
 import IndexModel from '@/models/xmlmodel/IndexModel';
 import ClipModel from '@/models/xmlmodel/ClipModel';
 import VideoFileModel from '@/models/VideoFileModel';
@@ -582,13 +583,25 @@ routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.
 
   await database.transaction(async(trx) => {
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
+    const sub_content_id = await ContentIdManager.getContentId();
+    if (!sub_content_id) {
+      throw new StdObject(-1, '컨텐츠 아이디 생성 실패', 500);
+    }
+    const service_video_seq = await new OperationServiceVideoModel( { database: trx }).createServiceVideo(operation_info, sub_content_id);
 
     const send_mail = new SendMail();
 
-    const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
-    const subject = operation_info.user_name + " 선생님으로부터 서비스 요청이 있습니다.";
+    const mail_to = ["hwj@mteg.co.kr"];
+    const subject = "[MTEG]" + operation_info.user_name + " 선생님으로부터 서비스 요청이 있습니다.";
     const attachments = [send_mail.getAttachObject(operation_info.media_directory + "Clip.xml", "Clip.xml")];
-    const send_mail_result = await send_mail.sendMailText(mail_to, subject, "첨부한 Clip.xml 파일을 확인하세요.", attachments);
+    let context = "";
+    context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+    context += `operation_seq: ${operation_seq}<br/>\n`;
+    context += `service_video_seq: ${service_video_seq}<br/>\n`;
+    context += `sub_content_id: ${sub_content_id}<br/>\n<br/>\n`;
+    context += "첨부한 Clip.xml 파일을 확인하세요.";
+
+    const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context, attachments);
 
     if (send_mail_result.isSuccess()) {
       await operation_model.updateRequestStatus(operation_seq, 'R');
