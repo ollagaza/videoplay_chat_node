@@ -1,8 +1,8 @@
-import _ from 'lodash';
 import ModelObject from '@/classes/ModelObject';
 import ClipInfo from "@/classes/surgbook/ClipInfo";
 import ClipSeqInfo from "@/classes/surgbook/ClipSeqInfo";
 import Util from '@/utils/baseutil';
+import jp from 'jsonpath';
 
 const DOC_VERSION = "1.0";
 
@@ -13,17 +13,15 @@ export default class ClipModel extends ModelObject {
 
   getClipInfo = async (operation_info) => {
     const clip_xml_info = await Util.loadXmlFile(operation_info.media_directory, 'Clip.xml');
-    const clip_list = new Array();
-    let clip_seq_list = new Array();
+    const clip_list = [];
+    let clip_seq_list = [];
+    const versions = jp.query(clip_xml_info, '$..doc_version');
+    const clips = jp.query(clip_xml_info, '$..Clip');
 
-    if (clip_xml_info
-        && clip_xml_info.ClipInfo
-        && clip_xml_info.ClipInfo.$
-        && clip_xml_info.ClipInfo.$.doc_version
-        && clip_xml_info.ClipInfo.Clip) {
+    if (versions[0] && clips.length) {
 
-      const clip_xml_list = clip_xml_info.ClipInfo.Clip;
-      clip_xml_list.forEach((clip_xml) => {
+      // const clip_xml_list = clip_xml_info.ClipInfo.Clip;
+      clips.forEach((clip_xml) => {
         const clip_info = new ClipInfo().getFromXML(clip_xml);
         clip_list.push(clip_info);
         clip_seq_list = clip_seq_list.concat(clip_info.seq_list);
@@ -31,7 +29,7 @@ export default class ClipModel extends ModelObject {
     }
 
     return {"clip_list": clip_list, "clip_seq_list": clip_seq_list};
-  }
+  };
 
   saveClipInfo = async (operation_info, clip_info) => {
     const clip_map = {};
