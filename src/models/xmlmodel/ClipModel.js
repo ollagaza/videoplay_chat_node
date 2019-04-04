@@ -2,7 +2,7 @@ import ModelObject from '@/classes/ModelObject';
 import ClipInfo from "@/classes/surgbook/ClipInfo";
 import ClipSeqInfo from "@/classes/surgbook/ClipSeqInfo";
 import Util from '@/utils/baseutil';
-import jp from 'jsonpath';
+import JsonPath from 'jsonpath';
 
 const DOC_VERSION = "1.0";
 
@@ -11,22 +11,30 @@ export default class ClipModel extends ModelObject {
     super(...args);
   }
 
-  getClipInfo = async (operation_info) => {
+  getClipInfoList = async (operation_info) => {
     const clip_xml_info = await Util.loadXmlFile(operation_info.media_directory, 'Clip.xml');
     const clip_list = [];
-    let clip_seq_list = [];
-    const versions = jp.query(clip_xml_info, '$..doc_version');
-    const clips = jp.query(clip_xml_info, '$..Clip');
+    const versions = JsonPath.query(clip_xml_info, '$..doc_version');
+    const clips = JsonPath.query(clip_xml_info, '$..Clip');
 
-    if (versions[0] && clips.length) {
-
-      // const clip_xml_list = clip_xml_info.ClipInfo.Clip;
-      clips.forEach((clip_xml) => {
+    if (versions[0] && clips[0]) {
+      clips[0].forEach((clip_xml) => {
         const clip_info = new ClipInfo().getFromXML(clip_xml);
+        clip_info.url_prefix = operation_info.url_prefix;
         clip_list.push(clip_info);
-        clip_seq_list = clip_seq_list.concat(clip_info.seq_list);
       });
     }
+
+    return clip_list;
+  };
+
+  getClipInfo = async (operation_info) => {
+    const clip_list = await this.getClipInfoList(operation_info);
+    let clip_seq_list = [];
+
+    clip_list.forEach((clip_info) => {
+      clip_seq_list = clip_seq_list.concat(clip_info.seq_list);
+    });
 
     return {"clip_list": clip_list, "clip_seq_list": clip_seq_list};
   };
@@ -71,5 +79,5 @@ export default class ClipModel extends ModelObject {
     await Util.writeXmlFile(operation_info.media_directory, 'Clip.xml', clip_xml_json);
 
     return clip_count;
-  }
+  };
 }

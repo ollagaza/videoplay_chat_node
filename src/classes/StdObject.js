@@ -116,7 +116,6 @@ export default class StdObject {
   }
 
   toBool() {
-    // TODO This method is misleading in that it returns true if error is 0, which should be true in boolean representation.
     return (this.error === 0);
   }
 

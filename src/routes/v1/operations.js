@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import service_config from '@/config/service.config';
-import path from 'path';
 import querystring from 'querystring';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
@@ -20,6 +19,7 @@ import OperationShareUserModel from '@/models/OperationShareUserModel';
 import OperationServiceVideoModel from '@/models/OperationServiceVideoModel';
 import IndexModel from '@/models/xmlmodel/IndexModel';
 import ClipModel from '@/models/xmlmodel/ClipModel';
+import ServiceVideoModel from '@/models/xmlmodel/ServiceVideoModel';
 import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
@@ -546,9 +546,10 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
   const operation_seq = req.params.operation_seq;
 
   await database.transaction(async(trx) => {
-    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
+    const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
     const clip_count = await new ClipModel({database: trx}).saveClipInfo(operation_info, req.body);
     await new OperationStorageModel({database: trx}).updateClipCount(operation_info.storage_seq, clip_count);
+    await operation_model.updateReviewStatus(operation_seq, clip_count > 0);
   });
 
   const output = new StdObject();
@@ -587,7 +588,11 @@ routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.
     if (!sub_content_id) {
       throw new StdObject(-1, '컨텐츠 아이디 생성 실패', 500);
     }
+    const member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
+
     const service_video_seq = await new OperationServiceVideoModel( { database: trx }).createServiceVideo(operation_info, sub_content_id);
+    const xml_path = await new ServiceVideoModel( { database: trx } ).saveServiceVideoXML(operation_info, member_info, sub_content_id);
+    log.d(req, xml_path);
 
     const send_mail = new SendMail();
 
@@ -600,14 +605,14 @@ routes.post('/:operation_seq(\\d+)/request/service', Auth.isAuthenticated(roles.
     context += `service_video_seq: ${service_video_seq}<br/>\n`;
     context += `sub_content_id: ${sub_content_id}<br/>\n<br/>\n`;
     context += "첨부한 Clip.xml 파일을 확인하세요.";
-
-    const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context, attachments);
-
-    if (send_mail_result.isSuccess()) {
-      await operation_model.updateRequestStatus(operation_seq, 'R');
-    } else {
-      throw send_mail_result;
-    }
+    //
+    // const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context, attachments);
+    //
+    // if (send_mail_result.isSuccess()) {
+    //   await operation_model.updateRequestStatus(operation_seq, 'R');
+    // } else {
+    //   throw send_mail_result;
+    // }
   });
 
   res.json(new StdObject());
