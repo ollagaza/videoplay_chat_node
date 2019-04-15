@@ -14,10 +14,13 @@ import https from 'https';
 import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
 import getDuration from 'get-video-duration';
+import ffprobe from 'node-ffprobe';
 import path from 'path';
 import multer from 'multer';
 import service_config from '@/config/service.config';
+import constants from '@/config/constants';
 import log from "@/classes/Logger";
+import JsonPath from "jsonpath";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -56,7 +59,7 @@ const timeStrToSecond = (time_str) => {
   const list_length = time_list.length;
 
   for(let i = list_length-1; i >= 0; i--){
-    sec += parseInt(time_list[i], 10) * multi;
+    sec += getInt(time_list[i], 10) * multi;
     multi *= 60;
   }
 
@@ -290,9 +293,36 @@ const isNumber = (str) => {
   }
 };
 
+const getInt = (str, on_error_result=0) => {
+  if (isNumber(str)) {
+    try {
+      return parseInt(str, 10);
+    } catch (e) {
+      return on_error_result;
+    }
+  } else {
+    return on_error_result;
+  }
+};
+
+const getFloat = (str, on_error_result=0) => {
+  if (isNumber(str)) {
+    try {
+      return parseFloat(str);
+    } catch (e) {
+      return on_error_result;
+    }
+  } else {
+    return on_error_result;
+  }
+};
+
 const isEmpty = (value) => {
   if (value === undefined || value === null) {
     return true;
+  }
+  if (typeof value === 'object') {
+    return _.isEmpty(value);
   }
   if (isNumber(value)) {
     return false;
@@ -352,6 +382,49 @@ const execute = async (command) => {
     result.message = error.message;
   }
   return result;
+};
+
+const getMediaInfo = async (media_path) => {
+  const async_func = new Promise( async (resolve) => {
+    const execute_result = await execute(`mediainfo --Full --Output=JSON "${media_path}"`);
+    const media_result = {
+      success: false,
+      media_type: constants.NO_MEDIA,
+      media_info: {}
+    };
+
+    if (execute_result.success && execute_result.out) {
+      const media_info = JSON.parse(execute_result.out);
+      const video = JsonPath.value(media_info, '$..track[?(@.@type=="Video")]');
+      const audio = JsonPath.value(media_info, '$..track[?(@.@type=="Audio")]');
+      const image = JsonPath.value(media_info, '$..track[?(@.@type=="Image")]');
+
+      media_result.success = true;
+      if (!isEmpty(video)) {
+        media_result.media_type = constants.MEDIA_VIDEO;
+        media_result.media_info.width = getInt(video.Width);
+        media_result.media_info.height = getInt(video.Height);
+        media_result.media_info.fps = getFloat(video.FrameRate);
+        media_result.media_info.frame_count = getInt(video.FrameCount);
+        media_result.media_info.duration = Math.round(getFloat(video.Duration));
+      } else if (!isEmpty(audio)) {
+        media_result.media_type = constants.MEDIA_AUDIO;
+        media_result.media_info.duration = Math.round(getFloat(audio.Duration));
+        media_result.media_info.sample_rate = Math.round(getFloat(audio.SamplingRate));
+        media_result.media_info.bit_depth = Math.round(getFloat(audio.BitDepth));
+      } else if (!isEmpty(image)) {
+        media_result.media_type = constants.MEDIA_IMAGE;
+        media_result.media_info.width = getInt(image.Width);
+        media_result.media_info.height = getInt(image.Height);
+      } else {
+        media_result.success = false;
+      }
+    }
+
+    resolve(media_result);
+  });
+
+  return await async_func;
 };
 
 const getVideoDimension = async (video_path) => {
@@ -638,32 +711,8 @@ export default {
   },
 
   "isNumber": isNumber,
-
-  "parseInt": (str, on_error_result=0) => {
-    if (isNumber(str)) {
-      try {
-        return parseInt(str, 10);
-      } catch (e) {
-        return on_error_result;
-      }
-
-    } else {
-      return on_error_result;
-    }
-  },
-
-  "parseFloat": (str, on_error_result=0) => {
-    if (isNumber(str)) {
-      try {
-        return parseFloat(str);
-      } catch (e) {
-        return on_error_result;
-      }
-
-    } else {
-      return on_error_result;
-    }
-  },
+  "parseInt": getInt,
+  "parseFloat": getFloat,
 
   "forward": async (url, method, token=null, data=null) => {
     let request_params = {
@@ -696,6 +745,7 @@ export default {
   "uploadByRequest": uploadByRequest,
 
   "execute": execute,
+  "getMediaInfo": getMediaInfo,
   "getVideoDimension": getVideoDimension,
   "getVideoDuration": getVideoDuration,
   "getThumbnail": getThumbnail,

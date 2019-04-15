@@ -2,9 +2,11 @@ import jwt from 'jsonwebtoken';
 import StdObject from '@/classes/StdObject';
 import TokenInfo from '@/classes/TokenInfo';
 import roles from "@/config/roles";
+import config from "@/config/config";
+
+const IS_DEV = config.isDev();
 
 const TOKEN_SECRET = "dpxldlwlTjwlqnr";
-const IS_DEV = process.env.NODE_ENV === 'development';
 const HOUR = 60 * 60;
 
 const setResponseHeader = (res, token_info) => {
@@ -48,7 +50,7 @@ const isAuthenticated = (require_roles) => {
   return async (req, res, next) => {
     const token = getToken(req);
 
-    if (!token && (require_roles == null || require_roles == roles.ALL)) {
+    if (!token && (require_roles == null || require_roles === roles.ALL)) {
       return next();
     }
 

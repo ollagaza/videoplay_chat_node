@@ -2,7 +2,7 @@ import JsonWrapper from '@/classes/JsonWrapper';
 import Util from '@/utils/baseutil';
 import mime from 'mime-types';
 
-const getFileType = (mime_type) => {
+const getFileType = async (mime_type) => {
   if (Util.isEmpty(mime_type)) {
     mime_type = 'etc';
   } else {
@@ -30,6 +30,7 @@ const getFileType = (mime_type) => {
     } else if (mime_type.indexOf('hwp') >= 0) {
       mime_type = 'hwp ';
     } else {
+      await Util.getMediaInfo(file_path)
       mime_type = 'etc';
     }
   }
@@ -107,7 +108,7 @@ export default class FileInfo extends JsonWrapper {
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_type = getFileType(upload_file_info.mimetype);
+    const file_type = await getFileType(upload_file_info.mimetype);
 
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
@@ -126,7 +127,7 @@ export default class FileInfo extends JsonWrapper {
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_type = getFileType(mime.lookup(file_path));
+    const file_type = await getFileType(mime.lookup(file_path));
     const file_stat = await Util.getFileStat(file_path);
     const file_size = file_stat ? file_stat.size : 0;
 

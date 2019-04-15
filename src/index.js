@@ -1,7 +1,5 @@
-import { Server } from 'http';
 import cluster from 'cluster';
 import os from 'os';
-import sticky from 'socketio-sticky-session'; // socketio 사용 대비
 import app from './app';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";

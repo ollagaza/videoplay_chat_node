@@ -1,0 +1,13 @@
+const NONE = 0;
+const NO_MEDIA = 100;
+const MEDIA_VIDEO = 101;
+const MEDIA_AUDIO = 102;
+const MEDIA_IMAGE = 103;
+
+export default {
+  "NONE": NONE,
+  "NO_MEDIA": NO_MEDIA,
+  "MEDIA_VIDEO": MEDIA_VIDEO,
+  "MEDIA_AUDIO": MEDIA_AUDIO,
+  "MEDIA_IMAGE": MEDIA_IMAGE
+};

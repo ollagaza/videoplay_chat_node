@@ -27,8 +27,8 @@ export default {
       password: '_media_'
     },
     pool: {
-      min: 2,
-      max: 10
+      min: 10,
+      max: 20
     },
     migrations: {
       tableName: 'knex_migrations'
