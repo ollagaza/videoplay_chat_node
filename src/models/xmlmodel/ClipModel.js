@@ -14,11 +14,11 @@ export default class ClipModel extends ModelObject {
   getClipInfoList = async (operation_info) => {
     const clip_xml_info = await Util.loadXmlFile(operation_info.media_directory, 'Clip.xml');
     const clip_list = [];
-    const versions = JsonPath.query(clip_xml_info, '$..doc_version');
-    const clips = JsonPath.query(clip_xml_info, '$..Clip');
+    const versions = JsonPath.value(clip_xml_info, '$..doc_version');
+    const clips = JsonPath.value(clip_xml_info, '$..Clip');
 
-    if (versions[0] && clips[0]) {
-      clips[0].forEach((clip_xml) => {
+    if (versions && clips) {
+      clips.forEach((clip_xml) => {
         const clip_info = new ClipInfo().getFromXML(clip_xml);
         clip_info.url_prefix = operation_info.url_prefix;
         clip_list.push(clip_info);

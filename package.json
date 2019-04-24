@@ -58,7 +58,9 @@
     "get-video-dimensions": "^1.0.0",
     "get-video-duration": "^1.0.3",
     "multer": "^1.4.1",
-    "jsonpath": "^1.0.1"
+    "jsonpath": "^1.0.1",
+    "node-ffprobe": "^1.2.2",
+    "mediainfo-parser": "^1.1.5"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

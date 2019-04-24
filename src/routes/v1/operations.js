@@ -914,7 +914,7 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(roles.LOGIN_USER)
   const operation_seq = req.params.operation_seq;
 
   const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
-  const storage_seq = operation_info.storage_seq
+  const storage_seq = operation_info.storage_seq;
 
   const output = new StdObject();
   output.add('video_files', await new VideoFileModel({ database }).videoFileList(storage_seq));

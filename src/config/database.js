@@ -1,8 +1,9 @@
 import knexfile from '@/knexfile';
 import log from "@/classes/Logger";
+import config from "@/config/config";
 
-const ENV = process.env.NODE_ENV;
-const IS_DEV = process.env.NODE_ENV === 'development';
+const ENV = config.getEnv();
+const IS_DEV = config.isDev();
 
 const database_config = knexfile[ENV];
 database_config.debug = true;

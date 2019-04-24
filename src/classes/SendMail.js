@@ -2,10 +2,11 @@ import nodemailer from 'nodemailer';
 import _ from 'lodash';
 import smtp_config from '@/smtp.config';
 import StdObject from '@/classes/StdObject';
+import config from "@/config/config";
 
-const env = process.env.NODE_ENV;
-const IS_DEV = process.env.NODE_ENV === 'development';
-const config = smtp_config[env];
+const ENV = config.getEnv();
+const IS_DEV = config.isDev();
+const mail_config = smtp_config[ENV];
 
 export default class SendMail {
   test = async () => {
@@ -16,7 +17,7 @@ export default class SendMail {
     const subject = 'Nodemailer 테스트444';
 
     return await this.send(mail_to, subject, mail_options);
-  }
+  };
 
   sendMailHtml = async (mail_to, subject, html, attachments=null) => {
     const mail_options = {
@@ -24,7 +25,7 @@ export default class SendMail {
     };
 
     return await this.send(mail_to, subject, mail_options, attachments);
-  }
+  };
 
   sendMailText = async (mail_to, subject, text, attachments=null) => {
     const mail_options = {
@@ -32,18 +33,18 @@ export default class SendMail {
     };
 
     return await this.send(mail_to, subject, mail_options, attachments);
-  }
+  };
 
   getTransport = () => {
-    return nodemailer.createTransport(config.transporter);
-  }
+    return nodemailer.createTransport(mail_config.transporter);
+  };
 
   send = async (mail_to, subject, mail_options, attachments=null) => {
     const result = new StdObject();
     const transport = this.getTransport();
 
     try {
-      mail_options.from = config.sender;
+      mail_options.from = mail_config.sender;
       if (_.isArray(mail_to)) {
         mail_options.to = _.join(mail_to, ', ');
       }
@@ -67,7 +68,7 @@ export default class SendMail {
     }
 
     return result;
-  }
+  };
 
   getAttachObject = (file_path, file_name=null, content_type=null) => {
     const attach = {path: file_path};
@@ -78,5 +79,5 @@ export default class SendMail {
       attach.contentType = content_type;
     }
     return attach;
-  }
+  };
 }
