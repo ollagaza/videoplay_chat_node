@@ -1003,7 +1003,6 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
   res.json(output);
 }));
 
-
 routes.get('/storage/summary', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
 
@@ -1013,6 +1012,16 @@ routes.get('/storage/summary', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(asyn
     output.add('summary_info', summary_info);
   }
   res.json(output);
+}));
+
+routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
+  const operation_media_info = await new OperationMediaModel( database ).getOperationMediaInfo(operation_info);
+
+  res.json(operation_media_info);
 }));
 
 export default routes;
