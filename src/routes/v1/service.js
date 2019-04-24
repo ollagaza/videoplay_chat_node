@@ -142,7 +142,7 @@ const on_error = Wrap(async(req, res) => {
   }
 
   const send_mail = new SendMail();
-  const mail_to = ["hwj@mteg.co.kr"];
+  const mail_to = ["hwj@mteg.co.kr", "weather8128@gmail.com"];
   const subject = "[MTEG ERROR] 서비스 비디오 에러";
   let context = "";
   context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;

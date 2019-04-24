@@ -64,7 +64,7 @@ export default class OperationModel extends ModelObject {
 
     const paging_result = await await this.queryPaginated(oKnex, list_count, page, page_count, params.no_paging);
 
-    const result = new Array();
+    const result = [];
 
     if (paging_result !== null && paging_result.data != null) {
       for (const key in paging_result.data) {
@@ -86,8 +86,7 @@ export default class OperationModel extends ModelObject {
 
   getOperationInfoByResult = (query_result) => {
     const service_info = service_config.getServiceInfo();
-    const media_root = service_info.media_root;
-    query_result.media_root = media_root;
+    query_result.media_root = service_info.media_root;
 
     const operation_info = new OperationInfo(query_result);
 

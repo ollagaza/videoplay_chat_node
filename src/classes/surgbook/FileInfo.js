@@ -1,8 +1,10 @@
 import JsonWrapper from '@/classes/JsonWrapper';
 import Util from '@/utils/baseutil';
 import mime from 'mime-types';
+import path from 'path';
+import constants from '@/config/constants';
 
-const getFileType = (mime_type) => {
+const getFileType = async (mime_type, file_name, file_path) => {
   if (Util.isEmpty(mime_type)) {
     mime_type = 'etc';
   } else {
@@ -30,7 +32,25 @@ const getFileType = (mime_type) => {
     } else if (mime_type.indexOf('hwp') >= 0) {
       mime_type = 'hwp ';
     } else {
-      mime_type = 'etc';
+      const file_ext = path.extname(file_name);
+      if (file_ext !== 'smil') {
+        const media_info = await Util.getMediaInfo(file_path);
+        switch (media_info.media_type) {
+          case constants.MEDIA_VIDEO:
+            mime_type = 'video';
+            break;
+          case constants.MEDIA_AUDIO:
+            mime_type = 'audio';
+            break;
+          case constants.MEDIA_IMAGE:
+            mime_type = 'image';
+            break;
+          default:
+            mime_type = 'etc';
+        }
+      } else {
+        mime_type = 'etc';
+      }
     }
   }
 
@@ -100,19 +120,19 @@ export default class FileInfo extends JsonWrapper {
     return this;
   };
 
-  getByUploadFileInfo = (upload_file_info, media_path) => {
+  getByUploadFileInfo = async (upload_file_info, media_path) => {
     this.setIgnoreEmpty(true);
 
     this.setKeys([
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_type = getFileType(upload_file_info.mimetype);
-
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
+    this.file_path = media_path + '\\' + this.filename;
+
+    const file_type = await getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
     this.file_type = file_type;
-    this.file_path = media_path + '\\' + upload_file_info.filename;
 
     this.is_empty = false;
 
@@ -126,14 +146,15 @@ export default class FileInfo extends JsonWrapper {
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_type = getFileType(mime.lookup(file_path));
     const file_stat = await Util.getFileStat(file_path);
     const file_size = file_stat ? file_stat.size : 0;
 
     this.file_name = file_name;
     this.file_size = file_size;
-    this.file_type = file_type;
     this.file_path = media_path + '\\' + this.file_name;
+
+    const file_type = await getFileType(mime.lookup(file_path), file_name, file_path);
+    this.file_type = file_type;
 
     this.is_empty = false;
 

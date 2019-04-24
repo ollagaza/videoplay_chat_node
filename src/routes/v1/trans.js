@@ -136,12 +136,12 @@ const on_error = Wrap(async(req, res) => {
   if (operation_info.isEmpty()) {
     error_seq = await service_error_model.createServiceError('trans', null, content_id, message);
   } else {
-    await operation_model.updateRequestStatus(operation_info.seq, 'E');
+    await operation_model.updateAnalysisStatus(operation_info.seq, 'E');
     error_seq = await service_error_model.createServiceError('trans', operation_info.seq, content_id, message);
   }
 
   const send_mail = new SendMail();
-  const mail_to = ["hwj@mteg.co.kr"];
+  const mail_to = ["hwj@mteg.co.kr", "weather8128@gmail.com"];
   const subject = "[MTEG ERROR] 트랜스코딩 에러";
   let context = "";
   context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
