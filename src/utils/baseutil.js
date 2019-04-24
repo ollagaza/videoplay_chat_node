@@ -14,7 +14,6 @@ import https from 'https';
 import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
 import getDuration from 'get-video-duration';
-import ffprobe from 'node-ffprobe';
 import path from 'path';
 import multer from 'multer';
 import service_config from '@/config/service.config';
@@ -45,11 +44,11 @@ const getMediaDirectory = (media_root, media_path) => {
 };
 
 const getUrlPrefix = (media_root, media_path) => {
-  let path = media_root + removePathSEQ(media_path);
-  path = path.replace(/\\/g, '/');
-  path = path.replace(/^\/+/g, '');
+  let full_path = media_root + removePathSEQ(media_path);
+  full_path = full_path.replace(/\\/g, '/');
+  full_path = full_path.replace(/^\/+/g, '');
 
-  return '/' + path;
+  return '/' + full_path;
 };
 
 const timeStrToSecond = (time_str) => {
