@@ -748,4 +748,12 @@ export default {
   "getVideoDimension": getVideoDimension,
   "getVideoDuration": getVideoDuration,
   "getThumbnail": getThumbnail,
+
+  "isTrue": (value) => {
+    const str = ('' + value).toLowerCase();
+    return str === 'y' || str === '1' || str === 'true';
+  },
+  "isNull": (value) => {
+    return value === null || value === undefined;
+  }
 };

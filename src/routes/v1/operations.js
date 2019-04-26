@@ -150,7 +150,7 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
   const output = new StdObject();
 
   const operation_model = new OperationModel({ database });
-  const operation_info_page = await operation_model.getOperationInfoListPage(page_query, token_info, req.query.search);
+  const operation_info_page = await operation_model.getOperationInfoListPage(page_query, token_info, req.query);
 
   output.adds(operation_info_page);
 
@@ -1019,9 +1019,12 @@ routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(roles.LOGIN_
   const operation_seq = req.params.operation_seq;
 
   const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
-  const operation_media_info = await new OperationMediaModel( database ).getOperationMediaInfo(operation_info);
+  const operation_media_info = await new OperationMediaModel({ database }).getOperationMediaInfo(operation_info);
 
-  res.json(operation_media_info);
+  const output = new StdObject();
+  output.add('operation_media_info', operation_media_info);
+
+  res.json(output);
 }));
 
 export default routes;

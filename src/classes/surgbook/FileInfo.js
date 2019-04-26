@@ -28,9 +28,11 @@ const getFileType = async (mime_type, file_name, file_path) => {
     } else if (mime_type.indexOf('audio') >= 0) {
       mime_type = 'audio';
     } else if (mime_type.indexOf('compressed') >= 0 || mime_type.indexOf('zip') >= 0 || mime_type.indexOf('tar') >= 0) {
-      mime_type = 'archive ';
+      mime_type = 'archive';
     } else if (mime_type.indexOf('hwp') >= 0) {
-      mime_type = 'hwp ';
+      mime_type = 'hwp';
+    } else if (mime_type.indexOf('xml') >= 0) {
+      mime_type = 'xml';
     } else {
       const file_ext = path.extname(file_name);
       if (file_ext !== 'smil') {

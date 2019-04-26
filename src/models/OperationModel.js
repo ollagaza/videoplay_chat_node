@@ -39,7 +39,7 @@ export default class OperationModel extends ModelObject {
     return await this.getOperation(where, true);
   };
 
-  getOperationInfoListPage = async (params, token_info, search, asc=false)  => {
+  getOperationInfoListPage = async (params, token_info, query_params, asc=false)  => {
     const page = params && params.page ? params.page : 1;
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
@@ -52,8 +52,13 @@ export default class OperationModel extends ModelObject {
     if (token_info.getRole() <= role.MEMBER) {
       oKnex.andWhere('member_seq', token_info.getId());
     }
-    if (search) {
-      oKnex.andWhere(this.database.raw(`(operation.operation_code LIKE '%${search}%' OR operation.operation_name LIKE '%${search}%')`));
+    if (query_params) {
+      if (!Util.isNull(query_params.analysis_complete)) {
+        oKnex.andWhere('is_analysis_complete', Util.isTrue(query_params.analysis_complete) ? 1 : 0);
+      }
+      if (!Util.isNull(query_params.search)) {
+        oKnex.andWhere(this.database.raw(`(operation.operation_code LIKE '%${query_params.search}%' OR operation.operation_name LIKE '%${query_params.search}%')`));
+      }
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
