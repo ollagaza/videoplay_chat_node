@@ -1,3 +1,4 @@
+import Promise from 'promise';
 import fs from 'fs';
 import Iconv from 'iconv';
 import dateFormat from 'dateformat';
@@ -337,11 +338,15 @@ const storage = multer.diskStorage({
     cb(null, path.resolve(req.upload_directory))
   },
   filename: function (req, file, cb) {
-    cb(null, 'upload_' + file.originalname)
+    if (req.new_file_name) {
+      cb(null, req.new_file_name)
+    } else {
+      cb(null, 'upload_' + file.originalname)
+    }
   },
 });
 
-const uploadByRequest = async (req, res, key, upload_directory) => {
+const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null) => {
   const async_func = new Promise( (resolve, reject) => {
     const uploader = multer({
       storage,
@@ -350,6 +355,7 @@ const uploadByRequest = async (req, res, key, upload_directory) => {
       }
     }).single(key);
     req.upload_directory = upload_directory;
+    req.new_file_name = new_file_name;
     uploader(req, res, error => {
       if (error) {
         log.e(req, error);

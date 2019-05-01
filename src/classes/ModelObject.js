@@ -1,3 +1,4 @@
+import Promise from 'promise';
 import PageHandler from '@/classes/PageHandler';
 
 export default class ModelObject {
@@ -25,38 +26,29 @@ export default class ModelObject {
   }
 
   async update(filters, params) {
-
-    const result = await this.database
+    return await this.database
       .update(params)
       .from(this.table_name)
       .where(filters);
-
-    return result;
   }
 
   async delete(filters) {
-
-    const result = await this.database
+    return await this.database
       .from(this.table_name)
       .where(filters)
       .del();
-
-    return result;
   }
 
   async findPaginated({ list_count = 20, page = 1, page_count = 10, no_paging = 'n', ...filters }, columns=null, order=null) {
     const oKnex = this.queryBuilder(filters, columns, order);
-
-    const result = await this.queryPaginated(oKnex, list_count, page, page_count, no_paging);
-
-    return result;
+    return await this.queryPaginated(oKnex, list_count, page, page_count, no_paging);
   }
 
   async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
     // 강제 형변환
-    list_count = list_count * 1;
-    cur_page = cur_page * 1;
-    page_count = page_count * 1;
+    list_count = parseInt(list_count);
+    cur_page = parseInt(cur_page);
+    page_count = parseInt(page_count);
 
     const use_paging = (!no_paging || no_paging.toLowerCase() !== 'y');
 
@@ -144,16 +136,16 @@ export default class ModelObject {
       return ["*"];
     }
 
-    const select = new Array();
+    const select = [];
     const function_column = /\(.+\)/i;
-    for(const key in columns) {
+    Object.keys(columns).forEach((key) => {
       const column = columns[key];
       if (function_column.test(column)) {
         select.push(this.database.raw(columns[key]));
       } else {
         select.push(columns[key]);
       }
-    }
+    });
 
     return select;
   };
