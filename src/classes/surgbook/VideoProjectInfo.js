@@ -10,7 +10,7 @@ export default class VideoProjectInfo extends JsonWrapper {
 
   setUrl = () => {
     const project_url = Util.pathToUrl(this.project_path);
-    const url_prefix = service_config.get('static_storage_prefix');
+    const url_prefix = service_config.get('static_storage_prefix') + project_url;
     this.sequence_file_url = url_prefix + this.sequence_file_name;
     if (this.is_trans_complete) {
       this.video_file_url = url_prefix + this.video_file_name;

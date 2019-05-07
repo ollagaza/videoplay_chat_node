@@ -10,6 +10,7 @@ import SendMail from '@/classes/SendMail';
 import log from "@/classes/Logger";
 import roles from "@/config/roles";
 import VideoProjectModel from '@/models/VideoProjectModel';
+import VideoProject from '@/db/mongodb/model/VideoProject';
 
 const routes = Router();
 
@@ -101,6 +102,7 @@ routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, re
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const result = await new VideoProjectModel({ database }).createVideoProjectInfo(req.body, member_seq);
+  // VideoProject
 
   const output = new StdObject();
   output.add('result', result);

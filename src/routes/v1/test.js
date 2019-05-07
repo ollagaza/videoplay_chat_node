@@ -15,12 +15,32 @@ import mime from "mime-types";
 import service_config from "@/config/service.config";
 import config from "@/config/config";
 import JsonPath from 'jsonpath';
+import TestModel from '@/db/mongodb/model/test';
+import ContentIdManager from '@/classes/ContentIdManager';
 
 const IS_DEV = config.isDev();
 
 const routes = Router();
 
 if (IS_DEV) {
+  routes.post('/mon', wrap(async (req, res) => {
+    const sequence = req.body;
+    const result = await TestModel.findBySequence(sequence);
+    res.json(result);
+  }));
+
+  routes.get('/mon/:id', wrap(async (req, res) => {
+    const id = req.params.id;
+    const result = await TestModel.findOneById(id);
+    res.json(result);
+  }));
+
+  routes.get('/mon', wrap(async (req, res) => {
+    const content_id = await ContentIdManager.getContentId();
+    const result = await TestModel.create(content_id, [1, 5, 10]);
+    res.json(result);
+  }));
+
   routes.get('/crypto', wrap(async (req, res) => {
     const data = {
       r: Util.getRandomString(5),

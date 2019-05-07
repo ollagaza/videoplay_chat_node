@@ -46,19 +46,21 @@ export default class VideoProjectModel extends ModelObject {
 
   getVideoProjectInfo = async (project_seq) => {
     const video_project_info = new VideoProjectInfo(await this.findOne({seq: project_seq}));
+    video_project_info.setUrl();
+    video_project_info.setIgnoreEmpty(true);
+    const video_project = video_project_info.toJSON();
+
     if (!video_project_info.isEmpty()) {
-      video_project_info.setUrl();
-      video_project_info.setIgnoreEmpty(true);
 
       const service_info = service_config.getServiceInfo();
       const media_root = service_info.media_root;
       const sequence_file_path = media_root + video_project_info.project_path + video_project_info.sequence_file_name;
       const sequence_data = await Util.readFile(sequence_file_path);
       if (sequence_data) {
-        video_project_info.sequence_list = JSON.parse(sequence_data);
+        video_project.sequence_list = JSON.parse(sequence_data);
       }
     }
-    return video_project_info.toJSON();
+    return video_project;
   };
 
   getVideoProjectList = async (member_seq) => {

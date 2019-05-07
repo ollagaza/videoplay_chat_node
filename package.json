@@ -61,7 +61,10 @@
     "jsonpath": "^1.0.1",
     "node-ffprobe": "^1.2.2",
     "mediainfo-parser": "^1.1.5",
-    "promise": "^8.0.3"
+    "promise": "^8.0.3",
+    "mongoose": "^5.5.6",
+    "assert": "^1.4.1",
+    "mongoose-plugin-autoinc": "^1.1.9"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",
