@@ -1,16 +1,18 @@
 import { Router } from 'express';
 import querystring from 'querystring';
-import Wrap from '@/utils/express-async';
+import service_config from '@/config/service.config';
+import roles from "@/config/roles";
 import Auth from '@/middlewares/auth.middleware';
+import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import ServiceErrorModel from '@/models/ServiceErrorModel';
 import SendMail from '@/classes/SendMail';
 import log from "@/classes/Logger";
-import roles from "@/config/roles";
-import VideoProjectModel from '@/models/VideoProjectModel';
-import VideoProject from '@/db/mongodb/model/VideoProject';
+import MemberModel from '@/models/MemberModel';
+import VideoProjectModel from '@/db/mongodb/model/VideoProject';
+import ContentIdManager from '@/classes/ContentIdManager';
 
 const routes = Router();
 
@@ -60,6 +62,15 @@ const routes = Router();
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
+
+const getMemberInfo = async (database, member_seq) => {
+  const member_info = await new MemberModel({ database: database }).getMemberInfo(member_seq);
+  if (!member_info || member_info.isEmpty()) {
+    throw new StdObject(-1, '회원정보가 없습니다.', 401)
+  }
+  return member_info;
+};
+
 const on_complete = Wrap(async(req, res) => {
   const token_info = req.token_info;
   const query_str = querystring.stringify(req.query);
@@ -81,7 +92,7 @@ routes.post('/video/error', Auth.isAuthenticated(), on_error);
 routes.get('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = token_info.getId();
-  const video_project_list = await new VideoProjectModel({ database }).getVideoProjectList(member_seq);
+  const video_project_list = await VideoProjectModel.findByMemberSeq(member_seq);
 
   const output = new StdObject();
   output.add('video_project_list', video_project_list);
@@ -91,7 +102,7 @@ routes.get('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res
 routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   // const token_info = req.token_info;
   const project_seq = req.params.project_seq;
-  const video_project = await new VideoProjectModel({ database }).getVideoProjectInfo(project_seq);
+  const video_project = await VideoProjectModel.findOneById(project_seq);
 
   const output = new StdObject();
   output.add('video_project', video_project);
@@ -99,10 +110,22 @@ routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), 
 }));
 
 routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+
   const token_info = req.token_info;
   const member_seq = token_info.getId();
-  const result = await new VideoProjectModel({ database }).createVideoProjectInfo(req.body, member_seq);
-  // VideoProject
+  const body = req.body;
+
+  const member_info = await getMemberInfo(database, member_seq);
+  const service_info = service_config.getServiceInfo();
+  const content_id = await ContentIdManager.getContentId();
+  const media_root = service_info.media_root;
+  const user_media_path = member_info.user_media_path;
+  const project_path = user_media_path + "VideoProject\\" + content_id + "\\";
+
+  await Util.createDirectory(media_root + project_path);
+
+  const result = await VideoProjectModel.createVideoProject(member_seq, body.operation_seq_list, content_id, body.project_name, project_path, body.total_time, body.sequence_list);
 
   const output = new StdObject();
   output.add('result', result);
@@ -110,8 +133,11 @@ routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, re
 }));
 
 routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const body = req.body;
+
   const project_seq = req.params.project_seq;
-  const result = await new VideoProjectModel({ database }).updateVideoProject(req.body, project_seq);
+  const result = await VideoProjectModel.updateByEditor(project_seq, body.operation_seq_list, body.project_name, body.total_time, body.sequence_list);
 
   const output = new StdObject();
   output.add('result', result);
@@ -120,7 +146,7 @@ routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), 
 
 routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const project_seq = req.params.project_seq;
-  const result = await new VideoProjectModel({ database }).deleteVideoProjectProgress(project_seq);
+  const result = await new VideoProjectModel.deleteById(project_seq);
 
   const output = new StdObject();
   output.add('result', result);

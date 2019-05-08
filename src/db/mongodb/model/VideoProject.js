@@ -19,12 +19,12 @@ const VideoProjectSchema = new Schema({
   sequence_list: Array
 });
 
-VideoProjectSchema.plugin(autoIncrement, { model: 'VideoProject', startAt: 1, incrementBy: 1 });
+VideoProjectSchema.plugin( autoIncrement, { model: 'VideoProject', startAt: 1, incrementBy: 1 } );
 VideoProjectSchema.indexes();
-VideoProjectSchema.index({ member_seq: 1, operation_seq_list: 1 });
-VideoProjectSchema.index({ member_seq: 1, status: 1 });
+VideoProjectSchema.index( { member_seq: 1, operation_seq_list: 1 } );
+VideoProjectSchema.index( { member_seq: 1, status: 1 } );
 
-VideoProjectSchema.statics.create = async function(member_seq, operation_seq_list, content_id, project_name, project_path, total_time, sequence_list) {
+VideoProjectSchema.statics.createVideoProject = function( member_seq, operation_seq_list, content_id, project_name, project_path, total_time, sequence_list ) {
   const model = new this();
   model.member_seq = member_seq;
   model.operation_seq_list = operation_seq_list;
@@ -37,20 +37,35 @@ VideoProjectSchema.statics.create = async function(member_seq, operation_seq_lis
   return model.save();
 };
 
-VideoProjectSchema.statics.findOneById = function(id) {
-  return this.findById(id);
+VideoProjectSchema.statics.updateByEditor = function( id, operation_seq_list, project_name, total_time, sequence_list ) {
+  const update = {
+    operation_seq_list,
+    project_name,
+    total_time,
+    sequence_list,
+    modify_date: Date.now()
+  };
+  return this.findByIdAndUpdate( id, update );
 };
 
-VideoProjectSchema.statics.findOneById = function(content_id) {
+VideoProjectSchema.statics.findOneById = function( id ) {
+  return this.findById( id );
+};
+
+VideoProjectSchema.statics.findOneByContentId = function( content_id ) {
   return this.findOne( { content_id: content_id } );
 };
 
-VideoProjectSchema.statics.findByMemberSeq = function(member_seq) {
-  return this.find({ member_seq: member_seq });
+VideoProjectSchema.statics.findByMemberSeq = function( member_seq ) {
+  return this.find( { member_seq: member_seq } );
 };
 
-VideoProjectSchema.statics.findByOperationSeq = function(member_seq, operation_seq_list) {
-  return this.find({ member_seq: member_seq, operation_seq_list: { "$in": operation_seq_list } });
+VideoProjectSchema.statics.findByOperationSeq = function( member_seq, operation_seq_list ) {
+  return this.find( { member_seq: member_seq, operation_seq_list: { "$in": operation_seq_list } } );
 };
 
-module.exports = mongoose.model('VideoProject', VideoProjectSchema);
+VideoProjectSchema.statics.deleteById = function( id ) {
+  return this.findByIdAndRemove( id );
+};
+
+module.exports = mongoose.model( 'VideoProject', VideoProjectSchema );
