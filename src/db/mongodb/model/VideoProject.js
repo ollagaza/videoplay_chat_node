@@ -37,7 +37,7 @@ VideoProjectSchema.statics.createVideoProject = function( member_seq, operation_
   return model.save();
 };
 
-VideoProjectSchema.statics.updateByEditor = function( id, operation_seq_list, project_name, total_time, sequence_list ) {
+VideoProjectSchema.statics.updateFromEditor = function( id, operation_seq_list, project_name, total_time, sequence_list ) {
   const update = {
     operation_seq_list,
     project_name,
@@ -45,7 +45,23 @@ VideoProjectSchema.statics.updateByEditor = function( id, operation_seq_list, pr
     sequence_list,
     modify_date: Date.now()
   };
-  return this.findByIdAndUpdate( id, update );
+  return this.updateOne( { _id: id }, update );
+};
+
+VideoProjectSchema.statics.updateStatus = function( id, status ) {
+  const update = {
+    status,
+    modify_date: Date.now()
+  };
+  return this.updateOne( { _id: id }, update );
+};
+
+VideoProjectSchema.statics.updateProgress = function( id, progress ) {
+  const update = {
+    progress,
+    modify_date: Date.now()
+  };
+  return this.updateOne( { _id: id }, update );
 };
 
 VideoProjectSchema.statics.findOneById = function( id ) {
@@ -65,7 +81,7 @@ VideoProjectSchema.statics.findByOperationSeq = function( member_seq, operation_
 };
 
 VideoProjectSchema.statics.deleteById = function( id ) {
-  return this.findByIdAndRemove( id );
+  return this.findByIdAndDelete( id );
 };
 
 module.exports = mongoose.model( 'VideoProject', VideoProjectSchema );
