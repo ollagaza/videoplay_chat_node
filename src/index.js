@@ -20,8 +20,9 @@ db.once('open', function(){
   log.debug("Connected to mongod server");
 });
 
+mongoose.set('useFindAndModify', false);
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://mteg_vas:dpaxldlwl_!@localhost:27017/surgstory', { useNewUrlParser: true, useFindAndModify: true } )
+mongoose.connect('mongodb://mteg_vas:dpaxldlwl_!@localhost:27017/surgstory', { useNewUrlParser: true, useFindAndModify: false } )
   .then(() => log.d(null, 'Successfully connected to mongodb'))
   .catch(e => log.e(null, e));
 

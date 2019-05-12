@@ -21,6 +21,7 @@ import service_config from '@/config/service.config';
 import constants from '@/config/constants';
 import log from "@/classes/Logger";
 import JsonPath from "jsonpath";
+import StdObject from '@/classes/StdObject';
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -288,7 +289,6 @@ const isNumber = (str) => {
   try {
     return !isNaN(parseFloat(str)) && isFinite(str);
   } catch (e) {
-    log.e(null, 'Util.isNumber', e);
     return false;
   }
 };
@@ -317,18 +317,21 @@ const getFloat = (str, on_error_result=0) => {
   }
 };
 
-const isEmpty = (value) => {
+const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
   if (value === undefined || value === null) {
     return true;
-  }
-  if (typeof value === 'object') {
-    return _.isEmpty(value);
   }
   if (isNumber(value)) {
     return false;
   }
   if (_.isString(value)) {
-    return _.trim(value) === '';
+    return allow_blank ? false : _.trim(value) === '';
+  }
+  if (_.isArray(value)) {
+    if (allow_empty_array) {
+      return false;
+    }
+    return value.length === 0;
   }
   return _.isEmpty(value);
 };
@@ -508,6 +511,69 @@ const secondToTimeStr = (second, format='HH:MM:ss', use_decimal_point=false) => 
   return date_str;
 };
 
+const hexToRGB = (hex) => {
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result && result.length >= 4 ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+  } : {
+    r: 0,
+    g: 0,
+    b: 0,
+  };
+};
+
+const getRandomString = (length = 10) => {
+  let str = '';
+  const space_length = RANDOM_KEY_SPACE.length;
+  for (let i = 0; i < length; i++) {
+    str += RANDOM_KEY_SPACE[Math.floor(Math.random()*space_length)];
+  }
+  return str;
+};
+
+const colorCodeToHex = (color_code) => {
+  const rgb = hexToRGB(color_code);
+  return '0x' + ((rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16);
+};
+
+const isTrue = (value) => {
+  const str = (`${value}`).toLowerCase();
+  return str === 'y' || str === '1' || str === 'true';
+};
+
+const isFalse = (value) => {
+  const str = (`${value}`).toLowerCase();
+  return str === 'n' || str === 'false';
+};
+
+const urlToPath = (url) => {
+  const service_info = service_config.getServiceInfo();
+  const check_regex = /^\/static\/(index|storage)\/(.+)$/g;
+  const result = check_regex.exec(url);
+  if (result && result.length === 3) {
+    let path = '';
+    const url_type = result[1];
+    switch (url_type) {
+      case 'index':
+        path = service_info.hawkeye_data_directory;
+        break;
+      case 'storage':
+        path = service_info.media_root;
+        break;
+      default:
+        return url;
+    }
+    path += '\\' + result[2].replace(/\//g, '\\');
+    return path;
+  }
+  return url;
+};
+
 export default {
   "convert": convert,
 
@@ -570,14 +636,7 @@ export default {
     return _.trim(value);
   },
 
-  "getRandomString": (length=10) => {
-    let str = '';
-    const space_length = RANDOM_KEY_SPACE.length;
-    for (let i = 0; i < length; i++) {
-      str += RANDOM_KEY_SPACE[Math.floor(Math.random()*space_length)];
-    }
-    return str;
-  },
+  "getRandomString": getRandomString,
 
   "equals": (target, compare, ignore_case=true) => {
     if (!target || !compare) {
@@ -755,11 +814,31 @@ export default {
   "getVideoDuration": getVideoDuration,
   "getThumbnail": getThumbnail,
 
-  "isTrue": (value) => {
-    const str = ('' + value).toLowerCase();
-    return str === 'y' || str === '1' || str === 'true';
-  },
   "isNull": (value) => {
     return value === null || value === undefined;
-  }
+  },
+  "getPayload": ( data, fields, set_modify_date = true, allow_blank = true, allow_empty_array = true ) => {
+    const model = {};
+    Object.keys( fields ).forEach(( key ) => {
+      const field_info = fields[key];
+      if ( isEmpty( data[key], allow_blank, allow_empty_array ) === false ) {
+        model[key] = data[key];
+      } else if ( field_info.require === true ) {
+        const error = new StdObject( -1, '잘못된 요청입니다', 400 );
+        error.add( 'field', key );
+        error.add( 'message', field_info.message );
+        throw error;
+      }
+    });
+    if ( set_modify_date ) {
+      model.modify_date = Date.now();
+    }
+    return model;
+  },
+  "hexToRGB": hexToRGB,
+  "getRandomId": () => getRandomString(5) + Math.floor(Date.now() / 1000),
+  "colorCodeToHex": colorCodeToHex,
+  isTrue,
+  isFalse,
+  urlToPath
 };

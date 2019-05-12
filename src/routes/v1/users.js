@@ -64,8 +64,6 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
   const member_seq = token_info.getId();
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
 
-  log.d(req, member_info);
-
   const output = new StdObject();
   output.add('member_info', member_info);
   res.json(output);
@@ -342,14 +340,13 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     const member_info = await member_model.getMemberInfo(member_seq);
 
     const media_root = service_config.get('media_root');
-    const upload_path = member_info.user_media_path + "_upload_";
+    const upload_path = member_info.user_media_path + "_upload_\\profile";
     const upload_full_path = media_root + upload_path;
     if (!(await Util.fileExists(upload_full_path))) {
       await Util.createDirectory(upload_full_path);
     }
 
     await Util.uploadByRequest(req, res, 'profile', upload_full_path);
-    log.d(req, req.file);
 
     const upload_file_info = req.file;
     if (Util.isEmpty(upload_file_info)) {
