@@ -20,6 +20,7 @@ const getFieldInfos = () => {
     request_status: { type: String, default: 'N', require: false, message: '동영상 제작 요청 상태값이 없습니다.' },
     progress: { type: Number, default: 0, require: false, message: '동영상 제작 진행률이 없습니다.' },
     sequence_list: { type: Array, default: [], require: false, message: '시퀀스 목록이 없습니다.' },
+    is_favorite: { type: Boolean, default: false, require: false, message: '즐겨찾기 여부가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   };
@@ -50,14 +51,6 @@ VideoProjectSchema.statics.updateFromEditor = function( id, payload ) {
   return this.updateOne( { _id: id }, payload );
 };
 
-VideoProjectSchema.statics.updateStatus = function( id, status ) {
-  const update = {
-    status,
-    modify_date: Date.now()
-  };
-  return this.updateOne( { _id: id }, update );
-};
-
 VideoProjectSchema.statics.updateRequestStatus = function( id, request_status, progress = 0 ) {
   const update = {
     request_status,
@@ -85,6 +78,22 @@ VideoProjectSchema.statics.updateRequestStatusByContentId = function( content_id
 VideoProjectSchema.statics.updateProgress = function( id, progress ) {
   const update = {
     progress,
+    modify_date: Date.now()
+  };
+  return this.updateOne( { _id: id }, update );
+};
+
+VideoProjectSchema.statics.updateStatus = function( id_list, status ) {
+  const update = {
+    status,
+    modify_date: Date.now()
+  };
+  return this.update( { _id: { $in: id_list } }, update );
+};
+
+VideoProjectSchema.statics.updateFavorite = function( id, is_favorite ) {
+  const update = {
+    is_favorite,
     modify_date: Date.now()
   };
   return this.updateOne( { _id: id }, update );
