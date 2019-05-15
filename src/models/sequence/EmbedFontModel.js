@@ -10,6 +10,7 @@ export default class EmbedFontModel {
     this._alpha = 1;
     this._align = Constants.CENTER;
     this._bold = false;
+    this._line_height = false;
   }
 
   init = (json) => {
@@ -20,6 +21,9 @@ export default class EmbedFontModel {
       this._alpha = parseFloat(json.alpha || 1);
       this._align = json.align || Constants.CENTER;
       this._bold = util.isTrue(json.bold);
+      if (!util.isFalse(json.line_height) && util.isNumber(json.line_height)) {
+        this._line_height = parseFloat(json.line_height);
+      }
       this._isUse = true;
     }
 
@@ -39,6 +43,9 @@ export default class EmbedFontModel {
       style += ` font-size: ${this._size}px;`;
       style += ` font-weight: ${this._bold ? 700 : 400};`;
       style += ` text-align: ${this._align};`;
+      if (util.isNumber(this._line_height)) {
+        style += ` line-height: ${this._line_height}px;`;
+      }
     }
     return style;
   };
@@ -99,6 +106,14 @@ export default class EmbedFontModel {
     this._bold = value;
   }
 
+  get line_height() {
+    return this._line_height;
+  }
+
+  set line_height(value) {
+    this._line_height = value;
+  }
+
   toJSON = () => {
     const json = {};
     json.name = this._name;
@@ -107,6 +122,7 @@ export default class EmbedFontModel {
     json.alpha = this._alpha;
     json.align = this._align;
     json.bold = this._bold;
+    json.line_height = this._line_height;
 
     return json;
   };
@@ -115,10 +131,11 @@ export default class EmbedFontModel {
     return {
       "$": {
         "Name": this._bold ? 'Nanum Barun Gothic Bold' : 'Nanum Barun Gothic',
-        "Size": this._size * scale,
+        "Size": Math.round(this._size * scale),
         "Color": util.colorCodeToHex(this._color),
         "Alpha": this._alpha,
-        "Align": this._align
+        "Align": this._align,
+        "LineSpacing": Math.round((this._line_height - this._size) * scale)
       }
     }
   };

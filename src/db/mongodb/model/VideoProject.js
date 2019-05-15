@@ -15,7 +15,7 @@ const getFieldInfos = () => {
     smil_file_name: { type: String, require: false, message: 'HLS 스트리밍 설정 파일 이름이 없습니다.' },
     total_time: { type: Number, default: 0, require: false, message: '총 재생 시간이 없습니다.' },
     total_size: { type: Number, default: 0, require: false, message: '총 파일 크기가 없습니다.' },
-    group: { type: [Number], default: [], require: false, message: '그룹 코드 목록' },
+    group_list: { type: [Number], default: [], require: false, message: '그룹 코드 목록이 없습니다.' },
     status: { type: String, default: 'Y', require: false, message: '프로젝트 상태값이 없습니다.' },
     request_status: { type: String, default: 'N', require: false, message: '동영상 제작 요청 상태값이 없습니다.' },
     progress: { type: Number, default: 0, require: false, message: '동영상 제작 진행률이 없습니다.' },
@@ -38,7 +38,7 @@ VideoProjectSchema.plugin( autoIncrement, { model: 'VideoProject', startAt: 1, i
 VideoProjectSchema.indexes();
 VideoProjectSchema.index( { member_seq: 1, operation_seq_list: 1 } );
 VideoProjectSchema.index( { member_seq: 1, status: 1 } );
-VideoProjectSchema.index( { member_seq: 1, parent_directory: 1 } );
+VideoProjectSchema.index( { member_seq: 1, group_list: 1 } );
 
 
 VideoProjectSchema.statics.createVideoProject = function( payload ) {
@@ -90,20 +90,20 @@ VideoProjectSchema.statics.updateProgress = function( id, progress ) {
   return this.updateOne( { _id: id }, update );
 };
 
-VideoProjectSchema.statics.findOneById = function( id ) {
-  return this.findById( id );
+VideoProjectSchema.statics.findOneById = function( id, projection = null ) {
+  return this.findById( id, projection );
 };
 
-VideoProjectSchema.statics.findOneByContentId = function( content_id ) {
-  return this.findOne( { content_id: content_id } );
+VideoProjectSchema.statics.findOneByContentId = function( content_id, projection = null ) {
+  return this.findOne( { content_id: content_id }, projection );
 };
 
-VideoProjectSchema.statics.findByMemberSeq = function( member_seq ) {
-  return this.find( { member_seq: member_seq } );
+VideoProjectSchema.statics.findByMemberSeq = function( member_seq, projection = null ) {
+  return this.find( { member_seq: member_seq }, projection );
 };
 
-VideoProjectSchema.statics.findByOperationSeq = function( member_seq, operation_seq_list ) {
-  return this.find( { member_seq: member_seq, operation_seq_list: { "$in": operation_seq_list } } );
+VideoProjectSchema.statics.findByOperationSeq = function( member_seq, operation_seq_list, projection = null ) {
+  return this.find( { member_seq: member_seq, operation_seq_list: { "$in": operation_seq_list } }, projection );
 };
 
 VideoProjectSchema.statics.deleteById = function( id ) {

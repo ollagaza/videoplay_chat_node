@@ -20,10 +20,10 @@ export default class EmbedSizeModel {
       if (util.isNumber(this._height)) {
         this._height = parseFloat(this._height);
       }
-      if (!util.isFalse(json.maxWidth)) {
+      if (!util.isFalse(json.maxWidth) && util.isNumber(json.maxWidth)) {
         this._maxWidth = parseFloat(json.maxWidth);
       }
-      if (!util.isFalse(json.maxHeight)) {
+      if (!util.isFalse(json.maxHeight) && util.isNumber(json.maxHeight)) {
         this._maxHeight = parseFloat(json.maxHeight);
       }
       this._isUse = true;
@@ -115,20 +115,20 @@ export default class EmbedSizeModel {
     } else if (this._width === Constants.AUTO) {
       json.Width = Constants.AUTO;
       if (this._maxWidth) {
-        json.MaxWidth = this._maxWidth * scale;
+        json.MaxWidth = Math.round(this._maxWidth * scale);
       }
     } else if (util.isNumber(this._width)) {
-      json.Width = this._width * scale;
+      json.Width = Math.round(this._width * scale);
     }
     if (this._height === Constants.MAX) {
       json.Height = Constants.MAX;
     } else if (this._height === Constants.AUTO) {
       json.Height = Constants.AUTO;
       if (this._maxHeight) {
-        json.MaxHeight = this._maxHeight * scale;
+        json.MaxHeight = Math.round(this._maxHeight * scale);
       }
     } else if (util.isNumber(this._height)) {
-      json.Height = this._height * scale;
+      json.Height = Math.round(this._height * scale);
     }
 
     return {

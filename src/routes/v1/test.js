@@ -159,7 +159,7 @@ if (IS_DEV) {
       const file = file_list[i];
       if (file.isFile()) {
         const file_path = dir + "\\" + file.name;
-        const file_info = await new FileInfo().getByFilePath(file_path, "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\", file.name);
+        const file_info = (await new FileInfo().getByFilePath(file_path, "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\", file.name));
         log.d(file_info.toJSON());
       }
 

@@ -1,4 +1,5 @@
 import Constants from '@/config/constants';
+import util from '@/utils/baseutil';
 
 export default class EmbedPositionModel {
   constructor() {
@@ -15,16 +16,16 @@ export default class EmbedPositionModel {
     if (json) {
       this._horizon = json.horizon;
       this._vertical = json.vertical;
-      if (json.left !== false) {
+      if (!util.isFalse(json.left) && util.isNumber(json.left)) {
         this._left = parseFloat(json.left);
       }
-      if (json.right !== false) {
+      if (!util.isFalse(json.right) && util.isNumber(json.right)) {
         this._right = parseFloat(json.right);
       }
-      if (json.top !== false) {
+      if (!util.isFalse(json.top) && util.isNumber(json.top)) {
         this._top = parseFloat(json.top);
       }
-      if (json.bottom !== false) {
+      if (!util.isFalse(json.bottom) && util.isNumber(json.bottom)) {
         this._bottom = parseFloat(json.bottom);
       }
       this._isUse = true;
@@ -147,24 +148,24 @@ export default class EmbedPositionModel {
     } else if (this._horizon === Constants.LEFT) {
       json.Horizon = Constants.LEFT;
     } else if (this._left !== false) {
-      json.Left = this._left * scale;
+      json.Left = Math.round(this._left * scale);
     }
     if (this._horizon === Constants.RIGHT) {
       json.Horizon = Constants.RIGHT;
     } else if (this._right !== false && this._horizon !== Constants.CENTER) {
-      json.Right = this._right * scale;
+      json.Right = Math.round(this._right * scale);
     }
     if (this._vertical === Constants.CENTER) {
       json.Vertical = Constants.CENTER;
     } else if (this._vertical === Constants.TOP) {
       json.Vertical = Constants.TOP;
     } else if (this._top !== false && this._vertical !== Constants.CENTER) {
-      json.Top = this._top * scale;
+      json.Top = Math.round(this._top * scale);
     }
     if (this._horizon === Constants.BOTTOM) {
       json.Vertical = Constants.BOTTOM;
     } else if (this._bottom !== false && this._vertical !== Constants.CENTER) {
-      json.Bottom = this._bottom * scale;
+      json.Bottom = Math.round(this._bottom * scale);
     }
 
     return {
