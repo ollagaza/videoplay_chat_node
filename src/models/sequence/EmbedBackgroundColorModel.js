@@ -54,6 +54,11 @@ export default class EmbedBackgroundColorModel {
     this._alpha = value;
   }
 
+  getRGBA() {
+    const rgb = util.hexToRGB(this._color);
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha})`;
+  }
+
   toJSON = () => {
     const json = {};
     json.color = this._color;

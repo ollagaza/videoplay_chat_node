@@ -45,8 +45,8 @@ const getMediaDirectory = (media_root, media_path) => {
   return media_root + path;
 };
 
-const getUrlPrefix = (media_root, media_path) => {
-  let full_path = media_root + removePathSEQ(media_path);
+const getUrlPrefix = (media_root, media_path, remove_seq = true) => {
+  let full_path = media_root + (remove_seq ? removePathSEQ(media_path) : media_path);
   full_path = full_path.replace(/\\/g, '/');
   full_path = full_path.replace(/^\/+/g, '');
 
@@ -131,7 +131,7 @@ const writeFile = async (file_path, context) => {
       resolve(false);
     });
 
-    write_stream.write(context,'utf8');
+    write_stream.write(context, 'utf8');
     write_stream.end();
   });
 
@@ -338,13 +338,14 @@ const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.resolve(req.upload_directory))
+    cb(null, path.resolve(req.upload_directory));
   },
   filename: function (req, file, cb) {
     if (req.new_file_name) {
-      cb(null, req.new_file_name)
+      cb(null, req.new_file_name);
     } else {
-      cb(null, 'upload_' + file.originalname)
+      req.new_file_name = 'upload_' + file.originalname;
+      cb(null, req.new_file_name);
     }
   },
 });
@@ -573,6 +574,8 @@ const urlToPath = (url) => {
   }
   return url;
 };
+
+const getRandomId = () => getRandomString(5) + Math.floor(Date.now() / 1000);
 
 export default {
   "convert": convert,
@@ -836,7 +839,7 @@ export default {
     return model;
   },
   "hexToRGB": hexToRGB,
-  "getRandomId": () => getRandomString(5) + Math.floor(Date.now() / 1000),
+  "getRandomId": getRandomId,
   "colorCodeToHex": colorCodeToHex,
   isTrue,
   isFalse,

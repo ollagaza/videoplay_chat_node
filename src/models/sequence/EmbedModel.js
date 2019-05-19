@@ -5,6 +5,7 @@ import EmbedFontModel from './EmbedFontModel';
 import EmbedPositionModel from './EmbedPositionModel';
 import EmbedSizeModel from './EmbedSizeModel';
 import logger from "@/classes/Logger";
+import text2png from "@/utils/textToImage";
 
 export default class EmbedModel {
   constructor(type) {
@@ -37,6 +38,7 @@ export default class EmbedModel {
 
   init = (json) => {
     if (json) {
+      this._id = json.id;
       this._name = json.name;
       this._type = json.type;
       this._src = json.src || '';
@@ -254,19 +256,27 @@ export default class EmbedModel {
     return json;
   };
 
-  getXmlJson = (scale) => {
+  getXmlJson = async (scale, file_path) => {
     const json = {
       "Type": this._type,
     };
 
-    if (this._type === Constants.IMAGE) {
+    if (util.isEmpty(this._src)) {
+      return null;
+    }
+
+    if (this._type === Constants.TEXT) {
+      await this.createTextImage(file_path);
+      json.Src = this._src;
+      json.Type = this._type;
+    } else if (this._type === Constants.IMAGE) {
       json.Src = util.urlToPath(this._src);
     } else if (this._type === Constants.VIDEO) {
       json.Src = util.urlToPath(this._origin_video_url);
       json.VideoStartTime = this._videoStartTime;
       json.VideoEndTime = this._videoEndTime;
     } else {
-      json.Src = this._src;
+      return null;
     }
 
     json.MultiLine = this._multiLine;
@@ -279,5 +289,43 @@ export default class EmbedModel {
     if (this._position.isUse) json.Position = this._position.getXmlJson(scale);
 
     return json;
+  };
+
+  createTextImage = async (file_path) => {
+    const font_name = this._font.bold ? 'NanumBarunGothicBold' : 'NanumBarunGothic';
+    const options = {
+      fontSize: this._font.size,
+      fontName: font_name,
+      textAlign: this._font.align,
+      textColor: this._font.getRGBA(),
+      backgroundColor: this._backGroundColor.getRGBA(),
+      lineSpacing: this._font.line_height > this._font.size ? this._font.line_height - this._font.size : 0,
+      padding: this._padding,
+      maxWidth: this._size.getMaxWidth(),
+      maxHeight: this._size.getMaxHeight(),
+      multiLine: this._multiLine,
+      localFontName: font_name,
+      localFontPath: process.cwd() + '\\font\\' + font_name + '.ttf',
+      startX: this._position.getStartX(),
+      startY: this._position.getStartY()
+    };
+
+    const image_file_path = file_path + this._id + '.png';
+    const image_info = await text2png(this._src, options);
+    const write_result = await util.writeFile(image_file_path, image_info.data);
+    logger.debug(image_file_path, this._id);
+
+    this._type = Constants.IMAGE;
+    this._src = image_file_path;
+    this._multiLine = false;
+    this._padding = 0;
+    this._size.width = image_info.width;
+    this._size.height = image_info.height;
+    this._size.resize = Constants.NONE;
+
+    this._font.isUse = false;
+    this._backGroundColor.isUse = false;
+    this._size.isUse = true;
+    this._position.isUse = true;
   };
 }

@@ -72,6 +72,36 @@ export default class EmbedPositionModel {
     return style;
   };
 
+  getStartX = () => {
+    if (this._horizon === Constants.CENTER) {
+      return 0;
+    } else if (this._horizon === Constants.LEFT) {
+      return 0;
+    } else if (this._left !== false) {
+      return this._left;
+    }
+    if (this._horizon === Constants.RIGHT) {
+      return 0;
+    } else if (this._right !== false && this._horizon !== Constants.CENTER) {
+      return this._right;
+    }
+  };
+
+  getStartY = () => {
+    if (this._vertical === Constants.CENTER) {
+      return 0;
+    } else if (this._vertical === Constants.TOP) {
+      return 0;
+    } else if (this._top !== false && this._vertical !== Constants.CENTER) {
+      return this._top;
+    }
+    if (this._horizon === Constants.BOTTOM) {
+      return 0;
+    } else if (this._bottom !== false && this._vertical !== Constants.CENTER) {
+      return this._bottom;
+    }
+  };
+
   get isUse() {
     return this._isUse;
   }

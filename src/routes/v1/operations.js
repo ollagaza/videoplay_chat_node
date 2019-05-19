@@ -944,11 +944,16 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
       await Util.createDirectory(media_directory);
     }
 
-    await Util.uploadByRequest(req, res, 'target', media_directory);
+    if (file_type === 'refer') {
+      await Util.uploadByRequest(req, res, 'target', media_directory, Util.getRandomId());
+    } else {
+      await Util.uploadByRequest(req, res, 'target', media_directory);
+    }
     const upload_file_info = req.file;
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
     }
+    upload_file_info.new_file_name = req.new_file_name;
 
     let upload_seq = null;
     let file_model = null;

@@ -57,6 +57,36 @@ export default class EmbedSizeModel {
     return style;
   };
 
+  getMaxWidth = (width_limit = 1920) => {
+    if (this._width === Constants.MAX) {
+      return width_limit;
+    } else if (this._width === Constants.AUTO) {
+      if (this._maxWidth) {
+        return Math.min(this._maxWidth, width_limit);
+      } else {
+        return width_limit;
+      }
+    } else if (util.isNumber(this._width)) {
+      return this._width;
+    }
+    return width_limit;
+  };
+
+  getMaxHeight = (height_limit = 1920) => {
+    if (this._height === Constants.MAX) {
+      return height_limit;
+    } else if (this._height === Constants.AUTO) {
+      if (this._maxHeight) {
+        return Math.min(this._maxHeight, height_limit);
+      } else {
+        return height_limit;
+      }
+    } else if (util.isNumber(this._height)) {
+      return this._height;
+    }
+    return height_limit;
+  };
+
   get isUse() {
     return this._isUse;
   }

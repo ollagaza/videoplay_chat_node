@@ -346,7 +346,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
       await Util.createDirectory(upload_full_path);
     }
 
-    await Util.uploadByRequest(req, res, 'profile', upload_full_path);
+    await Util.uploadByRequest(req, res, 'profile', upload_full_path, Util.getRandomId());
 
     const upload_file_info = req.file;
     if (Util.isEmpty(upload_file_info)) {
@@ -354,7 +354,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     }
 
     const origin_image_path = upload_file_info.path;
-    const resize_image_path = upload_path + '\\' + Date.now() + '.png';
+    const resize_image_path = upload_path + '\\' + Util.getRandomId() + '.png';
     const resize_image_full_path = media_root + resize_image_path;
     const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
 

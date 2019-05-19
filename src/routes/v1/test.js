@@ -19,12 +19,38 @@ import TestModel from '@/db/mongodb/model/test';
 import ContentIdManager from '@/classes/ContentIdManager'
 import { VideoProjectModel, VideoProjectField } from '@/db/mongodb/model/VideoProject';
 import SequenceModel from '@/models/sequence/SequenceModel';
+import text2png from "../../utils/textToImage";
+import fs from 'fs';
 
 const IS_DEV = config.isDev();
 
 const routes = Router();
 
 if (IS_DEV) {
+  routes.post('/image', wrap(async(req, res) => {
+    req.accepts('application/json');
+
+    const options = {
+      fontSize: 36,
+      fontName: 'NanumBarunGothic',
+      textAlign: 'right',
+      textColor: 'rgba(255, 255, 255, 1)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      lineSpacing: 14,
+      padding: 18,
+      maxWidth: 1200,
+      multiLine: true,
+      localFontName: 'NanumBarunGothic',
+      localFontPath: process.cwd() + '\\font\\NanumBarunGothic.ttf',
+      startX: 1000,
+      startY: 900
+    };
+
+    const text = req.body.text;
+    const image_data = await text2png(text, options);
+    res.send(await Util.writeFile('d:\\out.png', image_data.data));
+  }));
+
   routes.get('/video/:project_seq(\\d+)/:scale', wrap(async(req, res) => {
     const project_seq = req.params.project_seq;
     const scale = Util.parseFloat(req.params.scale, 1);

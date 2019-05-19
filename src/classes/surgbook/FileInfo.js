@@ -113,10 +113,10 @@ export default class FileInfo extends JsonWrapper {
 
   setUrl = (media_root) => {
     if (this.file_path) {
-      this.url = Util.getUrlPrefix(media_root, this.file_path);
+      this.url = Util.pathToUrl(media_root + this.file_path, false);
     }
     if (this.thumbnail) {
-      this.thumbnail_url = Util.getUrlPrefix(media_root, this.thumbnail);
+      this.thumbnail_url = Util.pathToUrl(media_root + this.thumbnail);
     }
 
     return this;
@@ -131,7 +131,7 @@ export default class FileInfo extends JsonWrapper {
 
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
-    this.file_path = media_path + '\\' + this.filename;
+    this.file_path = media_path + '\\' + upload_file_info.new_file_name;
 
     const file_type = await getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
     this.file_type = file_type;

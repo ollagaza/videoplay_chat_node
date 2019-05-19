@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import querystring from 'querystring';
+import path from 'path';
 import service_config from '@/config/service.config';
 import roles from "@/config/roles";
 import Auth from '@/middlewares/auth.middleware';
@@ -213,15 +214,19 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
 
   const output = new StdObject();
   output.add('result', result._id && result._id > 0);
+  output.add('status', 'R');
   res.json(output);
   (async() => {
+    const service_info = service_config.getServiceInfo();
+    const directory = service_info.media_root + result.project_path;
+
     const scale = 1;
     const sequence_list = result.sequence_list;
     const sequence_model_list = [];
     for (let i = 0; i < sequence_list.length; i++) {
       const sequence_model = new SequenceModel().init(sequence_list[i]);
       if (sequence_model.type) {
-        sequence_model_list.push(sequence_model.getXmlJson(i, scale));
+        sequence_model_list.push(await sequence_model.getXmlJson(i, scale, directory));
       }
     }
 
@@ -238,8 +243,6 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
       }
     };
 
-    const service_info = service_config.getServiceInfo();
-    const directory = service_info.media_root + result.project_path;
     const file_name = 'video_project.xml';
     await Util.writeXmlFile(directory, file_name, video_xml_json);
 
@@ -285,7 +288,7 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
     await Util.createDirectory(upload_full_path);
   }
 
-  const new_file_name = `${Date.now()}_${Util.getRandomString(4)}.png`;
+  const new_file_name = Util.getRandomId();
   await Util.uploadByRequest(req, res, 'image', upload_full_path, new_file_name);
   const upload_file_info = req.file;
   if (Util.isEmpty(upload_file_info)) {
@@ -331,6 +334,18 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
     throw new StdObject(3, '잘못된 상태 값', 400);
   }
   res.send(is_success ? 'ok' : 'fail');
+}));
+
+routes.post('/video/operation', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const operation_seq_list = req.body.operation_seq_list;
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+  const video_project_list = await VideoProjectModel.findByOperationSeq(member_seq, operation_seq_list, '-sequence_list');
+
+  const output = new StdObject();
+  output.add('video_project_list', video_project_list);
+  res.json(output);
 }));
 
 export default routes;

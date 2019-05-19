@@ -132,7 +132,7 @@ export default class SequenceModel {
     return json;
   };
 
-  getXmlJson = (index, scale = 1) => {
+  getXmlJson = async (index, scale = 1, file_path) => {
     const json = {
       "Index": index,
       "Type": this._type,
@@ -146,7 +146,7 @@ export default class SequenceModel {
     for (let i = 0; i < this._embeddings.length; i++) {
       const embed = this._embeddings[i];
       if (embed.isUse && !util.isEmpty(embed.src)) {
-        embeddings.push(embed.getXmlJson(scale));
+        embeddings.push(await embed.getXmlJson(scale, file_path));
       }
     }
     json.Embedding = embeddings;
