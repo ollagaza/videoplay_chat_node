@@ -575,7 +575,7 @@ const urlToPath = (url) => {
   return url;
 };
 
-const getRandomId = () => getRandomString(5) + Math.floor(Date.now() / 1000);
+const getRandomId = () => `${Math.floor(Date.now() / 1000)}_${getRandomString(5)}`;
 
 export default {
   "convert": convert,

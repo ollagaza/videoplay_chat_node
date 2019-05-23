@@ -147,6 +147,8 @@ export default class SequenceModel {
       const embed = this._embeddings[i];
       if (embed.isUse && !util.isEmpty(embed.src)) {
         embeddings.push(await embed.getXmlJson(scale, file_path));
+      } else {
+        logger.debug('embed empty', embed.toJSON());
       }
     }
     json.Embedding = embeddings;

@@ -21,6 +21,8 @@ const getFieldInfos = () => {
     progress: { type: Number, default: 0, require: false, message: '동영상 제작 진행률이 없습니다.' },
     sequence_list: { type: Array, default: [], require: false, message: '시퀀스 목록이 없습니다.' },
     is_favorite: { type: Boolean, default: false, require: false, message: '즐겨찾기 여부가 없습니다.' },
+    download_url: { type: String, default: null, require: false, message: '다운로드 URL이 없습니다.' },
+    stream_url: { type: String, default: null, require: false, message: '스트리밍 URL이 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   };
@@ -60,17 +62,25 @@ VideoProjectSchema.statics.updateRequestStatus = function( id, request_status, p
   return this.findByIdAndUpdate( id, update );
 };
 
-VideoProjectSchema.statics.updateRequestStatusByContentId = function( content_id, request_status, progress = 0, video_file_name = null, smil_file_name = null ) {
+VideoProjectSchema.statics.updateRequestStatusByContentId = function( content_id, request_status, progress = 0, media_info = null ) {
   const update = {
     request_status,
     progress,
     modify_date: Date.now()
   };
-  if (video_file_name) {
-    update.video_file_name = video_file_name;
-  }
-  if (smil_file_name) {
-    update.smil_file_name = smil_file_name;
+  if (media_info) {
+    if (media_info.video_file_name) {
+      update.video_file_name = media_info.video_file_name;
+    }
+    if (media_info.smil_file_name) {
+      update.smil_file_name = media_info.smil_file_name;
+    }
+    if (media_info.download_url) {
+      update.download_url = media_info.download_url;
+    }
+    if (media_info.stream_url) {
+      update.stream_url = media_info.stream_url;
+    }
   }
   return this.updateOne( { content_id: content_id }, update );
 };

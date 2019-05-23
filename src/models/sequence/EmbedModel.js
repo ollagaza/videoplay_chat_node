@@ -280,13 +280,17 @@ export default class EmbedModel {
     }
 
     json.MultiLine = this._multiLine;
-    json.Padding = this._padding * scale;
+    json.Padding = Math.round(this._padding * scale);
     json.Resize = this._resize;
 
     if (this._font.isUse) json.Font = this._font.getXmlJson(scale);
     if (this._backGroundColor.isUse) json.BackGround = this._backGroundColor.getXmlJson();
     if (this._size.isUse) json.Size = this._size.getXmlJson(scale);
     if (this._position.isUse) json.Position = this._position.getXmlJson(scale);
+
+    if (this._type === Constants.VIDEO) {
+      logger.debug('getXmlJson', this._origin_video_url, util.urlToPath(this._origin_video_url), json);
+    }
 
     return json;
   };
@@ -313,7 +317,7 @@ export default class EmbedModel {
     const image_file_path = file_path + this._id + '.png';
     const image_info = await text2png(this._src, options);
     const write_result = await util.writeFile(image_file_path, image_info.data);
-    logger.debug(image_file_path, this._id);
+    logger.debug(image_file_path, this._id, write_result);
 
     this._type = Constants.IMAGE;
     this._src = image_file_path;

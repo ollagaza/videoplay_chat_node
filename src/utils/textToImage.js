@@ -111,6 +111,7 @@ const makeText = (origin_text, options) => {
   const line_spacing = options.lineSpacing;
   const font_size = options.fontSize;
   const max_width = options.maxWidth - padding_w;
+  let max_line_height = 0;
   let lines = [];
   let width = 0;
 
@@ -133,7 +134,11 @@ const makeText = (origin_text, options) => {
       }
 
       const line_text = result;
-      let line_width = ctx.measureText(line_text).width;
+      const measure_text = ctx.measureText(line_text);
+      let line_width = measure_text.width;
+      if (measure_text.height > max_line_height) {
+        max_line_height = measure_text.height;
+      }
       if (options.multiLine) {
         width = Math.max(width, line_width);
       } else {
@@ -146,10 +151,12 @@ const makeText = (origin_text, options) => {
 
   // Calculate canvas size, add margin
   const line_max_width = padding_w + width;
+  const start_y = (-font_size / 2) + (line_spacing / 2);
   const text_height = padding_h + ( font_size + line_spacing ) * lines.length;
   ctx.canvas.width  = line_max_width;
   ctx.canvas.height =  Math.min(text_height, options.maxHeight);
   ctx.font = font_size + "px " + options.fontName;
+  ctx.textBaseline = "middle";
   ctx.fillStyle = options.textColor;
 
   ctx.antialias = 'gray';
@@ -161,7 +168,7 @@ const makeText = (origin_text, options) => {
     } else if (options.textAlign === 'right') {
       x = Math.max(options.paddingLeft, line_max_width - line.width - options.paddingRight);
     }
-    const y = options.paddingTop + font_size + (font_size + line_spacing) * i;
+    const y = start_y + options.paddingTop + font_size + (font_size + line_spacing) * i;
     if (options.maxHeight < y) {
       break;
     }

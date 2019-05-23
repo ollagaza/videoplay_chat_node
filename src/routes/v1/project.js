@@ -254,24 +254,24 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
     const query_str = querystring.stringify(query_data);
 
     const request_options = {
-      hostname: service_info.trans_server_domain,
-      port: service_info.trans_server_port,
-      path: service_info.trans_start_api + '?' + query_str,
+      hostname: service_info.auto_editor_server_domain,
+      port: service_info.auto_editor_server_port,
+      path: service_info.auto_editor_merge_api + '?' + query_str,
       method: 'GET'
     };
 
-    const api_url = 'http://' + service_info.trans_server_domain + ':' + service_info.trans_server_port + service_info.trans_start_api + '?' + query_str;
+    const api_url = 'http://' + service_info.auto_editor_server_domain + ':' + service_info.auto_editor_server_port + service_info.auto_editor_merge_api + '?' + query_str;
     log.d(req, api_url);
 
-    // let api_request_result = null;
-    // let is_execute_success = false;
-    // try {
-    //   api_request_result = await Util.httpRequest(request_options, false);
-    //   is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
-    // } catch (e) {
-    //   log.e(req, e);
-    //   api_request_result = e.message;
-    // }
+    let api_request_result = null;
+    let is_execute_success = false;
+    try {
+      api_request_result = await Util.httpRequest(request_options, false);
+      is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+    } catch (e) {
+      log.e(req, e);
+      api_request_result = e.message;
+    }
   })();
 }));
 
@@ -303,11 +303,12 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
 }));
 
 routes.get('/video/make/process', Wrap(async(req, res) => {
-  const content_id = req.query.content_id;
+  const content_id = req.query.ContentID;
+  // /api/v1/project/video/make/process?ContentID=13363f6d-7c88-11e9-bb8e-e0d55ee22ea6&SmilFileName=&Status=start&VideoFileName=
   const process_info = {
-    status: req.query.status,
-    video_file_name: req.query.video_file_name,
-    smil_file_name: req.query.smil_file_name,
+    status: req.query.Status,
+    video_file_name: req.query.VideoFileName,
+    smil_file_name: req.query.SmilFileName,
   };
   if (Util.isEmpty(process_info.status)) {
     throw new StdObject(1, '잘못된 파라미터', 400);
@@ -324,7 +325,12 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
     if (Util.isEmpty(process_info.video_file_name) || Util.isEmpty(process_info.smil_file_name)) {
       throw new StdObject(2, '결과파일 이름 누락', 400);
     }
-    const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'Y', 100, process_info.video_file_name, process_info.smil_file_name);
+
+    const video_project = await VideoProjectModel.findOneByContentId(content_id);
+    const path_url = Util.pathToUrl(video_project.project_path);
+    process_info.download_url = Util.pathToUrl(service_config.get('static_storage_prefix')) + path_url + process_info.video_file_name;
+    process_info.stream_url = service_config.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
+    const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'Y', 100, process_info);
     if (result && result.ok === 1) {
       is_success = true;
     } else {
