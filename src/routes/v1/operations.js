@@ -840,27 +840,32 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), W
   res.json(output);
 }));
 
-routes.put('/:operation_seq(\\d+)/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
   const token_info = req.token_info;
-  const operation_seq = req.params.operation_seq;
+  const member_seq = token_info.getId();
+  const seq_list = req.body.seq_list;
 
-  const {operation_model} = await getOperationInfo(database, operation_seq, token_info);
-  const result = await operation_model.updateStatusTrash(operation_seq, false);
+  const result = await new OperationModel({ database }).updateStatusTrash(seq_list, member_seq, false);
 
   const output = new StdObject();
   output.add('result', result);
+  output.add('status', 'T');
   res.json(output);
 }));
 
-routes.delete('/:operation_seq(\\d+)/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
   const token_info = req.token_info;
-  const operation_seq = req.params.operation_seq;
+  const member_seq = token_info.getId();
+  const seq_list = req.body.seq_list;
+  log.d(req, seq_list);
 
-  const {operation_model} = await getOperationInfo(database, operation_seq, token_info);
-  const result = await operation_model.updateStatusTrash(operation_seq, true);
+  const result = await new OperationModel({ database }).updateStatusTrash(seq_list, member_seq, true);
 
   const output = new StdObject();
   output.add('result', result);
+  output.add('status', 'Y');
   res.json(output);
 }));
 

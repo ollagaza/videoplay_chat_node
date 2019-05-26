@@ -146,8 +146,8 @@ export default class OperationModel extends ModelObject {
     return trash_path;
   };
 
-  updateStatusTrash = async (operation_seq, is_delete) => {
-    return await this.update({"seq": operation_seq}, {status: is_delete ? 'Y' : 'T', "modify_date": this.database.raw('NOW()')});
+  updateStatusTrash = async (operation_seq_list, member_seq, is_delete) => {
+    return await this.updateIn("seq", operation_seq_list, {status: is_delete ? 'Y' : 'T', "modify_date": this.database.raw('NOW()')}, { member_seq });
   };
 
   updateStatusFavorite = async (operation_seq, is_delete) => {

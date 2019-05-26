@@ -171,6 +171,8 @@ routes.delete('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(roles.L
 
 routes.put('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
   const id_list = req.body.id_list;
   const result = await VideoProjectModel.updateStatus(id_list, 'T');
 
@@ -182,6 +184,8 @@ routes.put('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(re
 
 routes.delete('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
   const id_list = req.body.id_list;
   const result = await VideoProjectModel.updateStatus(id_list, 'Y');
 

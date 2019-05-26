@@ -32,6 +32,17 @@ export default class ModelObject {
       .where(filters);
   }
 
+  async updateIn(key, in_array, params, filters=null) {
+    const oKnex = this.database
+      .update(params)
+      .from(this.table_name)
+      .whereIn(key, in_array);
+    if (filters) {
+      oKnex.andWhere(filters);
+    }
+    return oKnex;
+  }
+
   async delete(filters) {
     return await this.database
       .from(this.table_name)

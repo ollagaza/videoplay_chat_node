@@ -577,6 +577,8 @@ const urlToPath = (url) => {
 
 const getRandomId = () => `${Math.floor(Date.now() / 1000)}_${getRandomString(5)}`;
 
+const getFileExt = file_name => path.extname(file_name || '.').toLowerCase().substr(1);
+
 export default {
   "convert": convert,
 
@@ -843,5 +845,6 @@ export default {
   "colorCodeToHex": colorCodeToHex,
   isTrue,
   isFalse,
-  urlToPath
+  urlToPath,
+  getFileExt
 };
