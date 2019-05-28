@@ -83,7 +83,7 @@ export default class JsonWrapper {
     for (let index in this.json_keys) {
       const key = this.json_keys[index];
       let value = this[key];
-      if (this.ignore_empty && Util.isEmpty(value)) {
+      if (this.ignore_empty && Util.isEmpty(value, true, true)) {
         continue;
       }
       if (this.auto_trim) {

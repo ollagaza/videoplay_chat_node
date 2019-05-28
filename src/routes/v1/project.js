@@ -331,6 +331,9 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
     }
 
     const video_project = await VideoProjectModel.findOneByContentId(content_id);
+    if (Util.isEmpty(video_project)) {
+      throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
+    }
     const path_url = Util.pathToUrl(video_project.project_path);
     process_info.download_url = Util.pathToUrl(service_config.get('static_storage_prefix')) + path_url + process_info.video_file_name;
     process_info.stream_url = service_config.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
