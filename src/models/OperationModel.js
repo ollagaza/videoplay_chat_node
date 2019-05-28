@@ -6,6 +6,7 @@ import MemberModel from '@/models/MemberModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
+import ContentIdManager from '@/classes/ContentIdManager';
 
 const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
 
@@ -184,12 +185,14 @@ export default class OperationModel extends ModelObject {
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(-1, '회원정보가 없습니다.', 401)
     }
+    const content_id = await ContentIdManager.getContentId();
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
-    operation_info.media_path = user_media_path + operation_info.operation_code + '\\SEQ\\';
+    operation_info.media_path = user_media_path + content_id + '\\SEQ\\';
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
     operation_info.created_by_user = 1;
+    operation_info.content_id = content_id;
 
     const operation_seq = await this.create(operation_info, 'seq');
     operation_info.seq = operation_seq;

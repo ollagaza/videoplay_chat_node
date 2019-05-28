@@ -735,7 +735,7 @@ export default {
     return element;
   },
 
-  "getUuid": () => {
+  "getContentId": () => {
     return uuidv1();
   },
 
