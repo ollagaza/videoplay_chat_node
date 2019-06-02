@@ -893,9 +893,10 @@ routes.delete('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(roles.LOGIN
   res.json(output);
 }));
 
-routes.get('/verify/operation_code/:operation_code', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/verify/operation_code', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  const operation_code = req.params.operation_code;
+  req.accepts('application/json');
+  const operation_code = req.body.operation_code;
   const is_duplicate = await new OperationModel({ database }).isDuplicateOperationCode(token_info.getId(), operation_code);
 
   const output = new StdObject();
