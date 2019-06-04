@@ -204,8 +204,13 @@ export default class MemberInfo extends JsonWrapper {
     if (Util.isEmpty(this.user_name)) {
       return super.returnBoolean(-1, '성명을 입력해 주세요.', 400);
     }
-    if (this.user_name.length > 10) {
-      return super.returnBoolean(-1, '이름은 열자 이하로 입력하셔야 합니다.', 400);
+  };
+
+  checkUserId = () => {
+    this.checkEmpty();
+
+    if (Util.isEmpty(this.user_id)) {
+      return super.returnBoolean(-1, '아이디를 입력해 주세요.', 400);
     }
   };
 

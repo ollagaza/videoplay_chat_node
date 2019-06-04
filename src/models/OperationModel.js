@@ -57,8 +57,8 @@ export default class OperationModel extends ModelObject {
       if (!Util.isNull(query_params.analysis_complete)) {
         oKnex.andWhere('is_analysis_complete', Util.isTrue(query_params.analysis_complete) ? 1 : 0);
       }
-      if (!Util.isNull(query_params.search)) {
-        oKnex.andWhere(this.database.raw(`(operation.operation_code LIKE '%${query_params.search}%' OR operation.operation_name LIKE '%${query_params.search}%')`));
+      if (!Util.isNull(query_params.status)) {
+        oKnex.andWhere('status', query_params.status.toUpperCase());
       }
     }
 
