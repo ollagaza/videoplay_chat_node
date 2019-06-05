@@ -10,7 +10,8 @@ const create_user_form = `
 서지북 계정을 등록해 주셔서 감사합니다. <br>
 계정을 활성화하려면 확인버튼을 클릭하세요.<br>
 확인 버튼을 클릭해도 아무 반응이 없으면 링크를 복사해 <br>
-브라우저 주소 입력 창에 붙여 넣거나 직접 입력해 주세요.<br>{url_prefix}?auth_key={auth_key}&amp;member_seq={member_seq}</p>
+브라우저 주소 입력 창에 붙여 넣거나 직접 입력해 주세요.<br>
+{url_prefix}?auth_key={auth_key}&amp;member_seq={member_seq}</p>
         <div class="table_btn4" style="width: 430px;text-align: center;">
         	<a href="{url_prefix}?auth_key={auth_key}&member_seq={member_seq}" style="text-decoration: none;"><button type="submit" class="info_btn1" style="cursor: pointer;width: 200px;height: 43px;border-radius: 5px;background: #252a37;font-size: 18px;color: #fff;">확인</button></a>
         </div>

@@ -272,30 +272,20 @@ routes.post('/find/id', Wrap(async(req, res) => {
   member_info.checkUserName();
   member_info.checkEmailAddress();
 
+  const output = new StdObject();
+  let is_find = false;
   await database.transaction(async(trx) => {
     const oMemberModel = new MemberModel({ database: trx });
-    const find_info = await oMemberModel.findMember(member_info);
-    const temp_password = Util.getRandomString();
-    const update_result = await oMemberModel.updateTempPassword(find_info.seq, temp_password);
-    if (!update_result) {
-      throw new StdObject(-1, '비밀번호 재설정 실패', 400);
-    }
-
-    const template_data = {
-      "user_name": find_info.user_name,
-      "email_address": find_info.email_address,
-      "tmp_password": temp_password,
-      "url_prefix": req.body.url_prefix,
-      "request_domain": req.body.request_domain
-    };
-
-    const send_mail_result = await new SendMail().sendMailHtml([find_info.email_address], 'MTEG 계정정보 찾기를 요청하셨습니다.', MemberTemplate.findUserInfo(template_data));
-    if (send_mail_result.isSuccess() == false) {
-      throw send_mail_result;
+    const find_member_info = await oMemberModel.findMemberId(member_info);
+    if (find_member_info && !find_member_info.isEmpty()) {
+      output.add('user_id', find_member_info.user_id);
+      output.add('user_name', find_member_info.user_name);
+      output.add('email_address', find_member_info.email_address);
+      is_find = true;
     }
   });
-
-  res.json(new StdObject());
+  output.add('is_find', is_find);
+  res.json(output);
 }));
 
 

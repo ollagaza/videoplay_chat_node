@@ -54,8 +54,10 @@ let depart_list = null;
  *
  */
 routes.get('/timestamp', Wrap(async(req, res) => {
+  const now = Date.now();
   const output = new StdObject();
-  output.add('timestamp', Math.floor(Date.now() / 1000));
+  output.add('timestamp', Math.floor(now / 1000));
+  output.add('timestamp_mil', now);
   res.json(output);
 }));
 
