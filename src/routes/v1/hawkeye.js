@@ -127,7 +127,7 @@ const on_complete = Wrap(async(req, res) => {
       const video_file_name = video_info.video_name;
       media_info_api_result = "video_file_name: " + video_file_name + ", path: " + operation_info.media_directory + 'Media.xml';
 
-      await operation_model.updateAnalysisComplete(operation_seq,true);
+      await operation_model.updateAnalysisComplete(operation_seq, true);
       await syncOne(req, token_info, operation_seq);
 
       is_complete = true;

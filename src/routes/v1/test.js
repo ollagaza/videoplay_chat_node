@@ -113,6 +113,11 @@ if (IS_DEV) {
     res.json(result);
   }));
 
+  routes.get('/t/:id', wrap(async (req, res) => {
+    console.log(req.params.id);
+    res.send("" + Util.getRandomNumber(parseInt(req.params.id)));
+  }));
+
   routes.get('/crypto', wrap(async (req, res) => {
     const data = {
       r: Util.getRandomString(5),

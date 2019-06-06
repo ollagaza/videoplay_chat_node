@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import php from 'phpjs';
 import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import Wrap from '@/utils/express-async';
@@ -7,6 +6,7 @@ import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
+import Util from '@/utils/baseutil';
 
 const routes = Router();
 /**
@@ -118,8 +118,16 @@ routes.post('/', Wrap(async(req, res) => {
 
   // 임시 프리패스 비밀번호 설정. 데이터 연동 확인 후 삭제
   if (password !== 'dpaxldlwl_!') {
-    if (member_info.password !== php.md5(password)) {
-      throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+    if (member_info.password.length <= 32) {
+      if (member_info.password !== Util.md5(password)){
+        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+      }
+      await member_model.upgradePassword(member_info.seq, password);
+    } else {
+      if (member_info.password !== member_model.encryptPassword(password)) {
+        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+      }
+      await member_model.updateLastLogin(member_info.seq);
     }
   }
 

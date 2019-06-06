@@ -6,7 +6,6 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import _ from 'lodash';
 import xml2js from 'xml2js';
-import crypto from 'crypto';
 import aes256 from 'nodejs-aes256';
 import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
@@ -22,6 +21,7 @@ import constants from '@/config/constants';
 import log from "@/classes/Logger";
 import JsonPath from "jsonpath";
 import StdObject from '@/classes/StdObject';
+import crypto from 'crypto';
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -537,6 +537,13 @@ const getRandomString = (length = 10) => {
   return str;
 };
 
+const getRandomNumber = (length = 10) => {
+  const rand = Math.random();
+  const multi = Math.pow(10, length + 1) * 1.0;
+  const result = Math.round(rand * multi).toString();
+  return result.substr(result.length - length);
+};
+
 const colorCodeToHex = (color_code) => {
   const rgb = hexToRGB(color_code);
   return '0x' + ((rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16);
@@ -684,8 +691,12 @@ export default {
     return Math.ceil(time_diff / (1000 * 3600));
   },
 
+  "md5": (text) => {
+    return crypto.createHash('md5').update(text).digest("hex");
+  },
+
   "hash": (text, hash_algorithm='sha256') => {
-    return crypto.createHash(hash_algorithm).update(text).digest('base64');
+    return crypto.createHash(hash_algorithm).update(text).digest('hex');
   },
 
   "encrypt": (plain_data) => {
@@ -846,5 +857,6 @@ export default {
   isTrue,
   isFalse,
   urlToPath,
-  getFileExt
+  getFileExt,
+  getRandomNumber
 };

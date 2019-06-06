@@ -21,6 +21,7 @@ import SmilInfo from "@/classes/surgbook/SmilInfo";
 import VideoModel from '@/models/xmlmodel/VideoModel';
 import log from "@/classes/Logger";
 import IndexInfo from "@/classes/surgbook/IndexInfo";
+import SendMail from '@/classes/SendMail';
 
 const routes = Router();
 
@@ -182,6 +183,19 @@ const syncOne = async (req, token_info, operation_seq) => {
     }
 
     await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+
+    if (operation_info.analysis_status !== 'Y' && is_sync_complete) {
+      const send_mail = new SendMail();
+      const mail_to = ["hwj@mteg.co.kr"];
+      const subject = "동영상 분석 완료";
+      let context = "";
+      context += `완료 일자: ${Util.currentFormattedDate()}<br/>\n`;
+      context += `수술명: ${operation_info.operation_name}<br/>\n`;
+      context += `수술일자: ${operation_info.operation_date}<br/>\n`;
+      context += `content_id: ${content_id}<br/>\n`;
+      context += `큐레이션 URL: ${service_info.service_url}/v2/curation/${operation_seq}<br/>\n`;
+      await send_mail.sendMailHtml(mail_to, subject, context);
+    }
 
     log.d(req, `${log_prefix} complete`);
   });
