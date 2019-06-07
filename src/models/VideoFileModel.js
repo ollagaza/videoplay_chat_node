@@ -14,7 +14,7 @@ export default class VideoFileModel extends ModelObject {
   }
 
   createVideoFile = async (upload_file_info, storage_seq, media_path) => {
-    const file_info = new FileInfo().getByUploadFileInfo(upload_file_info, media_path).toJSON();
+    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, media_path)).toJSON();
     file_info.storage_seq = storage_seq;
 
     return await this.create(file_info, 'seq');
@@ -109,7 +109,7 @@ export default class VideoFileModel extends ModelObject {
           const video_file_path = video_directory + file_name;
           const file_info = (await new FileInfo().getByFilePath(video_file_path, media_path, file_name)).toJSON();
           if (file_info.file_type === 'video') {
-            if (smil_info.isTransVideo(file_name) || file_name == operation_media_info.video_file_name) {
+            if (smil_info.isTransVideo(file_name) || file_name === operation_media_info.video_file_name) {
               trans_video_count++;
               trans_video_size += file_info.file_size;
               continue;

@@ -1,4 +1,5 @@
 import ModelObject from '@/classes/ModelObject';
+import ServiceErrorInfo from '@/classes/surgbook/ServiceErrorInfo';
 
 export default class ServiceErrorModel extends ModelObject {
   constructor(...args) {
@@ -9,17 +10,8 @@ export default class ServiceErrorModel extends ModelObject {
   }
 
   createServiceError = async (error_type, operation_seq, content_id, message) => {
-    const create_info = {};
-    create_info.error_type = error_type;
-    if (operation_seq) {
-      create_info.operation_seq = operation_seq;
-    }
-    if (content_id) {
-      create_info.content_id = content_id;
-    }
-    if (operation_seq) {
-      create_info.message = message;
-    }
+    const error_info = new ServiceErrorInfo({ error_type, operation_seq, content_id, message });
+    const create_info = error_info.toJSON();
     return await this.create(create_info, 'seq');
   };
 }

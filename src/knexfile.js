@@ -5,7 +5,7 @@ export default {
   development: {
     client: 'mysql',
     connection: {
-      // host : '192.168.1.52',
+      // host : '192.168.0.52',
       database: 'surgbook',
       user:     'root',
       password: '_media_'
@@ -27,8 +27,8 @@ export default {
       password: '_media_'
     },
     pool: {
-      min: 2,
-      max: 10
+      min: 10,
+      max: 20
     },
     migrations: {
       tableName: 'knex_migrations'

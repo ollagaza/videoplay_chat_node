@@ -9,16 +9,115 @@ import SendMail from '@/classes/SendMail';
 import FileInfo from '@/classes/surgbook/FileInfo';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
-import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
 import roles from "@/config/roles";
-import request from 'request-promise';
+import mime from "mime-types";
+import service_config from "@/config/service.config";
+import config from "@/config/config";
+import JsonPath from 'jsonpath';
+import TestModel from '@/db/mongodb/model/test';
+import ContentIdManager from '@/classes/ContentIdManager'
+import { VideoProjectModel, VideoProjectField } from '@/db/mongodb/model/VideoProject';
+import SequenceModel from '@/models/sequence/SequenceModel';
+import text2png from "../../utils/textToImage";
+import fs from 'fs';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = config.isDev();
 
 const routes = Router();
 
 if (IS_DEV) {
+  routes.post('/image', wrap(async(req, res) => {
+    req.accepts('application/json');
+
+    const options = {
+      fontSize: 36,
+      fontName: 'NanumBarunGothic',
+      textAlign: 'right',
+      textColor: 'rgba(255, 255, 255, 1)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      lineSpacing: 14,
+      padding: 18,
+      maxWidth: 1200,
+      multiLine: true,
+      localFontName: 'NanumBarunGothic',
+      localFontPath: process.cwd() + '\\font\\NanumBarunGothic.ttf',
+      startX: 1000,
+      startY: 900
+    };
+
+    const text = req.body.text;
+    const image_data = await text2png(text, options);
+    res.send(await Util.writeFile('d:\\out.png', image_data.data));
+  }));
+
+  routes.get('/video/:project_seq(\\d+)/:scale', wrap(async(req, res) => {
+    const project_seq = req.params.project_seq;
+    const scale = Util.parseFloat(req.params.scale, 1);
+    const video_project = await VideoProjectModel.findOneById(project_seq);
+    const sequence_list = video_project.sequence_list;
+    const sequence_model_list = [];
+    for (let i = 0; i < sequence_list.length; i++) {
+      const sequence_model = new SequenceModel().init(sequence_list[i]);
+      if (sequence_model.type) {
+        sequence_model_list.push(sequence_model.getXmlJson(i, scale));
+      }
+    }
+
+    const video_xml_json = {
+      "VideoInfo": {
+        "MediaInfo": {
+          "ContentId": video_project.content_id,
+          "Width": 1920 * scale,
+          "Height": 1080 * scale,
+        },
+        "SequenceList": {
+          "Sequence": sequence_model_list
+        }
+      }
+    };
+
+    await Util.writeXmlFile(service_config.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json);
+
+    res.json(video_xml_json);
+  }));
+
+  routes.get('/reg', wrap(async (req, res) => {
+    const check_regex = /^\/static\/(index|storage)\/(.+)$/g;
+    const url = '/static/storage/EHMD/OBG/강소라/180504_000167275_W_385/SEQ/Trans_180504_000167275_W_385_SEQ.mp4';
+    log.d(req, url.match(check_regex));
+
+    res.send(Util.urlToPath(url));
+  }));
+
+  routes.get('/co/:code', wrap(async (req, res) => {
+    const code = req.params.code;
+    res.send(Util.colorCodeToHex(code));
+  }));
+
+  routes.post('/mon', wrap(async (req, res) => {
+    const sequence = req.body;
+    const result = await TestModel.findBySequence(sequence);
+    res.json(result);
+  }));
+
+  routes.get('/mon/:id', wrap(async (req, res) => {
+    const id = req.params.id;
+    const result = await TestModel.findOneById(id);
+    res.json(result);
+  }));
+
+  routes.get('/mon', wrap(async (req, res) => {
+    const content_id = await ContentIdManager.getContentId();
+    const result = await TestModel.create(content_id, [1, 5, 10]);
+    res.json(result);
+  }));
+
+  routes.get('/t/:id', wrap(async (req, res) => {
+    console.log(req.params.id);
+    res.send("" + Util.getRandomNumber(parseInt(req.params.id)));
+  }));
+
   routes.get('/crypto', wrap(async (req, res) => {
     const data = {
       r: Util.getRandomString(5),
@@ -56,11 +155,6 @@ if (IS_DEV) {
     res.send(source.replace(dest_rename_regex, 'Clip\\$1_' + start_frame + '_' + end_frame + '.$2'));
   }));
 
-  routes.get('/mail', wrap(async (req, res) => {
-    await new SendMail().test();
-    res.send('ok');
-  }));
-
   routes.get('/token', wrap(async (req, res) => {
     const result = await Auth.verifyToken(req);
     res.json(result);
@@ -89,63 +183,6 @@ if (IS_DEV) {
     res.json(output);
   }));
 
-  routes.get('/sort', wrap(async (req, res) => {
-    const service_info = service_config.getServiceInfo();
-    const content_id = 'aaa';
-    const video_file_name = 'test.mp4';
-    const index_list_data = {
-      "ContentID": content_id,
-      "PageNum": 1,
-      "CountOfPage": 1000,
-      "Type": 1,
-      "PassItem": "false"
-    };
-    const index_list_api_params = querystring.stringify(index_list_data);
-
-    const index_list_api_options = {
-      hostname: service_info.hawkeye_server_domain,
-      port: service_info.hawkeye_server_port,
-      path: service_info.hawkeye_index_list_api + '?' + index_list_api_params,
-      method: 'GET'
-    };
-    const index_list_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + service_info.hawkeye_index_list_api + '?' + index_list_api_params;
-    log.d(req, 'call hawkeye index list api', index_list_api_url);
-
-    const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
-    const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
-    if (!index_list_xml_info || !index_list_xml_info.errorimage || index_list_xml_info.errorimage.error) {
-      if (index_list_xml_info.errorimage && index_list_xml_info.errorimage.error) {
-        throw new StdObject(Util.getXmlText(index_list_xml_info.errorimage.error), Util.getXmlText(index_list_xml_info.errorimage.msg), 500);
-      } else {
-        throw new StdObject(3, "XML 파싱 오류", 500);
-      }
-    }
-
-    let index_file_list = [];
-    let frame_info = index_list_xml_info.errorimage.frameinfo;
-    if (frame_info) {
-      if (_.isArray(frame_info)) {
-        frame_info = frame_info[0];
-      }
-      const index_xml_list = frame_info.item;
-      if (index_xml_list) {
-        for (let i = 0; i < index_xml_list.length; i++) {
-          const index_xml_info = index_xml_list[i];
-          const image_path = Util.getXmlText(index_xml_info.orithumb);
-          const image_file_name = path.basename(image_path);
-          index_file_list.push(video_file_name + "_" + image_file_name);
-        }
-      }
-      index_file_list.sort(natsort());
-    }
-    const index_xml_info = {
-      "IndexInfo": {
-        "Index": index_file_list
-      }
-    };
-    res.json(index_xml_info);
-  }));
-
   routes.get('/meta', wrap(async (req, res) => {
     const dir = "\\\\192.168.0.54\\surgbook\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\SEQ";
     const file_list = Util.getDirectoryFileList(dir);
@@ -153,7 +190,7 @@ if (IS_DEV) {
       const file = file_list[i];
       if (file.isFile()) {
         const file_path = dir + "\\" + file.name;
-        const file_info = await new FileInfo().getByFilePath(file_path, "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\", file.name);
+        const file_info = (await new FileInfo().getByFilePath(file_path, "\\EHMD\\OBG\\강소라\\180510_000167418_M_388\\", file.name));
         log.d(file_info.toJSON());
       }
 
@@ -214,6 +251,37 @@ if (IS_DEV) {
     const origin_video_path = '\\\\192.168.1.54\\dev\\data\\' + name;
     const thumbnail_full_path = '\\\\192.168.1.54\\dev\\data\\' + Date.now() + '.png';
     res.json(await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, 300, 400));
+  }));
+
+  routes.get('/mail', wrap(async (req, res, next) => {
+    const send_mail = new SendMail();
+    // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
+    const mail_to = ["hwj@mteg.co.kr", "weather8128@gmail.com"];
+    const subject = "[MTEG ERROR] 트랜스코딩 에러";
+    let context = `요청 일자: 2019-04-07 13:06:06<br/>
+content_id: 46cb86b9-5774-11e9-bb8e-e0d55ee22ea6<br/>
+operation_seq : 336<br/>
+error_seq: 19<br/>
+에러: make Mergelist [empty directory]<br/>`;
+    const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
+
+    res.send(send_mail_result);
+  }));
+
+  routes.get('/filetype', wrap(async (req, res, next) => {
+    let file_path = 'D:\\temp\\허주연-CCSVI (동영상)\\SEQ\\00381.MTS';
+    // file_path = '\\\\192.168.1.54\\dev\\data\\EHMD\\OBG\\강소라\\180504_000150818_W_386\\SEQ\\180504_000150818_W_s001.mp4';
+    // file_path = '\\\\192.168.1.54\\dev\\data\\1552025121549.png';
+    file_path = '\\\\192.168.1.54\\dev\\data\\StreamingTest\\PlayList.smil';
+    // file_path = 'D:\\11. A Winter Story.m4a';
+    // file_path = '\\\\192.168.1.54\\dev\\data\\b.jpg';
+    log.d(req, mime.lookup(file_path));
+    const file_info = (await new FileInfo().getByFilePath(file_path, 'D:\\temp\\허주연-CCSVI (동영상)', '00381.MTS')).toJSON();
+    const media_info = await Util.getMediaInfo(file_path);
+    // const streams = JsonPath.value(video_info, '$..streams');
+    log.d(req, media_info);
+
+    res.json(file_info);
   }));
 }
 

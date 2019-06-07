@@ -12,7 +12,7 @@ export default class ReferFileModel extends ModelObject {
   }
 
   createReferFile = async (upload_file_info, storage_seq, media_path) => {
-    const file_info = new FileInfo().getByUploadFileInfo(upload_file_info, media_path).toJSON();
+    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, media_path)).toJSON();
     file_info.storage_seq = storage_seq;
 
     return await this.create(file_info, 'seq');

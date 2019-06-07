@@ -127,7 +127,7 @@ const on_complete = Wrap(async(req, res) => {
       const video_file_name = video_info.video_name;
       media_info_api_result = "video_file_name: " + video_file_name + ", path: " + operation_info.media_directory + 'Media.xml';
 
-      await operation_model.updateAnalysisComplete(operation_seq,true);
+      await operation_model.updateAnalysisComplete(operation_seq, true);
       await syncOne(req, token_info, operation_seq);
 
       is_complete = true;
@@ -190,12 +190,12 @@ const on_error = async (content_id, state) => {
   if (operation_info.isEmpty()) {
     error_seq = await service_error_model.createServiceError('hawkeye', null, content_id, message);
   } else {
-    await operation_model.updateRequestStatus(operation_info.seq, 'E');
+    await operation_model.updateAnalysisStatus(operation_info.seq, 'E');
     error_seq = await service_error_model.createServiceError('hawkeye', operation_info.seq, content_id, message);
   }
 
   const send_mail = new SendMail();
-  const mail_to = ["hwj@mteg.co.kr"];
+  const mail_to = ["hwj@mteg.co.kr", "weather8128@gmail.com"];
   const subject = "[MTEG ERROR] 호크아이 에러";
   let context = "";
   context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;

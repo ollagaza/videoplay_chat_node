@@ -1,36 +1,59 @@
 import JsonWrapper from '@/classes/JsonWrapper';
 import Util from '@/utils/baseutil';
 import mime from 'mime-types';
+import path from 'path';
+import constants from '@/config/constants';
 
-const getFileType = (mime_type) => {
+const getFileType = async (mime_type, file_name, file_path) => {
+  const file_ext = Util.getFileExt(file_name);
+  console.log('getFileType', mime_type, file_ext);
   if (Util.isEmpty(mime_type)) {
     mime_type = 'etc';
   } else {
     mime_type = mime_type.toLowerCase();
-    if (mime_type === 'application/octet-stream') {
-      mime_type = 'bin';
-    } else if (mime_type.startsWith('video')) {
+    if (mime_type.startsWith('video')) {
       mime_type = 'video';
     } else if (mime_type.startsWith('image')) {
       mime_type = 'image';
     }  else if (mime_type.indexOf('text') >= 0) {
       mime_type = 'text';
-    } else if (mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
+    } else if (file_ext === 'xls' || file_ext === 'xlsx' || mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
       mime_type = 'excel';
-    } else if (mime_type.indexOf('word') >= 0) {
+    } else if (file_ext === 'doc' || file_ext === 'docx' || mime_type.indexOf('word') >= 0) {
       mime_type = 'word';
-    } else if (mime_type.indexOf('powerpoint') >= 0 || mime_type.indexOf('presentationml') >= 0) {
+    } else if (file_ext === 'ppt' || file_ext === 'pptx' || mime_type.indexOf('powerpoint') >= 0 || mime_type.indexOf('presentationml') >= 0) {
       mime_type = 'powerpoint';
     } else if (mime_type.indexOf('pdf') >= 0) {
       mime_type = 'pdf';
     } else if (mime_type.indexOf('audio') >= 0) {
       mime_type = 'audio';
     } else if (mime_type.indexOf('compressed') >= 0 || mime_type.indexOf('zip') >= 0 || mime_type.indexOf('tar') >= 0) {
-      mime_type = 'archive ';
+      mime_type = 'archive';
     } else if (mime_type.indexOf('hwp') >= 0) {
-      mime_type = 'hwp ';
+      mime_type = 'hwp';
+    } else if (mime_type.indexOf('xml') >= 0) {
+      mime_type = 'xml';
+    } else if (mime_type === 'application/octet-stream') {
+      mime_type = 'bin';
     } else {
-      mime_type = 'etc';
+      if (file_ext !== 'smil') {
+        const media_info = await Util.getMediaInfo(file_path);
+        switch (media_info.media_type) {
+          case constants.MEDIA_VIDEO:
+            mime_type = 'video';
+            break;
+          case constants.MEDIA_AUDIO:
+            mime_type = 'audio';
+            break;
+          case constants.MEDIA_IMAGE:
+            mime_type = 'image';
+            break;
+          default:
+            mime_type = 'etc';
+        }
+      } else {
+        mime_type = 'etc';
+      }
     }
   }
 
@@ -91,28 +114,28 @@ export default class FileInfo extends JsonWrapper {
 
   setUrl = (media_root) => {
     if (this.file_path) {
-      this.url = Util.getUrlPrefix(media_root, this.file_path);
+      this.url = Util.pathToUrl(media_root + this.file_path, false);
     }
     if (this.thumbnail) {
-      this.thumbnail_url = Util.getUrlPrefix(media_root, this.thumbnail);
+      this.thumbnail_url = Util.pathToUrl(media_root + this.thumbnail);
     }
 
     return this;
   };
 
-  getByUploadFileInfo = (upload_file_info, media_path) => {
+  getByUploadFileInfo = async (upload_file_info, media_path) => {
     this.setIgnoreEmpty(true);
 
     this.setKeys([
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_type = getFileType(upload_file_info.mimetype);
-
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
+    this.file_path = media_path + '\\' + upload_file_info.new_file_name;
+
+    const file_type = await getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
     this.file_type = file_type;
-    this.file_path = media_path + '\\' + upload_file_info.filename;
 
     this.is_empty = false;
 
@@ -126,14 +149,15 @@ export default class FileInfo extends JsonWrapper {
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_type = getFileType(mime.lookup(file_path));
     const file_stat = await Util.getFileStat(file_path);
     const file_size = file_stat ? file_stat.size : 0;
 
     this.file_name = file_name;
     this.file_size = file_size;
-    this.file_type = file_type;
     this.file_path = media_path + '\\' + this.file_name;
+
+    const file_type = await getFileType(mime.lookup(file_path), file_name, file_path);
+    this.file_type = file_type;
 
     this.is_empty = false;
 

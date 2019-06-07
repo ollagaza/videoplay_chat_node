@@ -19,7 +19,7 @@ export default class MemberModel extends ModelObject {
       return null;
     }
     else {
-      return php.md5(password);
+      return Util.hash(`mt_${Util.md5(password)}_eg`);
     }
   };
 
@@ -86,8 +86,40 @@ export default class MemberModel extends ModelObject {
     return new MemberInfo(find_user_result);
   };
 
+  findMemberId = async (member_info) => {
+    member_info.setAutoTrim(true);
+    const member = member_info.toJSON();
+    const find_user_result = await this.findOne({user_name: member.user_name, email_address: member.email_address});
+    if (!find_user_result || !find_user_result.seq) {
+      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
+    }
+    return new MemberInfo(find_user_result);
+  };
+
+  findMemberInfo = async (member_info) => {
+    member_info.setAutoTrim(true);
+    const member = member_info.toJSON();
+    const find_user_result = await this.findOne({user_id: member.user_id, user_name: member.user_name, email_address: member.email_address});
+    if (!find_user_result || !find_user_result.seq) {
+      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
+    }
+    return new MemberInfo(find_user_result);
+  };
+
   updateTempPassword = async (member_seq, temp_password) => {
     return await this.update({seq: member_seq}, {password: this.encryptPassword(temp_password)});
+  };
+
+  changePassword = async (member_seq, new_password) => {
+    return await this.update({seq: member_seq}, {password: this.encryptPassword(new_password)});
+  };
+
+  upgradePassword = async (member_seq, new_password) => {
+    return await this.update({seq: member_seq}, {password: this.encryptPassword(new_password), "modify_date": this.database.raw('NOW()')});
+  };
+
+  updateLastLogin = async (member_seq) => {
+    return await this.update({seq: member_seq}, {"modify_date": this.database.raw('NOW()')});
   };
 
   getBannerNewUserList = async (list_count) => {

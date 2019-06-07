@@ -29,13 +29,13 @@ import Util from '@/utils/baseutil';
  *        description: "비디오의 총 프레임 수"
  *      origin_video_url:
  *        type: "string"
- *        description: "비디오의 총 재생 시간 (sec)"
+ *        description: "원본영상 다운로드 url"
  *      proxy_video_url:
  *        type: "string"
- *        description: "비디오의 총 프레임 수"
+ *        description: "프록시 영상 다운로드 url"
  *      video_source:
  *        type: "string"
- *        description: "비디오의 총 프레임 수"
+ *        description: "동영상 상대경로"
  *      is_trans_complete:
  *        type: "boolean"
  *        description: "트랜스코딩 완료 여부. 완료상태에서만 공유와 큐레이션 가능"

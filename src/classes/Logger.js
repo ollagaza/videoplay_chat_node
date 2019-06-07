@@ -1,6 +1,7 @@
 import log4js from 'log4js';
+import config from '@/config/config';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = config.isDev();
 const logger_config = {
   appenders: {
     out: { type: 'stdout', layout: { type: 'coloured' } },
@@ -52,5 +53,13 @@ export default {
     } else {
       app_logger.error(...args);
     }
+  },
+
+  "debug": (...args) => {
+    app_logger.debug(...args);
+  },
+
+  "error": (...args) => {
+    app_logger.error(...args);
   }
 }

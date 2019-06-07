@@ -7,6 +7,7 @@ import SendMail from '@/classes/SendMail';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
+import FindPasswordModel from '@/models/FindPasswordModel';
 import Util from '@/utils/baseutil';
 import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
@@ -63,8 +64,6 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
-
-  log.d(req, member_info);
 
   const output = new StdObject();
   output.add('member_info', member_info);
@@ -266,6 +265,122 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
   res.json(new StdObject());
 }));
 
+routes.post('/find/id', Wrap(async(req, res) => {
+  req.accepts('application/json');
+
+  const member_info = new MemberInfo(req.body);
+  member_info.setKeys(['user_name', 'email_address']);
+  member_info.checkUserName();
+  member_info.checkEmailAddress();
+
+  const output = new StdObject();
+  let is_find = false;
+  await database.transaction(async(trx) => {
+    const oMemberModel = new MemberModel({ database: trx });
+    const find_member_info = await oMemberModel.findMemberId(member_info);
+    if (find_member_info && !find_member_info.isEmpty()) {
+      output.add('user_id', find_member_info.user_id);
+      output.add('user_name', find_member_info.user_name);
+      output.add('email_address', find_member_info.email_address);
+      is_find = true;
+    }
+  });
+  output.add('is_find', is_find);
+  res.json(output);
+}));
+
+routes.post('/send_auth_code', Wrap(async(req, res) => {
+  req.accepts('application/json');
+
+  const member_info = new MemberInfo(req.body);
+  member_info.setKeys(['user_name', 'email_address', 'user_id']);
+  member_info.checkUserId();
+  member_info.checkUserName();
+  member_info.checkEmailAddress();
+
+  const output = new StdObject();
+  let is_send = false;
+  await database.transaction(async(trx) => {
+    const remain_time = 600;
+    const expire_time = Math.floor(Date.now() / 1000) + remain_time;
+
+    const member_model = new MemberModel({ database: trx });
+    const find_member_info = await member_model.findMemberInfo(member_info);
+    if (find_member_info && !find_member_info.isEmpty()) {
+      const auth_info = await new FindPasswordModel( { database: trx }).createAuthInfo(find_member_info.seq, find_member_info.email_address, expire_time);
+      output.add('seq', auth_info.seq);
+      output.add('check_code', auth_info.check_code);
+      output.add('remain_time', remain_time);
+
+      const template_data = {
+        "user_name": find_member_info.user_name,
+        "user_id": find_member_info.user_id,
+        "email_address": find_member_info.email_address,
+        "send_code": auth_info.send_code,
+        "url_prefix": req.body.url_prefix,
+        "request_domain": req.body.request_domain
+      };
+
+      const send_mail_result = await new SendMail().sendMailHtml([find_member_info.email_address], 'Surgstory 비밀번호 인증코드 입니다.', MemberTemplate.findUserInfo(template_data));
+      if (send_mail_result.isSuccess() == false) {
+        throw send_mail_result;
+      }
+
+      is_send = true;
+    }
+  });
+  output.add('is_send', is_send);
+  res.json(output);
+}));
+
+routes.post('/check_auth_code', Wrap(async(req, res) => {
+  req.accepts('application/json');
+
+  const output = new StdObject();
+  let is_verify = false;
+  await database.transaction(async(trx) => {
+    const find_password_model = new FindPasswordModel( { database: trx });
+    const auth_info = await find_password_model.findAuthInfo(req.body.seq);
+    if (!auth_info) {
+      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400);
+    }
+    if (auth_info.send_code === req.body.send_code && auth_info.check_code === req.body.check_code) {
+      await find_password_model.setVerify(req.body.seq);
+      is_verify = true;
+    } else {
+      throw new StdObject(-1, '인증코드가 일치하지 않습니다.', 400);
+    }
+  });
+  output.add('is_verify', is_verify);
+  res.json(output);
+}));
+
+routes.post('/change_password', Wrap(async(req, res) => {
+  req.accepts('application/json');
+
+  if (req.body.password !== req.body.password_confirm) {
+    throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
+  }
+
+  const output = new StdObject();
+  let is_change = false;
+  await database.transaction(async(trx) => {
+    const find_password_model = new FindPasswordModel( { database: trx });
+    const auth_info = await find_password_model.findAuthInfo(req.body.seq);
+    if (!auth_info) {
+      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400);
+    }
+    if (auth_info.is_verify === 1) {
+      const member_model = new MemberModel({ database: trx });
+      await member_model.changePassword(auth_info.member_seq, req.body.password);
+      is_change = true;
+    } else {
+      throw new StdObject(-2, '인증정보가 존재하지 않습니다.', 400);
+    }
+  });
+  output.add('is_change', is_change);
+  res.json(output);
+}));
 
 /**
  * @swagger
@@ -342,14 +457,13 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     const member_info = await member_model.getMemberInfo(member_seq);
 
     const media_root = service_config.get('media_root');
-    const upload_path = member_info.user_media_path + "_upload_";
+    const upload_path = member_info.user_media_path + "_upload_\\profile";
     const upload_full_path = media_root + upload_path;
     if (!(await Util.fileExists(upload_full_path))) {
       await Util.createDirectory(upload_full_path);
     }
 
-    await Util.uploadByRequest(req, res, 'profile', upload_full_path);
-    log.d(req, req.file);
+    await Util.uploadByRequest(req, res, 'profile', upload_full_path, Util.getRandomId());
 
     const upload_file_info = req.file;
     if (Util.isEmpty(upload_file_info)) {
@@ -357,7 +471,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     }
 
     const origin_image_path = upload_file_info.path;
-    const resize_image_path = upload_path + '\\' + Date.now() + '.png';
+    const resize_image_path = upload_path + '\\' + Util.getRandomId() + '.png';
     const resize_image_full_path = media_root + resize_image_path;
     const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
 
@@ -366,10 +480,14 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     if (resize_result.success) {
       const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
       if (update_profile_result) {
+        if (!Util.isEmpty(member_info.profile_image_path)) {
+          await Util.deleteFile(media_root + member_info.profile_image_path);
+        }
         output.error = 0;
         output.message = '';
         output.add('profile_image_url', Util.getUrlPrefix(service_config.get('static_storage_prefix'), resize_image_path));
       } else {
+        await Util.deleteFile(resize_image_full_path);
         output.error = -2;
       }
     } else {

@@ -1,7 +1,10 @@
 import StdObject from '@/classes/StdObject';
 import log from "@/classes/Logger";
+import SendMail from '@/classes/SendMail';
+import Util from '@/utils/baseutil';
+import config from '@/config/config';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = config.isDev();
 
 export default (fn) => {
   return (...args) => {
@@ -37,6 +40,21 @@ export default (fn) => {
             output.httpStatusCode = error.httpStatusCode;
           }
         }
+
+        const send_mail = new SendMail();
+        const mail_to = ["hwj@mteg.co.kr", "weather8128@gmail.com"];
+        const subject = "[MTEG ERROR] Api Request Error";
+        let context = '';
+        context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
+        context += `${req.method} ${req.originalUrl}<br/><br/>\n`;
+        if (error.message) {
+          context += `message: ${Util.nlToBr(error.message)}<br/>\n`;
+        }
+        if (error.stack) {
+          context += Util.nlToBr(JSON.stringify(error.stack, null, 4));
+        }
+        send_mail.sendMailHtml(mail_to, subject, context);
+
         return next(output);
       }
     })

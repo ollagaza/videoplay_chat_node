@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import php from 'phpjs';
 import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import Wrap from '@/utils/express-async';
@@ -7,6 +6,7 @@ import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
+import Util from '@/utils/baseutil';
 
 const routes = Router();
 /**
@@ -101,25 +101,33 @@ const routes = Router();
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  if (!req.body || !req.body.email_address || !req.body.password) {
-    const output = new StdObject(-1, "이메일과 패스워드를 정확하게 입력해 주세요.", 400);
+  if (!req.body || !req.body.user_id || !req.body.password) {
+    const output = new StdObject(-1, "아이디 비밀번호를 확인해 주세요.", 400);
     return res.json(output);
   }
 
-  const email = req.body.email_address;
+  const user_id = req.body.user_id;
   const password = req.body.password;
 
   const member_model = new MemberModel({ database });
-  const member_info = await member_model.findOne({"email_address": email});
+  const member_info = await member_model.findOne({"user_id": user_id});
 
-  if (member_info == null || member_info.email_address != email) {
+  if (member_info == null || member_info.user_id != user_id) {
     throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
   }
 
   // 임시 프리패스 비밀번호 설정. 데이터 연동 확인 후 삭제
   if (password !== 'dpaxldlwl_!') {
-    if (member_info.password !== php.md5(password)) {
-      throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+    if (member_info.password.length <= 32) {
+      if (member_info.password !== Util.md5(password)){
+        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+      }
+      await member_model.upgradePassword(member_info.seq, password);
+    } else {
+      if (member_info.password !== member_model.encryptPassword(password)) {
+        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+      }
+      await member_model.updateLastLogin(member_info.seq);
     }
   }
 

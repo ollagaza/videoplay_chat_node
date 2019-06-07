@@ -78,13 +78,13 @@ export default class ClipSeqInfo extends JsonWrapper {
     this.is_empty = false;
 
     return this;
-  }
+  };
 
   setDest = (source, fps) => {
     const start_frame = Math.round(this.start_time * fps);
     const end_frame = Math.round(this.end_time * fps);
     this.dest = source.replace(dest_rename_regex, 'Clip\\$1_' + start_frame + '_' + end_frame + '.$2')
-  }
+  };
 
   getXmlJson = () => {
     return {

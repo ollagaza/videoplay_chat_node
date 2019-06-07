@@ -1,8 +1,8 @@
-import _ from 'lodash';
 import ModelObject from '@/classes/ModelObject';
 import ClipInfo from "@/classes/surgbook/ClipInfo";
 import ClipSeqInfo from "@/classes/surgbook/ClipSeqInfo";
 import Util from '@/utils/baseutil';
+import JsonPath from 'jsonpath';
 
 const DOC_VERSION = "1.0";
 
@@ -11,27 +11,33 @@ export default class ClipModel extends ModelObject {
     super(...args);
   }
 
-  getClipInfo = async (operation_info) => {
+  getClipInfoList = async (operation_info) => {
     const clip_xml_info = await Util.loadXmlFile(operation_info.media_directory, 'Clip.xml');
-    const clip_list = new Array();
-    let clip_seq_list = new Array();
+    const clip_list = [];
+    const versions = JsonPath.value(clip_xml_info, '$..doc_version');
+    const clips = JsonPath.value(clip_xml_info, '$..Clip');
 
-    if (clip_xml_info
-        && clip_xml_info.ClipInfo
-        && clip_xml_info.ClipInfo.$
-        && clip_xml_info.ClipInfo.$.doc_version
-        && clip_xml_info.ClipInfo.Clip) {
-
-      const clip_xml_list = clip_xml_info.ClipInfo.Clip;
-      clip_xml_list.forEach((clip_xml) => {
+    if (versions && clips) {
+      clips.forEach((clip_xml) => {
         const clip_info = new ClipInfo().getFromXML(clip_xml);
+        clip_info.url_prefix = operation_info.url_prefix;
         clip_list.push(clip_info);
-        clip_seq_list = clip_seq_list.concat(clip_info.seq_list);
       });
     }
 
+    return clip_list;
+  };
+
+  getClipInfo = async (operation_info) => {
+    const clip_list = await this.getClipInfoList(operation_info);
+    let clip_seq_list = [];
+
+    clip_list.forEach((clip_info) => {
+      clip_seq_list = clip_seq_list.concat(clip_info.seq_list);
+    });
+
     return {"clip_list": clip_list, "clip_seq_list": clip_seq_list};
-  }
+  };
 
   saveClipInfo = async (operation_info, clip_info) => {
     const clip_map = {};
@@ -73,5 +79,5 @@ export default class ClipModel extends ModelObject {
     await Util.writeXmlFile(operation_info.media_directory, 'Clip.xml', clip_xml_json);
 
     return clip_count;
-  }
+  };
 }

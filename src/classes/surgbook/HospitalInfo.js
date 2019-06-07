@@ -5,7 +5,7 @@ const CUSTOM_CODE = 'XXXX';
 /**
  * @swagger
  * definitions:
- *  VideoInfo:
+ *  HospitalInfo:
  *    type: "object"
  *    required:
  *    - "code"
