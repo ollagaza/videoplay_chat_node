@@ -5,6 +5,7 @@ import StdObject from "@/classes/StdObject";
 import HospitalModel from "@/models/HospitalModel";
 import DepartModel from "@/models/DepartModel";
 import MemberModel from '@/models/MemberModel';
+import MedicalSubject from '@/data/MedicalSubject';
 
 /**
  * @swagger
@@ -58,6 +59,13 @@ routes.get('/timestamp', Wrap(async(req, res) => {
   const output = new StdObject();
   output.add('timestamp', Math.floor(now / 1000));
   output.add('timestamp_mil', now);
+  res.json(output);
+}));
+
+
+routes.get('/medical_subject', Wrap(async(req, res) => {
+  const output = new StdObject();
+  output.add('medical_subject', MedicalSubject.getJson());
   res.json(output);
 }));
 
