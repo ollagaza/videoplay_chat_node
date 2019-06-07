@@ -53,5 +53,13 @@ export default {
     } else {
       app_logger.error(...args);
     }
+  },
+
+  "debug": (...args) => {
+    app_logger.debug(...args);
+  },
+
+  "error": (...args) => {
+    app_logger.error(...args);
   }
 }

@@ -5,34 +5,37 @@ import path from 'path';
 import constants from '@/config/constants';
 
 const getFileType = async (mime_type, file_name, file_path) => {
+  const file_ext = Util.getFileExt(file_name);
+  console.log('getFileType', mime_type, file_ext);
   if (Util.isEmpty(mime_type)) {
     mime_type = 'etc';
   } else {
     mime_type = mime_type.toLowerCase();
-    if (mime_type === 'application/octet-stream') {
-      mime_type = 'bin';
-    } else if (mime_type.startsWith('video')) {
+    if (mime_type.startsWith('video')) {
       mime_type = 'video';
     } else if (mime_type.startsWith('image')) {
       mime_type = 'image';
     }  else if (mime_type.indexOf('text') >= 0) {
       mime_type = 'text';
-    } else if (mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
+    } else if (file_ext === 'xls' || file_ext === 'xlsx' || mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
       mime_type = 'excel';
-    } else if (mime_type.indexOf('word') >= 0) {
+    } else if (file_ext === 'doc' || file_ext === 'docx' || mime_type.indexOf('word') >= 0) {
       mime_type = 'word';
-    } else if (mime_type.indexOf('powerpoint') >= 0 || mime_type.indexOf('presentationml') >= 0) {
+    } else if (file_ext === 'ppt' || file_ext === 'pptx' || mime_type.indexOf('powerpoint') >= 0 || mime_type.indexOf('presentationml') >= 0) {
       mime_type = 'powerpoint';
     } else if (mime_type.indexOf('pdf') >= 0) {
       mime_type = 'pdf';
     } else if (mime_type.indexOf('audio') >= 0) {
       mime_type = 'audio';
     } else if (mime_type.indexOf('compressed') >= 0 || mime_type.indexOf('zip') >= 0 || mime_type.indexOf('tar') >= 0) {
-      mime_type = 'archive ';
+      mime_type = 'archive';
     } else if (mime_type.indexOf('hwp') >= 0) {
-      mime_type = 'hwp ';
+      mime_type = 'hwp';
+    } else if (mime_type.indexOf('xml') >= 0) {
+      mime_type = 'xml';
+    } else if (mime_type === 'application/octet-stream') {
+      mime_type = 'bin';
     } else {
-      const file_ext = path.extname(file_name);
       if (file_ext !== 'smil') {
         const media_info = await Util.getMediaInfo(file_path);
         switch (media_info.media_type) {
@@ -111,10 +114,10 @@ export default class FileInfo extends JsonWrapper {
 
   setUrl = (media_root) => {
     if (this.file_path) {
-      this.url = Util.getUrlPrefix(media_root, this.file_path);
+      this.url = Util.pathToUrl(media_root + this.file_path, false);
     }
     if (this.thumbnail) {
-      this.thumbnail_url = Util.getUrlPrefix(media_root, this.thumbnail);
+      this.thumbnail_url = Util.pathToUrl(media_root + this.thumbnail);
     }
 
     return this;
@@ -129,7 +132,7 @@ export default class FileInfo extends JsonWrapper {
 
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
-    this.file_path = media_path + '\\' + this.filename;
+    this.file_path = media_path + '\\' + upload_file_info.new_file_name;
 
     const file_type = await getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
     this.file_type = file_type;

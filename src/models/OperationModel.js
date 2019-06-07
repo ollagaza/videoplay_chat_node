@@ -6,6 +6,7 @@ import MemberModel from '@/models/MemberModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
+import ContentIdManager from '@/classes/ContentIdManager';
 
 const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
 
@@ -39,7 +40,7 @@ export default class OperationModel extends ModelObject {
     return await this.getOperation(where, true);
   };
 
-  getOperationInfoListPage = async (params, token_info, search, asc=false)  => {
+  getOperationInfoListPage = async (params, token_info, query_params, asc=false)  => {
     const page = params && params.page ? params.page : 1;
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
@@ -52,8 +53,13 @@ export default class OperationModel extends ModelObject {
     if (token_info.getRole() <= role.MEMBER) {
       oKnex.andWhere('member_seq', token_info.getId());
     }
-    if (search) {
-      oKnex.andWhere(this.database.raw(`(operation.operation_code LIKE '%${search}%' OR operation.operation_name LIKE '%${search}%')`));
+    if (query_params) {
+      if (!Util.isNull(query_params.analysis_complete)) {
+        oKnex.andWhere('is_analysis_complete', Util.isTrue(query_params.analysis_complete) ? 1 : 0);
+      }
+      if (!Util.isNull(query_params.status)) {
+        oKnex.andWhere('status', query_params.status.toUpperCase());
+      }
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
@@ -141,8 +147,8 @@ export default class OperationModel extends ModelObject {
     return trash_path;
   };
 
-  updateStatusTrash = async (operation_seq, is_delete) => {
-    return await this.update({"seq": operation_seq}, {status: is_delete ? 'Y' : 'T', "modify_date": this.database.raw('NOW()')});
+  updateStatusTrash = async (operation_seq_list, member_seq, is_delete) => {
+    return await this.updateIn("seq", operation_seq_list, {status: is_delete ? 'Y' : 'T', "modify_date": this.database.raw('NOW()')}, { member_seq });
   };
 
   updateStatusFavorite = async (operation_seq, is_delete) => {
@@ -179,12 +185,14 @@ export default class OperationModel extends ModelObject {
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(-1, '회원정보가 없습니다.', 401)
     }
+    const content_id = await ContentIdManager.getContentId();
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
-    operation_info.media_path = user_media_path + operation_info.operation_code + '\\SEQ\\';
+    operation_info.media_path = user_media_path + content_id + '\\SEQ\\';
     operation_info.hospital_code = member_info.hospital_code;
     operation_info.depart_code = member_info.depart_code;
     operation_info.created_by_user = 1;
+    operation_info.content_id = content_id;
 
     const operation_seq = await this.create(operation_info, 'seq');
     operation_info.seq = operation_seq;
