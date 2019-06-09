@@ -1,9 +1,9 @@
-import php from 'phpjs';
 import StdObject from '@/classes/StdObject';
 import ModelObject from '@/classes/ModelObject';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 import Util from '@/utils/baseutil';
 import service_config from '@/config/service.config';
+import ContentIdManager from '@/classes/ContentIdManager';
 
 export default class MemberModel extends ModelObject {
   constructor(...args) {
@@ -37,33 +37,22 @@ export default class MemberModel extends ModelObject {
   };
 
   createMember = async (member_info) => {
-    // 이메일이 중복되는 경우 409 CONFLICT를 뱉음
-    if (await this.findOne({email_address: member_info.email_address})) {
-      throw new StdObject(-1, '중복된 이메일 주소입니다.', 409);
-    }
-
     member_info.setAutoTrim(true);
     member_info.password = this.encryptPassword(member_info.password);
 
     const member = member_info.toJSON();
 
-    let user_media_path = "\\";
-    if (!member_info.hospital_code || member_info.hospital_code === 'XXXX') {
-      user_media_path += "C_" + Util.getRandomString(5).toUpperCase() + "\\";
-    } else {
-      user_media_path += member_info.hospital_code.toUpperCase() + "\\";
-    }
-    if (!member_info.depart_code || member_info.depart_code === 'ZZZ') {
-      user_media_path += "C_" + Util.getRandomString(4).toUpperCase() + "\\";
-    } else {
-      user_media_path += member_info.depart_code.toUpperCase() + "\\";
-    }
-    user_media_path += member_info.user_name + "\\";
-    member.user_media_path = user_media_path;
+    const content_id = await ContentIdManager.getContentId();
+    member.user_media_path = "\\" + member_info.user_name + "\\" + content_id + "\\";
 
-    const result = await super.create(member);
+    const service_info = service_config.getServiceInfo();
+    const media_root = service_info.media_root;
 
-    return result;
+    if ( !( await Util.fileExists(media_root + member.user_media_path) ) ) {
+      await Util.createDirectory(media_root + member.user_media_path);
+    }
+
+    return await super.create(member);
   };
 
   modifyMember = async (member_seq, member_info) => {
@@ -141,5 +130,19 @@ export default class MemberModel extends ModelObject {
 
   updateProfileImage = async (member_seq, profile_image_path) => {
     return await this.update( { seq: member_seq }, { profile_image_path: profile_image_path } );
+  };
+
+  isDuplicateId = async (user_id) => {
+    const where = {"user_id": user_id};
+    const total_count = await this.getTotalCount(where);
+
+    return total_count > 0;
+  };
+
+  isDuplicateNickname = async (nickname) => {
+    const where = {"user_nickname": nickname};
+    const total_count = await this.getTotalCount(where);
+
+    return total_count > 0;
   };
 }

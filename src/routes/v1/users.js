@@ -165,9 +165,11 @@ routes.post('/', Wrap(async(req, res) => {
 
   const member_info = new MemberInfo(req.body, ['password_confirm', 'url_prefix', 'request_domain']);
   member_info.checkDefaultParams();
-  member_info.checkUserName();
-  member_info.checkEmailAddress();
+  member_info.checkUserId();
   member_info.checkPassword();
+  member_info.checkUserName();
+  member_info.checkUserNickname();
+  member_info.checkEmailAddress();
 
   // 커밋과 롤백은 자동임
   await database.transaction(async(trx) => {
@@ -180,25 +182,25 @@ routes.post('/', Wrap(async(req, res) => {
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
 
-    const email_address = member_info.email_address;
-
-    const mail_auth_key = await new MemberAuthMailModel({ database: trx }).getMailAuthKey(member_seq, email_address);
-    if (mail_auth_key == null) {
-      throw new StdObject(-1, '이메일 인증정보 생성 실패', 500);
-    }
-
-    const template_data = {
-      "user_name": member_info.user_name,
-      "auth_key": mail_auth_key,
-      "member_seq": member_seq,
-      "url_prefix": req.body.url_prefix,
-      "request_domain": req.body.request_domain
-    };
-    const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', MemberTemplate.createUser(template_data));
-
-    if (!send_mail_result.isSuccess()) {
-      throw send_mail_result;
-    }
+    // const email_address = member_info.email_address;
+    //
+    // const mail_auth_key = await new MemberAuthMailModel({ database: trx }).getMailAuthKey(member_seq, email_address);
+    // if (mail_auth_key == null) {
+    //   throw new StdObject(-1, '이메일 인증정보 생성 실패', 500);
+    // }
+    //
+    // const template_data = {
+    //   "user_name": member_info.user_name,
+    //   "auth_key": mail_auth_key,
+    //   "member_seq": member_seq,
+    //   "url_prefix": req.body.url_prefix,
+    //   "request_domain": req.body.request_domain
+    // };
+    // const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', MemberTemplate.createUser(template_data));
+    //
+    // if (!send_mail_result.isSuccess()) {
+    //   throw send_mail_result;
+    // }
   });
 
   res.json(new StdObject());
@@ -494,6 +496,28 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
       output.error = -3;
     }
   });
+
+  res.json(output);
+}));
+
+routes.post('/verify/user_id', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const user_id = req.body.user_id;
+  const is_duplicate = await new MemberModel({ database }).isDuplicateId(user_id);
+
+  const output = new StdObject();
+  output.add('is_verify', !is_duplicate);
+
+  res.json(output);
+}));
+
+routes.post('/verify/nickname', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const nickname = req.body.nickname;
+  const is_duplicate = await new MemberModel({ database }).isDuplicateNickname(nickname);
+
+  const output = new StdObject();
+  output.add('is_verify', !is_duplicate);
 
   res.json(output);
 }));
