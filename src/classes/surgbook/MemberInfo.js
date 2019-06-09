@@ -184,17 +184,25 @@ export default class MemberInfo extends JsonWrapper {
     this.checkEmpty();
     this.checkCellphone();
 
-    if (Util.isEmpty(this.license_no)) {
-      return this.returnBoolean(-1, '면허번호를 정확하게 입력하세요.', 400);
-    }
-    if (Util.isEmpty(this.hospital_code)) {
+    if (Util.isEmpty(this.hospital)) {
       return this.returnBoolean(-1, '병원명을 정확하게 입력하세요.', 400);
     }
-    if (Util.isEmpty(this.depart_code)) {
-      return this.returnBoolean(-1, '진료분야를 정확하게 입력하세요.', 400);
+    if (Util.isEmpty(this.work_type)) {
+      return this.returnBoolean(-1, '근무형태를 정확하게 입력하세요.', 400);
     }
-    if (Util.isEmpty(this.position)) {
-      return this.returnBoolean(-1, '직위를 정확하게 입력하세요.', 400);
+    if (Util.isEmpty(this.major)) {
+      return this.returnBoolean(-1, '전공과목을 선택하세요.', 400);
+    }
+    if (Util.isEmpty(this.medical_subject)) {
+      return this.returnBoolean(-1, '진료과목을 하나이상 선택하세요.', 400);
+    }
+  };
+
+  checkUserId = () => {
+    this.checkEmpty();
+
+    if (Util.isEmpty(this.user_id)) {
+      return this.returnBoolean(-1, '아이디를 정확하게 입력하세요.', 400);
     }
   };
 
@@ -206,11 +214,19 @@ export default class MemberInfo extends JsonWrapper {
     }
   };
 
-  checkUserId = () => {
+  checkUserNickname = () => {
     this.checkEmpty();
 
-    if (Util.isEmpty(this.user_id)) {
-      return this.returnBoolean(-1, '아이디를 정확하게 입력하세요.', 400);
+    if (Util.isEmpty(this.user_nickname)) {
+      return this.returnBoolean(-1, '닉네임을 정확하게 입력하세요.', 400);
+    }
+  };
+
+  checkCellphone = () => {
+    this.checkEmpty();
+
+    if (Util.isEmpty(this.cellphone)) {
+      return this.returnBoolean(-1, '휴대전화 번호를 정확하게 입력하세요.', 400);
     }
   };
 
@@ -250,14 +266,6 @@ export default class MemberInfo extends JsonWrapper {
     this.password_confirm = Util.trim(this.password_confirm);
     if (this.password !== this.password_confirm) {
       return this.returnBoolean(-1, '입력하신 비밀번호와 비밀번호 확인이 일치하지 않습니다.', 400);
-    }
-  };
-
-  checkCellphone = () => {
-    this.checkEmpty();
-
-    if (Util.isEmpty(this.cellphone)) {
-      return this.returnBoolean(-1, '휴대폰 번호를 정확하게 입력하세요.', 400);
     }
   };
 }
