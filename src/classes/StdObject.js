@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 export default class StdObject {
   constructor(error, message, httpStatusCode) {
     this.error = 0; ///< 에러 코드 (0이면 에러 아님)

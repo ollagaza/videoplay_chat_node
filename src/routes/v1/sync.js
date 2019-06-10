@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import _ from 'lodash';
 import querystring from 'querystring';
 import service_config from '@/config/service.config';

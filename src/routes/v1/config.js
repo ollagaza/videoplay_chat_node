@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import Wrap from '@/utils/express-async';
 import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';

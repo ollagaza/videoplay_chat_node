@@ -1,7 +1,5 @@
 import {Router} from 'express';
 import _ from 'lodash';
-import natsort from 'natsort';
-import path from 'path';
 import querystring from 'querystring';
 import wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
@@ -14,13 +12,11 @@ import roles from "@/config/roles";
 import mime from "mime-types";
 import service_config from "@/config/service.config";
 import config from "@/config/config";
-import JsonPath from 'jsonpath';
 import TestModel from '@/db/mongodb/model/test';
 import ContentIdManager from '@/classes/ContentIdManager'
-import { VideoProjectModel, VideoProjectField } from '@/db/mongodb/model/VideoProject';
+import {VideoProjectModel} from '@/db/mongodb/model/VideoProject';
 import SequenceModel from '@/models/sequence/SequenceModel';
 import text2png from "../../utils/textToImage";
-import fs from 'fs';
 
 const IS_DEV = config.isDev();
 

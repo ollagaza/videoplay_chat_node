@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import Wrap from '@/utils/express-async';
 import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
@@ -6,13 +6,11 @@ import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
-import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import FindPasswordModel from '@/models/FindPasswordModel';
 import Util from '@/utils/baseutil';
 import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 import service_config from '@/config/service.config';
-import log from "@/classes/Logger";
 
 const routes = Router();
 

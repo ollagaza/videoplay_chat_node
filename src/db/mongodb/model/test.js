@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { autoIncrement } from 'mongoose-plugin-autoinc';
+import {autoIncrement} from 'mongoose-plugin-autoinc';
 
 const Schema = mongoose.Schema;
 

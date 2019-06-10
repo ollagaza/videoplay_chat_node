@@ -2,7 +2,6 @@ import ModelObject from '@/classes/ModelObject';
 import Util from '@/utils/baseutil';
 import StdObject from "@/classes/StdObject";
 import OperationShareInfo from '@/classes/surgbook/OperationShareInfo';
-import OperationShareUserModel from "@/models/OperationShareUserModel";
 
 export default class OperationShareModel extends ModelObject {
   constructor(...args) {

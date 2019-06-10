@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 
 require('babel-plugin-require-context-hook/register')();
 
