@@ -7,7 +7,6 @@ export default class TokenInfo {
       this.id = Util.parseInt(token_info.id); // member table seq
       this.role = Util.parseInt(token_info.role, roles.NONE); // 권한 코드. 나중에 쓸지도 모름.
       this.hospital = token_info.hospital;
-      this.depart = token_info.depart;
       this.token = token;
       this.remain_time = remain_time;
     }
@@ -16,8 +15,7 @@ export default class TokenInfo {
   setTokenByMemberInfo(member_info) {
     this.id = Util.parseInt(member_info.seq, 0); // member table seq
     this.role = Util.parseInt(member_info.role, roles.NONE); // 권한 코드. 나중에 쓸지도 모름.
-    this.hospital = member_info.hospital_code;
-    this.depart = member_info.depart_code;
+    this.hospital = member_info.hospital;
   }
 
   getId() {
@@ -30,10 +28,6 @@ export default class TokenInfo {
 
   getHospital() {
     return this.hospital;
-  }
-
-  getDepart() {
-    return this.depart;
   }
 
   getToken() {

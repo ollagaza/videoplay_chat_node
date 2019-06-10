@@ -237,9 +237,7 @@ if (IS_DEV) {
     const url = 'http://localhost:3000/api/v1/operations/9/request/analysis';
     const admin_member_info = {
       seq: 0,
-      role: roles.ADMIN,
-      hospital_code: 'XXXX',
-      depart_code: 'ZZZ'
+      role: roles.ADMIN
     };
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const forward_result = await Util.forward(url, 'POST', token_result.token);

@@ -93,10 +93,6 @@ export default class OperationStorageModel extends ModelObject {
     return await this.update({"seq": storage_seq}, {clip_count: clip_count, "modify_date": this.database.raw('NOW()')});
   };
 
-  updateReportCount = async (storage_seq, report_count) => {
-    return await this.update({"seq": storage_seq}, {report_count: report_count, "modify_date": this.database.raw('NOW()')});
-  };
-
   updateIndexCount = async (storage_seq, index_type, count) => {
     const params = {};
     params['index' + index_type + '_file_count'] = count;

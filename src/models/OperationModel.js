@@ -189,8 +189,6 @@ export default class OperationModel extends ModelObject {
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
     operation_info.media_path = user_media_path + content_id + '\\SEQ\\';
-    operation_info.hospital_code = member_info.hospital_code;
-    operation_info.depart_code = member_info.depart_code;
     operation_info.created_by_user = 1;
     operation_info.content_id = content_id;
 
