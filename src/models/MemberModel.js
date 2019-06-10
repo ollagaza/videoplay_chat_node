@@ -111,23 +111,6 @@ export default class MemberModel extends ModelObject {
     return await this.update({seq: member_seq}, {"modify_date": this.database.raw('NOW()')});
   };
 
-  getBannerNewUserList = async (list_count) => {
-    const columns = [
-      "member.user_name", "member.hospital_code", "member.depart_code"
-      , "if(member.hospital_code = 'XXXX', member.custom_hospital, hospital.name) as hostital_name"
-      , "if(member.depart_code = 'ZZZ', member.custom_branch, depart.name) as depart_name"
-    ];
-    const oKnex = this.database.select(this.arrayToSafeQuery(columns));
-    oKnex.from(this.table_name);
-    oKnex.innerJoin("hospital", "hospital.code", "member.hospital_code");
-    oKnex.innerJoin("depart", "depart.code", "member.depart_code");
-    oKnex.where(this.database.raw("email_address not like '%@mteg%' and email_address not LIKE '%test%'"));
-    oKnex.orderBy('member.seq', 'desc');
-    oKnex.limit(list_count);
-
-    return await oKnex;
-  };
-
   updateProfileImage = async (member_seq, profile_image_path) => {
     return await this.update( { seq: member_seq }, { profile_image_path: profile_image_path } );
   };

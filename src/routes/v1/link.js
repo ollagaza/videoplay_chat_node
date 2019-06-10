@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';

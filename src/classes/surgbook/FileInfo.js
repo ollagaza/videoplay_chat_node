@@ -1,7 +1,6 @@
 import JsonWrapper from '@/classes/JsonWrapper';
 import Util from '@/utils/baseutil';
 import mime from 'mime-types';
-import path from 'path';
 import constants from '@/config/constants';
 
 const getFileType = async (mime_type, file_name, file_path) => {

@@ -1,5 +1,4 @@
 import ModelObject from '@/classes/ModelObject';
-import OperationServiceVideoInfo from '@/classes/surgbook/OperationServiceVideoInfo';
 
 export default class OperationServiceVideoModel extends ModelObject {
   constructor(...args) {

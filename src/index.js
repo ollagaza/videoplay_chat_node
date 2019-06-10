@@ -1,5 +1,3 @@
-import cluster from 'cluster';
-import os from 'os';
 import app from './app';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";

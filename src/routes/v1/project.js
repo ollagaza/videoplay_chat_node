@@ -1,6 +1,5 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import querystring from 'querystring';
-import path from 'path';
 import service_config from '@/config/service.config';
 import roles from "@/config/roles";
 import Auth from '@/middlewares/auth.middleware';
@@ -8,11 +7,9 @@ import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
-import ServiceErrorModel from '@/models/ServiceErrorModel';
-import SendMail from '@/classes/SendMail';
 import log from "@/classes/Logger";
 import MemberModel from '@/models/MemberModel';
-import { VideoProjectModel, VideoProjectField } from '@/db/mongodb/model/VideoProject';
+import {VideoProjectField, VideoProjectModel} from '@/db/mongodb/model/VideoProject';
 import ContentIdManager from '@/classes/ContentIdManager';
 import SequenceModel from '@/models/sequence/SequenceModel';
 

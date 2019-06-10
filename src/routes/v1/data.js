@@ -1,9 +1,7 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import Wrap from '@/utils/express-async';
 import database from '@/config/database';
 import StdObject from "@/classes/StdObject";
-import HospitalModel from "@/models/HospitalModel";
-import DepartModel from "@/models/DepartModel";
 import MemberModel from '@/models/MemberModel';
 import MedicalSubject from '@/data/MedicalSubject';
 
@@ -16,8 +14,6 @@ import MedicalSubject from '@/data/MedicalSubject';
  */
 
 const routes = Router();
-let hospital_list = null;
-let depart_list = null;
 
 /**
  * @swagger
@@ -68,100 +64,6 @@ routes.get('/medical_subject', Wrap(async(req, res) => {
   output.add('medical_subject', MedicalSubject.getJson());
   res.json(output);
 }));
-
-/**
- * @swagger
- * /data/hospitals:
- *  get:
- *    summary: "병원 코드, 이름 등 정보 조회"
- *    tags: [Data]
- *    produces:
- *    - "application/json"
- *    responses:
- *      200:
- *        description: "병원 정보"
- *        schema:
- *          type: "object"
- *          properties:
- *            error:
- *              type: "integer"
- *              description: "에러코드"
- *              default: 0
- *            message:
- *              type: "string"
- *              description: "에러 메시지"
- *              default: ""
- *            httpStatusCode:
- *              type: "integer"
- *              description: "HTTP Status Code"
- *              default: 200
- *            variables:
- *              type: "object"
- *              description: "병원 정보"
- *              properties:
- *                hospitals:
- *                  type: "array"
- *                  description: "병원 코드, 이름 목록"
- *                  items:
- *                    $ref: "#definitions/HospitalInfo"
- *
- */
-routes.get('/hospitals', Wrap(async(req, res) => {
-  if (!hospital_list) {
-    hospital_list = await new HospitalModel({ database }).getHospitalList();
-  }
-  const output = new StdObject();
-  output.add('hospital_list', hospital_list);
-  res.json(output);
-}));
-
-
-/**
- * @swagger
- * /data/departs:
- *  get:
- *    summary: "진료과목 코드, 이름 등 정보 조회"
- *    tags: [Data]
- *    produces:
- *    - "application/json"
- *    responses:
- *      200:
- *        description: "진료과목 정보"
- *        schema:
- *          type: "object"
- *          properties:
- *            error:
- *              type: "integer"
- *              description: "에러코드"
- *              default: 0
- *            message:
- *              type: "string"
- *              description: "에러 메시지"
- *              default: ""
- *            httpStatusCode:
- *              type: "integer"
- *              description: "HTTP Status Code"
- *              default: 200
- *            variables:
- *              type: "object"
- *              description: "진료과목 정보"
- *              properties:
- *                hospitals:
- *                  type: "array"
- *                  description: "진료과목 정보 목록"
- *                  items:
- *                    $ref: "#definitions/DepartInfo"
- *
- */
-routes.get('/departs', Wrap(async(req, res) => {
-  if (!depart_list) {
-    depart_list = await new DepartModel({ database }).getDepartList();
-  }
-  const output = new StdObject();
-  output.add('depart_list', depart_list);
-  res.json(output);
-}));
-
 
 /**
  * @swagger

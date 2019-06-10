@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import service_config from '@/config/service.config';
 import querystring from 'querystring';
 import Wrap from '@/utils/express-async';

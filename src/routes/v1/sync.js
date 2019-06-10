@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import _ from 'lodash';
 import querystring from 'querystring';
 import service_config from '@/config/service.config';
@@ -13,7 +13,6 @@ import OperationMediaModel from '@/models/OperationMediaModel';
 import OperationStorageModel from '@/models/OperationStorageModel';
 import IndexModel from '@/models/xmlmodel/IndexModel';
 import ClipModel from '@/models/xmlmodel/ClipModel';
-import ReportModel from "@/models/xmlmodel/ReportModel";
 import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import OperationInfo from "@/classes/surgbook/OperationInfo";
@@ -151,7 +150,6 @@ const syncOne = async (req, token_info, operation_seq) => {
     const index1_info_list = await new IndexModel({ database: trx }).getIndexList(operation_info, 1);
     const index2_info_list = await new IndexModel({ database: trx }).getIndexList(operation_info, 2);
     const clip_info = await new ClipModel({ database: trx }).getClipInfo(operation_info);
-    const sheet_list = await new ReportModel({ database: trx }).getReportInfo(operation_info);
 
     const index1_file_size = await Util.getDirectoryFileSize(operation_info.media_directory + 'INX1');
     const index2_file_size = await Util.getDirectoryFileSize(operation_info.media_directory + 'INX2');
@@ -169,7 +167,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     update_storage_info.index2_file_count = index2_info_list.length;
     update_storage_info.index3_file_count = clip_info.clip_list.length;
     update_storage_info.clip_count = clip_info.clip_seq_list.length;
-    update_storage_info.report_count = sheet_list.length;
+    update_storage_info.report_count = 0;
 
     await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info);
     await operation_storage_model.updateStorageSummary(storage_seq);
@@ -204,9 +202,7 @@ const syncOne = async (req, token_info, operation_seq) => {
 const reSync = async (req, operation_seq) => {
   const admin_member_info = {
     seq: 0,
-    role: roles.ADMIN,
-    hospital_code: 'XXXX',
-    depart_code: 'ZZZ'
+    role: roles.ADMIN
   };
   const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
   const token_info = token_result.token_info;

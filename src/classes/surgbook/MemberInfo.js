@@ -23,18 +23,6 @@ import Util from '@/utils/baseutil';
  *      cellphone:
  *        type: "string"
  *        description: "회원 연락처"
- *      hospital_code:
- *        type: "string"
- *        description: "병원 코드"
- *      depart_code:
- *        type: "string"
- *        description: "진료과목 코드"
- *      custom_hospital:
- *        type: "string"
- *        description: "직접 입력한 병원 명"
- *      custom_branch:
- *        type: "string"
- *        description: "직접 입력한 진료과목"
  *      position:
  *        type: "string"
  *        description: "직위"
@@ -56,10 +44,6 @@ import Util from '@/utils/baseutil';
  *    - "password"
  *    - "password_confirm"
  *    - "cellphone"
- *    - "hospital_code"
- *    - "depart_code"
- *    - "custom_hospital"
- *    - "custom_branch"
  *    - "position"
  *    - "license_no"
  *    properties:
@@ -78,18 +62,6 @@ import Util from '@/utils/baseutil';
  *      cellphone:
  *        type: "string"
  *        description: "회원 연락처"
- *      hospital_code:
- *        type: "string"
- *        description: "병원 코드"
- *      depart_code:
- *        type: "string"
- *        description: "진료과목 코드"
- *      custom_hospital:
- *        type: "string"
- *        description: "직접 입력한 병원 명"
- *      custom_branch:
- *        type: "string"
- *        description: "직접 입력한 진료과목"
  *      position:
  *        type: "string"
  *        description: "직위"
@@ -104,10 +76,6 @@ import Util from '@/utils/baseutil';
  *    description: "변경된 회원정보"
  *    required:
  *    - "cellphone"
- *    - "hospital_code"
- *    - "depart_code"
- *    - "custom_hospital"
- *    - "custom_branch"
  *    - "position"
  *    - "license_no"
  *    properties:
@@ -126,18 +94,6 @@ import Util from '@/utils/baseutil';
  *      cellphone:
  *        type: "string"
  *        description: "회원 연락처"
- *      hospital_code:
- *        type: "string"
- *        description: "병원 코드"
- *      depart_code:
- *        type: "string"
- *        description: "진료과목 코드"
- *      custom_hospital:
- *        type: "string"
- *        description: "직접 입력한 병원 명"
- *      custom_branch:
- *        type: "string"
- *        description: "직접 입력한 진료과목"
  *      position:
  *        type: "string"
  *        description: "직위"

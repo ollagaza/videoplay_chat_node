@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import Wrap from '@/utils/express-async';
 import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
