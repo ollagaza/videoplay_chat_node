@@ -32,8 +32,8 @@ const getOperationInfo = async (database, operation_seq, token_info) => {
   if (operation_info == null || operation_info.isEmpty()) {
     throw new StdObject(-1, '수술 정보가 존재하지 않습니다.', 400);
   }
-  if (operation_info.member_seq != token_info.getId()) {
-    if (token_info.getRole() != roles.ADMIN) {
+  if (operation_info.member_seq !== token_info.getId()) {
+    if (token_info.getRole() !== roles.ADMIN) {
       throw new StdObject(-99, '권한이 없습니다.', 403);
     }
   }

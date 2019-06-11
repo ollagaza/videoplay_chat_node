@@ -11,17 +11,18 @@ import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
 import http from 'http';
 import https from 'https';
+import path from 'path';
+import multer from 'multer';
+import crypto from 'crypto';
 import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
 import getDuration from 'get-video-duration';
-import path from 'path';
-import multer from 'multer';
+import JsonPath from "jsonpath";
 import service_config from '@/config/service.config';
 import constants from '@/config/constants';
 import log from "@/classes/Logger";
-import JsonPath from "jsonpath";
 import StdObject from '@/classes/StdObject';
-import crypto from 'crypto';
+import Constants from '@/config/constants';
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -29,6 +30,14 @@ const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
 const RANDOM_KEY_SPACE = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000;
 const NEW_LINE_REGEXP = /\r?\n/g;
+
+let PATH_EXP;
+if (Constants.SEP === '/') {
+  PATH_EXP = new RegExp(/\//, 'g');
+} else {
+  PATH_EXP = new RegExp(/\\/, 'g');
+}
+
 
 const convert = (from_charset, to_charset, str) => {
   const iconv = new Iconv.Iconv(from_charset, to_charset);
@@ -47,7 +56,7 @@ const getMediaDirectory = (media_root, media_path) => {
 
 const getUrlPrefix = (media_root, media_path, remove_seq = true) => {
   let full_path = media_root + (remove_seq ? removePathSEQ(media_path) : media_path);
-  full_path = full_path.replace(/\\/g, '/');
+  full_path = full_path.replace(PATH_EXP, '/');
   full_path = full_path.replace(/^\/+/g, '');
 
   return '/' + full_path;
@@ -246,9 +255,9 @@ const deleteDirectory = async (path) => {
   for (let i = 0; i < file_list.length; i++) {
     const file = file_list[i];
     if (file.isDirectory()) {
-      await deleteDirectory( path + "\\" + file.name );
+      await deleteDirectory( path + Constants.SEP + file.name );
     } else {
-      await deleteFile( path + "\\" + file.name );
+      await deleteFile( path + Constants.SEP + file.name );
     }
   }
 };
@@ -576,7 +585,7 @@ const urlToPath = (url) => {
       default:
         return url;
     }
-    path += '\\' + result[2].replace(/\//g, '\\');
+    path += Constants.SEP + result[2].replace(/\//g, Constants.SEP);
     return path;
   }
   return url;
@@ -679,7 +688,7 @@ export default {
     for (let i = 0; i < file_list.length; i++) {
       const file = file_list[i];
       if (file.isFile()) {
-        const file_info = await getFileStat(directory_path + "\\" + file.name);
+        const file_info = await getFileStat(directory_path + Constants.SEP + file.name);
         file_size += file_info.size;
       }
     }
@@ -727,7 +736,7 @@ export default {
   },
 
   "pathToUrl": (path) => {
-    path = path.replace(/\\/g, '/');
+    path = path.replace(PATH_EXP, '/');
     path = path.replace(/^\/+/g, '');
 
     return '/' + path;

@@ -21,6 +21,7 @@ import VideoModel from '@/models/xmlmodel/VideoModel';
 import log from "@/classes/Logger";
 import IndexInfo from "@/classes/surgbook/IndexInfo";
 import SendMail from '@/classes/SendMail';
+import Constants from '@/config/constants';
 
 const routes = Router();
 
@@ -254,7 +255,7 @@ const reSync = async (req, operation_seq) => {
     await Util.deleteFile(media_directory + "History.xml");
     await Util.deleteFile(media_directory + "Report.xml");
 
-    const seq_directory = media_directory + 'SEQ\\';
+    const seq_directory = media_directory + 'SEQ' + Constants.SEP;
     let smil_info = null;
     if (!operation_media_info.isEmpty()){
       if (!Util.isEmpty(operation_media_info.smil_file_name)) {

@@ -6,6 +6,7 @@ import HistoryModel from '@/models/xmlmodel/HistoryModel';
 import log from "@/classes/Logger";
 import _ from 'lodash';
 import service_config from '@/config/service.config';
+import Constants from '@/config/constants';
 
 export default class IndexModel extends ModelObject {
   constructor(...args) {
@@ -111,7 +112,7 @@ export default class IndexModel extends ModelObject {
       await Util.createDirectory(save_directory);
     }
 
-    const original_index_image_path = save_directory + '\\' + index_file_name;
+    const original_index_image_path = save_directory + Constants.SEP + index_file_name;
     let execute_result = await Util.getThumbnail(origin_video_path, original_index_image_path, second);
 
     if (!execute_result.success) {
@@ -126,7 +127,7 @@ export default class IndexModel extends ModelObject {
     try {
       const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
       const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
-      const thumb_index_image_path = save_directory + '\\' + thumbnail_file_name;
+      const thumb_index_image_path = save_directory + Constants.SEP + thumbnail_file_name;
       execute_result = await Util.getThumbnail(origin_video_path, thumb_index_image_path, second, thumb_width, thumb_height);
 
       if (!execute_result.success) {

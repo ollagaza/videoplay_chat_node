@@ -7,6 +7,7 @@ import OperationMediaModel from '@/models/OperationMediaModel';
 import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
 import ContentIdManager from '@/classes/ContentIdManager';
+import Constants from '@/config/constants';
 
 const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
 
@@ -140,7 +141,7 @@ export default class OperationModel extends ModelObject {
     if ( !( await Util.fileExists(trash_root) ) ) {
       await Util.createDirectory(trash_root);
     }
-    if ( !( await Util.renameFile(operation_info.media_directory, trash_root + '\\' + trash_path) ) ){
+    if ( !( await Util.renameFile(operation_info.media_directory, trash_root + Constants.SEP + trash_path) ) ){
       // throw new StdObject(-1, '파일 삭제 실패', 500);
     }
 
@@ -188,7 +189,7 @@ export default class OperationModel extends ModelObject {
     const content_id = await ContentIdManager.getContentId();
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
-    operation_info.media_path = user_media_path + content_id + '\\SEQ\\';
+    operation_info.media_path = user_media_path + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
     operation_info.created_by_user = 1;
     operation_info.content_id = content_id;
 

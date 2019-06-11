@@ -12,6 +12,7 @@ import MemberModel from '@/models/MemberModel';
 import {VideoProjectField, VideoProjectModel} from '@/db/mongodb/model/VideoProject';
 import ContentIdManager from '@/classes/ContentIdManager';
 import SequenceModel from '@/models/sequence/SequenceModel';
+import Constants from '@/config/constants';
 
 const routes = Router();
 
@@ -101,7 +102,7 @@ routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, re
   const content_id = await ContentIdManager.getContentId();
   const media_root = service_info.media_root;
   const user_media_path = member_info.user_media_path;
-  const project_path = user_media_path + "VideoProject\\" + content_id + "\\";
+  const project_path = user_media_path + "VideoProject" + Constants.SEP + content_id + Constants.SEP;
 
   await Util.createDirectory(media_root + project_path);
   data.member_seq = member_seq;
@@ -250,7 +251,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
     const query_data = {
       "DirPath": directory,
       "ContentID": result.content_id,
-      "XmlFilePath": directory + "\\" + file_name
+      "XmlFilePath": directory + Constants.SEP + file_name
     };
     const query_str = querystring.stringify(query_data);
 
@@ -283,7 +284,7 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
   const member_model = new MemberModel({ database });
   const member_info = await member_model.getMemberInfo(member_seq);
   const media_root = service_config.get('media_root');
-  const upload_path = member_info.user_media_path + "_upload_\\project\\image";
+  const upload_path = member_info.user_media_path + "_upload_" + Constants.SEP + "project" + Constants.SEP + "image";
   const upload_full_path = media_root + upload_path;
   if (!(await Util.fileExists(upload_full_path))) {
     await Util.createDirectory(upload_full_path);
@@ -297,7 +298,7 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
   }
 
   log.d(req, upload_file_info);
-  const image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), upload_path + '\\' + new_file_name);
+  const image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
   const output = new StdObject();
   output.add('image_url', image_url);
   res.json(output);

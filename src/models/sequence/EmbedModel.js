@@ -309,7 +309,7 @@ export default class EmbedModel {
       maxHeight: this._size.getMaxHeight(),
       multiLine: this._multiLine,
       localFontName: font_name,
-      localFontPath: process.cwd() + '\\font\\' + font_name + '.ttf',
+      localFontPath: process.cwd() + Constants.SEP + 'font' + Constants.SEP + font_name + '.ttf',
       startX: this._position.getStartX(),
       startY: this._position.getStartY()
     };

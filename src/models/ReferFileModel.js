@@ -2,6 +2,7 @@ import ModelObject from '@/classes/ModelObject';
 import FileInfo from "@/classes/surgbook/FileInfo";
 import service_config from '@/config/service.config';
 import Util from '@/utils/baseutil';
+import Constants from '@/config/constants';
 
 export default class ReferFileModel extends ModelObject {
   constructor(...args) {
@@ -67,7 +68,7 @@ export default class ReferFileModel extends ModelObject {
   };
 
   syncReferFiles = async (operation_info, storage_seq) => {
-    const refer_directory = operation_info.media_directory + 'REF\\';
+    const refer_directory = operation_info.media_directory + 'REF' + Constants.SEP;
     const media_path = Util.removePathSEQ(operation_info.media_path) + 'REF';
 
     let refer_file_size = 0;

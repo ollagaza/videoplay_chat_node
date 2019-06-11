@@ -1,11 +1,10 @@
 import JsonWrapper from '@/classes/JsonWrapper';
 import Util from '@/utils/baseutil';
 import mime from 'mime-types';
-import constants from '@/config/constants';
+import Constants from '@/config/constants';
 
 const getFileType = async (mime_type, file_name, file_path) => {
   const file_ext = Util.getFileExt(file_name);
-  console.log('getFileType', mime_type, file_ext);
   if (Util.isEmpty(mime_type)) {
     mime_type = 'etc';
   } else {
@@ -38,13 +37,13 @@ const getFileType = async (mime_type, file_name, file_path) => {
       if (file_ext !== 'smil') {
         const media_info = await Util.getMediaInfo(file_path);
         switch (media_info.media_type) {
-          case constants.MEDIA_VIDEO:
+          case Constants.MEDIA_VIDEO:
             mime_type = 'video';
             break;
-          case constants.MEDIA_AUDIO:
+          case Constants.MEDIA_AUDIO:
             mime_type = 'audio';
             break;
-          case constants.MEDIA_IMAGE:
+          case Constants.MEDIA_IMAGE:
             mime_type = 'image';
             break;
           default:
@@ -90,19 +89,6 @@ const getFileType = async (mime_type, file_name, file_path) => {
  *
  */
 
-/*
-upload_file_info : {
-  fieldname: 'target',
-  originalname: 'Proxy_180510_000167418_M_s001.mp4',
-  encoding: '7bit',
-  mimetype: 'video/mp4',
-  destination: 'c:\\node-temp\\temp',
-  filename: 'Proxy_180510_000167418_M_s001.mp4',
-  path: 'c:\\node-temp\\temp\\Proxy_180510_000167418_M_s001.mp4',
-  size: 263319437
-};
-*/
-
 export default class FileInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
@@ -131,7 +117,7 @@ export default class FileInfo extends JsonWrapper {
 
     this.file_name = upload_file_info.originalname;
     this.file_size = upload_file_info.size;
-    this.file_path = media_path + '\\' + upload_file_info.new_file_name;
+    this.file_path = media_path + Constants.SEP + upload_file_info.new_file_name;
 
     const file_type = await getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
     this.file_type = file_type;
@@ -153,7 +139,7 @@ export default class FileInfo extends JsonWrapper {
 
     this.file_name = file_name;
     this.file_size = file_size;
-    this.file_path = media_path + '\\' + this.file_name;
+    this.file_path = media_path + Constants.SEP + this.file_name;
 
     const file_type = await getFileType(mime.lookup(file_path), file_name, file_path);
     this.file_type = file_type;

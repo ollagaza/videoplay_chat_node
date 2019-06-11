@@ -1,3 +1,7 @@
+import path from 'path';
+
+const SEP = path.sep;
+
 const NONE = 'none';
 const NO_MEDIA = 100;
 const MEDIA_VIDEO = 101;
@@ -54,5 +58,6 @@ export default {
   "PROCESS": PROCESS,
   "CREATE": CREATE,
   "MODIFY": MODIFY,
-  "PREVIEW": PREVIEW
+  "PREVIEW": PREVIEW,
+  "SEP": SEP
 };
