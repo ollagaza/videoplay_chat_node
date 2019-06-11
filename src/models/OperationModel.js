@@ -189,7 +189,7 @@ export default class OperationModel extends ModelObject {
     const content_id = await ContentIdManager.getContentId();
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
-    operation_info.media_path = user_media_path + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
+    operation_info.media_path = user_media_path + 'operation' + Constants.SEP + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
     operation_info.created_by_user = 1;
     operation_info.content_id = content_id;
 
