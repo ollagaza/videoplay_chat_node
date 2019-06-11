@@ -5,8 +5,8 @@ const IS_DEV = config.isDev();
 const logger_config = {
   appenders: {
     out: { type: 'stdout', layout: { type: 'coloured' } },
-    surgbook: { type: 'dateFile', filename: 'logs/surgbook.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 30 },
-    access: { type: 'dateFile', filename: 'logs/access.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 7 }
+    surgbook: { type: 'dateFile', filename: 'logs/api/surgbook.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 30 },
+    access: { type: 'dateFile', filename: 'logs/access/access.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 7 }
   },
   categories: {
     default: { appenders: [ 'out', 'surgbook' ], level: IS_DEV ? 'DEBUG' : 'INFO' },
