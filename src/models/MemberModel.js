@@ -42,7 +42,7 @@ export default class MemberModel extends ModelObject {
 
     const member = member_info.toJSON();
 
-    member.user_media_path = Constants.SEP + member_info.user_id + Constants.SEP + Constants.SEP;
+    member.user_media_path = Constants.SEP + member_info.user_id + Constants.SEP;
 
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
