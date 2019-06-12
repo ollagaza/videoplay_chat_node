@@ -5,7 +5,8 @@
     "watch": false,
     "env": {
       "NODE_ENV": "production",
-      "API_PORT": 3000
+      "API_PORT": 3000,
+      "LOG_PATH": "/var/log/surgstory"
     },
     "exec_mode": "cluster",
     "instances": 0

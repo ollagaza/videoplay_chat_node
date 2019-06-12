@@ -2,11 +2,13 @@ import log4js from 'log4js';
 import config from '@/config/config';
 
 const IS_DEV = config.isDev();
+const LOG_PATH = config.getLogPath();
+
 const logger_config = {
   appenders: {
     out: { type: 'stdout', layout: { type: 'coloured' } },
-    surgbook: { type: 'dateFile', filename: 'logs/api/surgbook.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 30 },
-    access: { type: 'dateFile', filename: 'logs/access/access.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 7 }
+    surgbook: { type: 'dateFile', filename: LOG_PATH + '/api/surgbook.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 30 },
+    access: { type: 'dateFile', filename:  LOG_PATH + '/access/access.log', pattern: '.yyyy-MM-dd', compress: false, "backups": 7 }
   },
   categories: {
     default: { appenders: [ 'out', 'surgbook' ], level: IS_DEV ? 'DEBUG' : 'INFO' },
