@@ -13,7 +13,9 @@ const logger_config = {
   categories: {
     default: { appenders: [ 'out', 'surgbook' ], level: IS_DEV ? 'DEBUG' : 'INFO' },
     access: { appenders: [ 'out', 'access' ], level: 'ALL' }
-  }
+  },
+  pm2: true,
+  pm2InstanceVar: 'INSTANCE_ID'
 };
 
 console.info(logger_config);

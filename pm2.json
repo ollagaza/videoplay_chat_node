@@ -9,6 +9,7 @@
       "LOG_PATH": "/var/log/surgstory"
     },
     "exec_mode": "cluster",
-    "instances": 0
+    "instances": 0,
+    "instance_var": "INSTANCE_ID"
   }]
 }
