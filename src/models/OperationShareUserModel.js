@@ -47,7 +47,7 @@ export default class OperationShareUserModel extends ModelObject {
     sql += "VALUES \n";
     for (let i = 0; i < email_list.length; i++) {
       const email_address = email_list[i];
-      if (i != 0) {
+      if (i !== 0) {
         sql += "  , ";
       }
       else {

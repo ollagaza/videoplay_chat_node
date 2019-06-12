@@ -112,7 +112,7 @@ routes.post('/', Wrap(async(req, res) => {
   const member_model = new MemberModel({ database });
   const member_info = await member_model.findOne({"user_id": user_id});
 
-  if (member_info == null || member_info.user_id != user_id) {
+  if (member_info == null || member_info.user_id !== user_id) {
     throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
   }
 
@@ -195,7 +195,7 @@ routes.post('/email', Wrap(async(req, res) => {
 
   const member_auth_mail_model =  new MemberAuthMailModel({ database });
   const has_auth_mail = await member_auth_mail_model.hasAuthMail(member_seq, auth_key);
-  if (has_auth_mail == false) {
+  if (has_auth_mail === false) {
     throw new StdObject(-1, "인증정보가 존재하지 않습니다.", 400);
   }
 

@@ -11,8 +11,8 @@ export default class OperationShareCommentModel extends ModelObject {
   checkCommentAuth = async (comment_seq, token_info, only_comment_owner) => {
     if (!token_info.isAdmin()) {
       const {comment_owner, operation_owner} = await this.getShareCommentOwner(comment_seq);
-      if (token_info.getId() != comment_owner) {
-        if (only_comment_owner || token_info.getId() != operation_owner) {
+      if (token_info.getId() !== comment_owner) {
+        if (only_comment_owner || token_info.getId() !== operation_owner) {
           return false;
         }
       }

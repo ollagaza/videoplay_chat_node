@@ -1,6 +1,7 @@
 import JsonWrapper from '@/classes/JsonWrapper';
 import service_config from '@/config/service.config';
 import Util from '@/utils/baseutil';
+import Constants from '@/config/constants';
 
 /**
  * @swagger
@@ -78,7 +79,7 @@ export default class OperationMediaInfo extends JsonWrapper {
 
       this.origin_video_url = url_prefix + "SEQ/" + this.video_file_name;
       this.proxy_video_url = url_prefix + "SEQ/" + this.proxy_file_name;
-      this.video_source = "SEQ\\" + this.video_file_name;
+      this.video_source = "SEQ" + Constants.SEP + this.video_file_name;
       this.origin_video_path = media_directory + this.video_source;
 
       if (Util.isEmpty(this.smil_file_name)){

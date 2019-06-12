@@ -11,6 +11,7 @@ import Util from '@/utils/baseutil';
 import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 import service_config from '@/config/service.config';
+import Constants from '@/config/constants';
 
 const routes = Router();
 
@@ -449,7 +450,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     const member_info = await member_model.getMemberInfo(member_seq);
 
     const media_root = service_config.get('media_root');
-    const upload_path = member_info.user_media_path + "_upload_\\profile";
+    const upload_path = member_info.user_media_path + `_upload_${Constants.SEP}profile`;
     const upload_full_path = media_root + upload_path;
     if (!(await Util.fileExists(upload_full_path))) {
       await Util.createDirectory(upload_full_path);
@@ -463,7 +464,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     }
 
     const origin_image_path = upload_file_info.path;
-    const resize_image_path = upload_path + '\\' + Util.getRandomId() + '.png';
+    const resize_image_path = upload_path + Constants.SEP + Util.getRandomId() + '.png';
     const resize_image_full_path = media_root + resize_image_path;
     const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
 

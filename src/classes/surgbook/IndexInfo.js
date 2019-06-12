@@ -1,8 +1,14 @@
 import _ from 'lodash';
 import path from 'path';
+import fs from 'fs';
 import JsonWrapper from '@/classes/JsonWrapper';
 import service_config from '@/config/service.config';
+import Constants from '@/config/constants';
 import Util from '@/utils/baseutil';
+import log from "@/classes/Logger";
+
+
+const seq_exp = new RegExp(/\\/, 'g');
 
 /**
  * @swagger
@@ -75,12 +81,21 @@ export default class IndexInfo extends JsonWrapper {
     const hawkeye_root_regex = new RegExp(`^.*${service_info.hwakeye_index_directory_root}`, 'i');
     const index_directory = service_info.hawkeye_data_directory;
 
-    const origin_file = Util.getXmlText(hawkeye_xml_info.orithumb).replace(hawkeye_root_regex, '');
-    const thumb_file = Util.getXmlText(hawkeye_xml_info.thumb).replace(hawkeye_root_regex, '');
+    let origin_file = Util.getXmlText(hawkeye_xml_info.orithumb).replace(hawkeye_root_regex, '');
+    let thumb_file = Util.getXmlText(hawkeye_xml_info.thumb).replace(hawkeye_root_regex, '');
+    if (Constants.SEP !== '\\') {
+      origin_file = origin_file.replace(seq_exp, '/');
+      thumb_file = thumb_file.replace(seq_exp, '/');
+    }
     const image_file_name = path.basename(origin_file);
     const frame = Util.getXmlText(hawkeye_xml_info.frame);
     const time = Util.getXmlText(hawkeye_xml_info.time);
-    if ( ( await Util.fileExists(index_directory + origin_file) ) && ( await Util.fileExists(index_directory + thumb_file) ) ) {
+
+    // log.d(null, index_directory, hawkeye_xml_info.orithumb, origin_file, thumb_file);
+    // log.d(null, index_directory + origin_file, index_directory + thumb_file);
+    // log.d(null, await Util.fileExists(index_directory + origin_file, fs.constants.R_OK), await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK));
+
+    if ( ( await Util.fileExists(index_directory + origin_file, fs.constants.R_OK) ) && ( await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK) ) ) {
       this.original_url = this.url;
       this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
       this.creator = "system";

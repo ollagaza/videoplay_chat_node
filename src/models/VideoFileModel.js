@@ -4,6 +4,7 @@ import SmilInfo from '@/classes/surgbook/SmilInfo';
 import service_config from '@/config/service.config';
 import Util from '@/utils/baseutil';
 import log from "@/classes/Logger";
+import Constants from '@/config/constants';
 
 export default class VideoFileModel extends ModelObject {
   constructor(...args) {
@@ -59,8 +60,15 @@ export default class VideoFileModel extends ModelObject {
       return true;
     }
 
+    let replace_query;
+    if (Constants.SEP === '/') {
+      replace_query = "REPLACE(file_path, '/SEQ/', '/Trash/')";
+    } else {
+      replace_query = "REPLACE(file_path, '\\\\SEQ\\\\', '\\\\Trash\\\\')";
+    }
+
     const update_params = {
-      "file_path": this.database.raw("REPLACE(file_path, '\\\\SEQ\\\\', '\\\\Trash\\\\')"),
+      "file_path": this.database.raw(replace_query),
       "status": "T",
       "modify_date": this.database.raw('NOW()')
     };
@@ -72,7 +80,7 @@ export default class VideoFileModel extends ModelObject {
 
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
-    const trash_directory = media_directory + 'Trash\\';
+    const trash_directory = media_directory + 'Trash' + Constants.SEP;
     if ( !( await Util.fileExists(trash_directory) ) ) {
       await Util.createDirectory(trash_directory);
     }
@@ -96,7 +104,7 @@ export default class VideoFileModel extends ModelObject {
     let trans_video_count = 0;
 
     if (!smil_info.isEmpty()) {
-      const video_directory = operation_info.media_directory + 'SEQ\\';
+      const video_directory = operation_info.media_directory + 'SEQ' + Constants.SEP;
       const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
       if (!operation_info.created_by_user || operation_info.created_by_user === false) {
         await this.delete({storage_seq: storage_seq});
@@ -133,7 +141,7 @@ export default class VideoFileModel extends ModelObject {
     const dimension = await Util.getVideoDimension(origin_video_path);
     if (!dimension.error && dimension.width && dimension.height) {
 
-      const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb\\' + Date.now() + '.jpg';
+      const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb' + Constants.SEP + Date.now() + '.jpg';
       const thumbnail_full_path = operation_info.media_root + thumbnail_path;
 
       const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);

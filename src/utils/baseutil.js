@@ -11,17 +11,18 @@ import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
 import http from 'http';
 import https from 'https';
+import path from 'path';
+import multer from 'multer';
+import crypto from 'crypto';
 import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
 import getDuration from 'get-video-duration';
-import path from 'path';
-import multer from 'multer';
+import JsonPath from "jsonpath";
 import service_config from '@/config/service.config';
 import constants from '@/config/constants';
 import log from "@/classes/Logger";
-import JsonPath from "jsonpath";
 import StdObject from '@/classes/StdObject';
-import crypto from 'crypto';
+import Constants from '@/config/constants';
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -29,6 +30,14 @@ const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
 const RANDOM_KEY_SPACE = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000;
 const NEW_LINE_REGEXP = /\r?\n/g;
+
+let PATH_EXP;
+if (Constants.SEP === '/') {
+  PATH_EXP = new RegExp(/\//, 'g');
+} else {
+  PATH_EXP = new RegExp(/\\/, 'g');
+}
+
 
 const convert = (from_charset, to_charset, str) => {
   const iconv = new Iconv.Iconv(from_charset, to_charset);
@@ -47,7 +56,7 @@ const getMediaDirectory = (media_root, media_path) => {
 
 const getUrlPrefix = (media_root, media_path, remove_seq = true) => {
   let full_path = media_root + (remove_seq ? removePathSEQ(media_path) : media_path);
-  full_path = full_path.replace(/\\/g, '/');
+  full_path = full_path.replace(PATH_EXP, '/');
   full_path = full_path.replace(/^\/+/g, '');
 
   return '/' + full_path;
@@ -246,9 +255,9 @@ const deleteDirectory = async (path) => {
   for (let i = 0; i < file_list.length; i++) {
     const file = file_list[i];
     if (file.isDirectory()) {
-      await deleteDirectory( path + "\\" + file.name );
+      await deleteDirectory( path + Constants.SEP + file.name );
     } else {
-      await deleteFile( path + "\\" + file.name );
+      await deleteFile( path + Constants.SEP + file.name );
     }
   }
 };
@@ -395,39 +404,53 @@ const execute = async (command) => {
 
 const getMediaInfo = async (media_path) => {
   const async_func = new Promise( async (resolve) => {
-    const execute_result = await execute(`mediainfo --Full --Output=JSON "${media_path}"`);
+    const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`);
     const media_result = {
       success: false,
       media_type: constants.NO_MEDIA,
       media_info: {}
     };
 
-    if (execute_result.success && execute_result.out) {
-      const media_info = JSON.parse(execute_result.out);
-      const video = JsonPath.value(media_info, '$..track[?(@.@type=="Video")]');
-      const audio = JsonPath.value(media_info, '$..track[?(@.@type=="Audio")]');
-      const image = JsonPath.value(media_info, '$..track[?(@.@type=="Image")]');
-
-      media_result.success = true;
-      if (!isEmpty(video)) {
-        media_result.media_type = constants.MEDIA_VIDEO;
-        media_result.media_info.width = getInt(video.Width);
-        media_result.media_info.height = getInt(video.Height);
-        media_result.media_info.fps = getFloat(video.FrameRate);
-        media_result.media_info.frame_count = getInt(video.FrameCount);
-        media_result.media_info.duration = Math.round(getFloat(video.Duration));
-      } else if (!isEmpty(audio)) {
-        media_result.media_type = constants.MEDIA_AUDIO;
-        media_result.media_info.duration = Math.round(getFloat(audio.Duration));
-        media_result.media_info.sample_rate = Math.round(getFloat(audio.SamplingRate));
-        media_result.media_info.bit_depth = Math.round(getFloat(audio.BitDepth));
-      } else if (!isEmpty(image)) {
-        media_result.media_type = constants.MEDIA_IMAGE;
-        media_result.media_info.width = getInt(image.Width);
-        media_result.media_info.height = getInt(image.Height);
-      } else {
-        media_result.success = false;
+    try{
+      if (execute_result.success && execute_result.out) {
+        const media_info_xml = await loadXmlString(execute_result.out);
+        const media_info = JsonPath.value(media_info_xml, '$..media[*].track');
+        if (media_info && media_info.length > 0) {
+          for (let i = 0; i < media_info.length; i++) {
+            const track = media_info[i];
+            if (track.$) {
+              const track_type = track.$.type;
+              if (track_type === 'Video') {
+                media_result.media_type = constants.MEDIA_VIDEO;
+                media_result.media_info.width = getInt(getXmlText(track.Width));
+                media_result.media_info.height = getInt(getXmlText(track.Height));
+                media_result.media_info.fps = getFloat(getXmlText(track.FrameRate));
+                media_result.media_info.frame_count = getInt(getXmlText(track.FrameCount));
+                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
+                media_result.success = true;
+                break;
+              } else if (track_type === 'Audio') {
+                media_result.media_type = constants.MEDIA_AUDIO;
+                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
+                media_result.media_info.sample_rate = Math.round(getFloat(getXmlText(track.SamplingRate)));
+                media_result.media_info.bit_depth = Math.round(getFloat(getXmlText(track.BitDepth)));
+                media_result.success = true;
+                break;
+              } else if (track_type === 'Image') {
+                media_result.media_type = constants.MEDIA_IMAGE;
+                media_result.media_info.width = getInt(getXmlText(track.Width));
+                media_result.media_info.height = getInt(getXmlText(track.Height));
+                media_result.success = true;
+                break;
+              } else {
+                media_result.success = false;
+              }
+            }
+          }
+        }
       }
+    } catch (error) {
+      log.e(null, "getMediaInfo", error, execute_result);
     }
 
     resolve(media_result);
@@ -576,7 +599,7 @@ const urlToPath = (url) => {
       default:
         return url;
     }
-    path += '\\' + result[2].replace(/\//g, '\\');
+    path += Constants.SEP + result[2].replace(/\//g, Constants.SEP);
     return path;
   }
   return url;
@@ -585,6 +608,19 @@ const urlToPath = (url) => {
 const getRandomId = () => `${Math.floor(Date.now() / 1000)}_${getRandomString(5)}`;
 
 const getFileExt = file_name => path.extname(file_name || '.').toLowerCase().substr(1);
+
+const getXmlText = (element) => {
+  if (!element) {
+    return "";
+  }
+  if (element._) {
+    return element._;
+  }
+  if (_.isArray(element)) {
+    return element[0];
+  }
+  return element;
+};
 
 export default {
   "convert": convert,
@@ -679,7 +715,7 @@ export default {
     for (let i = 0; i < file_list.length; i++) {
       const file = file_list[i];
       if (file.isFile()) {
-        const file_info = await getFileStat(directory_path + "\\" + file.name);
+        const file_info = await getFileStat(directory_path + Constants.SEP + file.name);
         file_size += file_info.size;
       }
     }
@@ -727,24 +763,13 @@ export default {
   },
 
   "pathToUrl": (path) => {
-    path = path.replace(/\\/g, '/');
+    path = path.replace(PATH_EXP, '/');
     path = path.replace(/^\/+/g, '');
 
     return '/' + path;
   },
 
-  "getXmlText": (element) => {
-    if (!element) {
-      return "";
-    }
-    if (element._) {
-      return element._;
-    }
-    if (_.isArray(element)) {
-      return element[0];
-    }
-    return element;
-  },
+  "getXmlText": getXmlText,
 
   "getContentId": () => {
     return uuidv1();

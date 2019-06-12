@@ -3,7 +3,7 @@ import ModelObject from '@/classes/ModelObject';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 import Util from '@/utils/baseutil';
 import service_config from '@/config/service.config';
-import ContentIdManager from '@/classes/ContentIdManager';
+import Constants from '@/config/constants';
 
 export default class MemberModel extends ModelObject {
   constructor(...args) {
@@ -42,8 +42,7 @@ export default class MemberModel extends ModelObject {
 
     const member = member_info.toJSON();
 
-    const content_id = await ContentIdManager.getContentId();
-    member.user_media_path = "\\" + member_info.user_name + "\\" + content_id + "\\";
+    member.user_media_path = Constants.SEP + member_info.user_id + Constants.SEP;
 
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
