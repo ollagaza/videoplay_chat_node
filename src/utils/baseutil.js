@@ -90,7 +90,7 @@ const fileExists = async (file_path, permission=null) => {
     }
     fs.access(file_path, permission, (error) => {
       if (error) {
-        // log.e(null, 'Util.fileExists', error);
+        log.e(null, 'Util.fileExists', error);
         resolve(false);
       } else {
         resolve(true);

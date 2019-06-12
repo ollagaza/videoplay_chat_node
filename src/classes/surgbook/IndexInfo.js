@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import path from 'path';
+import fs from 'fs';
 import JsonWrapper from '@/classes/JsonWrapper';
 import service_config from '@/config/service.config';
 import Constants from '@/config/constants';
@@ -83,7 +84,7 @@ export default class IndexInfo extends JsonWrapper {
     let origin_file = Util.getXmlText(hawkeye_xml_info.orithumb).replace(hawkeye_root_regex, '');
     let thumb_file = Util.getXmlText(hawkeye_xml_info.thumb).replace(hawkeye_root_regex, '');
     if (Constants.SEP !== '\\') {
-      thumb_file = origin_file.replace(seq_exp, '/');
+      origin_file = origin_file.replace(seq_exp, '/');
       thumb_file = thumb_file.replace(seq_exp, '/');
     }
     const image_file_name = path.basename(origin_file);
@@ -92,9 +93,9 @@ export default class IndexInfo extends JsonWrapper {
 
     log.d(null, index_directory, hawkeye_xml_info.orithumb, origin_file, thumb_file);
     log.d(null, index_directory + origin_file, index_directory + thumb_file);
-    log.d(null, await Util.fileExists(index_directory + origin_file), await Util.fileExists(index_directory + thumb_file));
+    log.d(null, await Util.fileExists(index_directory + origin_file, fs.constants.R_OK), await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK));
 
-    if ( ( await Util.fileExists(index_directory + origin_file) ) && ( await Util.fileExists(index_directory + thumb_file) ) ) {
+    if ( ( await Util.fileExists(index_directory + origin_file, fs.constants.R_OK) ) && ( await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK) ) ) {
       this.original_url = this.url;
       this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
       this.creator = "system";
