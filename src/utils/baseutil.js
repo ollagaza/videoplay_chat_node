@@ -404,7 +404,7 @@ const execute = async (command) => {
 
 const getMediaInfo = async (media_path) => {
   const async_func = new Promise( async (resolve) => {
-    const execute_result = await execute(`mediainfo --Full --Output=JSON "${media_path}"`);
+    const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`);
     const media_result = {
       success: false,
       media_type: constants.NO_MEDIA,
@@ -413,30 +413,40 @@ const getMediaInfo = async (media_path) => {
 
     try{
       if (execute_result.success && execute_result.out) {
-        const media_info = JSON.parse(execute_result.out);
-        const video = JsonPath.value(media_info, '$..track[?(@.@type=="Video")]');
-        const audio = JsonPath.value(media_info, '$..track[?(@.@type=="Audio")]');
-        const image = JsonPath.value(media_info, '$..track[?(@.@type=="Image")]');
-
-        media_result.success = true;
-        if (!isEmpty(video)) {
-          media_result.media_type = constants.MEDIA_VIDEO;
-          media_result.media_info.width = getInt(video.Width);
-          media_result.media_info.height = getInt(video.Height);
-          media_result.media_info.fps = getFloat(video.FrameRate);
-          media_result.media_info.frame_count = getInt(video.FrameCount);
-          media_result.media_info.duration = Math.round(getFloat(video.Duration));
-        } else if (!isEmpty(audio)) {
-          media_result.media_type = constants.MEDIA_AUDIO;
-          media_result.media_info.duration = Math.round(getFloat(audio.Duration));
-          media_result.media_info.sample_rate = Math.round(getFloat(audio.SamplingRate));
-          media_result.media_info.bit_depth = Math.round(getFloat(audio.BitDepth));
-        } else if (!isEmpty(image)) {
-          media_result.media_type = constants.MEDIA_IMAGE;
-          media_result.media_info.width = getInt(image.Width);
-          media_result.media_info.height = getInt(image.Height);
-        } else {
-          media_result.success = false;
+        const media_info_xml = await loadXmlString(execute_result.out);
+        const media_info = JsonPath.value(media_info_xml, '$..media[*].track');
+        if (media_info && media_info.length > 0) {
+          for (let i = 0; i < media_info.length; i++) {
+            const track = media_info[i];
+            if (track.$) {
+              const track_type = track.$.type;
+              if (track_type === 'Video') {
+                media_result.media_type = constants.MEDIA_VIDEO;
+                media_result.media_info.width = getInt(getXmlText(track.Width));
+                media_result.media_info.height = getInt(getXmlText(track.Height));
+                media_result.media_info.fps = getFloat(getXmlText(track.FrameRate));
+                media_result.media_info.frame_count = getInt(getXmlText(track.FrameCount));
+                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
+                media_result.success = true;
+                break;
+              } else if (track_type === 'Audio') {
+                media_result.media_type = constants.MEDIA_AUDIO;
+                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
+                media_result.media_info.sample_rate = Math.round(getFloat(getXmlText(track.SamplingRate)));
+                media_result.media_info.bit_depth = Math.round(getFloat(getXmlText(track.BitDepth)));
+                media_result.success = true;
+                break;
+              } else if (track_type === 'Image') {
+                media_result.media_type = constants.MEDIA_IMAGE;
+                media_result.media_info.width = getInt(getXmlText(track.Width));
+                media_result.media_info.height = getInt(getXmlText(track.Height));
+                media_result.success = true;
+                break;
+              } else {
+                media_result.success = false;
+              }
+            }
+          }
         }
       }
     } catch (error) {
@@ -599,6 +609,19 @@ const getRandomId = () => `${Math.floor(Date.now() / 1000)}_${getRandomString(5)
 
 const getFileExt = file_name => path.extname(file_name || '.').toLowerCase().substr(1);
 
+const getXmlText = (element) => {
+  if (!element) {
+    return "";
+  }
+  if (element._) {
+    return element._;
+  }
+  if (_.isArray(element)) {
+    return element[0];
+  }
+  return element;
+};
+
 export default {
   "convert": convert,
 
@@ -746,18 +769,7 @@ export default {
     return '/' + path;
   },
 
-  "getXmlText": (element) => {
-    if (!element) {
-      return "";
-    }
-    if (element._) {
-      return element._;
-    }
-    if (_.isArray(element)) {
-      return element[0];
-    }
-    return element;
-  },
+  "getXmlText": getXmlText,
 
   "getContentId": () => {
     return uuidv1();

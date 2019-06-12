@@ -55,11 +55,8 @@ if (IS_DEV) {
   }));
 
   routes.get('/reg', wrap(async (req, res) => {
-    const check_regex = /^\/static\/(index|storage)\/(.+)$/g;
-    const url = '/static/storage/EHMD/OBG/강소라/180504_000167275_W_385/SEQ/Trans_180504_000167275_W_385_SEQ.mp4';
-    log.d(req, url.match(check_regex));
-
-    res.send(Util.urlToPath(url));
+    const url = '\\\\192.168.1.54\\dev\\data/EHMD/OBG/강소라/180504_000167275_W_385/SEQ/Trans_180504_000167275_W_385_SEQ.mp4';
+    res.send(await Util.getMediaInfo(url));
   }));
 
   routes.get('/co/:code', wrap(async (req, res) => {
