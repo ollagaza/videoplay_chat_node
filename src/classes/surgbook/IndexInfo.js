@@ -3,6 +3,7 @@ import path from 'path';
 import JsonWrapper from '@/classes/JsonWrapper';
 import service_config from '@/config/service.config';
 import Util from '@/utils/baseutil';
+import log from "@/classes/Logger";
 
 /**
  * @swagger
@@ -80,6 +81,9 @@ export default class IndexInfo extends JsonWrapper {
     const image_file_name = path.basename(origin_file);
     const frame = Util.getXmlText(hawkeye_xml_info.frame);
     const time = Util.getXmlText(hawkeye_xml_info.time);
+
+    log.d(null, index_directory, hawkeye_xml_info.orithumb, origin_file, thumb_file);
+
     if ( ( await Util.fileExists(index_directory + origin_file) ) && ( await Util.fileExists(index_directory + thumb_file) ) ) {
       this.original_url = this.url;
       this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
