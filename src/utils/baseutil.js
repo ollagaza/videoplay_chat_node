@@ -411,32 +411,36 @@ const getMediaInfo = async (media_path) => {
       media_info: {}
     };
 
-    if (execute_result.success && execute_result.out) {
-      const media_info = JSON.parse(execute_result.out);
-      const video = JsonPath.value(media_info, '$..track[?(@.@type=="Video")]');
-      const audio = JsonPath.value(media_info, '$..track[?(@.@type=="Audio")]');
-      const image = JsonPath.value(media_info, '$..track[?(@.@type=="Image")]');
+    try{
+      if (execute_result.success && execute_result.out) {
+        const media_info = JSON.parse(execute_result.out);
+        const video = JsonPath.value(media_info, '$..track[?(@.@type=="Video")]');
+        const audio = JsonPath.value(media_info, '$..track[?(@.@type=="Audio")]');
+        const image = JsonPath.value(media_info, '$..track[?(@.@type=="Image")]');
 
-      media_result.success = true;
-      if (!isEmpty(video)) {
-        media_result.media_type = constants.MEDIA_VIDEO;
-        media_result.media_info.width = getInt(video.Width);
-        media_result.media_info.height = getInt(video.Height);
-        media_result.media_info.fps = getFloat(video.FrameRate);
-        media_result.media_info.frame_count = getInt(video.FrameCount);
-        media_result.media_info.duration = Math.round(getFloat(video.Duration));
-      } else if (!isEmpty(audio)) {
-        media_result.media_type = constants.MEDIA_AUDIO;
-        media_result.media_info.duration = Math.round(getFloat(audio.Duration));
-        media_result.media_info.sample_rate = Math.round(getFloat(audio.SamplingRate));
-        media_result.media_info.bit_depth = Math.round(getFloat(audio.BitDepth));
-      } else if (!isEmpty(image)) {
-        media_result.media_type = constants.MEDIA_IMAGE;
-        media_result.media_info.width = getInt(image.Width);
-        media_result.media_info.height = getInt(image.Height);
-      } else {
-        media_result.success = false;
+        media_result.success = true;
+        if (!isEmpty(video)) {
+          media_result.media_type = constants.MEDIA_VIDEO;
+          media_result.media_info.width = getInt(video.Width);
+          media_result.media_info.height = getInt(video.Height);
+          media_result.media_info.fps = getFloat(video.FrameRate);
+          media_result.media_info.frame_count = getInt(video.FrameCount);
+          media_result.media_info.duration = Math.round(getFloat(video.Duration));
+        } else if (!isEmpty(audio)) {
+          media_result.media_type = constants.MEDIA_AUDIO;
+          media_result.media_info.duration = Math.round(getFloat(audio.Duration));
+          media_result.media_info.sample_rate = Math.round(getFloat(audio.SamplingRate));
+          media_result.media_info.bit_depth = Math.round(getFloat(audio.BitDepth));
+        } else if (!isEmpty(image)) {
+          media_result.media_type = constants.MEDIA_IMAGE;
+          media_result.media_info.width = getInt(image.Width);
+          media_result.media_info.height = getInt(image.Height);
+        } else {
+          media_result.success = false;
+        }
       }
+    } catch (error) {
+      log.e(null, "getMediaInfo", error, execute_result);
     }
 
     resolve(media_result);
