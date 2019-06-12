@@ -83,6 +83,8 @@ export default class IndexInfo extends JsonWrapper {
     const time = Util.getXmlText(hawkeye_xml_info.time);
 
     log.d(null, index_directory, hawkeye_xml_info.orithumb, origin_file, thumb_file);
+    log.d(null, index_directory + origin_file, index_directory + thumb_file);
+    log.d(null, await Util.fileExists(index_directory + origin_file), await Util.fileExists(index_directory + thumb_file));
 
     if ( ( await Util.fileExists(index_directory + origin_file) ) && ( await Util.fileExists(index_directory + thumb_file) ) ) {
       this.original_url = this.url;
