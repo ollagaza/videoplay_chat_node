@@ -16,6 +16,8 @@ const logger_config = {
   }
 };
 
+console.info(logger_config);
+
 log4js.configure(logger_config);
 
 const app_logger = log4js.getLogger('default');
