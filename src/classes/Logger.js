@@ -18,7 +18,7 @@ const logger_config = {
   pm2InstanceVar: 'INSTANCE_ID'
 };
 
-console.info(logger_config);
+// console.info(logger_config);
 
 log4js.configure(logger_config);
 

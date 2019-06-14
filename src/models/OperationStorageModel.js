@@ -16,6 +16,10 @@ export default class OperationStorageModel extends ModelObject {
     return new OperationStorageInfo(await this.findOne({operation_seq: operation_info.seq}));
   };
 
+  deleteOperationStorageInfo = async (operation_info) => {
+    return this.delete({operation_seq: operation_info.seq});
+  };
+
   createOperationStorageInfo = async (operation_info) => {
     const create_params = {
       operation_seq: operation_info.seq

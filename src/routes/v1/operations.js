@@ -753,6 +753,7 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), W
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
     trash_path = await operation_model.updateStatusDelete(operation_info, token_info.getId());
     storage_seq = operation_info.storage_seq;
+    await new OperationStorageModel({ database: trx }).deleteOperationStorageInfo(operation_info);
   });
 
   if (storage_seq) {
