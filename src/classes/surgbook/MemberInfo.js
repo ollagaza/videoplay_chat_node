@@ -139,19 +139,19 @@ export default class MemberInfo extends JsonWrapper {
   checkDefaultParams = () => {
     this.checkEmpty();
     this.checkCellphone();
-
-    if (Util.isEmpty(this.hospital)) {
-      return this.returnBoolean(-1, '병원명을 정확하게 입력하세요.', 400);
-    }
-    if (Util.isEmpty(this.work_type)) {
-      return this.returnBoolean(-1, '근무형태를 정확하게 입력하세요.', 400);
-    }
-    if (Util.isEmpty(this.major)) {
-      return this.returnBoolean(-1, '전공과목을 선택하세요.', 400);
-    }
-    if (Util.isEmpty(this.medical_subject)) {
-      return this.returnBoolean(-1, '진료과목을 하나이상 선택하세요.', 400);
-    }
+    //
+    // if (Util.isEmpty(this.hospital)) {
+    //   return this.returnBoolean(-1, '병원명을 정확하게 입력하세요.', 400);
+    // }
+    // if (Util.isEmpty(this.work_type)) {
+    //   return this.returnBoolean(-1, '근무형태를 정확하게 입력하세요.', 400);
+    // }
+    // if (Util.isEmpty(this.major)) {
+    //   return this.returnBoolean(-1, '전공과목을 선택하세요.', 400);
+    // }
+    // if (Util.isEmpty(this.medical_subject)) {
+    //   return this.returnBoolean(-1, '진료과목을 하나이상 선택하세요.', 400);
+    // }
   };
 
   checkUserId = () => {
