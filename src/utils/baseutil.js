@@ -622,6 +622,60 @@ const getXmlText = (element) => {
   return element;
 };
 
+const getFileType = async (mime_type, file_name, file_path) => {
+  const file_ext = getFileExt(file_name);
+  if (file_ext === 'smil') {
+    return 'xml';
+  }
+
+  const media_info = await getMediaInfo(file_path);
+  switch (media_info.media_type) {
+    case Constants.MEDIA_VIDEO:
+      return 'video';
+    case Constants.MEDIA_AUDIO:
+      return 'audio';
+    case Constants.MEDIA_IMAGE:
+      return 'image';
+    default:
+      break;
+  }
+
+  if (isEmpty(mime_type)) {
+    mime_type = 'etc';
+  } else {
+    mime_type = mime_type.toLowerCase();
+    if (mime_type.startsWith('video')) {
+      mime_type = 'video';
+    } else if (mime_type.startsWith('image')) {
+      mime_type = 'image';
+    }  else if (mime_type.indexOf('text') >= 0) {
+      mime_type = 'text';
+    } else if (file_ext === 'xls' || file_ext === 'xlsx' || mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
+      mime_type = 'excel';
+    } else if (file_ext === 'doc' || file_ext === 'docx' || mime_type.indexOf('word') >= 0) {
+      mime_type = 'word';
+    } else if (file_ext === 'ppt' || file_ext === 'pptx' || mime_type.indexOf('powerpoint') >= 0 || mime_type.indexOf('presentationml') >= 0) {
+      mime_type = 'powerpoint';
+    } else if (mime_type.indexOf('pdf') >= 0) {
+      mime_type = 'pdf';
+    } else if (mime_type.indexOf('audio') >= 0) {
+      mime_type = 'audio';
+    } else if (mime_type.indexOf('compressed') >= 0 || mime_type.indexOf('zip') >= 0 || mime_type.indexOf('tar') >= 0) {
+      mime_type = 'archive';
+    } else if (mime_type.indexOf('hwp') >= 0) {
+      mime_type = 'hwp';
+    } else if (mime_type.indexOf('xml') >= 0) {
+      mime_type = 'xml';
+    } else if (mime_type === 'application/octet-stream') {
+      mime_type = 'bin';
+    } else {
+      mime_type = 'etc';
+    }
+  }
+
+  return mime_type;
+};
+
 export default {
   "convert": convert,
 
@@ -883,5 +937,6 @@ export default {
   isFalse,
   urlToPath,
   getFileExt,
-  getRandomNumber
+  getRandomNumber,
+  getFileType
 };

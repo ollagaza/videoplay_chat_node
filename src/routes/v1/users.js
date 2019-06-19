@@ -172,26 +172,6 @@ routes.post('/', Wrap(async(req, res) => {
     if (member_seq <= 0){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
-
-    // const email_address = member_info.email_address;
-    //
-    // const mail_auth_key = await new MemberAuthMailModel({ database: trx }).getMailAuthKey(member_seq, email_address);
-    // if (mail_auth_key == null) {
-    //   throw new StdObject(-1, '이메일 인증정보 생성 실패', 500);
-    // }
-    //
-    // const template_data = {
-    //   "user_name": member_info.user_name,
-    //   "auth_key": mail_auth_key,
-    //   "member_seq": member_seq,
-    //   "url_prefix": req.body.url_prefix,
-    //   "request_domain": req.body.request_domain
-    // };
-    // const send_mail_result = await new SendMail().sendMailHtml([email_address], 'MTEG 가입 인증 메일입니다.', MemberTemplate.createUser(template_data));
-    //
-    // if (!send_mail_result.isSuccess()) {
-    //   throw send_mail_result;
-    // }
   });
 
   res.json(new StdObject());
@@ -240,10 +220,9 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
     }
   }
 
-  const member_info = new MemberInfo(req.body, ['seq', 'password_confirm']);
-  member_info.checkDefaultParams();
-  member_info.checkUserName();
-  member_info.checkPassword(false);
+  const member_info = new MemberInfo(req.body);
+  member_info.checkUserNickname();
+  member_info.checkEmailAddress();
 
   await database.transaction(async(trx) => {
     const oMemberModel = new MemberModel({ database: trx });

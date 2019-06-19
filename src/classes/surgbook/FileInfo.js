@@ -3,61 +3,6 @@ import Util from '@/utils/baseutil';
 import mime from 'mime-types';
 import Constants from '@/config/constants';
 
-const getFileType = async (mime_type, file_name, file_path) => {
-  const file_ext = Util.getFileExt(file_name);
-  if (Util.isEmpty(mime_type)) {
-    mime_type = 'etc';
-  } else {
-    mime_type = mime_type.toLowerCase();
-    if (mime_type.startsWith('video')) {
-      mime_type = 'video';
-    } else if (mime_type.startsWith('image')) {
-      mime_type = 'image';
-    }  else if (mime_type.indexOf('text') >= 0) {
-      mime_type = 'text';
-    } else if (file_ext === 'xls' || file_ext === 'xlsx' || mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
-      mime_type = 'excel';
-    } else if (file_ext === 'doc' || file_ext === 'docx' || mime_type.indexOf('word') >= 0) {
-      mime_type = 'word';
-    } else if (file_ext === 'ppt' || file_ext === 'pptx' || mime_type.indexOf('powerpoint') >= 0 || mime_type.indexOf('presentationml') >= 0) {
-      mime_type = 'powerpoint';
-    } else if (mime_type.indexOf('pdf') >= 0) {
-      mime_type = 'pdf';
-    } else if (mime_type.indexOf('audio') >= 0) {
-      mime_type = 'audio';
-    } else if (mime_type.indexOf('compressed') >= 0 || mime_type.indexOf('zip') >= 0 || mime_type.indexOf('tar') >= 0) {
-      mime_type = 'archive';
-    } else if (mime_type.indexOf('hwp') >= 0) {
-      mime_type = 'hwp';
-    } else if (mime_type.indexOf('xml') >= 0) {
-      mime_type = 'xml';
-    } else if (mime_type === 'application/octet-stream') {
-      mime_type = 'bin';
-    } else {
-      if (file_ext !== 'smil') {
-        const media_info = await Util.getMediaInfo(file_path);
-        switch (media_info.media_type) {
-          case Constants.MEDIA_VIDEO:
-            mime_type = 'video';
-            break;
-          case Constants.MEDIA_AUDIO:
-            mime_type = 'audio';
-            break;
-          case Constants.MEDIA_IMAGE:
-            mime_type = 'image';
-            break;
-          default:
-            mime_type = 'etc';
-        }
-      } else {
-        mime_type = 'etc';
-      }
-    }
-  }
-
-  return mime_type;
-};
-
 /**
  * @swagger
  * definitions:
@@ -119,7 +64,7 @@ export default class FileInfo extends JsonWrapper {
     this.file_size = upload_file_info.size;
     this.file_path = media_path + Constants.SEP + upload_file_info.new_file_name;
 
-    const file_type = await getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
+    const file_type = await Util.getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
     this.file_type = file_type;
 
     this.is_empty = false;
@@ -141,7 +86,7 @@ export default class FileInfo extends JsonWrapper {
     this.file_size = file_size;
     this.file_path = media_path + Constants.SEP + this.file_name;
 
-    const file_type = await getFileType(mime.lookup(file_path), file_name, file_path);
+    const file_type = await Util.getFileType(mime.lookup(file_path), file_name, file_path);
     this.file_type = file_type;
 
     this.is_empty = false;
