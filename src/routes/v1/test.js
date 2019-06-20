@@ -193,6 +193,8 @@ if (IS_DEV) {
     const root_dir = req.body.root;
     await Util.deleteDirectory(root_dir);
     log.d(req, 'delete dir', root_dir);
+
+    res.send(true);
   }));
 }
 
