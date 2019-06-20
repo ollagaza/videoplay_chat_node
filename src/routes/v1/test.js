@@ -171,11 +171,12 @@ if (IS_DEV) {
               seq_list.push(seq_path);
             }
           }
-          dir_list[file.name] = seq_list;
+          if (seq_list.length <= 0) {
+            await Util.deleteDirectory(root_dir + Constants.SEP + file.name);
+          } else {
+            dir_list[file.name] = seq_list;
+          }
         }
-      }
-      if (i > 20) {
-        break;
       }
     }
     res.json(dir_list);
