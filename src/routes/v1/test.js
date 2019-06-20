@@ -175,8 +175,8 @@ if (IS_DEV) {
           }
           log.d(req, 'seq_list', seq_list);
           if (seq_list.length <= 0) {
-            const delete_result = await Util.deleteDirectory(target_dir);
-            log.d(req, 'delete dir', target_dir, delete_result);
+            await Util.deleteDirectory(target_dir);
+            log.d(req, 'delete dir', target_dir);
           } else {
             dir_list[file.name] = seq_list;
           }
@@ -184,6 +184,15 @@ if (IS_DEV) {
       }
     }
     res.json(dir_list);
+  }));
+
+  routes.delete('/dir', wrap(async (req, res, next) => {
+    req.accepts('application/json');
+    req.setTimeout(0);
+    log.d(req, req.body);
+    const root_dir = req.body.root;
+    await Util.deleteDirectory(root_dir);
+    log.d(req, 'delete dir', root_dir);
   }));
 }
 

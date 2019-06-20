@@ -163,6 +163,7 @@ const deleteFile = async (target_path) => {
           log.e(null, 'Util.deleteFile', `path=${target_path}`, error);
           resolve(false);
         } else {
+          log.d(null, 'Util.deleteFile', `path=${target_path}`);
           resolve(true);
         }
       });
@@ -262,7 +263,8 @@ const deleteDirectory = async (path) => {
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
     } else {
-      await deleteFile( path + Constants.SEP + file.name );
+      const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
+      log.d(null, path + Constants.SEP + file.name, delete_file_result);
     }
   }
 };
