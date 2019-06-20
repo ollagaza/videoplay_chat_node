@@ -104,7 +104,7 @@ const verifyToken = async (req, require_roles=null) => {
     let has_role = true;
     if (require_roles != null) {
       if (Array.isArray(require_roles)) {
-        has_role = require_roles.find(role => role === role);
+        has_role = require_roles.find(require_role => require_role === role);
       } else {
         has_role = role >= require_roles;
       }

@@ -1,4 +1,5 @@
 import {Router} from 'express';
+import config from '@/config/config';
 
 require('babel-plugin-require-context-hook/register')();
 
@@ -75,11 +76,18 @@ const routes = Router();
  */
 
 const files = require.context('.', true, /\/[^.]+\.js$/);
+const demon_regex = /.+\/demon\//i;
 
 files.keys().forEach((key) => {
   if (key === './index.js') return;
 
   if (files(key).default) {
+    if (demon_regex.test(key)) {
+      if (!config.isDemon()) {
+        return;
+      }
+    }
+    console.log(key);
     routes.use(key.replace(/(\.)|(js)/g, ''), files(key).default);
   }
 });

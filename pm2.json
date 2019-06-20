@@ -20,7 +20,8 @@
       "env": {
         "NODE_ENV": "development",
         "PORT": 4000,
-        "LOG_PATH": "/var/log/surgstory_demon"
+        "LOG_PATH": "/var/log/surgstory_demon",
+        "SERVER_MODE": "demon"
       },
       "instances": 1
     }
