@@ -256,14 +256,33 @@ const createDirectory = async (dir_path) => {
   return await async_func;
 };
 
+const removeDirectory = async (dir_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(dir_path) ) ) {
+      resolve(true);
+    } else {
+      fs.rmdir(dir_path, (error) => {
+        if (error) {
+          log.e(null, 'Util.removeDirectory', `path=${dir_path}`, error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
 const deleteDirectory = async (path) => {
   const file_list = await getDirectoryFileList(path);
   for (let i = 0; i < file_list.length; i++) {
     const file = file_list[i];
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
-      const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      log.d(null, 'delete dir', path + Constants.SEP + file.name, delete_file_result);
+      const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
+      log.d(null, 'delete dir', path + Constants.SEP + file.name, delete_directory_result);
     } else {
       const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
       log.d(null, 'delete file', path + Constants.SEP + file.name, delete_file_result);
