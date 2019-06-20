@@ -136,6 +136,7 @@ if (IS_DEV) {
 
   routes.post('/dirs', wrap(async (req, res, next) => {
     req.accepts('application/json');
+    req.setTimeout(0);
     const dir_list = {};
     log.d(req, req.body);
     const root_dir = req.body.root;
@@ -144,7 +145,8 @@ if (IS_DEV) {
     for (let i = 0; i < file_list.length; i++) {
       const file = file_list[i];
       if (file.isDirectory()) {
-        const seq_dir = root_dir + Constants.SEP + file.name + Constants.SEP + 'SEQ';
+        const target_dir = root_dir + Constants.SEP + file.name;
+        const seq_dir = target_dir + Constants.SEP + 'SEQ';
         const seq_file_list = await Util.getDirectoryFileList(seq_dir);
         log.d(req, i, seq_dir);
         if (seq_file_list) {
@@ -171,8 +173,10 @@ if (IS_DEV) {
               seq_list.push(seq_path);
             }
           }
+          log.d(req, 'seq_list', seq_list);
           if (seq_list.length <= 0) {
-            await Util.deleteDirectory(root_dir + Constants.SEP + file.name);
+            const delete_result = await Util.deleteDirectory(target_dir);
+            log.d(req, 'delete dir', target_dir, delete_result);
           } else {
             dir_list[file.name] = seq_list;
           }
