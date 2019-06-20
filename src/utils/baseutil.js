@@ -282,12 +282,14 @@ const deleteDirectory = async (path) => {
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
       const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
-      log.d(null, 'delete dir', path + Constants.SEP + file.name, delete_directory_result);
+      log.d(null, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
     } else {
       const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      log.d(null, 'delete file', path + Constants.SEP + file.name, delete_file_result);
+      log.d(null, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
     }
   }
+  const delete_root_result = await removeDirectory( path );
+  log.d(null, 'delete root dir', path, delete_root_result);
 };
 
 const getDirectoryFileList = async (directory_path, dirent = true) => {
