@@ -67,4 +67,6 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
     .json(err)
 });
 
+log.d(null, 'NODE_APP_INSTANCE', process.env.NODE_APP_INSTANCE);
+
 export default app;

@@ -172,7 +172,7 @@ routes.put('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(re
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const id_list = req.body.id_list;
-  const result = await VideoProjectModel.updateStatus(id_list, 'T');
+  const result = await VideoProjectModel.updateStatus(member_seq, id_list, 'T');
 
   const output = new StdObject();
   output.add('result', result);
@@ -185,7 +185,7 @@ routes.delete('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const id_list = req.body.id_list;
-  const result = await VideoProjectModel.updateStatus(id_list, 'Y');
+  const result = await VideoProjectModel.updateStatus(member_seq, id_list, 'Y');
 
   const output = new StdObject();
   output.add('result', result);
@@ -195,8 +195,10 @@ routes.delete('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async
 
 routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
   const project_seq = req.params.project_seq;
-  const result = await VideoProjectModel.deleteById(project_seq);
+  const result = await VideoProjectModel.deleteById(member_seq, project_seq);
   const output = new StdObject();
   output.add('result', result);
   res.json(output);
