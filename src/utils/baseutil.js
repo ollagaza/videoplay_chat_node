@@ -262,9 +262,11 @@ const deleteDirectory = async (path) => {
     const file = file_list[i];
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
+      const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
+      log.d(null, 'delete dir', path + Constants.SEP + file.name, delete_file_result);
     } else {
       const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      log.d(null, path + Constants.SEP + file.name, delete_file_result);
+      log.d(null, 'delete file', path + Constants.SEP + file.name, delete_file_result);
     }
   }
 };
