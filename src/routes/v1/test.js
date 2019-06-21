@@ -59,7 +59,7 @@ if (IS_DEV) {
     const file_name = 'birdman.mkv';
     const url = 'd:\\\\movie\\마녀.mkv';
     const media_info = await Util.getMediaInfo(url);
-    const type = await Util.getFileType(mime.lookup(url), file_name, url);
+    const type = await Util.getFileType(url, file_name);
     const result = new StdObject();
     result.add('media_info', media_info);
     result.add('type', type);

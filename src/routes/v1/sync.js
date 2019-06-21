@@ -103,8 +103,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     await Util.createDirectory(media_directory + "Thumb");
     await Util.createDirectory(media_directory + "Trash");
 
-    await operation_media_model.syncMediaInfoByXml(operation_info);
-    const operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
+    const operation_media_info = await operation_media_model.syncMediaInfo(operation_info);
 
     const is_sync_complete = operation_info.is_analysis_complete && operation_media_info.is_trans_complete;
     log.d(req, `${log_prefix} load operation infos. [is_sync_complete: ${is_sync_complete}]`);
@@ -115,6 +114,13 @@ const syncOne = async (req, token_info, operation_seq) => {
 
     const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
 
+    await Util.deleteFile(media_directory + "Index1.xml");
+    await Util.deleteFile(media_directory + "Index2.xml");
+    await Util.deleteFile(media_directory + "Custom.xml");
+    await Util.deleteFile(media_directory + "History.xml");
+    await Util.deleteFile(media_directory + "Report.xml");
+    await Util.deleteFile(media_directory + "Clip.xml");
+
     log.d(req, `${log_prefix} hawkeye index list api`);
 
     const index2_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index2_list_api, req, log_prefix);
@@ -124,14 +130,6 @@ const syncOne = async (req, token_info, operation_seq) => {
     } catch (error) {
       log.e(req, `${log_prefix} hawkeye index1 list api`, error);
     }
-
-    await Util.deleteFile(media_directory + "Index1.xml");
-    await Util.deleteFile(media_directory + "Index2.xml");
-    await Util.deleteFile(media_directory + "Custom.xml");
-    await Util.deleteFile(media_directory + "History.xml");
-    await Util.deleteFile(media_directory + "Report.xml");
-    await Util.deleteFile(media_directory + "Clip.xml");
-
     await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index2_xml_info);
     let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
     log.d(req, `${log_prefix} hawkeye index2 list api result: [${index_list_api_result}]`);

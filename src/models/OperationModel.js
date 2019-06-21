@@ -148,6 +148,10 @@ export default class OperationModel extends ModelObject {
     return trash_path;
   };
 
+  updateStatusNormal = async (operation_seq, member_seq) => {
+    return await this.update({"seq": operation_seq, "member_seq": member_seq}, {status: 'Y', "modify_date": this.database.raw('NOW()')});
+  };
+
   updateStatusTrash = async (operation_seq_list, member_seq, is_delete) => {
     return await this.updateIn("seq", operation_seq_list, {status: is_delete ? 'Y' : 'T', "modify_date": this.database.raw('NOW()')}, { member_seq });
   };
@@ -180,18 +184,21 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_review: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
-  createOperation = async (body, member_seq) => {
-    const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
+  createOperation = async (body, member_seq, created_by_user = true, status = null) => {
     const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(-1, '회원정보가 없습니다.', 401)
     }
+    const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
     const content_id = await ContentIdManager.getContentId();
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
     operation_info.media_path = user_media_path + 'operation' + Constants.SEP + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
-    operation_info.created_by_user = 1;
+    operation_info.created_by_user = created_by_user ? 1 : 0;
     operation_info.content_id = content_id;
+    if (status) {
+      operation_info.status = status;
+    }
 
     const operation_seq = await this.create(operation_info, 'seq');
     operation_info.seq = operation_seq;
@@ -218,5 +225,10 @@ export default class OperationModel extends ModelObject {
   getUnSyncOperationInfo = async (member_seq) => {
     const where = {"member_seq": member_seq, analysis_status: 'N', 'is_analysis_complete': 0, status: 'Y'};
     return await this.getOperation(where, false);
+  };
+
+  remove = async (operation_info, member_seq) => {
+    const where = {"member_seq": member_seq, "seq": operation_info.seq};
+    return await this.delete(where);
   };
 }

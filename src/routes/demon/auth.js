@@ -28,7 +28,7 @@ routes.post('/', Wrap(async(req, res) => {
     throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
   }
 
-  member_info.role = roles.MEMBER;
+  member_info.role = roles.API;
 
   const token_result = await Auth.generateTokenByMemberInfo(member_info, true);
 

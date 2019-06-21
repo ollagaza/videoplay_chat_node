@@ -64,7 +64,7 @@ export default class FileInfo extends JsonWrapper {
     this.file_size = upload_file_info.size;
     this.file_path = media_path + Constants.SEP + upload_file_info.new_file_name;
 
-    const file_type = await Util.getFileType(upload_file_info.mimetype, this.file_name, this.file_path);
+    const file_type = await Util.getFileType(this.file_path, this.file_name);
     this.file_type = file_type;
 
     this.is_empty = false;
@@ -72,21 +72,22 @@ export default class FileInfo extends JsonWrapper {
     return this;
   };
 
-  getByFilePath = async (file_path, media_path, file_name) => {
+  getByFilePath = async (absolute_file_path, media_path, file_name) => {
     this.setIgnoreEmpty(true);
 
     this.setKeys([
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_stat = await Util.getFileStat(file_path);
+    const file_stat = await Util.getFileStat(absolute_file_path);
     const file_size = file_stat ? file_stat.size : 0;
 
+    this.full_path = absolute_file_path;
     this.file_name = file_name;
     this.file_size = file_size;
     this.file_path = media_path + Constants.SEP + this.file_name;
 
-    const file_type = await Util.getFileType(mime.lookup(file_path), file_name, file_path);
+    const file_type = await Util.getFileType(absolute_file_path, file_name);
     this.file_type = file_type;
 
     this.is_empty = false;

@@ -1,3 +1,4 @@
+import path from 'path';
 import ModelObject from '@/classes/ModelObject';
 import FileInfo from "@/classes/surgbook/FileInfo";
 import SmilInfo from '@/classes/surgbook/SmilInfo';
@@ -95,6 +96,32 @@ export default class VideoFileModel extends ModelObject {
     return true;
   };
 
+  createVideoFileByPath = async (operation_info, storage_seq, video_file_path) => {
+    const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
+    const file_name = path.basename(video_file_path);
+    const file_info = (await new FileInfo().getByFilePath(video_file_path, media_path, file_name)).toJSON();
+    file_info.storage_seq = storage_seq;
+
+    if (file_info.file_type === Constants.VIDEO) {
+      file_info.thumbnail = this.createVideoThumbnail(video_file_path, operation_info);
+      await this.create(file_info, 'seq');
+      return file_info;
+    }
+    return null;
+  };
+
+  createVideoFileByFileInfo = async (operation_info, storage_seq, file_info) => {
+    const video_full_path = file_info.full_path;
+    file_info = file_info.toJSON();
+    file_info.storage_seq = storage_seq;
+    if (file_info.file_type === Constants.VIDEO) {
+      file_info.thumbnail = this.createVideoThumbnail(video_full_path, operation_info);
+      await this.create(file_info, 'seq');
+      return true;
+    }
+    return false;
+  };
+
   syncVideoFiles = async (operation_info, operation_media_info, storage_seq) => {
     const smil_info = await new SmilInfo().loadFromXml(operation_info.media_directory, operation_media_info.smil_file_name);
 
@@ -116,7 +143,7 @@ export default class VideoFileModel extends ModelObject {
           const file_name = file.name;
           const video_file_path = video_directory + file_name;
           const file_info = (await new FileInfo().getByFilePath(video_file_path, media_path, file_name)).toJSON();
-          if (file_info.file_type === 'video') {
+          if (file_info.file_type === Constants.VIDEO) {
             if (smil_info.isTransVideo(file_name) || file_name === operation_media_info.video_file_name) {
               trans_video_count++;
               trans_video_size += file_info.file_size;
@@ -127,8 +154,8 @@ export default class VideoFileModel extends ModelObject {
             origin_video_size += file_info.file_size;
 
             if (!operation_info.created_by_user || operation_info.created_by_user === false) {
-              const upload_seq = await this.create(file_info, 'seq');
-              await this.createVideoThumbnail(video_file_path, operation_info, upload_seq);
+              file_info.thumbnail = this.createVideoThumbnail(video_file_path, operation_info);
+              await this.create(file_info, 'seq');
             }
           }
         }
@@ -137,7 +164,7 @@ export default class VideoFileModel extends ModelObject {
     return {origin_video_size, origin_video_count, trans_video_size, trans_video_count};
   };
 
-  createVideoThumbnail = async (origin_video_path, operation_info, upload_seq) => {
+  createVideoThumbnail = async (origin_video_path, operation_info) => {
     const dimension = await Util.getVideoDimension(origin_video_path);
     if (!dimension.error && dimension.width && dimension.height) {
 
@@ -149,12 +176,18 @@ export default class VideoFileModel extends ModelObject {
 
       const execute_result = await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, thumb_width, thumb_height);
       if ( execute_result.success && ( await Util.fileExists(thumbnail_full_path) ) ) {
-        try {
-          await this.updateThumb(upload_seq, thumbnail_path);
-        } catch (error) {
-          log.e(null, 'VideoFileModel.createVideoThumbnail', error);
-        }
+        return thumbnail_path;
       }
     }
-  }
+    return null;
+  };
+
+  createAndUpdateVideoThumbnail = async (origin_video_path, operation_info, file_seq) => {
+    const thumbnail_path = this.createVideoThumbnail(origin_video_path, operation_info);
+    try {
+      await this.updateThumb(file_seq, thumbnail_path);
+    } catch (error) {
+      log.e(null, 'VideoFileModel.createVideoThumbnail', error);
+    }
+  };
 }

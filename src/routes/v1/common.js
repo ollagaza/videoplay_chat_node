@@ -32,7 +32,7 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
     log.e(req, 'upload fail', upload_file_info);
     throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
   }
-  const file_type = await Util.getFileType(upload_file_info.mimetype, new_file_name, upload_file_path);
+  const file_type = await Util.getFileType(upload_file_path, new_file_name);
   if (file_type !== 'image') {
     log.e(req, 'file type is not image', upload_file_info, file_type);
     await Util.deleteFile(upload_file_path);
