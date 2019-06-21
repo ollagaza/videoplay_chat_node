@@ -127,4 +127,22 @@ export default class MemberModel extends ModelObject {
 
     return total_count > 0;
   };
+
+  checkPassword = async (member_info, password, db_update = true) => {
+    if (member_info.password.length <= 32) {
+      if (member_info.password !== Util.md5(password)){
+        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+      }
+      if (db_update) {
+        await this.upgradePassword(member_info.seq, password);
+      }
+    } else {
+      if (member_info.password !== this.encryptPassword(password)) {
+        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+      }
+      if (db_update) {
+        await this.updateLastLogin(member_info.seq);
+      }
+    }
+  };
 }
