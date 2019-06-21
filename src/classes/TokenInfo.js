@@ -39,10 +39,10 @@ export default class TokenInfo {
   }
 
   isAdmin = () => {
-    return this.getRole() == roles.ADMIN;
+    return this.getRole() === roles.ADMIN;
   };
 
   isMember = () => {
-    return this.getRole() == roles.ADMIN;
+    return this.getRole() === roles.MEMBER;
   };
 }

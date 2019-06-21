@@ -88,14 +88,19 @@ const fileExists = async (file_path, permission=null) => {
     if (!permission) {
       permission = fs.constants.W_OK;
     }
-    fs.access(file_path, permission, (error) => {
-      if (error) {
-        // log.e(null, 'Util.fileExists', error);
-        resolve(false);
-      } else {
-        resolve(true);
-      }
-    });
+    try {
+      fs.access(file_path, permission, (error) => {
+        if (error) {
+          // log.e(null, 'Util.fileExists', error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    } catch (e) {
+      log.e(null, 'fileExists', file_path, e);
+      resolve(false);
+    }
   });
 
   return await async_func;
@@ -158,6 +163,7 @@ const deleteFile = async (target_path) => {
           log.e(null, 'Util.deleteFile', `path=${target_path}`, error);
           resolve(false);
         } else {
+          log.d(null, 'Util.deleteFile', `path=${target_path}`);
           resolve(true);
         }
       });
@@ -250,25 +256,49 @@ const createDirectory = async (dir_path) => {
   return await async_func;
 };
 
+const removeDirectory = async (dir_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(dir_path) ) ) {
+      resolve(true);
+    } else {
+      fs.rmdir(dir_path, (error) => {
+        if (error) {
+          log.e(null, 'Util.removeDirectory', `path=${dir_path}`, error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
 const deleteDirectory = async (path) => {
   const file_list = await getDirectoryFileList(path);
   for (let i = 0; i < file_list.length; i++) {
     const file = file_list[i];
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
+      const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
+      log.d(null, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
     } else {
-      await deleteFile( path + Constants.SEP + file.name );
+      const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
+      log.d(null, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
     }
   }
+  const delete_root_result = await removeDirectory( path );
+  log.d(null, 'delete root dir', path, delete_root_result);
 };
 
-const getDirectoryFileList = async (directory_path) => {
+const getDirectoryFileList = async (directory_path, dirent = true) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(directory_path) ) ) {
       log.d(null, 'Util.getDirectoryFileList', `directory not exists. path=${directory_path}`);
       resolve([]);
     } else {
-      fs.readdir(directory_path, {withFileTypes: true}, (error, files) => {
+      fs.readdir(directory_path, {withFileTypes: dirent}, (error, files) => {
         if (error) {
           log.e(null, 'Util.getDirectoryFileList', `path=${directory_path}`, error);
           resolve([]);
@@ -418,10 +448,10 @@ const getMediaInfo = async (media_path) => {
         if (media_info && media_info.length > 0) {
           for (let i = 0; i < media_info.length; i++) {
             const track = media_info[i];
-            if (track.$) {
-              const track_type = track.$.type;
-              if (track_type === 'Video') {
-                media_result.media_type = constants.MEDIA_VIDEO;
+            if (track.$ && track.$.type) {
+              const track_type = track.$.type.toLowerCase();
+              if (track_type === constants.VIDEO) {
+                media_result.media_type = constants.VIDEO;
                 media_result.media_info.width = getInt(getXmlText(track.Width));
                 media_result.media_info.height = getInt(getXmlText(track.Height));
                 media_result.media_info.fps = getFloat(getXmlText(track.FrameRate));
@@ -429,15 +459,15 @@ const getMediaInfo = async (media_path) => {
                 media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
                 media_result.success = true;
                 break;
-              } else if (track_type === 'Audio') {
-                media_result.media_type = constants.MEDIA_AUDIO;
+              } else if (track_type === constants.AUDIO) {
+                media_result.media_type = constants.AUDIO;
                 media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
                 media_result.media_info.sample_rate = Math.round(getFloat(getXmlText(track.SamplingRate)));
                 media_result.media_info.bit_depth = Math.round(getFloat(getXmlText(track.BitDepth)));
                 media_result.success = true;
                 break;
-              } else if (track_type === 'Image') {
-                media_result.media_type = constants.MEDIA_IMAGE;
+              } else if (track_type === constants.IMAGE) {
+                media_result.media_type = constants.IMAGE;
                 media_result.media_info.width = getInt(getXmlText(track.Width));
                 media_result.media_info.height = getInt(getXmlText(track.Height));
                 media_result.success = true;
@@ -625,17 +655,17 @@ const getXmlText = (element) => {
 const getFileType = async (mime_type, file_name, file_path) => {
   const file_ext = getFileExt(file_name);
   if (file_ext === 'smil') {
-    return 'xml';
+    return 'smil';
   }
 
   const media_info = await getMediaInfo(file_path);
   switch (media_info.media_type) {
-    case Constants.MEDIA_VIDEO:
-      return 'video';
-    case Constants.MEDIA_AUDIO:
-      return 'audio';
-    case Constants.MEDIA_IMAGE:
-      return 'image';
+    case Constants.VIDEO:
+      return Constants.VIDEO;
+    case Constants.AUDIO:
+      return Constants.AUDIO;
+    case Constants.IMAGE:
+      return Constants.IMAGE;
     default:
       break;
   }
@@ -644,11 +674,13 @@ const getFileType = async (mime_type, file_name, file_path) => {
     mime_type = 'etc';
   } else {
     mime_type = mime_type.toLowerCase();
-    if (mime_type.startsWith('video')) {
-      mime_type = 'video';
-    } else if (mime_type.startsWith('image')) {
-      mime_type = 'image';
-    }  else if (mime_type.indexOf('text') >= 0) {
+    if (mime_type.startsWith(Constants.VIDEO)) {
+      mime_type = Constants.VIDEO;
+    } else if (mime_type.startsWith(Constants.IMAGE)) {
+      mime_type = Constants.IMAGE;
+    } else if (mime_type.indexOf(Constants.AUDIO) >= 0) {
+      mime_type = Constants.AUDIO;
+    } else if (mime_type.indexOf('text') >= 0) {
       mime_type = 'text';
     } else if (file_ext === 'xls' || file_ext === 'xlsx' || mime_type.indexOf('ms-excel') >= 0 || mime_type.indexOf('spreadsheetml') >= 0) {
       mime_type = 'excel';
@@ -658,8 +690,6 @@ const getFileType = async (mime_type, file_name, file_path) => {
       mime_type = 'powerpoint';
     } else if (mime_type.indexOf('pdf') >= 0) {
       mime_type = 'pdf';
-    } else if (mime_type.indexOf('audio') >= 0) {
-      mime_type = 'audio';
     } else if (mime_type.indexOf('compressed') >= 0 || mime_type.indexOf('zip') >= 0 || mime_type.indexOf('tar') >= 0) {
       mime_type = 'archive';
     } else if (mime_type.indexOf('hwp') >= 0) {

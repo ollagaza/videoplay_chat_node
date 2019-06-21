@@ -93,12 +93,12 @@ VideoProjectSchema.statics.updateProgress = function( id, progress ) {
   return this.updateOne( { _id: id }, update );
 };
 
-VideoProjectSchema.statics.updateStatus = function( id_list, status ) {
+VideoProjectSchema.statics.updateStatus = function( member_seq, id_list, status ) {
   const update = {
     status,
     modify_date: Date.now()
   };
-  return this.update( { _id: { $in: id_list } }, update );
+  return this.update( { member_seq: member_seq, _id: { $in: id_list } }, update );
 };
 
 VideoProjectSchema.statics.updateFavorite = function( id, is_favorite ) {
@@ -125,8 +125,8 @@ VideoProjectSchema.statics.findByOperationSeq = function( member_seq, operation_
   return this.find( { member_seq: member_seq, operation_seq_list: { "$in": operation_seq_list } }, projection );
 };
 
-VideoProjectSchema.statics.deleteById = function( id ) {
-  return this.findByIdAndDelete( id );
+VideoProjectSchema.statics.deleteById = function( member_seq, id ) {
+  return this.findOneAndDelete( { member_seq: member_seq, _id: id } );
 };
 
 export const VideoProjectModel = mongoose.model( 'VideoProject', VideoProjectSchema );

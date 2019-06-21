@@ -359,4 +359,4 @@ routes.post('/operation/resync/member/:member_seq(\\d+)', Auth.isAuthenticated()
 }));
 
 export default routes;
-export {syncOne};
+export { syncOne, reSync };

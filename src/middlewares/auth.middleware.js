@@ -27,8 +27,11 @@ const getToken = (req) => {
   return null;
 };
 
-const generateTokenByMemberInfo = (member_info) => {
-  const expire = 24 * HOUR;
+const generateTokenByMemberInfo = (member_info, un_limit = false) => {
+  const expire = un_limit ? Number.MAX_VALUE : 24 * HOUR;
+  if (un_limit) {
+    member_info.role = roles.UN_LIMIT;
+  }
   const token_info = new TokenInfo();
   token_info.setTokenByMemberInfo(member_info);
 
@@ -101,7 +104,7 @@ const verifyToken = async (req, require_roles=null) => {
     let has_role = true;
     if (require_roles != null) {
       if (Array.isArray(require_roles)) {
-        has_role = require_roles.find(role => role === role);
+        has_role = require_roles.find(require_role => require_role === role);
       } else {
         has_role = role >= require_roles;
       }

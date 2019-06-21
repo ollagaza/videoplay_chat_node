@@ -1,15 +1,29 @@
 {
-  "apps": [{
-    "name": "surgstory",
-    "script": "dist/index.js",
-    "watch": false,
-    "env": {
-      "NODE_ENV": "production",
-      "API_PORT": 3000,
-      "LOG_PATH": "/var/log/surgstory"
+  "apps": [
+    {
+      "name": "surgstory",
+      "script": "dist/index.js",
+      "watch": false,
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": 3000,
+        "LOG_PATH": "/var/log/surgstory"
+      },
+      "exec_mode": "cluster",
+      "instances": 0,
+      "instance_var": "INSTANCE_ID"
     },
-    "exec_mode": "cluster",
-    "instances": 0,
-    "instance_var": "INSTANCE_ID"
-  }]
+    {
+      "name": "surgstory_demon",
+      "script": "dist/index.js",
+      "watch": false,
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": 4000,
+        "LOG_PATH": "/var/log/surgstory_demon",
+        "SERVER_MODE": "demon"
+      },
+      "instances": 1
+    }
+  ]
 }

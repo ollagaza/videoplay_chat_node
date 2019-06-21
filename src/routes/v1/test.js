@@ -17,6 +17,7 @@ import ContentIdManager from '@/classes/ContentIdManager'
 import {VideoProjectModel} from '@/db/mongodb/model/VideoProject';
 import SequenceModel from '@/models/sequence/SequenceModel';
 import text2png from "../../utils/textToImage";
+import Constants from '@/config/constants';
 
 const IS_DEV = config.isDev();
 
@@ -54,9 +55,15 @@ if (IS_DEV) {
     res.json(video_xml_json);
   }));
 
-  routes.get('/reg', wrap(async (req, res) => {
-    const url = '\\\\192.168.1.54\\dev\\data/EHMD/OBG/강소라/180504_000167275_W_385/SEQ/Trans_180504_000167275_W_385_SEQ.mp4';
-    res.send(await Util.getMediaInfo(url));
+  routes.get('/media', wrap(async (req, res) => {
+    const file_name = 'birdman.mkv';
+    const url = 'd:\\\\movie\\마녀.mkv';
+    const media_info = await Util.getMediaInfo(url);
+    const type = await Util.getFileType(mime.lookup(url), file_name, url);
+    const result = new StdObject();
+    result.add('media_info', media_info);
+    result.add('type', type);
+    res.json(result);
   }));
 
   routes.get('/co/:code', wrap(async (req, res) => {
@@ -125,6 +132,69 @@ if (IS_DEV) {
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const forward_result = await Util.forward(url, 'POST', token_result.token);
     res.json(forward_result);
+  }));
+
+  routes.post('/dirs', wrap(async (req, res, next) => {
+    req.accepts('application/json');
+    req.setTimeout(0);
+    const dir_list = {};
+    log.d(req, req.body);
+    const root_dir = req.body.root;
+    const file_list = await Util.getDirectoryFileList(root_dir);
+    const trans_reg = /^(Proxy|Trans)_/i;
+    for (let i = 0; i < file_list.length; i++) {
+      const file = file_list[i];
+      if (file.isDirectory()) {
+        const target_dir = root_dir + Constants.SEP + file.name;
+        const seq_dir = target_dir + Constants.SEP + 'SEQ';
+        const seq_file_list = await Util.getDirectoryFileList(seq_dir);
+        log.d(req, i, seq_dir);
+        if (seq_file_list) {
+          const seq_list = [];
+          for (let j = 0; j < seq_file_list.length; j++) {
+            const seq_file = seq_file_list[j];
+            if (!seq_file.isFile()) {
+              continue;
+            }
+            const file_ext = Util.getFileExt(seq_file.name);
+            if (file_ext === 'smil') {
+              continue;
+            }
+            const seq_path = seq_dir + Constants.SEP + seq_file.name;
+            const file_info = await Util.getFileStat(seq_path);
+            if (file_info.size <= 0) {
+              continue;
+            }
+            if (trans_reg.test(seq_file.name)) {
+              continue;
+            }
+            const media_info = await Util.getMediaInfo(seq_path);
+            if (media_info.media_type === Constants.VIDEO) {
+              seq_list.push(seq_path);
+            }
+          }
+          log.d(req, 'seq_list', seq_list);
+          if (seq_list.length <= 0) {
+            await Util.deleteDirectory(target_dir);
+            log.d(req, 'delete dir', target_dir);
+          } else {
+            dir_list[file.name] = seq_list;
+          }
+        }
+      }
+    }
+    res.json(dir_list);
+  }));
+
+  routes.delete('/dir', wrap(async (req, res, next) => {
+    req.accepts('application/json');
+    req.setTimeout(0);
+    log.d(req, req.body);
+    const root_dir = req.body.root;
+    await Util.deleteDirectory(root_dir);
+    log.d(req, 'delete dir', root_dir);
+
+    res.send(true);
   }));
 }
 

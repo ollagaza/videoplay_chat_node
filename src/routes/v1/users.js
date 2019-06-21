@@ -214,8 +214,8 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
 
-  if(token_info.getId() != member_seq){
-    if(token_info.getRole() == roles.MEMBER){
+  if(token_info.getId() !== member_seq){
+    if(token_info.getRole() === roles.MEMBER){
       throw new StdObject(-1, "잘못된 요청입니다.", 403);
     }
   }
@@ -235,6 +235,43 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
   });
 
   res.json(new StdObject());
+}));
+
+routes.put('/change_password/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async(req, res) => {
+  req.accepts('application/json');
+
+  const token_info = req.token_info;
+  const member_seq = Util.parseInt(req.params.member_seq);
+
+  if(token_info.getId() !== member_seq){
+    if(token_info.getRole() === roles.MEMBER){
+      throw new StdObject(-1, "잘못된 요청입니다.", 403);
+    }
+  }
+
+  if (Util.trim(req.body.old_password) === '') {
+    throw new StdObject(-1, "잘못된 요청입니다.", 400);
+  }
+
+  if (req.body.password !== req.body.password_confirm) {
+    throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
+  }
+
+  const output = new StdObject();
+  let is_change = false;
+  await database.transaction(async(trx) => {
+    const member_model = new MemberModel({ database: trx });
+    const member_info = await member_model.getMemberInfo(member_seq);
+
+    await member_model.checkPassword(member_info, req.body.old_password, false);
+
+    // 비밀번호 변경 정보 수정
+    await member_model.changePassword(member_seq, req.body.password);
+    is_change = true;
+  });
+
+  output.add('is_change', is_change);
+  res.json(output);
 }));
 
 routes.post('/find/id', Wrap(async(req, res) => {
@@ -327,7 +364,7 @@ routes.post('/check_auth_code', Wrap(async(req, res) => {
   res.json(output);
 }));
 
-routes.post('/change_password', Wrap(async(req, res) => {
+routes.post('/reset_password', Wrap(async(req, res) => {
   req.accepts('application/json');
 
   if (req.body.password !== req.body.password_confirm) {
