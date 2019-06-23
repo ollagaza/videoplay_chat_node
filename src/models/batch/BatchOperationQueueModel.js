@@ -5,7 +5,7 @@ export default class BatchOperationQueueModel extends ModelObject {
   constructor(...args) {
     super(...args);
 
-    this.table_name = 'sync_operation_queue';
+    this.table_name = 'batch_operation_queue';
     this.selectable_fields = ['*'];
   }
 
