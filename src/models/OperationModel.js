@@ -205,6 +205,7 @@ export default class OperationModel extends ModelObject {
 
     const service_info = service_config.getServiceInfo();
     const media_root = service_info.media_root;
+    operation_info.media_root = media_root;
     operation_info.media_directory = Util.getMediaDirectory(media_root, operation_info.media_path);
 
     return operation_info;

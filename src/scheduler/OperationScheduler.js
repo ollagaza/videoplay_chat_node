@@ -186,7 +186,7 @@ class OperationScheduler {
       log.d(null, this.log_prefix, 'copyFiles - file_info', origin_file, file_info.toJSON());
       if (file_info.file_type === Constants.VIDEO) {
         const copy_file_name = 'copy_' + file_name;
-        const video_file_path = video_directory + Constants.SEP + file_name;
+        const video_file_path = video_directory + Constants.SEP + copy_file_name;
         log.d(null, this.log_prefix, 'copyFiles - copy', origin_file, video_file_path);
         const copy_result = await Util.copyFile(origin_file, video_file_path);
         if (!copy_result) {

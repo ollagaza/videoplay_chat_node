@@ -941,9 +941,15 @@ export default {
         "bearer": token
       };
     }
-    if (!isEmpty(data)) {
-      request_params = _.merge(request_params, data);
+    if (data && !isEmpty(data)) {
+      if (method.toUpperCase() === 'GET') {
+        request_params.qs = data;
+      } else {
+        request_params.body = data;
+        request_params.json = true;
+      }
     }
+    log.d(null, request_params);
 
     const forward = request(request_params);
     try{
