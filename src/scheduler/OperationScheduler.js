@@ -211,15 +211,17 @@ class OperationScheduler {
     try {
       const video_file_model = new VideoFileModel({database});
       for (let i = 0; i < video_file_list.length; i++) {
-        log.d(null, this.log_prefix, 'copyFiles - add video file info', video_file_list[i]);
-        await video_file_model.createVideoFileByFileInfo(operation_info, operation_info.storage_seq, video_file_list[i]);
+        const file_info = video_file_list[i];
+        log.d(null, this.log_prefix, 'copyFiles - create thumbnail', file_info.full_path);
+        file_info.thumbnail = await video_file_model.createVideoThumbnail(file_info.full_path, operation_info)
       }
 
       await database.transaction(async(trx) => {
         const video_file_model = new VideoFileModel({database: trx});
         for (let i = 0; i < video_file_list.length; i++) {
-          log.d(null, this.log_prefix, 'copyFiles - add video file info', video_file_list[i]);
-          await video_file_model.createVideoFileByFileInfoJSON(operation_info, operation_info.storage_seq, video_file_list[i]);
+          const file_info = video_file_list[i];
+          log.d(null, this.log_prefix, 'copyFiles - add video file info', file_info.full_path);
+          await video_file_model.createVideoFileByFileInfoJSON(operation_info, operation_info.storage_seq, file_info);
         }
       });
     } catch (error) {
