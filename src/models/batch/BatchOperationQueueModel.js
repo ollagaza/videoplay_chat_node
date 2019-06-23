@@ -1,6 +1,7 @@
 import ModelObject from '@/classes/ModelObject';
+import log from "@/classes/Logger";
 
-export default class SyncOperationQueueModel extends ModelObject {
+export default class BatchOperationQueueModel extends ModelObject {
   constructor(...args) {
     super(...args);
 
@@ -35,10 +36,12 @@ export default class SyncOperationQueueModel extends ModelObject {
     }
   };
 
-  updateStatus = async (sync_info, status, is_complete = false) => {
+  updateStatus = async (sync_info, status, is_complete = false, error = null) => {
+    const error_str = this.getErrorString(error);
     const update_params = {
       "status": status,
       "is_complete": is_complete ? 1 : 0,
+      "error": error_str,
       "modify_date": this.database.raw('NOW()')
     };
     await this.update({"seq": sync_info.seq}, update_params);
@@ -71,28 +74,40 @@ export default class SyncOperationQueueModel extends ModelObject {
   };
 
   onJobError = async (sync_info, error) => {
-    if (typeof error !== 'string') {
-      error = JSON.stringify(error);
-    }
+    const error_str = this.getErrorString(error);
     const update_params = {
       "status": 'E',
       "is_complete": 0,
-      "error": error,
+      "error": error_str,
       "modify_date": this.database.raw('NOW()')
     };
     await this.update({"seq": sync_info.seq}, update_params);
   };
 
   onJobErrorByOperationSeq = async (operation_seq, error) => {
-    if (typeof error !== 'string') {
-      error = JSON.stringify(error);
-    }
+    const error_str = this.getErrorString(error);
     const update_params = {
       "status": 'E',
       "is_complete": 0,
-      "error": error,
+      "error": error_str,
       "modify_date": this.database.raw('NOW()')
     };
     await this.update({"operation_seq": operation_seq}, update_params);
+  };
+
+  getErrorString = (error) => {
+    if (!error) {
+      return null;
+    }
+    if (typeof error !== 'string') {
+      if (error.stack) {
+        error = JSON.stringify(error.stack);
+      } else if (error.toJSON) {
+        error = JSON.stringify(error.toJSON());
+      } else {
+        error = JSON.stringify(error);
+      }
+    }
+    return error;
   };
 }

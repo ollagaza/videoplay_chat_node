@@ -115,7 +115,7 @@ export default class VideoFileModel extends ModelObject {
     file_info = file_info.toJSON();
     file_info.storage_seq = storage_seq;
     if (file_info.file_type === Constants.VIDEO) {
-      file_info.thumbnail = this.createVideoThumbnail(video_full_path, operation_info);
+      file_info.thumbnail = await this.createVideoThumbnail(video_full_path, operation_info);
       await this.create(file_info, 'seq');
       return true;
     }
@@ -165,6 +165,7 @@ export default class VideoFileModel extends ModelObject {
   };
 
   createVideoThumbnail = async (origin_video_path, operation_info) => {
+    log.d(null, origin_video_path);
     const dimension = await Util.getVideoDimension(origin_video_path);
     if (!dimension.error && dimension.width && dimension.height) {
 

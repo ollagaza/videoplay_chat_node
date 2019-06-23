@@ -22,6 +22,7 @@ import log from "@/classes/Logger";
 import IndexInfo from "@/classes/surgbook/IndexInfo";
 import SendMail from '@/classes/SendMail';
 import Constants from '@/config/constants';
+import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
 
 const routes = Router();
 
@@ -78,67 +79,79 @@ const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {
 
 const syncOne = async (req, token_info, operation_seq) => {
   log.d(req, `sync_one[seq: ${operation_seq}] start`);
-  await database.transaction(async(trx) => {
-    const service_info = service_config.getServiceInfo();
+  const service_info = service_config.getServiceInfo();
 
-    const operation_model = new OperationModel({ database: trx });
-    const operation_media_model = new OperationMediaModel({ database: trx });
-    const operation_storage_model = new OperationStorageModel({ database: trx });
+  let content_id = null;
+  let operation_info = null;
+  let operation_media_info = null;
+
+  let log_prefix = null;
+  let is_sync_complete = false;
+
+  await database.transaction(async(trx) => {
+    const operation_model = new OperationModel({database: trx});
+    const operation_media_model = new OperationMediaModel({database: trx});
 
     const operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400);
     }
-    const media_directory = operation_info.media_directory;
-    const content_id = operation_info.content_id;
+    content_id = operation_info.content_id;
     if (Util.isEmpty(content_id)) {
       throw new StdObject(2, '등록된 컨텐츠 아이디가 없습니다.', 400);
     }
 
-    const log_prefix = `sync_one[seq: ${operation_seq}, content_id: ${content_id}]`;
+    log_prefix = `sync_one[seq: ${operation_seq}, content_id: ${content_id}]`;
 
-    await Util.createDirectory(media_directory + "SEQ");
-    await Util.createDirectory(media_directory + "Custom");
-    await Util.createDirectory(media_directory + "REF");
-    await Util.createDirectory(media_directory + "Thumb");
-    await Util.createDirectory(media_directory + "Trash");
+    operation_media_info = await operation_media_model.syncMediaInfo(operation_info);
 
-    const operation_media_info = await operation_media_model.syncMediaInfo(operation_info);
-
-    const is_sync_complete = operation_info.is_analysis_complete && operation_media_info.is_trans_complete;
+    is_sync_complete = operation_info.is_analysis_complete && operation_media_info.is_trans_complete;
     log.d(req, `${log_prefix} load operation infos. [is_sync_complete: ${is_sync_complete}]`);
-    if (!is_sync_complete) {
-      log.d(req, `${log_prefix} sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_info.is_trans_complete}]. process end`);
-      return;
-    }
+  });
 
+  if (!is_sync_complete) {
+    log.d(req, `${log_prefix} sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_info.is_trans_complete}]. process end`);
+    return;
+  }
+
+  const media_directory = operation_info.media_directory;
+
+  await Util.createDirectory(media_directory + "SEQ");
+  await Util.createDirectory(media_directory + "Custom");
+  await Util.createDirectory(media_directory + "REF");
+  await Util.createDirectory(media_directory + "Thumb");
+  await Util.createDirectory(media_directory + "Trash");
+
+  await Util.deleteFile(media_directory + "Index1.xml");
+  await Util.deleteFile(media_directory + "Index2.xml");
+  await Util.deleteFile(media_directory + "Custom.xml");
+  await Util.deleteFile(media_directory + "History.xml");
+  await Util.deleteFile(media_directory + "Report.xml");
+  await Util.deleteFile(media_directory + "Clip.xml");
+
+  log.d(req, `${log_prefix} hawkeye index list api`);
+
+  const index2_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index2_list_api, req, log_prefix);
+  await Util.writeXmlFile(media_directory, 'Index2.xml', index2_xml_info);
+  let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
+  log.d(req, `${log_prefix} hawkeye index2 list api result: [${index_list_api_result}]`);
+
+  // let index1_xml_info = null;
+  // try {
+  //   index1_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index1_list_api, req, log_prefix);
+  // } catch (error) {
+  //   log.e(req, `${log_prefix} hawkeye index1 list api`, error);
+  // }
+  // if (index1_xml_info) {
+  //   await Util.writeXmlFile(media_directory, 'Index1.xml', index1_xml_info);
+  //   index_list_api_result = "인덱스1 개수: " + (index1_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index1.xml';
+  //   log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
+  // }
+
+  await database.transaction(async(trx) => {
+
+    const operation_storage_model = new OperationStorageModel({database: trx});
     const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
-
-    await Util.deleteFile(media_directory + "Index1.xml");
-    await Util.deleteFile(media_directory + "Index2.xml");
-    await Util.deleteFile(media_directory + "Custom.xml");
-    await Util.deleteFile(media_directory + "History.xml");
-    await Util.deleteFile(media_directory + "Report.xml");
-    await Util.deleteFile(media_directory + "Clip.xml");
-
-    log.d(req, `${log_prefix} hawkeye index list api`);
-
-    const index2_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index2_list_api, req, log_prefix);
-    let index1_xml_info = null;
-    try {
-      index1_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index1_list_api, req, log_prefix);
-    } catch (error) {
-      log.e(req, `${log_prefix} hawkeye index1 list api`, error);
-    }
-    await Util.writeXmlFile(operation_info.media_directory, 'Index2.xml', index2_xml_info);
-    let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
-    log.d(req, `${log_prefix} hawkeye index2 list api result: [${index_list_api_result}]`);
-
-    if (index1_xml_info) {
-      await Util.writeXmlFile(operation_info.media_directory, 'Index1.xml', index1_xml_info);
-      index_list_api_result = "인덱스1 개수: " + (index1_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index1.xml';
-      log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
-    }
 
     const storage_seq = operation_storage_info.seq;
     operation_info.storage_seq = storage_seq;
@@ -146,12 +159,8 @@ const syncOne = async (req, token_info, operation_seq) => {
     const video_sync_result = await new VideoFileModel({database: trx}).syncVideoFiles(operation_info, operation_media_info, storage_seq);
     const refer_sync_result = await new ReferFileModel({database: trx}).syncReferFiles(operation_info, storage_seq);
 
-    const index1_info_list = await new IndexModel({ database: trx }).getIndexList(operation_info, 1);
     const index2_info_list = await new IndexModel({ database: trx }).getIndexList(operation_info, 2);
     const clip_info = await new ClipModel({ database: trx }).getClipInfo(operation_info);
-
-    const index1_file_size = await Util.getDirectoryFileSize(operation_info.media_directory + 'INX1');
-    const index2_file_size = await Util.getDirectoryFileSize(operation_info.media_directory + 'INX2');
 
     const update_storage_info = {};
     update_storage_info.origin_video_size = Util.byteToMB(video_sync_result.origin_video_size);
@@ -160,9 +169,9 @@ const syncOne = async (req, token_info, operation_seq) => {
     update_storage_info.trans_video_count = video_sync_result.trans_video_count;
     update_storage_info.refer_file_size = Util.byteToMB(refer_sync_result.refer_file_size);
     update_storage_info.refer_file_count = refer_sync_result.refer_file_count;
-    update_storage_info.index1_file_size = Util.byteToMB(index1_file_size);
-    update_storage_info.index1_file_count = index1_info_list.length;
-    update_storage_info.index2_file_size = Util.byteToMB(index2_file_size);
+    update_storage_info.index1_file_size = 0;
+    update_storage_info.index1_file_count = 0;
+    update_storage_info.index2_file_size = 0;
     update_storage_info.index2_file_count = index2_info_list.length;
     update_storage_info.index3_file_count = clip_info.clip_list.length;
     update_storage_info.clip_count = clip_info.clip_seq_list.length;
@@ -179,23 +188,28 @@ const syncOne = async (req, token_info, operation_seq) => {
       operation_update_param.analysis_status = operation_info.analysis_status === 'R' ? 'R' : 'N';
     }
 
+    const operation_model = new OperationModel({database: trx});
     await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
-
-    if (operation_info.analysis_status !== 'Y' && is_sync_complete) {
-      const send_mail = new SendMail();
-      const mail_to = ["hwj@mteg.co.kr"];
-      const subject = "동영상 분석 완료";
-      let context = "";
-      context += `완료 일자: ${Util.currentFormattedDate()}<br/>\n`;
-      context += `수술명: ${operation_info.operation_name}<br/>\n`;
-      context += `수술일자: ${operation_info.operation_date}<br/>\n`;
-      context += `content_id: ${content_id}<br/>\n`;
-      context += `큐레이션 URL: ${service_info.service_url}/v2/curation/${operation_seq}<br/>\n`;
-      await send_mail.sendMailHtml(mail_to, subject, context);
-    }
 
     log.d(req, `${log_prefix} complete`);
   });
+
+  if (is_sync_complete) {
+    await new BatchOperationQueueModel({ database }).onJobComplete(operation_seq);
+  }
+
+  if (operation_info.analysis_status !== 'Y' && is_sync_complete) {
+    const send_mail = new SendMail();
+    const mail_to = ["hwj@mteg.co.kr"];
+    const subject = "동영상 분석 완료";
+    let context = "";
+    context += `완료 일자: ${Util.currentFormattedDate()}<br/>\n`;
+    context += `수술명: ${operation_info.operation_name}<br/>\n`;
+    context += `수술일자: ${operation_info.operation_date}<br/>\n`;
+    context += `content_id: ${content_id}<br/>\n`;
+    context += `큐레이션 URL: ${service_info.service_url}/v2/curation/${operation_seq}<br/>\n`;
+    await send_mail.sendMailHtml(mail_to, subject, context);
+  }
 };
 
 const reSync = async (req, operation_seq) => {

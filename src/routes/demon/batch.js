@@ -1,20 +1,15 @@
 import {Router} from 'express';
-import service_config from '@/config/service.config';
 import roles from "@/config/roles";
 import Auth from '@/middlewares/auth.middleware';
 import Wrap from '@/utils/express-async';
-import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
-import log from "@/classes/Logger";
-import MemberModel from '@/models/MemberModel';
-import SyncOperationQueueModel from '@/models/demon/SyncOperationQueueModel';
-import Constants from '@/config/constants';
+import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
 import OperationScheduler from '@/scheduler/OperationScheduler';
 
 const routes = Router();
 
-routes.post('/', Auth.isAuthenticated(roles.API), Wrap(async(req, res) => {
+routes.post('/operation', Auth.isAuthenticated(roles.API), Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const token_info = req.token_info;
@@ -24,7 +19,7 @@ routes.post('/', Auth.isAuthenticated(roles.API), Wrap(async(req, res) => {
   let success = false;
   let message = '';
   await database.transaction(async(trx) => {
-    const sync_model = new SyncOperationQueueModel( { database: trx } );
+    const sync_model = new BatchOperationQueueModel( { database: trx } );
     if (await sync_model.verifyKey(member_seq, req.body.key)) {
       await sync_model.push(member_seq, req.body.key, req.body.data);
       success = true;
@@ -36,6 +31,10 @@ routes.post('/', Auth.isAuthenticated(roles.API), Wrap(async(req, res) => {
   output.add('success', success);
   output.add('message', message);
   res.json(output);
+
+  if (success) {
+    OperationScheduler.onNewJob();
+  }
 }));
 
 export default routes;

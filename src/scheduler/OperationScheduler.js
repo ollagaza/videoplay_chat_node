@@ -8,7 +8,7 @@ import database from '@/config/database';
 import log from "@/classes/Logger";
 import StdObject from '@/classes/StdObject';
 import FileInfo from "@/classes/surgbook/FileInfo";
-import SyncOperationQueueModel from '@/models/demon/SyncOperationQueueModel';
+import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
 import OperationModel from '@/models/OperationModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import OperationStorageModel from '@/models/OperationStorageModel';
@@ -18,8 +18,8 @@ import Constants from '@/config/constants';
 class OperationScheduler {
   constructor() {
     this.current_job = null;
+    this.is_process = false;
     this.log_prefix = 'OperationScheduler';
-    this.startSchedule();
   }
 
   startSchedule = () => {
@@ -27,7 +27,7 @@ class OperationScheduler {
       if (this.current_job) {
         log.d(null, this.log_prefix, 'startSchedule cancel. current_job is not null');
       } else {
-        this.current_job = scheduler.scheduleJob('30 * * * * *', this.jobExecutor);
+        this.current_job = scheduler.scheduleJob('30 10,40 * * * *', this.onNewJob);
         log.d(null, this.log_prefix, 'startSchedule');
       }
     } catch (error) {
@@ -47,9 +47,13 @@ class OperationScheduler {
     this.current_job = null;
   };
 
-  jobExecutor = async () => {
-    log.d(null, this.log_prefix, 'jobExecutor start');
-    await this.nextJob();
+  onNewJob = () => {
+    log.d(null, this.log_prefix, 'onNewJob start', this.is_process);
+    if (this.is_process) {
+      return;
+    }
+    this.is_process = true;
+    this.nextJob();
   };
 
   nextJob = async () => {
@@ -58,7 +62,7 @@ class OperationScheduler {
     try{
       let sync_info = null;
       await database.transaction(async(trx) => {
-        const sync_model = new SyncOperationQueueModel({database: trx});
+        const sync_model = new BatchOperationQueueModel({database: trx});
         sync_info = await sync_model.pop();
       });
 
@@ -72,11 +76,13 @@ class OperationScheduler {
         )();
       } else {
         log.d(null, this.log_prefix, 'executeNextJob', 'has no jop');
+        this.is_process = false;
         this.startSchedule();
       }
     } catch (error) {
-      this.startSchedule();
       log.e(null, this.log_prefix, 'executeNextJob', error);
+      this.is_process = false;
+      this.startSchedule();
     }
     log.d(null, this.log_prefix, 'executeNextJob end');
   };
@@ -88,15 +94,14 @@ class OperationScheduler {
     let is_success = false;
     try {
       await database.transaction(async(trx) => {
-        const sync_model = new SyncOperationQueueModel({ database: trx });
+        const sync_model = new BatchOperationQueueModel({ database: trx });
         operation_info = await this.createOperation(trx, sync_info);
         await sync_model.onJobStart(sync_info, operation_info.seq);
         sync_info.operation_seq = operation_info.seq;
       });
 
-      const media_path = operation_info.media_path;
-      await this.copyFiles(data, media_path);
-      const sync_model = new SyncOperationQueueModel({ database });
+      await this.copyFiles(data, operation_info);
+      const sync_model = new BatchOperationQueueModel({ database });
       await sync_model.updateStatus(sync_info, 'C');
 
       is_success = true;
@@ -107,18 +112,20 @@ class OperationScheduler {
 
     if (is_success) {
       try {
+        await new OperationStorageModel({database}).updateUploadFileSize(operation_info.storage_seq, 'video');
         const request_result = await this.requestAnalysis(operation_info.seq);
+        const sync_model = new BatchOperationQueueModel({database});
         if (request_result.error === 0) {
-          await new OperationStorageModel({database}).updateUploadFileSize(operation_info.storage_seq, 'video');
+          await sync_model.updateStatus(sync_info, 'R');
         } else {
-          log.e(null, this.log_prefix, 'executeNextJob - request', request_result);
+          await sync_model.updateStatus(sync_info, 'RE', false, request_result);
         }
       } catch (error) {
         log.e(null, this.log_prefix, 'executeNextJob - request error', error);
       } finally {
         if (operation_info) {
           try {
-            await new OperationModel({ database }).updateStatusNormal(operation_info.seq, sync_info.operation_seq);
+            await new OperationModel({ database }).updateStatusNormal(operation_info.seq, sync_info.member_seq);
           } catch (error) {
             log.e(null, this.log_prefix, 'executeNextJob - OperationModel.updateStatusNormal', error);
           }
@@ -144,8 +151,8 @@ class OperationScheduler {
     }
     const media_directory = operation_info.media_directory;
 
-    const media_info = await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
-    const storage_info = await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
+    const media_seq = await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
+    const storage_seq = await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
 
     await Util.createDirectory(media_directory + "SEQ");
     await Util.createDirectory(media_directory + "Custom");
@@ -153,8 +160,8 @@ class OperationScheduler {
     await Util.createDirectory(media_directory + "Thumb");
     await Util.createDirectory(media_directory + "Trash");
 
-    operation_info.media_seq = media_info.seq;
-    operation_info.storage_seq = storage_info.seq;
+    operation_info.media_seq = media_seq;
+    operation_info.storage_seq = storage_seq;
 
     log.d(null, this.log_prefix, 'createOperation end', sync_info, operation_info);
     return operation_info;
@@ -173,7 +180,7 @@ class OperationScheduler {
       const file_name = path.basename(origin_file);
       const file_info = await new FileInfo().getByFilePath(origin_file, video_directory, file_name);
       log.d(null, this.log_prefix, 'copyFiles - file_info', origin_file, file_info);
-      if (file_info.type === Constants.VIDEO) {
+      if (file_info.file_type === Constants.VIDEO) {
         const copy_file_name = 'copy_' + file_name;
         const video_file_path = video_directory + Constants.SEP + file_name;
         log.d(null, this.log_prefix, 'copyFiles - copy', origin_file, video_file_path);
@@ -182,7 +189,7 @@ class OperationScheduler {
           throw new StdObject(-3, '비디오 파일 복사 실패.', 400);
         }
         if (!(await Util.fileExists(video_file_path))) {
-          throw new StdObject(-3, '비디오 파일 복사 실패.', 400);
+          throw new StdObject(-4, '비디오 파일 복사 실패.', 400);
         }
         const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
         file_info.full_path = video_file_path;
@@ -190,7 +197,7 @@ class OperationScheduler {
         file_info.file_path = media_path + Constants.SEP + copy_file_name;
         video_file_list.push(file_info);
 
-        log.d(null, this.log_prefix, 'copyFiles - copy complete', origin_file, file_info);
+        log.d(null, this.log_prefix, 'copyFiles - copy complete', origin_file, video_file_path);
       }
     }
     if (video_file_list.length <= 0) {
@@ -198,10 +205,10 @@ class OperationScheduler {
     }
     try {
       await database.transaction(async(trx) => {
+        const video_file_model = new VideoFileModel({database: trx});
         for (let i = 0; i < video_file_list.length; i++) {
-          log.d(null, this.log_prefix, 'copyFiles - add video file info', video_file_list[i]);
-          const video_file_model = new VideoFileModel({database: trx});
-          await video_file_model.createVideoFileByFileInfo(video_file_list[i]);
+          log.d(null, this.log_prefix, 'copyFiles - add video file info', video_file_list[i].toJSON());
+          await video_file_model.createVideoFileByFileInfo(operation_info, operation_info.storage_seq, video_file_list[i]);
         }
       });
     } catch (error) {
@@ -246,14 +253,14 @@ class OperationScheduler {
   onExecuteError = async (sync_info, error, operation_info = null) => {
     log.e(null, this.log_prefix, 'onExecuteError', error, operation_info);
     try {
-      const sync_model = new SyncOperationQueueModel({ database });
+      const sync_model = new BatchOperationQueueModel({ database });
       await sync_model.onJobError(sync_info, error);
       if (operation_info) {
         const operation_model = new OperationModel({ database });
         operation_model.remove(operation_info, sync_info.member_seq)
         await Util.deleteDirectory(operation_info.media_directory);
       }
-    } catch (e) {
+    } catch (error) {
       log.e(null, this.log_prefix, 'onExecuteError update error', error);
     }
   };
