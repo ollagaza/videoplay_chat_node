@@ -218,6 +218,12 @@ if (IS_DEV) {
 
     res.send(true);
   }));
+
+  routes.get('/err', wrap(async (req, res, next) => {
+    throw new StdObject(-1, 'test', 400);
+
+    res.send(true);
+  }));
 }
 
 export default routes;

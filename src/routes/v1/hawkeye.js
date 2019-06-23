@@ -84,6 +84,7 @@ const on_complete = Wrap(async(req, res) => {
   let result = null;
   let media_info_api_url = null;
   let media_info_api_result = null;
+  let operation_seq = null;
   try {
     if (is_success) {
       if (Util.isEmpty(content_id)) {
@@ -95,7 +96,7 @@ const on_complete = Wrap(async(req, res) => {
       if (!operation_info || operation_info.isEmpty()) {
         throw new StdObject(2, `등록된 컨텐츠가 없습니다. [content_id=${content_id}]`, 400);
       }
-      const operation_seq = operation_info.seq;
+      operation_seq = operation_info.seq;
 
       const service_info = service_config.getServiceInfo();
       const media_info_data = {
@@ -155,15 +156,15 @@ const on_complete = Wrap(async(req, res) => {
   } catch (error) {
     if(error instanceof StdObject) {
       result = error;
-      message = error.message;
     } else {
       result = new StdObject(3, error.message, 500);
-      message = error.stack;
+      result.stack = error.stack;
     }
     log.e(req, error);
+    await new ServiceErrorModel({ database }).createServiceError('hawkeye', operation_seq, content_id, JSON.stringify(result));
   }
 
-  if (req.query.success != null) {
+  if (is_complete) {
     const send_mail = new SendMail();
     const mail_to = ["hwj@mteg.co.kr"];
     const subject = "호크아이 분석 완료 요청";
