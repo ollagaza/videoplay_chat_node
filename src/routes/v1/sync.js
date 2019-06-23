@@ -92,7 +92,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     const operation_model = new OperationModel({database: trx});
     const operation_media_model = new OperationMediaModel({database: trx});
 
-    const operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
+    operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400);
     }
