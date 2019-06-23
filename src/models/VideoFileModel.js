@@ -113,12 +113,13 @@ export default class VideoFileModel extends ModelObject {
   createVideoFileByFileInfo = async (operation_info, storage_seq, file_info, make_thumbnail = true) => {
     if (file_info.file_type === Constants.VIDEO) {
       const video_full_path = file_info.full_path;
-      const file_info_json = file_info.toJSON();
-      file_info_json.storage_seq = storage_seq;
+      file_info.storage_seq = storage_seq;
       if (make_thumbnail) {
         file_info.thumbnail = await this.createVideoThumbnail(video_full_path, operation_info);
       }
-      await this.create(file_info_json, 'seq');
+      file_info.addKey('storage_seq');
+      file_info.addKey('thumbnail');
+      await this.create(file_info.toJSON(), 'seq');
       return true;
     }
     return false;
@@ -128,7 +129,9 @@ export default class VideoFileModel extends ModelObject {
     if (operation_info.created_by_user !== true) {
       await this.deleteByStorageSeq(storage_seq);
       for (let i = 0; i < add_video_file_list.length; i++) {
-        await this.create(add_video_file_list[i]);
+        const file_info = add_video_file_list[i];
+        file_info.storage_seq = storage_seq;
+        await this.create(file_info);
       }
     }
   };
