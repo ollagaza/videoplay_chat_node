@@ -177,9 +177,13 @@ class OperationScheduler {
     const video_file_list = [];
     for (let i = 0; i < data.length; i++) {
       const origin_file = data[i];
+      log.d(null, this.log_prefix, 'copyFiles - file not exists', origin_file);
+      if (!(await Util.fileExists(origin_file))) {
+        continue;
+      }
       const file_name = path.basename(origin_file);
       const file_info = await new FileInfo().getByFilePath(origin_file, video_directory, file_name);
-      log.d(null, this.log_prefix, 'copyFiles - file_info', origin_file, file_info);
+      log.d(null, this.log_prefix, 'copyFiles - file_info', origin_file, file_info.toJSON());
       if (file_info.file_type === Constants.VIDEO) {
         const copy_file_name = 'copy_' + file_name;
         const video_file_path = video_directory + Constants.SEP + file_name;
