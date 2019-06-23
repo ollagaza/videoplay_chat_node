@@ -110,58 +110,29 @@ export default class VideoFileModel extends ModelObject {
     return null;
   };
 
-  createVideoFileByFileInfo = async (operation_info, storage_seq, file_info) => {
-    const video_full_path = file_info.full_path;
+  createVideoFileByFileInfoJSON = async (operation_info, storage_seq, file_info, make_thumbnail = true) => {
     if (file_info.file_type === Constants.VIDEO) {
-      file_info = file_info.toJSON();
       file_info.storage_seq = storage_seq;
-      file_info.thumbnail = await this.createVideoThumbnail(video_full_path, operation_info);
+      if (make_thumbnail) {
+        file_info.thumbnail = await this.createVideoThumbnail(file_info.full_path, operation_info);
+      }
       await this.create(file_info, 'seq');
       return true;
     }
     return false;
   };
 
-  syncVideoFiles = async (operation_info, operation_media_info, storage_seq) => {
-    const smil_info = await new SmilInfo().loadFromXml(operation_info.media_directory, operation_media_info.smil_file_name);
-
-    let origin_video_size = 0;
-    let origin_video_count = 0;
-    let trans_video_size = 0;
-    let trans_video_count = 0;
-
-    if (!smil_info.isEmpty()) {
-      const video_directory = operation_info.media_directory + 'SEQ' + Constants.SEP;
-      const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
-      if (!operation_info.created_by_user || operation_info.created_by_user === false) {
-        await this.delete({storage_seq: storage_seq});
-      }
-      const file_list = await Util.getDirectoryFileList(video_directory);
-      for (let i = 0; i < file_list.length; i++) {
-        const file = file_list[i];
-        if (file.isFile()) {
-          const file_name = file.name;
-          const video_file_path = video_directory + file_name;
-          const file_info = (await new FileInfo().getByFilePath(video_file_path, media_path, file_name)).toJSON();
-          if (file_info.file_type === Constants.VIDEO) {
-            if (smil_info.isTransVideo(file_name) || file_name === operation_media_info.video_file_name) {
-              trans_video_count++;
-              trans_video_size += file_info.file_size;
-              continue;
-            }
-            file_info.storage_seq = storage_seq;
-            origin_video_count++;
-            origin_video_size += file_info.file_size;
-
-            if (!operation_info.created_by_user || operation_info.created_by_user === false) {
-              file_info.thumbnail = await this.createVideoThumbnail(video_file_path, operation_info);
-              await this.create(file_info, 'seq');
-            }
-          }
-        }
+  syncVideoFiles = async (operation_info, add_video_file_list, storage_seq) => {
+    if (operation_info.created_by_user !== true) {
+      await this.deleteByStorageSeq(storage_seq);
+      for (let i = 0; i < add_video_file_list.length; i++) {
+        await this.create(add_video_file_list[i]);
       }
     }
-    return {origin_video_size, origin_video_count, trans_video_size, trans_video_count};
+  };
+
+  deleteByStorageSeq = async (storage_seq) => {
+    await this.delete({storage_seq: storage_seq});
   };
 
   createVideoThumbnail = async (origin_video_path, operation_info) => {

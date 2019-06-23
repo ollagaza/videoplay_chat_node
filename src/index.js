@@ -1,14 +1,8 @@
+import config from '@/config/config';
 import app from './app';
 import service_config from '@/config/service.config';
 import log from "@/classes/Logger";
-import OperationScheduler from '@/scheduler/OperationScheduler';
 import mongoose from 'mongoose';
-
-const IS_DEV = process.env.NODE_ENV === 'development';
-
-if (!IS_DEV) {
-  process.env.NODE_ENV = 'production';
-}
 
 const { PORT = 3000 } = process.env;
 
@@ -24,9 +18,12 @@ mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://mteg_vas:dpaxldlwl_!@localhost:27017/surgstory', { useNewUrlParser: true, useFindAndModify: false } )
   .then(() => {
     log.d(null, 'Successfully connected to mongodb');
-    OperationScheduler.startSchedule();
+    if (config.isDemon()) {
+      const OperationScheduler = require('./scheduler/OperationScheduler');
+      OperationScheduler.default.startSchedule();
+    }
   })
-  .catch(e => log.e(null, e));
+  .catch(e => log.e(null, 'mongodb connection error', e));
 
 app.listen(PORT, () => log.d(null, `Listening on port ${PORT} -> PID: ${process.pid }`));
 

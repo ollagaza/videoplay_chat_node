@@ -177,8 +177,8 @@ class OperationScheduler {
     const video_file_list = [];
     for (let i = 0; i < data.length; i++) {
       const origin_file = data[i];
-      log.d(null, this.log_prefix, 'copyFiles - file not exists', origin_file);
       if (!(await Util.fileExists(origin_file))) {
+        log.d(null, this.log_prefix, 'copyFiles - file not exists', origin_file);
         continue;
       }
       const file_name = path.basename(origin_file);
@@ -196,10 +196,11 @@ class OperationScheduler {
           throw new StdObject(-4, '비디오 파일 복사 실패.', 400);
         }
         const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
-        file_info.full_path = video_file_path;
-        file_info.file_name = copy_file_name;
-        file_info.file_path = media_path + Constants.SEP + copy_file_name;
-        video_file_list.push(file_info);
+        const file_info_json = file_info.toJSON();
+        file_info_json.full_path = video_file_path;
+        file_info_json.file_name = copy_file_name;
+        file_info_json.file_path = media_path + Constants.SEP + copy_file_name;
+        video_file_list.push(file_info_json);
 
         log.d(null, this.log_prefix, 'copyFiles - copy complete', origin_file, video_file_path);
       }
@@ -208,11 +209,17 @@ class OperationScheduler {
       throw new StdObject(-4, '비디오파일이 없습니다.', 400);
     }
     try {
+      const video_file_model = new VideoFileModel({database});
+      for (let i = 0; i < video_file_list.length; i++) {
+        log.d(null, this.log_prefix, 'copyFiles - add video file info', video_file_list[i]);
+        await video_file_model.createVideoFileByFileInfo(operation_info, operation_info.storage_seq, video_file_list[i]);
+      }
+
       await database.transaction(async(trx) => {
         const video_file_model = new VideoFileModel({database: trx});
         for (let i = 0; i < video_file_list.length; i++) {
-          log.d(null, this.log_prefix, 'copyFiles - add video file info', video_file_list[i].toJSON());
-          await video_file_model.createVideoFileByFileInfo(operation_info, operation_info.storage_seq, video_file_list[i]);
+          log.d(null, this.log_prefix, 'copyFiles - add video file info', video_file_list[i]);
+          await video_file_model.createVideoFileByFileInfoJSON(operation_info, operation_info.storage_seq, video_file_list[i]);
         }
       });
     } catch (error) {
