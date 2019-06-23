@@ -196,11 +196,10 @@ class OperationScheduler {
           throw new StdObject(-4, '비디오 파일 복사 실패.', 400);
         }
         const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
-        const file_info_json = file_info.toJSON();
-        file_info_json.full_path = video_file_path;
-        file_info_json.file_name = copy_file_name;
-        file_info_json.file_path = media_path + Constants.SEP + copy_file_name;
-        video_file_list.push(file_info_json);
+        file_info.full_path = video_file_path;
+        file_info.file_name = copy_file_name;
+        file_info.file_path = media_path + Constants.SEP + copy_file_name;
+        video_file_list.push(file_info);
 
         log.d(null, this.log_prefix, 'copyFiles - copy complete', origin_file, video_file_path);
       }
@@ -221,7 +220,7 @@ class OperationScheduler {
         for (let i = 0; i < video_file_list.length; i++) {
           const file_info = video_file_list[i];
           log.d(null, this.log_prefix, 'copyFiles - add video file info', file_info.full_path);
-          await video_file_model.createVideoFileByFileInfoJSON(operation_info, operation_info.storage_seq, file_info);
+          await video_file_model.createVideoFileByFileInfo(operation_info, operation_info.storage_seq, file_info);
         }
       });
     } catch (error) {
