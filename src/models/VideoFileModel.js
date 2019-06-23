@@ -112,9 +112,9 @@ export default class VideoFileModel extends ModelObject {
 
   createVideoFileByFileInfo = async (operation_info, storage_seq, file_info) => {
     const video_full_path = file_info.full_path;
-    file_info = file_info.toJSON();
-    file_info.storage_seq = storage_seq;
     if (file_info.file_type === Constants.VIDEO) {
+      file_info = file_info.toJSON();
+      file_info.storage_seq = storage_seq;
       file_info.thumbnail = await this.createVideoThumbnail(video_full_path, operation_info);
       await this.create(file_info, 'seq');
       return true;
@@ -154,7 +154,7 @@ export default class VideoFileModel extends ModelObject {
             origin_video_size += file_info.file_size;
 
             if (!operation_info.created_by_user || operation_info.created_by_user === false) {
-              file_info.thumbnail = this.createVideoThumbnail(video_file_path, operation_info);
+              file_info.thumbnail = await this.createVideoThumbnail(video_file_path, operation_info);
               await this.create(file_info, 'seq');
             }
           }
@@ -165,11 +165,12 @@ export default class VideoFileModel extends ModelObject {
   };
 
   createVideoThumbnail = async (origin_video_path, operation_info) => {
-    log.d(null, origin_video_path);
     const dimension = await Util.getVideoDimension(origin_video_path);
+    log.d(null, 'createVideoThumbnail', origin_video_path, dimension);
     if (!dimension.error && dimension.width && dimension.height) {
 
       const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb' + Constants.SEP + Date.now() + '.jpg';
+      log.d(null, 'createVideoThumbnail - thumbnail_path', origin_video_path, thumbnail_path);
       const thumbnail_full_path = operation_info.media_root + thumbnail_path;
 
       const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
@@ -177,6 +178,7 @@ export default class VideoFileModel extends ModelObject {
 
       const execute_result = await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, thumb_width, thumb_height);
       if ( execute_result.success && ( await Util.fileExists(thumbnail_full_path) ) ) {
+        log.d(null, 'createVideoThumbnail - success', origin_video_path, thumbnail_path);
         return thumbnail_path;
       }
     }
@@ -184,7 +186,7 @@ export default class VideoFileModel extends ModelObject {
   };
 
   createAndUpdateVideoThumbnail = async (origin_video_path, operation_info, file_seq) => {
-    const thumbnail_path = this.createVideoThumbnail(origin_video_path, operation_info);
+    const thumbnail_path = await this.createVideoThumbnail(origin_video_path, operation_info);
     try {
       await this.updateThumb(file_seq, thumbnail_path);
     } catch (error) {
