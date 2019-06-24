@@ -6,6 +6,7 @@ import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
 import OperationScheduler from '@/scheduler/OperationScheduler';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -24,6 +25,7 @@ routes.post('/operation', Auth.isAuthenticated(roles.API), Wrap(async(req, res) 
       await sync_model.push(member_seq, req.body.key, req.body.data);
       success = true;
     } else {
+      output.setError(-1);
       message = `${req.body.key} is already use`;
     }
   });
@@ -33,7 +35,11 @@ routes.post('/operation', Auth.isAuthenticated(roles.API), Wrap(async(req, res) 
   res.json(output);
 
   if (success) {
-    OperationScheduler.onNewJob();
+    try {
+      OperationScheduler.onNewJob();
+    } catch (e) {
+      log.e(req, e);
+    }
   }
 }));
 
