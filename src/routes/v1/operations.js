@@ -579,17 +579,21 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
 routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
+  let file_summary = null;
+  let member_info = null;
+  let api_request_result = null;
+  let media_directory = null;
+  let api_url = null;
+  let is_execute_success = false;
 
   await database.transaction(async(trx) => {
 
     const {operation_info, operation_model} = await getOperationInfo(trx, operation_seq, token_info);
-    const file_summary = await new VideoFileModel({database: trx}).videoFileSummary(operation_info.storage_seq);
-    const member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
+    file_summary = await new VideoFileModel({database: trx}).videoFileSummary(operation_info.storage_seq);
+    member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
 
     const service_info = service_config.getServiceInfo();
-    const media_directory = operation_info.media_directory + "SEQ";
-    let is_execute_success = false;
-    let is_send_mail_success = false;
+    media_directory = operation_info.media_directory + "SEQ";
 
     const operation_update_param = {};
     operation_update_param.analysis_status = 'R';
@@ -616,10 +620,8 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
       path: service_info.trans_start_api + '?' + query_str,
       method: 'GET'
     };
-    const api_url = 'http://' + service_info.trans_server_domain + ':' + service_info.trans_server_port + service_info.trans_start_api + '?' + query_str;
+    api_url = 'http://' + service_info.trans_server_domain + ':' + service_info.trans_server_port + service_info.trans_start_api + '?' + query_str;
     log.d(req, api_url);
-
-    let api_request_result = null;
     try {
       api_request_result = await Util.httpRequest(request_options, false);
       is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
@@ -628,6 +630,14 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
       api_request_result = e.message;
     }
 
+    if (is_execute_success) {
+      await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+    } else {
+      throw new StdObject(-1, '비디오 분석 요청 실패', 500);
+    }
+  });
+
+  if (is_execute_success) {
     try {
       const send_mail = new SendMail();
       // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];
@@ -636,22 +646,17 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
       let context = "";
       context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
       context += `파일 경로: ${media_directory}<br/>\n`;
-      context += `파일 개수: ${file_summary.total_count}<br/>\n`;
-      context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
+      if (file_summary) {
+        context += `파일 개수: ${file_summary.total_count}<br/>\n`;
+        context += `총 용량: ${file_summary.total_size}<br/><br/>\n`;
+      }
       context += `Api URL: ${api_url}<br/>\n`;
       context += `실행결과: ${Util.nlToBr(api_request_result)}<br/>\n`;
-      const send_mail_result = await send_mail.sendMailHtml(mail_to, subject, context);
-      is_send_mail_success = send_mail_result.isSuccess();
+      await send_mail.sendMailHtml(mail_to, subject, context);
     } catch (e) {
       log.e(req, e);
     }
-
-    if (is_execute_success || is_send_mail_success) {
-      await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
-    } else {
-      throw new StdObject(-1, '비디오 분석 요청 실패', 500);
-    }
-  });
+  }
 
   res.json(new StdObject());
 }));
@@ -914,7 +919,7 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
 
     if (file_type !== 'refer') {
       const origin_video_path = upload_file_info.path;
-      await file_model.createVideoThumbnail(origin_video_path, operation_info, upload_seq);
+      await file_model.createAndUpdateVideoThumbnail(origin_video_path, operation_info, upload_seq);
     }
 
     await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);

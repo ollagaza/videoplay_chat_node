@@ -23,6 +23,7 @@ import constants from '@/config/constants';
 import log from "@/classes/Logger";
 import StdObject from '@/classes/StdObject';
 import Constants from '@/config/constants';
+import mime from "mime-types";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -182,14 +183,19 @@ const renameFile = async (target_path, dest_path) => {
       log.d(null, 'Util.renameFile', `file already exists. dest_path=${dest_path}`);
       resolve(false);
     } else {
-      fs.rename(target_path, dest_path, (error) => {
-        if (error) {
-          log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
-          resolve(false);
-        } else {
-          resolve(true);
-        }
-      });
+      try {
+        fs.rename(target_path, dest_path, (error) => {
+          if (error) {
+            log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      } catch (error) {
+        log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+        resolve(false);
+      }
     }
   });
 
@@ -201,15 +207,23 @@ const copyFile = async (target_path, dest_path) => {
     if ( !( await fileExists(target_path) ) ) {
       log.d(null, 'Util.renameFile', `file not exists. target_path=${target_path}`);
       resolve(false);
+    } else if ( await fileExists(dest_path) ) {
+      log.d(null, 'Util.renameFile', `file already exists. target_path=${dest_path}`);
+      resolve(false);
     } else {
-      fs.copyFile(target_path, dest_path, (error) => {
-        if (error) {
-          log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
-          resolve(false);
-        } else {
-          resolve(true);
-        }
-      });
+      try {
+        fs.copyFile(target_path, dest_path, (error) => {
+          if (error) {
+            log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      } catch (error) {
+        log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+        resolve(false);
+      }
     }
   });
 
@@ -356,6 +370,23 @@ const getFloat = (str, on_error_result=0) => {
   }
 };
 
+const isArray = (value) => {
+  if (!value) {
+    return false;
+  }
+  return _.isArray(value);
+};
+
+const isString = (value) => {
+  if (value === '') {
+    return true;
+  }
+  if (!value) {
+    return false;
+  }
+  return _.isString(value);
+};
+
 const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
   if (value === undefined || value === null) {
     return true;
@@ -363,10 +394,10 @@ const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
   if (isNumber(value)) {
     return false;
   }
-  if (_.isString(value)) {
+  if (isString(value)) {
     return allow_blank ? false : _.trim(value) === '';
   }
-  if (_.isArray(value)) {
+  if (isArray(value)) {
     if (allow_empty_array) {
       return false;
     }
@@ -652,7 +683,7 @@ const getXmlText = (element) => {
   return element;
 };
 
-const getFileType = async (mime_type, file_name, file_path) => {
+const getFileType = async (file_path, file_name) => {
   const file_ext = getFileExt(file_name);
   if (file_ext === 'smil') {
     return 'smil';
@@ -670,6 +701,7 @@ const getFileType = async (mime_type, file_name, file_path) => {
       break;
   }
 
+  let mime_type = mime.lookup(file_path);
   if (isEmpty(mime_type)) {
     mime_type = 'etc';
   } else {
@@ -719,8 +751,8 @@ export default {
 
   "secondToTimeStr": secondToTimeStr,
 
+  "today": (format='yyyy-mm-dd') => { return dateFormatter(new Date().getTime(), format); },
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
-
   "currentFormattedDate": (format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(new Date().getTime(), format); },
 
   "loadXmlFile": async (directory, xml_file_name) => {
@@ -899,10 +931,6 @@ export default {
     return Math.ceil(byte/1024/1024);
   },
 
-  "isNumber": isNumber,
-  "parseInt": getInt,
-  "parseFloat": getFloat,
-
   "forward": async (url, method, token=null, data=null) => {
     let request_params = {
       "url": url,
@@ -913,9 +941,15 @@ export default {
         "bearer": token
       };
     }
-    if (!isEmpty(data)) {
-      request_params = _.merge(request_params, data);
+    if (data && !isEmpty(data)) {
+      if (method.toUpperCase() === 'GET') {
+        request_params.qs = data;
+      } else {
+        request_params.body = data;
+        request_params.json = true;
+      }
     }
+    log.d(null, request_params);
 
     const forward = request(request_params);
     try{
@@ -963,6 +997,12 @@ export default {
   "hexToRGB": hexToRGB,
   "getRandomId": getRandomId,
   "colorCodeToHex": colorCodeToHex,
+
+  "parseInt": getInt,
+  "parseFloat": getFloat,
+  isNumber,
+  isString,
+  isArray,
   isTrue,
   isFalse,
   urlToPath,
