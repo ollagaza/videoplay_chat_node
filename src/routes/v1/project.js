@@ -130,6 +130,8 @@ routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, re
 routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const data = req.body;
+  data.sequence_count = data.sequence_list ? data.sequence_list.length : 0;
+
   const project_seq = req.params.project_seq;
 
   const fields = VideoProjectField();
@@ -265,7 +267,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
     };
 
     const api_url = 'http://' + service_info.auto_editor_server_domain + ':' + service_info.auto_editor_server_port + service_info.auto_editor_merge_api + '?' + query_str;
-    log.d(req, api_url);
+    log.d(req, 'request - start', api_url);
 
     let api_request_result = null;
     let is_execute_success = false;
@@ -276,6 +278,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
       log.e(req, e);
       api_request_result = e.message;
     }
+    log.d(req, 'request - result', is_execute_success, api_url, api_request_result);
   })();
 }));
 
@@ -308,7 +311,6 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
 
 routes.get('/video/make/process', Wrap(async(req, res) => {
   const content_id = req.query.ContentID;
-  // /api/v1/project/video/make/process?ContentID=13363f6d-7c88-11e9-bb8e-e0d55ee22ea6&SmilFileName=&Status=start&VideoFileName=
   const process_info = {
     status: req.query.Status,
     video_file_name: req.query.VideoFileName,

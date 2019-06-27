@@ -19,6 +19,7 @@ const getFieldInfos = () => {
     status: { type: String, default: 'Y', require: false, message: '프로젝트 상태값이 없습니다.' },
     request_status: { type: String, default: 'N', require: false, message: '동영상 제작 요청 상태값이 없습니다.' },
     progress: { type: Number, default: 0, require: false, message: '동영상 제작 진행률이 없습니다.' },
+    sequence_count: { type: Number, default: 0, require: false, message: '시퀀스 개수가 없습니다.' },
     sequence_list: { type: Array, default: [], require: false, message: '시퀀스 목록이 없습니다.' },
     is_favorite: { type: Boolean, default: false, require: false, message: '즐겨찾기 여부가 없습니다.' },
     download_url: { type: String, default: null, require: false, message: '다운로드 URL이 없습니다.' },
