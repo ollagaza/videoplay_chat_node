@@ -7,7 +7,7 @@ const Schema = mongoose.Schema;
 const getFieldInfos = () => {
   return {
     member_seq: { type: Number, index: true, require: false, message: '사용자 아이디가 없습니다.' },
-    content_id: { type: String, index: true, require: false, message: '콘텐츠 아이디가 없습니다.' },
+    content_id: { type: String, index: true, unique: true, require: false, message: '콘텐츠 아이디가 없습니다.' },
     operation_seq_list: { type: [Number], default: [], require: false, message: '사용한 수술 목록이 없습니다.' },
     project_name: { type: String, require: false, message: '프로젝트 제목이 없습니다.' },
     project_path: { type: String, require: false, message: '프로젝트 저장 경로가 없습니다.' },
@@ -130,5 +130,6 @@ VideoProjectSchema.statics.deleteById = function( member_seq, id ) {
   return this.findOneAndDelete( { member_seq: member_seq, _id: id } );
 };
 
-export const VideoProjectModel = mongoose.model( 'VideoProject', VideoProjectSchema );
+const model = mongoose.model( 'VideoProject', VideoProjectSchema );
+export const VideoProjectModel = model;
 export const VideoProjectField = getFieldInfos;

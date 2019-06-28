@@ -2,7 +2,6 @@ import ModelObject from '@/classes/ModelObject';
 import IndexInfo from '@/classes/surgbook/IndexInfo';
 import StdObject from "@/classes/StdObject";
 import Util from '@/utils/baseutil';
-import HistoryModel from '@/models/xmlmodel/HistoryModel';
 import log from "@/classes/Logger";
 import _ from 'lodash';
 import service_config from '@/config/service.config';
@@ -140,8 +139,6 @@ export default class IndexModel extends ModelObject {
     }
 
     await this.saveIndexList(media_directory, index2_info_list);
-
-    new HistoryModel({ database: this.database }).addHistory(media_directory, 'add', [add_index_info]);
 
     return {add_index_info: add_index_info, total_index_count: index2_info_list.length};
   };

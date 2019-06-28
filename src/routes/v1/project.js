@@ -66,7 +66,7 @@ const routes = Router();
 const getMemberInfo = async (database, member_seq) => {
   const member_info = await new MemberModel({ database: database }).getMemberInfo(member_seq);
   if (!member_info || member_info.isEmpty()) {
-    throw new StdObject(-1, '회원정보가 없습니다.', 401)
+    throw new StdObject(-1, '회원정보가 없습니다.', 401);
   }
   return member_info;
 };
@@ -216,6 +216,10 @@ routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER
 routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const project_seq = req.params.project_seq;
+  const video_project = await VideoProjectModel.findOneById(project_seq);
+  if (!video_project || !video_project.sequence_list || video_project.sequence_list.length <= 0) {
+    throw new StdObject(-1, '등록된 동영상 정보가 없습니다.', 400);
+  }
   const result = await VideoProjectModel.updateRequestStatus(project_seq, 'R');
 
   const output = new StdObject();
