@@ -147,7 +147,7 @@ const syncOne = async (req, token_info, operation_seq) => {
   //   log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
   // }
 
-  const trans_video_directory = service_config.get('trans_video_root') + operation_info.media_path;
+  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
   const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, operation_media_info.smil_file_name);
   const add_video_file_list = [];
   let origin_video_size = 0;
@@ -282,7 +282,7 @@ const reSync = async (req, operation_seq) => {
     await operation_media_model.reSetOperationMedia(operation_info, false);
   });
 
-  const trans_video_directory = service_config.get('trans_video_root') + operation_info.media_path;
+  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
 
   // db 업데이트가 끝나면 기존 파일 정리.
   await Util.deleteDirectory(media_directory + "Custom");

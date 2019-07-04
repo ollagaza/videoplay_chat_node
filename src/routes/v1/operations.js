@@ -260,7 +260,7 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     }
     const operation_seq = operation_info.seq;
     const media_directory = operation_info.media_directory;
-    const trans_video_directory = service_config.get('trans_video_root') + operation_info.media_path;
+    const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
 
     await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
     await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);

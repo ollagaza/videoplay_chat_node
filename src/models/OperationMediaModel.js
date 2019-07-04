@@ -2,6 +2,7 @@ import service_config from '@/config/service.config';
 import ModelObject from '@/classes/ModelObject';
 import OperationMediaInfo from '@/classes/surgbook/OperationMediaInfo';
 import SmilInfo from '@/classes/surgbook/SmilInfo';
+import Util from '@/utils/baseutil';
 
 export default class OperationMediaModel extends ModelObject {
   constructor(...args) {
@@ -39,7 +40,7 @@ export default class OperationMediaModel extends ModelObject {
     if (!smil_file_name) {
       smil_file_name = service_config.get('default_smil_file_name');
     }
-    const trans_video_directory = service_config.get('trans_video_root') + operation_info.media_path;
+    const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
     const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, smil_file_name);
     return smil_info.isEmpty() ? { name: null, resolution: service_config.get('proxy_max_resolution') } : smil_info.findProxyVideoInfo();
   };
