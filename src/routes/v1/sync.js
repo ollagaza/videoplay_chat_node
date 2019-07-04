@@ -108,10 +108,11 @@ const syncOne = async (req, token_info, operation_seq) => {
   });
 
   if (!is_sync_complete) {
-    log.d(req, `${log_prefix} sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_info.is_trans_complete}]. process end`);
+    log.d(req, `${log_prefix} sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_media_info.is_trans_complete}]. process end`);
     return;
   }
 
+  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
   const media_directory = operation_info.media_directory;
 
   await Util.createDirectory(media_directory + "SEQ");
@@ -119,6 +120,7 @@ const syncOne = async (req, token_info, operation_seq) => {
   await Util.createDirectory(media_directory + "REF");
   await Util.createDirectory(media_directory + "Thumb");
   await Util.createDirectory(media_directory + "Trash");
+  await Util.createDirectory(trans_video_directory + "SEQ");
 
   await Util.deleteFile(media_directory + "Index1.xml");
   await Util.deleteFile(media_directory + "Index2.xml");
@@ -147,7 +149,6 @@ const syncOne = async (req, token_info, operation_seq) => {
   //   log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
   // }
 
-  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
   const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, operation_media_info.smil_file_name);
   const add_video_file_list = [];
   let origin_video_size = 0;

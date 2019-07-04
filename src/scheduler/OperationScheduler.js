@@ -154,11 +154,14 @@ class OperationScheduler {
     const media_seq = await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
     const storage_seq = await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
 
+    const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+
     await Util.createDirectory(media_directory + "SEQ");
     await Util.createDirectory(media_directory + "Custom");
     await Util.createDirectory(media_directory + "REF");
     await Util.createDirectory(media_directory + "Thumb");
     await Util.createDirectory(media_directory + "Trash");
+    await Util.createDirectory(trans_video_directory + "SEQ");
 
     operation_info.media_seq = media_seq;
     operation_info.storage_seq = storage_seq;
