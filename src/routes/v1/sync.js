@@ -39,7 +39,7 @@ const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {
     method: 'GET'
   };
   const index_list_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + api_url + '?' + index_list_api_params;
-  log.d(req, `${log_prefix} hawkeye index2 list api url: ${index_list_api_url}`);
+  log.d(req, `${log_prefix} hawkeye index list api url: ${index_list_api_url}`);
 
   const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
   const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
@@ -62,7 +62,8 @@ const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {
       for (let i = 0; i < index_xml_list.length; i++) {
         const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i]);
         if (!index_info.isEmpty()) {
-          index_file_list.push(index_info.getXmlJson());
+          // index_file_list.push(index_info.getXmlJson());
+          index_file_list.push(index_info.getJson());
         }
       }
     }
@@ -101,7 +102,7 @@ const syncOne = async (req, token_info, operation_seq) => {
 
     log_prefix = `sync_one[seq: ${operation_seq}, content_id: ${content_id}]`;
 
-    operation_media_info = await operation_media_model.syncMediaInfo(operation_info);
+    operation_media_info = await operation_media_model.getOperationMediaInfo(operation_info);
 
     is_sync_complete = operation_info.is_analysis_complete && operation_media_info.is_trans_complete;
     log.d(req, `${log_prefix} load operation infos. [is_sync_complete: ${is_sync_complete}]`);
@@ -134,18 +135,6 @@ const syncOne = async (req, token_info, operation_seq) => {
   let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
   log.d(req, `${log_prefix} hawkeye index2 list api result: [${index_list_api_result}]`);
   const index2_count = index2_xml_info.IndexInfo.Index.length;
-
-  // let index1_xml_info = null;
-  // try {
-  //   index1_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index1_list_api, req, log_prefix);
-  // } catch (error) {
-  //   log.e(req, `${log_prefix} hawkeye index1 list api`, error);
-  // }
-  // if (index1_xml_info) {
-  //   await Util.writeXmlFile(media_directory, 'Index1.xml', index1_xml_info);
-  //   index_list_api_result = "인덱스1 개수: " + (index1_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index1.xml';
-  //   log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
-  // }
 
   const smil_info = await new SmilInfo().loadFromXml(operation_info.media_directory, operation_media_info.smil_file_name);
   const add_video_file_list = [];

@@ -326,6 +326,29 @@ const getDirectoryFileList = async (directory_path, dirent = true) => {
   return await async_func;
 };
 
+const getDirectoryFileSize = async (directory_path) => {
+  const file_list = await getDirectoryFileList(directory_path);
+  let file_size = 0;
+  for (let i = 0; i < file_list.length; i++) {
+    const file = file_list[i];
+    if (file.isFile()) {
+      const file_info = await getFileStat(directory_path + Constants.SEP + file.name);
+      if (file_info && file_info.size) {
+        file_size += file_info.size;
+      }
+    }
+  }
+  return file_size;
+};
+
+const getFileSize = async (file_path) => {
+  const file_info = await getFileStat(file_path);
+  if (file_info && file_info.size) {
+    return  file_info.size;
+  }
+  return 0;
+};
+
 const loadXmlString = async (context) => {
   let result = {};
   if (!isEmpty(context)) {
@@ -824,19 +847,8 @@ export default {
   "createDirectory": createDirectory,
   "deleteDirectory": deleteDirectory,
   "getDirectoryFileList": getDirectoryFileList,
-
-  "getDirectoryFileSize": async (directory_path) => {
-    const file_list = await getDirectoryFileList(directory_path);
-    let file_size = 0;
-    for (let i = 0; i < file_list.length; i++) {
-      const file = file_list[i];
-      if (file.isFile()) {
-        const file_info = await getFileStat(directory_path + Constants.SEP + file.name);
-        file_size += file_info.size;
-      }
-    }
-    return file_size;
-  },
+  "getDirectoryFileSize": getDirectoryFileSize,
+  "getFileSize": getFileSize,
 
   "hourDifference": (target_date) => {
     const time_diff = Math.abs(target_date.getTime() - Date.now());

@@ -79,8 +79,7 @@ export default class FileInfo extends JsonWrapper {
       'file_name', 'file_size', 'file_type', 'file_path'
     ]);
 
-    const file_stat = await Util.getFileStat(absolute_file_path);
-    const file_size = file_stat ? file_stat.size : 0;
+    const file_size = await Util.getFileSize(absolute_file_path);
 
     this.full_path = absolute_file_path;
     this.file_name = file_name;

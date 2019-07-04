@@ -22,6 +22,7 @@ import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
+import {VideoIndexInfoField, VideoIndexInfoModel, addVideoIndex} from '@/db/mongodb/model/VideoIndex';
 
 const routes = Router();
 
@@ -372,17 +373,34 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
  *                    $ref: "#definitions/IndexInfo"
  *
  */
-routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/:operation_seq(\\d+)/indexes', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
-  const index_type = req.params.index_type;
 
   const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
 
-  const index_info_list = await new IndexModel({ database }).getIndexList(operation_info, index_type);
+  let index_list;
+  const video_project = await VideoIndexInfoModel.findOneByOperation(operation_seq);
+  if (!video_project) {
+    index_list = await new IndexModel({ database }).getIndexList(operation_info, 2);
+
+    const fields = VideoIndexInfoField();
+    fields.member_seq.require = true;
+    fields.operation_seq.require = true;
+
+    const data = {
+      operation_seq: operation_seq,
+      member_seq: operation_info.member_seq
+    };
+
+    const payload = Util.getPayload(data, fields);
+    await VideoIndexInfoModel.createVideoIndexInfo( payload, index_list );
+  } else {
+    index_list = video_project.index_list;
+  }
 
   const output = new StdObject();
-  output.add("index_info_list", index_info_list);
+  output.add("index_info_list", index_list);
 
   res.json(output);
 }));
@@ -437,8 +455,12 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const second = req.params.second;
-
   const output = new StdObject();
+
+  const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
+  const {add_index_info, total_index_count} = await VideoIndexInfoModel.addVideoIndex(operation_info, second);
+  await new OperationStorageModel(database).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
+  output.add("add_index_info", add_index_info);
 
   await database.transaction(async(trx) => {
     const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);

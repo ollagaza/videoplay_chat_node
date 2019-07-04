@@ -96,7 +96,7 @@ export default class IndexInfo extends JsonWrapper {
     // log.d(null, await Util.fileExists(index_directory + origin_file, fs.constants.R_OK), await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK));
 
     if ( ( await Util.fileExists(index_directory + origin_file, fs.constants.R_OK) ) && ( await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK) ) ) {
-      this.original_url = this.url;
+      this.original_url = service_info.static_index_prefix + Util.pathToUrl(origin_file);
       this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
       this.creator = "system";
       this.unique_id = "system/" + image_file_name;

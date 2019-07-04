@@ -26,15 +26,6 @@ export default class OperationMediaModel extends ModelObject {
     return await this.create(create_params, 'seq');
   };
 
-  syncMediaInfo = async (operation_info) => {
-    const media_info = await this.getOperationMediaInfo(operation_info);
-    const is_exist = media_info.isEmpty() === false;
-    if (!is_exist) {
-      return await this.createOperationMediaInfo(operation_info);
-    }
-    return media_info;
-  };
-
   getProxyVideoInfo = async (operation_info, origin_file_name, smil_file_name) => {
     if (!smil_file_name) {
       smil_file_name = service_config.get('default_smil_file_name');

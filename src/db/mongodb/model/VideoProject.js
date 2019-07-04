@@ -15,6 +15,7 @@ const getFieldInfos = () => {
     smil_file_name: { type: String, require: false, message: 'HLS 스트리밍 설정 파일 이름이 없습니다.' },
     total_time: { type: Number, default: 0, require: false, message: '총 재생 시간이 없습니다.' },
     total_size: { type: Number, default: 0, require: false, message: '총 파일 크기가 없습니다.' },
+    video_file_size: { type: Number, default: 0, require: false, message: '비디오 파일 크기가 없습니다.' },
     group_list: { type: [Number], default: [], require: false, message: '그룹 코드 목록이 없습니다.' },
     status: { type: String, default: 'Y', require: false, message: '프로젝트 상태값이 없습니다.' },
     request_status: { type: String, default: 'N', require: false, message: '동영상 제작 요청 상태값이 없습니다.' },

@@ -341,8 +341,16 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
       throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
     }
     const path_url = Util.pathToUrl(video_project.project_path);
+    const service_info = service_config.getServiceInfo();
+    const video_directory = service_info.media_root + video_project.project_path;
+    const video_file_path = video_directory + process_info.video_file_name;
+    const total_size = await Util.getDirectoryFileSize(video_directory);
+    const video_file_size = await Util.getFileSize(video_file_path);
     process_info.download_url = Util.pathToUrl(service_config.get('static_storage_prefix')) + path_url + process_info.video_file_name;
     process_info.stream_url = service_config.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
+    process_info.total_size = total_size;
+    process_info.video_file_size = video_file_size;
+
     const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'Y', 100, process_info);
     if (result && result.ok === 1) {
       is_success = true;
