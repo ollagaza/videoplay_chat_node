@@ -147,7 +147,8 @@ const syncOne = async (req, token_info, operation_seq) => {
   //   log.d(req, `${log_prefix} hawkeye index1 list api result: [${index_list_api_result}]`);
   // }
 
-  const smil_info = await new SmilInfo().loadFromXml(operation_info.media_directory, operation_media_info.smil_file_name);
+  const trans_video_directory = service_config.get('trans_video_root') + operation_info.media_path;
+  const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, operation_media_info.smil_file_name);
   const add_video_file_list = [];
   let origin_video_size = 0;
   let origin_video_count = 0;
@@ -250,6 +251,7 @@ const reSync = async (req, operation_seq) => {
   const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
   const token_info = token_result.token_info;
 
+  let operation_info = null;
   let media_directory = null;
   let operation_media_info = null;
 
@@ -258,7 +260,7 @@ const reSync = async (req, operation_seq) => {
     const operation_media_model = new OperationMediaModel({ database: trx });
     const operation_storage_model = new OperationStorageModel({ database: trx });
 
-    const operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
+    operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
     if (operation_info.isEmpty()) {
       throw new StdObject(-1, '수술정보가 존재하지 않습니다.', 400);
     }
@@ -280,6 +282,8 @@ const reSync = async (req, operation_seq) => {
     await operation_media_model.reSetOperationMedia(operation_info, false);
   });
 
+  const trans_video_directory = service_config.get('trans_video_root') + operation_info.media_path;
+
   // db 업데이트가 끝나면 기존 파일 정리.
   await Util.deleteDirectory(media_directory + "Custom");
   await Util.deleteDirectory(media_directory + "Trash");
@@ -292,6 +296,7 @@ const reSync = async (req, operation_seq) => {
   await Util.createDirectory(media_directory + "REF");
   await Util.createDirectory(media_directory + "Thumb");
   await Util.createDirectory(media_directory + "Trash");
+  await Util.createDirectory(trans_video_directory + "SEQ");
 
   await Util.deleteFile(media_directory + "Index.xml");
   await Util.deleteFile(media_directory + "Index1.xml");
@@ -302,10 +307,11 @@ const reSync = async (req, operation_seq) => {
   await Util.deleteFile(media_directory + "Report.xml");
 
   const seq_directory = media_directory + 'SEQ' + Constants.SEP;
+
   let smil_info = null;
   if (!operation_media_info.isEmpty()){
     if (!Util.isEmpty(operation_media_info.smil_file_name)) {
-      smil_info = await new SmilInfo().loadFromXml(media_directory, operation_media_info.smil_file_name);
+      smil_info = await new SmilInfo().loadFromXml(trans_video_directory, operation_media_info.smil_file_name);
       if (smil_info && smil_info.video_info_list && smil_info.video_info_list.length) {
         log.d(req, `SmilInfo [database: ${operation_media_info.smil_file_name}]`, smil_info.video_info_list.length);
       }
@@ -319,7 +325,7 @@ const reSync = async (req, operation_seq) => {
   }
 
   if (!smil_info || smil_info.isEmpty()) {
-    smil_info = await new SmilInfo().loadFromXml(media_directory, service_config.get('default_smil_file_name'));
+    smil_info = await new SmilInfo().loadFromXml(trans_video_directory, service_config.get('default_smil_file_name'));
     if (smil_info && smil_info.video_info_list && smil_info.video_info_list.length) {
       log.d(req, `SmilInfo [database: ${service_config.get('default_smil_file_name')}]`, smil_info.video_info_list.length);
     }
