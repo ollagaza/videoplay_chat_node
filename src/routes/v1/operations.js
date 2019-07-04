@@ -260,6 +260,7 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     }
     const operation_seq = operation_info.seq;
     const media_directory = operation_info.media_directory;
+    const trans_video_directory = service_config.get('trans_video_root') + operation_info.media_path;
 
     await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
     await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
@@ -269,6 +270,7 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     await Util.createDirectory(media_directory + "REF");
     await Util.createDirectory(media_directory + "Thumb");
     await Util.createDirectory(media_directory + "Trash");
+    await Util.createDirectory(trans_video_directory + "SEQ");
 
     output.add('operation_seq', operation_seq);
   });
