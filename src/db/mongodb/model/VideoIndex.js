@@ -23,9 +23,7 @@ const getIndexFieldInfos = () => {
   };
 };
 const index_schema_field_infos = getIndexFieldInfos();
-const index_info_schema = new Schema({
-  index_schema_field_infos
-}, { _id : false });
+const index_info_schema = new Schema(index_schema_field_infos, { _id : false });
 const index_info_model = mongoose.model( 'IndexInfo', index_info_schema );
 
 const getFieldInfos = () => {
@@ -52,20 +50,37 @@ video_index_info_schema.index( { member_seq: 1, tags: 1 } );
 
 const getIndexModelList = (index_list) => {
   const index_model_list = [];
+  if (!index_list) {
+    return index_model_list;
+  }
   const index_info_fields = getIndexFieldInfos();
   for (let i = 0; i < index_list.length; i++) {
-    const index_info_payload = Util.getPayload(index_info_fields, index_list[i]);
+    const index_info_payload = Util.getPayload(index_list[i].toJSON(), index_info_fields);
     index_model_list.push(new index_info_model(index_info_payload));
   }
   return index_model_list;
 };
 
-video_index_info_schema.statics.createVideoIndexInfo = function( payload, index_list ) {
+video_index_info_schema.statics.createVideoIndexInfo = function( payload, index_list = null ) {
   const index_model_list = getIndexModelList(index_list);
   payload.index_list = index_model_list;
   payload.index_count = index_model_list.length;
   const model = new this(payload);
   return model.save();
+};
+
+video_index_info_schema.statics.createVideoIndexInfoByOperation = function( operation_info, index_list = null ) {
+  const fields = VideoIndexInfoField();
+  fields.member_seq.require = true;
+  fields.operation_seq.require = true;
+
+  const data = {
+    operation_seq: operation_info.seq,
+    member_seq: operation_info.member_seq
+  };
+
+  const payload = Util.getPayload(data, fields);
+  return video_index_info_model.createVideoIndexInfo(payload, index_list);
 };
 
 video_index_info_schema.statics.updateIndexListByOperation = function( operation_seq, index_list, member_seq = null ) {
@@ -114,6 +129,8 @@ const addVideoIndex = async (operation_info, second) => {
     const start_frame = index_info.start_frame;
     const end_frame = index_info.end_frame;
 
+    log.d(null, start_frame, end_frame, target_frame);
+
     if (start_frame === target_frame) {
       throw new StdObject(-1, '동일한 인덱스 존재합니다.', 400);
     } else if(i === 0 && target_frame < start_frame){
@@ -130,10 +147,17 @@ const addVideoIndex = async (operation_info, second) => {
   if (null === copy_index_info) {
     end_frame = media_info.total_frame;
     end_time = media_info.total_time;
+    if (total_count > 0) {
+      copy_index_info = index_info_list[total_count - 1];
+    }
   }
   else {
-    end_frame = copy_index_info.end_frame - 1;
+    end_frame = copy_index_info.end_frame;
     end_time = copy_index_info.end_time;
+  }
+  if (copy_index_info) {
+    copy_index_info.end_frame = target_frame - 1;
+    copy_index_info.end_time = second;
   }
 
   const index_file_name = `index_original_${target_frame}_${Date.now()}.jpg`;
@@ -162,7 +186,6 @@ const addVideoIndex = async (operation_info, second) => {
 
   const original_index_image_path = save_directory + Constants.SEP + index_file_name;
   let execute_result = await Util.getThumbnail(origin_video_path, original_index_image_path, second);
-
   if (!execute_result.success) {
     log.e(null, `IndexModel.addIndex execute error [${execute_result.command}]`, execute_result);
     throw new StdObject(-1, '인덱스 추출 실패', 400);
@@ -194,8 +217,6 @@ const addVideoIndex = async (operation_info, second) => {
 
 const video_index_info_model = mongoose.model( 'VideoIndexInfo', video_index_info_schema );
 
-export default {
-  VideoIndexInfoModel: video_index_info_model,
-  VideoIndexInfoField: getFieldInfos,
-  addVideoIndex: addVideoIndex
-};
+export const VideoIndexInfoModel = video_index_info_model;
+export const VideoIndexInfoField = getFieldInfos;
+export const AddVideoIndex = addVideoIndex;

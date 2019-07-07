@@ -21,6 +21,7 @@ import SendMail from '@/classes/SendMail';
 import Constants from '@/config/constants';
 import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
 import FileInfo from "@/classes/surgbook/FileInfo";
+import {VideoIndexInfoField, VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
 
 const routes = Router();
 
@@ -63,17 +64,23 @@ const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {
         const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i]);
         if (!index_info.isEmpty()) {
           // index_file_list.push(index_info.getXmlJson());
-          index_file_list.push(index_info.getJson());
+          index_file_list.push(index_info);
         }
       }
     }
-    _.sortBy(index_file_list, index_xml => Util.parseInt(index_xml.frame));
-  }
-  return {
-    "IndexInfo": {
-      "Index": index_file_list
+    if (index_file_list.length > 2) {
+      _.sortBy(index_file_list, index_info => Util.parseInt(index_info.frame));
+
+      let prev_info = index_file_list[0];
+      for (let i = 1; i < index_file_list.length; i++) {
+        const current_info = index_file_list[i];
+        prev_info.end_frame = current_info.start_frame - 1;
+        prev_info.end_time = current_info.start_time;
+        prev_info = current_info;
+      }
     }
-  };
+  }
+  return index_file_list;
 };
 
 const syncOne = async (req, token_info, operation_seq) => {
@@ -132,11 +139,22 @@ const syncOne = async (req, token_info, operation_seq) => {
 
   log.d(req, `${log_prefix} hawkeye index list api`);
 
-  const index2_xml_info = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index2_list_api, req, log_prefix);
-  await Util.writeXmlFile(media_directory, 'Index2.xml', index2_xml_info);
-  let index_list_api_result = "인덱스2 개수: " + (index2_xml_info.IndexInfo.Index.length) + "개, path: " + operation_info.media_directory + 'Index2.xml';
+  const index_info_list = await getHawkeyeXmlInfo(content_id, service_info.hawkeye_index2_list_api, req, log_prefix);
+  const index_count = index_info_list.length;
+  let index_list_api_result = "인덱스2 개수: " + (index_count) + "개";
   log.d(req, `${log_prefix} hawkeye index2 list api result: [${index_list_api_result}]`);
-  const index2_count = index2_xml_info.IndexInfo.Index.length;
+  if (index_count > 0) {
+    const index_info = index_info_list[index_count - 1];
+    index_info.end_frame = operation_media_info.total_frame;
+    index_info.end_time = operation_media_info.total_time;
+  }
+
+  const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq);
+  if (video_index_info) {
+    await VideoIndexInfoModel.updateIndexListByOperation(operation_seq, index_info_list);
+  } else {
+    await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info_list);
+  }
 
   const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, operation_media_info.smil_file_name);
   const add_video_file_list = [];
@@ -189,7 +207,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     update_storage_info.index1_file_size = 0;
     update_storage_info.index1_file_count = 0;
     update_storage_info.index2_file_size = 0;
-    update_storage_info.index2_file_count = index2_count;
+    update_storage_info.index2_file_count = index_count;
     update_storage_info.report_count = 0;
 
     if (operation_info.created_by_user !== true) {
@@ -295,6 +313,9 @@ const reSync = async (req, operation_seq) => {
   await Util.deleteFile(media_directory + "Custom.xml");
   await Util.deleteFile(media_directory + "History.xml");
   await Util.deleteFile(media_directory + "Report.xml");
+
+  await VideoIndexInfoModel.deleteByOperation(operation_info.seq);
+  await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
 
   const seq_directory = media_directory + 'SEQ' + Constants.SEP;
 

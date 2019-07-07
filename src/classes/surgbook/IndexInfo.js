@@ -42,7 +42,7 @@ export default class IndexInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
 
-    this.setKeys(['unique_id', 'creator', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'start_frame']);
+    this.setKeys(['unique_id', 'creator', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'start_frame', 'end_frame']);
   }
 
   getFromXML = (index_xml_info) => {

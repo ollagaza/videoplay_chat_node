@@ -22,8 +22,7 @@ import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
-import {VideoIndexInfoField, VideoIndexInfoModel, addVideoIndex} from '@/db/mongodb/model/VideoIndex';
-
+import {VideoIndexInfoField, VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
 const routes = Router();
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
@@ -40,7 +39,7 @@ const getOperationInfo = async (database, operation_seq, token_info) => {
   }
 
   return { operation_info, operation_model };
-}
+};
 
 /**
  * @swagger
@@ -273,6 +272,8 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     await Util.createDirectory(media_directory + "Trash");
     await Util.createDirectory(trans_video_directory + "SEQ");
 
+    await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
+
     output.add('operation_seq', operation_seq);
   });
 
@@ -382,23 +383,12 @@ routes.get('/:operation_seq(\\d+)/indexes', Auth.isAuthenticated(roles.DEFAULT),
   const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
 
   let index_list;
-  const video_project = await VideoIndexInfoModel.findOneByOperation(operation_seq);
-  if (!video_project) {
+  const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq);
+  if (!video_index_info) {
     index_list = await new IndexModel({ database }).getIndexList(operation_info, 2);
-
-    const fields = VideoIndexInfoField();
-    fields.member_seq.require = true;
-    fields.operation_seq.require = true;
-
-    const data = {
-      operation_seq: operation_seq,
-      member_seq: operation_info.member_seq
-    };
-
-    const payload = Util.getPayload(data, fields);
-    await VideoIndexInfoModel.createVideoIndexInfo( payload, index_list );
+    await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_list);
   } else {
-    index_list = video_project.index_list;
+    index_list = video_index_info.index_list;
   }
 
   const output = new StdObject();
@@ -460,16 +450,9 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
   const output = new StdObject();
 
   const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
-  const {add_index_info, total_index_count} = await VideoIndexInfoModel.addVideoIndex(operation_info, second);
-  await new OperationStorageModel(database).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
+  const {add_index_info, total_index_count} = await AddVideoIndex(operation_info, second);
+  await new OperationStorageModel({ database }).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
   output.add("add_index_info", add_index_info);
-
-  await database.transaction(async(trx) => {
-    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
-    const {add_index_info, total_index_count} = await new IndexModel({database}).addIndex(operation_info, second);
-    await new OperationStorageModel({database: trx}).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
-    output.add("add_index_info", add_index_info);
-  });
 
   res.json(output);
 }));
