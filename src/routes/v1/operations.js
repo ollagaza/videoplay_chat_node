@@ -376,7 +376,7 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
  *                    $ref: "#definitions/IndexInfo"
  *
  */
-routes.get('/:operation_seq(\\d+)/indexes', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
