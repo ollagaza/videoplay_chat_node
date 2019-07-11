@@ -45,7 +45,7 @@ schema_field_infos.operation_seq.require = true;
 const video_index_info_schema = new Schema(schema_field_infos);
 
 video_index_info_schema.indexes();
-video_index_info_schema.index( { operation_seq: 1, member_seq: 1, start_frame: 1 } );
+video_index_info_schema.index( { operation_seq: 1, member_seq: 1 } );
 video_index_info_schema.index( { member_seq: 1, tags: 1 } );
 
 const getIndexModelList = (index_list) => {

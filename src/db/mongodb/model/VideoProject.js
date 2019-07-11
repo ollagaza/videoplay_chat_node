@@ -37,25 +37,25 @@ schema_field_infos.project_name.require = true;
 schema_field_infos.status.require = true;
 schema_field_infos.request_status.require = true;
 
-const VideoProjectSchema = new Schema(schema_field_infos);
+const video_project_schema = new Schema(schema_field_infos);
 
-VideoProjectSchema.plugin( autoIncrement, { model: 'VideoProject', startAt: 1, incrementBy: 1 } );
-VideoProjectSchema.indexes();
-VideoProjectSchema.index( { member_seq: 1, operation_seq_list: 1 } );
-VideoProjectSchema.index( { member_seq: 1, status: 1 } );
-VideoProjectSchema.index( { member_seq: 1, group_list: 1 } );
+video_project_schema.plugin( autoIncrement, { model: 'VideoProject', startAt: 1, incrementBy: 1 } );
+video_project_schema.indexes();
+video_project_schema.index( { member_seq: 1, operation_seq_list: 1 } );
+video_project_schema.index( { member_seq: 1, status: 1 } );
+video_project_schema.index( { member_seq: 1, group_list: 1 } );
 
 
-VideoProjectSchema.statics.createVideoProject = function( payload ) {
+video_project_schema.statics.createVideoProject = function( payload ) {
   const model = new this(payload);
   return model.save();
 };
 
-VideoProjectSchema.statics.updateFromEditor = function( id, payload ) {
+video_project_schema.statics.updateFromEditor = function( id, payload ) {
   return this.updateOne( { _id: id }, payload );
 };
 
-VideoProjectSchema.statics.updateRequestStatus = function( id, request_status, progress = 0 ) {
+video_project_schema.statics.updateRequestStatus = function( id, request_status, progress = 0 ) {
   const update = {
     request_status,
     progress,
@@ -64,7 +64,7 @@ VideoProjectSchema.statics.updateRequestStatus = function( id, request_status, p
   return this.findByIdAndUpdate( id, update );
 };
 
-VideoProjectSchema.statics.updateRequestStatusByContentId = function( content_id, request_status, progress = 0, media_info = null ) {
+video_project_schema.statics.updateRequestStatusByContentId = function( content_id, request_status, progress = 0, media_info = null ) {
   const update = {
     request_status,
     progress,
@@ -87,7 +87,7 @@ VideoProjectSchema.statics.updateRequestStatusByContentId = function( content_id
   return this.updateOne( { content_id: content_id }, update );
 };
 
-VideoProjectSchema.statics.updateProgress = function( id, progress ) {
+video_project_schema.statics.updateProgress = function( id, progress ) {
   const update = {
     progress,
     modify_date: Date.now()
@@ -95,7 +95,7 @@ VideoProjectSchema.statics.updateProgress = function( id, progress ) {
   return this.updateOne( { _id: id }, update );
 };
 
-VideoProjectSchema.statics.updateStatus = function( member_seq, id_list, status ) {
+video_project_schema.statics.updateStatus = function( member_seq, id_list, status ) {
   const update = {
     status,
     modify_date: Date.now()
@@ -103,7 +103,7 @@ VideoProjectSchema.statics.updateStatus = function( member_seq, id_list, status 
   return this.update( { member_seq: member_seq, _id: { $in: id_list } }, update );
 };
 
-VideoProjectSchema.statics.updateFavorite = function( id, is_favorite ) {
+video_project_schema.statics.updateFavorite = function( id, is_favorite ) {
   const update = {
     is_favorite,
     modify_date: Date.now()
@@ -111,26 +111,26 @@ VideoProjectSchema.statics.updateFavorite = function( id, is_favorite ) {
   return this.updateOne( { _id: id }, update );
 };
 
-VideoProjectSchema.statics.findOneById = function( id, projection = null ) {
+video_project_schema.statics.findOneById = function( id, projection = null ) {
   return this.findById( id, projection );
 };
 
-VideoProjectSchema.statics.findOneByContentId = function( content_id, projection = null ) {
+video_project_schema.statics.findOneByContentId = function( content_id, projection = null ) {
   return this.findOne( { content_id: content_id }, projection );
 };
 
-VideoProjectSchema.statics.findByMemberSeq = function( member_seq, projection = null ) {
+video_project_schema.statics.findByMemberSeq = function( member_seq, projection = null ) {
   return this.find( { member_seq: member_seq }, projection );
 };
 
-VideoProjectSchema.statics.findByOperationSeq = function( member_seq, operation_seq_list, projection = null ) {
+video_project_schema.statics.findByOperationSeq = function( member_seq, operation_seq_list, projection = null ) {
   return this.find( { member_seq: member_seq, operation_seq_list: { "$in": operation_seq_list } }, projection );
 };
 
-VideoProjectSchema.statics.deleteById = function( member_seq, id ) {
+video_project_schema.statics.deleteById = function( member_seq, id ) {
   return this.findOneAndDelete( { member_seq: member_seq, _id: id } );
 };
 
-const model = mongoose.model( 'VideoProject', VideoProjectSchema );
-export const VideoProjectModel = model;
+const video_project_model = mongoose.model( 'VideoProject', video_project_schema );
+export const VideoProjectModel = video_project_model;
 export const VideoProjectField = getFieldInfos;
