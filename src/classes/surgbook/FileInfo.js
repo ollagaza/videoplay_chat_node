@@ -64,7 +64,7 @@ export default class FileInfo extends JsonWrapper {
     this.file_size = upload_file_info.size;
     this.file_path = media_path + Constants.SEP + upload_file_info.new_file_name;
 
-    const file_type = await Util.getFileType(this.file_path, this.file_name);
+    const file_type = await Util.getFileType(upload_file_info.path, this.file_name);
     this.file_type = file_type;
 
     this.is_empty = false;
