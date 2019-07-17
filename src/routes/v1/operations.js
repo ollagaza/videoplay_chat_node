@@ -23,6 +23,7 @@ import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
 import {VideoIndexInfoField, VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
+import {OperationMetadataField, OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
 const routes = Router();
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
@@ -254,7 +255,7 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
 
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
-    const operation_info = await operation_model.createOperation(req.body, member_seq);
+    const operation_info = await operation_model.createOperation(req.body.operation_info, member_seq);
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
@@ -273,6 +274,7 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     await Util.createDirectory(trans_video_directory + "SEQ");
 
     await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
+    await OperationMetadataModel.createOperationMetadata(operation_info, req.body.meta_data);
 
     output.add('operation_seq', operation_seq);
   });
@@ -983,6 +985,16 @@ routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(roles.LOGIN_
 
   const output = new StdObject();
   output.add('operation_media_info', operation_media_info);
+
+  res.json(output);
+}));
+
+routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const operation_metadata = await OperationMetadataModel.findByOperationSeq(operation_seq);
+
+  const output = new StdObject();
+  output.add('operation_metadata', operation_metadata);
 
   res.json(output);
 }));
