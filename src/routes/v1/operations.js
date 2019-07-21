@@ -22,7 +22,8 @@ import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
-
+import {VideoIndexInfoField, VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
+import {OperationMetadataField, OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
 const routes = Router();
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
@@ -39,7 +40,7 @@ const getOperationInfo = async (database, operation_seq, token_info) => {
   }
 
   return { operation_info, operation_model };
-}
+};
 
 /**
  * @swagger
@@ -254,7 +255,7 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
 
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
-    const operation_info = await operation_model.createOperation(req.body, member_seq);
+    const operation_info = await operation_model.createOperation(req.body.operation_info, member_seq);
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
@@ -271,6 +272,9 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     await Util.createDirectory(media_directory + "Thumb");
     await Util.createDirectory(media_directory + "Trash");
     await Util.createDirectory(trans_video_directory + "SEQ");
+
+    await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
+    await OperationMetadataModel.createOperationMetadata(operation_info, req.body.meta_data);
 
     output.add('operation_seq', operation_seq);
   });
@@ -310,14 +314,19 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
  */
 routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-
+  const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
-  const operation_info = new OperationInfo().getByRequestBody(req.body);
+
+  const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
+
+  const update_operation_info = new OperationInfo().getByRequestBody(req.body.operation_info);
   if (operation_info.isEmpty()) {
     throw new StdObject(-1, '잘못된 요청입니다.', 400);
   }
 
-  const result = await new OperationModel({ database }).updateOperationInfo(operation_seq, operation_info);
+  const result = await new OperationModel({ database }).updateOperationInfo(operation_seq, update_operation_info);
+  const metadata_result = await OperationMetadataModel.updateByOperationSeq(operation_info, req.body.meta_data);
+  log.d(req, metadata_result);
 
   const output = new StdObject();
   output.add('result', result);
@@ -377,14 +386,20 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
 routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
-  const index_type = req.params.index_type;
 
   const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
 
-  const index_info_list = await new IndexModel({ database }).getIndexList(operation_info, index_type);
+  let index_list;
+  const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq);
+  if (!video_index_info) {
+    index_list = await new IndexModel({ database }).getIndexList(operation_info, 2);
+    await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_list);
+  } else {
+    index_list = video_index_info.index_list;
+  }
 
   const output = new StdObject();
-  output.add("index_info_list", index_info_list);
+  output.add("index_info_list", index_list);
 
   res.json(output);
 }));
@@ -439,15 +454,12 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const second = req.params.second;
-
   const output = new StdObject();
 
-  await database.transaction(async(trx) => {
-    const {operation_info} = await getOperationInfo(trx, operation_seq, token_info);
-    const {add_index_info, total_index_count} = await new IndexModel({database}).addIndex(operation_info, second);
-    await new OperationStorageModel({database: trx}).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
-    output.add("add_index_info", add_index_info);
-  });
+  const { operation_info } = await getOperationInfo(database, operation_seq, token_info);
+  const {add_index_info, total_index_count} = await AddVideoIndex(operation_info, second);
+  await new OperationStorageModel({ database }).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
+  output.add("add_index_info", add_index_info);
 
   res.json(output);
 }));
@@ -978,6 +990,16 @@ routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(roles.LOGIN_
 
   const output = new StdObject();
   output.add('operation_media_info', operation_media_info);
+
+  res.json(output);
+}));
+
+routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const operation_metadata = await OperationMetadataModel.findByOperationSeq(operation_seq);
+
+  const output = new StdObject();
+  output.add('operation_metadata', operation_metadata);
 
   res.json(output);
 }));

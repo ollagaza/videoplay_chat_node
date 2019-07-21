@@ -134,8 +134,8 @@ export default class OperationInfo extends JsonWrapper {
     super(data, private_keys);
 
     this.setKeys([
-      'seq', 'list_no', 'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
-      , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race'
+      'seq', 'list_no', 'operation_type', 'operation_code', 'operation_name', 'operation_date'
+      , 'patient_name', 'patient_age', 'patient_sex', 'hour', 'minute'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
       , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress'
       , 'total_file_size', 'total_file_count', 'clip_count', 'service_video_count', 'report_count'
@@ -174,8 +174,8 @@ export default class OperationInfo extends JsonWrapper {
 
   getByRequestBody = (body) => {
     this.setKeys([
-      'operation_code', 'operation_name', 'operation_date', 'pre_operation', 'post_operation'
-      , 'patient_id', 'patient_name', 'patient_age', 'patient_sex', 'patient_race', 'media_path'
+      'operation_type', 'operation_code', 'operation_name', 'operation_date'
+      , 'patient_age', 'patient_sex', 'hour', 'minute', 'media_path'
     ]);
 
     this.setIgnoreEmpty(true);

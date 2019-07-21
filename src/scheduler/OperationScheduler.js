@@ -13,6 +13,7 @@ import OperationModel from '@/models/OperationModel';
 import OperationMediaModel from '@/models/OperationMediaModel';
 import OperationStorageModel from '@/models/OperationStorageModel';
 import VideoFileModel from '@/models/VideoFileModel';
+import { VideoIndexInfoModel } from '@/db/mongodb/model/VideoIndex';
 import Constants from '@/config/constants';
 
 class OperationScheduler {
@@ -153,6 +154,7 @@ class OperationScheduler {
 
     const media_seq = await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
     const storage_seq = await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
+    await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
 
     const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
 
