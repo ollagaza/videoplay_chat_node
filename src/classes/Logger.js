@@ -1,7 +1,8 @@
 import log4js from 'log4js';
 import config from '@/config/config';
 
-const IS_DEV = config.isDev();
+// const IS_DEV = config.isDev();
+const IS_DEV = true;
 const LOG_PATH = config.getLogPath();
 
 const logger_config = {
