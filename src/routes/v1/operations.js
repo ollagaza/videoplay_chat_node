@@ -314,14 +314,19 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
  */
 routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-
+  const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
-  const operation_info = new OperationInfo().getByRequestBody(req.body);
+
+  const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
+
+  const update_operation_info = new OperationInfo().getByRequestBody(req.body.operation_info);
   if (operation_info.isEmpty()) {
     throw new StdObject(-1, '잘못된 요청입니다.', 400);
   }
 
-  const result = await new OperationModel({ database }).updateOperationInfo(operation_seq, operation_info);
+  const result = await new OperationModel({ database }).updateOperationInfo(operation_seq, update_operation_info);
+  const metadata_result = await OperationMetadataModel.updateByOperationSeq(operation_info, req.body.meta_data);
+  log.d(req, metadata_result);
 
   const output = new StdObject();
   output.add('result', result);
