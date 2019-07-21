@@ -3,7 +3,8 @@ import log from "@/classes/Logger";
 import config from "@/config/config";
 
 const ENV = config.getEnv();
-const IS_DEV = config.isDev();
+// const IS_DEV = config.isDev();
+const IS_DEV = true;
 
 const database_config = knexfile[ENV];
 database_config.debug = true;
