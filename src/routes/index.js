@@ -1,5 +1,6 @@
 import {Router} from 'express';
 import config from '@/config/config';
+import log from "@/classes/Logger";
 
 require('babel-plugin-require-context-hook/register')();
 
@@ -87,7 +88,7 @@ files.keys().forEach((key) => {
         return;
       }
     }
-    console.log(key);
+    log.d(null, 'add api', key);
     routes.use(key.replace(/(\.)|(js)/g, ''), files(key).default);
   }
 });

@@ -75,6 +75,7 @@ const on_complete = Wrap(async(req, res) => {
   let is_complete = false;
   let message = '';
   let result = null;
+  let operation_seq = null;
   try {
     if (Util.isEmpty(content_id) || Util.isEmpty(trans_info.video_file_name) || Util.isEmpty(trans_info.smil_file_name)) {
       throw new StdObject(1, '잘못된 파라미터', 400);
@@ -85,8 +86,9 @@ const on_complete = Wrap(async(req, res) => {
       throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
     }
     await new OperationMediaModel({ database }).updateTransComplete(operation_info, trans_info);
+    operation_seq = operation_info.seq;
 
-    await syncOne(req, token_info, operation_info.seq);
+    await syncOne(req, token_info, operation_seq);
 
     is_complete = true;
     result = new StdObject();
@@ -97,12 +99,14 @@ const on_complete = Wrap(async(req, res) => {
       message = error.message;
     } else {
       result = new StdObject(3, error.message, 500);
+      result.stack = error.stack;
       message = error.message;
     }
     log.e(req, error);
+    await new ServiceErrorModel({ database }).createServiceError('hawkeye', operation_seq, content_id, JSON.stringify(result));
   }
 
-  if (req.query.success != null) {
+  if (is_complete) {
     const send_mail = new SendMail();
     const mail_to = ["hwj@mteg.co.kr"];
     const subject = "트랜스코딩 완료 요청";

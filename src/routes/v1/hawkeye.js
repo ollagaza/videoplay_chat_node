@@ -6,6 +6,7 @@ import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
 import OperationModel from '@/models/OperationModel';
+import OperationMediaModel from '@/models/OperationMediaModel';
 import ServiceErrorModel from '@/models/ServiceErrorModel';
 import SendMail from '@/classes/SendMail';
 import {syncOne} from '@/routes/v1/sync';
@@ -84,6 +85,7 @@ const on_complete = Wrap(async(req, res) => {
   let result = null;
   let media_info_api_url = null;
   let media_info_api_result = null;
+  let operation_seq = null;
   try {
     if (is_success) {
       if (Util.isEmpty(content_id)) {
@@ -95,7 +97,7 @@ const on_complete = Wrap(async(req, res) => {
       if (!operation_info || operation_info.isEmpty()) {
         throw new StdObject(2, `등록된 컨텐츠가 없습니다. [content_id=${content_id}]`, 400);
       }
-      const operation_seq = operation_info.seq;
+      operation_seq = operation_info.seq;
 
       const service_info = service_config.getServiceInfo();
       const media_info_data = {
@@ -118,16 +120,8 @@ const on_complete = Wrap(async(req, res) => {
       if (video_info.isEmpty()) {
         throw new StdObject(video_info.error_code, video_info.message, 500);
       }
-      const media_xml_info = {
-        "MediaInfo": {
-          "Media": video_info.getXmlJson()
-        }
-      };
-      await Util.writeXmlFile(operation_info.media_directory, 'Media.xml', media_xml_info);
-      const video_file_name = video_info.video_name;
-      media_info_api_result = "video_file_name: " + video_file_name + ", path: " + operation_info.media_directory + 'Media.xml';
-
       await operation_model.updateAnalysisComplete(operation_seq, true);
+      await new OperationMediaModel({ database }).updateVideoInfo(operation_info, video_info);
       await syncOne(req, token_info, operation_seq);
 
       is_complete = true;
@@ -155,18 +149,18 @@ const on_complete = Wrap(async(req, res) => {
   } catch (error) {
     if(error instanceof StdObject) {
       result = error;
-      message = error.message;
     } else {
       result = new StdObject(3, error.message, 500);
-      message = error.stack;
+      result.stack = error.stack;
     }
     log.e(req, error);
+    await new ServiceErrorModel({ database }).createServiceError('hawkeye', operation_seq, content_id, JSON.stringify(result));
   }
 
-  if (req.query.success != null) {
+  if (is_complete) {
     const send_mail = new SendMail();
     const mail_to = ["hwj@mteg.co.kr"];
-    const subject = "호크아이 분석 완료 요청";
+    const subject = "호크아이 분석 완료";
     let context = "";
     context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`;
     context += `content_id: ${content_id}<br/>\n`;

@@ -59,7 +59,7 @@ if (IS_DEV) {
     const file_name = 'birdman.mkv';
     const url = 'd:\\\\movie\\마녀.mkv';
     const media_info = await Util.getMediaInfo(url);
-    const type = await Util.getFileType(mime.lookup(url), file_name, url);
+    const type = await Util.getFileType(url, file_name);
     const result = new StdObject();
     result.add('media_info', media_info);
     result.add('type', type);
@@ -134,56 +134,78 @@ if (IS_DEV) {
     res.json(forward_result);
   }));
 
-  routes.post('/dirs', wrap(async (req, res, next) => {
+  routes.post('/burning', wrap(async (req, res, next) => {
     req.accepts('application/json');
     req.setTimeout(0);
-    const dir_list = {};
     log.d(req, req.body);
     const root_dir = req.body.root;
+    const user_id = req.body.user_id;
+    const url_prefix = req.body.url_prefix;
     const file_list = await Util.getDirectoryFileList(root_dir);
-    const trans_reg = /^(Proxy|Trans)_/i;
-    for (let i = 0; i < file_list.length; i++) {
-      const file = file_list[i];
-      if (file.isDirectory()) {
-        const target_dir = root_dir + Constants.SEP + file.name;
-        const seq_dir = target_dir + Constants.SEP + 'SEQ';
-        const seq_file_list = await Util.getDirectoryFileList(seq_dir);
-        log.d(req, i, seq_dir);
-        if (seq_file_list) {
-          const seq_list = [];
-          for (let j = 0; j < seq_file_list.length; j++) {
-            const seq_file = seq_file_list[j];
-            if (!seq_file.isFile()) {
-              continue;
+    res.json(file_list);
+
+    try {
+      const auth_url = url_prefix + '/api/demon/auth';
+      const batch_url = url_prefix + '/api/demon/batch/operation';
+      log.d(req, 'urls', auth_url, batch_url);
+      const auth_params = {
+        "user_id": user_id
+      };
+      const auth_result = await Util.forward(auth_url, 'POST', null, auth_params);
+      if (!auth_result || auth_result.error !== 0) {
+        log.e(req, 'request auth error', auth_result);
+        return;
+      }
+      const auth_token = auth_result.variables.token;
+      const trans_reg = /^(Proxy|Trans)_/i;
+      for (let i = 0; i < file_list.length; i++) {
+        const file = file_list[i];
+        if (file.isDirectory()) {
+          const target_dir = root_dir + Constants.SEP + file.name;
+          const seq_dir = target_dir + Constants.SEP + 'SEQ';
+          const seq_file_list = await Util.getDirectoryFileList(seq_dir);
+          log.d(req, i, seq_dir);
+          if (seq_file_list) {
+            const seq_list = [];
+            for (let j = 0; j < seq_file_list.length; j++) {
+              const seq_file = seq_file_list[j];
+              if (!seq_file.isFile()) {
+                continue;
+              }
+              const file_ext = Util.getFileExt(seq_file.name);
+              if (file_ext === 'smil') {
+                continue;
+              }
+              const seq_path = seq_dir + Constants.SEP + seq_file.name;
+              const file_info = await Util.getFileStat(seq_path);
+              if (file_info.size <= 0) {
+                continue;
+              }
+              if (trans_reg.test(seq_file.name)) {
+                continue;
+              }
+              const media_info = await Util.getMediaInfo(seq_path);
+              if (media_info.media_type === Constants.VIDEO) {
+                seq_list.push(seq_path);
+              }
             }
-            const file_ext = Util.getFileExt(seq_file.name);
-            if (file_ext === 'smil') {
-              continue;
+            if (seq_list.length <= 0) {
+              await Util.deleteDirectory(target_dir);
+              log.d(req, 'delete dir', target_dir);
+            } else {
+              const request_data = {
+                "key": file.name,
+                "data": seq_list
+              };
+              const batch_result = await Util.forward(batch_url, 'POST', auth_token, request_data);
+              log.d(req, 'batch_result', request_data, batch_result);
             }
-            const seq_path = seq_dir + Constants.SEP + seq_file.name;
-            const file_info = await Util.getFileStat(seq_path);
-            if (file_info.size <= 0) {
-              continue;
-            }
-            if (trans_reg.test(seq_file.name)) {
-              continue;
-            }
-            const media_info = await Util.getMediaInfo(seq_path);
-            if (media_info.media_type === Constants.VIDEO) {
-              seq_list.push(seq_path);
-            }
-          }
-          log.d(req, 'seq_list', seq_list);
-          if (seq_list.length <= 0) {
-            await Util.deleteDirectory(target_dir);
-            log.d(req, 'delete dir', target_dir);
-          } else {
-            dir_list[file.name] = seq_list;
           }
         }
       }
+    } catch (error) {
+      log.e(req, error);
     }
-    res.json(dir_list);
   }));
 
   routes.delete('/dir', wrap(async (req, res, next) => {
@@ -193,6 +215,12 @@ if (IS_DEV) {
     const root_dir = req.body.root;
     await Util.deleteDirectory(root_dir);
     log.d(req, 'delete dir', root_dir);
+
+    res.send(true);
+  }));
+
+  routes.get('/err', wrap(async (req, res, next) => {
+    throw new StdObject(-1, 'test', 400);
 
     res.send(true);
   }));

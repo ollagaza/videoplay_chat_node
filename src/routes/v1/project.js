@@ -66,7 +66,7 @@ const routes = Router();
 const getMemberInfo = async (database, member_seq) => {
   const member_info = await new MemberModel({ database: database }).getMemberInfo(member_seq);
   if (!member_info || member_info.isEmpty()) {
-    throw new StdObject(-1, '회원정보가 없습니다.', 401)
+    throw new StdObject(-1, '회원정보가 없습니다.', 401);
   }
   return member_info;
 };
@@ -130,6 +130,8 @@ routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, re
 routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const data = req.body;
+  data.sequence_count = data.sequence_list ? data.sequence_list.length : 0;
+
   const project_seq = req.params.project_seq;
 
   const fields = VideoProjectField();
@@ -214,6 +216,10 @@ routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER
 routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const project_seq = req.params.project_seq;
+  const video_project = await VideoProjectModel.findOneById(project_seq);
+  if (!video_project || !video_project.sequence_list || video_project.sequence_list.length <= 0) {
+    throw new StdObject(-1, '등록된 동영상 정보가 없습니다.', 400);
+  }
   const result = await VideoProjectModel.updateRequestStatus(project_seq, 'R');
 
   const output = new StdObject();
@@ -265,7 +271,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
     };
 
     const api_url = 'http://' + service_info.auto_editor_server_domain + ':' + service_info.auto_editor_server_port + service_info.auto_editor_merge_api + '?' + query_str;
-    log.d(req, api_url);
+    log.d(req, 'request - start', api_url);
 
     let api_request_result = null;
     let is_execute_success = false;
@@ -276,6 +282,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
       log.e(req, e);
       api_request_result = e.message;
     }
+    log.d(req, 'request - result', is_execute_success, api_url, api_request_result);
   })();
 }));
 
@@ -308,7 +315,6 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
 
 routes.get('/video/make/process', Wrap(async(req, res) => {
   const content_id = req.query.ContentID;
-  // /api/v1/project/video/make/process?ContentID=13363f6d-7c88-11e9-bb8e-e0d55ee22ea6&SmilFileName=&Status=start&VideoFileName=
   const process_info = {
     status: req.query.Status,
     video_file_name: req.query.VideoFileName,
@@ -335,8 +341,16 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
       throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
     }
     const path_url = Util.pathToUrl(video_project.project_path);
+    const service_info = service_config.getServiceInfo();
+    const video_directory = service_info.media_root + video_project.project_path;
+    const video_file_path = video_directory + process_info.video_file_name;
+    const total_size = await Util.getDirectoryFileSize(video_directory);
+    const video_file_size = await Util.getFileSize(video_file_path);
     process_info.download_url = Util.pathToUrl(service_config.get('static_storage_prefix')) + path_url + process_info.video_file_name;
     process_info.stream_url = service_config.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
+    process_info.total_size = total_size;
+    process_info.video_file_size = video_file_size;
+
     const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'Y', 100, process_info);
     if (result && result.ok === 1) {
       is_success = true;
