@@ -12,6 +12,8 @@ import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 import service_config from '@/config/service.config';
 import Constants from '@/config/constants';
+import {UserDataModel} from '@/db/mongodb/model/UserData';
+import log from "@/classes/Logger";
 
 const routes = Router();
 
@@ -113,7 +115,7 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
  */
 routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  const member_seq = req.params.member_seq;
+  const member_seq = Util.parseInt(req.params.member_seq);
 
   if (token_info.getId() !== member_seq){
     if(token_info.getRole() === roles.MEMBER){
@@ -526,6 +528,28 @@ routes.post('/verify/nickname', Wrap(async(req, res) => {
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
 
+  res.json(output);
+}));
+
+routes.get('/:member_seq(\\d+)/data', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = Util.parseInt(req.params.member_seq);
+  log.d(req, token_info, member_seq, token_info.getId(), token_info.getId() !== member_seq);
+  if (token_info.getId() !== member_seq){
+    if(token_info.getRole() === roles.MEMBER){
+      throw new StdObject(-1, "잘못된 요청입니다.", 403);
+    }
+  }
+
+
+  let user_data = await UserDataModel.findByMemberSeq(member_seq, '-_id -member_seq -created_date -modify_date');
+  if (!user_data) {
+    user_data = await UserDataModel.createUserData(member_seq, {});
+  }
+  log.d(req, user_data);
+
+  const output = new StdObject();
+  output.add('user_data', user_data);
   res.json(output);
 }));
 

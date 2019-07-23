@@ -22,8 +22,9 @@ import VideoFileModel from '@/models/VideoFileModel';
 import ReferFileModel from '@/models/ReferFileModel';
 import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
-import {VideoIndexInfoField, VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
-import {OperationMetadataField, OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
+import {VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
+import {OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
+import {UserDataModel} from '@/db/mongodb/model/UserData';
 const routes = Router();
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
@@ -252,19 +253,28 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
   }
 
   const output = new StdObject();
+  let operation_info = null;
+  let is_success = false;
 
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
-    const operation_info = await operation_model.createOperation(req.body.operation_info, member_seq);
+    operation_info = await operation_model.createOperation(req.body.operation_info, member_seq);
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
     const operation_seq = operation_info.seq;
-    const media_directory = operation_info.media_directory;
-    const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
 
     await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
     await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
+
+    output.add('operation_seq', operation_seq);
+
+    is_success = true;
+  });
+
+  if (is_success) {
+    const media_directory = operation_info.media_directory;
+    const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
 
     await Util.createDirectory(media_directory + "SEQ");
     await Util.createDirectory(media_directory + "Custom");
@@ -273,11 +283,14 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     await Util.createDirectory(media_directory + "Trash");
     await Util.createDirectory(trans_video_directory + "SEQ");
 
-    await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
-    await OperationMetadataModel.createOperationMetadata(operation_info, req.body.meta_data);
-
-    output.add('operation_seq', operation_seq);
-  });
+    try {
+      await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
+      await OperationMetadataModel.createOperationMetadata(operation_info, req.body.meta_data);
+      await UserDataModel.updateByMemberSeq(member_seq, { operation_type: operation_info.operation_type });
+    } catch (error) {
+      log.e(req, 'create metadata error', error);
+    }
+  }
 
   res.json(output);
 }));
@@ -316,6 +329,7 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
   req.accepts('application/json');
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
+  const member_seq = token_info.getId();
 
   const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
 
@@ -324,12 +338,22 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
     throw new StdObject(-1, '잘못된 요청입니다.', 400);
   }
 
-  const result = await new OperationModel({ database }).updateOperationInfo(operation_seq, update_operation_info);
-  const metadata_result = await OperationMetadataModel.updateByOperationSeq(operation_info, req.body.meta_data);
-  log.d(req, metadata_result);
-
   const output = new StdObject();
-  output.add('result', result);
+  await database.transaction(async(trx) => {
+    const result = await new OperationModel({ database: trx }).updateOperationInfo(operation_seq, update_operation_info);
+    const metadata_result = await OperationMetadataModel.updateByOperationSeq(operation_info, update_operation_info.operation_type, req.body.meta_data);
+    log.d(req, 'metadata_result', metadata_result);
+    if (!metadata_result || !metadata_result._id) {
+      throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400);
+    }
+    output.add('result', result);
+  });
+  try {
+    const user_data_result = await UserDataModel.updateByMemberSeq(member_seq, { operation_type: update_operation_info.operation_type });
+    log.d(req, 'user_data_result', user_data_result);
+  } catch (error) {
+    log.e(req, 'update user_data error', error);
+  }
 
   res.json(output);
 }));
