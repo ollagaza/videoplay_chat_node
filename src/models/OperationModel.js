@@ -184,6 +184,10 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_review: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
+  updateMigChipStatus = async (operation_seq, status) => {
+    return await this.update({"seq": operation_seq}, {mig_clip: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
+  };
+
   createOperation = async (body, member_seq, created_by_user = true, status = null, use_new_clip_api = true) => {
     const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);
     if (!member_info || member_info.isEmpty()) {

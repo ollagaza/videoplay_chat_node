@@ -599,9 +599,17 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(roles.DEFAULT
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
-  const clip_info = await new ClipModel({ database }).getClipInfo(operation_info);
-  // clip_info.clip_seq_list
+  const {operation_info, operation_model} = await getOperationInfo(database, operation_seq, token_info);
+  if (operation_info.mig_clip !== true) {
+    const clip_info = await new ClipModel({ database }).getClipInfo(operation_info);
+    if (clip_info) {
+      const clip_seq_list = clip_info.clip_seq_list;
+      if (clip_seq_list && clip_seq_list.length) {
+        await OperationClipModel.createOperationClipByList(operation_info, clip_seq_list);
+      }
+      await operation_model.updateMigChipStatus(operation_seq, true);
+    }
+  }
   log.d(req, req.headers.version, semver.gt(req.headers.version, '1.0.0'));
 
   const clip_list = await OperationClipModel.findByOperationSeq(operation_seq, '-member_seq -content_id -operation_seq');
