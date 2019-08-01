@@ -64,7 +64,7 @@ operation_clip_schema.statics.updateOperationClip = function( clip_id, clip_info
   if (tag_list) {
     update.tag_list = tag_list;
   }
-  return this.findByIdAndUpdate( clip_id, update );
+  return this.findByIdAndUpdate( clip_id, update, {"new": true} );
 };
 
 operation_clip_schema.statics.findOneById = function( id, projection = null ) {
