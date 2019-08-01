@@ -621,26 +621,26 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(roles.DEFAULT
 }));
 
 routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
-  if (!req.body || !req.body.clip_info) {
+  if (!req.body) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
   }
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
 
-  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body.clip_info);
+  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body);
   const output = new StdObject();
   output.add('result', create_result);
   res.json(output);
 }));
 
 routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
-  if (!req.body || !req.body.clip_info) {
+  if (!req.body) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
   }
   const clip_id = req.params.clip_id;
 
-  const update_result = await OperationClipModel.updateOperationClip(clip_id, req.body.clip_info);
+  const update_result = await OperationClipModel.updateOperationClip(clip_id, req.body);
 
   const output = new StdObject();
   output.add('result', update_result);
