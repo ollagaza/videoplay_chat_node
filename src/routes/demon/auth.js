@@ -24,23 +24,7 @@ routes.post('/', Wrap(async(req, res) => {
     throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
   }
 
-  member_info.role = roles.API;
-
-  const token_result = await Auth.generateTokenByMemberInfo(member_info, true);
-
-  const output = new StdObject();
-  if (token_result != null && token_result.token != null) {
-    output.add("token", token_result.token);
-    output.add("remain_time", token_result.remain);
-    output.add("member_seq", member_info.seq);
-    output.add("role", token_result.token_info.getRole());
-    Auth.setResponseHeader(res, token_result.token_info);
-  }
-  else {
-    output.setError(-1);
-    output.setMessage("인증토큰 생성 실패");
-    output.httpStatusCode = 500;
-  }
+  const output = await Auth.getTokenResult(res, member_info, roles.API);
 
   return res.json(output);
 }));

@@ -1,6 +1,7 @@
 import {Router} from 'express';
 import service_config from '@/config/service.config';
 import querystring from 'querystring';
+import semver from 'semver';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
@@ -24,6 +25,7 @@ import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
 import {VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
 import {OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
+import {OperationClipModel} from '@/db/mongodb/model/OperationClip';
 import {UserDataModel} from '@/db/mongodb/model/UserData';
 const routes = Router();
 
@@ -258,7 +260,8 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
 
   await database.transaction(async(trx) => {
     const operation_model = new OperationModel({ database: trx });
-    operation_info = await operation_model.createOperation(req.body.operation_info, member_seq);
+    const use_new_clip_api = semver.gt(req.headers.version, '1.0.0');
+    operation_info = await operation_model.createOperation(req.body.operation_info, member_seq, true, null, use_new_clip_api);
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
@@ -589,6 +592,67 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
   });
 
   const output = new StdObject();
+  res.json(output);
+}));
+
+routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+
+  const {operation_info, operation_model} = await getOperationInfo(database, operation_seq, token_info);
+  if (operation_info.mig_clip !== true) {
+    const clip_info = await new ClipModel({ database }).getClipInfo(operation_info);
+    if (clip_info) {
+      const clip_seq_list = clip_info.clip_seq_list;
+      if (clip_seq_list && clip_seq_list.length) {
+        await OperationClipModel.createOperationClipByList(operation_info, clip_seq_list);
+      }
+      await operation_model.updateMigChipStatus(operation_seq, true);
+    }
+  }
+  log.d(req, req.headers.version, semver.gt(req.headers.version, '1.0.0'));
+
+  const clip_list = await OperationClipModel.findByOperationSeq(operation_seq, '-member_seq -content_id -operation_seq');
+
+  const output = new StdObject();
+  output.add("clip_list", clip_list);
+
+  res.json(output);
+}));
+
+routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  if (!req.body) {
+    throw new StdObject(-1, "잘못된 요청입니다.", 400);
+  }
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+  const {operation_info} = await getOperationInfo(database, operation_seq, token_info);
+
+  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body);
+  const output = new StdObject();
+  output.add('result', create_result);
+  res.json(output);
+}));
+
+routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  if (!req.body) {
+    throw new StdObject(-1, "잘못된 요청입니다.", 400);
+  }
+  const clip_id = req.params.clip_id;
+
+  const update_result = await OperationClipModel.updateOperationClip(clip_id, req.body);
+
+  const output = new StdObject();
+  output.add('result', update_result);
+  res.json(output);
+}));
+
+routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const clip_id = req.params.clip_id;
+  const delete_result = await OperationClipModel.deleteById(clip_id);
+
+  const output = new StdObject();
+  output.add('result', delete_result);
   res.json(output);
 }));
 

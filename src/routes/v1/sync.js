@@ -163,6 +163,7 @@ const syncOne = async (req, token_info, operation_seq) => {
   let trans_video_size = 0;
   let trans_video_count = 0;
   if (!smil_info.isEmpty()) {
+    const video_model = await new VideoFileModel({ database });
     const video_directory = operation_info.media_directory + 'SEQ' + Constants.SEP;
     const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
     const file_list = await Util.getDirectoryFileList(video_directory);
@@ -181,7 +182,7 @@ const syncOne = async (req, token_info, operation_seq) => {
           origin_video_count++;
           origin_video_size += file_info.file_size;
           if (operation_info.created_by_user !== true) {
-            file_info.thumbnail = await this.createVideoThumbnail(video_file_path, operation_info);
+            file_info.thumbnail = await video_model.createVideoThumbnail(video_file_path, operation_info);
             add_video_file_list.push(file_info);
           }
         }

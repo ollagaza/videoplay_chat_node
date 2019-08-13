@@ -184,7 +184,11 @@ export default class OperationModel extends ModelObject {
     return await this.update({"seq": operation_seq}, {is_review: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
-  createOperation = async (body, member_seq, created_by_user = true, status = null) => {
+  updateMigChipStatus = async (operation_seq, status) => {
+    return await this.update({"seq": operation_seq}, {mig_clip: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
+  };
+
+  createOperation = async (body, member_seq, created_by_user = true, status = null, use_new_clip_api = true) => {
     const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(-1, '회원정보가 없습니다.', 401)
@@ -196,6 +200,7 @@ export default class OperationModel extends ModelObject {
     operation_info.media_path = user_media_path + 'operation' + Constants.SEP + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
     operation_info.created_by_user = created_by_user ? 1 : 0;
     operation_info.content_id = content_id;
+    operation_info.mig_clip = use_new_clip_api ? 1 : 0;
     if (status) {
       operation_info.status = status;
     }
