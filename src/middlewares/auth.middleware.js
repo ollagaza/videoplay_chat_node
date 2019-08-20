@@ -131,9 +131,32 @@ const verifyToken = async (req, require_roles=null) => {
   return output;
 };
 
+const getTokenResult = async (res, member_info, role) => {
+  member_info.role = role;
+
+  const token_result = await generateTokenByMemberInfo(member_info);
+
+  const output = new StdObject();
+  if (token_result != null && token_result.token != null) {
+    output.add("token", token_result.token);
+    output.add("remain_time", token_result.remain);
+    output.add("member_seq", member_info.seq);
+    output.add("role", token_result.token_info.getRole());
+    setResponseHeader(res, token_result.token_info);
+  }
+  else {
+    output.setError(-1);
+    output.setMessage("인증토큰 생성 실패");
+    output.httpStatusCode = 500;
+  }
+
+  return output;
+};
+
 export default {
   "setResponseHeader": setResponseHeader,
   "generateTokenByMemberInfo": generateTokenByMemberInfo,
   "isAuthenticated": isAuthenticated,
-  "verifyToken": verifyToken
+  "verifyToken": verifyToken,
+  "getTokenResult": getTokenResult
 };

@@ -9,6 +9,7 @@ import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import Util from '@/utils/baseutil';
 
 const routes = Router();
+
 /**
  * @swagger
  * tags:
@@ -127,25 +128,7 @@ routes.post('/', Wrap(async(req, res) => {
   if (has_auth_mail) {
     throw new StdObject(-1, "이메일 인증 후 사용 가능합니다.", 400);
   }
-
-  member_info.role = roles.MEMBER;
-
-  const token_result = await Auth.generateTokenByMemberInfo(member_info);
-
-  const output = new StdObject();
-  if (token_result != null && token_result.token != null) {
-    output.add("token", token_result.token);
-    output.add("remain_time", token_result.remain);
-    output.add("member_seq", member_seq);
-    output.add("role", token_result.token_info.getRole());
-    Auth.setResponseHeader(res, token_result.token_info);
-  }
-  else {
-    output.setError(-1);
-    output.setMessage("인증토큰 생성 실패");
-    output.httpStatusCode = 500;
-  }
-
+  const output = await Auth.getTokenResult(res, member_info, roles.MEMBER);
   return res.json(output);
 }));
 
@@ -233,24 +216,7 @@ routes.post('/token/refresh', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async
   const member_model = new MemberModel({ database });
   const member_info = await member_model.findOne({"seq": member_seq});
 
-  member_info.role = roles.MEMBER;
-
-  const token_result = await Auth.generateTokenByMemberInfo(member_info);
-
-  const output = new StdObject();
-  if (token_result != null && token_result.token != null) {
-    output.add("token", token_result.token);
-    output.add("remain_time", token_result.remain);
-    output.add("member_seq", member_seq);
-    output.add("role", token_result.token_info.getRole());
-    Auth.setResponseHeader(res, token_result.token_info);
-  }
-  else {
-    output.setError(-1);
-    output.setMessage("인증토큰 생성 실패");
-    output.httpStatusCode = 500;
-  }
-
+  const output = await Auth.getTokenResult(res, member_info, roles.MEMBER);
   return res.json(output);
 }));
 
