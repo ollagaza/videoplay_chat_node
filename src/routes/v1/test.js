@@ -141,6 +141,7 @@ if (IS_DEV) {
     const root_dir = req.body.root;
     const user_id = req.body.user_id;
     const url_prefix = req.body.url_prefix;
+    const random_key = req.body.random_key === true;
     const file_list = await Util.getDirectoryFileList(root_dir);
     res.json(file_list);
 
@@ -194,9 +195,11 @@ if (IS_DEV) {
               log.d(req, 'delete dir', target_dir);
             } else {
               const request_data = {
-                "key": file.name,
                 "data": seq_list
               };
+              if (random_key) {
+                request_data.key = await ContentIdManager.getContentId();
+              }
               const batch_result = await Util.forward(batch_url, 'POST', auth_token, request_data);
               log.d(req, 'batch_result', request_data, batch_result);
             }
