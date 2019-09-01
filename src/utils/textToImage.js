@@ -1,3 +1,4 @@
+import log from "@/classes/Logger";
 const {registerFont, createCanvas} = require('canvas');
 
 /**
@@ -93,8 +94,8 @@ const text2png = (text, options = {}) => {
         throw new Error(`output type:${options.output} is not supported.`)
     }
   } catch (e) {
-    console.error(text, result, options);
-    console.error(e);
+    log.error(text, result, options);
+    log.error(e);
     throw e;
   }
 

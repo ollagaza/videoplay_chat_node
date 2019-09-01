@@ -256,7 +256,7 @@ export default class EmbedModel {
     return json;
   };
 
-  getXmlJson = async (scale, file_path) => {
+  getXmlJson = async (scale, file_path, editor_server_directory) => {
     const json = {
       "Type": this._type,
     };
@@ -266,7 +266,7 @@ export default class EmbedModel {
     }
 
     if (this._type === Constants.TEXT) {
-      await this.createTextImage(file_path);
+      await this.createTextImage(file_path, editor_server_directory);
       json.Src = this._src;
       json.Type = this._type;
     } else if (this._type === Constants.IMAGE) {
@@ -295,7 +295,7 @@ export default class EmbedModel {
     return json;
   };
 
-  createTextImage = async (file_path) => {
+  createTextImage = async (file_path, editor_server_directory) => {
     const font_name = this._font.bold ? 'NanumBarunGothicBold' : 'NanumBarunGothic';
     const options = {
       fontSize: this._font.size,
@@ -315,12 +315,13 @@ export default class EmbedModel {
     };
 
     const image_file_path = file_path + this._id + '.png';
+    const editor_image_file_path = editor_server_directory + this._id + '.png';
     const image_info = await text2png(this._src, options);
     const write_result = await util.writeFile(image_file_path, image_info.data);
-    logger.debug(image_file_path, this._id, write_result);
+    logger.debug(image_file_path, this._id, write_result, editor_image_file_path);
 
     this._type = Constants.IMAGE;
-    this._src = image_file_path;
+    this._src = editor_image_file_path;
     this._multiLine = false;
     this._padding = 0;
     this._size.width = image_info.width;

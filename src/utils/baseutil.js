@@ -668,7 +668,7 @@ const isFalse = (value) => {
 
 const urlToPath = (url, editor_path = false) => {
   const service_info = service_config.getServiceInfo();
-  const check_regex = /^\/static\/(index|storage)\/(.+)$/g;
+  const check_regex = /^\/static\/(index|storage|video)\/(.+)$/g;
   const result = check_regex.exec(url);
   if (result && result.length === 3) {
     let path = '';
