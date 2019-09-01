@@ -155,7 +155,7 @@ class OperationScheduler {
     const storage_seq = await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
     await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
 
-    await OperationService.createDirectory(operation_info);
+    await OperationService.createOperationDirectory(operation_info);
 
     operation_info.media_seq = media_seq;
     operation_info.storage_seq = storage_seq;

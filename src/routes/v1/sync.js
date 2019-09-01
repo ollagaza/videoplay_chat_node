@@ -124,7 +124,7 @@ const syncOne = async (req, token_info, operation_seq) => {
   const trans_media_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
   const media_directory = operation_info.media_directory;
 
-  await OperationService.createDirectory(operation_info);
+  await OperationService.createOperationDirectory(operation_info);
   await OperationService.deleteMetaFiles(operation_info);
 
   log.d(req, `${log_prefix} hawkeye index list api`);
@@ -308,7 +308,7 @@ const reSync = async (req, operation_seq) => {
   // db 업데이트가 끝나면 기존 파일 정리.
 
   await OperationService.deleteOperationDirectory(operation_info);
-  await OperationService.createDirectory(operation_info);
+  await OperationService.createOperationDirectory(operation_info);
 
   await VideoIndexInfoModel.deleteByOperation(operation_info.seq);
   await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
