@@ -270,9 +270,9 @@ export default class EmbedModel {
       json.Src = this._src;
       json.Type = this._type;
     } else if (this._type === Constants.IMAGE) {
-      json.Src = util.urlToPath(this._src);
+      json.Src = util.urlToPath(this._src, true);
     } else if (this._type === Constants.VIDEO) {
-      json.Src = util.urlToPath(this._origin_video_url);
+      json.Src = util.urlToPath(this._origin_video_url, true);
       json.VideoStartTime = this._videoStartTime;
       json.VideoEndTime = this._videoEndTime;
     } else {

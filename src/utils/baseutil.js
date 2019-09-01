@@ -666,7 +666,7 @@ const isFalse = (value) => {
   return str === 'n' || str === 'false';
 };
 
-const urlToPath = (url) => {
+const urlToPath = (url, editor_path = false) => {
   const service_info = service_config.getServiceInfo();
   const check_regex = /^\/static\/(index|storage)\/(.+)$/g;
   const result = check_regex.exec(url);
@@ -675,15 +675,34 @@ const urlToPath = (url) => {
     const url_type = result[1];
     switch (url_type) {
       case 'index':
-        path = service_info.hawkeye_data_directory;
+        if (editor_path) {
+          path = service_info.auto_editor_index_root;
+        } else {
+          path = service_info.hawkeye_data_directory;
+        }
         break;
       case 'storage':
-        path = service_info.media_root;
+        if (editor_path) {
+          path = service_info.auto_editor_file_root;
+        } else {
+          path = service_info.media_root;
+        }
+        break;
+      case 'video':
+        if (editor_path) {
+          path = service_info.auto_editor_video_root;
+        } else {
+          path = service_info.trans_video_root;
+        }
         break;
       default:
         return url;
     }
-    path += Constants.SEP + result[2].replace(/\//g, Constants.SEP);
+    let sep = Constants.SEP;
+    if (editor_path) {
+      sep = service_info.auto_editor_sep;
+    }
+    path += sep + result[2].replace(/\//g, sep);
     return path;
   }
   return url;

@@ -44,14 +44,15 @@ export default class VideoFileModel extends ModelObject {
   };
 
   deleteAll = async (storage_seq, trash_path) => {
-    await this.update({"storage_seq": storage_seq}, {
-      "status": "D",
-      "file_path": trash_path,
-      "modify_date": this.database.raw('NOW()')
-    });
+    // await this.update({"storage_seq": storage_seq}, {
+    //   "status": "D",
+    //   "file_path": trash_path,
+    //   "modify_date": this.database.raw('NOW()')
+    // });
+    await this.delete({ storage_seq: storage_seq });
   };
 
-  deleteSelectedFiles = async (file_seq_list, media_directory) => {
+  deleteSelectedFiles = async (file_seq_list) => {
     const oKnex = this.database
       .select(this.selectable_fields)
       .from(this.table_name)
@@ -61,37 +62,21 @@ export default class VideoFileModel extends ModelObject {
       return true;
     }
 
-    let replace_query;
-    if (Constants.SEP === '/') {
-      replace_query = "REPLACE(file_path, '/SEQ/', '/Trash/')";
-    } else {
-      replace_query = "REPLACE(file_path, '\\\\SEQ\\\\', '\\\\Trash\\\\')";
-    }
-
-    const update_params = {
-      "file_path": this.database.raw(replace_query),
-      "status": "T",
-      "modify_date": this.database.raw('NOW()')
-    };
-
     await this.database
-      .update(update_params)
       .from(this.table_name)
-      .whereIn('seq', file_seq_list);
+      .whereIn('seq', file_seq_list)
+      .del();
 
-    const service_info = service_config.getServiceInfo();
-    const media_root = service_info.media_root;
-    const trash_directory = media_directory + 'Trash' + Constants.SEP;
-    if ( !( await Util.fileExists(trash_directory) ) ) {
-      await Util.createDirectory(trash_directory);
-    }
+    (async() => {
+      const service_info = service_config.getServiceInfo();
+      const trans_video_root = service_info.trans_video_root;
 
-    for (let i = 0; i < result_list.length; i++) {
-      const file_info = result_list[i];
-      const target_path = media_root + file_info.file_path;
-      const dest_path = trash_directory + file_info.file_name;
-      await Util.renameFile(target_path, dest_path);
-    }
+      for (let i = 0; i < result_list.length; i++) {
+        const file_info = result_list[i];
+        const target_path = trans_video_root + file_info.file_path;
+        await Util.deleteFile(target_path);
+      }
+    })();
 
     return true;
   };
