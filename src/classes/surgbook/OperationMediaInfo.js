@@ -74,11 +74,12 @@ export default class OperationMediaInfo extends JsonWrapper {
   setUrl = (operation_info) => {
     if (this.is_trans_complete) {
       const media_directory = operation_info.media_directory;
-      const url_prefix = operation_info.url_prefix;
+      // const url_prefix = operation_info.url_prefix;
+      const vod_url_prefix = operation_info.vod_url_prefix;
       const url_media_path = Util.pathToUrl(operation_info.media_path);
 
-      this.origin_video_url = url_prefix + "SEQ/" + this.video_file_name;
-      this.proxy_video_url = url_prefix + "SEQ/" + this.proxy_file_name;
+      this.origin_video_url = vod_url_prefix + "SEQ/" + this.video_file_name;
+      this.proxy_video_url = vod_url_prefix + "SEQ/" + this.proxy_file_name;
       this.video_source = "SEQ" + Constants.SEP + this.video_file_name;
       this.origin_video_path = media_directory + this.video_source;
 

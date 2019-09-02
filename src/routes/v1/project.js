@@ -229,6 +229,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
   (async() => {
     const service_info = service_config.getServiceInfo();
     const directory = service_info.media_root + result.project_path;
+    const editor_server_directory = service_info.auto_editor_file_root + result.project_path.replace(new RegExp(Constants.SEP, 'g'), service_info.auto_editor_sep);
 
     const scale = 1;
     const sequence_list = result.sequence_list;
@@ -236,7 +237,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
     for (let i = 0; i < sequence_list.length; i++) {
       const sequence_model = new SequenceModel().init(sequence_list[i]);
       if (sequence_model.type) {
-        sequence_model_list.push(await sequence_model.getXmlJson(i, scale, directory));
+        sequence_model_list.push(await sequence_model.getXmlJson(i, scale, directory, editor_server_directory));
       }
     }
 
@@ -257,9 +258,9 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
     await Util.writeXmlFile(directory, file_name, video_xml_json);
 
     const query_data = {
-      "DirPath": directory,
+      "DirPath": editor_server_directory,
       "ContentID": result.content_id,
-      "XmlFilePath": directory + Constants.SEP + file_name
+      "XmlFilePath": editor_server_directory + file_name
     };
     const query_str = querystring.stringify(query_data);
 
