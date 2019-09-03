@@ -162,7 +162,8 @@ if (IS_DEV) {
       for (let i = 0; i < file_list.length; i++) {
         const file = file_list[i];
         if (file.isDirectory()) {
-          const target_dir = root_dir + Constants.SEP + file.name;
+          const directory_name = file.name;
+          const target_dir = root_dir + Constants.SEP + directory_name;
           const seq_dir = target_dir + Constants.SEP + 'SEQ';
           const seq_file_list = await Util.getDirectoryFileList(seq_dir);
           log.d(req, i, seq_dir);
@@ -199,6 +200,8 @@ if (IS_DEV) {
               };
               if (random_key) {
                 request_data.key = await ContentIdManager.getContentId();
+              } else {
+                request_data.key = directory_name;
               }
               const batch_result = await Util.forward(batch_url, 'POST', auth_token, request_data);
               log.d(req, 'batch_result', request_data, batch_result);
