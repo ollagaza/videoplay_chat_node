@@ -676,6 +676,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   let media_directory = null;
   let api_url = null;
   let is_execute_success = false;
+  const service_info = service_config.getServiceInfo();
 
   await database.transaction(async(trx) => {
 
@@ -683,7 +684,6 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     file_summary = await new VideoFileModel({database: trx}).videoFileSummary(operation_info.storage_seq);
     member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
 
-    const service_info = service_config.getServiceInfo();
     media_directory = operation_info.media_directory + "SEQ";
 
     const operation_update_param = {};
@@ -728,7 +728,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     }
   });
 
-  if (is_execute_success) {
+  if (service_info.send_process_mail === 'Y' && is_execute_success) {
     try {
       const send_mail = new SendMail();
       // const mail_to = ["hwj@mteg.co.kr", "ytcho@mteg.co.kr"];

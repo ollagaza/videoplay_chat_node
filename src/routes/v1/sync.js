@@ -250,7 +250,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     await new BatchOperationQueueModel({ database }).onJobComplete(operation_seq);
   }
 
-  if (operation_info.analysis_status !== 'Y' && is_sync_complete) {
+  if (service_info.send_process_mail === 'Y' && is_sync_complete) {
     const send_mail = new SendMail();
     const mail_to = ["hwj@mteg.co.kr"];
     const subject = "동영상 분석 완료";
