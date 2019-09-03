@@ -88,7 +88,7 @@ const deleteOperationFiles = async (operation_info) => {
 
   await Util.deleteDirectory(media_directory);
   if (media_directory !== trans_video_directory) {
-    await Util.deleteDirectory(deleteOperationFiles);
+    await Util.deleteDirectory(trans_video_directory);
   }
 };
 
