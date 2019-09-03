@@ -83,6 +83,12 @@ video_project_schema.statics.updateRequestStatusByContentId = function( content_
     if (media_info.stream_url) {
       update.stream_url = media_info.stream_url;
     }
+    if (media_info.total_size) {
+      update.stream_url = media_info.total_size;
+    }
+    if (media_info.video_file_size) {
+      update.stream_url = media_info.video_file_size;
+    }
   }
   return this.updateOne( { content_id: content_id }, update );
 };
