@@ -84,10 +84,10 @@ video_project_schema.statics.updateRequestStatusByContentId = function( content_
       update.stream_url = media_info.stream_url;
     }
     if (media_info.total_size) {
-      update.stream_url = media_info.total_size;
+      update.total_size = media_info.total_size;
     }
     if (media_info.video_file_size) {
-      update.stream_url = media_info.video_file_size;
+      update.video_file_size = media_info.video_file_size;
     }
   }
   return this.updateOne( { content_id: content_id }, update );
