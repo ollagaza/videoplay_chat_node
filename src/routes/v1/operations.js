@@ -1046,4 +1046,22 @@ routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(roles.LOGIN_US
   res.json(output);
 }));
 
+routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const token_info = req.token_info;
+  let member_seq = req.params.member_seq;
+  if (token_info.getRole() === roles.MEMBER ) {
+    member_seq = token_info.getId();
+  } else if (member_seq !== token_info.getId()) {
+    if (token_info.getRole() !== roles.ADMIN) {
+      throw new StdObject(-99, '권한이 없습니다.', 403);
+    }
+  }
+
+  const clip_list = await OperationClipModel.findByMemberSeq(member_seq);
+
+  const output = new StdObject();
+  output.add('clip_list', clip_list);
+  res.json(output);
+}));
+
 export default routes;

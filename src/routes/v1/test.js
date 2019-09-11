@@ -12,7 +12,6 @@ import roles from "@/config/roles";
 import mime from "mime-types";
 import service_config from "@/config/service.config";
 import config from "@/config/config";
-import TestModel from '@/db/mongodb/model/test';
 import ContentIdManager from '@/classes/ContentIdManager'
 import {VideoProjectModel} from '@/db/mongodb/model/VideoProject';
 import SequenceModel from '@/models/sequence/SequenceModel';
@@ -69,29 +68,6 @@ if (IS_DEV) {
   routes.get('/co/:code', wrap(async (req, res) => {
     const code = req.params.code;
     res.send(Util.colorCodeToHex(code));
-  }));
-
-  routes.post('/mon', wrap(async (req, res) => {
-    const sequence = req.body;
-    const result = await TestModel.findBySequence(sequence);
-    res.json(result);
-  }));
-
-  routes.get('/mon/:id', wrap(async (req, res) => {
-    const id = req.params.id;
-    const result = await TestModel.findOneById(id);
-    res.json(result);
-  }));
-
-  routes.get('/mon', wrap(async (req, res) => {
-    const content_id = await ContentIdManager.getContentId();
-    const result = await TestModel.create(content_id, [1, 5, 10]);
-    res.json(result);
-  }));
-
-  routes.get('/t/:id', wrap(async (req, res) => {
-    console.log(req.params.id);
-    res.send("" + Util.getRandomNumber(parseInt(req.params.id)));
   }));
 
   routes.get('/crypto', wrap(async (req, res) => {
