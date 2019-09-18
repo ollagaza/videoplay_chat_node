@@ -178,7 +178,7 @@ const addVideoIndex = async (operation_info, second) => {
   index_info_list = _.sortBy(index_info_list, index_info => index_info.start_frame);
 
   const media_directory = operation_info.media_directory;
-  const trans_video_path = operation_info.media_info.trans_video_path;
+  const trans_video_path = operation_info.trans_video_path;
   const save_directory = media_directory + 'Thumb';
   if ( !( await Util.fileExists(save_directory) ) ) {
     await Util.createDirectory(save_directory);

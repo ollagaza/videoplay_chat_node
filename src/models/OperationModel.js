@@ -8,6 +8,7 @@ import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
 import ContentIdManager from '@/classes/ContentIdManager';
 import Constants from '@/config/constants';
+import log from "@/classes/Logger";
 
 const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
 
@@ -98,8 +99,8 @@ export default class OperationModel extends ModelObject {
     const operation_info = new OperationInfo(query_result);
 
     if (operation_info.media_root) {
-      operation_info.media_directory = Util.getMediaDirectory(operation_info.media_root, operation_info.media_path);
-      operation_info.trans_directory = Util.getMediaDirectory(operation_info.trans_video_root, operation_info.media_path);
+      operation_info.media_directory = Util.getMediaDirectory(service_info.media_root, operation_info.media_path);
+      operation_info.trans_directory = Util.getMediaDirectory(service_info.trans_video_root, operation_info.media_path);
       operation_info.url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
       operation_info.vod_url_prefix = Util.getUrlPrefix(service_info.static_video_prefix, operation_info.media_path);
     }
@@ -117,8 +118,8 @@ export default class OperationModel extends ModelObject {
     if (import_media_info === true) {
       const media_info = await new OperationMediaModel({ "database": this.database }).getOperationMediaInfo(operation_info);
       operation_info.setMediaInfo(media_info);
-      operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
-      operation_info.trans_video_path = operation_info.trans_directory + operation_info.video_source;
+      operation_info.origin_video_path = operation_info.media_directory + media_info.video_source;
+      operation_info.trans_video_path = operation_info.trans_directory + media_info.video_source;
     }
 
     return operation_info;
