@@ -202,9 +202,16 @@ if (IS_DEV) {
   }));
 
   routes.get('/err', wrap(async (req, res, next) => {
-    throw new StdObject(-1, 'test', 400);
 
-    res.send(true);
+    const result1 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smi");
+    const result2 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smil");
+    const result3 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\Trans_6227f7a0-d923-11e9-bcaf-81e66f898cf9.mp4");
+    log.d(req, "\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\Trans_6227f7a0-d923-11e9-bcaf-81e66f898cf9.mp4");
+    res.send({
+      result1,
+      result2,
+      result3
+    });
   }));
 }
 

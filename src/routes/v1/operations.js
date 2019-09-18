@@ -28,6 +28,8 @@ import {OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
 import {OperationClipModel} from '@/db/mongodb/model/OperationClip';
 import {UserDataModel} from '@/db/mongodb/model/UserData';
 import OperationService from '@/service/operation/OperationService';
+import Constants from '@/config/constants';
+
 const routes = Router();
 
 /**
@@ -685,6 +687,11 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
 
     media_directory = operation_info.media_directory + "SEQ";
+    let sep_pattern = "/";
+    if (Constants.SEP === "\\") {
+      sep_pattern = "\\\\";
+    }
+    const trans_server_directory = service_info.trans_server_root + operation_info.media_path.replace(new RegExp(sep_pattern, 'g'), service_info.trans_server_sep);
 
     const operation_update_param = {};
     operation_update_param.analysis_status = 'R';
@@ -700,7 +707,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     }
 
     const query_data = {
-      "DirPath": media_directory,
+      "DirPath": trans_server_directory,
       "ContentID": content_id
     };
     const query_str = querystring.stringify(query_data);
