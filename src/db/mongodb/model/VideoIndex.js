@@ -178,14 +178,14 @@ const addVideoIndex = async (operation_info, second) => {
   index_info_list = _.sortBy(index_info_list, index_info => index_info.start_frame);
 
   const media_directory = operation_info.media_directory;
-  const origin_video_path = operation_info.media_info.origin_video_path;
+  const trans_video_path = operation_info.media_info.trans_video_path;
   const save_directory = media_directory + 'Thumb';
   if ( !( await Util.fileExists(save_directory) ) ) {
     await Util.createDirectory(save_directory);
   }
 
   const original_index_image_path = save_directory + Constants.SEP + index_file_name;
-  let execute_result = await Util.getThumbnail(origin_video_path, original_index_image_path, second);
+  let execute_result = await Util.getThumbnail(trans_video_path, original_index_image_path, second);
   if (!execute_result.success) {
     log.e(null, `IndexModel.addIndex execute error [${execute_result.command}]`, execute_result);
     throw new StdObject(-1, '인덱스 추출 실패', 400);
@@ -199,7 +199,7 @@ const addVideoIndex = async (operation_info, second) => {
     const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
     const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
     const thumb_index_image_path = save_directory + Constants.SEP + thumbnail_file_name;
-    execute_result = await Util.getThumbnail(origin_video_path, thumb_index_image_path, second, thumb_width, thumb_height);
+    execute_result = await Util.getThumbnail(trans_video_path, thumb_index_image_path, second, thumb_width, thumb_height);
 
     if (!execute_result.success) {
       log.e(null, `IndexModel.addIndex thumb execute error [${execute_result.command}]`, execute_result);

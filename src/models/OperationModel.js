@@ -99,6 +99,7 @@ export default class OperationModel extends ModelObject {
 
     if (operation_info.media_root) {
       operation_info.media_directory = Util.getMediaDirectory(operation_info.media_root, operation_info.media_path);
+      operation_info.trans_directory = Util.getMediaDirectory(operation_info.trans_video_root, operation_info.media_path);
       operation_info.url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
       operation_info.vod_url_prefix = Util.getUrlPrefix(service_info.static_video_prefix, operation_info.media_path);
     }
@@ -117,6 +118,7 @@ export default class OperationModel extends ModelObject {
       const media_info = await new OperationMediaModel({ "database": this.database }).getOperationMediaInfo(operation_info);
       operation_info.setMediaInfo(media_info);
       operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
+      operation_info.trans_video_path = operation_info.trans_directory + operation_info.video_source;
     }
 
     return operation_info;
