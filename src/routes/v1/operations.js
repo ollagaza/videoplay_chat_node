@@ -647,6 +647,48 @@ routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.
   res.json(output);
 }));
 
+routes.post('/:operation_seq(\\d+)/phase', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  if (!req.body) {
+    throw new StdObject(-1, "잘못된 요청입니다.", 400);
+  }
+
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+
+  const create_result = await OperationClipModel.createPhase(operation_info, req.body.phase_desc);
+  const phase_id = create_result._id;
+  await OperationClipModel.setPhase(phase_id, req.body.clip_id_list);
+
+  const output = new StdObject();
+  output.add('phase', create_result);
+  output.add('phase_id', phase_id);
+  res.json(output);
+}));
+
+routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  // const operation_seq = req.params.operation_seq;
+  const phase_id = req.params.phase_id;
+  const phase_desc = req.body.phase_desc;
+
+  log.d(req, phase_id, phase_desc);
+  const update_result = await OperationClipModel.updatePhase(phase_id, phase_desc);
+
+  const output = new StdObject();
+  output.add('result', update_result);
+  res.json(output);
+}));
+
+routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const phase_id = req.params.phase_id;
+  const update_result = await OperationClipModel.unsetPhase(operation_seq, phase_id);
+
+  const output = new StdObject();
+  output.add('result', update_result);
+  res.json(output);
+}));
+
 /**
  * @swagger
  * /operations/{operation_seq}/request/analysis:
