@@ -33,6 +33,7 @@ const operation_clip_schema = new Schema(schema_field_infos, { strict: false });
 
 operation_clip_schema.indexes();
 operation_clip_schema.index( { member_seq: 1, tag_list: 1 } );
+operation_clip_schema.index( { member_seq: 1, is_phase: 1 } );
 operation_clip_schema.index( { operation_seq: 1, phase_id: 1 } );
 
 operation_clip_schema.statics.createOperationClip = function( operation_info, clip_info ) {
@@ -84,7 +85,7 @@ operation_clip_schema.statics.findOneByContentId = function( content_id, project
 };
 
 operation_clip_schema.statics.findByMemberSeq = function( member_seq, projection = null ) {
-  return this.find( { member_seq: member_seq }, projection );
+  return this.find( { member_seq: member_seq, is_phase: { $ne: true } }, projection );
 };
 
 operation_clip_schema.statics.deleteById = function( id ) {
@@ -107,6 +108,10 @@ operation_clip_schema.statics.createPhase = function( operation_info, phase_desc
   };
   const model = new this(payload);
   return model.save();
+};
+
+operation_clip_schema.statics.deletePhase = function( operation_seq, phase_id ) {
+  return this.deleteOne( { _id: phase_id, operation_seq } );
 };
 
 operation_clip_schema.statics.updatePhase = function( phase_id, phase_desc ) {
@@ -134,6 +139,15 @@ operation_clip_schema.statics.unsetPhase = function( operation_seq, phase_id ) {
     modify_date: Date.now()
   };
   return this.update( { operation_seq, phase_id }, update );
+};
+
+operation_clip_schema.statics.unsetPhaseOne = function( clip_id, operation_seq, phase_id ) {
+  const update = {
+    phase_id: null,
+    is_phase: false,
+    modify_date: Date.now()
+  };
+  return this.update( { _id: clip_id, operation_seq, phase_id }, update );
 };
 
 const operation_clip_model = mongoose.model( 'OperationClip', operation_clip_schema );

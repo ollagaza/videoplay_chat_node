@@ -611,6 +611,28 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(roles.DEFAULT
   res.json(output);
 }));
 
+routes.put('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const phase_id = req.params.phase_id;
+  const result = await OperationClipModel.setPhase(phase_id, req.body.clip_id_list);
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+routes.delete('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const phase_id = req.params.phase_id;
+
+  const result = await OperationClipModel.unsetPhaseOne(req.body.clip_id, operation_seq, phase_id);
+  if (req.body.remove_phase === true) {
+    await OperationClipModel.deletePhase(operation_seq, phase_id);
+  }
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
 routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   if (!req.body) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
@@ -619,7 +641,8 @@ routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(roles.DEFAULT), W
   const operation_seq = req.params.operation_seq;
   const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
 
-  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body);
+  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body.clip_info);
+  await new OperationStorageModel({ database }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   const output = new StdObject();
   output.add('result', create_result);
   res.json(output);
@@ -639,8 +662,16 @@ routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEF
 }));
 
 routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const token_info = req.token_info;
   const clip_id = req.params.clip_id;
+  const operation_seq = req.params.operation_seq;
+  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+
   const delete_result = await OperationClipModel.deleteById(clip_id);
+  await new OperationStorageModel({ database }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
+  if (req.body.remove_phase === true) {
+    await OperationClipModel.deletePhase(operation_seq, req.body.phase_id);
+  }
 
   const output = new StdObject();
   output.add('result', delete_result);
@@ -682,6 +713,7 @@ routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.D
 routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   const operation_seq = req.params.operation_seq;
   const phase_id = req.params.phase_id;
+  const delete_result = await OperationClipModel.deletePhase(operation_seq, phase_id);
   const update_result = await OperationClipModel.unsetPhase(operation_seq, phase_id);
 
   const output = new StdObject();
