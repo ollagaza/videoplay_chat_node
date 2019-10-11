@@ -21,7 +21,8 @@ import SendMail from '@/classes/SendMail';
 import Constants from '@/config/constants';
 import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
 import FileInfo from "@/classes/surgbook/FileInfo";
-import {VideoIndexInfoField, VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
+import { VideoIndexInfoModel } from '@/db/mongodb/model/VideoIndex';
+import OperationService from '@/service/operation/OperationService';
 
 const routes = Router();
 
@@ -120,22 +121,11 @@ const syncOne = async (req, token_info, operation_seq) => {
     return;
   }
 
-  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+  const trans_media_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
   const media_directory = operation_info.media_directory;
 
-  await Util.createDirectory(media_directory + "SEQ");
-  await Util.createDirectory(media_directory + "Custom");
-  await Util.createDirectory(media_directory + "REF");
-  await Util.createDirectory(media_directory + "Thumb");
-  await Util.createDirectory(media_directory + "Trash");
-  await Util.createDirectory(trans_video_directory + "SEQ");
-
-  await Util.deleteFile(media_directory + "Index1.xml");
-  await Util.deleteFile(media_directory + "Index2.xml");
-  await Util.deleteFile(media_directory + "Custom.xml");
-  await Util.deleteFile(media_directory + "History.xml");
-  await Util.deleteFile(media_directory + "Report.xml");
-  await Util.deleteFile(media_directory + "Clip.xml");
+  await OperationService.createOperationDirectory(operation_info);
+  await OperationService.deleteMetaFiles(operation_info);
 
   log.d(req, `${log_prefix} hawkeye index list api`);
 
@@ -156,7 +146,10 @@ const syncOne = async (req, token_info, operation_seq) => {
     await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info_list);
   }
 
-  const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, operation_media_info.smil_file_name);
+  const smil_info = await new SmilInfo().loadFromXml(trans_media_directory, operation_media_info.smil_file_name);
+  const trans_video_directory = trans_media_directory + 'SEQ' + Constants.SEP;
+  const video_directory = media_directory + 'SEQ' + Constants.SEP;
+  const is_directory_sperated = trans_video_directory !== video_directory;
   const add_video_file_list = [];
   let origin_video_size = 0;
   let origin_video_count = 0;
@@ -164,8 +157,8 @@ const syncOne = async (req, token_info, operation_seq) => {
   let trans_video_count = 0;
   if (!smil_info.isEmpty()) {
     const video_model = await new VideoFileModel({ database });
-    const video_directory = operation_info.media_directory + 'SEQ' + Constants.SEP;
     const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
+
     const file_list = await Util.getDirectoryFileList(video_directory);
     for (let i = 0; i < file_list.length; i++) {
       const file = file_list[i];
@@ -174,16 +167,35 @@ const syncOne = async (req, token_info, operation_seq) => {
         const video_file_path = video_directory + file_name;
         const file_info = (await new FileInfo().getByFilePath(video_file_path, media_path, file_name)).toJSON();
         if (file_info.file_type === Constants.VIDEO) {
-          if (smil_info.isTransVideo(file_name) || file_name === operation_media_info.video_file_name) {
-            trans_video_count++;
-            trans_video_size += file_info.file_size;
-            continue;
+          if (!is_directory_sperated) {
+            if (smil_info.isTransVideo(file_name) || file_name === operation_media_info.video_file_name) {
+              trans_video_count++;
+              trans_video_size += file_info.file_size;
+              continue;
+            }
           }
           origin_video_count++;
           origin_video_size += file_info.file_size;
           if (operation_info.created_by_user !== true) {
             file_info.thumbnail = await video_model.createVideoThumbnail(video_file_path, operation_info);
             add_video_file_list.push(file_info);
+          }
+        }
+      }
+    }
+    if (is_directory_sperated) {
+      const trans_video_file_list = await Util.getDirectoryFileList(trans_video_directory);
+      for (let i = 0; i < trans_video_file_list.length; i++) {
+        const trans_video_file = trans_video_file_list[i];
+        if (trans_video_file.isFile()) {
+          const trans_video_file_name = trans_video_file.name;
+          const trans_video_file_path = trans_video_directory + trans_video_file_name;
+          const file_info = (await new FileInfo().getByFilePath(trans_video_file_path, media_path, trans_video_file_name)).toJSON();
+          if (file_info.file_type === Constants.VIDEO) {
+            if (smil_info.isTransVideo(trans_video_file_name) || trans_video_file_name === operation_media_info.video_file_name) {
+              trans_video_count++;
+              trans_video_size += file_info.file_size;
+            }
           }
         }
       }
@@ -238,7 +250,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     await new BatchOperationQueueModel({ database }).onJobComplete(operation_seq);
   }
 
-  if (operation_info.analysis_status !== 'Y' && is_sync_complete) {
+  if (service_info.send_process_mail === 'Y' && is_sync_complete) {
     const send_mail = new SendMail();
     const mail_to = ["hwj@mteg.co.kr"];
     const subject = "동영상 분석 완료";
@@ -294,26 +306,9 @@ const reSync = async (req, operation_seq) => {
   const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
 
   // db 업데이트가 끝나면 기존 파일 정리.
-  await Util.deleteDirectory(media_directory + "Custom");
-  await Util.deleteDirectory(media_directory + "Trash");
-  await Util.deleteDirectory(media_directory + "INX1");
-  await Util.deleteDirectory(media_directory + "INX2");
-  await Util.deleteDirectory(media_directory + "INX3");
 
-  await Util.createDirectory(media_directory + "SEQ");
-  await Util.createDirectory(media_directory + "Custom");
-  await Util.createDirectory(media_directory + "REF");
-  await Util.createDirectory(media_directory + "Thumb");
-  await Util.createDirectory(media_directory + "Trash");
-  await Util.createDirectory(trans_video_directory + "SEQ");
-
-  await Util.deleteFile(media_directory + "Index.xml");
-  await Util.deleteFile(media_directory + "Index1.xml");
-  await Util.deleteFile(media_directory + "Index2.xml");
-  await Util.deleteFile(media_directory + "Clip.xml");
-  await Util.deleteFile(media_directory + "Custom.xml");
-  await Util.deleteFile(media_directory + "History.xml");
-  await Util.deleteFile(media_directory + "Report.xml");
+  await OperationService.deleteOperationDirectory(operation_info);
+  await OperationService.createOperationDirectory(operation_info);
 
   await VideoIndexInfoModel.deleteByOperation(operation_info.seq);
   await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);

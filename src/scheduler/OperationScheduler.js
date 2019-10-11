@@ -15,6 +15,7 @@ import OperationStorageModel from '@/models/OperationStorageModel';
 import VideoFileModel from '@/models/VideoFileModel';
 import { VideoIndexInfoModel } from '@/db/mongodb/model/VideoIndex';
 import Constants from '@/config/constants';
+import OperationService from '@/service/operation/OperationService';
 
 class OperationScheduler {
   constructor() {
@@ -150,20 +151,11 @@ class OperationScheduler {
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
-    const media_directory = operation_info.media_directory;
-
     const media_seq = await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
     const storage_seq = await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
     await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
 
-    const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
-
-    await Util.createDirectory(media_directory + "SEQ");
-    await Util.createDirectory(media_directory + "Custom");
-    await Util.createDirectory(media_directory + "REF");
-    await Util.createDirectory(media_directory + "Thumb");
-    await Util.createDirectory(media_directory + "Trash");
-    await Util.createDirectory(trans_video_directory + "SEQ");
+    await OperationService.createOperationDirectory(operation_info);
 
     operation_info.media_seq = media_seq;
     operation_info.storage_seq = storage_seq;

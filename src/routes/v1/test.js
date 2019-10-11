@@ -12,7 +12,6 @@ import roles from "@/config/roles";
 import mime from "mime-types";
 import service_config from "@/config/service.config";
 import config from "@/config/config";
-import TestModel from '@/db/mongodb/model/test';
 import ContentIdManager from '@/classes/ContentIdManager'
 import {VideoProjectModel} from '@/db/mongodb/model/VideoProject';
 import SequenceModel from '@/models/sequence/SequenceModel';
@@ -71,29 +70,6 @@ if (IS_DEV) {
     res.send(Util.colorCodeToHex(code));
   }));
 
-  routes.post('/mon', wrap(async (req, res) => {
-    const sequence = req.body;
-    const result = await TestModel.findBySequence(sequence);
-    res.json(result);
-  }));
-
-  routes.get('/mon/:id', wrap(async (req, res) => {
-    const id = req.params.id;
-    const result = await TestModel.findOneById(id);
-    res.json(result);
-  }));
-
-  routes.get('/mon', wrap(async (req, res) => {
-    const content_id = await ContentIdManager.getContentId();
-    const result = await TestModel.create(content_id, [1, 5, 10]);
-    res.json(result);
-  }));
-
-  routes.get('/t/:id', wrap(async (req, res) => {
-    console.log(req.params.id);
-    res.send("" + Util.getRandomNumber(parseInt(req.params.id)));
-  }));
-
   routes.get('/crypto', wrap(async (req, res) => {
     const data = {
       r: Util.getRandomString(5),
@@ -141,6 +117,7 @@ if (IS_DEV) {
     const root_dir = req.body.root;
     const user_id = req.body.user_id;
     const url_prefix = req.body.url_prefix;
+    const random_key = req.body.random_key === true;
     const file_list = await Util.getDirectoryFileList(root_dir);
     res.json(file_list);
 
@@ -161,7 +138,8 @@ if (IS_DEV) {
       for (let i = 0; i < file_list.length; i++) {
         const file = file_list[i];
         if (file.isDirectory()) {
-          const target_dir = root_dir + Constants.SEP + file.name;
+          const directory_name = file.name;
+          const target_dir = root_dir + Constants.SEP + directory_name;
           const seq_dir = target_dir + Constants.SEP + 'SEQ';
           const seq_file_list = await Util.getDirectoryFileList(seq_dir);
           log.d(req, i, seq_dir);
@@ -194,9 +172,13 @@ if (IS_DEV) {
               log.d(req, 'delete dir', target_dir);
             } else {
               const request_data = {
-                "key": file.name,
                 "data": seq_list
               };
+              if (random_key) {
+                request_data.key = await ContentIdManager.getContentId();
+              } else {
+                request_data.key = directory_name;
+              }
               const batch_result = await Util.forward(batch_url, 'POST', auth_token, request_data);
               log.d(req, 'batch_result', request_data, batch_result);
             }
@@ -220,9 +202,16 @@ if (IS_DEV) {
   }));
 
   routes.get('/err', wrap(async (req, res, next) => {
-    throw new StdObject(-1, 'test', 400);
 
-    res.send(true);
+    const result1 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smi");
+    const result2 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smil");
+    const result3 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\Trans_6227f7a0-d923-11e9-bcaf-81e66f898cf9.mp4");
+    log.d(req, "\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\Trans_6227f7a0-d923-11e9-bcaf-81e66f898cf9.mp4");
+    res.send({
+      result1,
+      result2,
+      result3
+    });
   }));
 }
 

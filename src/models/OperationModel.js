@@ -8,6 +8,7 @@ import StdObject from "@/classes/StdObject";
 import service_config from '@/config/service.config';
 import ContentIdManager from '@/classes/ContentIdManager';
 import Constants from '@/config/constants';
+import log from "@/classes/Logger";
 
 const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
 
@@ -98,8 +99,10 @@ export default class OperationModel extends ModelObject {
     const operation_info = new OperationInfo(query_result);
 
     if (operation_info.media_root) {
-      operation_info.media_directory = Util.getMediaDirectory(operation_info.media_root, operation_info.media_path);
+      operation_info.media_directory = Util.getMediaDirectory(service_info.media_root, operation_info.media_path);
+      operation_info.trans_directory = Util.getMediaDirectory(service_info.trans_video_root, operation_info.media_path);
       operation_info.url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
+      operation_info.vod_url_prefix = Util.getUrlPrefix(service_info.static_video_prefix, operation_info.media_path);
     }
 
     return operation_info;
@@ -115,37 +118,15 @@ export default class OperationModel extends ModelObject {
     if (import_media_info === true) {
       const media_info = await new OperationMediaModel({ "database": this.database }).getOperationMediaInfo(operation_info);
       operation_info.setMediaInfo(media_info);
-      operation_info.origin_video_path = operation_info.media_directory + operation_info.video_source;
+      operation_info.origin_video_path = operation_info.media_directory + media_info.video_source;
+      operation_info.trans_video_path = operation_info.trans_directory + media_info.video_source;
     }
 
     return operation_info;
   };
 
-  updateStatusDelete = async (operation_info, member_seq) => {
-    const operation_seq = operation_info.seq;
-    const delete_suffix = Math.floor(Date.now() / 1000) + '_' + operation_seq + '_' + member_seq + '_';
-
-    const where = {"seq": operation_seq};
-    const trash_path = delete_suffix + operation_info.operation_code;
-
-    const update_params = {
-      "status": 'D'
-      , "modify_date": this.database.raw('NOW()')
-      , "operation_code": this.database.raw(`CONCAT('${delete_suffix}', operation_code)`)
-      , "media_path": trash_path
-    };
-    await this.update(where, update_params);
-
-    const service_info = service_config.getServiceInfo();
-    const trash_root = service_info.trash_root;
-    if ( !( await Util.fileExists(trash_root) ) ) {
-      await Util.createDirectory(trash_root);
-    }
-    if ( !( await Util.renameFile(operation_info.media_directory, trash_root + Constants.SEP + trash_path) ) ){
-      // throw new StdObject(-1, '파일 삭제 실패', 500);
-    }
-
-    return trash_path;
+  deleteOperation = async (operation_info) => {
+    await this.delete({ "seq": operation_info.seq });
   };
 
   updateStatusNormal = async (operation_seq, member_seq) => {

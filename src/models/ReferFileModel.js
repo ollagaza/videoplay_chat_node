@@ -55,14 +55,16 @@ export default class ReferFileModel extends ModelObject {
       .whereIn('seq', file_seq_list)
       .del();
 
-    const service_info = service_config.getServiceInfo();
-    const media_root = service_info.media_root;
+    (async () => {
+      const service_info = service_config.getServiceInfo();
+      const media_root = service_info.media_root;
 
-    for (let i = 0; i < result_list.length; i++) {
-      const file_info = result_list[i];
-      const target_path = media_root + file_info.file_path;
-      await Util.deleteFile(target_path);
-    }
+      for (let i = 0; i < result_list.length; i++) {
+        const file_info = result_list[i];
+        const target_path = media_root + file_info.file_path;
+        await Util.deleteFile(target_path);
+      }
+    })();
 
     return true;
   };

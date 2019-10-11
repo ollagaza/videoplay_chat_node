@@ -83,6 +83,12 @@ video_project_schema.statics.updateRequestStatusByContentId = function( content_
     if (media_info.stream_url) {
       update.stream_url = media_info.stream_url;
     }
+    if (media_info.total_size) {
+      update.total_size = media_info.total_size;
+    }
+    if (media_info.video_file_size) {
+      update.video_file_size = media_info.video_file_size;
+    }
   }
   return this.updateOne( { content_id: content_id }, update );
 };
@@ -100,7 +106,7 @@ video_project_schema.statics.updateStatus = function( member_seq, id_list, statu
     status,
     modify_date: Date.now()
   };
-  return this.update( { member_seq: member_seq, _id: { $in: id_list } }, update );
+  return this.update( { member_seq: member_seq, _id: { $in: id_list } }, update, {"multi": true} );
 };
 
 video_project_schema.statics.updateFavorite = function( id, is_favorite ) {
