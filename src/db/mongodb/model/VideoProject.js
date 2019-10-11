@@ -106,7 +106,7 @@ video_project_schema.statics.updateStatus = function( member_seq, id_list, statu
     status,
     modify_date: Date.now()
   };
-  return this.update( { member_seq: member_seq, _id: { $in: id_list } }, update );
+  return this.update( { member_seq: member_seq, _id: { $in: id_list } }, update, {"multi": true} );
 };
 
 video_project_schema.statics.updateFavorite = function( id, is_favorite ) {

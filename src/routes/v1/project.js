@@ -229,7 +229,11 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
   (async() => {
     const service_info = service_config.getServiceInfo();
     const directory = service_info.media_root + result.project_path;
-    const editor_server_directory = service_info.auto_editor_file_root + result.project_path.replace(new RegExp(Constants.SEP, 'g'), service_info.auto_editor_sep);
+    let sep_pattern = "/";
+    if (Constants.SEP === "\\") {
+      sep_pattern = "\\\\";
+    }
+    const editor_server_directory = service_info.auto_editor_file_root + result.project_path.replace(new RegExp(sep_pattern, 'g'), service_info.auto_editor_sep);
 
     const scale = 1;
     const sequence_list = result.sequence_list;

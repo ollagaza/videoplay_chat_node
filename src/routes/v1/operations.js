@@ -28,6 +28,8 @@ import {OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
 import {OperationClipModel} from '@/db/mongodb/model/OperationClip';
 import {UserDataModel} from '@/db/mongodb/model/UserData';
 import OperationService from '@/service/operation/OperationService';
+import Constants from '@/config/constants';
+
 const routes = Router();
 
 /**
@@ -609,6 +611,28 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(roles.DEFAULT
   res.json(output);
 }));
 
+routes.put('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const phase_id = req.params.phase_id;
+  const result = await OperationClipModel.setPhase(phase_id, req.body.clip_id_list);
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+routes.delete('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const phase_id = req.params.phase_id;
+
+  const result = await OperationClipModel.unsetPhaseOne(req.body.clip_id, operation_seq, phase_id);
+  if (req.body.remove_phase === true) {
+    await OperationClipModel.deletePhase(operation_seq, phase_id);
+  }
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
 routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
   if (!req.body) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
@@ -617,7 +641,8 @@ routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(roles.DEFAULT), W
   const operation_seq = req.params.operation_seq;
   const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
 
-  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body);
+  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body.clip_info);
+  await new OperationStorageModel({ database }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   const output = new StdObject();
   output.add('result', create_result);
   res.json(output);
@@ -637,11 +662,62 @@ routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEF
 }));
 
 routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const token_info = req.token_info;
   const clip_id = req.params.clip_id;
+  const operation_seq = req.params.operation_seq;
+  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+
   const delete_result = await OperationClipModel.deleteById(clip_id);
+  await new OperationStorageModel({ database }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
+  if (req.body.remove_phase === true) {
+    await OperationClipModel.deletePhase(operation_seq, req.body.phase_id);
+  }
 
   const output = new StdObject();
   output.add('result', delete_result);
+  res.json(output);
+}));
+
+routes.post('/:operation_seq(\\d+)/phase', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  if (!req.body) {
+    throw new StdObject(-1, "잘못된 요청입니다.", 400);
+  }
+
+  const token_info = req.token_info;
+  const operation_seq = req.params.operation_seq;
+  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+
+  const create_result = await OperationClipModel.createPhase(operation_info, req.body.phase_desc);
+  const phase_id = create_result._id;
+  await OperationClipModel.setPhase(phase_id, req.body.clip_id_list);
+
+  const output = new StdObject();
+  output.add('phase', create_result);
+  output.add('phase_id', phase_id);
+  res.json(output);
+}));
+
+routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  // const operation_seq = req.params.operation_seq;
+  const phase_id = req.params.phase_id;
+  const phase_desc = req.body.phase_desc;
+
+  log.d(req, phase_id, phase_desc);
+  const update_result = await OperationClipModel.updatePhase(phase_id, phase_desc);
+
+  const output = new StdObject();
+  output.add('result', update_result);
+  res.json(output);
+}));
+
+routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const phase_id = req.params.phase_id;
+  const delete_result = await OperationClipModel.deletePhase(operation_seq, phase_id);
+  const update_result = await OperationClipModel.unsetPhase(operation_seq, phase_id);
+
+  const output = new StdObject();
+  output.add('result', update_result);
   res.json(output);
 }));
 
@@ -685,6 +761,11 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
 
     media_directory = operation_info.media_directory + "SEQ";
+    let sep_pattern = "/";
+    if (Constants.SEP === "\\") {
+      sep_pattern = "\\\\";
+    }
+    const trans_server_directory = service_info.trans_server_root + operation_info.media_path.replace(new RegExp(sep_pattern, 'g'), service_info.trans_server_sep);
 
     const operation_update_param = {};
     operation_update_param.analysis_status = 'R';
@@ -700,7 +781,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
     }
 
     const query_data = {
-      "DirPath": media_directory,
+      "DirPath": trans_server_directory,
       "ContentID": content_id
     };
     const query_str = querystring.stringify(query_data);
@@ -1043,6 +1124,24 @@ routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(roles.LOGIN_US
   const output = new StdObject();
   output.add('operation_metadata', operation_metadata);
 
+  res.json(output);
+}));
+
+routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+  const token_info = req.token_info;
+  let member_seq = req.params.member_seq;
+  if (token_info.getRole() === roles.MEMBER ) {
+    member_seq = token_info.getId();
+  } else if (member_seq !== token_info.getId()) {
+    if (token_info.getRole() !== roles.ADMIN) {
+      throw new StdObject(-99, '권한이 없습니다.', 403);
+    }
+  }
+
+  const clip_list = await OperationClipModel.findByMemberSeq(member_seq);
+
+  const output = new StdObject();
+  output.add('clip_list', clip_list);
   res.json(output);
 }));
 
