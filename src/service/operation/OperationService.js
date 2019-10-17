@@ -1,31 +1,9 @@
 import service_config from '@/config/service.config';
-import querystring from 'querystring';
-import semver from 'semver';
-import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
-import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
-import database from '@/config/database';
 import StdObject from '@/classes/StdObject';
-import SendMail from '@/classes/SendMail';
-import ContentIdManager from '@/classes/ContentIdManager';
-import MemberModel from '@/models/MemberModel';
-import OperationInfo from "@/classes/surgbook/OperationInfo";
 import OperationModel from '@/models/OperationModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
-import OperationStorageModel from '@/models/OperationStorageModel';
-import OperationShareModel from '@/models/OperationShareModel';
-import OperationShareUserModel from '@/models/OperationShareUserModel';
-import IndexModel from '@/models/xmlmodel/IndexModel';
-import ClipModel from '@/models/xmlmodel/ClipModel';
-import VideoFileModel from '@/models/VideoFileModel';
-import ReferFileModel from '@/models/ReferFileModel';
-import ShareTemplate from '@/template/mail/share.template';
 import log from "@/classes/Logger";
-import {VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
-import {OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
-import {OperationClipModel} from '@/db/mongodb/model/OperationClip';
-import {UserDataModel} from '@/db/mongodb/model/UserData';
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
   const operation_model = new OperationModel({ database });

@@ -1,6 +1,7 @@
 import config from '@/config/config';
 import app from './app';
 import service_config from '@/config/service.config';
+import code_scene_service from '@/service/code/CodeSceneService';
 import log from "@/classes/Logger";
 import mongoose from 'mongoose';
 
@@ -27,4 +28,5 @@ mongoose.connect('mongodb://mteg_vas:dpaxldlwl_!@localhost:27017/surgstory', { u
 
 app.listen(PORT, () => log.d(null, `Listening on port ${PORT} -> PID: ${process.pid }`));
 
-service_config.load();
+service_config.init();
+code_scene_service.init();

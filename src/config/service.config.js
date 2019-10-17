@@ -16,7 +16,7 @@ const load_config = async () => {
 };
 
 export default {
-  load: async (callback) => {
+  init: async (callback) => {
     await load_config();
     if (callback) callback();
   },
