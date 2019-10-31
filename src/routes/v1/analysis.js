@@ -8,7 +8,8 @@ const routes = Router();
 
 routes.get('/analysis_data', Wrap(async(req, res) => {
   const output = new StdObject();
-  output.add('analysis_data', analisys.getJson());
+  log.debug(analisys);
+  output.add('analysis_data', analisys);
   res.json(output);
 }));
 
