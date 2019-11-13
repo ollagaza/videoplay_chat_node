@@ -41,8 +41,7 @@ const seq_exp = new RegExp(/\\/, 'g');
 export default class IndexInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
     super(data, private_keys);
-
-    this.setKeys(['unique_id', 'creator', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'start_frame', 'end_frame']);
+    this.setKeys(['unique_id', 'creator', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'start_frame', 'end_frame', 'tags']);
   }
 
   getFromXML = (index_xml_info) => {
@@ -62,13 +61,15 @@ export default class IndexInfo extends JsonWrapper {
     this.start_frame = Util.parseFloat(index_xml_info.$.Frame);
     this.end_time = 0;
     this.end_frame = 0;
+    this.is_range = false;
 
     this.is_empty = false;
 
     return this;
   };
 
-  getFromHawkeyeXML = async (hawkeye_xml_info) => {
+  getFromHawkeyeXML = async (hawkeye_xml_info, check_file_exists=true) => {
+    // log.d(null, hawkeye_xml_info);
     if (!hawkeye_xml_info) {
       return this;
     }
@@ -88,24 +89,38 @@ export default class IndexInfo extends JsonWrapper {
       thumb_file = thumb_file.replace(seq_exp, '/');
     }
     const image_file_name = path.basename(origin_file);
-    const frame = Util.getXmlText(hawkeye_xml_info.frame);
-    const time = Util.getXmlText(hawkeye_xml_info.time);
 
     // log.d(null, index_directory, hawkeye_xml_info.orithumb, origin_file, thumb_file);
     // log.d(null, index_directory + origin_file, index_directory + thumb_file);
     // log.d(null, await Util.fileExists(index_directory + origin_file, fs.constants.R_OK), await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK));
-
-    if ( ( await Util.fileExists(index_directory + origin_file, fs.constants.R_OK) ) && ( await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK) ) ) {
-      this.original_url = service_info.static_index_prefix + Util.pathToUrl(origin_file);
-      this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
-      this.creator = "system";
-      this.unique_id = "system/" + image_file_name;
-      this.start_time = Util.parseFloat(time);
-      this.start_frame = Util.parseFloat(frame);
-      this.end_time = 0;
-      this.end_frame = 0;
-      this.is_empty = false;
+    if (check_file_exists) {
+      if ( !( await Util.fileExists(index_directory + origin_file, fs.constants.R_OK) ) || !( await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK) ) ) {
+        return this;
+      }
     }
+
+    const frame = Util.getXmlText(hawkeye_xml_info.frame).split('-');
+    const time = Util.getXmlText(hawkeye_xml_info.time).split('-');
+
+    this.is_range = frame.length > 1;
+    this.start_frame = Util.parseFloat(frame[0], 0);
+    this.end_frame = Util.parseFloat(frame[1], 0);
+    this.start_time = Util.parseFloat(time[0], 0);
+    this.end_time = Util.parseFloat(time[1], 0);
+
+    this.original_url = service_info.static_index_prefix + Util.pathToUrl(origin_file);
+    this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
+    this.creator = "system";
+    this.unique_id = "system/" + image_file_name;
+    const code = Util.getXmlText(hawkeye_xml_info.type);
+    this.code = code;
+    this.errorid = Util.getXmlText(hawkeye_xml_info.errorid);
+    this.state = Util.getXmlText(hawkeye_xml_info.state);
+    this.tags = [code];
+    this.tag_map = {};
+    this.tag_map[code] = true;
+
+    this.is_empty = false;
 
     return this;
   };
