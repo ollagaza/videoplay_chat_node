@@ -14,17 +14,18 @@ const routes = Router();
 const sSiteCode = "BQ102";
 const sSitePW = "KebrTmErp7KG";
 
-const sModulePath = "D:\\00_Works\\02_Project\\00_Surgstory\\40_본인인증\\CertServiceModule\\Window\\CPClient.exe";
+// const sModulePath = "D:\\00_Works\\02_Project\\00_Surgstory\\40_본인인증\\CertServiceModule\\Window\\CPClient.exe";
+const sModulePath = "C:\\WebFiles\\workspace\\UserCertEnDeCodingRunExe\\CPClient.exe";
 
 const sAuthType = "M";
 const sPopGubun = "Y";
 const sCustomize = "";
 const sGender = "";
 
-// const sReturnUrl = "https://www.surgstory.com/certresult";
-// const sErrorUrl = "https://www.surgstory.com/certresult";
-const sReturnUrl = "http://192.168.0.12/certresult.php";
-const sErrorUrl = "http://192.168.0.12/certresult.php";
+const sReturnUrl = "https://www.surgstory.com/middlephp/certresult.php";
+const sErrorUrl = "https://www.surgstory.com/middlephp/certresult.php";
+// const sReturnUrl = "http://192.168.0.12:10080/middlephp/certresult.php";
+// const sErrorUrl = "http://192.168.0.12:10080/middlephp/certresult.php";
 
 routes.get('/checkNice', Wrap(async(req, res) => {
   const sDate = new Date();
