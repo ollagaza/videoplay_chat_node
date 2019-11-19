@@ -119,7 +119,17 @@ export default class ModelObject {
     oKnex.from(this.table_name);
 
     if (filters) {
-      oKnex.where(filters);
+      if(Object.keys(filters).length === 1) {
+        oKnex.where(filters);
+      } else {
+        Object.keys(filters).forEach((key) => {
+          if (key.indexOf("!") !== -1){
+            oKnex.whereNot(key.replace("!", ""), filters[key]);
+          } else {
+            oKnex.where(key, filters[key]);
+          }
+        });
+      }
     }
 
     if (group != null){
@@ -129,7 +139,6 @@ export default class ModelObject {
     if (order != null){
       oKnex.orderBy(order.name, order.direction);
     }
-
     return oKnex;
   };
 
