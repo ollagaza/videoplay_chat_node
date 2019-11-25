@@ -11,7 +11,7 @@ export default class MemberModel extends ModelObject {
 
     this.table_name = 'member';
     this.selectable_fields = ['*'];
-    this.private_fields = ['password', 'user_media_path', 'profile_image_path'];
+    this.private_fields = ['password', 'user_media_path', 'profile_image_path', 'certkey'];
   }
 
   encryptPassword = (password) => {
