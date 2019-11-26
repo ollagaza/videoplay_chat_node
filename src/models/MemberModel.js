@@ -74,6 +74,24 @@ export default class MemberModel extends ModelObject {
     return new MemberInfo(find_user_result);
   };
 
+  findMembers = async (searchText) => {
+    const find_user_results = await this.find(
+      {
+        "is_new": true, 
+        "@or": {
+          "%user_id": searchText, 
+          "%user_name": searchText
+        }, 
+        "used": ["notin", 0, 2, 3, 4, 5],
+      }
+    );
+
+    if (!find_user_results || find_user_results.length === 0) {
+      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
+    }
+    return new MemberInfo(find_user_results);
+  };
+
   findMemberId = async (member_info) => {
     member_info.setAutoTrim(true);
     const member = member_info.toJSON();

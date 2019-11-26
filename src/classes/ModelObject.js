@@ -119,17 +119,7 @@ export default class ModelObject {
     oKnex.from(this.table_name);
 
     if (filters) {
-      if(Object.keys(filters).length === 1) {
-        oKnex.where(filters);
-      } else {
-        Object.keys(filters).forEach((key) => {
-          if (key.indexOf("!") !== -1){
-            oKnex.whereNot(key.replace("!", ""), filters[key]);
-          } else {
-            oKnex.where(key, filters[key]);
-          }
-        });
-      }
+      this.queryWhere(oKnex, filters);
     }
 
     if (group != null){
@@ -141,6 +131,84 @@ export default class ModelObject {
     }
     return oKnex;
   };
+
+  queryWhere = (oKnex, filters) => {
+    if(!filters.is_new || filters.is_new === undefined) {
+      Object.keys(filters).forEach((key) => {
+        this.publicWhere(oKnex, key, filters);
+      });
+    } else {
+      Object.keys(filters).forEach((key) => {
+        if(key.indexOf("@") !== -1) {
+          if(key.replace("@", "").toLowerCase() === "or") {
+            this.queryOrWhere(oKnex, key, filters);
+          } else if(key.replace("@", "").toLowerCase() === "and") {
+            this.queryAndWhere(oKnex, key, filters);
+          }
+        } else {
+          this.publicWhere(oKnex, key, filters);
+        }
+      });
+    }
+  };
+
+  publicWhere = (oKnex, key, filters) => {
+    if(key !== "is_new") {
+      if (key.indexOf("!") !== -1) {
+        oKnex.whereNot(key.replace("!", ""), filters[key]);
+      } else if (key.indexOf("%") !== -1) {
+        oKnex.where(key.replace("%", ""), 'like', `%${filters[key]}%`);
+      } else if (Array.isArray(filters[key])) {
+        this.queryArrayData(oKnex, key, filters[key]);
+      } else {
+        oKnex.where(key, filters[key]);
+      }
+    }
+  }
+
+  queryArrayData(oKnex, key, filters) {
+    if (filters[0] === "between") {
+      oKnex.whereBetween(key, filters.slice(1));
+    } else if (filters[0] === "in") {
+      oKnex.whereIn(key, filters.slice(1));
+    } else if (filters[0] === "notin") {
+      oKnex.whereNotIn(key, filters.slice(1));
+    }
+  }
+
+  queryOrWhere = (oKnex, key, filters) => {
+    if(key !== "is_new") {
+      const orFilter = filters[key];
+      Object.keys(orFilter).forEach((orKey) => {
+        if (orKey.indexOf("!") !== -1) {
+          oKnex.orWhereNot(orKey.replace("!", ""), orFilter[orKey]);
+        } else if (orKey.indexOf("%") !== -1) {
+          oKnex.orWhere(orKey.replace("%", ""), "like", "%" + orFilter[orKey] + "%");
+        } else if (Array.isArray(orFilter[orKey])) {
+          this.queryArrayData(oKnex, orKey, orFilter[orKey]);
+        } else {
+          oKnex.orWhere(filters[orKey]);
+        }
+      });
+    }
+  }
+
+  queryAndWhere = (oKnex, key, filters) => {
+    if(key !== "is_new") {
+      const andFilter = filters[key];
+      Object.keys(andFilter).forEach((andKey) => {
+        if (andKey.indexOf("!") !== -1) {
+          oKnex.andWhereNot(andKey.replace("!", ""), andFilter[andKey]);
+        } else if (andKey.indexOf("%") !== -1) {
+          oKnex.andWhere(andKey.replace("%", ""), "like", "%" + andFilter[andKey] + "%");
+        } else if (Array.isArray(andFilter[andKey])) {
+          this.queryArrayData(oKnex, andKey, andFilter[andKey]);
+        } else {
+          oKnex.andWhere(andFilter[andKey]);
+        }
+      });
+    }
+  }
 
   getTotalCount = async (filters) => {
     const result = await this.database.count('* as total_count').from(this.table_name).where(filters).first();

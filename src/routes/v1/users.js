@@ -553,4 +553,48 @@ routes.get('/:member_seq(\\d+)/data', Auth.isAuthenticated(roles.LOGIN_USER), Wr
   res.json(output);
 }));
 
+routes.put('/Leave/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async(req, res) => {
+  req.accepts('application/json');
+
+  const token_info = req.token_info;
+  const member_seq = Util.parseInt(req.params.member_seq);
+
+  if(token_info.getId() !== member_seq){
+    if(token_info.getRole() === roles.MEMBER){
+      throw new StdObject(-1, "잘못된 요청입니다.", 403);
+    }
+  }
+
+  const member_info = new MemberInfo();
+  member_info.addKey("used");
+  member_info.used = "2";
+
+  await database.transaction(async(trx) => {
+    const oMemberModel = new MemberModel({ database: trx });
+
+    // 사용자 정보 수정
+    const result = await oMemberModel.modifyMember(member_seq, member_info);
+    if (!result) {
+      throw new StdObject(-1, '회원정보 수정 실패', 400);
+    }
+  });
+
+  res.json(new StdObject());
+}));
+
+routes.post('/finds', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+  const searchText = req.body.searchText;
+  
+  await database.transaction(async(trx) => {
+    const oMemberModel = new MemberModel({ database: trx });
+    const findUsers = await oMemberModel.findMembers(searchText);
+    output.add('user_data', findUsers);
+  });
+  
+  output.add("searchText", searchText);
+  res.json(output);
+}));
+
 export default routes;
