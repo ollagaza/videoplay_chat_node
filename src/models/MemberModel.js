@@ -77,12 +77,17 @@ export default class MemberModel extends ModelObject {
   findMembers = async (searchText) => {
     const find_user_results = await this.find(
       {
-        "is_new": true, 
-        "@or": {
-          "%user_id": searchText, 
-          "%user_name": searchText
-        }, 
+        "is_new": true,
+        "is_veryfied": [">", 0],
+        "and": {
+          "!user_id": "aaa",
+          "@or": {
+            "%user_id": searchText,
+            "%user_name": searchText
+          }
+        },
         "used": ["notin", 0, 2, 3, 4, 5],
+        "seq": [">", 0]
       }
     );
 

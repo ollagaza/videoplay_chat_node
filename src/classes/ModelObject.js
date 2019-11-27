@@ -34,12 +34,12 @@ const queryWhere = (oKnex, filters) => {
   if(filters.is_new !== true) {
     setQueryValues(oKnex, filters, false);
   } else {
-    jsonWhere(oKnex, filters);
+    jsonWhere(oKnex, filters, false, false, 'queryWhere');
   }
 };
 
-const jsonWhere = (oKnex, filters, is_or=false) => {
-  log.d(null, LOG_PREFIX, 'jsonWhere', filters, is_or);
+const jsonWhere = (oKnex, filters, is_or=false, is_or_key=false, caller='') => {
+  log.d(null, LOG_PREFIX, 'jsonWhere', filters, is_or, caller);
   const callback = function() {
     Object.keys(filters).forEach((key) => {
       if (key === 'is_new') {
@@ -47,11 +47,11 @@ const jsonWhere = (oKnex, filters, is_or=false) => {
       }
       const replaced_key = key.replace("@", "").toLowerCase();
       if(replaced_key === "or") {
-        jsonWhere(this, filters[key], true);
+        jsonWhere(this, filters[key], is_or, true, 'jsonWhere');
       } else if(replaced_key === "and") {
-        jsonWhere(this, filters[key], false);
+        jsonWhere(this, filters[key], is_or, false, 'jsonWhere');
       } else {
-        setQueryValues(this, key, filters[key], is_or);
+        setQueryValues(this, key, filters[key], is_or_key);
       }
     });
   };
@@ -73,9 +73,9 @@ const setQueryValues = (oKnex, key, values, is_or=false) => {
       }
       const replaced_key = key.replace("@", "").toLowerCase();
       if(replaced_key === "or") {
-        jsonWhere(oKnex, values[key], true);
+        jsonWhere(oKnex, values[key], is_or, true, 'setQueryValues');
       } else if(replaced_key === "and") {
-        jsonWhere(oKnex, values[key], false);
+        jsonWhere(oKnex, values[key], is_or, false, 'setQueryValues');
       } else {
         setQueryValue(oKnex, key, values[key], is_or);
       }
@@ -100,14 +100,17 @@ const setQueryValue = (oKnex, key, value, is_or=false) => {
     function_name = is_or ? 'orWhere' : 'andWhere';
   } else if (Array.isArray(value)) {
     const value_type = value[0];
+    args.push(key);
     if (value_type === "between") {
       function_name = is_or ? 'orWhereBetween' : 'whereBetween';
     } else if (value_type === "in") {
       function_name = is_or ? 'orWhereIn' : 'whereIn';
     } else if (value_type === "notin") {
       function_name = is_or ? 'orWhereNotIn' : 'whereNotIn';
+    } else {
+      args.push(value_type);
+      function_name = is_or ? 'orWhere' : 'where';
     }
-    args.push(key);
     args.push(value.slice(1));
   } else {
     args.push(key);
@@ -162,7 +165,7 @@ export default class ModelObject {
   };
 
   update = async (filters, params) => {
-    return this.database
+    return await this.database
       .update(params)
       .from(this.table_name)
       .where(filters);
@@ -176,7 +179,7 @@ export default class ModelObject {
     if (filters) {
       oKnex.andWhere(filters);
     }
-    return oKnex;
+    return await oKnex;
   };
 
   delete = async (filters) => {
@@ -236,14 +239,14 @@ export default class ModelObject {
   }
 
   async find(filters=null, columns=null, order=null, group=null) {
-    return this.queryBuilder(filters, columns, order, group);
+    return await this.queryBuilder(filters, columns, order, group);
   }
 
   async findOne(filters=null, columns=null, order=null, group=null) {
     const oKnex = this.queryBuilder(filters, columns, order, group);
     oKnex.first();
 
-    return oKnex;
+    return await oKnex;
   }
 
   getTotalCount = async (filters) => {
