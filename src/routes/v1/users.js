@@ -597,13 +597,13 @@ routes.post('/finds', Wrap(async(req, res) => {
   req.accepts('application/json');
   const output = new StdObject();
   const searchText = req.body.searchText;
-  
+
   await database.transaction(async(trx) => {
     const oMemberModel = new MemberModel({ database: trx });
     const findUsers = await oMemberModel.findMembers(searchText);
     output.add('user_data', findUsers);
   });
-  
+
   output.add("searchText", searchText);
   res.json(output);
 }));

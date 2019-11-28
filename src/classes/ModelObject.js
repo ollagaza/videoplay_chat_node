@@ -32,28 +32,19 @@ const queryGenerator = (database, table_name, selectable_fields, filters=null, c
 const queryWhere = (oKnex, filters) => {
   log.d(null, LOG_PREFIX, 'queryWhere', filters);
   if(filters.is_new !== true) {
-    setQueryValues(oKnex, filters, false);
+    oKnex.where(filters);
   } else {
-    jsonWhere(oKnex, filters, false, false, 'queryWhere');
+    jsonWhere(oKnex, filters.query, false, false, 'queryWhere');
   }
 };
 
 const jsonWhere = (oKnex, filters, is_or=false, is_or_key=false, caller='') => {
-  log.d(null, LOG_PREFIX, 'jsonWhere', filters, is_or, caller);
+  log.d(null, LOG_PREFIX, 'jsonWhere', filters, is_or, is_or_key, caller);
   const callback = function() {
-    Object.keys(filters).forEach((key) => {
-      if (key === 'is_new') {
-        return;
-      }
-      const replaced_key = key.replace("@", "").toLowerCase();
-      if(replaced_key === "or") {
-        jsonWhere(this, filters[key], is_or, true, 'jsonWhere');
-      } else if(replaced_key === "and") {
-        jsonWhere(this, filters[key], is_or, false, 'jsonWhere');
-      } else {
-        setQueryValues(this, key, filters[key], is_or_key);
-      }
-    });
+    const filter_length = filters.length;
+    for (let i = 0; i < filter_length; i++) {
+      setQueryValues(this, filters[i], is_or_key);
+    }
   };
   if (is_or) {
     oKnex.orWhere(callback);
@@ -62,62 +53,63 @@ const jsonWhere = (oKnex, filters, is_or=false, is_or_key=false, caller='') => {
   }
 };
 
-const setQueryValues = (oKnex, key, values, is_or=false) => {
-  log.d(null, LOG_PREFIX, 'setQueryValues', values, is_or);
-  if (_.isArray(values)) {
-    setQueryValue(oKnex, key, values, is_or);
-  } else if (_.isObject(values)) {
-    Object.keys(values).forEach((key) => {
-      if (key === 'is_new') {
-        return;
-      }
-      const replaced_key = key.replace("@", "").toLowerCase();
-      if(replaced_key === "or") {
-        jsonWhere(oKnex, values[key], is_or, true, 'setQueryValues');
-      } else if(replaced_key === "and") {
-        jsonWhere(oKnex, values[key], is_or, false, 'setQueryValues');
-      } else {
-        setQueryValue(oKnex, key, values[key], is_or);
-      }
-    });
-  } else {
-    setQueryValue(oKnex, key, values, is_or);
-  }
+const setQueryValues = (oKnex, filter_map, is_or=false) => {
+  log.d(null, LOG_PREFIX, 'setQueryValues', filter_map, is_or);
+  Object.keys(filter_map).forEach((key) => {
+    const filters = filter_map[key];
+    log.d(null, LOG_PREFIX, 'setQueryValues', key, filters, is_or);
+    if(key === "$or") {
+      jsonWhere(oKnex, filters, is_or, true, 'setQueryValues');
+    } else if(key === "$and") {
+      jsonWhere(oKnex, filters, is_or, false, 'setQueryValues');
+    } else {
+      setQueryValue(oKnex, key, filters, is_or);
+    }
+  });
 };
 
-const setQueryValue = (oKnex, key, value, is_or=false) => {
+const setQueryValue = (oKnex, key, values, is_or=false) => {
   let function_name = null;
-  const prefix = key.charAt(0);
-  const args = [];
-  if (prefix === '!') {
-    args.push(key.replace("!", ""));
-    args.push(value);
-    function_name = is_or ? 'orWhereNot' : 'whereNot';
-  } else if (prefix === '%') {
-    args.push(key.replace("%", ""));
-    args.push('like');
-    args.push(`%${value}%`);
-    function_name = is_or ? 'orWhere' : 'andWhere';
-  } else if (Array.isArray(value)) {
-    const value_type = value[0];
+  const is_value_array = _.isArray(values);
+  const operator = is_value_array ? values[0] : null;
+  const is_not = operator === 'not';
+  let args = [];
+  if (values === null) {
     args.push(key);
-    if (value_type === "between") {
+    function_name = is_or ? 'orWhereNull' : 'whereNull';
+  } else if (is_value_array) {
+    args.push(key);
+    if (is_not) {
+      if (values[1] === null) {
+        function_name = is_or ? 'orWhereNotNull' : 'whereNotNull';
+      } else {
+        args.push(values[1]);
+        function_name = is_or ? 'orWhereNot' : 'whereNot';
+      }
+    } else if (operator === "like") {
+      args.push('like');
+      args.push(`%${values[1]}%`);
+      function_name = is_or ? 'orWhere' : 'andWhere';
+    } else if (operator === "between") {
       function_name = is_or ? 'orWhereBetween' : 'whereBetween';
-    } else if (value_type === "in") {
+      args.push(values.slice(1));
+    } else if (operator === "in") {
       function_name = is_or ? 'orWhereIn' : 'whereIn';
-    } else if (value_type === "notin") {
+      args.push(values.slice(1));
+    } else if (operator === "notin") {
       function_name = is_or ? 'orWhereNotIn' : 'whereNotIn';
+      args.push(values.slice(1));
     } else {
-      args.push(value_type);
+      args.push(operator);
       function_name = is_or ? 'orWhere' : 'where';
+      args.push(values[1]);
     }
-    args.push(value.slice(1));
   } else {
     args.push(key);
-    args.push(value);
+    args.push(values);
     function_name = is_or ? 'orWhere' : 'andWhere';
   }
-  log.d(null, LOG_PREFIX, 'setQueryValue', key, value, is_or, function_name, args);
+  log.d(null, LOG_PREFIX, 'setQueryValue', key, values, is_or, function_name, args);
   oKnex[function_name].apply(oKnex, args);
 };
 

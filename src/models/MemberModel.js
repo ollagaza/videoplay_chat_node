@@ -4,6 +4,7 @@ import MemberInfo from "@/classes/surgbook/MemberInfo";
 import Util from '@/utils/baseutil';
 import service_config from '@/config/service.config';
 import Constants from '@/config/constants';
+import log from '@/classes/Logger';
 
 export default class MemberModel extends ModelObject {
   constructor(...args) {
@@ -78,19 +79,52 @@ export default class MemberModel extends ModelObject {
     const find_user_results = await this.find(
       {
         "is_new": true,
-        "is_veryfied": [">", 0],
-        "and": {
-          "!user_id": "aaa",
-          "@or": {
-            "%user_id": searchText,
-            "%user_name": searchText
+        "query": [
+          {
+            "user_id": ["not", "aaa"],
+          },
+          {
+            "$or": [
+              {
+                "user_id": ["like", searchText],
+              },
+              {
+                "user_name": ["like", searchText]
+              }
+            ]
+          },
+          {
+            "used": ["notin", 0, 2, 3, 4, 5],
+          },
+          {
+            "seq": [">", 0],
+          },
+          {
+            "used": ["between", 0, 5],
+          },
+          {
+            "$or": [
+              {
+                "user_id": "test"
+              },
+              {
+                "$and": [
+                  {
+                    "user_id": ["not", "test3"]
+                  },
+                  {
+                    "user_id": ["not", null]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "user_id": null,
           }
-        },
-        "used": ["notin", 0, 2, 3, 4, 5],
-        "seq": [">", 0]
+        ]
       }
     );
-
     if (!find_user_results || find_user_results.length === 0) {
       throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
