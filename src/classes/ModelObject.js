@@ -1,5 +1,144 @@
 import Promise from 'promise';
 import PageHandler from '@/classes/PageHandler';
+import log from '@/classes/Logger';
+import _ from 'lodash';
+
+const LOG_PREFIX = '[ModelObject]';
+
+const queryGenerator = (database, table_name, selectable_fields, filters=null, columns=null, order=null, group=null) => {
+  let oKnex = null;
+  if (!columns) {
+    oKnex = database.select(selectable_fields);
+  }
+  else {
+    oKnex = database.select(arrayToSafeQuery(database, columns));
+  }
+  oKnex.from(table_name);
+
+  if (filters) {
+    queryWhere(oKnex, filters);
+  }
+
+  if (group != null){
+    oKnex.groupBy(group);
+  }
+
+  if (order != null){
+    oKnex.orderBy(order.name, order.direction);
+  }
+  return oKnex;
+};
+
+const queryWhere = (oKnex, filters) => {
+  log.d(null, LOG_PREFIX, 'queryWhere', filters);
+  if(filters.is_new !== true) {
+    setQueryValues(oKnex, filters, false);
+  } else {
+    jsonWhere(oKnex, filters, false, false, 'queryWhere');
+  }
+};
+
+const jsonWhere = (oKnex, filters, is_or=false, is_or_key=false, caller='') => {
+  log.d(null, LOG_PREFIX, 'jsonWhere', filters, is_or, caller);
+  const callback = function() {
+    Object.keys(filters).forEach((key) => {
+      if (key === 'is_new') {
+        return;
+      }
+      const replaced_key = key.replace("@", "").toLowerCase();
+      if(replaced_key === "or") {
+        jsonWhere(this, filters[key], is_or, true, 'jsonWhere');
+      } else if(replaced_key === "and") {
+        jsonWhere(this, filters[key], is_or, false, 'jsonWhere');
+      } else {
+        setQueryValues(this, key, filters[key], is_or_key);
+      }
+    });
+  };
+  if (is_or) {
+    oKnex.orWhere(callback);
+  } else {
+    oKnex.andWhere(callback);
+  }
+};
+
+const setQueryValues = (oKnex, key, values, is_or=false) => {
+  log.d(null, LOG_PREFIX, 'setQueryValues', values, is_or);
+  if (_.isArray(values)) {
+    setQueryValue(oKnex, key, values, is_or);
+  } else if (_.isObject(values)) {
+    Object.keys(values).forEach((key) => {
+      if (key === 'is_new') {
+        return;
+      }
+      const replaced_key = key.replace("@", "").toLowerCase();
+      if(replaced_key === "or") {
+        jsonWhere(oKnex, values[key], is_or, true, 'setQueryValues');
+      } else if(replaced_key === "and") {
+        jsonWhere(oKnex, values[key], is_or, false, 'setQueryValues');
+      } else {
+        setQueryValue(oKnex, key, values[key], is_or);
+      }
+    });
+  } else {
+    setQueryValue(oKnex, key, values, is_or);
+  }
+};
+
+const setQueryValue = (oKnex, key, value, is_or=false) => {
+  let function_name = null;
+  const prefix = key.charAt(0);
+  const args = [];
+  if (prefix === '!') {
+    args.push(key.replace("!", ""));
+    args.push(value);
+    function_name = is_or ? 'orWhereNot' : 'whereNot';
+  } else if (prefix === '%') {
+    args.push(key.replace("%", ""));
+    args.push('like');
+    args.push(`%${value}%`);
+    function_name = is_or ? 'orWhere' : 'andWhere';
+  } else if (Array.isArray(value)) {
+    const value_type = value[0];
+    args.push(key);
+    if (value_type === "between") {
+      function_name = is_or ? 'orWhereBetween' : 'whereBetween';
+    } else if (value_type === "in") {
+      function_name = is_or ? 'orWhereIn' : 'whereIn';
+    } else if (value_type === "notin") {
+      function_name = is_or ? 'orWhereNotIn' : 'whereNotIn';
+    } else {
+      args.push(value_type);
+      function_name = is_or ? 'orWhere' : 'where';
+    }
+    args.push(value.slice(1));
+  } else {
+    args.push(key);
+    args.push(value);
+    function_name = is_or ? 'orWhere' : 'andWhere';
+  }
+  log.d(null, LOG_PREFIX, 'setQueryValue', key, value, is_or, function_name, args);
+  oKnex[function_name].apply(oKnex, args);
+};
+
+const arrayToSafeQuery = (database, columns) => {
+  if (!columns) {
+    return ["*"];
+  }
+
+  const select = [];
+  const function_column = /\(.+\)/i;
+  Object.keys(columns).forEach((key) => {
+    const column = columns[key];
+    if (function_column.test(column)) {
+      select.push(database.raw(columns[key]));
+    } else {
+      select.push(columns[key]);
+    }
+  });
+
+  return select;
+};
 
 export default class ModelObject {
   constructor({ database }) {
@@ -8,7 +147,7 @@ export default class ModelObject {
     this.selectable_fields = [];
   }
 
-  async create(params, returning=null) {
+  create = async (params, returning=null) => {
     let oKnex = null;
     if (returning) {
       oKnex = this.database
@@ -23,16 +162,16 @@ export default class ModelObject {
     const result = await oKnex;
 
     return result.shift();
-  }
+  };
 
-  async update(filters, params) {
+  update = async (filters, params) => {
     return await this.database
       .update(params)
       .from(this.table_name)
       .where(filters);
-  }
+  };
 
-  async updateIn(key, in_array, params, filters=null) {
+  updateIn = async (key, in_array, params, filters=null) => {
     const oKnex = this.database
       .update(params)
       .from(this.table_name)
@@ -40,20 +179,24 @@ export default class ModelObject {
     if (filters) {
       oKnex.andWhere(filters);
     }
-    return oKnex;
-  }
+    return await oKnex;
+  };
 
-  async delete(filters) {
-    return await this.database
+  delete = async (filters) => {
+    return this.database
       .from(this.table_name)
       .where(filters)
       .del();
-  }
+  };
 
-  async findPaginated({ list_count = 20, page = 1, page_count = 10, no_paging = 'n', ...filters }, columns=null, order=null) {
+  queryBuilder = (filters=null, columns=null, order=null, group=null) => {
+    return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group);
+  };
+
+  findPaginated = async ({ list_count = 20, page = 1, page_count = 10, no_paging = 'n', ...filters }, columns=null, order=null) => {
     const oKnex = this.queryBuilder(filters, columns, order);
     return await this.queryPaginated(oKnex, list_count, page, page_count, no_paging);
-  }
+  };
 
   async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
     // 강제 형변환
@@ -96,9 +239,7 @@ export default class ModelObject {
   }
 
   async find(filters=null, columns=null, order=null, group=null) {
-    const oKnex = this.queryBuilder(filters, columns, order, group);
-
-    return await oKnex;
+    return await this.queryBuilder(filters, columns, order, group);
   }
 
   async findOne(filters=null, columns=null, order=null, group=null) {
@@ -106,108 +247,6 @@ export default class ModelObject {
     oKnex.first();
 
     return await oKnex;
-  }
-
-  queryBuilder = (filters=null, columns=null, order=null, group=null) => {
-    let oKnex = null;
-    if (!columns) {
-      oKnex = this.database.select(this.selectable_fields);
-    }
-    else {
-     oKnex = this.database.select(this.arrayToSafeQuery(columns));
-    }
-    oKnex.from(this.table_name);
-
-    if (filters) {
-      this.queryWhere(oKnex, filters);
-    }
-
-    if (group != null){
-      oKnex.groupBy(group);
-    }
-
-    if (order != null){
-      oKnex.orderBy(order.name, order.direction);
-    }
-    return oKnex;
-  };
-
-  queryWhere = (oKnex, filters) => {
-    if(!filters.is_new || filters.is_new === undefined) {
-      Object.keys(filters).forEach((key) => {
-        this.publicWhere(oKnex, key, filters);
-      });
-    } else {
-      Object.keys(filters).forEach((key) => {
-        if(key.indexOf("@") !== -1) {
-          if(key.replace("@", "").toLowerCase() === "or") {
-            this.queryOrWhere(oKnex, key, filters);
-          } else if(key.replace("@", "").toLowerCase() === "and") {
-            this.queryAndWhere(oKnex, key, filters);
-          }
-        } else {
-          this.publicWhere(oKnex, key, filters);
-        }
-      });
-    }
-  };
-
-  publicWhere = (oKnex, key, filters) => {
-    if(key !== "is_new") {
-      if (key.indexOf("!") !== -1) {
-        oKnex.whereNot(key.replace("!", ""), filters[key]);
-      } else if (key.indexOf("%") !== -1) {
-        oKnex.where(key.replace("%", ""), 'like', `%${filters[key]}%`);
-      } else if (Array.isArray(filters[key])) {
-        this.queryArrayData(oKnex, key, filters[key]);
-      } else {
-        oKnex.where(key, filters[key]);
-      }
-    }
-  }
-
-  queryArrayData(oKnex, key, filters) {
-    if (filters[0] === "between") {
-      oKnex.whereBetween(key, filters.slice(1));
-    } else if (filters[0] === "in") {
-      oKnex.whereIn(key, filters.slice(1));
-    } else if (filters[0] === "notin") {
-      oKnex.whereNotIn(key, filters.slice(1));
-    }
-  }
-
-  queryOrWhere = (oKnex, key, filters) => {
-    if(key !== "is_new") {
-      const orFilter = filters[key];
-      Object.keys(orFilter).forEach((orKey) => {
-        if (orKey.indexOf("!") !== -1) {
-          oKnex.orWhereNot(orKey.replace("!", ""), orFilter[orKey]);
-        } else if (orKey.indexOf("%") !== -1) {
-          oKnex.orWhere(orKey.replace("%", ""), "like", "%" + orFilter[orKey] + "%");
-        } else if (Array.isArray(orFilter[orKey])) {
-          this.queryArrayData(oKnex, orKey, orFilter[orKey]);
-        } else {
-          oKnex.orWhere(filters[orKey]);
-        }
-      });
-    }
-  }
-
-  queryAndWhere = (oKnex, key, filters) => {
-    if(key !== "is_new") {
-      const andFilter = filters[key];
-      Object.keys(andFilter).forEach((andKey) => {
-        if (andKey.indexOf("!") !== -1) {
-          oKnex.andWhereNot(andKey.replace("!", ""), andFilter[andKey]);
-        } else if (andKey.indexOf("%") !== -1) {
-          oKnex.andWhere(andKey.replace("%", ""), "like", "%" + andFilter[andKey] + "%");
-        } else if (Array.isArray(andFilter[andKey])) {
-          this.queryArrayData(oKnex, andKey, andFilter[andKey]);
-        } else {
-          oKnex.andWhere(andFilter[andKey]);
-        }
-      });
-    }
   }
 
   getTotalCount = async (filters) => {
@@ -220,21 +259,6 @@ export default class ModelObject {
   };
 
   arrayToSafeQuery = (columns) => {
-    if (!columns) {
-      return ["*"];
-    }
-
-    const select = [];
-    const function_column = /\(.+\)/i;
-    Object.keys(columns).forEach((key) => {
-      const column = columns[key];
-      if (function_column.test(column)) {
-        select.push(this.database.raw(columns[key]));
-      } else {
-        select.push(columns[key]);
-      }
-    });
-
-    return select;
+    arrayToSafeQuery(this.database, columns);
   };
 }
