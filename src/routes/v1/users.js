@@ -13,6 +13,7 @@ import MemberInfo from "@/classes/surgbook/MemberInfo";
 import service_config from '@/config/service.config';
 import Constants from '@/config/constants';
 import {UserDataModel} from '@/db/mongodb/model/UserData';
+import MemberLogModel from '@/models/MemberLogModel';
 import log from "@/classes/Logger";
 
 const routes = Router();
@@ -174,6 +175,9 @@ routes.post('/', Wrap(async(req, res) => {
     if (member_seq <= 0){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
+    const oMemberLogModel = new MemberLogModel({ database: trx });
+    oMemberLogModel.createMemberLog(member_seq, "1000");
+    oMemberLogModel.createMemberLog(member_seq, "1001", 300);
   });
 
   res.json(new StdObject());
@@ -234,6 +238,9 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
     if (!result) {
       throw new StdObject(-1, '회원정보 수정 실패', 400);
     }
+
+    const oMemberLogModel = new MemberLogModel({ database: trx });
+    oMemberLogModel.createMemberLog(member_seq, "1002");
   });
 
   res.json(new StdObject());
@@ -558,6 +565,7 @@ routes.put('/Leave/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap
 
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
+  const leaveText = req.body.leaveText;
 
   if(token_info.getId() !== member_seq){
     if(token_info.getRole() === roles.MEMBER){
@@ -577,6 +585,9 @@ routes.put('/Leave/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap
     if (!result) {
       throw new StdObject(-1, '회원정보 수정 실패', 400);
     }
+
+    const oMemberLogModel = new MemberLogModel({ database: trx });
+    await oMemberLogModel.createMemberLog(member_seq, "9999", leaveText);
   });
 
   res.json(new StdObject());
