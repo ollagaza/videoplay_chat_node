@@ -1,7 +1,6 @@
 import StdObject from '@/classes/StdObject';
 import ModelObject from '@/classes/ModelObject';
 import service_config from '@/config/service.config';
-import memberLog from '@/data/MemberLog';
 import {LogCodeModel} from '@/db/mongodb/model/MemberLogCode';
 
 export default class MemberLogModel extends ModelObject {

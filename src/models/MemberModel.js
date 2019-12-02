@@ -95,32 +95,6 @@ export default class MemberModel extends ModelObject {
           },
           {
             "used": ["notin", 0, 2, 3, 4, 5],
-          },
-          {
-            "seq": [">", 0],
-          },
-          {
-            "used": ["between", 0, 5],
-          },
-          {
-            "$or": [
-              {
-                "user_id": "test"
-              },
-              {
-                "$and": [
-                  {
-                    "user_id": ["not", "test3"]
-                  },
-                  {
-                    "user_id": ["not", null]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "user_id": null,
           }
         ]
       }

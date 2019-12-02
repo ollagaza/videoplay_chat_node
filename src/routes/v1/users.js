@@ -6,6 +6,7 @@ import StdObject from '@/classes/StdObject';
 import SendMail from '@/classes/SendMail';
 import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
+import MemberSubModel from '@/models/MemberSubModel';
 import FindPasswordModel from '@/models/FindPasswordModel';
 import Util from '@/utils/baseutil';
 import MemberTemplate from '@/template/mail/member.template';
@@ -66,9 +67,23 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
+  const member_sub_info = await new MemberSubModel({database}).getMemberSubInfo(member_seq);
 
   const output = new StdObject();
   output.add('member_info', member_info);
+  output.add('member_sub_info', member_sub_info);
+  res.json(output);
+}));
+
+routes.post('/me2', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+  const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
+  const member_sub_info = await new MemberSubModel({database}).getMemberSubInfo(member_seq);
+
+  const output = new StdObject();
+  output.add('member_info', member_info);
+  output.add('member_sub_info', member_sub_info);
   res.json(output);
 }));
 
