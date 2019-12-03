@@ -13,11 +13,11 @@ export default class MemberSubModel extends ModelObject {
 
     this.table_name = 'member_sub';
     this.selectable_fields = ['*'];
-    this.private_fields = ['regist_date', 'modify_date', 'user_id', 'password', 
-    'user_nickname', 'user_name', 'gender', 'email_address', 
-    'mail_acceptance', 'birth_day', 'cellphone', 'tel', 
-    'user_media_path', 'profile_image_path', 'certkey', 'used', 
-    'hospcode', 'hospname', 'treatcode', 'treatname', 
+    this.private_fields = ['regist_date', 'modify_date', 'user_id', 'password',
+    'user_nickname', 'user_name', 'gender', 'email_address',
+    'mail_acceptance', 'birth_day', 'cellphone', 'tel',
+    'user_media_path', 'profile_image_path', 'certkey', 'used',
+    'hospcode', 'hospname', 'treatcode', 'treatname',
     'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
     ];
   }
@@ -37,9 +37,9 @@ export default class MemberSubModel extends ModelObject {
   };
 
   createMember = async (member_seq, member_info) => {
-    member_info.seq = member_seq
     member_info.setAutoTrim(true);
     const member = member_info.toJSON();
+    member.seq = member_seq;
     return await this.create(member);
   };
 
@@ -53,8 +53,8 @@ export default class MemberSubModel extends ModelObject {
       const member = member_info.toJSON();
       return await this.update({seq: member_seq}, member);
     } else {
-      member_info.seq = member_seq
       const member = member_info.toJSON();
+      member.seq = member_seq;
       return await this.create(member);
     }
   };
