@@ -18,7 +18,7 @@ export default class MemberLogModel extends ModelObject {
       log_text: text,
     };
 
-    return await super.create(memberLog);
+    return await this.create(memberLog);
   };
 
   getMemberLog = async (seq) => {

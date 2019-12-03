@@ -11,6 +11,7 @@ import FindPasswordModel from '@/models/FindPasswordModel';
 import Util from '@/utils/baseutil';
 import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
+import MemberInfoSub from "@/classes/surgbook/MemberInfoSub";
 import service_config from '@/config/service.config';
 import Constants from '@/config/constants';
 import {UserDataModel} from '@/db/mongodb/model/UserData';
@@ -191,8 +192,8 @@ routes.post('/', Wrap(async(req, res) => {
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
     const oMemberLogModel = new MemberLogModel({ database: trx });
-    oMemberLogModel.createMemberLog(member_seq, "1000");
-    oMemberLogModel.createMemberLog(member_seq, "1001", 300);
+    await oMemberLogModel.createMemberLog(member_seq, "1000");
+    await oMemberLogModel.createMemberLog(member_seq, "1001", 300);
   });
 
   res.json(new StdObject());
@@ -231,6 +232,19 @@ routes.post('/', Wrap(async(req, res) => {
  */
 routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
+  const private_fields = ['password',
+    'license_no', 'license_image_path', 'special_no', 
+    'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype', 
+    'trainingcode', 'trainingname', 'universitycode', 'universityname', 
+    'graduation_year', 'interrest_code', 'interrest_text'];
+
+  const sub_private_fields = ['regist_date', 'modify_date', 'user_id', 'password', 
+    'user_nickname', 'user_name', 'gender', 'email_address', 
+    'mail_acceptance', 'birth_day', 'cellphone', 'tel', 
+    'user_media_path', 'profile_image_path', 'certkey', 'used', 
+    'hospcode', 'hospname', 'treatcode', 'treatname', 
+    'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
+    ];
 
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
@@ -241,21 +255,25 @@ routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async
     }
   }
 
-  const member_info = new MemberInfo(req.body);
+  const member_info = new MemberInfo(req.body, private_fields);
+  const member_info_sub = new MemberInfoSub(req.body, sub_private_fields);
+
   member_info.checkUserNickname();
   member_info.checkEmailAddress();
 
   await database.transaction(async(trx) => {
     const oMemberModel = new MemberModel({ database: trx });
+    const oMemberSubModel = new MemberSubModel({ database: trx });
 
     // 사용자 정보 수정
     const result = await oMemberModel.modifyMember(member_seq, member_info);
-    if (!result) {
+    const result2 = await oMemberSubModel.modifyMember(member_seq, member_info_sub);
+    if (!result && !result2) {
       throw new StdObject(-1, '회원정보 수정 실패', 400);
     }
 
     const oMemberLogModel = new MemberLogModel({ database: trx });
-    oMemberLogModel.createMemberLog(member_seq, "1002");
+    await oMemberLogModel.createMemberLog(member_seq, "1002");
   });
 
   res.json(new StdObject());
@@ -602,7 +620,7 @@ routes.put('/Leave/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap
     }
 
     const oMemberLogModel = new MemberLogModel({ database: trx });
-    await oMemberLogModel.createMemberLog(member_seq, "9999", leaveText);
+    await await oMemberLogModel.createMemberLog(member_seq, "9999", leaveText);
   });
 
   res.json(new StdObject());
