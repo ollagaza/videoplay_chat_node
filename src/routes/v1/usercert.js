@@ -8,25 +8,32 @@ import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import Util from '@/utils/baseutil';
+import service_config from '@/config/service.config';
 
 const routes = Router();
 
 const sSiteCode = "BQ102";
 const sSitePW = "KebrTmErp7KG";
 
+<<<<<<< HEAD
 // const sModulePath = "D:\\00_Works\\02_Project\\00_Surgstory\\40_본인인증\\CertServiceModule\\Window\\CPClient.exe";
 const sModulePath = "C:\\WebFiles\\workspace\\UserCertEnDeCodingRunExe\\CPClient.exe";
 
+=======
+>>>>>>> usercert
 const sAuthType = "M";
 const sPopGubun = "Y";
 const sCustomize = "";
 const sGender = "";
 
+<<<<<<< HEAD
 const sReturnUrl = "https://www.surgstory.com/middlephp/certresult.php";
 const sErrorUrl = "https://www.surgstory.com/middlephp/certresult.php";
 // const sReturnUrl = "http://192.168.0.12:10080/middlephp/certresult.php";
 // const sErrorUrl = "http://192.168.0.12:10080/middlephp/certresult.php";
 
+=======
+>>>>>>> usercert
 routes.get('/checkNice', Wrap(async(req, res) => {
   const sDate = new Date();
   let sCPRequest = sSiteCode + "_" + sDate.getTime();
@@ -35,11 +42,14 @@ routes.get('/checkNice', Wrap(async(req, res) => {
   let sEncData = "";
   let sRtnMSG = "";
 
+  const sModulePath = service_config.get('cert_path');
+  const sReturnUrl = service_config.get('cert_result_url');
+
   sPlaincData = "7:REQ_SEQ" + sCPRequest.length + ":" + sCPRequest +
                 "8:SITECODE" + sSiteCode.length + ":" + sSiteCode +
                 "9:AUTH_TYPE" + sAuthType.length + ":" + sAuthType +
                 "7:RTN_URL" + sReturnUrl.length + ":" + sReturnUrl +
-                "7:ERR_URL" + sErrorUrl.length + ":" + sErrorUrl +
+                "7:ERR_URL" + sReturnUrl.length + ":" + sReturnUrl +
                 "11:POPUP_GUBUN" + sPopGubun.length + ":" + sPopGubun +
                 "9:CUSTOMIZE" + sCustomize.length + ":" + sCustomize +
                 "6:GENDER" + sGender.length + ":" + sGender ;
@@ -52,8 +62,6 @@ routes.get('/checkNice', Wrap(async(req, res) => {
   });
 
   child.on("close", () => {
-    console.log(sEncData);
-      
     if (sEncData == "-1") {
       sRtnMSG = "암/복호화 시스템 오류입니다.";
     } else if (sEncData == "-2") {
@@ -77,15 +85,16 @@ routes.post('/certResult', Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const encodeData = req.body.EncodeData;
+  const sModulePath = service_config.get('cert_path');
 
   let sDecData = "";
   let cmd = "";
   
   if( /^0-9a-zA-Z+\/=/.test(encodeData) == true){
-    sRtnMSG = "입력값 오류";
-    requestnumber = "";
-    authtype = "";
-    errcode = "";
+    let sRtnMSG = "입력값 오류";
+    let requestnumber = "";
+    let authtype = "";
+    let errcode = "";
 
     const output = new StdObject();
     output.add('sRtnMSG', sRtnMSG);
@@ -126,6 +135,7 @@ routes.post('/certResult', Wrap(async(req, res) => {
           'responsenumber': decodeURIComponent(GetValue(sDecData , "RES_SEQ")),
           'authtype': decodeURIComponent(GetValue(sDecData , "AUTH_TYPE")),
           'errcode': decodeURIComponent(GetValue(sDecData , "ERR_CODE")),
+          'errmsg': sRtnMSG,
           'name': decodeURIComponent(GetValue(sDecData , "UTF8_NAME")),
           'birthdate': decodeURIComponent(GetValue(sDecData , "BIRTHDATE")),
           'gender': decodeURIComponent(GetValue(sDecData , "GENDER")),
@@ -136,7 +146,6 @@ routes.post('/certResult', Wrap(async(req, res) => {
           'mobileco': decodeURIComponent(GetValue(sDecData , "MOBILE_CO")),
         });
       }
-      console.log(output);
       res.json(output);
     });
   }
