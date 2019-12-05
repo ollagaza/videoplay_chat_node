@@ -153,10 +153,21 @@ const getTokenResult = async (res, member_info, role) => {
   return output;
 };
 
+const getLanguage = (req) => {
+  let lang = req.headers.lang;
+
+  if (lang === undefined || lang === '') {
+    lang = 'kor';
+  }
+
+  return lang;
+};
+
 export default {
   "setResponseHeader": setResponseHeader,
   "generateTokenByMemberInfo": generateTokenByMemberInfo,
   "isAuthenticated": isAuthenticated,
   "verifyToken": verifyToken,
-  "getTokenResult": getTokenResult
+  "getTokenResult": getTokenResult,
+  "getLanguage": getLanguage
 };

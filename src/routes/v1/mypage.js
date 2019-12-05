@@ -1,4 +1,5 @@
 import {Router} from 'express';
+import Auth from '@/middlewares/auth.middleware';
 import Wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
@@ -17,7 +18,8 @@ routes.post('/notice', Wrap(async(req, res) => {
 
   await database.transaction(async(trx) => {
     const oMemberLogModel = new MemberLogModel({database: trx});
-    const result = await oMemberLogModel.getMemberLog(user_seq);
+    const lang = Auth.getLanguage(req);
+    const result = await oMemberLogModel.getMemberLog(lang, user_seq);
     output.add("notices", result);
   });
 
