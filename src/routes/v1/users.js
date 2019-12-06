@@ -65,10 +65,11 @@ const routes = Router();
  *
  */
 routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const lang = Auth.getLanguage(req);
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
-  const member_sub_info = await new MemberSubModel({database}).getMemberSubInfo(member_seq);
+  const member_sub_info = await new MemberSubModel({database}).getMemberSubInfo(lang, member_seq);
 
   const output = new StdObject();
   output.add('member_info', member_info);
@@ -77,10 +78,11 @@ routes.get('/me', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =
 }));
 
 routes.post('/me2', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+  const lang = Auth.getLanguage(req);
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const member_info = await new MemberModel({database}).getMemberInfo(member_seq);
-  const member_sub_info = await new MemberSubModel({database}).getMemberSubInfo(member_seq);
+  const member_sub_info = await new MemberSubModel({database}).getMemberSubInfo(lang, member_seq);
 
   const output = new StdObject();
   output.add('member_info', member_info);

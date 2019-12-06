@@ -1,3 +1,4 @@
+import Auth from '@/middlewares/auth.middleware';
 import StdObject from '@/classes/StdObject';
 import ModelObject from '@/classes/ModelObject';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
@@ -22,13 +23,15 @@ export default class MemberSubModel extends ModelObject {
     ];
   }
 
-  getMemberSubInfo = async (member_seq) => {
+  getMemberSubInfo = async (lang, member_seq) => {
     const query_result = await this.findOne({seq: member_seq});
     const member_info = new MemberInfo(query_result);
+    const medical = await MedicalModel.findAll();
     member_info.addKey('medical');
-    member_info.medical = await MedicalModel.findAll();
+    member_info.medical = medical[0]._doc.kor;
+    const interrest = await InterrestModel.findAll();
     member_info.addKey('interrest');
-    member_info.interrest = await InterrestModel.findAll();
+    member_info.interrest = interrest[0]._doc.kor;
     if (!member_info.isEmpty() && !Util.isEmpty(member_info.license_image_path)) {
       member_info.addKey('license_image_url');
       member_info.license_image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), member_info.license_image_path);
