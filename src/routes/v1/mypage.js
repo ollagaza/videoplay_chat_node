@@ -26,4 +26,28 @@ routes.post('/notice', Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.post('/msg_list', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const user_seq = req.body.seq;
+  const output = new StdObject();
+
+  res.json(output);
+}));
+
+routes.post('/msg_send', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const user_seq = req.body.seq;
+  const output = new StdObject();
+
+  res.json(output);
+}));
+
+routes.post('/msg_receive', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const user_seq = req.body.seq;
+  const output = new StdObject();
+
+  res.json(output);
+}));
+
 export default routes;
