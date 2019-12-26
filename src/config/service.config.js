@@ -1,11 +1,14 @@
 import database from '@/config/database';
 import ServiceConfigModel from '@/models/ServiceConfigModel';
 
-const service_config = {};
+let service_config = {};
 
 const load_config = async () => {
   const service_config_model = new ServiceConfigModel({ database });
   const config_list = await service_config_model.find();
+
+  service_config = {};
+
   if (config_list && config_list.length) {
     for (let i = 0; i < config_list.length; i++) {
       const config = config_list[i];
@@ -17,6 +20,11 @@ const load_config = async () => {
 
 export default {
   init: async (callback) => {
+    await load_config();
+    if (callback) callback();
+  },
+
+  reload: async (callback) => {
     await load_config();
     if (callback) callback();
   },
