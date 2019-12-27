@@ -9,6 +9,7 @@ routes.get('/reloadService', Wrap(async(req, res) => {
   const socket = io.getSocket();
   socket.emit('reloadService');
   log.debug('node api reloadService call');
+  res.json('success');
 }));
 
 export default routes;

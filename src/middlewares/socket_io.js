@@ -57,11 +57,9 @@ const init = async() => {
 
   socket.on('serviceConfigreLoad', () => {
     log.debug('socket emit serviceConfigreLoad call');
-    log.debug('node 1', service_config.get('test'));
     ( async () => {
       await service_config.reload();
     })();
-    log.debug('node 2', service_config.get('test'));
   });
 };
 
