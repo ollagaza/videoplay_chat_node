@@ -8,6 +8,7 @@ import service_config from '@/config/service.config';
 import Constants from '@/config/constants';
 import log from "@/classes/Logger";
 import MemberLogModel from "@/models/MemberLogModel";
+import io from '@/middlewares/socket_io';
 
 const routes = Router();
 
@@ -28,6 +29,29 @@ routes.post('/notice', Wrap(async(req, res) => {
 
 routes.post('/msg_list', Wrap(async(req, res) => {
   req.accepts('application/json');
+  const user_seq = req.body.seq;
+  const output = new StdObject();
+
+  res.json(output);
+}));
+
+routes.get('/test_msg_send', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const socket = io.getSocket();
+  socket.emit('sendFrontMsg', 'londhunter');
+
+  const user_seq = req.body.seq;
+  const output = new StdObject();
+
+  res.json(output);
+}));
+
+routes.get('/test_glo_send', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const socket = io.getSocket();
+  const data = { 'type':'globalNotice', 'data':'test' };
+  socket.emit('sendFrontGloMsg', data);
+
   const user_seq = req.body.seq;
   const output = new StdObject();
 

@@ -7,8 +7,8 @@ let socket;
 
 const init = async() => {
   const uId = util.getContentId();
-  const ip = service_config.get('socket_server_ip');
-  const port = service_config.get('socket_server_port');
+  const ip = service_config.get('socket_relay_server_ip');
+  const port = service_config.get('socket_relay_server_port');
 
   socket = io(`${ip}:${port}/backend`, {
     path: '/',
@@ -55,11 +55,8 @@ const init = async() => {
     socket.emit('status', uId);
   }),
 
-  socket.on('serviceConfigreLoad', () => {
-    log.debug('socket emit serviceConfigreLoad call');
-    ( async () => {
-      await service_config.reload();
-    })();
+  socket.on('sendMsg', (data) => {
+    log.debug(data);
   });
 };
 
