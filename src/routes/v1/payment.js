@@ -25,7 +25,6 @@ routes.get('/paymentlist', Wrap(async(req, res) => {
       result[group][paymentinfo[key].code] = paymentinfo[key];
     }
   });
-  log.debug(result);
   output.add('paymentinfo', result);
   res.json(output);
 }));
