@@ -8,6 +8,7 @@ import log from "@/classes/Logger";
 const routes = Router();
 
 routes.get('/paymentlist', Wrap(async(req, res) => {
+  req.accepts('application/json');
   const output = new StdObject();
 
   const paymentinfo = await PaymentService.getPaymentList(database, 'Kor');

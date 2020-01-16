@@ -253,4 +253,9 @@ export default class ModelObject {
   arrayToSafeQuery = (columns) => {
     arrayToSafeQuery(this.database, columns);
   };
+
+  getMaxData = async (column, filters) => {
+    const result = await this.database.max(column).from(this.table_name).where(filters).first();
+    return result;
+  };
 }

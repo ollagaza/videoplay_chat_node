@@ -3,6 +3,7 @@ import Util from '@/utils/baseutil';
 import roles from "@/config/roles";
 import StdObject from '@/classes/StdObject';
 import PaymentModel from '@/models/PaymentModel';
+import Payment_ResultModel from '@/models/Payment_ResultModel';
 import log from "@/classes/Logger";
 
 const getPaymentList = async (database, lang='Kor') => {
@@ -13,5 +14,5 @@ const getPaymentList = async (database, lang='Kor') => {
 };
 
 export default {
-  getPaymentList
+  getPaymentList,
 };
