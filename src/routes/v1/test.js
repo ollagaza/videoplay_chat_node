@@ -18,6 +18,8 @@ import SequenceModel from '@/models/sequence/SequenceModel';
 import text2png from "../../utils/textToImage";
 import Constants from '@/config/constants';
 
+import IndexInfo from "@/classes/surgbook/IndexInfo";
+
 const IS_DEV = config.isDev();
 
 const routes = Router();
@@ -212,6 +214,114 @@ if (IS_DEV) {
       result2,
       result3
     });
+  }));
+
+  const getHawkeyeXmlInfo = async (req, log_prefix) => {
+    const index_list_api_options = {
+      hostname: 'localhost',
+      port: 80,
+      path: '/test/ErrorReportImage.xml',
+      method: 'GET'
+    };
+    const index_list_api_url = 'http://localhost/test/ErrorReportImage.xml';
+    log.d(req, `${log_prefix} hawkeye index list api url: ${index_list_api_url}`);
+
+    const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
+    const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
+    if (!index_list_xml_info || index_list_xml_info.errorcode || Util.isEmpty(index_list_xml_info.errorreport) || Util.isEmpty(index_list_xml_info.errorreport.frameinfo)) {
+      if (index_list_xml_info && index_list_xml_info.errorcode && index_list_xml_info.errorcode.state) {
+        throw new StdObject(3, Util.getXmlText(index_list_xml_info.errorcode.state), 500);
+      } else {
+        throw new StdObject(3, "XML 파싱 오류", 500);
+      }
+    }
+
+    let index_info_list = [];
+    const index_info_map = {};
+    const range_index_list = [];
+    const tag_map = {};
+    const tag_info_map = {};
+    let frame_info = index_list_xml_info.errorreport.frameinfo;
+    if (frame_info) {
+      if (_.isArray(frame_info)) {
+        frame_info = frame_info[0];
+      }
+      const index_xml_list = frame_info.item;
+      if (index_xml_list) {
+        for (let i = 0; i < index_xml_list.length; i++) {
+          const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i], false);
+          if (!index_info.isEmpty()) {
+            const type_code = index_info.code;
+            if (index_info.is_range) {
+              range_index_list.push(index_info);
+            } else {
+              const saved_index_info = index_info_map[index_info.start_frame];
+              if (saved_index_info) {
+                saved_index_info.tag_map[type_code] = true;
+              } else {
+                index_info_map[index_info.start_frame] = index_info;
+              }
+            }
+            tag_map[type_code] = true;
+            if (!tag_info_map[type_code]) {
+              tag_info_map[type_code] = {
+                code: type_code,
+                name: index_info.state,
+                total_frame: 0,
+                last_end_frame: 0,
+                uptime: 0,
+                uptime_list: [],
+              };
+            }
+          }
+        }
+      }
+      const set_range_tags = (index_info) => {
+        const start_frame = index_info.start_frame;
+        range_index_list.forEach((range_info) => {
+          if (range_info.start_frame <= start_frame && range_info.end_frame >= start_frame) {
+            index_info.tag_map[range_info.code] = true;
+          }
+        });
+      };
+      index_info_list = _.orderBy(index_info_map, ['start_frame'], ['asc']);
+      let prev_info = index_info_list[0];
+      for (let i = 1; i < index_info_list.length; i++) {
+        const current_info = index_info_list[i];
+        prev_info.end_frame = current_info.start_frame - 1;
+        prev_info.end_time = current_info.start_time;
+        set_range_tags(current_info);
+        current_info.tags = _.keys(current_info.tag_map);
+        prev_info = current_info;
+      }
+      for (let i = 1; i < index_info_list.length; i++) {
+        const index_info = index_info_list[i];
+        if (index_info.end_frame <= 0) break;
+        for (let j = 0; j < index_info.tags.length; j++) {
+          const tag_info = tag_info_map[index_info.tags[j]];
+          tag_info.total_frame += index_info.end_frame - index_info.start_frame;
+          tag_info.uptime += index_info.end_time - index_info.start_time;
+          if (tag_info.last_end_frame !== index_info.start_frame) {
+            tag_info.uptime_list.push({ start_time: index_info.start_time, end_time: index_info.end_time });
+          } else {
+            tag_info.uptime_list[tag_info.uptime_list.length - 1].end_time = index_info.end_time;
+          }
+          tag_info.last_end_frame = index_info.end_frame + 1;
+        }
+      }
+    }
+    const result = {};
+    result.tags = _.keys(tag_map);
+    result.index_info_list = index_info_list;
+    result.tag_info_map = tag_info_map;
+    return result;
+  };
+
+  routes.get('/idx', wrap(async (req, res, next) => {
+    const index_info_list = await getHawkeyeXmlInfo(req, '[test]');
+    const result = new StdObject();
+    result.add('index_info_list', index_info_list);
+    res.json(result);
   }));
 }
 

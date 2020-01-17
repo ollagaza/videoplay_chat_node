@@ -5,7 +5,7 @@ import dateFormat from 'dateformat';
 import {promisify} from 'util';
 import {exec} from 'child_process';
 import _ from 'lodash';
-import xml2js from 'xml2js';
+import xml2js, { parseString } from 'xml2js';
 import aes256 from 'nodejs-aes256';
 import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
@@ -27,6 +27,8 @@ import mime from "mime-types";
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
+const XML_TO_JSON = new xml2js.Parser({trim: true, explicitArray: false});
+
 
 const RANDOM_KEY_SPACE = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000;
@@ -920,6 +922,18 @@ export default {
 
   "getContentId": () => {
     return uuidv1();
+  },
+
+  "getXmlToJson": (xml) => {
+    return new Promise((resolve, reject) => {
+      XML_TO_JSON.parseString(xml, function (err, json) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(json);
+        }
+      });
+    });
   },
 
   "httpRequest": (options, post_data, is_https=false) => {

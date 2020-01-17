@@ -1,9 +1,11 @@
 import StdObject from '@/classes/StdObject';
 import ModelObject from '@/classes/ModelObject';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
+import MemberInfoSub from "@/classes/surgbook/MemberInfoSub";
 import Util from '@/utils/baseutil';
 import service_config from '@/config/service.config';
 import Constants from '@/config/constants';
+import log from '@/classes/Logger';
 
 export default class MemberModel extends ModelObject {
   constructor(...args) {
@@ -11,7 +13,11 @@ export default class MemberModel extends ModelObject {
 
     this.table_name = 'member';
     this.selectable_fields = ['*'];
-    this.private_fields = ['password', 'user_media_path', 'profile_image_path', 'certkey'];
+    this.private_fields = ['password', 'user_media_path', 'profile_image_path', 'certkey',
+    'license_no', 'license_image_path', 'special_no', 
+    'major', 'major_sub', 'worktype', 
+    'trainingcode', 'trainingname', 'universitycode', 'universityname', 
+    'graduation_year', 'interrest_code', 'interrest_text'];
   }
 
   encryptPassword = (password) => {
@@ -51,7 +57,7 @@ export default class MemberModel extends ModelObject {
       await Util.createDirectory(media_root + member.user_media_path);
     }
 
-    return await super.create(member);
+    return await this.create(member);
   };
 
   modifyMember = async (member_seq, member_info) => {
@@ -59,7 +65,7 @@ export default class MemberModel extends ModelObject {
     member_info.setAutoTrim(true);
     member_info.password = this.encryptPassword(member_info.password);
     const member = member_info.toJSON();
-    const result = await super.update({seq: member_seq}, member);
+    const result = await this.update({seq: member_seq}, member);
 
     return result;
   };
@@ -72,6 +78,36 @@ export default class MemberModel extends ModelObject {
       throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
     return new MemberInfo(find_user_result);
+  };
+
+  findMembers = async (searchText) => {
+    const find_user_results = await this.find(
+      {
+        "is_new": true,
+        "query": [
+          {
+            "user_id": ["not", "aaa"],
+          },
+          {
+            "$or": [
+              {
+                "user_id": ["like", searchText],
+              },
+              {
+                "user_name": ["like", searchText]
+              }
+            ]
+          },
+          {
+            "used": ["notin", 0, 2, 3, 4, 5],
+          }
+        ]
+      }
+    );
+    if (!find_user_results || find_user_results.length === 0) {
+      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
+    }
+    return new MemberInfo(find_user_results);
   };
 
   findMemberId = async (member_info) => {
