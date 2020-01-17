@@ -1,14 +1,15 @@
-import ModelObject from '@/classes/ModelObject';
-import Util from '@/utils/baseutil';
-import StdObject from "@/classes/StdObject";
-import OperationShareInfo from '@/classes/surgbook/OperationShareInfo';
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
+import StdObject from '../../../wrapper/std-object'
+import OperationShareInfo from '../../../wrapper/operation/OperationShareInfo';
 
-export default class OperationShareModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class OperationShareModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'operation_share';
-    this.selectable_fields = ['*'];
+    this.table_name = 'operation_share'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[OperationShareModel]'
   }
 
   getShareInfoBySeq = async  (share_seq) => {

@@ -1,18 +1,19 @@
 import path from 'path';
-import ModelObject from '@/classes/ModelObject';
-import FileInfo from "@/classes/surgbook/FileInfo";
-import SmilInfo from '@/classes/surgbook/SmilInfo';
-import service_config from '@/config/service.config';
-import Util from '@/utils/baseutil';
-import log from "@/classes/Logger";
-import Constants from '@/config/constants';
+import ServiceConfig from '../../../service/service-config';
+import Constants from '../../../constants/constants'
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
+import log from '../../../libs/logger'
 
-export default class VideoFileModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+import FileInfo from '../../../wrapper/file/FileInfo'
 
-    this.table_name = 'video_file';
-    this.selectable_fields = ['*'];
+export default class VideoFileModel extends MySQLModel {
+  constructor(database) {
+    super(database)
+
+    this.table_name = 'video_file'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[VideoFileModel]'
   }
 
   createVideoFile = async (upload_file_info, storage_seq, media_path) => {
@@ -28,7 +29,7 @@ export default class VideoFileModel extends ModelObject {
   };
 
   videoFileList = async (storage_seq) => {
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const result_list = await this.find({storage_seq: storage_seq, status: 'Y'});
     const list = [];
     if (result_list) {
@@ -43,12 +44,7 @@ export default class VideoFileModel extends ModelObject {
     await this.update({seq: file_seq}, {thumbnail: thumbnail_path})
   };
 
-  deleteAll = async (storage_seq, trash_path) => {
-    // await this.update({"storage_seq": storage_seq}, {
-    //   "status": "D",
-    //   "file_path": trash_path,
-    //   "modify_date": this.database.raw('NOW()')
-    // });
+  deleteAll = async (storage_seq) => {
     await this.delete({ storage_seq: storage_seq });
   };
 
@@ -68,7 +64,7 @@ export default class VideoFileModel extends ModelObject {
       .del();
 
     (async() => {
-      const service_info = service_config.getServiceInfo();
+      const service_info = ServiceConfig.getServiceInfo();
       const trans_video_root = service_info.trans_video_root;
 
       for (let i = 0; i < result_list.length; i++) {
@@ -134,8 +130,8 @@ export default class VideoFileModel extends ModelObject {
       log.d(null, 'createVideoThumbnail - thumbnail_path', origin_video_path, thumbnail_path);
       const thumbnail_full_path = operation_info.media_root + thumbnail_path;
 
-      const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
-      const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
+      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212);
+      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160);
 
       const execute_result = await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, thumb_width, thumb_height);
       if ( execute_result.success && ( await Util.fileExists(thumbnail_full_path) ) ) {

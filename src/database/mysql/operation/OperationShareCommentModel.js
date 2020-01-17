@@ -1,11 +1,12 @@
-import ModelObject from '@/classes/ModelObject';
+import MySQLModel from '../../mysql-model'
 
-export default class OperationShareCommentModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class OperationShareCommentModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'operation_share_comment';
-    this.selectable_fields = ['*'];
+    this.table_name = 'operation_share_comment'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[OperationShareCommentModel]'
   }
 
   checkCommentAuth = async (comment_seq, token_info, only_comment_owner) => {

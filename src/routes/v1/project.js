@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import querystring from 'querystring';
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import roles from "@/config/roles";
 import Auth from '@/middlewares/auth.middleware';
 import Wrap from '@/utils/express-async';
@@ -98,7 +98,7 @@ routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, re
   const data = req.body;
 
   const member_info = await getMemberInfo(database, member_seq);
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
   const content_id = await ContentIdManager.getContentId();
   const media_root = service_info.media_root;
   const user_media_path = member_info.user_media_path;
@@ -206,7 +206,7 @@ routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER
   res.json(output);
   if (result && result.project_path) {
     (async () => {
-      const service_info = service_config.getServiceInfo();
+      const service_info = ServiceConfig.getServiceInfo();
       const media_root = service_info.media_root;
       await Util.deleteDirectory(media_root + result.project_path);
     })();
@@ -227,7 +227,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
   output.add('status', 'R');
   res.json(output);
   (async() => {
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const directory = service_info.media_root + result.project_path;
     let sep_pattern = "/";
     if (Constants.SEP === "\\") {
@@ -297,7 +297,7 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
   const member_seq = token_info.getId();
   const member_model = new MemberModel({ database });
   const member_info = await member_model.getMemberInfo(member_seq);
-  const media_root = service_config.get('media_root');
+  const media_root = ServiceConfig.get('media_root');
   const upload_path = member_info.user_media_path + "_upload_" + Constants.SEP + "project" + Constants.SEP + "image";
   const upload_full_path = media_root + upload_path;
   if (!(await Util.fileExists(upload_full_path))) {
@@ -312,7 +312,7 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
   }
 
   log.d(req, upload_file_info);
-  const image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
+  const image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
   const output = new StdObject();
   output.add('image_url', image_url);
   res.json(output);
@@ -346,13 +346,13 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
       throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
     }
     const path_url = Util.pathToUrl(video_project.project_path);
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const video_directory = service_info.media_root + video_project.project_path;
     const video_file_path = video_directory + process_info.video_file_name;
     const total_size = await Util.getDirectoryFileSize(video_directory);
     const video_file_size = await Util.getFileSize(video_file_path);
-    process_info.download_url = Util.pathToUrl(service_config.get('static_storage_prefix')) + path_url + process_info.video_file_name;
-    process_info.stream_url = service_config.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
+    process_info.download_url = Util.pathToUrl(ServiceConfig.get('static_storage_prefix')) + path_url + process_info.video_file_name;
+    process_info.stream_url = ServiceConfig.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
     process_info.total_size = total_size;
     process_info.video_file_size = video_file_size;
 

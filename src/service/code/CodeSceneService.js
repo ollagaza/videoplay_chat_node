@@ -1,15 +1,15 @@
-import database from '@/config/database';
-import CodeSceneModel from '@/models/CodeSceneModel';
+import DBMysql from '../../database/knex-mysql'
+import CodeSceneModel from '../../database/mysql/code/CodeSceneModel';
 
 const CodeSceneClass = class {
   constructor() {
-    this.is_load_complete = false;
-    this.code_list = [];
-    this.code_map = {};
+    this.is_load_complete = false
+    this.code_list = []
+    this.code_map = {}
   }
 
   init = async () => {
-    const code_scene_model = new CodeSceneModel({ database });
+    const code_scene_model = new CodeSceneModel(DBMysql);
     const result_list = await code_scene_model.find();
     if (result_list && result_list.length) {
       for (let i = 0; i < result_list.length; i++) {

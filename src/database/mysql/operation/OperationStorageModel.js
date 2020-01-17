@@ -1,15 +1,16 @@
-import ModelObject from '@/classes/ModelObject';
-import role from '@/config/roles';
-import OperationStorageInfo from '@/classes/surgbook/OperationStorageInfo';
-import VideoFileModel from '@/models/VideoFileModel';
-import ReferFileModel from '@/models/ReferFileModel';
+import Role from '../../../constants/roles'
+import MySQLModel from '../../mysql-model'
+import OperationStorageInfo from '../../../wrapper/operation/OperationStorageInfo'
+import VideoFileModel from '../file/VideoFileModel'
+import ReferFileModel from '../file/ReferFileModel'
 
-export default class OperationStorageModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class OperationStorageModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'operation_storage';
-    this.selectable_fields = ['*'];
+    this.table_name = 'operation_storage'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[OperationStorageModel]'
   }
 
   getOperationStorageInfo = async (operation_info) => {
@@ -79,7 +80,7 @@ export default class OperationStorageModel extends ModelObject {
     oKnex.from('operation');
     oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     oKnex.leftOuterJoin("operation_media", "operation_media.operation_seq", "operation.seq");
-    if (token_info.getRole() <= role.MEMBER) {
+    if (token_info.getRole() <= Role.MEMBER) {
       oKnex.where({member_seq: token_info.getId()});
     }
     oKnex.first();

@@ -1,6 +1,6 @@
 import path from 'path';
 import scheduler from 'node-schedule';
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import Auth from '@/middlewares/auth.middleware';
 import roles from "@/config/roles";
 import Util from '@/utils/baseutil';
@@ -240,7 +240,7 @@ class OperationScheduler {
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const token_info = token_result.token_info;
 
-    const url = `${service_config.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
+    const url = `${ServiceConfig.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
     let request_result = await Util.forward(url, 'POST', token_info.token);
     if (typeof request_result === 'string') {
       request_result = JSON.parse(request_result);

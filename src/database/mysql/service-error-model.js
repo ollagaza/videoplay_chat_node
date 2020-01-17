@@ -10,6 +10,7 @@ export default class ServiceErrorModel extends MySQLModel {
 
     this.table_name = 'service_error'
     this.selectable_fields = ['*']
+    this.log_prefix = '[ServiceErrorModel]'
   }
 
   createServiceError = async (error_type, operation_seq, content_id, message, req) => {

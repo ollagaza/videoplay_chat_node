@@ -1,6 +1,6 @@
 import formatter from "string-template";
 import _ from 'lodash'
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 
 const create_user_form = `
 <div style="width: 100%;background: #fff;padding-top: 50px;">
@@ -57,7 +57,7 @@ const find_user_info_form = `
 `;
 
 const getServiceInfo = () => {
-  return service_config.getServiceInfo();
+  return ServiceConfig.getServiceInfo();
 };
 
 export default {

@@ -1,12 +1,13 @@
-import ModelObject from '@/classes/ModelObject';
-import Util from '@/utils/baseutil'
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
 
-export default class OperationShareUserModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class OperationShareUserModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'operation_share_user';
-    this.selectable_fields = ['*'];
+    this.table_name = 'operation_share_user'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[OperationShareUserModel]'
   }
 
   getUserAuthType = async (share_seq, email_address) => {

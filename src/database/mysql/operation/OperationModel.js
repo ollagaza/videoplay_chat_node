@@ -1,23 +1,23 @@
-import ModelObject from '@/classes/ModelObject';
-import role from '@/config/roles';
-import Util from '@/utils/baseutil';
-import OperationInfo from '@/classes/surgbook/OperationInfo';
-import MemberModel from '@/models/MemberModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
-import StdObject from "@/classes/StdObject";
-import service_config from '@/config/service.config';
-import ContentIdManager from '@/classes/ContentIdManager';
-import Constants from '@/config/constants';
-import log from "@/classes/Logger";
+import ServiceConfig from '../../../service/service-config';
+import Constants from '../../../constants/constants'
+import Role from '../../../constants/roles'
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
+import StdObject from '../../../wrapper/std-object'
+
+import OperationMediaModel from './OperationMediaModel';
+import OperationInfo from '../../../wrapper/operation/OperationInfo';
+import MemberModel from '../member/MemberModel';
 
 const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
 
-export default class OperationModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class OperationModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'operation';
-    this.selectable_fields = ['*'];
+    this.table_name = 'operation'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[OperationModel]'
   }
 
   getOperation = async (where, import_media_info) => {
@@ -35,7 +35,7 @@ export default class OperationModel extends ModelObject {
 
   getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
     const where = {"operation.seq": operation_seq};
-    if (check_owner && token_info.getRole() <= role.MEMBER) {
+    if (check_owner && token_info.getRole() <= Role.MEMBER) {
       where.member_seq = token_info.getId();
     }
 
@@ -52,7 +52,7 @@ export default class OperationModel extends ModelObject {
     oKnex.innerJoin("member", "member.seq", "operation.member_seq");
     oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     oKnex.whereIn('status', ['Y', 'T']);
-    if (token_info.getRole() <= role.MEMBER) {
+    if (token_info.getRole() <= Role.MEMBER) {
       oKnex.andWhere('member_seq', token_info.getId());
     }
     if (query_params) {
@@ -70,7 +70,7 @@ export default class OperationModel extends ModelObject {
     }
     oKnex.orderBy(order_by.name, order_by.direction);
 
-    const paging_result = await await this.queryPaginated(oKnex, list_count, page, page_count, params.no_paging);
+    const paging_result = await this.queryPaginated(oKnex, list_count, page, page_count, params.no_paging);
 
     const result = [];
 
@@ -93,7 +93,7 @@ export default class OperationModel extends ModelObject {
   };
 
   getOperationInfoByResult = (query_result) => {
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     query_result.media_root = service_info.media_root;
 
     const operation_info = new OperationInfo(query_result);
@@ -175,7 +175,7 @@ export default class OperationModel extends ModelObject {
       throw new StdObject(-1, '회원정보가 없습니다.', 401)
     }
     const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
-    const content_id = await ContentIdManager.getContentId();
+    const content_id = Util.getContentId();
     const user_media_path = member_info.user_media_path;
     operation_info.member_seq = member_seq;
     operation_info.media_path = user_media_path + 'operation' + Constants.SEP + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
@@ -189,7 +189,7 @@ export default class OperationModel extends ModelObject {
     const operation_seq = await this.create(operation_info, 'seq');
     operation_info.seq = operation_seq;
 
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const media_root = service_info.media_root;
     operation_info.media_root = media_root;
     operation_info.media_directory = Util.getMediaDirectory(media_root, operation_info.media_path);

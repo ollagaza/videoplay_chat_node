@@ -1,18 +1,18 @@
-import php from 'phpjs';
-import ModelObject from '@/classes/ModelObject';
-import Util from '@/utils/baseutil';
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
 
-export default class MemberAuthMailModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class MemberAuthMailModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'member_auth_mail';
-    this.selectable_fields = ['*'];
+    this.table_name = 'member_auth_mail'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[MemberAuthMailModel]'
   }
 
   getMailAuthKey = async (member_seq, member_email) => {
     const random_val = 10000000 + Math.floor(Math.random() * 90000000);
-    const auth_key = php.md5(random_val);
+    const auth_key = Util.md5(random_val);
 
     const params = {
       "auth_key": auth_key,

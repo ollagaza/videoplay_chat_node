@@ -1,14 +1,13 @@
-import ModelObject from '@/classes/ModelObject';
-import ClipInfo from "@/classes/surgbook/ClipInfo";
-import ClipSeqInfo from "@/classes/surgbook/ClipSeqInfo";
-import Util from '@/utils/baseutil';
 import JsonPath from 'jsonpath';
+import Util from '../../utils/baseutil'
+import ClipInfo from "../../wrapper/xml/ClipInfo"
+import ClipSeqInfo from "../../wrapper/xml/ClipSeqInfo"
 
 const DOC_VERSION = "1.0";
 
-export default class ClipModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class ClipModel {
+  constructor() {
+    this.log_prefix = '[ClipModel]'
   }
 
   getClipInfoList = async (operation_info) => {

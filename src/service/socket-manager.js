@@ -75,6 +75,6 @@ const SocketManagerClass = class extends EventEmitter {
   }
 }
 
-const socket_manager = new SocketManagerClass()
+const socketManager = new SocketManagerClass()
 
-export default socket_manager
+export default socketManager

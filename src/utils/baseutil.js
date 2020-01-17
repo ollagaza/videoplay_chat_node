@@ -18,7 +18,7 @@ import request from 'request-promise';
 import getDimension from 'get-video-dimensions';
 import getDuration from 'get-video-duration';
 import JsonPath from "jsonpath";
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import constants from '@/config/constants';
 import log from "@/classes/Logger";
 import StdObject from '@/classes/StdObject';
@@ -669,7 +669,7 @@ const isFalse = (value) => {
 };
 
 const urlToPath = (url, editor_path = false) => {
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
   const check_regex = /^\/static\/(index|storage|video)\/(.+)$/g;
   const result = check_regex.exec(url);
   if (result && result.length === 3) {
@@ -892,12 +892,12 @@ export default {
       plain_text = plain_data;
     }
 
-    return base64url.encode(aes256.encrypt(service_config.get('crypto_key'), plain_text), 'utf-8');
+    return base64url.encode(aes256.encrypt(ServiceConfig.get('crypto_key'), plain_text), 'utf-8');
   },
 
   "decrypt": (encrypted_data) => {
     try{
-      return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
+      return aes256.decrypt(ServiceConfig.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
     } catch (error) {
       log.e(null, 'Util.decrypt', error);
       return null;

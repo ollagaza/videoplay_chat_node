@@ -1,15 +1,17 @@
-import ModelObject from '@/classes/ModelObject';
-import FileInfo from "@/classes/surgbook/FileInfo";
-import service_config from '@/config/service.config';
-import Util from '@/utils/baseutil';
-import Constants from '@/config/constants';
+import ServiceConfig from '../../../service/service-config';
+import Constants from '../../../constants/constants'
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
 
-export default class ReferFileModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+import FileInfo from '../../../wrapper/file/FileInfo'
 
-    this.table_name = 'refer_file';
-    this.selectable_fields = ['*'];
+export default class ReferFileModel extends MySQLModel {
+  constructor(database) {
+    super(database)
+
+    this.table_name = 'refer_file'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[ReferFileModel]'
   }
 
   createReferFile = async (upload_file_info, storage_seq, media_path) => {
@@ -25,7 +27,7 @@ export default class ReferFileModel extends ModelObject {
   };
 
   referFileList = async (storage_seq) => {
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const result_list = await this.find({storage_seq: storage_seq, status: 'Y'});
     const list = [];
     if (result_list) {
@@ -56,7 +58,7 @@ export default class ReferFileModel extends ModelObject {
       .del();
 
     (async () => {
-      const service_info = service_config.getServiceInfo();
+      const service_info = ServiceConfig.getServiceInfo();
       const media_root = service_info.media_root;
 
       for (let i = 0; i < result_list.length; i++) {

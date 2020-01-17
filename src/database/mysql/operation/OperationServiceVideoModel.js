@@ -1,11 +1,12 @@
-import ModelObject from '@/classes/ModelObject';
+import MySQLModel from '../../mysql-model'
 
-export default class OperationServiceVideoModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class OperationServiceVideoModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'operation_service_video';
-    this.selectable_fields = ['*'];
+    this.table_name = 'operation_service_video'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[OperationServiceVideoModel]'
   }
 
   createServiceVideo = async (operation_info, sub_content_id) => {

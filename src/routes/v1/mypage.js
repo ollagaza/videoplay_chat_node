@@ -4,7 +4,7 @@ import Wrap from '@/utils/express-async';
 import StdObject from '@/classes/StdObject';
 import database from '@/config/database';
 import Util from '@/utils/baseutil';
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import Constants from '@/config/constants';
 import log from "@/classes/Logger";
 import MemberLogModel from "@/models/MemberLogModel";

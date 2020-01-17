@@ -12,7 +12,7 @@ import Util from '@/utils/baseutil';
 import MemberTemplate from '@/template/mail/member.template';
 import MemberInfo from "@/classes/surgbook/MemberInfo";
 import MemberInfoSub from "@/classes/surgbook/MemberInfoSub";
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import Constants from '@/config/constants';
 import {UserDataModel} from '@/db/mongodb/model/UserData';
 import MemberLogModel from '@/models/MemberLogModel';
@@ -235,16 +235,16 @@ routes.post('/', Wrap(async(req, res) => {
 routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
   const private_fields = ['password',
-    'license_no', 'license_image_path', 'special_no', 
-    'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype', 
-    'trainingcode', 'trainingname', 'universitycode', 'universityname', 
+    'license_no', 'license_image_path', 'special_no',
+    'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype',
+    'trainingcode', 'trainingname', 'universitycode', 'universityname',
     'graduation_year', 'interrest_code', 'interrest_text'];
 
-  const sub_private_fields = ['regist_date', 'modify_date', 'user_id', 'password', 
-    'user_nickname', 'user_name', 'gender', 'email_address', 
-    'mail_acceptance', 'birth_day', 'cellphone', 'tel', 
-    'user_media_path', 'profile_image_path', 'certkey', 'used', 
-    'hospcode', 'hospname', 'treatcode', 'treatname', 
+  const sub_private_fields = ['regist_date', 'modify_date', 'user_id', 'password',
+    'user_nickname', 'user_name', 'gender', 'email_address',
+    'mail_acceptance', 'birth_day', 'cellphone', 'tel',
+    'user_media_path', 'profile_image_path', 'certkey', 'used',
+    'hospcode', 'hospname', 'treatcode', 'treatname',
     'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
     ];
 
@@ -509,7 +509,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
     const member_model = new MemberModel({ database: trx });
     const member_info = await member_model.getMemberInfo(member_seq);
 
-    const media_root = service_config.get('media_root');
+    const media_root = ServiceConfig.get('media_root');
     const upload_path = member_info.user_media_path + `_upload_${Constants.SEP}profile`;
     const upload_full_path = media_root + upload_path;
     if (!(await Util.fileExists(upload_full_path))) {
@@ -538,7 +538,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(roles.
         }
         output.error = 0;
         output.message = '';
-        output.add('profile_image_url', Util.getUrlPrefix(service_config.get('static_storage_prefix'), resize_image_path));
+        output.add('profile_image_url', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resize_image_path));
       } else {
         await Util.deleteFile(resize_image_full_path);
         output.error = -2;

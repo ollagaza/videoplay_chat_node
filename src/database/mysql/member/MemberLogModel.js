@@ -1,14 +1,13 @@
-import StdObject from '@/classes/StdObject';
-import ModelObject from '@/classes/ModelObject';
-import service_config from '@/config/service.config';
-import {LogCodeModel} from '@/db/mongodb/model/MemberLogCode';
+import MySQLModel from '../../mysql-model'
+import { LogCodeModel } from '../../mongodb/MemberLogCode';
 
-export default class MemberLogModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class MemberLogModel extends MySQLModel {
+  constructor(database) {
+    super(database);
 
-    this.table_name = 'member_log';
-    this.selectable_fields = ['*'];
+    this.table_name = 'member_log'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[MemberLogModel]'
   }
 
   createMemberLog = async (seq, code, text = "") => {

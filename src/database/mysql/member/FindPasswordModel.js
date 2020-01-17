@@ -1,12 +1,13 @@
-import ModelObject from '@/classes/ModelObject';
-import Util from '@/utils/baseutil';
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
 
-export default class FindPasswordModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class FindPasswordModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'find_pw';
-    this.selectable_fields = ['*'];
+    this.table_name = 'find_pw'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[FindPasswordModel]'
   }
 
   createAuthInfo = async (member_seq, member_email, expire_time) => {

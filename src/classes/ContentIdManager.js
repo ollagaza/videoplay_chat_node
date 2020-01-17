@@ -1,7 +1,7 @@
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import Util from '@/utils/baseutil';
 
-const service_info = service_config.getServiceInfo();
+const service_info = ServiceConfig.getServiceInfo();
 const getContentId = async () => {
   // const request_options = {
   //   hostname: service_info.cms_server_domain,

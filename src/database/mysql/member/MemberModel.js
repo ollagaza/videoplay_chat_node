@@ -1,23 +1,25 @@
-import StdObject from '@/classes/StdObject';
-import ModelObject from '@/classes/ModelObject';
-import MemberInfo from "@/classes/surgbook/MemberInfo";
-import MemberInfoSub from "@/classes/surgbook/MemberInfoSub";
-import Util from '@/utils/baseutil';
-import service_config from '@/config/service.config';
-import Constants from '@/config/constants';
-import log from '@/classes/Logger';
+import ServiceConfig from '../../../service/service-config';
+import Constants from '../../../constants/constants'
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
+import StdObject from '../../../wrapper/std-object'
 
-export default class MemberModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+import MemberInfo from "../../../wrapper/member/MemberInfo";
 
-    this.table_name = 'member';
-    this.selectable_fields = ['*'];
-    this.private_fields = ['password', 'user_media_path', 'profile_image_path', 'certkey',
-    'license_no', 'license_image_path', 'special_no', 
-    'major', 'major_sub', 'worktype', 
-    'trainingcode', 'trainingname', 'universitycode', 'universityname', 
-    'graduation_year', 'interrest_code', 'interrest_text'];
+export default class MemberModel extends MySQLModel {
+  constructor(database) {
+    super(database)
+
+    this.table_name = 'member'
+    this.selectable_fields = ['*']
+    this.private_fields = [
+      'password', 'user_media_path', 'profile_image_path', 'certkey',
+      'license_no', 'license_image_path', 'special_no',
+      'major', 'major_sub', 'worktype',
+      'trainingcode', 'trainingname', 'universitycode', 'universityname',
+      'graduation_year', 'interrest_code', 'interrest_text'
+    ]
+    this.log_prefix = '[MemberModel]'
   }
 
   encryptPassword = (password) => {
@@ -37,7 +39,7 @@ export default class MemberModel extends ModelObject {
     const member_info = new MemberInfo(query_result, this.private_fields);
     if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
       member_info.addKey('profile_image_url');
-      member_info.profile_image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), member_info.profile_image_path);
+      member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
     }
     return member_info;
   };
@@ -50,7 +52,7 @@ export default class MemberModel extends ModelObject {
 
     member.user_media_path = Constants.SEP + member_info.user_id + Constants.SEP;
 
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const media_root = service_info.media_root;
 
     if ( !( await Util.fileExists(media_root + member.user_media_path) ) ) {

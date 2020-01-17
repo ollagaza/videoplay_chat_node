@@ -1,5 +1,7 @@
-import log from "@/classes/Logger";
-const {registerFont, createCanvas} = require('canvas');
+import log from "./logger";
+const { registerFont, createCanvas } = require('canvas');
+
+const log_prefix = '[text-to-image]'
 
 /**
  * Convert text to PNG image.
@@ -93,10 +95,9 @@ const text2png = (text, options = {}) => {
       default:
         throw new Error(`output type:${options.output} is not supported.`)
     }
-  } catch (e) {
-    log.error(text, result, options);
-    log.error(e);
-    throw e;
+  } catch (error) {
+    log.error(log_prefix, '[text2png]', text, result, options, error);
+    throw error;
   }
 
   return result;

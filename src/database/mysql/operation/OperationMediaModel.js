@@ -1,18 +1,15 @@
-import service_config from '@/config/service.config';
+import ServiceConfig from '../../../service/service-config';
 import MySQLModel from '../../mysql-model'
-import StdObject from '../../../wrapper/std-object'
-import log from '../../../libs/logger'
 import Util from '../../../utils/baseutil'
-import Constants from '../../../constants/constants'
-import OperationMediaInfo from '@/classes/surgbook/OperationMediaInfo';
-import SmilInfo from '@/classes/surgbook/SmilInfo';
+import OperationMediaInfo from '../../../wrapper/operation/OperationMediaInfo';
+import SmilInfo from '../../../wrapper/xml/SmilInfo';
 
 export default class OperationMediaModel extends MySQLModel {
   constructor(database) {
-    super(database);
+    super(database)
 
-    this.table_name = 'operation_media';
-    this.selectable_fields = ['*'];
+    this.table_name = 'operation_media'
+    this.selectable_fields = ['*']
     this.log_prefix = '[OperationMediaModel]'
   }
 
@@ -33,11 +30,11 @@ export default class OperationMediaModel extends MySQLModel {
 
   getProxyVideoInfo = async (operation_info, origin_file_name, smil_file_name) => {
     if (!smil_file_name) {
-      smil_file_name = service_config.get('default_smil_file_name');
+      smil_file_name = ServiceConfig.get('default_smil_file_name');
     }
-    const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+    const trans_video_directory = Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
     const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, smil_file_name);
-    return smil_info.isEmpty() ? { name: null, resolution: service_config.get('proxy_max_resolution') } : smil_info.findProxyVideoInfo();
+    return smil_info.isEmpty() ? { name: null, resolution: ServiceConfig.get('proxy_max_resolution') } : smil_info.findProxyVideoInfo();
   };
 
   updateTransComplete = async (operation_info, trans_info) => {

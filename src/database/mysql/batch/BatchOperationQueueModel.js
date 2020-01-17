@@ -1,12 +1,12 @@
-import ModelObject from '@/classes/ModelObject';
-import log from "@/classes/Logger";
+import MySQLModel from '../../mysql-model'
 
-export default class BatchOperationQueueModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+export default class BatchOperationQueueModel extends MySQLModel {
+  constructor(database) {
+    super(database)
 
-    this.table_name = 'batch_operation_queue';
-    this.selectable_fields = ['*'];
+    this.table_name = 'batch_operation_queue'
+    this.selectable_fields = ['*']
+    this.log_prefix = '[BatchOperationQueueModel]'
   }
 
   verifyKey = async (member_seq, key) => {

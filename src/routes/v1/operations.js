@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import querystring from 'querystring';
 import semver from 'semver';
 import Wrap from '@/utils/express-async';
@@ -752,7 +752,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   let media_directory = null;
   let api_url = null;
   let is_execute_success = false;
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
 
   await database.transaction(async(trx) => {
 

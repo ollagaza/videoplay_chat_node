@@ -8,7 +8,7 @@ import database from '@/config/database';
 import MemberModel from '@/models/MemberModel';
 import MemberAuthMailModel from '@/models/MemberAuthMailModel';
 import Util from '@/utils/baseutil';
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 
 const routes = Router();
 
@@ -28,8 +28,8 @@ routes.get('/checkNice', Wrap(async(req, res) => {
   let sEncData = "";
   let sRtnMSG = "";
 
-  const sModulePath = service_config.get('cert_path');
-  const sReturnUrl = service_config.get('cert_result_url');
+  const sModulePath = ServiceConfig.get('cert_path');
+  const sReturnUrl = ServiceConfig.get('cert_result_url');
 
   sPlaincData = "7:REQ_SEQ" + sCPRequest.length + ":" + sCPRequest +
                 "8:SITECODE" + sSiteCode.length + ":" + sSiteCode +
@@ -71,11 +71,11 @@ routes.post('/certResult', Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const encodeData = req.body.EncodeData;
-  const sModulePath = service_config.get('cert_path');
+  const sModulePath = ServiceConfig.get('cert_path');
 
   let sDecData = "";
   let cmd = "";
-  
+
   if( /^0-9a-zA-Z+\/=/.test(encodeData) == true){
     let sRtnMSG = "입력값 오류";
     let requestnumber = "";
@@ -93,7 +93,7 @@ routes.post('/certResult', Wrap(async(req, res) => {
     if (encodeData !== "") {
       cmd = sModulePath + " " + "DEC" + " " + sSiteCode + " " + sSitePW + " " + encodeData;
     }
-    
+
     const child = exec(cmd, {encoding: "euc-kr"});
     child.stdout.on("data", (data) => {
         sDecData += data;

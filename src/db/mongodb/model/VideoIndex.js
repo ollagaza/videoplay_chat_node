@@ -3,7 +3,7 @@ import _ from "lodash";
 import Util from '@/utils/baseutil';
 import StdObject from "@/classes/StdObject";
 import log from "@/classes/Logger";
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import Constants from '@/config/constants';
 
 const Schema = mongoose.Schema;
@@ -196,8 +196,8 @@ const addVideoIndex = async (operation_info, second) => {
   }
 
   try {
-    const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
-    const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
+    const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212);
+    const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160);
     const thumb_index_image_path = save_directory + Constants.SEP + thumbnail_file_name;
     execute_result = await Util.getThumbnail(trans_video_path, thumb_index_image_path, second, thumb_width, thumb_height);
 

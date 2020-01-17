@@ -1,9 +1,11 @@
-import service_config from '@/config/service.config';
-import Util from '@/utils/baseutil';
-import roles from "@/config/roles";
-import StdObject from '@/classes/StdObject';
-import OperationModel from '@/models/OperationModel';
-import log from "@/classes/Logger";
+import ServiceConfig from '../../service/service-config';
+import Constants from '../../constants/constants'
+import Role from '../../constants/roles'
+import Util from '../../utils/baseutil'
+import StdObject from '../../wrapper/std-object'
+import log from '../../libs/logger'
+
+import OperationModel from '../../database/mysql/operation/OperationModel';
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
   const operation_model = new OperationModel({ database });
@@ -13,7 +15,7 @@ const getOperationInfo = async (database, operation_seq, token_info) => {
     throw new StdObject(-1, '수술 정보가 존재하지 않습니다.', 400);
   }
   if (operation_info.member_seq !== token_info.getId()) {
-    if (token_info.getRole() !== roles.ADMIN) {
+    if (token_info.getRole() !== Role.ADMIN) {
       throw new StdObject(-99, '권한이 없습니다.', 403);
     }
   }
@@ -23,7 +25,7 @@ const getOperationInfo = async (database, operation_seq, token_info) => {
 
 const createOperationDirectory = async (operation_info) => {
   const media_directory = operation_info.media_directory;
-  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+  const trans_video_directory = Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
 
   await Util.createDirectory(media_directory + "SEQ");
   await Util.createDirectory(media_directory + "Custom");
@@ -35,7 +37,7 @@ const createOperationDirectory = async (operation_info) => {
 
 const deleteOperationDirectory = async (operation_info, delete_video = false) => {
   const media_directory = operation_info.media_directory;
-  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+  const trans_video_directory = Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
 
   await Util.deleteDirectory(media_directory + "Custom");
   await Util.deleteDirectory(media_directory + "Trash");
@@ -62,7 +64,7 @@ const deleteMetaFiles = async (operation_info) => {
 
 const deleteOperationFiles = async (operation_info) => {
   const media_directory = operation_info.media_directory;
-  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+  const trans_video_directory = Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
 
   await Util.deleteDirectory(media_directory);
   if (media_directory !== trans_video_directory) {

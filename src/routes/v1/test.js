@@ -10,12 +10,12 @@ import Auth from '@/middlewares/auth.middleware';
 import log from "@/classes/Logger";
 import roles from "@/config/roles";
 import mime from "mime-types";
-import service_config from "@/config/service.config";
+import ServiceConfig from "@/config/service.config";
 import config from "@/config/config";
 import ContentIdManager from '@/classes/ContentIdManager'
 import {VideoProjectModel} from '@/db/mongodb/model/VideoProject';
 import SequenceModel from '@/models/sequence/SequenceModel';
-import text2png from "../../utils/textToImage";
+import text2png from "../../libs/textToImage";
 import Constants from '@/config/constants';
 
 import IndexInfo from "@/classes/surgbook/IndexInfo";
@@ -51,7 +51,7 @@ if (IS_DEV) {
       }
     };
 
-    await Util.writeXmlFile(service_config.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json);
+    await Util.writeXmlFile(ServiceConfig.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json);
 
     res.json(video_xml_json);
   }));

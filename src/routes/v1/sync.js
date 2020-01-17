@@ -1,7 +1,7 @@
 import {Router} from 'express';
 import _ from 'lodash';
 import querystring from 'querystring';
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 import Wrap from '@/utils/express-async';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
@@ -27,7 +27,7 @@ import OperationService from '@/service/operation/OperationService';
 const routes = Router();
 
 const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
 
   const index_list_data = {
     "ContentID": content_id
@@ -86,7 +86,7 @@ const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {
 
 const syncOne = async (req, token_info, operation_seq) => {
   log.d(req, `sync_one[seq: ${operation_seq}] start`);
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
 
   let content_id = null;
   let operation_info = null;
@@ -121,7 +121,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     return;
   }
 
-  const trans_media_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+  const trans_media_directory = Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
   const media_directory = operation_info.media_directory;
 
   await OperationService.createOperationDirectory(operation_info);
@@ -303,7 +303,7 @@ const reSync = async (req, operation_seq) => {
     await operation_media_model.reSetOperationMedia(operation_info, false);
   });
 
-  const trans_video_directory = Util.getMediaDirectory(service_config.get('trans_video_root'), operation_info.media_path);
+  const trans_video_directory = Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
 
   // db 업데이트가 끝나면 기존 파일 정리.
 
@@ -332,9 +332,9 @@ const reSync = async (req, operation_seq) => {
   }
 
   if (!smil_info || smil_info.isEmpty()) {
-    smil_info = await new SmilInfo().loadFromXml(trans_video_directory, service_config.get('default_smil_file_name'));
+    smil_info = await new SmilInfo().loadFromXml(trans_video_directory, ServiceConfig.get('default_smil_file_name'));
     if (smil_info && smil_info.video_info_list && smil_info.video_info_list.length) {
-      log.d(req, `SmilInfo [database: ${service_config.get('default_smil_file_name')}]`, smil_info.video_info_list.length);
+      log.d(req, `SmilInfo [database: ${ServiceConfig.get('default_smil_file_name')}]`, smil_info.video_info_list.length);
     }
   }
 
@@ -357,10 +357,10 @@ const reSync = async (req, operation_seq) => {
       }
     }
   }
-  await Util.deleteFile(seq_directory + service_config.get('default_smil_file_name'));
+  await Util.deleteFile(seq_directory + ServiceConfig.get('default_smil_file_name'));
   await Util.deleteFile(media_directory + "Media.xml");
 
-  const url = `${service_config.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
+  const url = `${ServiceConfig.get('forward_api_server_url')}/operations/${operation_seq}/request/analysis`;
   return await Util.forward(url, 'POST', token_info.token);
 };
 

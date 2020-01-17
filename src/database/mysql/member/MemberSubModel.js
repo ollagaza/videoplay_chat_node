@@ -1,26 +1,26 @@
-import Auth from '@/middlewares/auth.middleware';
-import StdObject from '@/classes/StdObject';
-import ModelObject from '@/classes/ModelObject';
-import MemberInfo from "@/classes/surgbook/MemberInfo";
-import Util from '@/utils/baseutil';
-import service_config from '@/config/service.config';
-import {MedicalModel} from '@/db/mongodb/model/Medical';
-import {InterrestModel} from '@/db/mongodb/model/interrest';
-import log from '@/classes/Logger';
+import ServiceConfig from '../../../service/service-config';
+import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/baseutil'
+import { MedicalModel } from '../../mongodb/Medical';
+import { InterrestModel } from '../../mongodb/interrest';
 
-export default class MemberSubModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+import MemberInfo from "../../../wrapper/member/MemberInfo";
 
-    this.table_name = 'member_sub';
-    this.selectable_fields = ['*'];
-    this.private_fields = ['regist_date', 'modify_date', 'user_id', 'password',
-    'user_nickname', 'user_name', 'gender', 'email_address',
-    'mail_acceptance', 'birth_day', 'cellphone', 'tel',
-    'user_media_path', 'profile_image_path', 'certkey', 'used',
-    'hospcode', 'hospname', 'treatcode', 'treatname',
-    'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
-    ];
+export default class MemberSubModel extends MySQLModel {
+  constructor(database) {
+    super(database)
+
+    this.table_name = 'member_sub'
+    this.selectable_fields = ['*']
+    this.private_fields = [
+      'regist_date', 'modify_date', 'user_id', 'password',
+      'user_nickname', 'user_name', 'gender', 'email_address',
+      'mail_acceptance', 'birth_day', 'cellphone', 'tel',
+      'user_media_path', 'profile_image_path', 'certkey', 'used',
+      'hospcode', 'hospname', 'treatcode', 'treatname',
+      'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
+    ]
+    this.log_prefix = '[MemberSubModel]'
   }
 
   getMemberSubInfo = async (lang, member_seq) => {
@@ -34,7 +34,7 @@ export default class MemberSubModel extends ModelObject {
     member_info.interrest = interrest[0]._doc.kor;
     if (!member_info.isEmpty() && !Util.isEmpty(member_info.license_image_path)) {
       member_info.addKey('license_image_url');
-      member_info.license_image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), member_info.license_image_path);
+      member_info.license_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.license_image_path);
     }
     return member_info;
   };

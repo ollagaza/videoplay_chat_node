@@ -1,15 +1,16 @@
-import ModelObject from '@/classes/ModelObject';
-import IndexInfo from '@/classes/surgbook/IndexInfo';
-import StdObject from "@/classes/StdObject";
-import Util from '@/utils/baseutil';
-import log from "@/classes/Logger";
 import _ from 'lodash';
-import service_config from '@/config/service.config';
-import Constants from '@/config/constants';
 
-export default class IndexModel extends ModelObject {
-  constructor(...args) {
-    super(...args);
+import ServiceConfig from '../../service/service-config';
+import Constants from '../../constants/constants'
+import Util from '../../utils/baseutil'
+import StdObject from '../../wrapper/std-object'
+import log from '../../libs/logger'
+
+import IndexInfo from '@/classes/surgbook/IndexInfo';
+
+export default class IndexModel {
+  constructor() {
+    this.log_prefix = '[IndexModel]'
   }
 
   loadIndexXML = async (operation_info, index_type) => {
@@ -115,24 +116,24 @@ export default class IndexModel extends ModelObject {
     let execute_result = await Util.getThumbnail(origin_video_path, original_index_image_path, second);
 
     if (!execute_result.success) {
-      log.e(null, `IndexModel.addIndex execute error [${execute_result.command}]`, execute_result);
+      log.error(this.log_prefix, `IndexModel.addIndex execute error [${execute_result.command}]`, execute_result);
       throw new StdObject(-1, '인덱스 추출 실패', 400);
     }
     if ( !( await Util.fileExists(original_index_image_path) ) ) {
-      log.e(null, `IndexModel.addIndex file not exists [${execute_result.command}]`, execute_result);
+      log.error(this.log_prefix, `IndexModel.addIndex file not exists [${execute_result.command}]`, execute_result);
       throw new StdObject(-1, '인덱스 파일 저장 실패', 400);
     }
 
     try {
-      const thumb_width = Util.parseInt(service_config.get('thumb_width'), 212);
-      const thumb_height = Util.parseInt(service_config.get('thumb_height'), 160);
+      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212);
+      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160);
       const thumb_index_image_path = save_directory + Constants.SEP + thumbnail_file_name;
       execute_result = await Util.getThumbnail(origin_video_path, thumb_index_image_path, second, thumb_width, thumb_height);
 
       if (!execute_result.success) {
-        log.e(null, `IndexModel.addIndex thumb execute error [${execute_result.command}]`, execute_result);
+        log.error(this.log_prefix, `IndexModel.addIndex thumb execute error [${execute_result.command}]`, execute_result);
       } else if ( !( await Util.fileExists(original_index_image_path) ) ) {
-        log.e(null, `IndexModel.addIndex thumb file not exists [${execute_result.command}]`, execute_result);
+        log.error(this.log_prefix, `IndexModel.addIndex thumb file not exists [${execute_result.command}]`, execute_result);
       }
     } catch (error) {
       add_index.thumbnail_url = add_index.original_url;

@@ -11,7 +11,7 @@ import ServiceErrorModel from '@/models/ServiceErrorModel';
 import SendMail from '@/classes/SendMail';
 import log from "@/classes/Logger";
 import {syncOne} from '@/routes/v1/sync';
-import service_config from '@/config/service.config';
+import ServiceConfig from '@/config/service.config';
 
 const routes = Router();
 
@@ -65,7 +65,7 @@ const on_complete = Wrap(async(req, res) => {
   const token_info = req.token_info;
   const query_str = querystring.stringify(req.query);
   log.d(req, 'api 호출', query_str);
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
 
   const content_id = req.query.content_id;
   const trans_info = {
