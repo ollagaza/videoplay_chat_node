@@ -1,9 +1,8 @@
+import DBMySQL from '../../database/knex-mysql'
 import ServiceConfig from '../../service/service-config';
-import Constants from '../../constants/constants'
 import Role from '../../constants/roles'
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
-import log from '../../libs/logger'
 
 import OperationModel from '../../database/mysql/operation/OperationModel';
 
