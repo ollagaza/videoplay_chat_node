@@ -4,6 +4,7 @@ import Auth from '../../middlewares/auth.middleware';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import MemberLogModel from '../../database/mysql/member/MemberLogModel';
+import SocketManager from '../../service/socket-manager'
 
 const routes = Router();
 
@@ -32,8 +33,7 @@ routes.post('/msg_list', Wrap(async(req, res) => {
 
 routes.get('/test_msg_send', Wrap(async(req, res) => {
   req.accepts('application/json');
-  const socket = io.getSocket();
-  socket.emit('sendFrontMsg', 'londhunter');
+  await SocketManager.sendToFrontOne('londhunter', { 'test': 'aaa' })
 
   const user_seq = req.body.seq;
   const output = new StdObject();
@@ -43,9 +43,8 @@ routes.get('/test_msg_send', Wrap(async(req, res) => {
 
 routes.get('/test_glo_send', Wrap(async(req, res) => {
   req.accepts('application/json');
-  const socket = io.getSocket();
   const data = { 'type':'globalNotice', 'data':'test' };
-  socket.emit('sendFrontGloMsg', data);
+  await SocketManager.sendToFrontAll(data)
 
   const user_seq = req.body.seq;
   const output = new StdObject();

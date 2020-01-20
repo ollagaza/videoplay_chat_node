@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { exec } from 'child_process';
-import _ from 'lodash';
 import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
 import StdObject from '../../wrapper/std-object';
@@ -135,11 +134,10 @@ routes.post('/certResult', Wrap(async(req, res) => {
 function GetValue(plaindata , key){
   let arrData = plaindata.split(":");
   let value = "";
-  for (let i in arrData) {
+  for (let i = 0; i < arrData.length; i++) {
     const item = arrData[i];
     if (item.indexOf(key) === 0) {
       let valLen = parseInt(item.replace(key, ""));
-      arrData[i++];
       value = arrData[i].substr(0 ,valLen);
       break;
     }

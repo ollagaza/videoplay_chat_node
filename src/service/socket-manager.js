@@ -73,6 +73,20 @@ const SocketManagerClass = class extends EventEmitter {
     // log.debug(this.log_prefix, '[onStatus]', this.socket.id );
     this.socket.emit('status', this.uId);
   }
+
+  requestReloadService = async () => {
+    this.socket.emit('reloadService')
+  }
+
+  sendToFrontOne = async (user_id, data = null) => {
+    const request_data = data ? data : {}
+    request_data.uid = user_id
+    this.socket.emit('sendFrontMsg', request_data);
+  }
+
+  sendToFrontAll = async (request_data) => {
+    this.socket.emit('sendFrontGloMsg', request_data);
+  }
 }
 
 const socketManager = new SocketManagerClass()
