@@ -46,4 +46,12 @@ routes.put('/paymentUpdate', Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.put('/paymentPeriodUpdate', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+  const payment_update = await PaymentService.updatePayment(database, req.body.pg_data);
+  output.add('result', payment_update);
+  res.json(output);
+}));
+
 export default routes;
