@@ -2,10 +2,10 @@ import jwt from 'jsonwebtoken'
 import StdObject from '../wrapper/std-object'
 import TokenInfo from '../wrapper/token-info'
 import Role from '../constants/roles'
-import config from '../config/config'
+import Config from '../config/config'
 import Constants from '../constants/constants'
 
-const IS_DEV = config.isDev()
+const IS_DEV = Config.isDev()
 
 const TOKEN_SECRET = Constants.TOKEN_SECRET
 const HOUR = 60 * 60

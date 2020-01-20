@@ -1,10 +1,10 @@
 import StdObject from '../wrapper/std-object'
 import log from '../libs/logger'
-import config from '../config/config'
+import Config from '../config/config'
 import ServiceErrorModel from '../database/mysql/service-error-model'
 import db_mysql from '../database/knex-mysql'
 
-const IS_DEV = config.isDev()
+const IS_DEV = Config.isDev()
 
 export default (fn) => {
   return (...args) => {

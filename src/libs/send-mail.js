@@ -2,10 +2,10 @@ import nodemailer from 'nodemailer'
 import _ from 'lodash'
 import smtp_config from '../config/smtp.config'
 import StdObject from '../wrapper/std-object'
-import config from '../config/config'
+import Config from '../config/config'
 
-const ENV = config.getEnv()
-const IS_DEV = config.isDev()
+const ENV = Config.getEnv()
+const IS_DEV = Config.isDev()
 const mail_config = smtp_config[ENV]
 
 export default class SendMail {

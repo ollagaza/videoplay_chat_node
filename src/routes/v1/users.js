@@ -12,7 +12,7 @@ import SendMail from '../../libs/send-mail';
 import MemberModel from '../../database/mysql/member/MemberModel';
 import MemberSubModel from '../../database/mysql/member/MemberSubModel';
 import MemberLogModel from '../../database/mysql/member/MemberLogModel';
-import FindPasswordModel from '@/models/FindPasswordModel';
+import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";

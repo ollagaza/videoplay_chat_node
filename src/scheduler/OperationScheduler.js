@@ -1,21 +1,22 @@
 import path from 'path';
 import scheduler from 'node-schedule';
-import ServiceConfig from '@/config/service.config';
-import Auth from '@/middlewares/auth.middleware';
-import Role from "@/config/roles";
-import Util from '@/utils/baseutil';
-import database from '@/config/database';
-import log from "@/classes/Logger";
-import StdObject from '@/classes/StdObject';
-import FileInfo from "@/classes/surgbook/FileInfo";
-import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
-import OperationModel from '@/models/OperationModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
-import OperationStorageModel from '@/models/OperationStorageModel';
-import VideoFileModel from '@/models/VideoFileModel';
-import { VideoIndexInfoModel } from '@/db/mongodb/model/VideoIndex';
-import Constants from '@/config/constants';
-import OperationService from '@/service/operation/OperationService';
+import ServiceConfig from '../service/service-config';
+import Auth from '../middlewares/auth.middleware';
+import Role from "../constants/roles";
+import Constants from '../constants/constants';
+import Util from '../utils/baseutil';
+import StdObject from '../wrapper/std-object';
+import DBMySQL from '../database/knex-mysql';
+import OperationService from '../service/operation/OperationService';
+import BatchOperationQueueModel from '../database/mysql/batch/BatchOperationQueueModel';
+import OperationModel from '../database/mysql/operation/OperationModel';
+import OperationMediaModel from '../database/mysql/operation/OperationMediaModel';
+import OperationStorageModel from '../database/mysql/operation/OperationStorageModel';
+import VideoFileModel from '../database/mysql/file/VideoFileModel';
+import { VideoIndexInfoModel } from '../database/mongodb/VideoIndex';
+import FileInfo from "../wrapper/file/FileInfo";
+
+import log from "../libs/logger";
 
 class OperationScheduler {
   constructor() {
@@ -55,7 +56,11 @@ class OperationScheduler {
       return;
     }
     this.is_process = true;
-    this.nextJob();
+    (
+      async () => {
+        await this.nextJob();
+      }
+    )()
   };
 
   nextJob = async () => {
@@ -266,7 +271,7 @@ class OperationScheduler {
       await sync_model.onJobError(sync_info, error);
       if (operation_info) {
         const operation_model = new OperationModel(DBMySQL);
-        operation_model.remove(operation_info, sync_info.member_seq)
+        await operation_model.remove(operation_info, sync_info.member_seq)
         await Util.deleteDirectory(operation_info.media_directory);
       }
     } catch (error) {

@@ -1,12 +1,12 @@
 import knex_config from '../config/knex.config'
 import log from '../libs/logger'
-import config from '../config/config'
+import Config from '../config/config'
 import Constants from '../constants/constants'
 
-const ENV = config.getEnv()
-const PRINT_DB_LOG = config.printDBLog()
+const ENV = Config.getEnv()
+const PRINT_DB_LOG = Config.printDBLog()
 
-const database_config = config.isLocal() ? knex_config[Constants.LOCAL] : knex_config[ENV]
+const database_config = Config.isLocal() ? knex_config[Constants.LOCAL] : knex_config[ENV]
 database_config.debug = true
 database_config.log = {
   warn (message) {

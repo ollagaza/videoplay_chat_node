@@ -4,9 +4,8 @@ import ServiceConfig from '../../service/service-config';
 import Constants from '../../constants/constants'
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
+import IndexInfo from '../../wrapper/xml/IndexInfo';
 import log from '../../libs/logger'
-
-import IndexInfo from '@/classes/surgbook/IndexInfo';
 
 export default class IndexModel {
   constructor() {

@@ -1,12 +1,12 @@
 import Promise from 'promise'
 import mongoose from 'mongoose'
 import mongodb_config from '../config/mongodb.config'
-import config from '../config/config'
+import Config from '../config/config'
 import log from '../libs/logger'
 import Constants from '../constants/constants'
 
-const ENV = config.getEnv()
-const database_config = config.isLocal() ? mongodb_config[Constants.LOCAL] : mongodb_config[ENV]
+const ENV = Config.getEnv()
+const database_config = Config.isLocal() ? mongodb_config[Constants.LOCAL] : mongodb_config[ENV]
 
 const init = async () => {
   const async_func = new Promise(resolve => {

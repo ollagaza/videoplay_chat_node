@@ -1,8 +1,8 @@
 import log4js from 'log4js'
-import config from '../config/config'
+import Config from '../config/config'
 
-const IS_DEV = config.isDev()
-const LOG_PATH = config.getLogPath()
+const IS_DEV = Config.isDev()
+const LOG_PATH = Config.getLogPath()
 
 const logger_config = {
   appenders: {

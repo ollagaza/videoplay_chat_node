@@ -2,10 +2,10 @@ import Promise from 'promise';
 import fs from 'fs';
 import Iconv from 'iconv';
 import dateFormat from 'dateformat';
-import {promisify} from 'util';
+import { promisify } from 'util';
 import {exec} from 'child_process';
 import _ from 'lodash';
-import xml2js, { parseString } from 'xml2js';
+import xml2js from 'xml2js';
 import aes256 from 'nodejs-aes256';
 import base64url from 'base64-url';
 import uuidv1 from 'uuid/v1';
@@ -15,15 +15,14 @@ import path from 'path';
 import multer from 'multer';
 import crypto from 'crypto';
 import request from 'request-promise';
-import getDimension from 'get-video-dimensions';
-import getDuration from 'get-video-duration';
+import GetDimension from 'get-video-dimensions';
+import GetDuration from 'get-video-duration';
 import JsonPath from "jsonpath";
-import ServiceConfig from '@/config/service.config';
-import constants from '@/config/constants';
-import log from "@/classes/Logger";
-import StdObject from '@/classes/StdObject';
-import Constants from '@/config/constants';
 import mime from "mime-types";
+import ServiceConfig from '../service/service-config';
+import log from "../libs/logger";
+import StdObject from '../wrapper/std-object';
+import Constants from '../constants/constants';
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
@@ -493,7 +492,7 @@ const getMediaInfo = async (media_path) => {
     const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`);
     const media_result = {
       success: false,
-      media_type: constants.NO_MEDIA,
+      media_type: Constants.NO_MEDIA,
       media_info: {}
     };
 
@@ -506,8 +505,8 @@ const getMediaInfo = async (media_path) => {
             const track = media_info[i];
             if (track.$ && track.$.type) {
               const track_type = track.$.type.toLowerCase();
-              if (track_type === constants.VIDEO) {
-                media_result.media_type = constants.VIDEO;
+              if (track_type === Constants.VIDEO) {
+                media_result.media_type = Constants.VIDEO;
                 media_result.media_info.width = getInt(getXmlText(track.Width));
                 media_result.media_info.height = getInt(getXmlText(track.Height));
                 media_result.media_info.fps = getFloat(getXmlText(track.FrameRate));
@@ -515,15 +514,15 @@ const getMediaInfo = async (media_path) => {
                 media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
                 media_result.success = true;
                 break;
-              } else if (track_type === constants.AUDIO) {
-                media_result.media_type = constants.AUDIO;
+              } else if (track_type === Constants.AUDIO) {
+                media_result.media_type = Constants.AUDIO;
                 media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
                 media_result.media_info.sample_rate = Math.round(getFloat(getXmlText(track.SamplingRate)));
                 media_result.media_info.bit_depth = Math.round(getFloat(getXmlText(track.BitDepth)));
                 media_result.success = true;
                 break;
-              } else if (track_type === constants.IMAGE) {
-                media_result.media_type = constants.IMAGE;
+              } else if (track_type === Constants.IMAGE) {
+                media_result.media_type = Constants.IMAGE;
                 media_result.media_info.width = getInt(getXmlText(track.Width));
                 media_result.media_info.height = getInt(getXmlText(track.Height));
                 media_result.success = true;
@@ -551,7 +550,7 @@ const getVideoDimension = async (video_path) => {
     message: ''
   };
   try {
-    const dimensions = await getDimension(video_path);
+    const dimensions = await GetDimension(video_path);
     result.success = true;
     result.width = dimensions.width;
     result.height = dimensions.height;
@@ -568,7 +567,7 @@ const getVideoDuration = async (video_path) => {
     message: ''
   };
   try {
-    const duration = await getDuration.getVideoDurationInSeconds(video_path);
+    const duration = await GetDuration.getVideoDurationInSeconds(video_path);
     result.success = true;
     result.duration = duration;
   } catch(error) {
@@ -589,7 +588,7 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
 
     const w_ratio = dimension.width / width;
     const h_ratio = dimension.height / height;
-    let crop_option = '';
+    let crop_option;
     if (w_ratio >= h_ratio) {
       crop_option = `crop=in_h*${width}/${height}:in_h`;
     } else {

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import Util from '@/utils/baseutil';
-import log from "@/classes/Logger";
+import Util from '../../utils/baseutil';
+import log from "../../libs/logger";
 
 const Schema = mongoose.Schema;
 

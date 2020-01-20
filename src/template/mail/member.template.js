@@ -1,6 +1,6 @@
 import formatter from "string-template";
 import _ from 'lodash'
-import ServiceConfig from '@/config/service.config';
+import ServiceConfig from '../../service/service-config';
 
 const create_user_form = `
 <div style="width: 100%;background: #fff;padding-top: 50px;">

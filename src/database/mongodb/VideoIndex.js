@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 import _ from "lodash";
-import Util from '@/utils/baseutil';
-import StdObject from "@/classes/StdObject";
-import log from "@/classes/Logger";
-import ServiceConfig from '@/config/service.config';
-import Constants from '@/config/constants';
+import Util from '../../utils/baseutil';
+import StdObject from "../../wrapper/std-object";
+import log from "../../libs/logger";
+import ServiceConfig from '../../service/service-config';
+import Constants from '../../constants/constants';
 
 const Schema = mongoose.Schema;
 
@@ -142,8 +142,8 @@ const addVideoIndex = async (operation_info, second) => {
     }
   }
 
-  let end_time = 0;
-  let end_frame = 0;
+  let end_time;
+  let end_frame;
   if (null === copy_index_info) {
     end_frame = media_info.total_frame;
     end_time = media_info.total_time;
