@@ -137,13 +137,13 @@ routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
 
   const output = new StdObject();
 
-  const operation_model = new OperationModel({ DBMySQL });
+  const operation_model = new OperationModel(DBMySQL);
   const operation_info_page = await operation_model.getOperationInfoListPage(page_query, token_info, req.query);
 
   output.adds(operation_info_page);
 
   if (Util.equals(req.query.summary, 'y')) {
-    const summary_info = await new OperationStorageModel({ DBMySQL }).getStorageSummary(token_info);
+    const summary_info = await new OperationStorageModel(DBMySQL).getStorageSummary(token_info);
     if (summary_info !== null) {
       output.add('summary_info', summary_info);
     }
@@ -409,7 +409,7 @@ routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticat
   let index_list;
   const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq);
   if (!video_index_info) {
-    index_list = await new IndexModel({ DBMySQL }).getIndexList(operation_info, 2);
+    index_list = await new IndexModel(DBMySQL).getIndexList(operation_info, 2);
     await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_list);
   } else {
     index_list = video_index_info.index_list;
@@ -475,7 +475,7 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const {add_index_info, total_index_count} = await AddVideoIndex(operation_info, second);
-  await new OperationStorageModel({ DBMySQL }).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
+  await new OperationStorageModel(DBMySQL).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
   output.add("add_index_info", add_index_info);
 
   res.json(output);
@@ -524,7 +524,7 @@ routes.get('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(Role.DEFAULT), Wr
   const operation_seq = req.params.operation_seq;
 
   const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const clip_info = await new ClipModel({ DBMySQL }).getClipInfo(operation_info);
+  const clip_info = await new ClipModel(DBMySQL).getClipInfo(operation_info);
 
   const output = new StdObject();
   output.add("clip_list", clip_info.clip_list);
@@ -591,7 +591,7 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(Role.DEFAULT)
 
   const {operation_info, operation_model} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   if (operation_info.mig_clip !== true) {
-    const clip_info = await new ClipModel({ DBMySQL }).getClipInfo(operation_info);
+    const clip_info = await new ClipModel(DBMySQL).getClipInfo(operation_info);
     if (clip_info) {
       const clip_seq_list = clip_info.clip_seq_list;
       if (clip_seq_list && clip_seq_list.length) {
@@ -641,7 +641,7 @@ routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(Role.DEFAULT), Wr
   const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   const create_result = await OperationClipModel.createOperationClip(operation_info, req.body.clip_info);
-  await new OperationStorageModel({ DBMySQL }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
+  await new OperationStorageModel(DBMySQL).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   const output = new StdObject();
   output.add('result', create_result);
   res.json(output);
@@ -667,7 +667,7 @@ routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(Role.D
   const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   const delete_result = await OperationClipModel.deleteById(clip_id);
-  await new OperationStorageModel({ DBMySQL }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
+  await new OperationStorageModel(DBMySQL).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   if (req.body.remove_phase === true) {
     await OperationClipModel.deletePhase(operation_seq, req.body.phase_id);
   }
@@ -863,8 +863,8 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(Role.LOGIN
   }
 
   const {operation_info, operation_model} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const share_model = new OperationShareModel({DBMySQL});
-  const member_info = await new MemberModel({DBMySQL}).getMemberInfo(token_info.getId());
+  const share_model = new OperationShareModel(DBMySQL);
+  const member_info = await new MemberModel(DBMySQL).getMemberInfo(token_info.getId());
   const share_info = await share_model.getShareInfo(operation_info);
   const share_seq = share_info.seq;
   let send_user_count = 0;
@@ -906,12 +906,12 @@ routes.get('/:operation_seq(\\d+)/share/users', Auth.isAuthenticated(Role.LOGIN_
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const share_model = new OperationShareModel({DBMySQL});
+  const share_model = new OperationShareModel(DBMySQL);
   const share_info = await share_model.getShareInfo(operation_info);
 
   const output = new StdObject();
   if (share_info && !share_info.isEmpty()) {
-    const share_user_model = new OperationShareUserModel({DBMySQL});
+    const share_user_model = new OperationShareUserModel(DBMySQL);
     const share_user_list = await share_user_model.getShareUserList(share_info.seq);
     output.add('share_user_list', share_user_list);
   }
@@ -924,7 +924,7 @@ routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res)
   const member_seq = token_info.getId();
   const seq_list = req.body.seq_list;
 
-  const result = await new OperationModel({ DBMySQL }).updateStatusTrash(seq_list, member_seq, false);
+  const result = await new OperationModel(DBMySQL).updateStatusTrash(seq_list, member_seq, false);
 
   const output = new StdObject();
   output.add('result', result);
@@ -939,7 +939,7 @@ routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, r
   const seq_list = req.body.seq_list;
   log.d(req, seq_list);
 
-  const result = await new OperationModel({ DBMySQL }).updateStatusTrash(seq_list, member_seq, true);
+  const result = await new OperationModel(DBMySQL).updateStatusTrash(seq_list, member_seq, true);
 
   const output = new StdObject();
   output.add('result', result);
@@ -975,7 +975,7 @@ routes.post('/verify/operation_code', Auth.isAuthenticated(Role.LOGIN_USER), Wra
   const token_info = req.token_info;
   req.accepts('application/json');
   const operation_code = req.body.operation_code;
-  const is_duplicate = await new OperationModel({ DBMySQL }).isDuplicateOperationCode(token_info.getId(), operation_code);
+  const is_duplicate = await new OperationModel(DBMySQL).isDuplicateOperationCode(token_info.getId(), operation_code);
 
   const output = new StdObject();
   output.add('verify', !is_duplicate);
@@ -1001,8 +1001,8 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.LOGIN_USER),
   const storage_seq = operation_info.storage_seq;
 
   const output = new StdObject();
-  output.add('video_files', await new VideoFileModel({ DBMySQL }).videoFileList(storage_seq));
-  output.add('refer_files', await new ReferFileModel({ DBMySQL }).referFileList(storage_seq));
+  output.add('video_files', await new VideoFileModel(DBMySQL).videoFileList(storage_seq));
+  output.add('refer_files', await new ReferFileModel(DBMySQL).referFileList(storage_seq));
 
   res.json(output);
 }));
@@ -1096,7 +1096,7 @@ routes.get('/storage/summary', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   const token_info = req.token_info;
 
   const output = new StdObject();
-  const summary_info = await new OperationStorageModel({ DBMySQL }).getStorageSummary(token_info);
+  const summary_info = await new OperationStorageModel(DBMySQL).getStorageSummary(token_info);
   if (summary_info !== null) {
     output.add('summary_info', summary_info);
   }
@@ -1108,7 +1108,7 @@ routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(Role.LOGIN_U
   const operation_seq = req.params.operation_seq;
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const operation_media_info = await new OperationMediaModel({ DBMySQL }).getOperationMediaInfo(operation_info);
+  const operation_media_info = await new OperationMediaModel(DBMySQL).getOperationMediaInfo(operation_info);
 
   const output = new StdObject();
   output.add('operation_media_info', operation_media_info);
