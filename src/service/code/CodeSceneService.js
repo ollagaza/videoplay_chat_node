@@ -3,6 +3,7 @@ import CodeSceneModel from '../../database/mysql/code/CodeSceneModel';
 
 const CodeSceneClass = class {
   constructor() {
+    this.log_prefix = '[CodeSceneClass]'
     this.is_load_complete = false
     this.code_list = []
     this.code_map = {}

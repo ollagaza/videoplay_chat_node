@@ -7,7 +7,9 @@ import StdObject from '../../wrapper/std-object'
 import OperationModel from '../../database/mysql/operation/OperationModel';
 
 const OperationServiceClass = class {
-  constructor () {}
+  constructor () {
+    this.log_prefix = '[OperationServiceClass]'
+  }
 
   getOperationModel = (database = null) => {
     if (database) {

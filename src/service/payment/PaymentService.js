@@ -3,7 +3,9 @@ import PaymentModel from '../../database/mysql/payment/PaymentModel'
 import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel'
 
 const PaymentServiceClass = class {
-  constructor () {}
+  constructor () {
+    this.log_prefix = '[PaymentServiceClass]'
+  }
 
   getPaymentModel = (database = null) => {
     if (database) {

@@ -1,9 +1,13 @@
 import DBMySQL from '../database/knex-mysql'
 import ServiceConfigModel from '../database/mysql/service-config-model'
+import SocketManager from './socket-manager'
+import log from '../libs/logger'
 
 const ServiceConfigClass = class {
   constructor () {
+    this.log_prefix = '[ServiceConfigClass]'
     this.service_config_map = {}
+    SocketManager.on('onReloadServiceConfig', this.reload)
   }
 
   load_config = async () => {
@@ -27,6 +31,7 @@ const ServiceConfigClass = class {
   }
 
   reload = async (callback) => {
+    log.debug(this.log_prefix, '[reload]')
     await this.load_config();
     if (callback) callback();
   }

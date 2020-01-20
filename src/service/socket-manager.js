@@ -57,6 +57,7 @@ const SocketManagerClass = class extends EventEmitter {
 
     this.socket.on('status', this.onStatus)
     this.socket.on('sendMsg', this.onSendMsg)
+    this.socket.on('reloadServiceConfig', this.onReloadServiceConfig)
   }
 
   sendMsg = async (data) => {
@@ -74,8 +75,13 @@ const SocketManagerClass = class extends EventEmitter {
     this.socket.emit('status', this.uId);
   }
 
+  onReloadServiceConfig = async () => {
+    log.debug(this.log_prefix, '[onReloadServiceConfig]')
+    this.emit('onReloadServiceConfig')
+  }
+
   requestReloadService = async () => {
-    this.socket.emit('reloadService')
+    this.socket.emit('reloadServiceConfig')
   }
 
   sendToFrontOne = async (user_id, data = null) => {
