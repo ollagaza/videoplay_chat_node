@@ -1,11 +1,8 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import Util from '@/utils/baseutil';
-import ServiceConfig from '@/config/service.config';
-import xml2js from 'xml2js';
-import log from "@/classes/Logger";
-
+import { Router } from 'express';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import StdObject from '../../wrapper/std-object';
 
 const routes = Router();
 

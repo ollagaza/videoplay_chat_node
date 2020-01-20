@@ -1,14 +1,9 @@
-import {Router} from 'express';
-import Auth from '@/middlewares/auth.middleware';
-import Wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import database from '@/config/database';
-import Util from '@/utils/baseutil';
-import ServiceConfig from '@/config/service.config';
-import Constants from '@/config/constants';
-import log from "@/classes/Logger";
-import MemberLogModel from "@/models/MemberLogModel";
-import io from '@/middlewares/socket_io';
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import Auth from '../../middlewares/auth.middleware';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import MemberLogModel from '../../database/mysql/member/MemberLogModel';
 
 const routes = Router();
 
@@ -17,8 +12,8 @@ routes.post('/notice', Wrap(async(req, res) => {
   const user_seq = req.body.seq;
   const output = new StdObject();
 
-  await database.transaction(async(trx) => {
-    const oMemberLogModel = new MemberLogModel({database: trx});
+  await DBMySQL.transaction(async(transaction) => {
+    const oMemberLogModel = new MemberLogModel(transaction);
     const lang = Auth.getLanguage(req);
     const result = await oMemberLogModel.getMemberLog(lang, user_seq);
     output.add("notices", result);

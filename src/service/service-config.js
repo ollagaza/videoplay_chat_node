@@ -1,10 +1,10 @@
-import DBMysql from '../database/knex-mysql'
+import DBMySQL from '../database/knex-mysql'
 import ServiceConfigModel from '../database/mysql/service-config-model'
 
 let service_config = {};
 
 const load_config = async () => {
-  const service_config_model = new ServiceConfigModel( DBMysql );
+  const service_config_model = new ServiceConfigModel( DBMySQL );
   const config_list = await service_config_model.find();
 
   service_config = {};

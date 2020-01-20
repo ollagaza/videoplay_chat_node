@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import StdObject from '../wrapper/std-object'
 import TokenInfo from '../wrapper/token-info'
-import roles from '../constants/roles'
+import Role from '../constants/roles'
 import config from '../config/config'
 import Constants from '../constants/constants'
 
@@ -51,7 +51,7 @@ const isAuthenticated = (require_roles) => {
   return async (req, res, next) => {
     const token = getToken(req)
 
-    if (!token && (require_roles == null || require_roles === roles.ALL)) {
+    if (!token && (require_roles == null || require_roles === Role.ALL)) {
       return next()
     }
 

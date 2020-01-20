@@ -8,7 +8,7 @@ import FileInfo from '@/classes/surgbook/FileInfo';
 import Util from '@/utils/baseutil';
 import Auth from '@/middlewares/auth.middleware';
 import log from "@/classes/Logger";
-import roles from "@/config/roles";
+import Role from "@/config/roles";
 import mime from "mime-types";
 import ServiceConfig from "@/config/service.config";
 import config from "@/config/config";
@@ -105,7 +105,7 @@ if (IS_DEV) {
     const url = 'http://localhost:3000/api/v1/operations/9/request/analysis';
     const admin_member_info = {
       seq: 0,
-      role: roles.ADMIN
+      role: Role.ADMIN
     };
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const forward_result = await Util.forward(url, 'POST', token_result.token);

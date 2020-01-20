@@ -1,34 +1,33 @@
-import {Router} from 'express';
-import ServiceConfig from '@/config/service.config';
+import { Router } from 'express';
 import querystring from 'querystring';
 import semver from 'semver';
-import Wrap from '@/utils/express-async';
-import Util from '@/utils/baseutil';
-import Auth from '@/middlewares/auth.middleware';
-import roles from "@/config/roles";
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import SendMail from '@/classes/SendMail';
-import ContentIdManager from '@/classes/ContentIdManager';
-import MemberModel from '@/models/MemberModel';
-import OperationInfo from "@/classes/surgbook/OperationInfo";
-import OperationModel from '@/models/OperationModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
-import OperationStorageModel from '@/models/OperationStorageModel';
-import OperationShareModel from '@/models/OperationShareModel';
-import OperationShareUserModel from '@/models/OperationShareUserModel';
-import IndexModel from '@/models/xmlmodel/IndexModel';
-import ClipModel from '@/models/xmlmodel/ClipModel';
-import VideoFileModel from '@/models/VideoFileModel';
-import ReferFileModel from '@/models/ReferFileModel';
-import ShareTemplate from '@/template/mail/share.template';
-import log from "@/classes/Logger";
-import {VideoIndexInfoModel, AddVideoIndex} from '@/db/mongodb/model/VideoIndex';
-import {OperationMetadataModel} from '@/db/mongodb/model/OperationMetadata';
-import {OperationClipModel} from '@/db/mongodb/model/OperationClip';
-import {UserDataModel} from '@/db/mongodb/model/UserData';
-import OperationService from '@/service/operation/OperationService';
-import Constants from '@/config/constants';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import Constants from '../../constants/constants';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import log from "../../libs/logger";
+import SendMail from '../../libs/send-mail';
+import OperationService from '../../service/operation/OperationService';
+import MemberModel from '../../database/mysql/member/MemberModel';
+import OperationModel from '../../database/mysql/operation/OperationModel';
+import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
+import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
+import OperationShareModel from '../../database/mysql/operation/OperationShareModel';
+import OperationShareUserModel from '../../database/mysql/operation/OperationShareUserModel';
+import IndexModel from '../../models/xml/IndexModel';
+import ClipModel from '../../models/xml/ClipModel';
+import VideoFileModel from '../../database/mysql/file/VideoFileModel';
+import ReferFileModel from '../../database/mysql/file/ReferFileModel';
+import OperationInfo from "../../wrapper/operation/OperationInfo";
+import ShareTemplate from '../../template/mail/share.template';
+import { VideoIndexInfoModel, AddVideoIndex } from '../../database/mongodb/VideoIndex';
+import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata';
+import { OperationClipModel } from '../../database/mongodb/OperationClip';
+import { UserDataModel } from '../../database/mongodb/UserData';
 
 const routes = Router();
 
@@ -128,7 +127,7 @@ const routes = Router();
  *                  $ref: "#definitions/VideoSummaryInfo"
  *
  */
-routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const page_query = {};
   page_query.page = req.query.page;
@@ -138,13 +137,13 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
 
   const output = new StdObject();
 
-  const operation_model = new OperationModel({ database });
+  const operation_model = new OperationModel({ DBMySQL });
   const operation_info_page = await operation_model.getOperationInfoListPage(page_query, token_info, req.query);
 
   output.adds(operation_info_page);
 
   if (Util.equals(req.query.summary, 'y')) {
-    const summary_info = await new OperationStorageModel({ database }).getStorageSummary(token_info);
+    const summary_info = await new OperationStorageModel({ DBMySQL }).getStorageSummary(token_info);
     if (summary_info !== null) {
       output.add('summary_info', summary_info);
     }
@@ -195,11 +194,11 @@ routes.get('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => 
  *                  $ref: "#definitions/OperationEditInfo"
  *
  */
-routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const output = new StdObject();
   output.add('operation_info', operation_info);
 
@@ -231,10 +230,10 @@ routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
  */
-routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   let member_seq;
-  if (token_info.getRole() <= roles.MEMBER) {
+  if (token_info.getRole() <= Role.MEMBER) {
     member_seq = token_info.getId();
   }
   else {
@@ -245,8 +244,8 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
   let operation_info = null;
   let is_success = false;
 
-  await database.transaction(async(trx) => {
-    const operation_model = new OperationModel({ database: trx });
+  await DBMySQL.transaction(async(transaction) => {
+    const operation_model = new OperationModel(transaction);
     const use_new_clip_api = semver.gt(req.headers.version, '1.0.0');
     operation_info = await operation_model.createOperation(req.body.operation_info, member_seq, true, null, use_new_clip_api);
     if (!operation_info || !operation_info.seq) {
@@ -254,8 +253,8 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
     }
     const operation_seq = operation_info.seq;
 
-    await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
-    await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
+    await new OperationMediaModel(transaction).createOperationMediaInfo(operation_info);
+    await new OperationStorageModel(transaction).createOperationStorageInfo(operation_info);
 
     output.add('operation_seq', operation_seq);
 
@@ -307,13 +306,13 @@ routes.post('/', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) =>
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
  */
-routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const member_seq = token_info.getId();
 
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   const update_operation_info = new OperationInfo().getByRequestBody(req.body.operation_info);
   if (operation_info.isEmpty()) {
@@ -321,8 +320,8 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
   }
 
   const output = new StdObject();
-  await database.transaction(async(trx) => {
-    const result = await new OperationModel({ database: trx }).updateOperationInfo(operation_seq, update_operation_info);
+  await DBMySQL.transaction(async(transaction) => {
+    const result = await new OperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info);
     const metadata_result = await OperationMetadataModel.updateByOperationSeq(operation_info, update_operation_info.operation_type, req.body.meta_data);
     log.d(req, 'metadata_result', metadata_result);
     if (!metadata_result || !metadata_result._id) {
@@ -340,12 +339,12 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap
   res.json(output);
 }));
 
-routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const output = new StdObject();
 
-  const {operation_info, operation_model} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info, operation_model} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   await operation_model.deleteOperation(operation_info);
   OperationService.deleteOperationFiles(operation_info);
 
@@ -401,16 +400,16 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), W
  *                    $ref: "#definitions/IndexInfo"
  *
  */
-routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   let index_list;
   const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq);
   if (!video_index_info) {
-    index_list = await new IndexModel({ database }).getIndexList(operation_info, 2);
+    index_list = await new IndexModel({ DBMySQL }).getIndexList(operation_info, 2);
     await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_list);
   } else {
     index_list = video_index_info.index_list;
@@ -468,15 +467,15 @@ routes.get('/:operation_seq(\\d+)/indexes/:index_type(\\d+)', Auth.isAuthenticat
  *                  $ref: "#definitions/IndexInfo"
  *
  */
-routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const second = req.params.second;
   const output = new StdObject();
 
-  const { operation_info } = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const {add_index_info, total_index_count} = await AddVideoIndex(operation_info, second);
-  await new OperationStorageModel({ database }).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
+  await new OperationStorageModel({ DBMySQL }).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
   output.add("add_index_info", add_index_info);
 
   res.json(output);
@@ -520,12 +519,12 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
  *              $ref: "#definitions/Clip"
  *
  */
-routes.get('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
-  const clip_info = await new ClipModel({ database }).getClipInfo(operation_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
+  const clip_info = await new ClipModel({ DBMySQL }).getClipInfo(operation_info);
 
   const output = new StdObject();
   output.add("clip_list", clip_info.clip_list);
@@ -567,7 +566,7 @@ routes.get('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   if (!req.body || !req.body.clip_list || !req.body.clip_seq_list) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
   }
@@ -575,10 +574,10 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  await database.transaction(async(trx) => {
-    const {operation_info, operation_model} = await OperationService.getOperationInfo(trx, operation_seq, token_info);
-    const clip_count = await new ClipModel({database: trx}).saveClipInfo(operation_info, req.body);
-    await new OperationStorageModel({database: trx}).updateClipCount(operation_info.storage_seq, clip_count);
+  await DBMySQL.transaction(async(transaction) => {
+    const {operation_info, operation_model} = await OperationService.getOperationInfo(transaction, operation_seq, token_info);
+    const clip_count = await new ClipModel(transaction).saveClipInfo(operation_info, req.body);
+    await new OperationStorageModel(transaction).updateClipCount(operation_info.storage_seq, clip_count);
     await operation_model.updateReviewStatus(operation_seq, clip_count > 0);
   });
 
@@ -586,13 +585,13 @@ routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(roles.DEFAULT), W
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info, operation_model} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info, operation_model} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   if (operation_info.mig_clip !== true) {
-    const clip_info = await new ClipModel({ database }).getClipInfo(operation_info);
+    const clip_info = await new ClipModel({ DBMySQL }).getClipInfo(operation_info);
     if (clip_info) {
       const clip_seq_list = clip_info.clip_seq_list;
       if (clip_seq_list && clip_seq_list.length) {
@@ -611,7 +610,7 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(roles.DEFAULT
   res.json(output);
 }));
 
-routes.put('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.put('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const phase_id = req.params.phase_id;
   const result = await OperationClipModel.setPhase(phase_id, req.body.clip_id_list);
 
@@ -619,7 +618,7 @@ routes.put('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(ro
   output.add('result', result);
   res.json(output);
 }));
-routes.delete('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.delete('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const operation_seq = req.params.operation_seq;
   const phase_id = req.params.phase_id;
 
@@ -633,22 +632,22 @@ routes.delete('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated
   res.json(output);
 }));
 
-routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   if (!req.body) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
   }
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   const create_result = await OperationClipModel.createOperationClip(operation_info, req.body.clip_info);
-  await new OperationStorageModel({ database }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
+  await new OperationStorageModel({ DBMySQL }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   const output = new StdObject();
   output.add('result', create_result);
   res.json(output);
 }));
 
-routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   if (!req.body) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
   }
@@ -661,14 +660,14 @@ routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEF
   res.json(output);
 }));
 
-routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const clip_id = req.params.clip_id;
   const operation_seq = req.params.operation_seq;
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   const delete_result = await OperationClipModel.deleteById(clip_id);
-  await new OperationStorageModel({ database }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
+  await new OperationStorageModel({ DBMySQL }).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   if (req.body.remove_phase === true) {
     await OperationClipModel.deletePhase(operation_seq, req.body.phase_id);
   }
@@ -678,14 +677,14 @@ routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(roles.
   res.json(output);
 }));
 
-routes.post('/:operation_seq(\\d+)/phase', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/phase', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   if (!req.body) {
     throw new StdObject(-1, "잘못된 요청입니다.", 400);
   }
 
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   const create_result = await OperationClipModel.createPhase(operation_info, req.body.phase_desc);
   const phase_id = create_result._id;
@@ -697,7 +696,7 @@ routes.post('/:operation_seq(\\d+)/phase', Auth.isAuthenticated(roles.DEFAULT), 
   res.json(output);
 }));
 
-routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   // const operation_seq = req.params.operation_seq;
   const phase_id = req.params.phase_id;
   const phase_desc = req.body.phase_desc;
@@ -710,7 +709,7 @@ routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.D
   res.json(output);
 }));
 
-routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const operation_seq = req.params.operation_seq;
   const phase_id = req.params.phase_id;
   const delete_result = await OperationClipModel.deletePhase(operation_seq, phase_id);
@@ -743,7 +742,7 @@ routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(role
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
  */
-routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   let file_summary = null;
@@ -754,11 +753,11 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
   let is_execute_success = false;
   const service_info = ServiceConfig.getServiceInfo();
 
-  await database.transaction(async(trx) => {
+  await DBMySQL.transaction(async(transaction) => {
 
-    const {operation_info, operation_model} = await OperationService.getOperationInfo(trx, operation_seq, token_info);
-    file_summary = await new VideoFileModel({database: trx}).videoFileSummary(operation_info.storage_seq);
-    member_info = await new MemberModel({database: trx}).getMemberInfo(operation_info.member_seq);
+    const {operation_info, operation_model} = await OperationService.getOperationInfo(transaction, operation_seq, token_info);
+    file_summary = await new VideoFileModel(transaction).videoFileSummary(operation_info.storage_seq);
+    member_info = await new MemberModel(transaction).getMemberInfo(operation_info.member_seq);
 
     media_directory = operation_info.media_directory + "SEQ";
     let sep_pattern = "/";
@@ -772,8 +771,8 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
 
     let content_id = operation_info.content_id;
     if (Util.isEmpty(content_id)) {
-      content_id = await ContentIdManager.getContentId();
-      log.d(req, 'ContentIdManager.getContentId', content_id);
+      content_id = Util.getContentId();
+      log.d(req, 'content_id', content_id);
       if (!content_id) {
         throw new StdObject(-1, '컨텐츠 아이디 생성 실패', 500);
       }
@@ -855,7 +854,7 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(roles
  *        schema:
  *           $ref: "#/definitions/DefaultResponse"
  */
-routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
@@ -863,16 +862,16 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
     throw new StdObject(-1, '공유 대상자가 업습니다.', 400);
   }
 
-  const {operation_info, operation_model} = await OperationService.getOperationInfo(database, operation_seq, token_info);
-  const share_model = new OperationShareModel({database});
-  const member_info = await new MemberModel({database}).getMemberInfo(token_info.getId());
+  const {operation_info, operation_model} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
+  const share_model = new OperationShareModel({DBMySQL});
+  const member_info = await new MemberModel({DBMySQL}).getMemberInfo(token_info.getId());
   const share_info = await share_model.getShareInfo(operation_info);
   const share_seq = share_info.seq;
   let send_user_count = 0;
 
   // 수술정보 존재여부 확인 및 권한 체크
-  await database.transaction(async(trx) => {
-    const share_user_result = await new OperationShareUserModel({database: trx}).createShareUser(share_seq, req.body.email_list, req.body.auth_type);
+  await DBMySQL.transaction(async(transaction) => {
+    const share_user_result = await new OperationShareUserModel(transaction).createShareUser(share_seq, req.body.email_list, req.body.auth_type);
     send_user_count = share_user_result.length;
 
     if (req.body.is_send_mail) {
@@ -903,29 +902,29 @@ routes.post('/:operation_seq(\\d+)/share/email', Auth.isAuthenticated(roles.LOGI
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/share/users', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:operation_seq(\\d+)/share/users', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
-  const share_model = new OperationShareModel({database});
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
+  const share_model = new OperationShareModel({DBMySQL});
   const share_info = await share_model.getShareInfo(operation_info);
 
   const output = new StdObject();
   if (share_info && !share_info.isEmpty()) {
-    const share_user_model = new OperationShareUserModel({database});
+    const share_user_model = new OperationShareUserModel({DBMySQL});
     const share_user_list = await share_user_model.getShareUserList(share_info.seq);
     output.add('share_user_list', share_user_list);
   }
   res.json(output);
 }));
 
-routes.put('/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const seq_list = req.body.seq_list;
 
-  const result = await new OperationModel({ database }).updateStatusTrash(seq_list, member_seq, false);
+  const result = await new OperationModel({ DBMySQL }).updateStatusTrash(seq_list, member_seq, false);
 
   const output = new StdObject();
   output.add('result', result);
@@ -933,14 +932,14 @@ routes.put('/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res
   res.json(output);
 }));
 
-routes.delete('/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const seq_list = req.body.seq_list;
   log.d(req, seq_list);
 
-  const result = await new OperationModel({ database }).updateStatusTrash(seq_list, member_seq, true);
+  const result = await new OperationModel({ DBMySQL }).updateStatusTrash(seq_list, member_seq, true);
 
   const output = new StdObject();
   output.add('result', result);
@@ -948,11 +947,11 @@ routes.delete('/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, 
   res.json(output);
 }));
 
-routes.put('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_model} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_model} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const result = await operation_model.updateStatusFavorite(operation_seq, false);
 
   const output = new StdObject();
@@ -960,11 +959,11 @@ routes.put('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(roles.LOGIN_US
   res.json(output);
 }));
 
-routes.delete('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_model} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_model} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const result = await operation_model.updateStatusFavorite(operation_seq, true);
 
   const output = new StdObject();
@@ -972,11 +971,11 @@ routes.delete('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(roles.LOGIN
   res.json(output);
 }));
 
-routes.post('/verify/operation_code', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/verify/operation_code', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   req.accepts('application/json');
   const operation_code = req.body.operation_code;
-  const is_duplicate = await new OperationModel({ database }).isDuplicateOperationCode(token_info.getId(), operation_code);
+  const is_duplicate = await new OperationModel({ DBMySQL }).isDuplicateOperationCode(token_info.getId(), operation_code);
 
   const output = new StdObject();
   output.add('verify', !is_duplicate);
@@ -984,39 +983,39 @@ routes.post('/verify/operation_code', Auth.isAuthenticated(roles.LOGIN_USER), Wr
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const {operation_info} = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const output = new StdObject();
   output.add('download_url', operation_info.media_info.origin_video_url);
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const { operation_info } = await OperationService.getOperationInfo(database, operation_seq, token_info);
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const storage_seq = operation_info.storage_seq;
 
   const output = new StdObject();
-  output.add('video_files', await new VideoFileModel({ database }).videoFileList(storage_seq));
-  output.add('refer_files', await new ReferFileModel({ database }).referFileList(storage_seq));
+  output.add('video_files', await new VideoFileModel({ DBMySQL }).videoFileList(storage_seq));
+  output.add('refer_files', await new ReferFileModel({ DBMySQL }).referFileList(storage_seq));
 
   res.json(output);
 }));
 
-routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const file_type = req.params.file_type;
 
   const output = new StdObject();
 
-  await database.transaction(async(trx) => {
-    const {operation_info} = await OperationService.getOperationInfo(trx, operation_seq, token_info);
+  await DBMySQL.transaction(async(transaction) => {
+    const {operation_info} = await OperationService.getOperationInfo(transaction, operation_seq, token_info);
     const storage_seq = operation_info.storage_seq;
     let media_directory = operation_info.media_directory;
     if (file_type !== 'refer') {
@@ -1043,10 +1042,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
     let upload_seq = null;
     let file_model = null;
     if (file_type !== 'refer') {
-      file_model = new VideoFileModel({database: trx});
+      file_model = new VideoFileModel(transaction);
       upload_seq = await file_model.createVideoFile(upload_file_info, storage_seq, Util.removePathSEQ(operation_info.media_path) + 'SEQ');
     } else {
-      file_model = new ReferFileModel({database: trx});
+      file_model = new ReferFileModel(transaction);
       upload_seq = await file_model.createReferFile(upload_file_info, storage_seq, Util.removePathSEQ(operation_info.media_path) + 'REF');
     }
 
@@ -1059,14 +1058,14 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles
       await file_model.createAndUpdateVideoThumbnail(origin_video_path, operation_info, upload_seq);
     }
 
-    await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
+    await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);
     output.add('upload_seq', upload_seq);
   });
 
   res.json(output);
 }));
 
-routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
   const file_type = req.params.file_type;
@@ -1078,38 +1077,38 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(rol
 
   const output = new StdObject();
 
-  await database.transaction(async(trx) => {
-    const {operation_info} = await OperationService.getOperationInfo(trx, operation_seq, token_info);
+  await DBMySQL.transaction(async(transaction) => {
+    const {operation_info} = await OperationService.getOperationInfo(transaction, operation_seq, token_info);
     const storage_seq = operation_info.storage_seq;
     if (file_type !== 'refer') {
-      await new VideoFileModel({database: trx}).deleteSelectedFiles(file_seq_list);
+      await new VideoFileModel(transaction).deleteSelectedFiles(file_seq_list);
     } else {
-      await new ReferFileModel({database: trx}).deleteSelectedFiles(file_seq_list);
+      await new ReferFileModel(transaction).deleteSelectedFiles(file_seq_list);
     }
 
-    await new OperationStorageModel({database: trx}).updateUploadFileSize(storage_seq, file_type);
+    await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);
   });
 
   res.json(output);
 }));
 
-routes.get('/storage/summary', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/storage/summary', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
 
   const output = new StdObject();
-  const summary_info = await new OperationStorageModel({ database }).getStorageSummary(token_info);
+  const summary_info = await new OperationStorageModel({ DBMySQL }).getStorageSummary(token_info);
   if (summary_info !== null) {
     output.add('summary_info', summary_info);
   }
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const { operation_info } = await OperationService.getOperationInfo(database, operation_seq, token_info);
-  const operation_media_info = await new OperationMediaModel({ database }).getOperationMediaInfo(operation_info);
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
+  const operation_media_info = await new OperationMediaModel({ DBMySQL }).getOperationMediaInfo(operation_info);
 
   const output = new StdObject();
   output.add('operation_media_info', operation_media_info);
@@ -1117,7 +1116,7 @@ routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(roles.LOGIN_
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const operation_seq = req.params.operation_seq;
   const operation_metadata = await OperationMetadataModel.findByOperationSeq(operation_seq);
 
@@ -1127,13 +1126,13 @@ routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(roles.LOGIN_US
   res.json(output);
 }));
 
-routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(roles.DEFAULT), Wrap(async (req, res) => {
+routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   let member_seq = req.params.member_seq;
-  if (token_info.getRole() === roles.MEMBER ) {
+  if (token_info.getRole() === Role.MEMBER ) {
     member_seq = token_info.getId();
   } else if (member_seq !== token_info.getId()) {
-    if (token_info.getRole() !== roles.ADMIN) {
+    if (token_info.getRole() !== Role.ADMIN) {
       throw new StdObject(-99, '권한이 없습니다.', 403);
     }
   }

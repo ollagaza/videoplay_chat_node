@@ -1,17 +1,17 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import querystring from 'querystring';
-import Wrap from '@/utils/express-async';
-import Auth from '@/middlewares/auth.middleware';
-import Util from '@/utils/baseutil';
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import OperationModel from '@/models/OperationModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
-import ServiceErrorModel from '@/models/ServiceErrorModel';
-import SendMail from '@/classes/SendMail';
-import log from "@/classes/Logger";
-import {syncOne} from '@/routes/v1/sync';
-import ServiceConfig from '@/config/service.config';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import log from "../../libs/logger";
+import SendMail from '../../libs/send-mail';
+import OperationModel from '../../database/mysql/operation/OperationModel';
+import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
+import ServiceErrorModel from '../../database/mysql/service-error-model';
+import { syncOne } from './sync';
 
 const routes = Router();
 
@@ -83,11 +83,11 @@ const on_complete = Wrap(async(req, res) => {
       throw new StdObject(1, '잘못된 파라미터', 400);
     }
 
-    const operation_info = await new OperationModel({ database }).getOperationInfoByContentId(content_id);
+    const operation_info = await new OperationModel(DBMySQL).getOperationInfoByContentId(content_id);
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
     }
-    await new OperationMediaModel({ database }).updateTransComplete(operation_info, trans_info);
+    await new OperationMediaModel(DBMySQL).updateTransComplete(operation_info, trans_info);
     operation_seq = operation_info.seq;
 
     await syncOne(req, token_info, operation_seq);
@@ -105,7 +105,7 @@ const on_complete = Wrap(async(req, res) => {
       message = error.message;
     }
     log.e(req, error);
-    await new ServiceErrorModel({ database }).createServiceError('hawkeye', operation_seq, content_id, JSON.stringify(result));
+    await new ServiceErrorModel(DBMySQL).createServiceError('hawkeye', operation_seq, content_id, JSON.stringify(result));
   }
 
   if (service_info.send_process_mail === 'Y' && is_complete) {
@@ -135,8 +135,8 @@ const on_error = Wrap(async(req, res) => {
     throw new StdObject(1, '잘못된 파라미터', 400);
   }
 
-  const operation_model = new OperationModel({ database });
-  const service_error_model = new ServiceErrorModel({ database });
+  const operation_model = new OperationModel(DBMySQL);
+  const service_error_model = new ServiceErrorModel(DBMySQL);
   const operation_info = await operation_model.getOperationInfoByContentId(content_id);
   if (operation_info.isEmpty()) {
     await service_error_model.createServiceError('trans', null, content_id, message);

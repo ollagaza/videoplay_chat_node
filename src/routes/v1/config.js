@@ -1,7 +1,7 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import StdObject from "@/classes/StdObject";
-import ServiceConfig from '@/config/service.config';
+import { Router } from 'express';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import StdObject from '../../wrapper/std-object';
 
 const routes = Router();
 

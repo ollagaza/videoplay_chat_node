@@ -1,14 +1,9 @@
-import {Router} from 'express';
-import bodyParser from 'body-parser';
-import {exec} from 'child_process';
-import roles from "@/config/roles";
-import Wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import database from '@/config/database';
-import MemberModel from '@/models/MemberModel';
-import MemberAuthMailModel from '@/models/MemberAuthMailModel';
-import Util from '@/utils/baseutil';
-import ServiceConfig from '@/config/service.config';
+import { Router } from 'express';
+import { exec } from 'child_process';
+import _ from 'lodash';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import StdObject from '../../wrapper/std-object';
 
 const routes = Router();
 
@@ -48,13 +43,13 @@ routes.get('/checkNice', Wrap(async(req, res) => {
   });
 
   child.on("close", () => {
-    if (sEncData == "-1") {
+    if (sEncData === "-1") {
       sRtnMSG = "암/복호화 시스템 오류입니다.";
-    } else if (sEncData == "-2") {
+    } else if (sEncData === "-2") {
       sRtnMSG = "암호화 처리 오류입니다.";
-    } else if (sEncData == "-3") {
+    } else if (sEncData === "-3") {
       sRtnMSG = "암호화 데이터 오류 입니다.";
-    } else if (sEncData == "-9") {
+    } else if (sEncData === "-9") {
       sRtnMSG = "입력값 오류 : 암호화 처리시, 필요한 파라미터 값을 확인해 주시기 바랍니다.";
     } else {
       sRtnMSG = "";
@@ -76,7 +71,7 @@ routes.post('/certResult', Wrap(async(req, res) => {
   let sDecData = "";
   let cmd = "";
 
-  if( /^0-9a-zA-Z+\/=/.test(encodeData) == true){
+  if( /^0-9a-zA-Z+\/=/.test(encodeData) === true){
     let sRtnMSG = "입력값 오류";
     let requestnumber = "";
     let authtype = "";
@@ -103,17 +98,17 @@ routes.post('/certResult', Wrap(async(req, res) => {
       const output = new StdObject();
       let sRtnMSG = "";
 
-      if (sDecData == "-1") {
+      if (sDecData === "-1") {
         sRtnMSG = "암/복호화 시스템 오류";
-      } else if (sDecData == "-4") {
+      } else if (sDecData === "-4") {
         sRtnMSG = "복호화 처리 오류";
-      } else if (sDecData == "-5") {
+      } else if (sDecData === "-5") {
         sRtnMSG = "HASH값 불일치 - 복호화 데이터는 리턴됨";
-      } else if (sDecData == "-6") {
+      } else if (sDecData === "-6") {
         sRtnMSG = "복호화 데이터 오류";
-      } else if (sDecData == "-9") {
+      } else if (sDecData === "-9") {
         sRtnMSG = "입력값 오류";
-      } else if (sDecData == "-12") {
+      } else if (sDecData === "-12") {
         sRtnMSG = "사이트 비밀번호 오류";
       } else {
         output.add('resultData', {
@@ -141,8 +136,8 @@ function GetValue(plaindata , key){
   let arrData = plaindata.split(":");
   let value = "";
   for (let i in arrData) {
-    var item = arrData[i];
-    if (item.indexOf(key) == 0) {
+    const item = arrData[i];
+    if (item.indexOf(key) === 0) {
       let valLen = parseInt(item.replace(key, ""));
       arrData[i++];
       value = arrData[i].substr(0 ,valLen);

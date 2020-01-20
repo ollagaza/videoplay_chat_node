@@ -2,7 +2,7 @@ import path from 'path';
 import scheduler from 'node-schedule';
 import ServiceConfig from '@/config/service.config';
 import Auth from '@/middlewares/auth.middleware';
-import roles from "@/config/roles";
+import Role from "@/config/roles";
 import Util from '@/utils/baseutil';
 import database from '@/config/database';
 import log from "@/classes/Logger";
@@ -63,8 +63,8 @@ class OperationScheduler {
     log.d(null, this.log_prefix, 'executeNextJob start');
     try{
       let sync_info = null;
-      await database.transaction(async(trx) => {
-        const sync_model = new BatchOperationQueueModel({database: trx});
+      await DBMySQL.transaction(async(transaction) => {
+        const sync_model = new BatchOperationQueueModel(transaction);
         sync_info = await sync_model.pop();
       });
 
@@ -95,15 +95,15 @@ class OperationScheduler {
     let operation_info = null;
     let is_success = false;
     try {
-      await database.transaction(async(trx) => {
-        const sync_model = new BatchOperationQueueModel({ database: trx });
-        operation_info = await this.createOperation(trx, sync_info);
+      await DBMySQL.transaction(async(transaction) => {
+        const sync_model = new BatchOperationQueueModel(transaction);
+        operation_info = await this.createOperation(transaction, sync_info);
         await sync_model.onJobStart(sync_info, operation_info.seq);
         sync_info.operation_seq = operation_info.seq;
       });
 
       await this.copyFiles(data, operation_info);
-      const sync_model = new BatchOperationQueueModel({ database });
+      const sync_model = new BatchOperationQueueModel(DBMySQL);
       await sync_model.updateStatus(sync_info, 'C');
 
       is_success = true;
@@ -114,9 +114,9 @@ class OperationScheduler {
 
     if (is_success) {
       try {
-        await new OperationStorageModel({database}).updateUploadFileSize(operation_info.storage_seq, 'video');
+        await new OperationStorageModel(DBMySQL).updateUploadFileSize(operation_info.storage_seq, 'video');
         const request_result = await this.requestAnalysis(operation_info.seq);
-        const sync_model = new BatchOperationQueueModel({database});
+        const sync_model = new BatchOperationQueueModel(DBMySQL);
         if (request_result.error === 0) {
           await sync_model.updateStatus(sync_info, 'R');
         } else {
@@ -127,7 +127,7 @@ class OperationScheduler {
       } finally {
         if (operation_info) {
           try {
-            await new OperationModel({ database }).updateStatusNormal(operation_info.seq, sync_info.member_seq);
+            await new OperationModel(DBMySQL).updateStatusNormal(operation_info.seq, sync_info.member_seq);
           } catch (error) {
             log.e(null, this.log_prefix, 'executeNextJob - OperationModel.updateStatusNormal', error);
           }
@@ -139,9 +139,9 @@ class OperationScheduler {
     this.onExecuteJobComplete();
   };
 
-  createOperation = async (trx, sync_info) => {
+  createOperation = async (transaction, sync_info) => {
     log.d(null, this.log_prefix, 'createOperation start', sync_info);
-    const operation_model = new OperationModel({ database: trx });
+    const operation_model = new OperationModel(transaction);
     const operation = {
       "operation_code": sync_info.key,
       "operation_name": sync_info.key,
@@ -151,8 +151,8 @@ class OperationScheduler {
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
-    const media_seq = await new OperationMediaModel({ database: trx }).createOperationMediaInfo(operation_info);
-    const storage_seq = await new OperationStorageModel({ database: trx }).createOperationStorageInfo(operation_info);
+    const media_seq = await new OperationMediaModel(transaction).createOperationMediaInfo(operation_info);
+    const storage_seq = await new OperationStorageModel(transaction).createOperationStorageInfo(operation_info);
     await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
 
     await OperationService.createOperationDirectory(operation_info);
@@ -205,15 +205,15 @@ class OperationScheduler {
       throw new StdObject(-4, '비디오파일이 없습니다.', 400);
     }
     try {
-      const video_file_model = new VideoFileModel({database});
+      const video_file_model = new VideoFileModel(DBMySQL);
       for (let i = 0; i < video_file_list.length; i++) {
         const file_info = video_file_list[i];
         log.d(null, this.log_prefix, 'copyFiles - create thumbnail', file_info.full_path);
         file_info.thumbnail = await video_file_model.createVideoThumbnail(file_info.full_path, operation_info)
       }
 
-      await database.transaction(async(trx) => {
-        const video_file_model = new VideoFileModel({database: trx});
+      await DBMySQL.transaction(async(transaction) => {
+        const video_file_model = new VideoFileModel(transaction);
         for (let i = 0; i < video_file_list.length; i++) {
           const file_info = video_file_list[i];
           log.d(null, this.log_prefix, 'copyFiles - add video file info', file_info.full_path);
@@ -235,7 +235,7 @@ class OperationScheduler {
 
     const admin_member_info = {
       seq: 0,
-      role: roles.ADMIN
+      role: Role.ADMIN
     };
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const token_info = token_result.token_info;
@@ -262,10 +262,10 @@ class OperationScheduler {
   onExecuteError = async (sync_info, error, operation_info = null) => {
     log.e(null, this.log_prefix, 'onExecuteError', error, operation_info);
     try {
-      const sync_model = new BatchOperationQueueModel({ database });
+      const sync_model = new BatchOperationQueueModel(DBMySQL);
       await sync_model.onJobError(sync_info, error);
       if (operation_info) {
-        const operation_model = new OperationModel({ database });
+        const operation_model = new OperationModel(DBMySQL);
         operation_model.remove(operation_info, sync_info.member_seq)
         await Util.deleteDirectory(operation_info.media_directory);
       }

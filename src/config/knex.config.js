@@ -2,7 +2,7 @@ export default {
   local: {
     client: 'mysql',
     connection: {
-      database: 'naver_storage',
+      database: 'surgbook',
       user: 'root',
       password: '_media_'
     },
@@ -19,7 +19,7 @@ export default {
     client: 'mysql',
     connection: {
       host: '10.41.170.177',
-      database: 'naver_storage',
+      database: 'surgbook',
       user: 'root',
       password: '_media_'
     },
@@ -35,7 +35,7 @@ export default {
   production: {
     client: 'mysql',
     connection: {
-      database: 'naver_storage',
+      database: 'surgbook',
       user: 'root',
       password: '_media_'
     },

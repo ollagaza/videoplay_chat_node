@@ -1,28 +1,28 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import _ from 'lodash';
 import querystring from 'querystring';
-import ServiceConfig from '@/config/service.config';
-import Wrap from '@/utils/express-async';
-import Util from '@/utils/baseutil';
-import Auth from '@/middlewares/auth.middleware';
-import roles from "@/config/roles";
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import OperationModel from '@/models/OperationModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
-import OperationStorageModel from '@/models/OperationStorageModel';
-import VideoFileModel from '@/models/VideoFileModel';
-import ReferFileModel from '@/models/ReferFileModel';
-import OperationInfo from "@/classes/surgbook/OperationInfo";
-import SmilInfo from "@/classes/surgbook/SmilInfo";
-import log from "@/classes/Logger";
-import IndexInfo from "@/classes/surgbook/IndexInfo";
-import SendMail from '@/classes/SendMail';
-import Constants from '@/config/constants';
-import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
-import FileInfo from "@/classes/surgbook/FileInfo";
-import { VideoIndexInfoModel } from '@/db/mongodb/model/VideoIndex';
-import OperationService from '@/service/operation/OperationService';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import Constants from '../../constants/constants';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import log from "../../libs/logger";
+import SendMail from '../../libs/send-mail';
+import OperationService from '../../service/operation/OperationService';
+import OperationModel from '../../database/mysql/operation/OperationModel';
+import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
+import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
+import VideoFileModel from '../../database/mysql/file/VideoFileModel';
+import ReferFileModel from '../../database/mysql/file/ReferFileModel';
+import BatchOperationQueueModel from '../../database/mysql/batch/BatchOperationQueueModel';
+import OperationInfo from "../../wrapper/operation/OperationInfo";
+import FileInfo from "../../wrapper/file/FileInfo";
+import SmilInfo from "../../wrapper/xml/SmilInfo";
+import IndexInfo from "../../wrapper/xml/IndexInfo";
+import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex';
 
 const routes = Router();
 
@@ -95,9 +95,9 @@ const syncOne = async (req, token_info, operation_seq) => {
   let log_prefix = null;
   let is_sync_complete = false;
 
-  await database.transaction(async(trx) => {
-    const operation_model = new OperationModel({database: trx});
-    const operation_media_model = new OperationMediaModel({database: trx});
+  await DBMySQL.transaction(async(transaction) => {
+    const operation_model = new OperationModel(transaction);
+    const operation_media_model = new OperationMediaModel(transaction);
 
     operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
     if (!operation_info || operation_info.isEmpty()) {
@@ -156,7 +156,7 @@ const syncOne = async (req, token_info, operation_seq) => {
   let trans_video_size = 0;
   let trans_video_count = 0;
   if (!smil_info.isEmpty()) {
-    const video_model = await new VideoFileModel({ database });
+    const video_model = await new VideoFileModel(DBMySQL);
     const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
 
     const file_list = await Util.getDirectoryFileList(video_directory);
@@ -202,15 +202,15 @@ const syncOne = async (req, token_info, operation_seq) => {
     }
   }
 
-  await database.transaction(async(trx) => {
+  await DBMySQL.transaction(async(transaction) => {
 
-    const operation_storage_model = new OperationStorageModel({database: trx});
+    const operation_storage_model = new OperationStorageModel(transaction);
     const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
 
     const storage_seq = operation_storage_info.seq;
     operation_info.storage_seq = storage_seq;
 
-    await new VideoFileModel({database: trx}).syncVideoFiles(operation_info, add_video_file_list, storage_seq);
+    await new VideoFileModel(transaction).syncVideoFiles(operation_info, add_video_file_list, storage_seq);
 
     const update_storage_info = {};
     update_storage_info.origin_video_size = Util.byteToMB(origin_video_size);
@@ -224,7 +224,7 @@ const syncOne = async (req, token_info, operation_seq) => {
     update_storage_info.report_count = 0;
 
     if (operation_info.created_by_user !== true) {
-      const refer_sync_result = await new ReferFileModel({database: trx}).syncReferFiles(operation_info, storage_seq);
+      const refer_sync_result = await new ReferFileModel(transaction).syncReferFiles(operation_info, storage_seq);
       update_storage_info.refer_file_size = Util.byteToMB(refer_sync_result.refer_file_size);
       update_storage_info.refer_file_count = refer_sync_result.refer_file_count;
     }
@@ -240,14 +240,14 @@ const syncOne = async (req, token_info, operation_seq) => {
       operation_update_param.analysis_status = operation_info.analysis_status === 'R' ? 'R' : 'N';
     }
 
-    const operation_model = new OperationModel({database: trx});
+    const operation_model = new OperationModel(transaction);
     await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
 
     log.d(req, `${log_prefix} complete`);
   });
 
   if (is_sync_complete) {
-    await new BatchOperationQueueModel({ database }).onJobComplete(operation_seq);
+    await new BatchOperationQueueModel(DBMySQL).onJobComplete(operation_seq);
   }
 
   if (service_info.send_process_mail === 'Y' && is_sync_complete) {
@@ -267,7 +267,7 @@ const syncOne = async (req, token_info, operation_seq) => {
 const reSync = async (req, operation_seq) => {
   const admin_member_info = {
     seq: 0,
-    role: roles.ADMIN
+    role: Role.ADMIN
   };
   const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
   const token_info = token_result.token_info;
@@ -276,10 +276,10 @@ const reSync = async (req, operation_seq) => {
   let media_directory = null;
   let operation_media_info = null;
 
-  await database.transaction(async(trx) => {
-    const operation_model = new OperationModel({ database: trx });
-    const operation_media_model = new OperationMediaModel({ database: trx });
-    const operation_storage_model = new OperationStorageModel({ database: trx });
+  await DBMySQL.transaction(async(transaction) => {
+    const operation_model = new OperationModel(transaction);
+    const operation_media_model = new OperationMediaModel(transaction);
+    const operation_storage_model = new OperationStorageModel(transaction);
 
     operation_info = await operation_model.getOperationInfo(operation_seq, token_info, false);
     if (operation_info.isEmpty()) {
@@ -387,7 +387,7 @@ routes.post('/operation/resync/member/:member_seq(\\d+)', Auth.isAuthenticated()
 
   res.json(new StdObject());
 
-  const operation_model = new OperationModel({ database });
+  const operation_model = new OperationModel(DBMySQL);
   let is_finish = false;
   let sync_count = 0;
 

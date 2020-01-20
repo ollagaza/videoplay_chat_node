@@ -1,21 +1,21 @@
-import {Router} from 'express';
-import ServiceConfig from '@/config/service.config';
-import roles from "@/config/roles";
-import Auth from '@/middlewares/auth.middleware';
-import Wrap from '@/utils/express-async';
-import Util from '@/utils/baseutil';
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import log from "@/classes/Logger";
-import MemberModel from '@/models/MemberModel';
-import Constants from '@/config/constants';
+import { Router } from 'express';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import Constants from '../../constants/constants';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import log from "../../libs/logger";
+import MemberModel from '../../database/mysql/member/MemberModel';
 
 const routes = Router();
 
-routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = token_info.getId();
-  const member_model = new MemberModel({ database });
+  const member_model = new MemberModel(DBMySQL);
   const member_info = await member_model.getMemberInfo(member_seq);
   const media_root = ServiceConfig.get('media_root');
   const upload_path = member_info.user_media_path + "_upload_" + Constants.SEP + "image";

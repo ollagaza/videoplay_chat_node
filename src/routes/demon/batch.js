@@ -1,16 +1,16 @@
-import {Router} from 'express';
-import roles from "@/config/roles";
-import Auth from '@/middlewares/auth.middleware';
-import Wrap from '@/utils/express-async';
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import BatchOperationQueueModel from '@/models/batch/BatchOperationQueueModel';
-import OperationScheduler from '@/scheduler/OperationScheduler';
-import log from "@/classes/Logger";
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import log from "../../libs/logger";
+import BatchOperationQueueModel from '../../database/mysql/batch/BatchOperationQueueModel';
+import OperationScheduler from '../../scheduler/OperationScheduler';
 
 const routes = Router();
 
-routes.post('/operation', Auth.isAuthenticated(roles.API), Wrap(async(req, res) => {
+routes.post('/operation', Auth.isAuthenticated(Role.API), Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const token_info = req.token_info;
@@ -19,8 +19,8 @@ routes.post('/operation', Auth.isAuthenticated(roles.API), Wrap(async(req, res) 
   const output = new StdObject();
   let success = false;
   let message = '';
-  await database.transaction(async(trx) => {
-    const sync_model = new BatchOperationQueueModel( { database: trx } );
+  await DBMySQL.transaction(async(transaction) => {
+    const sync_model = new BatchOperationQueueModel( transaction );
     if (await sync_model.verifyKey(member_seq, req.body.key)) {
       await sync_model.push(member_seq, req.body.key, req.body.data);
       success = true;

@@ -1,4 +1,4 @@
-import DBMysql from '../../database/knex-mysql'
+import DBMySQL from '../../database/knex-mysql'
 import CodeSceneModel from '../../database/mysql/code/CodeSceneModel';
 
 const CodeSceneClass = class {
@@ -9,7 +9,7 @@ const CodeSceneClass = class {
   }
 
   init = async () => {
-    const code_scene_model = new CodeSceneModel(DBMysql);
+    const code_scene_model = new CodeSceneModel(DBMySQL);
     const result_list = await code_scene_model.find();
     if (result_list && result_list.length) {
       for (let i = 0; i < result_list.length; i++) {

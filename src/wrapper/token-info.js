@@ -1,11 +1,11 @@
-import roles from '../constants/roles'
+import Role from '../constants/roles'
 import Util from '../utils/baseutil'
 
 export default class TokenInfo {
   constructor (token_info, token, remain_time) {
     if (token_info != null) {
       this.id = Util.parseInt(token_info.id) // member table seq
-      this.role = Util.parseInt(token_info.role, roles.NONE) // 권한 코드. 나중에 쓸지도 모름.
+      this.role = Util.parseInt(token_info.role, Role.NONE) // 권한 코드. 나중에 쓸지도 모름.
       this.token = token
       this.remain_time = remain_time
     }
@@ -13,7 +13,7 @@ export default class TokenInfo {
 
   setTokenByMemberInfo (member_info) {
     this.id = Util.parseInt(member_info.seq, 0) // member table seq
-    this.role = Util.parseInt(member_info.role, roles.NONE) // 권한 코드. 나중에 쓸지도 모름.
+    this.role = Util.parseInt(member_info.role, Role.NONE) // 권한 코드. 나중에 쓸지도 모름.
   }
 
   getId () {
@@ -33,10 +33,10 @@ export default class TokenInfo {
   }
 
   isAdmin = () => {
-    return this.getRole() === roles.ADMIN
+    return this.getRole() === Role.ADMIN
   }
 
   isMember = () => {
-    return this.getRole() === roles.MEMBER
+    return this.getRole() === Role.MEMBER
   }
 }

@@ -8,7 +8,7 @@ import log from '../../libs/logger'
 import OperationModel from '../../database/mysql/operation/OperationModel';
 
 const getOperationInfo = async (database, operation_seq, token_info) => {
-  const operation_model = new OperationModel({ database });
+  const operation_model = new OperationModel(DBMySQL);
   const operation_info = await operation_model.getOperationInfo(operation_seq, token_info);
 
   if (operation_info == null || operation_info.isEmpty()) {

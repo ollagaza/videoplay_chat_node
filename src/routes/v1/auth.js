@@ -1,12 +1,11 @@
-import {Router} from 'express';
-import Auth from '@/middlewares/auth.middleware';
-import roles from "@/config/roles";
-import Wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import database from '@/config/database';
-import MemberModel from '@/models/MemberModel';
-import MemberAuthMailModel from '@/models/MemberAuthMailModel';
-import Util from '@/utils/baseutil';
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import MemberModel from '../../database/mysql/member/MemberModel';
+import MemberAuthMailModel from '../../database/mysql/member/MemberAuthMailModel';
 
 const routes = Router();
 
@@ -110,7 +109,7 @@ routes.post('/', Wrap(async(req, res) => {
   const user_id = req.body.user_id;
   const password = req.body.password;
 
-  const member_model = new MemberModel({ database });
+  const member_model = new MemberModel(DBMySQL);
   const member_info = await member_model.findOne({"user_id": user_id});
 
   if (member_info == null || member_info.user_id !== user_id) {
@@ -124,11 +123,11 @@ routes.post('/', Wrap(async(req, res) => {
 
   const member_seq = member_info.seq;
 
-  const has_auth_mail = await new MemberAuthMailModel({ database }).hasAuthMail(member_seq);
+  const has_auth_mail = await new MemberAuthMailModel(DBMySQL).hasAuthMail(member_seq);
   if (has_auth_mail) {
     throw new StdObject(-1, "이메일 인증 후 사용 가능합니다.", 400);
   }
-  const output = await Auth.getTokenResult(res, member_info, roles.MEMBER);
+  const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
   return res.json(output);
 }));
 
@@ -166,13 +165,17 @@ routes.post('/email', Wrap(async(req, res) => {
   const member_seq = req.body.member_seq;
   const auth_key = req.body.auth_key;
 
-  const member_auth_mail_model =  new MemberAuthMailModel({ database });
+  const member_auth_mail_model =  new MemberAuthMailModel(DBMySQL);
   const has_auth_mail = await member_auth_mail_model.hasAuthMail(member_seq, auth_key);
   if (has_auth_mail === false) {
     throw new StdObject(-1, "인증정보가 존재하지 않습니다.", 400);
   }
 
-  member_auth_mail_model.deleteAuthMail(member_seq);
+  (
+    async () => {
+      await member_auth_mail_model.deleteAuthMail(member_seq);
+    }
+  )()
 
   res.json(new StdObject());
 }));
@@ -209,14 +212,14 @@ routes.post('/email', Wrap(async(req, res) => {
  *              $ref: "#/definitions/AuthAccessToken"
  *
  */
-routes.post('/token/refresh', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = token_info.getId();
 
-  const member_model = new MemberModel({ database });
+  const member_model = new MemberModel(DBMySQL);
   const member_info = await member_model.findOne({"seq": member_seq});
 
-  const output = await Auth.getTokenResult(res, member_info, roles.MEMBER);
+  const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
   return res.json(output);
 }));
 

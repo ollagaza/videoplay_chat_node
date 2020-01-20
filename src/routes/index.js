@@ -1,6 +1,6 @@
 import {Router} from 'express';
-import config from '@/config/config';
-import log from "@/classes/Logger";
+import config from '../config/config';
+import log from "../libs/logger";
 
 require('babel-plugin-require-context-hook/register')();
 

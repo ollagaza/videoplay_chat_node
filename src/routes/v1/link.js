@@ -1,11 +1,11 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import Util from '@/utils/baseutil';
-import Auth from '@/middlewares/auth.middleware';
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import OperationShareModel from '@/models/OperationShareModel';
-import log from "@/classes/Logger";
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import OperationShareModel from '../../database/mysql/operation/OperationShareModel';
+import log from "../../libs/logger";
 
 const routes = Router();
 
@@ -27,7 +27,7 @@ routes.get('/verify/:link_key', Auth.isAuthenticated(), Wrap(async(req, res) => 
   const output = new StdObject();
 
   if (link_type === 'operation') {
-    const share_info = await new OperationShareModel({ database }).getShareInfoByDecryptedInfo(link_key_info);
+    const share_info = await new OperationShareModel(DBMySQL).getShareInfoByDecryptedInfo(link_key_info);
     if (!share_info || share_info.isEmpty()) {
       throw new StdObject(-4, '잘못된 접근입니다.', 400);
     }
