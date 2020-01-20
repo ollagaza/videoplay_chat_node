@@ -1,12 +1,12 @@
 import express from 'express';
 import path from 'path';
 import bodyParser from 'body-parser';
-import headerMiddleware from '@/middlewares/header.middleware';
-import StdObject from '@/classes/StdObject';
-import routes from '@/routes';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import log from "@/classes/Logger";
+import headerMiddleware from './middlewares/header.middleware';
+import StdObject from './wrapper/std-object';
+import routes from './routes';
+import log from "./libs/logger";
 
 const app = express();
 

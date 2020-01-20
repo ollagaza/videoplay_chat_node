@@ -1,13 +1,12 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import log from "@/classes/Logger";
-import io from '@/middlewares/socket_io';
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import SocketManager from '../../service/socket-manager'
+import log from "../../libs/logger";
 
 const routes = Router();
 
 routes.get('/reloadService', Wrap(async(req, res) => {
-  const socket = io.getSocket();
-  socket.emit('reloadService');
+  await SocketManager.requestReloadService()
   log.debug('node api reloadService call');
   res.json('success');
 }));

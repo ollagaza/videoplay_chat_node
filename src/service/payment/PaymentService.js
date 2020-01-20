@@ -1,13 +1,9 @@
-import service_config from '@/config/service.config';
-import Util from '@/utils/baseutil';
-import roles from "@/config/roles";
-import StdObject from '@/classes/StdObject';
-import PaymentModel from '@/models/PaymentModel';
-import Payment_ResultModel from '@/models/Payment_ResultModel';
-import log from "@/classes/Logger";
+import DBMySQL from '../../database/knex-mysql'
+import PaymentModel from '../../database/mysql/payment/PaymentModel'
+import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel'
 
 const getPaymentList = async (database, lang='Kor') => {
-  const payment_model = new PaymentModel({ database });
+  const payment_model = new PaymentModel(DBMySQL);
   const payment_list = await payment_model.getPaymentList(lang);
 
   return payment_list;
@@ -15,16 +11,16 @@ const getPaymentList = async (database, lang='Kor') => {
 
 const insertPayment = async (database, pg_data) => {
   let result = null;
-  const payment_resultmodel = new Payment_ResultModel({ database });
-  result = payment_resultmodel.getPaymentCreate(pg_data);
+  const payment_result_model = new PaymentResultModel({ database });
+  result = payment_result_model.getPaymentCreate(pg_data);
 
   return result;
 };
 
 const updatePayment = async (database, pg_data) => {
   let result = null;
-  const payment_resultmodel = new Payment_ResultModel({ database });
-  result = payment_resultmodel.getPaymentModify(pg_data);
+  const payment_result_model = new PaymentResultModel({ database });
+  result = payment_result_model.getPaymentModify(pg_data);
 
   return result;
 };

@@ -1,14 +1,10 @@
-import {Router} from 'express';
-import Auth from '@/middlewares/auth.middleware';
-import Wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import database from '@/config/database';
-import Util from '@/utils/baseutil';
-import service_config from '@/config/service.config';
-import Constants from '@/config/constants';
-import log from "@/classes/Logger";
-import MemberLogModel from "@/models/MemberLogModel";
-import io from '@/middlewares/socket_io';
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import Auth from '../../middlewares/auth.middleware';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import MemberLogModel from '../../database/mysql/member/MemberLogModel';
+import SocketManager from '../../service/socket-manager'
 
 const routes = Router();
 
@@ -17,8 +13,8 @@ routes.post('/notice', Wrap(async(req, res) => {
   const user_seq = req.body.seq;
   const output = new StdObject();
 
-  await database.transaction(async(trx) => {
-    const oMemberLogModel = new MemberLogModel({database: trx});
+  await DBMySQL.transaction(async(transaction) => {
+    const oMemberLogModel = new MemberLogModel(transaction);
     const lang = Auth.getLanguage(req);
     const result = await oMemberLogModel.getMemberLog(lang, user_seq);
     output.add("notices", result);
@@ -37,8 +33,7 @@ routes.post('/msg_list', Wrap(async(req, res) => {
 
 routes.get('/test_msg_send', Wrap(async(req, res) => {
   req.accepts('application/json');
-  const socket = io.getSocket();
-  socket.emit('sendFrontMsg', 'londhunter');
+  await SocketManager.sendToFrontOne('londhunter', { 'test': 'aaa' })
 
   const user_seq = req.body.seq;
   const output = new StdObject();
@@ -48,9 +43,8 @@ routes.get('/test_msg_send', Wrap(async(req, res) => {
 
 routes.get('/test_glo_send', Wrap(async(req, res) => {
   req.accepts('application/json');
-  const socket = io.getSocket();
   const data = { 'type':'globalNotice', 'data':'test' };
-  socket.emit('sendFrontGloMsg', data);
+  await SocketManager.sendToFrontAll(data)
 
   const user_seq = req.body.seq;
   const output = new StdObject();
