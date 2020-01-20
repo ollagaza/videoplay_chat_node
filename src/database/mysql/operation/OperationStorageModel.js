@@ -41,14 +41,14 @@ export default class OperationStorageModel extends MySQLModel {
     let file_size_info = null;
     let update_params = {};
     if (file_type === 'all' || file_type === 'video') {
-      file_size_info = await new VideoFileModel({ database: this.database }).videoFileSummary(storage_seq);
+      file_size_info = await new VideoFileModel(this.database).videoFileSummary(storage_seq);
       let total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0;
       total_size = Math.ceil(total_size / 1024 / 1024);
       update_params.origin_video_size = total_size;
       update_params.origin_video_count = (file_size_info.total_count ? parseInt(file_size_info.total_count) : 0);
     }
     if (file_type === 'all' || file_type === 'refer') {
-      file_size_info = await new ReferFileModel({ database: this.database }).referFileSummary(storage_seq);
+      file_size_info = await new ReferFileModel(this.database).referFileSummary(storage_seq);
       let total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0;
       total_size = Math.ceil(total_size / 1024 / 1024);
       update_params.refer_file_size = total_size;

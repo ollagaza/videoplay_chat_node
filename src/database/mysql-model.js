@@ -1,4 +1,6 @@
 import _ from 'lodash'
+import Promise from 'promise';
+import PageHandler from '../libs/page-handler';
 import log from '../libs/logger'
 
 const LOG_PREFIX = '[ModelObject]'
@@ -180,6 +182,51 @@ export default class MysqlModel {
 
   queryBuilder = (filters = null, columns = null, order = null, group = null) => {
     return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group)
+  }
+
+  findPaginated = async ({ list_count = 20, page = 1, page_count = 10, no_paging = 'n', ...filters }, columns=null, order=null) => {
+    const oKnex = this.queryBuilder(filters, columns, order);
+    return await this.queryPaginated(oKnex, list_count, page, page_count, no_paging);
+  };
+
+  async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
+    // 강제 형변환
+    list_count = parseInt(list_count);
+    cur_page = parseInt(cur_page);
+    page_count = parseInt(page_count);
+
+    const use_paging = (!no_paging || no_paging.toLowerCase() !== 'y');
+
+    const oCountKnex = this.database.from(oKnex.clone().as('list'));
+    const oDataListKnex = oKnex.clone();
+    if (use_paging) {
+      oDataListKnex
+        .limit(list_count)
+        .offset(list_count * (cur_page - 1));
+    }
+
+    // 갯수와 데이터를 동시에 얻기
+    const [{ total_count }, data] = await Promise.all([
+      oCountKnex.count('* as total_count').first(),
+      oDataListKnex
+    ]);
+
+
+    if (use_paging) {
+      list_count = total_count;
+      cur_page = 1;
+    }
+
+    // 번호 매기기
+    let virtual_no = total_count - (cur_page - 1) * list_count;
+    for(let i = 0; i < data.length; i++) {
+      await new Promise(resolve => process.nextTick(resolve));
+      data[i] = { ...data[i], _no: virtual_no-- };
+    }
+
+    const total_page = Math.ceil(total_count / list_count) || 1;
+
+    return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count) }
   }
 
   async find (filters = null, columns = null, order = null, group = null) {

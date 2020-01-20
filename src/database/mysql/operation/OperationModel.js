@@ -116,7 +116,7 @@ export default class OperationModel extends MySQLModel {
     const operation_info = this.getOperationInfoByResult(query_result);
 
     if (import_media_info === true) {
-      const media_info = await new OperationMediaModel({ "database": this.database }).getOperationMediaInfo(operation_info);
+      const media_info = await new OperationMediaModel(this.database).getOperationMediaInfo(operation_info);
       operation_info.setMediaInfo(media_info);
       operation_info.origin_video_path = operation_info.media_directory + media_info.video_source;
       operation_info.trans_video_path = operation_info.trans_directory + media_info.video_source;
@@ -170,7 +170,7 @@ export default class OperationModel extends MySQLModel {
   };
 
   createOperation = async (body, member_seq, created_by_user = true, status = null, use_new_clip_api = true) => {
-    const member_info = await new MemberModel({ database: this.database }).getMemberInfo(member_seq);
+    const member_info = await new MemberModel(this.database).getMemberInfo(member_seq);
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(-1, '회원정보가 없습니다.', 401)
     }
