@@ -1,6 +1,6 @@
 import formatter from "string-template";
 import _ from 'lodash';
-import service_config from '@/config/service.config';
+import ServiceConfig from '../../service/service-config';
 
 const invite_form = `
 <div style="margin: 20px auto; box-sizing: border-box; width: 600px; padding: 40px; border-top: 5px solid #369; font-size: 16px; background-color: #fff; font-family: 'Noto Sans KR', '나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif;">
@@ -28,7 +28,7 @@ const invite_form = `
 `;
 
 const getServiceInfo = () => {
-  return service_config.getServiceInfo();
+  return ServiceConfig.getServiceInfo();
 };
 
 export default {

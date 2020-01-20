@@ -1,4 +1,4 @@
-import util from '@/utils/baseutil';
+import Util from '../../utils/baseutil'
 
 export default class EmbedBackgroundColorModel {
   constructor() {
@@ -20,7 +20,7 @@ export default class EmbedBackgroundColorModel {
   getStyle = () => {
     let style = '';
     if (this._isUse) {
-      const rgb = util.hexToRGB(this._color);
+      const rgb = Util.hexToRGB(this._color);
       if (this._alpha !== 1) {
         style += ` background-color: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha});`;
       } else {
@@ -55,7 +55,7 @@ export default class EmbedBackgroundColorModel {
   }
 
   getRGBA() {
-    const rgb = util.hexToRGB(this._color);
+    const rgb = Util.hexToRGB(this._color);
     return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha})`;
   }
 
@@ -70,7 +70,7 @@ export default class EmbedBackgroundColorModel {
   getXmlJson = () => {
     return {
       "$": {
-        "Color": util.colorCodeToHex(this._color),
+        "Color": Util.colorCodeToHex(this._color),
         "Alpha": this._alpha
       }
     }

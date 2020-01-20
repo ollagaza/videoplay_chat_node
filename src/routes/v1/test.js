@@ -1,31 +1,26 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import _ from 'lodash';
-import querystring from 'querystring';
-import wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import SendMail from '@/classes/SendMail';
-import FileInfo from '@/classes/surgbook/FileInfo';
-import Util from '@/utils/baseutil';
-import Auth from '@/middlewares/auth.middleware';
-import log from "@/classes/Logger";
-import roles from "@/config/roles";
-import mime from "mime-types";
-import service_config from "@/config/service.config";
-import config from "@/config/config";
-import ContentIdManager from '@/classes/ContentIdManager'
-import {VideoProjectModel} from '@/db/mongodb/model/VideoProject';
-import SequenceModel from '@/models/sequence/SequenceModel';
-import text2png from "../../utils/textToImage";
-import Constants from '@/config/constants';
-
-import IndexInfo from "@/classes/surgbook/IndexInfo";
-
-const IS_DEV = config.isDev();
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import Constants from '../../constants/constants';
+import StdObject from '../../wrapper/std-object';
+import log from "../../libs/logger";
 
 const routes = Router();
 
+import Config from "../../config/config";
+import SequenceModel from '../../models/sequence/SequenceModel';
+import { VideoProjectModel } from '../../database/mongodb/VideoProject';
+
+import IndexInfo from "../../wrapper/xml/IndexInfo";
+
+const IS_DEV = Config.isDev();
+
 if (IS_DEV) {
-  routes.get('/video/:project_seq(\\d+)/:scale', wrap(async(req, res) => {
+  routes.get('/video/:project_seq(\\d+)/:scale', Wrap(async(req, res) => {
     const project_seq = req.params.project_seq;
     const scale = Util.parseFloat(req.params.scale, 1);
     const video_project = await VideoProjectModel.findOneById(project_seq);
@@ -51,12 +46,12 @@ if (IS_DEV) {
       }
     };
 
-    await Util.writeXmlFile(service_config.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json);
+    await Util.writeXmlFile(ServiceConfig.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json);
 
     res.json(video_xml_json);
   }));
 
-  routes.get('/media', wrap(async (req, res) => {
+  routes.get('/media', Wrap(async (req, res) => {
     const file_name = 'birdman.mkv';
     const url = 'd:\\\\movie\\마녀.mkv';
     const media_info = await Util.getMediaInfo(url);
@@ -67,12 +62,12 @@ if (IS_DEV) {
     res.json(result);
   }));
 
-  routes.get('/co/:code', wrap(async (req, res) => {
+  routes.get('/co/:code', Wrap(async (req, res) => {
     const code = req.params.code;
     res.send(Util.colorCodeToHex(code));
   }));
 
-  routes.get('/crypto', wrap(async (req, res) => {
+  routes.get('/crypto', Wrap(async (req, res) => {
     const data = {
       r: Util.getRandomString(5),
       s: 155
@@ -88,12 +83,12 @@ if (IS_DEV) {
     res.json(output);
   }));
 
-  routes.get('/token', wrap(async (req, res) => {
+  routes.get('/token', Wrap(async (req, res) => {
     const result = await Auth.verifyToken(req);
     res.json(result);
   }));
 
-  routes.get('/uuid', wrap(async (req, res) => {
+  routes.get('/uuid', Wrap(async (req, res) => {
     const uuid = await Util.getUuid();
     const output = new StdObject();
     output.add('uuid', uuid);
@@ -101,18 +96,18 @@ if (IS_DEV) {
     res.json(output);
   }));
 
-  routes.get('/forward', wrap(async (req, res, next) => {
+  routes.get('/forward', Wrap(async (req, res, next) => {
     const url = 'http://localhost:3000/api/v1/operations/9/request/analysis';
     const admin_member_info = {
       seq: 0,
-      role: roles.ADMIN
+      role: Role.ADMIN
     };
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const forward_result = await Util.forward(url, 'POST', token_result.token);
     res.json(forward_result);
   }));
 
-  routes.post('/burning', wrap(async (req, res, next) => {
+  routes.post('/burning', Wrap(async (req, res, next) => {
     req.accepts('application/json');
     req.setTimeout(0);
     log.d(req, req.body);
@@ -177,7 +172,7 @@ if (IS_DEV) {
                 "data": seq_list
               };
               if (random_key) {
-                request_data.key = await ContentIdManager.getContentId();
+                request_data.key = Util.getContentId();
               } else {
                 request_data.key = directory_name;
               }
@@ -192,7 +187,7 @@ if (IS_DEV) {
     }
   }));
 
-  routes.delete('/dir', wrap(async (req, res, next) => {
+  routes.delete('/dir', Wrap(async (req, res, next) => {
     req.accepts('application/json');
     req.setTimeout(0);
     log.d(req, req.body);
@@ -203,7 +198,7 @@ if (IS_DEV) {
     res.send(true);
   }));
 
-  routes.get('/err', wrap(async (req, res, next) => {
+  routes.get('/err', Wrap(async (req, res, next) => {
 
     const result1 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smi");
     const result2 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smil");
@@ -317,7 +312,7 @@ if (IS_DEV) {
     return result;
   };
 
-  routes.get('/idx', wrap(async (req, res, next) => {
+  routes.get('/idx', Wrap(async (req, res, next) => {
     const index_info_list = await getHawkeyeXmlInfo(req, '[test]');
     const result = new StdObject();
     result.add('index_info_list', index_info_list);

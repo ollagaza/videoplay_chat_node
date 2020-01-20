@@ -1,12 +1,12 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import StdObject from "@/classes/StdObject";
-import service_config from '@/config/service.config';
+import { Router } from 'express';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import StdObject from '../../wrapper/std-object';
 
 const routes = Router();
 
 routes.get('/reload', Wrap(async(req, res) => {
-  await service_config.load();
+  await ServiceConfig.load();
   res.json(new StdObject());
 }));
 

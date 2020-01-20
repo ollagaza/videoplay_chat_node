@@ -1,9 +1,10 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import database from '@/config/database';
-import StdObject from "@/classes/StdObject";
-import MemberModel from '@/models/MemberModel';
-import MedicalSubject from '@/data/MedicalSubject';
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import StdObject from '../../wrapper/std-object';
+
+import MedicalSubject from '../../data/MedicalSubject';
+
+const routes = Router();
 
 /**
  * @swagger
@@ -12,8 +13,6 @@ import MedicalSubject from '@/data/MedicalSubject';
  *  description: 권한이 필요하지 않은 각종 자료 조회 (병원, 부서, 배너 등등)
  *
  */
-
-const routes = Router();
 
 /**
  * @swagger
@@ -62,56 +61,6 @@ routes.get('/timestamp', Wrap(async(req, res) => {
 routes.get('/medical_subject', Wrap(async(req, res) => {
   const output = new StdObject();
   output.add('medical_subject', MedicalSubject.getJson());
-  res.json(output);
-}));
-
-/**
- * @swagger
- * /data/new_join_users:
- *  get:
- *    summary: "신규 가입자 목록"
- *    tags: [Data]
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "list_count"
- *      in: "query"
- *      description: "목록 최대 개수"
- *      required: false
- *      type: "integer"
- *      default: 10
- *    responses:
- *      200:
- *        description: "최근 가입자 목록"
- *        schema:
- *          type: "object"
- *          properties:
- *            new_user_list:
- *              type: "array"
- *              description: "가입자 정보"
- *              items:
- *                type: "string"
- *
- */
-routes.get('/new_join_users', Wrap(async(req, res) => {
-  let list_count = 10;
-  if (req.query.list_count) {
-    list_count = req.query.list_count;
-  }
-
-  const oMemberModel = new MemberModel({ database });
-  const query_result = await oMemberModel.getBannerNewUserList(list_count);
-  const output = new StdObject();
-
-  if (query_result && query_result.length > 0){
-    const output_list = new Array();
-    for (let i = 0; i < query_result.length; i++) {
-      const result = query_result[i];
-      output_list.push(result.hostital_name + ' ' + result.user_name.substr(0, 1) + "OO 교수님이 가입하셨습니다.");
-    }
-    output.add('new_user_list', output_list);
-  }
-
   res.json(output);
 }));
 

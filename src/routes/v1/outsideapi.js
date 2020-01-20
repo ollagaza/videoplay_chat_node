@@ -1,11 +1,8 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import Util from '@/utils/baseutil';
-import service_config from '@/config/service.config';
-import xml2js from 'xml2js';
-import log from "@/classes/Logger";
-
+import { Router } from 'express';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import StdObject from '../../wrapper/std-object';
 
 const routes = Router();
 
@@ -16,11 +13,11 @@ routes.post('/searchHosp', Wrap(async(req, res) => {
   const searchText = req.body.searchText;
   const pageNo = req.body.pageNo === undefined || req.body.pageNo === null ? 1 : req.body.pageNo;
   const pageRows = req.body.pageRows === undefined || req.body.pageRows === null ? 10 : req.body.pageRows;
-  const url = service_config.get('search_hosp_url');
-  const path = service_config.get('search_hosp_path');
-  const apiKey = service_config.get('search_hosp_key');
+  const url = ServiceConfig.get('search_hosp_url');
+  const path = ServiceConfig.get('search_hosp_path');
+  const apiKey = ServiceConfig.get('search_hosp_key');
 
-  const params = '?ServiceKey=' + apiKey 
+  const params = '?ServiceKey=' + apiKey
     + '&pageNo=' + pageNo
     + '&numOfRows=' + pageRows
     + '&QN=' + encodeURIComponent(searchText);
@@ -35,7 +32,7 @@ routes.post('/searchHosp', Wrap(async(req, res) => {
   const resultjson = await Util.getXmlToJson(resultList);
   output.add("searchText", searchText);
   output.add("resultList", resultjson);
-  
+
   res.json(output);
 }));
 
@@ -46,11 +43,11 @@ routes.post('/searchUniv', Wrap(async(req, res) => {
   const searchText = req.body.searchText;
   const pageNo = req.body.pageNo === undefined || req.body.pageNo === null ? 1 : req.body.pageNo;
   const pageRows = req.body.pageRows === undefined || req.body.pageRows === null ? 10 : req.body.pageRows;
-  const url = service_config.get('search_univ_url');
-  const path = service_config.get('search_univ_path');
-  const apiKey = service_config.get('search_univ_key');
+  const url = ServiceConfig.get('search_univ_url');
+  const path = ServiceConfig.get('search_univ_path');
+  const apiKey = ServiceConfig.get('search_univ_key');
 
-  const params = '?apiKey=' + apiKey 
+  const params = '?apiKey=' + apiKey
     + '&svcType=api&svcCode=SCHOOL&contentType=json&gubun=univ_list'
     + '&thisPage=' + pageNo
     + '&perPage=' + pageRows

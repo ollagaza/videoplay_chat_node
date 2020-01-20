@@ -1,5 +1,5 @@
-import Constants from '@/config/constants';
-import util from '@/utils/baseutil';
+import Constants from '../../constants/constants'
+import Util from '../../utils/baseutil'
 
 export default class EmbedFontModel {
   constructor() {
@@ -20,8 +20,8 @@ export default class EmbedFontModel {
       this._color = json.color || '#000000';
       this._alpha = parseFloat(json.alpha || 1);
       this._align = json.align || Constants.CENTER;
-      this._bold = util.isTrue(json.bold);
-      if (!util.isFalse(json.line_height) && util.isNumber(json.line_height)) {
+      this._bold = Util.isTrue(json.bold);
+      if (!Util.isFalse(json.line_height) && Util.isNumber(json.line_height)) {
         this._line_height = parseFloat(json.line_height);
       }
       this._isUse = true;
@@ -33,7 +33,7 @@ export default class EmbedFontModel {
   getStyle = () => {
     let style = '';
     if (this._isUse) {
-      const rgb = util.hexToRGB(this._color);
+      const rgb = Util.hexToRGB(this._color);
       if (this._alpha !== 1) {
         style += ` color: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha});`;
       } else {
@@ -43,7 +43,7 @@ export default class EmbedFontModel {
       style += ` font-size: ${this._size}px;`;
       style += ` font-weight: ${this._bold ? 700 : 400};`;
       style += ` text-align: ${this._align};`;
-      if (util.isNumber(this._line_height)) {
+      if (Util.isNumber(this._line_height)) {
         style += ` line-height: ${this._line_height}px;`;
       }
     }
@@ -115,7 +115,7 @@ export default class EmbedFontModel {
   }
 
   getRGBA() {
-    const rgb = util.hexToRGB(this._color);
+    const rgb = Util.hexToRGB(this._color);
     return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha})`;
   }
 
@@ -137,7 +137,7 @@ export default class EmbedFontModel {
       "$": {
         "Name": this._bold ? 'Nanum Barun Gothic Bold' : 'Nanum Barun Gothic',
         "Size": Math.round(this._size * scale),
-        "Color": util.colorCodeToHex(this._color),
+        "Color": Util.colorCodeToHex(this._color),
         "Alpha": this._alpha,
         "Align": this._align,
         "LineSpacing": Math.round((this._line_height - this._size) * scale)
