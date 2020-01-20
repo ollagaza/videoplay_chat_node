@@ -83,19 +83,6 @@ routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) =>
   res.json(output);
 }));
 
-routes.post('/me2', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const lang = Auth.getLanguage(req);
-  const token_info = req.token_info;
-  const member_seq = token_info.getId();
-  const member_info = await new MemberModel(DBMySQL).getMemberInfo(member_seq);
-  const member_sub_info = await new MemberSubModel(DBMySQL).getMemberSubInfo(lang, member_seq);
-
-  const output = new StdObject();
-  output.add('member_info', member_info);
-  output.add('member_sub_info', member_sub_info);
-  res.json(output);
-}));
-
 /**
  * @swagger
  * /users/{member_seq}:
