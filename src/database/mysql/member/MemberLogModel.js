@@ -12,7 +12,7 @@ export default class MemberLogModel extends MySQLModel {
 
   createMemberLog = async (seq, code, text = "") => {
     const memberLog = {
-      user_seq: seq,
+      member_seq: seq,
       log_code: code,
       log_text: text,
     };
@@ -22,7 +22,7 @@ export default class MemberLogModel extends MySQLModel {
 
   getMemberLog = async (lang, seq) => {
     const memberLog = {
-      user_seq: seq,
+      member_seq: seq,
     }
     const fieldSet = ["log_code", "log_text", "date_format(regist_date, '%Y%m%d') keydate", "date_format(regist_date, '%Y%m%d%H%i') regist_date"];
     const resultContent = {};
