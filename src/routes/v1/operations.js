@@ -12,6 +12,7 @@ import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import SendMail from '../../libs/send-mail';
 import OperationService from '../../service/operation/OperationService';
+import OperationClipService from '../../service/operation/OperationClipService';
 import MemberModel from '../../database/mysql/member/MemberModel';
 import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
@@ -26,7 +27,6 @@ import OperationInfo from "../../wrapper/operation/OperationInfo";
 import ShareTemplate from '../../template/mail/share.template';
 import { VideoIndexInfoModel, AddVideoIndex } from '../../database/mongodb/VideoIndex';
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata';
-import { OperationClipModel } from '../../database/mongodb/OperationClip';
 import { UserDataModel } from '../../database/mongodb/UserData';
 
 const routes = Router();
@@ -595,14 +595,14 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(Role.DEFAULT)
     if (clip_info) {
       const clip_seq_list = clip_info.clip_seq_list;
       if (clip_seq_list && clip_seq_list.length) {
-        await OperationClipModel.createOperationClipByList(operation_info, clip_seq_list);
+        await OperationClipService.createClipByList(operation_info, clip_seq_list);
       }
       await operation_model.updateMigChipStatus(operation_seq, true);
     }
   }
   log.d(req, req.headers.version, semver.gt(req.headers.version, '1.0.0'));
 
-  const clip_list = await OperationClipModel.findByOperationSeq(operation_seq, '-member_seq -content_id -operation_seq');
+  const clip_list = await OperationClipService.findByOperationSeq(operation_seq);
 
   const output = new StdObject();
   output.add("clip_list", clip_list);
@@ -612,7 +612,7 @@ routes.get('/:operation_seq(\\d+)/clip/list', Auth.isAuthenticated(Role.DEFAULT)
 
 routes.put('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const phase_id = req.params.phase_id;
-  const result = await OperationClipModel.setPhase(phase_id, req.body.clip_id_list);
+  const result = await OperationClipService.setPhase(phase_id, req.body.clip_id_list);
 
   const output = new StdObject();
   output.add('result', result);
@@ -622,9 +622,9 @@ routes.delete('/:operation_seq(\\d+)/clip/phase/:phase_id', Auth.isAuthenticated
   const operation_seq = req.params.operation_seq;
   const phase_id = req.params.phase_id;
 
-  const result = await OperationClipModel.unsetPhaseOne(req.body.clip_id, operation_seq, phase_id);
+  const result = await OperationClipService.unsetPhaseOne(req.body.clip_id, operation_seq, phase_id);
   if (req.body.remove_phase === true) {
-    await OperationClipModel.deletePhase(operation_seq, phase_id);
+    await OperationClipService.deletePhase(operation_seq, phase_id);
   }
 
   const output = new StdObject();
@@ -640,7 +640,7 @@ routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(Role.DEFAULT), Wr
   const operation_seq = req.params.operation_seq;
   const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
-  const create_result = await OperationClipModel.createOperationClip(operation_info, req.body.clip_info);
+  const create_result = await OperationClipService.createClip(operation_info, req.body.clip_info);
   await new OperationStorageModel(DBMySQL).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   const output = new StdObject();
   output.add('result', create_result);
@@ -653,7 +653,7 @@ routes.put('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(Role.DEFA
   }
   const clip_id = req.params.clip_id;
 
-  const update_result = await OperationClipModel.updateOperationClip(clip_id, req.body);
+  const update_result = await OperationClipService.updateClip(clip_id, req.body);
 
   const output = new StdObject();
   output.add('result', update_result);
@@ -666,10 +666,10 @@ routes.delete('/:operation_seq(\\d+)/clip/:clip_id', Auth.isAuthenticated(Role.D
   const operation_seq = req.params.operation_seq;
   const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
-  const delete_result = await OperationClipModel.deleteById(clip_id);
+  const delete_result = await OperationClipService.deleteById(clip_id);
   await new OperationStorageModel(DBMySQL).updateClipCount(operation_info.storage_seq, req.body.clip_count);
   if (req.body.remove_phase === true) {
-    await OperationClipModel.deletePhase(operation_seq, req.body.phase_id);
+    await OperationClipService.deletePhase(operation_seq, req.body.phase_id);
   }
 
   const output = new StdObject();
@@ -686,9 +686,9 @@ routes.post('/:operation_seq(\\d+)/phase', Auth.isAuthenticated(Role.DEFAULT), W
   const operation_seq = req.params.operation_seq;
   const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
-  const create_result = await OperationClipModel.createPhase(operation_info, req.body.phase_desc);
+  const create_result = await OperationClipService.createPhase(operation_info, req.body.phase_desc);
   const phase_id = create_result._id;
-  await OperationClipModel.setPhase(phase_id, req.body.clip_id_list);
+  await OperationClipService.setPhase(phase_id, req.body.clip_id_list);
 
   const output = new StdObject();
   output.add('phase', create_result);
@@ -702,7 +702,7 @@ routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role.DE
   const phase_desc = req.body.phase_desc;
 
   log.d(req, phase_id, phase_desc);
-  const update_result = await OperationClipModel.updatePhase(phase_id, phase_desc);
+  const update_result = await OperationClipService.updatePhase(phase_id, phase_desc);
 
   const output = new StdObject();
   output.add('result', update_result);
@@ -712,8 +712,8 @@ routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role.DE
 routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const operation_seq = req.params.operation_seq;
   const phase_id = req.params.phase_id;
-  const delete_result = await OperationClipModel.deletePhase(operation_seq, phase_id);
-  const update_result = await OperationClipModel.unsetPhase(operation_seq, phase_id);
+  const delete_result = await OperationClipService.deletePhase(operation_seq, phase_id);
+  const update_result = await OperationClipService.unsetPhase(operation_seq, phase_id);
 
   const output = new StdObject();
   output.add('result', update_result);
@@ -1137,7 +1137,7 @@ routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap
     }
   }
 
-  const clip_list = await OperationClipModel.findByMemberSeq(member_seq);
+  const clip_list = await OperationClipService.findByMemberSeq(member_seq);
 
   const output = new StdObject();
   output.add('clip_list', clip_list);

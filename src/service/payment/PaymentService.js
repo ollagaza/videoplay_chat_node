@@ -2,31 +2,48 @@ import DBMySQL from '../../database/knex-mysql'
 import PaymentModel from '../../database/mysql/payment/PaymentModel'
 import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel'
 
-const getPaymentList = async (database, lang='Kor') => {
-  const payment_model = new PaymentModel(DBMySQL);
-  const payment_list = await payment_model.getPaymentList(lang);
+const PaymentServiceClass = class {
+  constructor () {
+    this.log_prefix = '[PaymentServiceClass]'
+  }
 
-  return payment_list;
-};
+  getPaymentModel = (database = null) => {
+    if (database) {
+      return new PaymentModel(database)
+    }
+    return new PaymentModel(DBMySQL)
+  }
+  getPaymentResultModel = (database = null) => {
+    if (database) {
+      return new PaymentResultModel(database)
+    }
+    return new PaymentResultModel(DBMySQL)
+  }
 
-const insertPayment = async (database, pg_data) => {
-  let result = null;
-  const payment_result_model = new PaymentResultModel({ database });
-  result = payment_result_model.getPaymentCreate(pg_data);
+  getPaymentList = async (database, lang='Kor') => {
+    const payment_model = this.getPaymentModel(database);
+    const payment_list = await payment_model.getPaymentList(lang);
 
-  return result;
-};
+    return payment_list;
+  };
 
-const updatePayment = async (database, pg_data) => {
-  let result = null;
-  const payment_result_model = new PaymentResultModel({ database });
-  result = payment_result_model.getPaymentModify(pg_data);
+  insertPayment = async (database, pg_data) => {
+    let result = null;
+    const payment_result_model = this.getPaymentResultModel(database);
+    result = await payment_result_model.getPaymentCreate(pg_data);
 
-  return result;
-};
+    return result;
+  };
 
-export default {
-  getPaymentList,
-  insertPayment,
-  updatePayment,
-};
+  updatePayment = async (database, pg_data) => {
+    let result = null;
+    const payment_result_model = this.getPaymentResultModel(database);
+    result = await payment_result_model.getPaymentModify(pg_data);
+
+    return result;
+  };
+}
+
+const payment_service = new PaymentServiceClass()
+
+export default payment_service
