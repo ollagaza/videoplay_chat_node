@@ -24,7 +24,7 @@ export default class MemberSubModel extends MySQLModel {
   }
 
   getMemberSubInfo = async (lang, member_seq) => {
-    const query_result = await this.findOne({seq: member_seq});
+    const query_result = await this.findOne({member_seq: member_seq});
     const member_info = new MemberInfo(query_result);
     const medical = await MedicalModel.findAll();
     member_info.addKey('medical');
@@ -47,14 +47,14 @@ export default class MemberSubModel extends MySQLModel {
   };
 
   modifyMember = async (member_seq, member_info) => {
-    const query_result = await this.findOne({seq: member_seq});
+    const query_result = await this.findOne({member_seq: member_seq});
 
     member_info.setIgnoreEmpty(true);
     member_info.setAutoTrim(true);
 
     if (query_result !== undefined) {
       const member = member_info.toJSON();
-      return await this.update({seq: member_seq}, member);
+      return await this.update({member_seq: member_seq}, member);
     } else {
       const member = member_info.toJSON();
       member.seq = member_seq;
@@ -63,6 +63,6 @@ export default class MemberSubModel extends MySQLModel {
   };
 
   updateProfileImage = async (member_seq, profile_image_path) => {
-    return await this.update( { seq: member_seq }, { profile_image_path: profile_image_path } );
+    return await this.update( { member_seq: member_seq }, { profile_image_path: profile_image_path } );
   };
 }
