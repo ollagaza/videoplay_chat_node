@@ -13,6 +13,7 @@ const PaymentServiceClass = class {
     }
     return new PaymentModel(DBMySQL)
   }
+
   getPaymentResultModel = (database = null) => {
     if (database) {
       return new PaymentResultModel(database)
@@ -27,10 +28,17 @@ const PaymentServiceClass = class {
     return payment_list;
   };
 
+  getPaymentResult = async(database, member_seq) => {
+    const payment_result_model = this.getPaymentResultModel(database);
+    const result = await payment_result_model.getPaymentResult(member_seq);
+
+    return result;
+  };
+
   insertPayment = async (database, pg_data) => {
     let result = null;
     const payment_result_model = this.getPaymentResultModel(database);
-    result = await payment_result_model.getPaymentCreate(pg_data);
+    result = await payment_result_model.putPaymentCreate(pg_data);
 
     return result;
   };
@@ -38,7 +46,7 @@ const PaymentServiceClass = class {
   updatePayment = async (database, pg_data) => {
     let result = null;
     const payment_result_model = this.getPaymentResultModel(database);
-    result = await payment_result_model.getPaymentModify(pg_data);
+    result = await payment_result_model.putPaymentModify(pg_data);
 
     return result;
   };
