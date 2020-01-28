@@ -9,7 +9,22 @@ export default class PaymentResultModel extends MySQLModel {
     this.log_prefix = '[PaymentResultModel]'
   }
 
-  getPaymentCreate = async (pg_data) => {
+  getPaymentResult = async(member_seq) => {
+    const oKnex = this.database.raw(`
+    select list.*, result.* 
+    from payment_result result
+    inner join payment_list list on list.code = json_extract(result.custom_data, '$.code')
+    where result.success = 1
+      and buyer_seq = ${member_seq}
+      and result.customer_uid is null
+      and date_format(result.paid_at, '%Y%m') between date_format(date_sub(NOW(), interval 6 month), '%Y%m') and date_format(date_add(NOW(), interval 5 month), '%Y%m')
+    order by result.paid_at	desc
+    `);
+    
+    return await oKnex;
+  };
+
+  putPaymentCreate = async (pg_data) => {
     if (typeof pg_data.custom_data !== 'string') {
       pg_data.custom_data = JSON.stringify(pg_data.custom_data);
     }
@@ -17,7 +32,7 @@ export default class PaymentResultModel extends MySQLModel {
     return await this.create(pg_data);
   };
 
-  getPaymentModify = async (pg_data) => {
+  putPaymentModify = async (pg_data) => {
     if (typeof pg_data.custom_data !== 'string') {
       pg_data.custom_data = JSON.stringify(pg_data.custom_data);
     }

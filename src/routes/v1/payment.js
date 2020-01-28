@@ -1,4 +1,7 @@
 import { Router } from 'express';
+import Auth from '../../middlewares/auth.middleware';
+import Util from '../../utils/baseutil';
+import Role from "../../constants/roles";
 import Wrap from '../../utils/express-async';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
@@ -32,7 +35,7 @@ routes.get('/paymentlist', Wrap(async(req, res) => {
 routes.put('/paymentInsert', Wrap(async(req, res) => {
   req.accepts('application/json');
   const output = new StdObject();
-  const payment_insert = await PaymentService.insertPayment(database, req.body.pg_data);
+  const payment_insert = await PaymentService.insertPayment(DBMySQL, req.body.pg_data);
   output.add('result', payment_insert);
   res.json(output);
 }));
@@ -40,7 +43,7 @@ routes.put('/paymentInsert', Wrap(async(req, res) => {
 routes.put('/paymentUpdate', Wrap(async(req, res) => {
   req.accepts('application/json');
   const output = new StdObject();
-  const payment_update = await PaymentService.updatePayment(database, req.body.pg_data);
+  const payment_update = await PaymentService.updatePayment(DBMySQL, req.body.pg_data);
   output.add('result', payment_update);
   res.json(output);
 }));
@@ -48,9 +51,18 @@ routes.put('/paymentUpdate', Wrap(async(req, res) => {
 routes.put('/paymentPeriodUpdate', Wrap(async(req, res) => {
   req.accepts('application/json');
   const output = new StdObject();
-  const payment_update = await PaymentService.updatePayment(database, req.body.pg_data);
+  const payment_update = await PaymentService.updatePayment(DBMySQL, req.body.pg_data);
   output.add('result', payment_update);
   res.json(output);
 }));
 
+routes.post('/paymentResult', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+  const output = new StdObject();
+  const result = await PaymentService.getPaymentResult(DBMySQL, member_seq);
+  output.add('result', result);
+  res.json(output);
+}));
 export default routes;
