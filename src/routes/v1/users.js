@@ -1,30 +1,15 @@
 import { Router } from 'express';
-import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
 import Util from '../../utils/baseutil';
 import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import SendMail from '../../libs/send-mail';
-import MemberModel from '../../database/mysql/member/MemberModel';
-import MemberSubModel from '../../database/mysql/member/MemberSubModel';
-import MemberLogModel from '../../database/mysql/member/MemberLogModel';
-import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
-import { UserDataModel } from '../../database/mongodb/UserData';
+import MemberService from '../../service/member/MemberService'
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
-import MemberTemplate from '../../template/mail/member.template';
 
 const routes = Router();
-
-
-
-
-
-
 
 /**
  * @swagger
@@ -74,12 +59,12 @@ routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) =>
   const lang = Auth.getLanguage(req);
   const token_info = req.token_info;
   const member_seq = token_info.getId();
-  const member_info = await new MemberModel(DBMySQL).getMemberInfo(member_seq);
-  const member_sub_info = await new MemberSubModel(DBMySQL).getMemberSubInfo(lang, member_seq);
+  const member_info = await MemberService.getMemberInfoWithSub(DBMySQL, member_seq, lang);
 
   const output = new StdObject();
-  output.add('member_info', member_info);
-  output.add('member_sub_info', member_sub_info);
+  output.add('member_info', member_info.member_info);
+  output.add('member_sub_info', member_info.member_sub_info);
+
   res.json(output);
 }));
 
@@ -135,7 +120,7 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
     }
   }
 
-  const member_info = await new MemberModel(DBMySQL).getMemberInfo(member_seq);
+  const member_info = await MemberService.getMemberInfo(member_seq);
   const output = new StdObject();
   output.add('member_info', member_info);
   res.json(output);
@@ -179,16 +164,8 @@ routes.post('/', Wrap(async(req, res) => {
   // 커밋과 롤백은 자동임
   await DBMySQL.transaction(async(transaction) => {
     // 트랜잭션 사용해야 하므로 trx를 넘김
-    const oMemberModel = new MemberModel(transaction);
-
     // 사용자 삽입
-    const member_seq = await oMemberModel.createMember(member_info);
-    if (member_seq <= 0){
-      throw new StdObject(-1, '회원정보 생성 실패', 500);
-    }
-    const oMemberLogModel = new MemberLogModel(transaction);
-    await oMemberLogModel.createMemberLog(member_seq, "1000");
-    await oMemberLogModel.createMemberLog(member_seq, "1001", 300);
+    await MemberService.createMember(transaction, member_info);
   });
 
   res.json(new StdObject());
@@ -227,48 +204,25 @@ routes.post('/', Wrap(async(req, res) => {
  */
 routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const private_fields = ['password',
-    'license_no', 'license_image_path', 'special_no',
-    'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype',
-    'trainingcode', 'trainingname', 'universitycode', 'universityname',
-    'graduation_year', 'interrest_code', 'interrest_text'];
-
-  const sub_private_fields = ['regist_date', 'modify_date', 'user_id', 'password',
-    'user_nickname', 'user_name', 'gender', 'email_address',
-    'mail_acceptance', 'birth_day', 'cellphone', 'tel',
-    'user_media_path', 'profile_image_path', 'certkey', 'used',
-    'hospcode', 'hospname', 'treatcode', 'treatname',
-    'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
-    ];
 
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
 
-  if(token_info.getId() !== member_seq){
-    if(token_info.getRole() === Role.MEMBER){
-      throw new StdObject(-1, "잘못된 요청입니다.", 403);
-    }
+  if(!MemberService.checkMyToken(token_info, member_seq)){
+    throw new StdObject(-1, "잘못된 요청입니다.", 403);
   }
 
-  const member_info = new MemberInfo(req.body, private_fields);
-  const member_info_sub = new MemberInfoSub(req.body, sub_private_fields);
+  const member_info = new MemberInfo(req.body, MemberService.member_private_fields);
+  const member_sub_info = new MemberInfoSub(req.body, MemberService.member_sub_private_fields);
 
   member_info.checkUserNickname();
   member_info.checkEmailAddress();
 
   await DBMySQL.transaction(async(transaction) => {
-    const oMemberModel = new MemberModel(transaction);
-    const oMemberSubModel = new MemberSubModel(transaction);
-
-    // 사용자 정보 수정
-    const result = await oMemberModel.modifyMember(member_seq, member_info);
-    const result2 = await oMemberSubModel.modifyMember(member_seq, member_info_sub);
-    if (!result && !result2) {
+    const result = await MemberService.modifyMemberWithSub(transaction, member_seq, member_info, member_sub_info)
+    if (!result) {
       throw new StdObject(-1, '회원정보 수정 실패', 400);
     }
-
-    const oMemberLogModel = new MemberLogModel(transaction);
-    await oMemberLogModel.createMemberLog(member_seq, "1002");
   });
 
   res.json(new StdObject());
@@ -280,33 +234,12 @@ routes.put('/change_password/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAU
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
 
-  if(token_info.getId() !== member_seq){
-    if(token_info.getRole() === Role.MEMBER){
-      throw new StdObject(-1, "잘못된 요청입니다.", 403);
-    }
-  }
-
-  if (Util.trim(req.body.old_password) === '') {
-    throw new StdObject(-1, "잘못된 요청입니다.", 400);
-  }
-
-  if (req.body.password !== req.body.password_confirm) {
-    throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
+  if(!MemberService.checkMyToken(token_info, member_seq)){
+    throw new StdObject(-1, "잘못된 요청입니다.", 403);
   }
 
   const output = new StdObject();
-  let is_change = false;
-  await DBMySQL.transaction(async(transaction) => {
-    const member_model = new MemberModel(transaction);
-    const member_info = await member_model.getMemberInfo(member_seq);
-
-    await member_model.checkPassword(member_info, req.body.old_password, false);
-
-    // 비밀번호 변경 정보 수정
-    await member_model.changePassword(member_seq, req.body.password);
-    is_change = true;
-  });
-
+  const is_change = await MemberService.changePassword(DBMySQL, member_seq, req.body)
   output.add('is_change', is_change);
   res.json(output);
 }));
@@ -314,177 +247,29 @@ routes.put('/change_password/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAU
 routes.post('/find/id', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const member_info = new MemberInfo(req.body);
-  member_info.setKeys(['user_name', 'email_address']);
-  member_info.checkUserName();
-  member_info.checkEmailAddress();
-
-  const output = new StdObject();
-  let is_find = false;
-  await DBMySQL.transaction(async(transaction) => {
-    const oMemberModel = new MemberModel(transaction);
-    const find_member_info = await oMemberModel.findMemberId(member_info);
-    if (find_member_info && !find_member_info.isEmpty()) {
-      output.add('user_id', find_member_info.user_id);
-      output.add('user_name', find_member_info.user_name);
-      output.add('email_address', find_member_info.email_address);
-      is_find = true;
-    }
-  });
-  output.add('is_find', is_find);
+  const output = MemberService.findMemberId(DBMySQL, req.body)
   res.json(output);
 }));
 
 routes.post('/send_auth_code', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const member_info = new MemberInfo(req.body);
-  member_info.setKeys(['user_name', 'email_address', 'user_id']);
-  member_info.checkUserId();
-  member_info.checkUserName();
-  member_info.checkEmailAddress();
-
-  const output = new StdObject();
-  let is_send = false;
-  await DBMySQL.transaction(async(transaction) => {
-    const remain_time = 600;
-    const expire_time = Math.floor(Date.now() / 1000) + remain_time;
-
-    const member_model = new MemberModel(transaction);
-    const find_member_info = await member_model.findMemberInfo(member_info);
-    if (find_member_info && !find_member_info.isEmpty()) {
-      const auth_info = await new FindPasswordModel( transaction).createAuthInfo(find_member_info.seq, find_member_info.email_address, expire_time);
-      output.add('seq', auth_info.seq);
-      output.add('check_code', auth_info.check_code);
-      output.add('remain_time', remain_time);
-
-      const template_data = {
-        "user_name": find_member_info.user_name,
-        "user_id": find_member_info.user_id,
-        "email_address": find_member_info.email_address,
-        "send_code": auth_info.send_code,
-        "url_prefix": req.body.url_prefix,
-        "request_domain": req.body.request_domain
-      };
-
-      const send_mail_result = await new SendMail().sendMailHtml([find_member_info.email_address], 'Surgstory 비밀번호 인증코드 입니다.', MemberTemplate.findUserInfo(template_data));
-      if (send_mail_result.isSuccess() == false) {
-        throw send_mail_result;
-      }
-
-      is_send = true;
-    }
-  });
-  output.add('is_send', is_send);
+  const output = await MemberService.sendAuthCode(DBMySQL, req.body)
   res.json(output);
 }));
 
 routes.post('/check_auth_code', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const output = new StdObject();
-  let is_verify = false;
-  await DBMySQL.transaction(async(transaction) => {
-    const find_password_model = new FindPasswordModel( transaction);
-    const auth_info = await find_password_model.findAuthInfo(req.body.seq);
-    if (!auth_info) {
-      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400);
-    }
-    if (auth_info.send_code === req.body.send_code && auth_info.check_code === req.body.check_code) {
-      await find_password_model.setVerify(req.body.seq);
-      is_verify = true;
-    } else {
-      throw new StdObject(-1, '인증코드가 일치하지 않습니다.', 400);
-    }
-  });
-  output.add('is_verify', is_verify);
+  const output = await MemberService.checkAuthCode(DBMySQL, req.body)
   res.json(output);
 }));
 
 routes.post('/reset_password', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  if (req.body.password !== req.body.password_confirm) {
-    throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
-  }
-
-  const output = new StdObject();
-  let is_change = false;
-  await DBMySQL.transaction(async(transaction) => {
-    const find_password_model = new FindPasswordModel( transaction);
-    const auth_info = await find_password_model.findAuthInfo(req.body.seq);
-    if (!auth_info) {
-      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400);
-    }
-    if (auth_info.is_verify === 1) {
-      const member_model = new MemberModel(transaction);
-      await member_model.changePassword(auth_info.member_seq, req.body.password);
-      is_change = true;
-    } else {
-      throw new StdObject(-2, '인증정보가 존재하지 않습니다.', 400);
-    }
-  });
-  output.add('is_change', is_change);
+  const output = await MemberService.resetPassword(DBMySQL, req.body)
   res.json(output);
-}));
-
-/**
- * @swagger
- * /users/find:
- *  post:
- *    summary: "회원정보검색 후 비밀번호를 재설정하고 이메일 발송"
- *    tags: [Users]
- *    consumes:
- *    - "application/json"
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "body"
- *      in: "body"
- *      description: "회원가입 확인을 위한 기본 정보"
- *      required: true
- *      schema:
- *        $ref: "#/definitions/UserResetPasswordInfo"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
-routes.post('/find', Wrap(async(req, res) => {
-  req.accepts('application/json');
-
-  const member_info = new MemberInfo(req.body);
-  member_info.setKeys(['user_name', 'email_address', 'cellphone']);
-  member_info.checkUserName();
-  member_info.checkEmailAddress();
-  member_info.checkCellphone();
-
-  await DBMySQL.transaction(async(transaction) => {
-    const oMemberModel = new MemberModel(transaction);
-    const find_info = await oMemberModel.findMember(member_info);
-    const temp_password = Util.getRandomString();
-    const update_result = await oMemberModel.updateTempPassword(find_info.seq, temp_password);
-    if (!update_result) {
-      throw new StdObject(-1, '비밀번호 재설정 실패', 400);
-    }
-
-    const template_data = {
-      "user_name": find_info.user_name,
-      "email_address": find_info.email_address,
-      "tmp_password": temp_password,
-      "url_prefix": req.body.url_prefix,
-      "request_domain": req.body.request_domain
-    };
-
-    const send_mail_result = await new SendMail().sendMailHtml([find_info.email_address], 'MTEG 계정정보 찾기를 요청하셨습니다.', MemberTemplate.findUserInfo(template_data));
-    if (send_mail_result.isSuccess() === false) {
-      throw send_mail_result;
-    }
-  });
-
-  res.json(new StdObject());
 }));
 
 routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
@@ -496,50 +281,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.L
     }
   }
 
-  const output = new StdObject(-1, '프로필 업로드 실패');
-
-  await DBMySQL.transaction(async(transaction) => {
-    const member_model = new MemberModel(transaction);
-    const member_info = await member_model.getMemberInfo(member_seq);
-
-    const media_root = ServiceConfig.get('media_root');
-    const upload_path = member_info.user_media_path + `_upload_${Constants.SEP}profile`;
-    const upload_full_path = media_root + upload_path;
-    if (!(await Util.fileExists(upload_full_path))) {
-      await Util.createDirectory(upload_full_path);
-    }
-
-    await Util.uploadByRequest(req, res, 'profile', upload_full_path, Util.getRandomId());
-
-    const upload_file_info = req.file;
-    if (Util.isEmpty(upload_file_info)) {
-      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
-    }
-
-    const origin_image_path = upload_file_info.path;
-    const resize_image_path = upload_path + Constants.SEP + Util.getRandomId() + '.png';
-    const resize_image_full_path = media_root + resize_image_path;
-    const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
-
-    await Util.deleteFile(origin_image_path);
-
-    if (resize_result.success) {
-      const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
-      if (update_profile_result) {
-        if (!Util.isEmpty(member_info.profile_image_path)) {
-          await Util.deleteFile(media_root + member_info.profile_image_path);
-        }
-        output.error = 0;
-        output.message = '';
-        output.add('profile_image_url', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resize_image_path));
-      } else {
-        await Util.deleteFile(resize_image_full_path);
-        output.error = -2;
-      }
-    } else {
-      output.error = -3;
-    }
-  });
+  const output = await MemberService.changeProfileImage(DBMySQL, member_seq, req, res)
 
   res.json(output);
 }));
@@ -547,7 +289,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.L
 routes.post('/verify/user_id', Wrap(async(req, res) => {
   req.accepts('application/json');
   const user_id = req.body.user_id;
-  const is_duplicate = await new MemberModel(DBMySQL).isDuplicateId(user_id);
+  const is_duplicate = await MemberService.isDuplicateId(user_id);
 
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
@@ -558,7 +300,7 @@ routes.post('/verify/user_id', Wrap(async(req, res) => {
 routes.post('/verify/nickname', Wrap(async(req, res) => {
   req.accepts('application/json');
   const nickname = req.body.nickname;
-  const is_duplicate = await new MemberModel(DBMySQL).isDuplicateNickname(nickname);
+  const is_duplicate = await MemberService.isDuplicateNickname(nickname);
 
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
@@ -569,19 +311,11 @@ routes.post('/verify/nickname', Wrap(async(req, res) => {
 routes.get('/:member_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
-  log.d(req, token_info, member_seq, token_info.getId(), token_info.getId() !== member_seq);
-  if (token_info.getId() !== member_seq){
-    if(token_info.getRole() === Role.MEMBER){
-      throw new StdObject(-1, "잘못된 요청입니다.", 403);
-    }
+  if(!MemberService.checkMyToken(token_info, member_seq)){
+    throw new StdObject(-1, "잘못된 요청입니다.", 403);
   }
 
-
-  let user_data = await UserDataModel.findByMemberSeq(member_seq, '-_id -member_seq -created_date -modify_date');
-  if (!user_data) {
-    user_data = await UserDataModel.createUserData(member_seq, {});
-  }
-  log.d(req, user_data);
+  const user_data = await MemberService.getMemberMetadata(member_seq)
 
   const output = new StdObject();
   output.add('user_data', user_data);
@@ -593,30 +327,13 @@ routes.put('/Leave/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(
 
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
-  const leaveText = req.body.leaveText;
+  const leave_text = req.body.leaveText;
 
-  if(token_info.getId() !== member_seq){
-    if(token_info.getRole() === Role.MEMBER){
-      throw new StdObject(-1, "잘못된 요청입니다.", 403);
-    }
+  if(!MemberService.checkMyToken(token_info, member_seq)){
+    throw new StdObject(-1, "잘못된 요청입니다.", 403);
   }
 
-  const member_info = new MemberInfo();
-  member_info.addKey("used");
-  member_info.used = "2";
-
-  await DBMySQL.transaction(async(transaction) => {
-    const oMemberModel = new MemberModel(transaction);
-
-    // 사용자 정보 수정
-    const result = await oMemberModel.modifyMember(member_seq, member_info);
-    if (!result) {
-      throw new StdObject(-1, '회원정보 수정 실패', 400);
-    }
-
-    const oMemberLogModel = new MemberLogModel(transaction);
-    await oMemberLogModel.createMemberLog(member_seq, "9999", leaveText);
-  });
+  await MemberService.leaveMember(DBMySQL, member_seq, leave_text)
 
   res.json(new StdObject());
 }));
@@ -624,15 +341,13 @@ routes.put('/Leave/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(
 routes.post('/finds', Wrap(async(req, res) => {
   req.accepts('application/json');
   const output = new StdObject();
-  const searchText = req.body.searchText;
+  const search_text = req.body.searchText;
 
-  await DBMySQL.transaction(async(transaction) => {
-    const oMemberModel = new MemberModel(transaction);
-    const findUsers = await oMemberModel.findMembers(searchText);
-    output.add('user_data', findUsers);
-  });
+  const find_user_info_list = MemberService.findMembers(DBMySQL, search_text)
 
-  output.add("searchText", searchText);
+  output.add('user_data', find_user_info_list);
+  output.add("searchText", search_text);
+
   res.json(output);
 }));
 

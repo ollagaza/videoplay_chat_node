@@ -4,7 +4,7 @@ import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
-import MemberModel from '../../database/mysql/member/MemberModel';
+import MemberService from '../../service/member/MemberService'
 import MemberAuthMailModel from '../../database/mysql/member/MemberAuthMailModel';
 
 const routes = Router();
@@ -109,8 +109,7 @@ routes.post('/', Wrap(async(req, res) => {
   const user_id = req.body.user_id;
   const password = req.body.password;
 
-  const member_model = new MemberModel(DBMySQL);
-  const member_info = await member_model.findOne({"user_id": user_id});
+  const member_info = await MemberService.getMemberInfoById(DBMySQL, user_id)
 
   if (member_info == null || member_info.user_id !== user_id) {
     throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
@@ -118,7 +117,7 @@ routes.post('/', Wrap(async(req, res) => {
 
   // 임시 프리패스 비밀번호 설정. 데이터 연동 확인 후 삭제
   if (password !== 'dpaxldlwl_!') {
-    await member_model.checkPassword(member_info, password);
+    await MemberService.checkPassword(DBMySQL, member_info, password);
   }
 
   const member_seq = member_info.seq;
@@ -216,8 +215,7 @@ routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(
   const token_info = req.token_info;
   const member_seq = token_info.getId();
 
-  const member_model = new MemberModel(DBMySQL);
-  const member_info = await member_model.findOne({"seq": member_seq});
+  const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
 
   const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
   return res.json(output);

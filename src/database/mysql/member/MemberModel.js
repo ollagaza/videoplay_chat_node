@@ -36,12 +36,15 @@ export default class MemberModel extends MySQLModel {
     if (query_result && query_result.regist_date) {
       query_result.regist_date = Util.dateFormat(query_result.regist_date.getTime());
     }
-    const member_info = new MemberInfo(query_result, this.private_fields);
-    if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
-      member_info.addKey('profile_image_url');
-      member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
+    return new MemberInfo(query_result, this.private_fields);
+  };
+
+  getMemberInfoById = async (user_id) => {
+    const query_result = await this.findOne({"user_id": user_id});
+    if (query_result && query_result.regist_date) {
+      query_result.regist_date = Util.dateFormat(query_result.regist_date.getTime());
     }
-    return member_info;
+    return new MemberInfo(query_result, this.private_fields);
   };
 
   createMember = async (member_info) => {
@@ -65,21 +68,13 @@ export default class MemberModel extends MySQLModel {
   modifyMember = async (member_seq, member_info) => {
     member_info.setIgnoreEmpty(true);
     member_info.setAutoTrim(true);
-    member_info.password = this.encryptPassword(member_info.password);
+    if (member_info.password) {
+      member_info.password = this.encryptPassword(member_info.password);
+    }
     const member = member_info.toJSON();
     const result = await this.update({seq: member_seq}, member);
 
     return result;
-  };
-
-  findMember = async (member_info) => {
-    member_info.setAutoTrim(true);
-    const member = member_info.toJSON();
-    const find_user_result = await this.findOne({user_name: member.user_name, email_address: member.email_address, cellphone: member.cellphone});
-    if (!find_user_result || !find_user_result.seq) {
-      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
-    }
-    return new MemberInfo(find_user_result);
   };
 
   findMembers = async (searchText) => {
@@ -166,21 +161,12 @@ export default class MemberModel extends MySQLModel {
     return total_count > 0;
   };
 
-  checkPassword = async (member_info, password, db_update = true) => {
-    if (member_info.password.length <= 32) {
-      if (member_info.password !== Util.md5(password)){
-        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
-      }
-      if (db_update) {
-        await this.upgradePassword(member_info.seq, password);
-      }
-    } else {
-      if (member_info.password !== this.encryptPassword(password)) {
-        throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
-      }
-      if (db_update) {
-        await this.updateLastLogin(member_info.seq);
-      }
+  leaveMember = async (member_seq) => {
+    const update_info = {
+      "used": "2",
+      "modify_date": this.database.raw('NOW()')
     }
-  };
+    const result = await this.update({ seq: member_seq }, update_info);
+    return result;
+  }
 }
