@@ -58,7 +58,12 @@ const MemberServiceClass = class {
     return new MemberSubModel(DBMySQL)
   }
 
-  getMemberInfo = async (database, member_seq, options = {}) => {
+  getMemberInfo = async (database, member_seq) => {
+    const { member_info } = await this.getMemberInfoWidthModel(database, member_seq)
+    return member_info
+  }
+
+  getMemberInfoWidthModel = async (database, member_seq) => {
     const member_model = this.getMemberModel(database)
     const member_info = await member_model.getMemberInfo(member_seq)
     if (member_info.isEmpty() || !member_info.seq) {
@@ -68,13 +73,11 @@ const MemberServiceClass = class {
       member_info.addKey('profile_image_url');
       member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
     }
-    if (options.return_width_model === true) {
-      return {
-        member_model,
-        member_info
-      }
+
+    return {
+      member_model,
+      member_info
     }
-    return member_info
   }
 
   getMemberInfoById = async (database, user_id) => {
@@ -82,7 +85,7 @@ const MemberServiceClass = class {
     return await member_model.getMemberInfoById(user_id)
   }
 
-    getMemberSubInfo = async (database, member_seq, lang = 'kor') => {
+  getMemberSubInfo = async (database, member_seq, lang = 'kor') => {
     const member_sub_model = this.getMemberSubModel(database)
     return await member_sub_model.getMemberSubInfo(member_seq, lang)
   }
@@ -154,7 +157,7 @@ const MemberServiceClass = class {
       throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
     }
 
-    const { member_info, member_model } = await this.getMemberInfo(database, member_seq, { return_width_model: true })
+    const { member_info, member_model } = await this.getMemberInfoWidthModel(database, member_seq)
     await this.checkPassword(database, member_info, request_body.old_password, false)
     await member_model.changePassword(member_seq, request_body.password)
     return true
@@ -262,7 +265,7 @@ const MemberServiceClass = class {
   }
 
   changeProfileImage = async (database, member_seq, request, response) => {
-    const { member_info, member_model } = await this.getMemberInfo(database, member_seq, { return_width_model: true });
+    const { member_info, member_model } = await this.getMemberInfoWidthModel(database, member_seq);
 
     const output = new StdObject(-1, '프로필 업로드 실패');
 

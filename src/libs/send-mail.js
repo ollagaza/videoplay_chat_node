@@ -3,12 +3,17 @@ import _ from 'lodash'
 import smtp_config from '../config/smtp.config'
 import StdObject from '../wrapper/std-object'
 import Config from '../config/config'
+import log from './logger'
 
 const ENV = Config.getEnv()
 const IS_DEV = Config.isDev()
 const mail_config = smtp_config[ENV]
 
 export default class SendMail {
+  constructor () {
+    this.log_prefix = '[SendMail]'
+  }
+
   test = async () => {
     const mail_options = {
       text: '평문 보내기 테스트 444'
@@ -56,12 +61,14 @@ export default class SendMail {
         mail_options.attachments = attachments
       }
       result.adds(await transport.sendMail(mail_options))
-    } catch (e) {
+    } catch (error) {
       result.setError(-1)
       result.setHttpStatusCode(500)
+      result.setMessage(error.message)
       if (IS_DEV) {
-        result.stack = e.stack
+        result.stack = error.stack
       }
+      log.error(this.log_prefix, '[send]', error)
     } finally {
       await transport.close()
     }

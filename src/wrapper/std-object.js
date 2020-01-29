@@ -50,13 +50,9 @@ export default class StdObject {
     return this.httpStatusCode
   }
 
-  setMessage (message, type) {
+  setMessage (message) {
     if (typeof message === 'undefined') {
       message = 'success'
-    }
-
-    if (typeof type === 'undefined') {
-      type = null
     }
 
     this.message = message

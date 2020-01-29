@@ -19,6 +19,7 @@ import GetDimension from 'get-video-dimensions';
 import GetDuration from 'get-video-duration';
 import JsonPath from "jsonpath";
 import mime from "mime-types";
+import moment from 'moment'
 import ServiceConfig from '../service/service-config';
 import log from "../libs/logger";
 import StdObject from '../wrapper/std-object';
@@ -781,6 +782,21 @@ const getFileType = async (file_path, file_name) => {
   return mime_type;
 };
 
+const getCurrentTimestamp = () => {
+  const now = Date.now()
+  return Math.floor(now / 1000)
+}
+
+const addDay = (day, format = 'YYYY-MM-DD') => {
+  const calc_date = moment().add(day, 'days')
+  if (format == null) {
+    return calc_date.toDate()
+  } else if (format === Constants.TIMESTAMP) {
+    return calc_date.unix()
+  }
+  return calc_date.format(format)
+}
+
 export default {
   "convert": convert,
 
@@ -797,6 +813,8 @@ export default {
   "today": (format='yyyy-mm-dd') => { return dateFormatter(new Date().getTime(), format); },
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
   "currentFormattedDate": (format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(new Date().getTime(), format); },
+  'getCurrentTimestamp': getCurrentTimestamp,
+  'addDay': addDay,
 
   "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name;
