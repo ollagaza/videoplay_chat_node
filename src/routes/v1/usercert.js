@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
 import StdObject from '../../wrapper/std-object';
+import log from "../../libs/logger";
 
 const routes = Router();
 
@@ -137,8 +138,8 @@ function GetValue(plaindata , key){
   for (let i = 0; i < arrData.length; i++) {
     const item = arrData[i];
     if (item.indexOf(key) === 0) {
-      let valLen = parseInt(item.replace(key, ""));
-      value = arrData[i].substr(0 ,valLen);
+      let valLen = parseInt(item.replace(key, "").trim());
+      value = arrData[++i].substr(0 ,valLen);
       break;
     }
   }
