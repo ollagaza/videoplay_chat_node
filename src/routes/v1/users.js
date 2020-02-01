@@ -11,6 +11,7 @@ import log from "../../libs/logger";
 import SendMail from '../../libs/send-mail';
 import MemberModel from '../../database/mysql/member/MemberModel';
 import MemberSubModel from '../../database/mysql/member/MemberSubModel';
+import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel';
 import MemberLogModel from '../../database/mysql/member/MemberLogModel';
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { UserDataModel } from '../../database/mongodb/UserData';
@@ -168,7 +169,7 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const member_info = new MemberInfo(req.body, ['password_confirm', 'url_prefix', 'request_domain']);
+  const member_info = new MemberInfo(req.body, ['password_confirm', 'url_prefix', 'request_domain', 'payData']);
   member_info.checkDefaultParams();
   member_info.checkUserId();
   member_info.checkPassword();
@@ -183,12 +184,19 @@ routes.post('/', Wrap(async(req, res) => {
 
     // 사용자 삽입
     const member_seq = await oMemberModel.createMember(member_info);
+
     if (member_seq <= 0){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
+    } else {
+      const oMemberLogModel = new MemberLogModel(transaction);
+      await oMemberLogModel.createMemberLog(member_seq, "1000");
+      await oMemberLogModel.createMemberLog(member_seq, "1001", 300);
+
+      const oPaymentResultModel = new PaymentResultModel(transaction);
+      req.body.payData.buyer_seq = member_seq;
+      req.body.payData.paid_at = transaction.raw('CURRENT_TIMESTAMP');
+      await oPaymentResultModel.putPaymentCreate(req.body.payData);
     }
-    const oMemberLogModel = new MemberLogModel(transaction);
-    await oMemberLogModel.createMemberLog(member_seq, "1000");
-    await oMemberLogModel.createMemberLog(member_seq, "1001", 300);
   });
 
   res.json(new StdObject());
