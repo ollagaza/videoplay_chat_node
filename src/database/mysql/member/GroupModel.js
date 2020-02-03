@@ -59,4 +59,15 @@ export default class GroupModel extends MySQLModel {
     const update_params = this.getParams(group_info)
     return await this.update({ seq: group_seq }, update_params)
   }
+
+  updateStorageUsedSize = async (group_seq, used_storage_size) => {
+    const filter = {
+      seq: group_seq
+    }
+    const update_params = {
+      used_storage_size,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update(filter, update_params)
+  }
 }

@@ -21,14 +21,14 @@ export default class OperationModel extends MySQLModel {
   }
 
   getOperation = async (where, import_media_info) => {
-    const oKnex = this.database.select(join_select);
-    oKnex.from('operation');
-    oKnex.innerJoin("member", "member.seq", "operation.member_seq");
-    oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
-    oKnex.where(where);
-    oKnex.first();
+    const query = this.database.select(join_select);
+    query.from('operation');
+    query.innerJoin("member", "member.seq", "operation.member_seq");
+    query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
+    query.where(where);
+    query.first();
 
-    const query_result = await oKnex;
+    const query_result = await query;
 
     return await this.getOperationInfoWithMediaInfo(query_result, import_media_info);
   };
@@ -47,20 +47,20 @@ export default class OperationModel extends MySQLModel {
     const list_count = params && params.list_count ? params.list_count : 20;
     const page_count = params && params.page_count ? params.page_count : 10;
 
-    const oKnex = this.database.select(join_select);
-    oKnex.from('operation');
-    oKnex.innerJoin("member", "member.seq", "operation.member_seq");
-    oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
-    oKnex.whereIn('status', ['Y', 'T']);
+    const query = this.database.select(join_select);
+    query.from('operation');
+    query.innerJoin("member", "member.seq", "operation.member_seq");
+    query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
+    query.whereIn('status', ['Y', 'T']);
     if (token_info.getRole() <= Role.MEMBER) {
-      oKnex.andWhere('member_seq', token_info.getId());
+      query.andWhere('member_seq', token_info.getId());
     }
     if (query_params) {
       if (!Util.isNull(query_params.analysis_complete)) {
-        oKnex.andWhere('is_analysis_complete', Util.isTrue(query_params.analysis_complete) ? 1 : 0);
+        query.andWhere('is_analysis_complete', Util.isTrue(query_params.analysis_complete) ? 1 : 0);
       }
       if (!Util.isNull(query_params.status)) {
-        oKnex.andWhere('status', query_params.status.toUpperCase());
+        query.andWhere('status', query_params.status.toUpperCase());
       }
     }
 
@@ -68,9 +68,9 @@ export default class OperationModel extends MySQLModel {
     if (asc) {
       order_by.direction = 'ASC';
     }
-    oKnex.orderBy(order_by.name, order_by.direction);
+    query.orderBy(order_by.name, order_by.direction);
 
-    const paging_result = await this.queryPaginated(oKnex, list_count, page, page_count, params.no_paging);
+    const paging_result = await this.queryPaginated(query, list_count, page, page_count, params.no_paging);
 
     const result = [];
 
@@ -218,4 +218,62 @@ export default class OperationModel extends MySQLModel {
     const where = {"member_seq": member_seq, "seq": operation_info.seq};
     return await this.delete(where);
   };
+
+  getGroupMemberOperationList = async (group_seq, member_seq) => {
+    const filter = {
+      group_seq,
+      member_seq
+    }
+    const operation_list = []
+    const query_result = await this.find(filter)
+    if (query_result) {
+      for (let i = 0; i < query_result.length; i++) {
+        operation_list.push(this.getOperationInfoByResult(query_result[i]));
+      }
+    }
+    return operation_list
+  }
+
+  setGroupMemberOperationState = async (group_seq, member_seq, status) => {
+    const filter = {
+      group_seq,
+      member_seq
+    }
+    const params = {
+      status,
+      "modify_date": this.database.raw('NOW()')
+    }
+    return await this.update(filter, params);
+  }
+
+  getGroupTotalStorageUsedSize = async (group_seq) => {
+    const filter = {
+      group_seq
+    }
+
+    return await this.getGroupUsedStorageSize(filter)
+  }
+
+  getGroupMemberStorageUsedSize = async (group_seq, member_seq) => {
+    const filter = {
+      group_seq,
+      member_seq
+    }
+
+    return await this.getGroupUsedStorageSize(filter)
+  }
+
+  getGroupUsedStorageSize = async (filter) => {
+    const query = this.database.select([ 'SUM(operation_storage.total_file_size) AS total_size' ])
+    query.from('operation')
+    query.innerJoin("operation_storage", "operation_storage.operation_seq", "operation.seq")
+    query.where(filter)
+    query.whereIn('status', ['Y', 'T'])
+
+    const query_result = this.findOne(query)
+    if (!query_result || !query_result.total_size) {
+      return 0
+    }
+    return Util.parseInt(query_result.total_size)
+  }
 }

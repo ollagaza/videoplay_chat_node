@@ -29,7 +29,7 @@ const queryGenerator = (database, table_name, selectable_fields, filters = null,
 }
 
 const queryWhere = (oKnex, filters) => {
-  log.d(null, LOG_PREFIX, 'queryWhere', filters)
+  log.debug(LOG_PREFIX, 'queryWhere', filters)
   if (filters.is_new !== true) {
     oKnex.where(filters)
   } else {
@@ -38,7 +38,7 @@ const queryWhere = (oKnex, filters) => {
 }
 
 const jsonWhere = (oKnex, filters, is_or = false, is_or_key = false, caller = '') => {
-  log.d(null, LOG_PREFIX, 'jsonWhere', filters, is_or, is_or_key, caller)
+  log.debug(LOG_PREFIX, 'jsonWhere', filters, is_or, is_or_key, caller)
   const callback = function () {
     const filter_length = filters.length
     for (let i = 0; i < filter_length; i++) {
@@ -53,10 +53,10 @@ const jsonWhere = (oKnex, filters, is_or = false, is_or_key = false, caller = ''
 }
 
 const setQueryValues = (oKnex, filter_map, is_or = false) => {
-  log.d(null, LOG_PREFIX, 'setQueryValues', filter_map, is_or)
+  log.debug(LOG_PREFIX, 'setQueryValues', filter_map, is_or)
   Object.keys(filter_map).forEach((key) => {
     const filters = filter_map[key]
-    log.d(null, LOG_PREFIX, 'setQueryValues', key, filters, is_or)
+    log.debug(LOG_PREFIX, 'setQueryValues', key, filters, is_or)
     if (key === '$or') {
       jsonWhere(oKnex, filters, is_or, true, 'setQueryValues')
     } else if (key === '$and') {
@@ -108,7 +108,7 @@ const setQueryValue = (oKnex, key, values, is_or = false) => {
     args.push(values)
     function_name = is_or ? 'orWhere' : 'andWhere'
   }
-  log.d(null, LOG_PREFIX, 'setQueryValue', key, values, is_or, function_name, args)
+  log.debug(LOG_PREFIX, 'setQueryValue', key, values, is_or, function_name, args)
   oKnex[function_name].apply(oKnex, args)
 }
 

@@ -89,6 +89,34 @@ const OperationServiceClass = class {
       await Util.deleteDirectory(trans_video_directory);
     }
   };
+
+  deleteGroupMemberOperations = async (group_seq, member_seq) => {
+    const operation_model = this.getOperationModel()
+    await operation_model.setGroupMemberOperationState(group_seq, member_seq, 'D')
+    const operation_list = await operation_model.getGroupMemberOperationList(group_seq, member_seq);
+
+    (
+      async () => {
+        await this.deleteOperationByList(operation_list)
+      }
+    )()
+  }
+
+  deleteOperationByList = async (operation_list) => {
+    for (let i = 0; i < operation_list.length; i++) {
+      const operation_info = operation_list[i]
+    }
+  }
+
+  getGroupTotalStorageUsedSize = async (database, group_seq) => {
+    const operation_model = this.getOperationModel(database)
+    return await operation_model.getGroupTotalStorageUsedSize(group_seq)
+  }
+
+  getGroupMemberStorageUsedSize = async (database, group_seq, member_seq) => {
+    const operation_model = this.getOperationModel(database)
+    return await operation_model.getGroupMemberStorageUsedSize(group_seq, member_seq)
+  }
 }
 
 const operation_service = new OperationServiceClass()
