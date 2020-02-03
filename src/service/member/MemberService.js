@@ -7,9 +7,9 @@ import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import MemberLogService from './MemberLogService'
+import PaymentService from '../payment/PaymentService'
 import MemberModel from '../../database/mysql/member/MemberModel';
 import MemberSubModel from '../../database/mysql/member/MemberSubModel';
-import MemberLogModel from '../../database/mysql/member/MemberLogModel';
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
@@ -104,13 +104,22 @@ const MemberServiceClass = class {
     return await this.getMemberInfo(database, token_info.getId())
   }
 
-  createMember = async (database, member_info) => {
+  createMember = async (database, request_body) => {
+    const member_info = new MemberInfo(request_body, ['password_confirm', 'url_prefix', 'request_domain', 'payData']);
+    member_info.checkDefaultParams();
+    member_info.checkUserId();
+    member_info.checkPassword();
+    member_info.checkUserName();
+    member_info.checkUserNickname();
+    member_info.checkEmailAddress();
+
     const member_model = this.getMemberModel(database)
-    const member_seq = await member_model.createMember(member_info)
-    if (member_seq <= 0){
+    const create_member_info = await member_model.createMember(member_info)
+    if (!create_member_info.seq){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
-    await MemberLogService.memberJoinLog(database, member_seq)
+    await MemberLogService.memberJoinLog(database, create_member_info.seq)
+    await PaymentService.createDefaultPaymentResult(database, create_member_info.seq)
   }
 
   modifyMemberInfo = async (database, member_seq, member_info, add_log = true) => {

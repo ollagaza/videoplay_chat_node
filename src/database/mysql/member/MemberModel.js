@@ -62,7 +62,11 @@ export default class MemberModel extends MySQLModel {
       await Util.createDirectory(media_root + member.user_media_path);
     }
 
-    return await this.create(member);
+    const member_seq = await this.create(member, 'seq')
+    member_info.addKey('seq')
+    member_info.seq = member_seq
+
+    return member_info
   };
 
   modifyMember = async (member_seq, member_info) => {

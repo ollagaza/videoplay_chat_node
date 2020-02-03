@@ -11,7 +11,7 @@ export default class PaymentResultModel extends MySQLModel {
 
   getPaymentResult = async(member_seq) => {
     const oKnex = this.database.raw(`
-    select list.*, result.* 
+    select list.*, result.*
     from payment_result result
     inner join payment_list list on list.code = json_extract(result.custom_data, '$.code')
     where result.success = 1
@@ -20,8 +20,17 @@ export default class PaymentResultModel extends MySQLModel {
       and date_format(result.paid_at, '%Y%m') between date_format(date_sub(NOW(), interval 6 month), '%Y%m') and date_format(date_add(NOW(), interval 5 month), '%Y%m')
     order by result.paid_at	desc
     `);
-    
+
     return await oKnex;
+  };
+
+  createPaymentResultByMemberSeq = async (member_seq) => {
+    const create_params = {
+      buyer_seq: member_seq,
+      paid_at: this.database.raw('NOW()')
+    }
+
+    return await this.create(create_params);
   };
 
   putPaymentCreate = async (pg_data) => {

@@ -153,19 +153,9 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const member_info = new MemberInfo(req.body, ['password_confirm', 'url_prefix', 'request_domain']);
-  member_info.checkDefaultParams();
-  member_info.checkUserId();
-  member_info.checkPassword();
-  member_info.checkUserName();
-  member_info.checkUserNickname();
-  member_info.checkEmailAddress();
-
   // 커밋과 롤백은 자동임
   await DBMySQL.transaction(async(transaction) => {
-    // 트랜잭션 사용해야 하므로 trx를 넘김
-    // 사용자 삽입
-    await MemberService.createMember(transaction, member_info);
+    await MemberService.createMember(transaction, req.body);
   });
 
   res.json(new StdObject());
