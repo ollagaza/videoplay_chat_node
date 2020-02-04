@@ -24,9 +24,10 @@ const MemberServiceClass = class {
       'license_no', 'license_image_path', 'special_no',
       'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
-      'graduation_year', 'interrest_code', 'interrest_text'];
+      'graduation_year', 'interrest_code', 'interrest_text',
+      'member_seq'];
 
-    this.member_sub_private_fields = ['regist_date', 'modify_date', 'user_id', 'password',
+    this.member_sub_private_fields = ['seq', 'regist_date', 'modify_date', 'user_id', 'password',
       'user_nickname', 'user_name', 'gender', 'email_address',
       'mail_acceptance', 'birth_day', 'cellphone', 'tel',
       'user_media_path', 'profile_image_path', 'certkey', 'used',
@@ -118,8 +119,8 @@ const MemberServiceClass = class {
     if (!create_member_info.seq){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
-    await MemberLogService.memberJoinLog(database, create_member_info.seq)
     await PaymentService.createDefaultPaymentResult(database, create_member_info.seq)
+    await MemberLogService.memberJoinLog(database, create_member_info.seq)
   }
 
   modifyMemberInfo = async (database, member_seq, member_info, add_log = true) => {

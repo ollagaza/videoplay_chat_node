@@ -18,12 +18,12 @@ export default class MemberSubModel extends MySQLModel {
       'mail_acceptance', 'birth_day', 'cellphone', 'tel',
       'user_media_path', 'profile_image_path', 'certkey', 'used',
       'hospcode', 'hospname', 'treatcode', 'treatname',
-      'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
+      'etc1', 'etc2', 'etc3', 'etc4', 'etc5', 'seq'
     ]
     this.log_prefix = '[MemberSubModel]'
   }
 
-  getMemberSubInfo = async (lang, member_seq) => {
+  getMemberSubInfo = async (member_seq, lang) => {
     const query_result = await this.findOne({member_seq: member_seq});
     const member_info = new MemberInfo(query_result);
     const medical = await MedicalModel.findAll();
@@ -57,7 +57,7 @@ export default class MemberSubModel extends MySQLModel {
       return await this.update({member_seq: member_seq}, member);
     } else {
       const member = member_info.toJSON();
-      member.seq = member_seq;
+      member.member_seq = member_seq;
       return await this.create(member);
     }
   };

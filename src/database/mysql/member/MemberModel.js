@@ -17,7 +17,7 @@ export default class MemberModel extends MySQLModel {
       'license_no', 'license_image_path', 'special_no',
       'major', 'major_sub', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
-      'graduation_year', 'interrest_code', 'interrest_text'
+      'graduation_year', 'interrest_code', 'interrest_text', 'member_seq'
     ]
     this.log_prefix = '[MemberModel]'
   }
