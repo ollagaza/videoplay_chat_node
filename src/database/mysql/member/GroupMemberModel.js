@@ -11,8 +11,13 @@ export default class GroupMemberModel extends MySQLModel {
     this.selectable_fields = ['*']
     this.log_prefix = '[GroupMemberModel]'
     this.group_member_select = [
-      'group_member.seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade', 'group_member.status',
+      'group_member.seq AS group_member_seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade', 'group_member.status',
       'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq', 'member.hospname', 'member.treatcode', 'member.used'
+    ];
+    this.member_group_select = [
+      'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
+      'group_member.status AS group_member_status', 'group_member.join_date',
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name', 'group_info.storage_size'
     ];
   }
 
@@ -63,12 +68,20 @@ export default class GroupMemberModel extends MySQLModel {
 
   getMemberGroupList = async (member_seq, status = null, private_keys = null) => {
     const filter = {
-      member_seq
+      'group_member.member_seq': member_seq
     }
+    const in_raw = this.database.raw("group_info.status IN ('Y', 'F')")
+    const query = this.database.select(this.member_group_select);
+    query.from('group_member')
+    query.innerJoin("group_info", function() {
+      this.on("group_info.seq", "group_member.group_seq")
+        .andOn(in_raw)
+    })
+    query.where(filter)
     if (status) {
-      filter.status = status
+      query.where('group_member.status', status)
     }
-    const query_result = await this.find(filter)
+    const query_result = await query
     return this.getFindResultList(query_result, private_keys)
   }
 

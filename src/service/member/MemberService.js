@@ -63,6 +63,43 @@ const MemberServiceClass = class {
     return member_info
   }
 
+  isActiveMember = (member_info) => {
+    if (!member_info || member_info.isEmpty() || !member_info.seq) {
+      return false
+    }
+    return Util.parseInt(member_info.used, 0) === 1
+  }
+
+  getMemberStateError = (member_info) => {
+    const output = new StdObject()
+    if (this.isActiveMember(member_info)) {
+      output.error = -1
+      output.message = '등록된 회원이 아닙니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 0) {
+      output.error = -2
+      output.message = '회원가입 승인이 완료되지 않았습니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 2) {
+      output.error = -3
+      output.message = '탈퇴처리된 계정입니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 3) {
+      output.error = -4
+      output.message = '휴면처리된 계정입니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 4) {
+      output.error = -5
+      output.message = '사용중지된 계정입니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 5) {
+      output.error = -6
+      output.message = '사용제제된 계정입니다.'
+      output.httpStatusCode = 403
+    }
+    return output
+  }
+
   getMemberInfoWidthModel = async (database, member_seq) => {
     const member_model = this.getMemberModel(database)
     const member_info = await member_model.getMemberInfo(member_seq)

@@ -96,6 +96,7 @@ const GroupServiceClass = class {
   }
 
   getMemberGroupList = async (database, member_seq, is_active_only = true) => {
+    log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
     const status = is_active_only ? 'Y' : null
     const group_member_model = this.getGroupMemberModel(database)
     return await group_member_model.getMemberGroupList(member_seq, status)
