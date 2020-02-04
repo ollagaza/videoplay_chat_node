@@ -39,4 +39,18 @@ export default class TokenInfo {
   isMember = () => {
     return this.getRole() === Role.MEMBER
   }
+
+  getLang = () => {
+    return this.lang
+  }
+  setLang = (lang) => {
+    this.lang = lang
+  }
+
+  getGroupSeq = () => {
+    return this.group_seq
+  }
+  setGroupSeq = (group_seq) => {
+    this.group_seq = group_seq
+  }
 }

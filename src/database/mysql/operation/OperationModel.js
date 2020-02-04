@@ -51,10 +51,11 @@ export default class OperationModel extends MySQLModel {
     query.from('operation');
     query.innerJoin("member", "member.seq", "operation.member_seq");
     query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
+    query.andWhere('group_seq', token_info.getGroupSeq());
     query.whereIn('status', ['Y', 'T']);
-    if (token_info.getRole() <= Role.MEMBER) {
-      query.andWhere('member_seq', token_info.getId());
-    }
+    // if (token_info.getRole() <= Role.MEMBER) {
+    //   query.andWhere('member_seq', token_info.getId());
+    // }
     if (query_params) {
       if (!Util.isNull(query_params.analysis_complete)) {
         query.andWhere('is_analysis_complete', Util.isTrue(query_params.analysis_complete) ? 1 : 0);
