@@ -312,6 +312,20 @@ routes.get('/:member_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wra
   res.json(output);
 }));
 
+routes.put('/:member_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = Util.parseInt(req.params.member_seq);
+  if(!MemberService.checkMyToken(token_info, member_seq)){
+    throw new StdObject(-1, "잘못된 요청입니다.", 403);
+  }
+
+  const user_data = await MemberService.updateMemberMetadata(member_seq, req.body.changes)
+
+  const output = new StdObject();
+  output.add('user_data', user_data);
+  res.json(output);
+}));
+
 routes.put('/Leave/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
 

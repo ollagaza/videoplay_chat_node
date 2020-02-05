@@ -374,6 +374,10 @@ const MemberServiceClass = class {
     return user_data
   }
 
+  updateMemberMetadata = async (member_seq, changes) => {
+    return await UserDataModel.updateByMemberSeq(member_seq, changes);
+  }
+
   leaveMember = async (database, member_seq, leave_text) => {
     const member_model = this.getMemberModel(database)
     await member_model.leaveMember(member_seq)
