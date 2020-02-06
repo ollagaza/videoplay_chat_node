@@ -214,14 +214,15 @@ export default class MysqlModel {
 
     if (use_paging) {
       list_count = total_count;
-      cur_page = 1;
+    } else {
+      cur_page = 1
     }
 
     // 번호 매기기
     let virtual_no = total_count - (cur_page - 1) * list_count;
     for(let i = 0; i < data.length; i++) {
-      await new Promise(resolve => process.nextTick(resolve));
-      data[i] = { ...data[i], _no: virtual_no-- };
+      data[i]['_no'] = virtual_no;
+      virtual_no--;
     }
 
     const total_page = Math.ceil(total_count / list_count) || 1;

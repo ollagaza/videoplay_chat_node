@@ -129,28 +129,14 @@ const routes = Router();
  */
 routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  const page_query = {};
-  page_query.page = req.query.page;
-  page_query.list_count = req.query.list_count;
-  page_query.page_count = req.query.page_count;
-  page_query.no_paging = req.query.no_paging;
+
+  const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, token_info, req);
 
   const output = new StdObject();
-
-  const operation_model = new OperationModel(DBMySQL);
-  const operation_info_page = await operation_model.getOperationInfoListPage(page_query, token_info, req.query);
-
   output.adds(operation_info_page);
-
-  if (Util.equals(req.query.summary, 'y')) {
-    const summary_info = await new OperationStorageModel(DBMySQL).getStorageSummary(token_info);
-    if (summary_info !== null) {
-      output.add('summary_info', summary_info);
-    }
-  }
-
   res.json(output);
 }));
+
 
 /**
  * @swagger
@@ -478,110 +464,6 @@ routes.post('/:operation_seq(\\d+)/indexes/:second([\\d.]+)', Auth.isAuthenticat
   await new OperationStorageModel(DBMySQL).updateIndexCount(operation_info.storage_seq, 2, total_index_count);
   output.add("add_index_info", add_index_info);
 
-  res.json(output);
-}));
-
-/**
- * @swagger
- * /operations/{operation_seq}/clips:
- *  get:
- *    summary: "수술의 클립 목록"
- *    tags: [Operations]
- *    security:
- *    - access_token: []
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "operation_seq"
- *      in: "path"
- *      description: "수술정보 고유번호"
- *      type: "integer"
- *      require: true
- *    responses:
- *      200:
- *        description: "수술의 클립 정보"
- *        schema:
- *          type: "object"
- *          properties:
- *            error:
- *              type: "integer"
- *              description: "에러코드"
- *              default: 0
- *            message:
- *              type: "string"
- *              description: "에러 메시지"
- *              default: ""
- *            httpStatusCode:
- *              type: "integer"
- *              description: "HTTP Status Code"
- *              default: 200
- *            variables:
- *              $ref: "#definitions/Clip"
- *
- */
-routes.get('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  const token_info = req.token_info;
-  const operation_seq = req.params.operation_seq;
-
-  const {operation_info} = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const clip_info = await new ClipModel(DBMySQL).getClipInfo(operation_info);
-
-  const output = new StdObject();
-  output.add("clip_list", clip_info.clip_list);
-  output.add("clip_seq_list", clip_info.clip_seq_list);
-
-  res.json(output);
-}));
-
-
-/**
- * @swagger
- * /operations/{operation_seq}/clips:
- *  put:
- *    summary: "수정한 클립 정보 저장"
- *    tags: [Operations]
- *    security:
- *    - access_token: []
- *    consume:
- *    - "application/json"
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "operation_seq"
- *      in: "path"
- *      description: "수술정보 고유번호"
- *      type: "integer"
- *      require: true
- *    - name: "body"
- *      in: "body"
- *      description: "수정된 클립 정보"
- *      require: true
- *      type: "object"
- *      schema:
- *        $ref: "#definitions/Clip"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
-routes.put('/:operation_seq(\\d+)/clips', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  if (!req.body || !req.body.clip_list || !req.body.clip_seq_list) {
-    throw new StdObject(-1, "잘못된 요청입니다.", 400);
-  }
-
-  const token_info = req.token_info;
-  const operation_seq = req.params.operation_seq;
-
-  await DBMySQL.transaction(async(transaction) => {
-    const {operation_info, operation_model} = await OperationService.getOperationInfo(transaction, operation_seq, token_info);
-    const clip_count = await new ClipModel(transaction).saveClipInfo(operation_info, req.body);
-    await new OperationStorageModel(transaction).updateClipCount(operation_info.storage_seq, clip_count);
-    await operation_model.updateReviewStatus(operation_seq, clip_count > 0);
-  });
-
-  const output = new StdObject();
   res.json(output);
 }));
 
@@ -1129,15 +1011,13 @@ routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(Role.LOGIN_USE
 routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   let member_seq = req.params.member_seq;
-  if (token_info.getRole() === Role.MEMBER ) {
-    member_seq = token_info.getId();
-  } else if (member_seq !== token_info.getId()) {
+  if (member_seq && member_seq !== token_info.getId()) {
     if (token_info.getRole() !== Role.ADMIN) {
       throw new StdObject(-99, '권한이 없습니다.', 403);
     }
   }
 
-  const clip_list = await OperationClipService.findByMemberSeq(member_seq);
+  const clip_list = await OperationClipService.findByGroupSeq(token_info.group_seq);
 
   const output = new StdObject();
   output.add('clip_list', clip_list);

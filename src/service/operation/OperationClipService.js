@@ -35,6 +35,10 @@ const OperationClipServiceClass = class {
     return await OperationClipModel.findByMemberSeq(member_seq)
   }
 
+  findByGroupSeq = async (group_seq) => {
+    return await OperationClipModel.findByGroupSeq(group_seq)
+  }
+
   createPhase = async (operation_info, phase_desc) => {
     return await OperationClipModel.createPhase(operation_info, phase_desc)
   }
@@ -53,6 +57,14 @@ const OperationClipServiceClass = class {
 
   unsetPhaseOne = async (clip_id, operation_seq, phase_id) => {
     return await OperationClipModel.unsetPhaseOne(clip_id, operation_seq, phase_id)
+  }
+
+  migrationGroupSeq = async (member_seq, group_seq) => {
+    await OperationClipModel.migrationGroupSeq(member_seq, group_seq)
+  }
+
+  migrationGroupSeqByOperation = async (operation_seq, group_seq) => {
+    await OperationClipModel.migrationGroupSeqByOperation(operation_seq, group_seq)
   }
 }
 

@@ -36,11 +36,12 @@ export default class GroupMemberModel extends MySQLModel {
     if (is_set_modify_date) {
       params.modify_date = this.database.raw('NOW()')
     }
+    return params
   }
 
   createGroupMember = async (group_member_info) => {
     const create_params = this.getParams(group_member_info)
-    const group_member_seq = this.create(create_params, 'seq')
+    const group_member_seq = await this.create(create_params, 'seq')
     group_member_info.seq = group_member_seq
     if (!(group_member_info instanceof GroupMemberInfo)) {
       return new GroupMemberInfo(group_member_info)
@@ -54,7 +55,7 @@ export default class GroupMemberModel extends MySQLModel {
       group_seq,
       member_seq
     }
-    const query_result = this.findOne(filter)
+    const query_result = await this.findOne(filter)
     return new GroupMemberInfo(query_result, private_keys)
   }
 
@@ -62,7 +63,7 @@ export default class GroupMemberModel extends MySQLModel {
     const filter = {
       seq: group_member_seq
     }
-    const query_result = this.findOne(filter)
+    const query_result = await this.findOne(filter)
     return new GroupMemberInfo(query_result, private_keys)
   }
 

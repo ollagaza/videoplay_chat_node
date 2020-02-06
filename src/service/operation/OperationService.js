@@ -25,16 +25,41 @@ const OperationServiceClass = class {
     return Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
   }
 
-  getOperationInfo = async (database, operation_seq, token_info) => {
+  getOperationListByRequest = async (database, token_info, request) => {
+    const request_query = request.query | {};
+    const page_params = {};
+    page_params.page = request_query.page
+    page_params.list_count = request_query.list_count
+    page_params.page_count = request_query.page_count
+    page_params.no_paging = request_query.no_paging
+
+    const filter_params = {}
+    filter_params.analysis_complete = request_query.analysis_complete
+    filter_params.analysis_complete = request_query.status
+
+    return await this.getOperationList(database, token_info.getGroupSeq(), page_params, filter_params)
+  }
+
+  getOperationList = async (database, group_seq, page_params = {}, filter_params = {}) => {
+    page_params.no_paging = page_params.no_paging | 'n'
     const operation_model = this.getOperationModel(database);
-    const operation_info = await operation_model.getOperationInfo(operation_seq, token_info);
+    return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
+  }
+
+  getOperationInfo = async (database, operation_seq, token_info, check_owner= true) => {
+    const operation_model = this.getOperationModel(database);
+    const operation_info = await operation_model.getOperationInfo(operation_seq);
 
     if (operation_info == null || operation_info.isEmpty()) {
       throw new StdObject(-1, '수술 정보가 존재하지 않습니다.', 400);
     }
-    if (operation_info.member_seq !== token_info.getId()) {
-      if (token_info.getRole() !== Role.ADMIN) {
-        throw new StdObject(-99, '권한이 없습니다.', 403);
+    if (check_owner) {
+      if (operation_info.member_seq !== token_info.getId()) {
+        if (token_info.getRole() !== Role.ADMIN) {
+          if (operation_info.group_seq !== token_info.getGroupSeq()) {
+            throw new StdObject(-99, '권한이 없습니다.', 403);
+          }
+        }
       }
     }
 
@@ -116,6 +141,11 @@ const OperationServiceClass = class {
   getGroupMemberStorageUsedSize = async (database, group_seq, member_seq) => {
     const operation_model = this.getOperationModel(database)
     return await operation_model.getGroupMemberStorageUsedSize(group_seq, member_seq)
+  }
+
+  migrationGroupSeq = async (database, member_seq, group_seq) => {
+    const operation_model = this.getOperationModel(database)
+    await operation_model.migrationGroupSeq(member_seq, group_seq)
   }
 }
 

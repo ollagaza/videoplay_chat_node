@@ -389,6 +389,12 @@ const MemberServiceClass = class {
     const find_users = await member_model.findMembers(search_text);
     return find_users
   }
+
+  getMemberList = async (database, search_option = null) => {
+    const member_model = this.getMemberModel(database)
+    const member_list = await member_model.getMemberList(search_option)
+    return member_list
+  }
 }
 
 const member_service = new MemberServiceClass()

@@ -31,11 +31,12 @@ export default class GroupInviteModel extends MySQLModel {
     if (is_set_modify_date) {
       params.modify_date = this.database.raw('NOW()')
     }
+    return params
   }
 
   createGroupInvite = async (group_invite_info) => {
     const create_params = this.getParams(group_invite_info)
-    const invite_seq = this.create(create_params, 'seq')
+    const invite_seq = await this.create(create_params, 'seq')
     group_invite_info.seq = invite_seq
     if (!(group_invite_info instanceof GroupInviteInfo)) {
       return new GroupInviteInfo(group_invite_info)
@@ -48,7 +49,7 @@ export default class GroupInviteModel extends MySQLModel {
     const filter = {
       seq: group_invite_seq
     }
-    const query_result = this.findOne(filter)
+    const query_result = await this.findOne(filter)
     return new GroupInviteInfo(query_result, private_keys)
   }
 
@@ -60,7 +61,7 @@ export default class GroupInviteModel extends MySQLModel {
     if (invite_code) {
       filter.invite_code = invite_code
     }
-    const query_result = this.findOne(filter)
+    const query_result = await this.findOne(filter)
     return new GroupInviteInfo(query_result, private_keys)
   }
 

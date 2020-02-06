@@ -51,14 +51,32 @@ const GroupServiceClass = class {
       member_seq: member_info.seq,
       group_type: 'P',
       status: 'F',
-      group_name: member_info.name,
+      group_name: member_info.user_name,
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')),
       used_storage_size
     }
+    return await this.createGroupInfo(database, create_group_info, member_info.seq, options)
+  }
+
+  createEnterpriseGroup = async (database, group_type, member_info, options = {}) => {
+    const create_group_info = {
+      member_seq: member_info.seq,
+      group_type,
+      status: 'F',
+      group_name: member_info.user_name,
+      storage_size: 0,
+      used_storage_size: 0
+    }
+    return await this.createGroupInfo(database, create_group_info, member_info.seq, options)
+  }
+
+  createGroupInfo = async (database, create_group_info, member_seq, options) => {
+    log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
+    log.debug(this.log_prefix, '[createGroupInfo]', '[group_info]', group_info.toJSON())
 
-    const group_member_info = await this.addGroupMember(database, group_info, member_info.seq, 'O')
+    const group_member_info = await this.addGroupMember(database, group_info, member_seq, 'O')
 
     if (!options.result_by_object) {
       return group_info
@@ -78,7 +96,7 @@ const GroupServiceClass = class {
   }
 
   addGroupMember = async (database, group_info, member_seq, grade, max_storage_size = 0) => {
-    if (group_info.group_type === 'P') {
+    if (grade !== 'O' && group_info.group_type === 'P') {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
     const add_group_member_info = {
