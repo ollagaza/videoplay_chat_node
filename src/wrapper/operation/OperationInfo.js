@@ -138,7 +138,7 @@ export default class OperationInfo extends JsonWrapper {
       , 'patient_name', 'patient_age', 'patient_sex', 'hour', 'minute'
       , 'status', 'analysis_status', 'request_status', 'is_review', 'is_sharing', 'is_favorite'
       , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress'
-      , 'total_file_size', 'total_file_count', 'clip_count', 'service_video_count', 'report_count'
+      , 'total_file_size', 'total_file_count', 'clip_count', 'index2_file_count', 'origin_video_count', 'trans_video_count'
     ]);
 
     if (data) {

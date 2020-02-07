@@ -3,8 +3,10 @@ import ServiceConfig from '../../service/service-config';
 import Role from '../../constants/roles'
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
-
+import log from '../../libs/logger'
 import OperationModel from '../../database/mysql/operation/OperationModel';
+import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
+import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
 
 const OperationServiceClass = class {
   constructor () {
@@ -16,6 +18,20 @@ const OperationServiceClass = class {
       return new OperationModel(database)
     }
     return new OperationModel(DBMySQL)
+  }
+
+  getOperationStorageModel = (database = null) => {
+    if (database) {
+      return new OperationStorageModel(database)
+    }
+    return new OperationStorageModel(DBMySQL)
+  }
+
+  getOperationMediaModel = (database = null) => {
+    if (database) {
+      return new OperationMediaModel(database)
+    }
+    return new OperationMediaModel(DBMySQL)
   }
 
   getMediaDirectory = (operation_info) => {
@@ -146,6 +162,33 @@ const OperationServiceClass = class {
   migrationGroupSeq = async (database, member_seq, group_seq) => {
     const operation_model = this.getOperationModel(database)
     await operation_model.migrationGroupSeq(member_seq, group_seq)
+  }
+
+  migrationStorageSize = async (database) => {
+    const operation_storage_model = this.getOperationStorageModel(database)
+    await operation_storage_model.migrationStorageSize()
+  }
+
+  migrationTotalFileSize = async (database) => {
+    const operation_storage_model = this.getOperationStorageModel(database)
+    await operation_storage_model.migrationTotalFileSize()
+  }
+
+  migrationOriginVideoSize = async (database, member_seq) => {
+    const operation_model = this.getOperationModel(database)
+    const operation_storage_model = this.getOperationStorageModel(database)
+    const operation_list = await operation_model.getOperationListByMemberSeq(member_seq)
+    for (let i = 0; i < operation_list.length; i++) {
+      if (operation_list[i].status !== 'D') {
+        const operation_info = await operation_model.getOperationInfoWithMediaInfo(operation_list[i], true)
+        operation_info.setIgnoreEmpty(true)
+        if (operation_info.trans_video_path) {
+          const file_size = await Util.getFileSize(operation_info.trans_video_path)
+          log.debug(this.log_prefix, '[migrationOriginVideoSize]', file_size, operation_info.toJSON())
+          await operation_storage_model.migrationOriginVideoSize(operation_info.seq, file_size)
+        }
+      }
+    }
   }
 }
 

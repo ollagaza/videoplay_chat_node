@@ -110,7 +110,7 @@ video_project_schema.statics.updateStatus = function( group_seq, id_list, status
     status,
     modify_date: Date.now()
   };
-  return this.update( { group_seq: group_seq, _id: { $in: id_list } }, update, {"multi": true} );
+  return this.updateMany( { group_seq: group_seq, _id: { $in: id_list } }, update, {"multi": true} );
 };
 
 video_project_schema.statics.updateFavorite = function( id, is_favorite ) {
@@ -149,7 +149,7 @@ video_project_schema.statics.migrationGroupSeq = function( member_seq, group_seq
   const update = {
     group_seq
   };
-  return this.update( { member_seq: member_seq }, update, {"multi": true} );
+  return this.updateMany( { member_seq: member_seq }, update, {"multi": true} );
 };
 
 const video_project_model = mongoose.model( 'VideoProject', video_project_schema );

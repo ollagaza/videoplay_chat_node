@@ -974,17 +974,6 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Rol
   res.json(output);
 }));
 
-routes.get('/storage/summary', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
-
-  const output = new StdObject();
-  const summary_info = await new OperationStorageModel(DBMySQL).getStorageSummary(token_info);
-  if (summary_info !== null) {
-    output.add('summary_info', summary_info);
-  }
-  res.json(output);
-}));
-
 routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;

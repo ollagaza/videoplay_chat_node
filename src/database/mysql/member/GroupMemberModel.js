@@ -17,7 +17,8 @@ export default class GroupMemberModel extends MySQLModel {
     this.member_group_select = [
       'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
       'group_member.status AS group_member_status', 'group_member.join_date',
-      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name', 'group_info.storage_size'
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
+      'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size'
     ];
   }
 
@@ -192,14 +193,14 @@ export default class GroupMemberModel extends MySQLModel {
     return update_result
   }
 
-  updateStorageUsedSizeByMemberSeq = async (group_member_seq, used_storage_size) => {
+  updateStorageUsedSizeByGroupMemberSeq = async (group_member_seq, used_storage_size) => {
     const filter = {
       seq: group_member_seq
     }
     return await this.updateStorageUsedSize(filter, used_storage_size)
   }
 
-  updateStorageUsedSizeByGroupMemberSeq = async (group_seq, member_seq, used_storage_size) => {
+  updateStorageUsedSizeByMemberSeq = async (group_seq, member_seq, used_storage_size) => {
     const filter = {
       group_seq,
       member_seq

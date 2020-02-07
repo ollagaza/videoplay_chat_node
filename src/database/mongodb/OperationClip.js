@@ -103,7 +103,7 @@ operation_clip_schema.statics.deleteById = function( id ) {
 };
 
 operation_clip_schema.statics.deleteByOperationSeq = function( operation_seq ) {
-  return this.findOneAndDelete( { operation_seq: operation_seq } );
+  return this.deleteMany( { operation_seq: operation_seq }, {"multi": true} );
 };
 
 operation_clip_schema.statics.createPhase = function( operation_info, phase_desc ) {
@@ -140,7 +140,7 @@ operation_clip_schema.statics.setPhase = function( phase_id, id_list ) {
     is_phase: false,
     modify_date: Date.now()
   };
-  return this.update( { _id: { $in: id_list } }, update, {"multi": true} );
+  return this.updateMany( { _id: { $in: id_list } }, update, {"multi": true} );
 };
 
 operation_clip_schema.statics.unsetPhase = function( operation_seq, phase_id ) {
@@ -149,7 +149,7 @@ operation_clip_schema.statics.unsetPhase = function( operation_seq, phase_id ) {
     is_phase: false,
     modify_date: Date.now()
   };
-  return this.update( { operation_seq, phase_id }, update );
+  return this.updateMany( { operation_seq, phase_id }, update, {"multi": true} );
 };
 
 operation_clip_schema.statics.unsetPhaseOne = function( clip_id, operation_seq, phase_id ) {
@@ -166,7 +166,7 @@ operation_clip_schema.statics.migrationGroupSeq = function( member_seq, group_se
     group_seq
   };
   log.debug(log_prefix, '[migrationGroupSeq]', `member_seq: ${member_seq}, group_seq: ${group_seq}`)
-  return this.update( { member_seq: member_seq }, update, {"multi": true} );
+  return this.updateMany( { member_seq: member_seq }, update, {"multi": true} );
 };
 
 operation_clip_schema.statics.migrationGroupSeqByOperation = function( operation_seq, group_seq ) {
@@ -174,7 +174,7 @@ operation_clip_schema.statics.migrationGroupSeqByOperation = function( operation
     group_seq
   };
   log.debug(log_prefix, '[migrationGroupSeqByOperation]', `operation_seq: ${operation_seq}, group_seq: ${group_seq}`)
-  return this.update( { operation_seq: operation_seq }, update, {"multi": true} );
+  return this.updateMany( { operation_seq: operation_seq }, update, {"multi": true} );
 };
 
 const operation_clip_model = mongoose.model( 'OperationClip', operation_clip_schema );

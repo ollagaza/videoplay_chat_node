@@ -55,6 +55,10 @@ const OperationClipServiceClass = class {
     return await OperationClipModel.setPhase(phase_id, clip_id_list)
   }
 
+  unsetPhase = async (operation_seq, phase_id) => {
+    return await OperationClipModel.unsetPhase(operation_seq, phase_id)
+  }
+
   unsetPhaseOne = async (clip_id, operation_seq, phase_id) => {
     return await OperationClipModel.unsetPhaseOne(clip_id, operation_seq, phase_id)
   }

@@ -44,6 +44,48 @@ const GroupServiceClass = class {
     return new GroupInviteModel(DBMySQL)
   }
 
+  getBaseInfo = (req, group_seq_from_token = true) => {
+    const token_info = req.token_info;
+    const member_seq = token_info.getId()
+    const group_seq = group_seq_from_token ? token_info.getGroupSeq() : req.params.group_seq
+
+    return {
+      token_info,
+      member_seq,
+      group_seq
+    }
+  }
+
+  checkGroupAuth = async (database, req, group_seq_from_token = true, check_group_auth = true, throw_exception = false) => {
+    const { token_info, member_seq, group_seq } = this.getBaseInfo(req, group_seq_from_token)
+    const member_info = await MemberService.getMemberInfo(database, member_seq)
+    if (!MemberService.isActiveMember(member_info)) {
+      throw MemberService.getMemberStateError(member_info)
+    }
+    let group_member_info = null
+    let is_active_group_member = true
+    if ( token_info.getRole() === Role.ADMIN ) {
+      is_active_group_member = true
+    } else if (check_group_auth) {
+      if (!group_seq) {
+        is_active_group_member = false
+      } else {
+        group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
+        is_active_group_member = !group_member_info || group_member_info.isEmpty() || !group_member_info.group_seq || !group_member_info.member_seq
+      }
+    }
+    if ( !is_active_group_member && throw_exception) {
+      throw new StdObject(-1, '권한이 없습니다', 403)
+    }
+    return {
+      member_seq,
+      group_seq,
+      member_info,
+      group_member_info,
+      is_active_group_member
+    }
+  }
+
   createPersonalGroup = async (database, member_info, options = {}) => {
     const storage_size = Util.parseInt(options.storage_size, 0)
     const used_storage_size = Util.parseInt(options.used_storage_size, 0)
@@ -52,7 +94,7 @@ const GroupServiceClass = class {
       group_type: 'P',
       status: 'F',
       group_name: member_info.user_name,
-      storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')),
+      storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size
     }
     return await this.createGroupInfo(database, create_group_info, member_info.seq, options)
@@ -71,11 +113,12 @@ const GroupServiceClass = class {
   }
 
   createGroupInfo = async (database, create_group_info, member_seq, options) => {
+    const content_id = Util.getContentId()
+    create_group_info.content_id = content_id
+    create_group_info.media_path = `/group/${content_id}`
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
-    log.debug(this.log_prefix, '[createGroupInfo]', '[group_info]', group_info.toJSON())
-
     const group_member_info = await this.addGroupMember(database, group_info, member_seq, 'O')
 
     if (!options.result_by_object) {
@@ -104,7 +147,7 @@ const GroupServiceClass = class {
       member_seq,
       max_storage_size: max_storage_size ? max_storage_size : group_info.storage_size,
       used_storage_size: 0,
-      grade: 'N',
+      grade: grade,
       status: 'Y',
       join_date: Util.getCurrentTimestamp()
     }
@@ -286,6 +329,7 @@ const GroupServiceClass = class {
 
   updateGroupUsedStorage = async (database, group_seq) => {
     const operation_storage_used = await OperationService.getGroupTotalStorageUsedSize(database, group_seq)
+    log.debug(this.log_prefix, '[updateGroupUsedStorage]', group_seq, operation_storage_used)
     const total_storage_used = operation_storage_used
     const group_model = this.getGroupModel(database)
     await group_model.updateStorageUsedSize(group_seq, total_storage_used)
@@ -293,9 +337,9 @@ const GroupServiceClass = class {
 
   updateMemberUsedStorage = async (database, group_seq, member_seq) => {
     const operation_storage_used = await OperationService.getGroupMemberStorageUsedSize(database, group_seq, member_seq)
-    const total_storage_used = operation_storage_used
     const group_member_model = this.getGroupMemberModel(database)
-    await group_member_model.updateStorageUsedSizeByMemberSeq(group_seq, member_seq, total_storage_used)
+    await group_member_model.updateStorageUsedSizeByMemberSeq(group_seq, member_seq, operation_storage_used)
+    await this.updateGroupUsedStorage(database, group_seq)
   }
 
   updateMemberUsedStorageBySeq = async (database, group_member_seq) => {

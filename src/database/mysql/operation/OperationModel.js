@@ -4,12 +4,17 @@ import Role from '../../../constants/roles'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import StdObject from '../../../wrapper/std-object'
+import log from '../../../libs/logger'
 
 import OperationMediaModel from './OperationMediaModel';
 import OperationInfo from '../../../wrapper/operation/OperationInfo';
 import MemberModel from '../member/MemberModel';
 
-const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
+const join_select = [
+  'operation.*', 'member.user_name', 'operation_storage.seq as storage_seq',
+  'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
+  'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
+];
 
 export default class OperationModel extends MySQLModel {
   constructor(database) {
@@ -256,22 +261,26 @@ export default class OperationModel extends MySQLModel {
   }
 
   getGroupUsedStorageSize = async (filter) => {
-    const query = this.database.select([ 'SUM(operation_storage.total_file_size) AS total_size' ])
+    const query = this.database.select([ this.database.raw('SUM(operation_storage.origin_video_size) AS total_size') ])
     query.from('operation')
     query.innerJoin("operation_storage", "operation_storage.operation_seq", "operation.seq")
     query.where(filter)
     query.whereIn('status', ['Y', 'T'])
+    query.first()
 
-    const query_result = this.findOne(query)
+    const query_result = await query
+    log.debug(this.log_prefix, '[getGroupUsedStorageSize]', filter, query_result)
     if (!query_result || !query_result.total_size) {
       return 0
     }
+    log.debug(this.log_prefix, '[getGroupUsedStorageSize - return]', filter, query_result.total_size, Util.parseInt(query_result.total_size))
     return Util.parseInt(query_result.total_size)
   }
 
   getOperationListByMemberSeq = async (member_seq) => {
-    return this.find({ member_seq })
+    return await this.find({ member_seq })
   }
+
   migrationGroupSeq = async (member_seq, group_seq) => {
     return await this.update({"member_seq": member_seq}, { group_seq });
   }

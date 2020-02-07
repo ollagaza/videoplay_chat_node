@@ -6,43 +6,12 @@ import Role from "../../constants/roles";
 import Wrap from '../../utils/express-async';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
-import MemberService from '../../service/member/MemberService';
 import GroupService from '../../service/member/GroupService';
 
 const routes = Router();
 
-const getBaseInfo = (req) => {
-  const token_info = req.token_info;
-  const member_seq = token_info.getId()
-  const group_seq = req.params.group_seq
-
-  return {
-    token_info,
-    member_seq,
-    group_seq
-  }
-}
-
 const checkGroupAuth = async (database, req, check_group_auth = true, throw_exception = false) => {
-  const { token_info, member_seq, group_seq } = getBaseInfo(req)
-  const member_info = await MemberService.getMemberInfo(database, member_seq)
-  if (!MemberService.isActiveMember(member_info)) {
-    throw MemberService.getMemberStateError(member_info)
-  }
-  let is_active_group_member = true;
-  if ( token_info.getRole() === Role.ADMIN ) {
-    is_active_group_member = true
-  } else if (check_group_auth) {
-    is_active_group_member = await GroupService.isActiveGroupMember(database, group_seq, member_seq)
-    if ( !is_active_group_member && throw_exception) {
-      throw new StdObject(-1, '권한이 없습니다', 403)
-    }
-  }
-  return {
-    member_seq,
-    group_seq,
-    is_active_group_member
-  }
+  return await GroupService.checkGroupAuth(database, req, false, check_group_auth, throw_exception)
 }
 
 routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
