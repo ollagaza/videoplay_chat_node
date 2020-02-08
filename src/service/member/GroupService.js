@@ -10,11 +10,6 @@ import MemberService from './MemberService'
 import OperationService from '../operation/OperationService'
 import GroupModel from '../../database/mysql/member/GroupModel';
 import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
-import GroupInviteModel from '../../database/mysql/member/GroupInviteModel';
-import GroupInfo from "../../wrapper/member/GroupInfo";
-import GroupMemberInfo from "../../wrapper/member/GroupMemberInfo";
-import GroupInviteInfo from "../../wrapper/member/GroupInviteInfo";
-import MemberModel from '../../database/mysql/member/MemberModel'
 import SendMail from '../../libs/send-mail'
 import MemberTemplate from '../../template/mail/member.template'
 
@@ -35,13 +30,6 @@ const GroupServiceClass = class {
       return new GroupMemberModel(database)
     }
     return new GroupMemberModel(DBMySQL)
-  }
-
-  getGroupInviteModel = (database) => {
-    if (database) {
-      return new GroupInviteModel(database)
-    }
-    return new GroupInviteModel(DBMySQL)
   }
 
   getBaseInfo = (req, group_seq_from_token = true) => {
@@ -171,8 +159,8 @@ const GroupServiceClass = class {
 
   getGroupMemberListWithInvite = async (database, group_seq, is_active_only = false) => {
     const status = is_active_only ? 'Y' : null
-    const group_invite_model = this.getGroupInviteModel(database)
-    return await group_invite_model.getGroupMemberList(group_seq, status)
+    const group_model = this.getGroupModel(database)
+    return await group_model.getGroupAdminMemberList(group_seq, status)
   }
 
   getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
@@ -238,14 +226,32 @@ const GroupServiceClass = class {
     }
   }
 
-  getAvailableInviteId = async (database) => {
+  checkInviteEmail = async (database, email_address) => {
     const group_invite_model = this.getGroupInviteModel(database)
     let invite_id;
+    let invite_code;
     let count = 0
     while (count < 5) {
       invite_id = Util.getContentId()
-      if (await group_invite_model.isAvailableInviteId(invite_id)) {
-        return invite_id
+      invite_code = Util.getRandomString(8).toUpperCase()
+      if (await group_invite_model.isAvailableInviteId(invite_id, invite_code)) {
+        return { invite_id, invite_code }
+      }
+      count++
+    }
+    throw new StdObject(-1, '초대 아이디를 생성할 수 없습니다.', 400)
+  }
+
+  getAvailableInviteId = async (database) => {
+    const group_invite_model = this.getGroupInviteModel(database)
+    let invite_id;
+    let invite_code;
+    let count = 0
+    while (count < 5) {
+      invite_id = Util.getContentId()
+      invite_code = Util.getRandomString(8).toUpperCase()
+      if (await group_invite_model.isAvailableInviteId(invite_id, invite_code)) {
+        return { invite_id, invite_code }
       }
       count++
     }
@@ -253,17 +259,16 @@ const GroupServiceClass = class {
   }
 
   inviteGroupMember = async (database, owner_info, group_info, email_address) => {
-    const invite_id = await this.getAvailableInviteId()
-    const invite_code = Util.getRandomString(8).toUpperCase()
+    const { invite_id, invite_code } = await this.getAvailableInviteId()
 
     const create_invite_params = {
       invite_id,
       invite_code,
       group_seq: group_info.seq,
-      email: email_address,
-      status: 'N'
+      invite_email: email_address,
+      invite_status: 'N'
     }
-    const group_invite_model = this.getGroupInviteModel(database)
+    const group_member_model = this.getGroupMemberModel(database)
     await group_invite_model.expireInviteInfo(group_info.seq, email_address)
     const group_invite_info = await group_invite_model.createGroupInvite(create_invite_params)
 

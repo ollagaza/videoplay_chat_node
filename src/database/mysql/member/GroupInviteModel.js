@@ -95,34 +95,6 @@ export default class GroupInviteModel extends MySQLModel {
     return update_result
   }
 
-  isAvailableInviteId = async (invite_id) => {
-    const select = ['COUNT(*) AS total_count']
-    const filter = {
-      invite_id
-    }
-    const find_result = await this.findOne(filter, select);
-    if (!find_result) {
-      return true
-    }
-    return Util.parseInt(find_result.total_count, 0) === 0
-  }
-
-  expireInviteInfo = async (group_seq, email_address) => {
-    const filter = {
-      group_seq,
-      email: email_address
-    }
-    const update_params = {
-      invite_id: null,
-      invite_code: null,
-      status: 'D',
-      modify_date: this.database.raw('NOW()')
-    }
-    const update_result = await this.update(filter, update_params)
-    log.debug(this.log_prefix, '[expireInviteInfo]', update_result)
-    return update_result
-  }
-
   getGroupMemberList = async (group_seq) => {
     const filter = {
       group_seq

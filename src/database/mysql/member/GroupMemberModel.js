@@ -215,4 +215,98 @@ export default class GroupMemberModel extends MySQLModel {
     }
     return await this.update(filter, update_params)
   }
+
+
+
+  isAvailableInviteId = async (invite_id, invite_code) => {
+    const select = ['COUNT(*) AS total_count']
+    const filter = {
+      invite_id,
+      invite_code
+    }
+    const find_result = await this.findOne(filter, select);
+    if (!find_result) {
+      return true
+    }
+    return Util.parseInt(find_result.total_count, 0) === 0
+  }
+
+  expireInviteInfo = async (group_seq, email_address) => {
+    const filter = {
+      group_seq,
+      email: email_address
+    }
+    const update_params = {
+      invite_id: null,
+      invite_code: null,
+      status: 'D',
+      modify_date: this.database.raw('NOW()')
+    }
+    const update_result = await this.update(filter, update_params)
+    log.debug(this.log_prefix, '[expireInviteInfo]', update_result)
+    return update_result
+  }
+
+
+
+  createGroupInvite = async (group_invite_info) => {
+    const create_params = this.getParams(group_invite_info)
+    const invite_seq = await this.create(create_params, 'seq')
+    group_invite_info.seq = invite_seq
+    if (!(group_invite_info instanceof GroupInviteInfo)) {
+      return new GroupInviteInfo(group_invite_info)
+    }
+    group_invite_info.addKey('seq')
+    return group_invite_info
+  }
+
+  getGroupInviteInfo = async (group_invite_seq, private_keys = null) => {
+    const filter = {
+      seq: group_invite_seq
+    }
+    const query_result = await this.findOne(filter)
+    return new GroupInviteInfo(query_result, private_keys)
+  }
+
+  getGroupInviteByCode = async (invite_id, invite_code, private_keys = null) => {
+    const filter = {}
+    if (invite_id) {
+      filter.invite_id = invite_id
+    }
+    if (invite_code) {
+      filter.invite_code = invite_code
+    }
+    const query_result = await this.findOne(filter)
+    return new GroupInviteInfo(query_result, private_keys)
+  }
+
+  updateInviteStatus = async (group_invite_seq, status, error = null) => {
+    const filter = {
+      seq: group_invite_seq
+    }
+    const update_params = {
+      status,
+      modify_date: this.database.raw('NOW()')
+    }
+    if (error) {
+      update_params.error = error
+    }
+    const update_result = await this.update(filter, update_params)
+    log.debug(this.log_prefix, '[updateInviteStatus]', update_result)
+    return update_result
+  }
+
+  inviteConfirm = async (group_invite_seq, member_seq) => {
+    const filter = {
+      seq: group_invite_seq
+    }
+    const update_params = {
+      member_seq,
+      confirm_date: this.database.raw('NOW()'),
+      modify_date: this.database.raw('NOW()')
+    }
+    const update_result = await this.update(filter, update_params)
+    log.debug(this.log_prefix, '[inviteConfirm]', update_result)
+    return update_result
+  }
 }

@@ -212,9 +212,7 @@ export default class MysqlModel {
     ]);
 
 
-    if (use_paging) {
-      list_count = total_count;
-    } else {
+    if (!use_paging) {
       cur_page = 1
     }
 
