@@ -33,10 +33,10 @@ routes.get('/:group_seq(\\d+)/auth', Auth.isAuthenticated(Role.DEFAULT), Wrap(as
   res.json(output);
 }));
 
-routes.get('/:group_seq(\\d+)/member_list', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
   const { group_seq } = await checkGroupAuth(DBMySQL, req)
-  const group_member_list = await GroupService.getGroupMemberList(DBMySQL, group_seq)
+  const group_member_list = await GroupService.getGroupMemberList(DBMySQL, group_seq, req)
 
   const output = new StdObject();
   output.add('group_member_list', group_member_list);

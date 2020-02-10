@@ -1,6 +1,5 @@
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
 import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
@@ -11,7 +10,6 @@ import OperationService from '../operation/OperationService'
 import GroupModel from '../../database/mysql/member/GroupModel';
 import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
 import SendMail from '../../libs/send-mail'
-import MemberTemplate from '../../template/mail/member.template'
 
 const GroupServiceClass = class {
   constructor () {
@@ -151,16 +149,21 @@ const GroupServiceClass = class {
     return await group_member_model.getMemberGroupList(member_seq, status)
   }
 
-  getGroupMemberList = async (database, group_seq, is_active_only = false) => {
-    const status = is_active_only ? 'Y' : null
-    const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getGroupMemberList(group_seq, status)
-  }
+  getGroupMemberList = async (database, group_seq, request) => {
+    const request_body = request.body ? request.body : {}
+    const status = request_body.status
+    const search_text = request_body.search_text
 
-  getGroupMemberListWithInvite = async (database, group_seq, is_active_only = false) => {
-    const status = is_active_only ? 'Y' : null
-    const group_model = this.getGroupModel(database)
-    return await group_model.getGroupAdminMemberList(group_seq, status)
+    const paging = {}
+    paging.list_count = request_body.list_count ? request_body.list_count : 20
+    paging.cur_page = request_body.cur_page ? request_body.cur_page : 1
+    paging.page_count = request_body.page_count ? request_body.page_count : 10
+    paging.no_paging = request_body.no_paging ? request_body.no_paging : 'Y'
+
+    log.debug(this.log_prefix, '[getGroupMemberList]', request_body, status, search_text, paging)
+
+    const group_member_model = this.getGroupMemberModel(database)
+    return await group_member_model.getGroupMemberList(group_seq, status, paging, search_text)
   }
 
   getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
@@ -222,36 +225,24 @@ const GroupServiceClass = class {
         async (owner_info, group_info, email_address) => {
           await this.inviteGroupMember(null, owner_info, group_info, email_address)
         }
-      )(owner_info, group_info, invite_email_list[i])
+      )(owner_info, group_info_json, invite_email_list[i])
     }
   }
 
-  checkInviteEmail = async (database, email_address) => {
-    const group_invite_model = this.getGroupInviteModel(database)
-    let invite_id;
-    let invite_code;
-    let count = 0
-    while (count < 5) {
-      invite_id = Util.getContentId()
-      invite_code = Util.getRandomString(8).toUpperCase()
-      if (await group_invite_model.isAvailableInviteId(invite_id, invite_code)) {
-        return { invite_id, invite_code }
-      }
-      count++
-    }
-    throw new StdObject(-1, '초대 아이디를 생성할 수 없습니다.', 400)
+  getGroupMemberByEmail = async (database, group_seq, email_address) => {
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_member_info = await group_member_model.getGroupMemberByEmail(group_seq, email_address)
+    return group_member_info
   }
 
   getAvailableInviteId = async (database) => {
-    const group_invite_model = this.getGroupInviteModel(database)
-    let invite_id;
+    const group_member_model = this.getGroupMemberModel(database)
     let invite_code;
     let count = 0
     while (count < 5) {
-      invite_id = Util.getContentId()
       invite_code = Util.getRandomString(8).toUpperCase()
-      if (await group_invite_model.isAvailableInviteId(invite_id, invite_code)) {
-        return { invite_id, invite_code }
+      if (await group_member_model.isAvailableInviteCode(invite_code)) {
+        return invite_code
       }
       count++
     }
@@ -259,57 +250,62 @@ const GroupServiceClass = class {
   }
 
   inviteGroupMember = async (database, owner_info, group_info, email_address) => {
-    const { invite_id, invite_code } = await this.getAvailableInviteId()
-
-    const create_invite_params = {
-      invite_id,
-      invite_code,
-      group_seq: group_info.seq,
-      invite_email: email_address,
-      invite_status: 'N'
-    }
-    const group_member_model = this.getGroupMemberModel(database)
-    await group_invite_model.expireInviteInfo(group_info.seq, email_address)
-    const group_invite_info = await group_invite_model.createGroupInvite(create_invite_params)
-
-    const title = `<b>${owner_info.hospname}</b>의 ${owner_info.user_name}님이 Surgstory에 초대하였습니다.`
-    const body = `<a href='${ServiceConfig.get('service_url')}/invite/code=${invite_code}&id=${invite_id}&type=group' target="_blank">클릭</a>`
-    const send_mail_result = await new SendMail().sendMailHtml([group_invite_info.email_address], title, body);
-    if (send_mail_result.isSuccess() === false) {
-      await group_invite_model.updateInviteStatus(group_invite_model.seq, 'E', send_mail_result.message)
+    let group_member_seq;
+    const group_seq = group_info.seq
+    let group_member_info = await this.getGroupMemberByEmail(database, group_seq, email_address)
+    if (!group_member_info.isEmpty() && group_member_info.status !== 'N') {
       return
     }
-    await group_invite_model.updateInviteStatus(group_invite_model.seq, 'S')
+    const invite_code = await this.getAvailableInviteId()
+
+    const group_member_model = this.getGroupMemberModel(database)
+    if (group_member_info.isEmpty()) {
+      group_member_seq = group_member_info.seq
+      await group_member_model.resetInviteInfo(group_member_seq, invite_code)
+    } else {
+      group_member_info = await group_member_model.createGroupInvite(group_seq, invite_code, email_address)
+      group_member_seq = group_member_info.seq
+    }
+
+
+    const title = `<b>${owner_info.hospname}</b>의 ${owner_info.user_name}님이 Surgstory에 초대하였습니다.`
+    const body = `<a href='${ServiceConfig.get('service_url')}/invite/group/${invite_code}' target="_blank">클릭</a>`
+    const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body);
+    if (send_mail_result.isSuccess() === false) {
+      await group_member_model.updateInviteStatus(group_member_seq, 'E', send_mail_result.message)
+      return
+    }
+    await group_member_model.updateInviteStatus(group_member_seq, 'S')
   }
 
-  joinGroup = async (database, member_seq, invite_id, invite_code) => {
+  joinGroup = async (database, member_seq, invite_code) => {
     const member_info = await MemberService.getMemberInfo(database)
     if (member_info.isEmpty() || member_info.seq !== member_seq) {
       throw new StdObject(-1, '등록되지 않은 회원입니다.', 400)
     }
 
-    const group_invite_model = this.getGroupInviteModel(database)
-    const group_invite_info = await group_invite_model.getGroupInviteByCode(invite_id, invite_code)
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_invite_info = await group_member_model.getGroupInviteByCode(invite_code)
     if (group_invite_info.isEmpty() || !group_invite_info.seq) {
-      throw new StdObject(-1, '만료된 링크입니다.', 400)
+      throw new StdObject(-2, '잘못된 링크입니다.', 400)
     }
-    if (group_invite_info.status !== 'S') {
-      throw new StdObject(-1, '만료된 링크입니다.', 400)
+    if (group_invite_info.invite_status !== 'S') {
+      throw new StdObject(-3, '만료된 링크입니다.', 400)
     }
     const group_info = await this.getGroupInfo(database, group_invite_info.group_seq)
     if (group_info.isEmpty() || group_info.group_type === 'P') {
-      throw new StdObject(-1, '그룹 정보가 없습니다.', 400)
+      throw new StdObject(-4, '그룹 정보가 없습니다.', 400)
     }
     if (group_info.status !== 'Y') {
-      throw new StdObject(-1, '사용이 만료된 그룹입니다.', 400)
+      throw new StdObject(-5, '사용이 만료된 그룹입니다.', 400)
     }
-    let group_member_info = await this.getGroupMemberInfo(database, group_invite_info.group_seq, member_seq)
+    const group_member_info = await this.getGroupMemberInfo(database, group_invite_info.group_seq, member_seq)
     if (!group_member_info.isEmpty()) {
-      throw new StdObject(-1, '이미 가입된 그룹입니다.', 400)
+      throw new StdObject(-6, '이미 가입된 그룹입니다.', 400)
     }
 
     await this.addGroupMember(database, group_info, member_seq, 'N')
-    await group_invite_model.inviteConfirm(group_invite_model.seq, member_seq)
+    await group_member_model.inviteConfirm(group_invite_info.seq, member_seq)
 
     return group_info
   }

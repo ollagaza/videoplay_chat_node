@@ -58,22 +58,6 @@ export default class GroupModel extends MySQLModel {
     return new GroupInfo(query_result, private_keys)
   }
 
-  getGroupAdminMemberList = async (group_seq) => {
-    const filter = {
-      group_seq
-    }
-    const query = this.database.select(this.group_member_list_select);
-    query.from('group_invite')
-    query.leftOuterJoin('group_member', { "group_member.group_seq": "group_invite.group_seq", "group_member.member_seq": "group_invite.member_seq" })
-    query.leftOuterJoin("member", { "member.seq": "group_invite.member_seq" })
-    query.where(filter)
-    query.whereNot({ status: 'D'} )
-
-    const query_result = await query
-
-    return this.getFindResultList(query_result, null)
-  }
-
   getGroupStatistics = async (group_seq) => {
 
   }
