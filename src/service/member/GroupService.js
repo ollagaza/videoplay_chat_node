@@ -151,19 +151,21 @@ const GroupServiceClass = class {
 
   getGroupMemberList = async (database, group_seq, request) => {
     const request_body = request.body ? request.body : {}
+    const request_paging = request_body.paging ? request_body.paging : {}
+    const request_order = request_body.request_order ? request_body.request_order : null
     const status = request_body.status
     const search_text = request_body.search_text
 
     const paging = {}
-    paging.list_count = request_body.list_count ? request_body.list_count : 20
-    paging.cur_page = request_body.cur_page ? request_body.cur_page : 1
-    paging.page_count = request_body.page_count ? request_body.page_count : 10
-    paging.no_paging = request_body.no_paging ? request_body.no_paging : 'Y'
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 20
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = request_paging.no_paging ? request_paging.no_paging : 'Y'
 
     log.debug(this.log_prefix, '[getGroupMemberList]', request_body, status, search_text, paging)
 
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getGroupMemberList(group_seq, status, paging, search_text)
+    return await group_member_model.getGroupMemberList(group_seq, status, paging, search_text, request_order)
   }
 
   getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
