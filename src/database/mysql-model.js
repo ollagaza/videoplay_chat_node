@@ -184,9 +184,9 @@ export default class MysqlModel {
     return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group)
   }
 
-  findPaginated = async ({ list_count = 20, page = 1, page_count = 10, no_paging = 'n', ...filters }, columns=null, order=null) => {
-    const oKnex = this.queryBuilder(filters, columns, order);
-    return await this.queryPaginated(oKnex, list_count, page, page_count, no_paging);
+  findPaginated = async (filters = null, columns = null, order = null, group = null, pages = null) => {
+    const oKnex = this.queryBuilder(filters, columns, order, group);
+    return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count = 10);
   };
 
   async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
@@ -225,7 +225,7 @@ export default class MysqlModel {
 
     const total_page = Math.ceil(total_count / list_count) || 1;
 
-    return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count) }
+    return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count, list_count) }
   }
 
   async find (filters = null, columns = null, order = null, group = null) {

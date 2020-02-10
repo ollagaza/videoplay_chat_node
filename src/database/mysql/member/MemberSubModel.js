@@ -1,6 +1,7 @@
 import ServiceConfig from '../../../service/service-config';
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
+import StdObject from '../../../wrapper/std-object'
 import { MedicalModel } from '../../mongodb/Medical';
 import { InterrestModel } from '../../mongodb/interrest';
 
@@ -64,5 +65,11 @@ export default class MemberSubModel extends MySQLModel {
 
   updateProfileImage = async (member_seq, profile_image_path) => {
     return await this.update( { member_seq: member_seq }, { profile_image_path: profile_image_path } );
+  };
+
+  findMembers = async (searchText) => {
+    const find_user_results = await this.find(searchText);
+    
+    return find_user_results;
   };
 }
