@@ -67,31 +67,11 @@ export default class OperationStorageModel extends MySQLModel {
 
   updateStorageSummary = async (storage_seq) => {
     const update_params = {
-      "total_file_size": this.database.raw('index1_file_size + index2_file_size + origin_video_size + trans_video_size + refer_file_size + service_video_size'),
-      "total_file_count": this.database.raw('origin_video_count + trans_video_count + refer_file_count + service_video_count'),
+      "total_file_size": this.database.raw('index1_file_size + index2_file_size + origin_video_size + trans_video_size + refer_file_size'),
+      "total_file_count": this.database.raw('origin_video_count + trans_video_count + refer_file_count'),
       "modify_date": this.database.raw('NOW()')
     };
     await this.update({seq: storage_seq}, update_params);
-  };
-
-  getStorageSummary = async  (token_info) => {
-    const columns = ["sum(operation_storage.total_file_count) as total_file_count", "sum(operation_storage.total_file_size) as total_file_size", "sum(operation_media.total_time) as total_run_time"];
-    const oKnex = this.database.select(this.arrayToSafeQuery(columns));
-    oKnex.from('operation');
-    oKnex.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
-    oKnex.leftOuterJoin("operation_media", "operation_media.operation_seq", "operation.seq");
-    if (token_info.getRole() <= Role.MEMBER) {
-      oKnex.where({member_seq: token_info.getId()});
-    }
-    oKnex.first();
-
-    const result = await oKnex;
-    const output = {};
-    output.total_file_count = result.total_file_count ? result.total_file_count : 0;
-    output.total_file_size = result.total_file_size ? result.total_file_size : 0;
-    output.total_run_time = result.total_run_time ? result.total_run_time : 0;
-
-    return output;
   };
 
   updateClipCount = async (storage_seq, clip_count) => {
@@ -104,4 +84,30 @@ export default class OperationStorageModel extends MySQLModel {
     params.modify_date = this.database.raw('NOW()');
     return await this.update({"seq": storage_seq}, params);
   };
+
+  migrationStorageSize = async () => {
+    const update_params = {
+      'index1_file_size': this.database.raw('index1_file_size * 1024'),
+      'index2_file_size': this.database.raw('index2_file_size * 1024'),
+      'trans_video_size': this.database.raw('trans_video_size * 1024'),
+      'refer_file_size': this.database.raw('refer_file_size * 1024'),
+      'is_migration': 1
+    }
+    return await this.update({ 'is_migration' : 0 }, update_params);
+  }
+
+  migrationTotalFileSize = async () => {
+    const update_params = {
+      "total_file_size": this.database.raw('index1_file_size + index2_file_size + origin_video_size + trans_video_size + refer_file_size'),
+      "total_file_count": this.database.raw('origin_video_count + trans_video_count + refer_file_count')
+    }
+    return await this.update({ }, update_params);
+  }
+
+  migrationOriginVideoSize = async (operation_seq, origin_video_size) => {
+    const update_params = {
+      'origin_video_size': origin_video_size
+    }
+    return await this.update({ operation_seq }, update_params);
+  }
 }

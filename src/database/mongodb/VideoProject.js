@@ -6,6 +6,7 @@ const Schema = mongoose.Schema;
 
 const getFieldInfos = () => {
   return {
+    group_seq: { type: Number, index: true, require: false, message: '그룹 아이디가 없습니다.' },
     member_seq: { type: Number, index: true, require: false, message: '사용자 아이디가 없습니다.' },
     content_id: { type: String, index: true, unique: true, require: false, message: '콘텐츠 아이디가 없습니다.' },
     operation_seq_list: { type: [Number], default: [], require: false, message: '사용한 수술 목록이 없습니다.' },
@@ -31,6 +32,7 @@ const getFieldInfos = () => {
 };
 
 const schema_field_infos = getFieldInfos();
+schema_field_infos.group_seq.require = true;
 schema_field_infos.member_seq.require = true;
 schema_field_infos.content_id.require = true;
 schema_field_infos.project_name.require = true;
@@ -41,7 +43,9 @@ const video_project_schema = new Schema(schema_field_infos);
 
 video_project_schema.plugin( autoIncrement, { model: 'VideoProject', startAt: 1, incrementBy: 1 } );
 video_project_schema.indexes();
+video_project_schema.index( { group_seq: 1, operation_seq_list: 1 } );
 video_project_schema.index( { member_seq: 1, operation_seq_list: 1 } );
+video_project_schema.index( { group_seq: 1, status: 1 } );
 video_project_schema.index( { member_seq: 1, status: 1 } );
 video_project_schema.index( { member_seq: 1, group_list: 1 } );
 
@@ -101,12 +105,12 @@ video_project_schema.statics.updateProgress = function( id, progress ) {
   return this.updateOne( { _id: id }, update );
 };
 
-video_project_schema.statics.updateStatus = function( member_seq, id_list, status ) {
+video_project_schema.statics.updateStatus = function( group_seq, id_list, status ) {
   const update = {
     status,
     modify_date: Date.now()
   };
-  return this.update( { member_seq: member_seq, _id: { $in: id_list } }, update, {"multi": true} );
+  return this.updateMany( { group_seq: group_seq, _id: { $in: id_list } }, update, {"multi": true} );
 };
 
 video_project_schema.statics.updateFavorite = function( id, is_favorite ) {
@@ -129,12 +133,23 @@ video_project_schema.statics.findByMemberSeq = function( member_seq, projection 
   return this.find( { member_seq: member_seq }, projection );
 };
 
-video_project_schema.statics.findByOperationSeq = function( member_seq, operation_seq_list, projection = null ) {
-  return this.find( { member_seq: member_seq, operation_seq_list: { "$in": operation_seq_list } }, projection );
+video_project_schema.statics.findByGroupSeq = function( group_seq, projection = null ) {
+  return this.find( { group_seq: group_seq }, projection );
 };
 
-video_project_schema.statics.deleteById = function( member_seq, id ) {
-  return this.findOneAndDelete( { member_seq: member_seq, _id: id } );
+video_project_schema.statics.findByOperationSeq = function( group_seq, operation_seq_list, projection = null ) {
+  return this.find( { group_seq: group_seq, operation_seq_list: { "$in": operation_seq_list } }, projection );
+};
+
+video_project_schema.statics.deleteById = function( group_seq, id ) {
+  return this.findOneAndDelete( { group_seq: group_seq, _id: id } );
+};
+
+video_project_schema.statics.migrationGroupSeq = function( member_seq, group_seq ) {
+  const update = {
+    group_seq
+  };
+  return this.updateMany( { member_seq: member_seq }, update, {"multi": true} );
 };
 
 const video_project_model = mongoose.model( 'VideoProject', video_project_schema );

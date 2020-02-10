@@ -31,6 +31,18 @@ export default class MemberModel extends MySQLModel {
     }
   };
 
+  getMemberList = async (search_options = null, page_options = null) => {
+    let filter = search_options
+    const member_list = []
+    const query_result = await this.find(filter)
+    if (query_result) {
+      for (let i = 0; i < query_result.length; i++) {
+        member_list.push(new MemberInfo(query_result[i], this.private_fields))
+      }
+    }
+    return member_list
+  }
+
   getMemberInfo = async (member_seq) => {
     const query_result = await this.findOne({seq: member_seq});
     if (query_result && query_result.regist_date) {

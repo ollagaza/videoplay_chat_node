@@ -15,55 +15,8 @@ import SequenceModel from '../../models/sequence/SequenceModel';
 
 const routes = Router();
 
-/**
- * @swagger
- * tags:
- *  name: Trans
- *  description: 트랜스코더 연동
- *
- */
-
-/**
- * @swagger
- * /trans/complete:
- *  get:
- *    summary: "트랜스코더의 진행 상태를 업데이트 한다."
- *    tags: [Trans]
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "content_id"
- *      in: "query"
- *      description: "콘텐츠ID"
- *      required: true
- *      type: "string"
- *    - name: success
- *      in: "query"
- *      type: "string"
- *      description: "처리 결과. 성공: true or 1. 그 외 실패"
- *      required: true
- *    - name: video_file_name
- *      in: "query"
- *      type: "string"
- *      description: "병합이 완료된 고화질 동영상 파일 이름"
- *    - name: smil_file_name
- *      in: "query"
- *      type: "string"
- *      description: "smil 파일 이름"
- *    - name: error
- *      in: "query"
- *      type: "string"
- *      description: "에러 정보"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
-
 const getMemberInfo = async (database, member_seq) => {
-  const member_info = await new MemberModel({ database: database }).getMemberInfo(member_seq);
+  const member_info = await new MemberModel(database).getMemberInfo(member_seq);
   if (!member_info || member_info.isEmpty()) {
     throw new StdObject(-1, '회원정보가 없습니다.', 401);
   }
@@ -72,8 +25,7 @@ const getMemberInfo = async (database, member_seq) => {
 
 routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  const member_seq = token_info.getId();
-  const video_project_list = await VideoProjectModel.findByMemberSeq(member_seq, '-sequence_list');
+  const video_project_list = await VideoProjectModel.findByGroupSeq(token_info.getGroupSeq(), '-sequence_list');
 
   const output = new StdObject();
   output.add('video_project_list', video_project_list);
@@ -104,12 +56,14 @@ routes.post('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res
   const project_path = user_media_path + "VideoProject" + Constants.SEP + content_id + Constants.SEP;
 
   await Util.createDirectory(media_root + project_path);
+  data.group_seq = token_info.getGroupSeq();
   data.member_seq = member_seq;
   data.content_id = content_id;
   data.project_path = project_path;
   data.parent_directory = data.parent_directory || '';
 
   const fields = VideoProjectField();
+  fields.group_seq.require = true;
   fields.member_seq.require = true;
   fields.content_id.require = true;
   fields.project_name.require = true;
@@ -184,9 +138,9 @@ routes.put('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req
 routes.delete('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
-  const member_seq = token_info.getId();
+  const group_seq = token_info.getGroupSeq();
   const id_list = req.body.id_list;
-  const result = await VideoProjectModel.updateStatus(member_seq, id_list, 'Y');
+  const result = await VideoProjectModel.updateStatus(group_seq, id_list, 'Y');
 
   const output = new StdObject();
   output.add('result', result);
@@ -197,9 +151,9 @@ routes.delete('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(
 routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
-  const member_seq = token_info.getId();
+  const group_seq = token_info.getGroupSeq();
   const project_seq = req.params.project_seq;
-  const result = await VideoProjectModel.deleteById(member_seq, project_seq);
+  const result = await VideoProjectModel.deleteById(group_seq, project_seq);
   const output = new StdObject();
   output.add('result', result);
   res.json(output);
@@ -371,8 +325,8 @@ routes.post('/video/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   req.accepts('application/json');
   const operation_seq_list = req.body.operation_seq_list;
   const token_info = req.token_info;
-  const member_seq = token_info.getId();
-  const video_project_list = await VideoProjectModel.findByOperationSeq(member_seq, operation_seq_list, '-sequence_list');
+  const group_seq = token_info.getGroupSeq();
+  const video_project_list = await VideoProjectModel.findByOperationSeq(group_seq, operation_seq_list, '-sequence_list');
 
   const output = new StdObject();
   output.add('video_project_list', video_project_list);
