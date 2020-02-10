@@ -212,7 +212,7 @@ export default class MysqlModel {
     ]);
 
 
-    if (use_paging) {
+    if (!use_paging) {
       cur_page = 1;
     }
 
