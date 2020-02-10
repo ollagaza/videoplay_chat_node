@@ -1,13 +1,10 @@
 export default class PageHandler {
-  constructor(total_count, total_page, cur_page, page_count) {
-
-    if(typeof page_count === 'undefined') {
-      page_count = 10;
-    }
+  constructor(total_count, total_page, cur_page, page_count = 10, list_count) {
 
     this.total_count = total_count;
     this.total_page = total_page;
     this.cur_page = cur_page;
+    this.list_count = list_count;
     this.page_count = page_count;
     this.point = 0;
 

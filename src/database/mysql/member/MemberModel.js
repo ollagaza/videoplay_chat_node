@@ -82,39 +82,18 @@ export default class MemberModel extends MySQLModel {
   };
 
   findMembers = async (searchText) => {
-    const find_user_results = await this.find(
-      {
-        "is_new": true,
-        "query": [
-          {
-            "user_id": ["not", "aaa"],
-          },
-          {
-            "$or": [
-              {
-                "user_id": ["like", searchText],
-              },
-              {
-                "user_name": ["like", searchText]
-              }
-            ]
-          },
-          {
-            "used": ["notin", 0, 2, 3, 4, 5],
-          }
-        ]
-      }
-    );
-    if (!find_user_results || find_user_results.length === 0) {
+    const find_user_results = await this.findPaginated(searchText, null, null, null, searchText.page_navigation);
+    if (!find_user_results.data || find_user_results.data.length === 0) {
       throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
-    return new MemberInfo(find_user_results);
+    return find_user_results;
   };
 
   findMemberId = async (member_info) => {
     member_info.setAutoTrim(true);
     const member = member_info.toJSON();
     const find_user_result = await this.findOne({user_name: member.user_name, email_address: member.email_address});
+    
     if (!find_user_result || !find_user_result.seq) {
       throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }

@@ -8,6 +8,7 @@ import DBMySQL from '../../database/knex-mysql';
 import MemberService from '../../service/member/MemberService'
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
+import log from '../../libs/logger'
 
 const routes = Router();
 
@@ -333,8 +334,7 @@ routes.post('/finds', Wrap(async(req, res) => {
   const output = new StdObject();
   const search_text = req.body.searchText;
 
-  const find_user_info_list = MemberService.findMembers(DBMySQL, search_text)
-
+  const find_user_info_list = await MemberService.findMembers(DBMySQL, search_text)
   output.add('user_data', find_user_info_list);
   output.add("searchText", search_text);
 

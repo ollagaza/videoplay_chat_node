@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
 import Auth from '../../middlewares/auth.middleware';
@@ -346,8 +347,23 @@ const MemberServiceClass = class {
 
   findMembers = async (database, search_text) => {
     const member_model = this.getMemberModel(database)
+    const member_sub_model = this.getMemberSubModel(database)
     const find_users = await member_model.findMembers(search_text);
-    return find_users
+
+    search_text.query = [];
+    search_text.query = [{ member_seq: _.concat('in', _.map(find_users.data, 'seq')) }]
+
+    const find_sub_users = await member_sub_model.findMembers(search_text);
+    const res = [];
+    _.keyBy(find_users.data, data => {
+      if (_.every(find_sub_users, { member_seq: data.seq })) {
+        res.push(_.merge(data, _.find(find_sub_users, { member_seq: data.seq })));
+      } else {
+        res.push(_.merge(data));
+      }
+    });
+    find_users.data = new MemberInfo(res)
+    return find_users;
   }
 }
 
