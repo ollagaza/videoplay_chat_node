@@ -14,7 +14,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.seq AS group_member_seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
       'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq',
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
-      'member.user_name', 'member.user_nickname', 'member.hospname', 'member.treatcode', 'member.used'
+      'member.user_name', 'member.user_nickname', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used'
     ];
     this.member_group_select = [
       'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
@@ -92,7 +92,7 @@ export default class GroupMemberModel extends MySQLModel {
     return this.getFindResultList(query_result, private_keys)
   }
 
-  getGroupMemberList = async (group_seq, status = null, paging = {}, search_text = null) => {
+  getGroupMemberList = async (group_seq, status = null, paging = {}, search_text = null, order = null) => {
     const filter = {
       group_seq
     }
@@ -112,13 +112,17 @@ export default class GroupMemberModel extends MySQLModel {
           .orWhere("member.treatcode", "like", `%${search_text}%`)
       })
     }
+    if (order) {
+      query.orderBy(order)
+    }
 
     const query_result = await this.queryPaginated(query, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
-
-    return this.getFindResultList(query_result, null)
+    query_result.data = this.getFindResultList(query_result.data, null)
+    log.debug(this.log_prefix, '[getGroupMemberList]', query_result.data)
+    return query_result
   }
 
-  getFindResultList = async (query_result, private_keys = null) => {
+  getFindResultList = (query_result, private_keys = null) => {
     const result_list = []
     if (!query_result) {
       return result_list
@@ -256,7 +260,7 @@ export default class GroupMemberModel extends MySQLModel {
       group_seq: group_seq,
       invite_code,
       invite_email: email_address,
-      invite_status: 'N',
+      invite_status: 'S',
       invite_date: this.database.raw('NOW()')
     }
     const group_member_seq = await this.create(create_params, 'seq')
@@ -270,7 +274,7 @@ export default class GroupMemberModel extends MySQLModel {
     }
     const update_params = {
       invite_code,
-      invite_status: 'N',
+      invite_status: 'S',
       invite_date: this.database.raw('NOW()')
     }
     const query_result = await this.update(filter, update_params)

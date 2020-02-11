@@ -39,7 +39,7 @@ routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wra
   const group_member_list = await GroupService.getGroupMemberList(DBMySQL, group_seq, req)
 
   const output = new StdObject();
-  output.add('group_member_list', group_member_list);
+  output.adds(group_member_list);
   res.json(output);
 }));
 
