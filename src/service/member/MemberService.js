@@ -395,7 +395,7 @@ const MemberServiceClass = class {
     _.forEach(params, (value, key) => {
       searchObj.query[key] = value;
     });
-    // searchObj.page_navigation = page_navigation;
+
     const member_model = this.getMemberModel(database)
     const member_sub_model = this.getMemberSubModel(database)
     const find_users = await member_model.findMembers(searchObj);
@@ -420,6 +420,19 @@ const MemberServiceClass = class {
     const member_model = this.getMemberModel(database)
     const member_list = await member_model.getMemberList(search_option)
     return member_list
+  }
+
+  updateAdminMembers = async (database, setData, search_option = null) => {
+    const searchObj = {
+      is_new: true,
+      query: [],
+    };
+    _.forEach(search_option, (value, key) => {
+      searchObj.query[key] = value;
+    });
+    const member_model = this.getMemberModel(database)
+    const update_Result = await member_model.updateAdminUserData(setData, searchObj)
+    return update_Result
   }
 }
 

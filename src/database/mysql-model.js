@@ -156,10 +156,15 @@ export default class MysqlModel {
   }
 
   update = async (filters, params) => {
-    return await this.database
+    const oKnex = this.database
       .update(params)
       .from(this.table_name)
-      .where(filters)
+
+      if (filters) {
+        queryWhere(oKnex, filters)
+      }
+
+      return oKnex;
   }
 
   updateIn = async (key, in_array, params, filters = null) => {

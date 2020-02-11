@@ -164,4 +164,8 @@ export default class MemberModel extends MySQLModel {
     const result = await this.update({ seq: member_seq }, update_info);
     return result;
   }
+
+  updateAdminUserData = async (setData, search_option = null) => {
+    return await this.update(search_option, setData);
+  };
 }
