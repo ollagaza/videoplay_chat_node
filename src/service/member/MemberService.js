@@ -386,15 +386,24 @@ const MemberServiceClass = class {
     await MemberLogService.memberLeaveLog(database, member_seq, leave_text)
   }
 
-  findMembers = async (database, search_text) => {
+  findMembers = async (database, params, page_navigation) => {
+    const searchObj = {
+      is_new: true,
+      query: [],
+      page_navigation: page_navigation,
+    };
+    _.forEach(params, (value, key) => {
+      searchObj.query[key] = value;
+    });
+    // searchObj.page_navigation = page_navigation;
     const member_model = this.getMemberModel(database)
     const member_sub_model = this.getMemberSubModel(database)
-    const find_users = await member_model.findMembers(search_text);
+    const find_users = await member_model.findMembers(searchObj);
 
-    search_text.query = [];
-    search_text.query = [{ member_seq: _.concat('in', _.map(find_users.data, 'seq')) }]
+    searchObj.query = [];
+    searchObj.query = [{ member_seq: _.concat('in', _.map(find_users.data, 'seq')) }]
 
-    const find_sub_users = await member_sub_model.findMembers(search_text);
+    const find_sub_users = await member_sub_model.findMembers(searchObj);
     const res = [];
     _.keyBy(find_users.data, data => {
       if (_.every(find_sub_users, { member_seq: data.seq })) {
