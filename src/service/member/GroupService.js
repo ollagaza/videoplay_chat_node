@@ -277,7 +277,7 @@ const GroupServiceClass = class {
       await group_member_model.updateInviteStatus(group_member_seq, 'E', send_mail_result.message)
       return
     }
-    await group_member_model.updateInviteStatus(group_member_seq, 'S')
+    await group_member_model.updateInviteStatus(group_member_seq, 'Y')
   }
 
   joinGroup = async (database, member_seq, invite_code) => {

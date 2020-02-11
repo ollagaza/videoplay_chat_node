@@ -260,7 +260,7 @@ export default class GroupMemberModel extends MySQLModel {
       group_seq: group_seq,
       invite_code,
       invite_email: email_address,
-      invite_status: 'N',
+      invite_status: 'S',
       invite_date: this.database.raw('NOW()')
     }
     const group_member_seq = await this.create(create_params, 'seq')
@@ -274,7 +274,7 @@ export default class GroupMemberModel extends MySQLModel {
     }
     const update_params = {
       invite_code,
-      invite_status: 'N',
+      invite_status: 'S',
       invite_date: this.database.raw('NOW()')
     }
     const query_result = await this.update(filter, update_params)
