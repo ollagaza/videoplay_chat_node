@@ -128,17 +128,9 @@ const GroupServiceClass = class {
     if (grade !== 'O' && group_info.group_type === 'P') {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
-    const add_group_member_info = {
-      group_seq: group_info.seq,
-      member_seq,
-      max_storage_size: max_storage_size ? max_storage_size : group_info.storage_size,
-      used_storage_size: 0,
-      grade: grade,
-      status: 'Y',
-      join_date: Util.getCurrentTimestamp()
-    }
+
     const group_member_model = this.getGroupMemberModel(database)
-    const group_member_info = await group_member_model.createGroupMember(add_group_member_info)
+    const group_member_info = await group_member_model.createGroupMember(group_info, member_seq, grade, max_storage_size)
     return group_member_info
   }
 
@@ -179,9 +171,20 @@ const GroupServiceClass = class {
     return await group_member_model.getGroupMemberInfo(group_seq, member_seq)
   }
 
+  getMemberGroupInfoWithGroup = async (database, group_seq, member_seq, status = null) => {
+    const group_member_model = this.getGroupMemberModel(database)
+    return await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
+  }
+
   getGroupMemberInfoBySeq = async (database, group_member_seq) => {
     const group_member_model = this.getGroupMemberModel(database)
     return await group_member_model.getGroupMemberInfoBySeq(group_member_seq)
+  }
+
+  getGroupMemberInfoByInviteEmail = async (database, group_seq, email_address) => {
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_member_info = await group_member_model.getGroupMemberInfoByInviteEmail(group_seq, email_address)
+    return group_member_info
   }
 
   isGroupAdmin = async (database, group_seq, member_seq) => {
@@ -202,7 +205,13 @@ const GroupServiceClass = class {
     return await group_model.getGroupInfo(group_seq)
   }
 
-  inviteGroupMembers = async (database, group_seq, member_seq, invite_email_list) => {
+  inviteGroupMembers = async (database, group_seq, member_info, request_body) => {
+    if (Util.isEmpty(request_body)) {
+      throw new StdObject(-1, '잘못된 요청입니다.', 400)
+    }
+    const invite_email_list = request_body.invite_email_list
+    const invite_message = request_body.invite_message
+    log.debug(this.log_prefix, '[inviteGroupMembers]', request_body, invite_email_list, invite_message)
     if (!Util.isArray(invite_email_list)) {
       throw new StdObject(-1, '잘못된 요청입니다.', 400)
     }
@@ -210,31 +219,28 @@ const GroupServiceClass = class {
     if (group_info.group_type === 'P') {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
-    if (group_info.member_seq !== member_seq) {
-      const is_group_admin = await this.isGroupAdmin(database, group_seq, member_seq)
+    if (group_info.member_seq !== member_info.seq) {
+      const is_group_admin = await this.isGroupAdmin(database, group_seq, member_info.seq)
       if (!is_group_admin) {
         throw new StdObject(-1, '권한이 없습니다.', 400)
       }
     }
 
-    const owner_info = await MemberService.getMemberInfo(database, group_info.member_seq)
     const group_info_json = group_info.toJSON()
     const active_user_count = await this.getGroupMemberCount(database, group_seq)
     group_info_json.active_user_count = active_user_count
 
     for (let i = 0; i < invite_email_list.length; i++) {
       (
-        async (owner_info, group_info, email_address) => {
-          await this.inviteGroupMember(null, owner_info, group_info, email_address)
+        async (member_info, group_info, email_address, invite_message) => {
+          try {
+            await this.inviteGroupMember(null, member_info, group_info, email_address, invite_message)
+          } catch (error) {
+            log.error(this.log_prefix, '[inviteGroupMembers]', error)
+          }
         }
-      )(owner_info, group_info_json, invite_email_list[i])
+      )(member_info, group_info_json, invite_email_list[i], invite_message)
     }
-  }
-
-  getGroupMemberByEmail = async (database, group_seq, email_address) => {
-    const group_member_model = this.getGroupMemberModel(database)
-    const group_member_info = await group_member_model.getGroupMemberByEmail(group_seq, email_address)
-    return group_member_info
   }
 
   getAvailableInviteId = async (database) => {
@@ -251,27 +257,35 @@ const GroupServiceClass = class {
     throw new StdObject(-1, '초대 아이디를 생성할 수 없습니다.', 400)
   }
 
-  inviteGroupMember = async (database, owner_info, group_info, email_address) => {
+  encryptInviteCode = (invite_code) => {
+    return Util.encrypt(invite_code)
+  }
+
+  decryptInviteCode = (invite_code) => {
+    return Util.decrypt(invite_code)
+  }
+
+  inviteGroupMember = async (database, member_info, group_info, email_address, invite_message) => {
     let group_member_seq;
     const group_seq = group_info.seq
-    let group_member_info = await this.getGroupMemberByEmail(database, group_seq, email_address)
+    let group_member_info = await this.getGroupMemberInfoByInviteEmail(database, group_seq, email_address)
     if (!group_member_info.isEmpty() && group_member_info.status !== 'N') {
       return
     }
     const invite_code = await this.getAvailableInviteId()
 
     const group_member_model = this.getGroupMemberModel(database)
-    if (group_member_info.isEmpty()) {
+    if (!group_member_info.isEmpty() && group_member_info.seq) {
       group_member_seq = group_member_info.seq
       await group_member_model.resetInviteInfo(group_member_seq, invite_code)
     } else {
-      group_member_info = await group_member_model.createGroupInvite(group_seq, invite_code, email_address)
+      group_member_info = await group_member_model.createGroupInvite(group_seq, member_info.seq, invite_code, email_address)
       group_member_seq = group_member_info.seq
     }
 
-
-    const title = `<b>${owner_info.hospname}</b>의 ${owner_info.user_name}님이 Surgstory에 초대하였습니다.`
-    const body = `<a href='${ServiceConfig.get('service_url')}/invite/group/${invite_code}' target="_blank">클릭</a>`
+    const title = `<b>${group_info.group_name}</b>의 ${member_info.user_name}님이 Surgstory에 초대하였습니다.`
+    const encrypt_invite_code = this.encryptInviteCode(invite_code);
+    const body = `<a href='${ServiceConfig.get('service_url')}/invite/group/${encrypt_invite_code}' target="_blank">클릭</a><br/><pre>${invite_message ? invite_message : ''}</pre>`
     const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body);
     if (send_mail_result.isSuccess() === false) {
       await group_member_model.updateInviteStatus(group_member_seq, 'E', send_mail_result.message)
@@ -280,36 +294,65 @@ const GroupServiceClass = class {
     await group_member_model.updateInviteStatus(group_member_seq, 'Y')
   }
 
-  joinGroup = async (database, member_seq, invite_code) => {
-    const member_info = await MemberService.getMemberInfo(database)
-    if (member_info.isEmpty() || member_info.seq !== member_seq) {
-      throw new StdObject(-1, '등록되지 않은 회원입니다.', 400)
-    }
-
+  getInviteGroupInfo = async (database, input_invite_code, invite_seq = null, member_seq = null, is_encrypted = false) => {
+    const invite_code = `${is_encrypted ? this.decryptInviteCode(input_invite_code) : input_invite_code}`.toUpperCase();
     const group_member_model = this.getGroupMemberModel(database)
-    const group_invite_info = await group_member_model.getGroupInviteByCode(invite_code)
-    if (group_invite_info.isEmpty() || !group_invite_info.seq) {
-      throw new StdObject(-2, '잘못된 링크입니다.', 400)
+    const group_invite_info = await group_member_model.getGroupInviteInfo(invite_code, invite_seq)
+    group_invite_info.setIgnoreEmpty(true)
+    if (group_invite_info.isEmpty()) {
+      throw new StdObject(-1, '만료된 초대코드입니다.', 400)
     }
-    if (group_invite_info.invite_status !== 'S') {
-      throw new StdObject(-3, '만료된 링크입니다.', 400)
+    if (invite_seq) {
+      //if (group_invite_info)
     }
-    const group_info = await this.getGroupInfo(database, group_invite_info.group_seq)
-    if (group_info.isEmpty() || group_info.group_type === 'P') {
-      throw new StdObject(-4, '그룹 정보가 없습니다.', 400)
+    if (group_invite_info.join_member_seq) {
+      const output = new StdObject();
+      if (member_seq) {
+        if (group_invite_info.join_member_seq === member_seq) {
+          if (group_invite_info.group_member_status === 'Y') {
+            output.error = 1
+            output.message = '이미 가입된 팀입니다.'
+            output.add('group_seq', group_invite_info.group_seq)
+            throw output
+          } else {
+            if (group_invite_info.group_member_status === 'P') {
+              output.error = -12
+              output.message = `'${group_invite_info.group_name}'팀 사용이 일시중지 되었습니다.`
+              throw new StdObject(-6, `'${group_invite_info.group_name}'그룹 사용이 일시중지 되었습니다.`, 400)
+            } else {
+              output.error = -13
+              output.message = `'${group_invite_info.group_name}'팀에서 탈퇴되었습니다.`
+            }
+          }
+        } else {
+          output.error = -11
+          output.message = '만료된 초대코드입니다.'
+        }
+        output.httpStatusCode = 400
+      } else {
+        output.error = -2
+        output.message = '만료된 초대코드입니다.'
+      }
+      throw output
     }
-    if (group_info.status !== 'Y') {
-      throw new StdObject(-5, '사용이 만료된 그룹입니다.', 400)
+    if (group_invite_info.invite_status !== 'Y') {
+      throw new StdObject(-3, '만료된 초대코드입니다.', 400)
     }
-    const group_member_info = await this.getGroupMemberInfo(database, group_invite_info.group_seq, member_seq)
-    if (!group_member_info.isEmpty()) {
-      throw new StdObject(-6, '이미 가입된 그룹입니다.', 400)
+    if (group_invite_info.group_status !== 'Y' || group_invite_info.group_type === 'P') {
+      throw new StdObject(-4, '가입이 불가능한 팀입니다.', 400)
     }
 
-    await this.addGroupMember(database, group_info, member_seq, 'N')
-    await group_member_model.inviteConfirm(group_invite_info.seq, member_seq)
+    return group_invite_info;
+  }
 
-    return group_info
+  joinGroup = async (database, member_seq, invite_code, invite_seq = null) => {
+    invite_code = `${invite_code}`.toUpperCase()
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
+
+    await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size)
+
+    return await this.getMemberGroupInfoWithGroup(database, group_invite_info.group_seq, member_seq, 'Y')
   }
 
   changeGradeAdmin = async (database, group_seq, member_seq, group_member_seq) => {

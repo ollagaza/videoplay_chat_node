@@ -52,7 +52,7 @@ export default class GroupModel extends MySQLModel {
 
   getGroupInfo = async  (group_seq, private_keys = null) => {
     const filter = {
-      group_seq
+      seq: group_seq
     }
     const query_result = await this.findOne(filter)
     return new GroupInfo(query_result, private_keys)

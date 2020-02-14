@@ -2,12 +2,12 @@ import Role from '../constants/roles'
 import Util from '../utils/baseutil'
 
 export default class TokenInfo {
-  constructor (token_info, token, remain_time) {
+  constructor (token_info, token, expire_time) {
     if (token_info != null) {
       this.id = Util.parseInt(token_info.id) // member table seq
       this.role = Util.parseInt(token_info.role, Role.NONE) // 권한 코드. 나중에 쓸지도 모름.
       this.token = token
-      this.remain_time = remain_time
+      this.expire_time = expire_time
     }
   }
 
@@ -28,8 +28,8 @@ export default class TokenInfo {
     return this.token
   }
 
-  getRemainTime () {
-    return this.remain_time
+  getExpireTime () {
+    return this.expire_time
   }
 
   isAdmin = () => {

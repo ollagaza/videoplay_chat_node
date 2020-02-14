@@ -280,7 +280,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.L
 routes.post('/verify/user_id', Wrap(async(req, res) => {
   req.accepts('application/json');
   const user_id = req.body.user_id;
-  const is_duplicate = await MemberService.isDuplicateId(user_id);
+  const is_duplicate = await MemberService.isDuplicateId(DBMySQL, user_id);
 
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
@@ -291,7 +291,7 @@ routes.post('/verify/user_id', Wrap(async(req, res) => {
 routes.post('/verify/nickname', Wrap(async(req, res) => {
   req.accepts('application/json');
   const nickname = req.body.nickname;
-  const is_duplicate = await MemberService.isDuplicateNickname(nickname);
+  const is_duplicate = await MemberService.isDuplicateNickname(DBMySQL, nickname);
 
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
