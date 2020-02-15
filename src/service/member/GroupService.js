@@ -302,30 +302,15 @@ const GroupServiceClass = class {
     if (group_invite_info.isEmpty()) {
       throw new StdObject(-1, '만료된 초대코드입니다.', 400)
     }
-    if (invite_seq) {
-      //if (group_invite_info)
-    }
+    const group_seq = group_invite_info.group_seq
+    const group_name = group_invite_info.group_name
     if (group_invite_info.join_member_seq) {
       const output = new StdObject();
       if (member_seq) {
         if (group_invite_info.join_member_seq === member_seq) {
-          if (group_invite_info.group_member_status === 'Y') {
-            output.error = 1
-            output.message = '이미 가입된 팀입니다.'
-            output.add('group_seq', group_invite_info.group_seq)
-            throw output
-          } else {
-            if (group_invite_info.group_member_status === 'P') {
-              output.error = -12
-              output.message = `'${group_invite_info.group_name}'팀 사용이 일시중지 되었습니다.`
-              throw new StdObject(-6, `'${group_invite_info.group_name}'그룹 사용이 일시중지 되었습니다.`, 400)
-            } else {
-              output.error = -13
-              output.message = `'${group_invite_info.group_name}'팀에서 탈퇴되었습니다.`
-            }
-          }
+          throw this.getInviteMemberStatusError(group_seq, group_name, group_invite_info.group_member_status);
         } else {
-          output.error = -11
+          output.error = 11
           output.message = '만료된 초대코드입니다.'
         }
         output.httpStatusCode = 400
@@ -341,18 +326,42 @@ const GroupServiceClass = class {
     if (group_invite_info.group_status !== 'Y' || group_invite_info.group_type === 'P') {
       throw new StdObject(-4, '가입이 불가능한 팀입니다.', 400)
     }
+    if (member_seq) {
+      const group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
+      log.debug(this.log_prefix, '[getInviteGroupInfo]', member_seq, group_member_info.toJSON())
+      if (!group_member_info.isEmpty()) {
+        throw this.getInviteMemberStatusError(group_seq, group_name, group_member_info.status);
+      }
+    }
 
     return group_invite_info;
   }
 
-  joinGroup = async (database, member_seq, invite_code, invite_seq = null) => {
+  getInviteMemberStatusError = (group_seq, group_name, member_status) => {
+    const output = new StdObject();
+    if (member_status === 'Y') {
+      output.error = 1
+      output.message = '이미 가입된 팀입니다.'
+      output.add('group_seq', group_seq)
+      throw output
+    } else if (member_status === 'P') {
+      output.error = 2
+      output.message = `'${group_name}'팀 사용이 일시중지 되었습니다.`
+    } else {
+      output.error = 3
+      output.message = `'${group_name}'팀에서 탈퇴되었습니다.`
+    }
+    return output
+  }
+
+  joinGroup = async (database, invite_seq, member_seq, invite_code) => {
     invite_code = `${invite_code}`.toUpperCase()
     const group_member_model = this.getGroupMemberModel(database)
     const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
 
     await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size)
 
-    return await this.getMemberGroupInfoWithGroup(database, group_invite_info.group_seq, member_seq, 'Y')
+    return group_invite_info.group_seq
   }
 
   changeGradeAdmin = async (database, group_seq, member_seq, group_member_seq) => {

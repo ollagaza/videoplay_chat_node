@@ -26,6 +26,16 @@ routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.get('/:group_seq(\\d+)/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
+  const member_group_info = await GroupService.getMemberGroupInfoWithGroup(DBMySQL, group_seq, member_seq)
+
+  const output = new StdObject();
+  output.add('group_info', member_group_info);
+  res.json(output);
+}));
+
 routes.get('/:group_seq(\\d+)/auth', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
   const { is_active_group_member } = await checkGroupAuth(DBMySQL, req, true, false)
@@ -126,8 +136,8 @@ routes.get('/invite/:invite_code', Auth.isAuthenticated(), Wrap(async(req, res) 
   req.accepts('application/json');
   const token_info = req.token_info;
   const member_seq = token_info ? token_info.getId() : null
-
   const invite_code = req.params.invite_code
+  log.d(req, token_info, member_seq, invite_code)
   const group_invite_info = await GroupService.getInviteGroupInfo(DBMySQL, invite_code, null, member_seq, true)
 
   const output = new StdObject();
@@ -141,24 +151,11 @@ routes.post('/join/:invite_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(
   log.d(req, member_seq)
   const invite_seq = Util.parseInt(req.params.invite_seq, 0)
   const invite_code = req.body.invite_code
-  const group_member_info = await GroupService.joinGroup(DBMySQL, invite_seq, member_seq, invite_code)
+  const group_seq = await GroupService.joinGroup(DBMySQL, invite_seq, member_seq, invite_code)
 
   const output = new StdObject();
-  output.add('group_info', group_member_info);
+  output.add('group_seq', group_seq);
   res.json(output);
 }));
-
-routes.post('/join', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
-  req.accepts('application/json');
-  const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
-  log.d(req, member_seq)
-  const invite_code = req.body.invite_code
-  const group_info = await GroupService.joinGroup(DBMySQL, member_seq, invite_code)
-
-  const output = new StdObject();
-  output.add('group_info', group_info);
-  res.json(output);
-}));
-
 
 export default routes;
