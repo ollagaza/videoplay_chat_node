@@ -396,6 +396,8 @@ const MemberServiceClass = class {
       searchObj.query[key] = value;
     });
 
+    log.debug(this.log_prefix, searchObj.query);
+
     const member_model = this.getMemberModel(database)
     const member_sub_model = this.getMemberSubModel(database)
     const find_users = await member_model.findMembers(searchObj);
@@ -406,7 +408,7 @@ const MemberServiceClass = class {
     const find_sub_users = await member_sub_model.findMembers(searchObj);
     const res = [];
     _.keyBy(find_users.data, data => {
-      if (_.every(find_sub_users, { member_seq: data.seq })) {
+      if (_.find(find_sub_users, { member_seq: data.seq })) {
         res.push(_.merge(data, _.find(find_sub_users, { member_seq: data.seq })));
       } else {
         res.push(_.merge(data));
@@ -427,6 +429,11 @@ const MemberServiceClass = class {
       is_new: true,
       query: [],
     };
+    _.forEach(setData, (value, key) => {
+      if (value === 'now') {
+        setData[key] = database.raw('NOW()');
+      }
+    });
     _.forEach(search_option, (value, key) => {
       searchObj.query[key] = value;
     });

@@ -1,9 +1,10 @@
+import _ from 'lodash';
 import ServiceConfig from '../../../service/service-config';
 import Constants from '../../../constants/constants'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import StdObject from '../../../wrapper/std-object'
-
+import log from "../../../libs/logger";
 import MemberInfo from "../../../wrapper/member/MemberInfo";
 
 export default class MemberModel extends MySQLModel {
@@ -88,6 +89,7 @@ export default class MemberModel extends MySQLModel {
       member_info.password = this.encryptPassword(member_info.password);
     }
     const member = member_info.toJSON();
+    log.debug(this.log_prefix, member);
     const result = await this.update({seq: member_seq}, member);
 
     return result;
@@ -166,6 +168,9 @@ export default class MemberModel extends MySQLModel {
   }
 
   updateAdminUserData = async (setData, search_option = null) => {
+    if (_.includes(setData, 'now')) {
+
+    }
     return await this.update(search_option, setData);
   };
 }
