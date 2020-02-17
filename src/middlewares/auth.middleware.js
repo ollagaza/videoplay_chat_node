@@ -61,6 +61,7 @@ const isAuthenticated = (require_roles) => {
       const token_info = verify_result.get('token_info')
       token_info.setLang(getLanguage(req))
       token_info.setGroupSeq(getGroupSeq(req))
+      token_info.setServiceDomain(getServiceDomain(req))
       req.token_info = token_info
       setResponseHeader(res, req.token_info)
       next()
@@ -168,6 +169,10 @@ const getLanguage = (req) => {
 
 const getGroupSeq = (req) => {
   return Util.parseInt(req.headers.group_seq, 0)
+}
+
+const getServiceDomain = (req) => {
+  return req.headers.service_domain
 }
 
 export default {

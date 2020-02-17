@@ -3,6 +3,8 @@ import Util from '../utils/baseutil'
 
 export default class TokenInfo {
   constructor (token_info, token, expire_time) {
+    this.group_seq = null
+    this.service_domain = null
     if (token_info != null) {
       this.id = Util.parseInt(token_info.id) // member table seq
       this.role = Util.parseInt(token_info.role, Role.NONE) // 권한 코드. 나중에 쓸지도 모름.
@@ -52,5 +54,12 @@ export default class TokenInfo {
   }
   setGroupSeq = (group_seq) => {
     this.group_seq = group_seq
+  }
+
+  getServiceDomain = () => {
+    return this.service_domain
+  }
+  setServiceDomain = (service_domain) => {
+    this.service_domain = service_domain
   }
 }

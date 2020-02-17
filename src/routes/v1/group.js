@@ -28,11 +28,10 @@ routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
 
 routes.get('/:group_seq(\\d+)/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
-  const member_group_info = await GroupService.getMemberGroupInfoWithGroup(DBMySQL, group_seq, member_seq)
+  const { group_member_info } = await checkGroupAuth(DBMySQL, req)
 
   const output = new StdObject();
-  output.add('group_info', member_group_info);
+  output.add('group_info', group_member_info);
   res.json(output);
 }));
 
@@ -57,10 +56,10 @@ routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wra
 
 routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/delete', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
+  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
   const is_delete_operation = req.body.is_delete_operation === true
-  await GroupService.deleteMember(DBMySQL, group_seq, member_seq, group_member_seq, is_delete_operation)
+  await GroupService.deleteMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain(), is_delete_operation)
 
   const output = new StdObject();
   output.add('result', true);
@@ -69,9 +68,9 @@ routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/delete', Auth.isAuthentica
 
 routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/delete', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
+  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.unDeleteMember(DBMySQL, group_seq, member_seq, group_member_seq)
+  await GroupService.unDeleteMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
 
   const output = new StdObject();
   output.add('result', true);
@@ -80,9 +79,9 @@ routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/delete', Auth.isAuthent
 
 routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
+  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.changeGradeAdmin(DBMySQL, group_seq, member_seq, group_member_seq)
+  await GroupService.changeGradeAdmin(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
 
   const output = new StdObject();
   output.add('result', true);
@@ -91,9 +90,9 @@ routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenticat
 
 routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
+  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.changeGradeNormal(DBMySQL, group_seq, member_seq, group_member_seq)
+  await GroupService.changeGradeNormal(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
 
   const output = new StdObject();
   output.add('result', true);
@@ -102,9 +101,9 @@ routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenti
 
 routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/pause', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
+  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.pauseMember(DBMySQL, group_seq, member_seq, group_member_seq)
+  await GroupService.pauseMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
 
   const output = new StdObject();
   output.add('result', true);
@@ -113,9 +112,9 @@ routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/pause', Auth.isAuthenticat
 
 routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/pause', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_seq } = await checkGroupAuth(DBMySQL, req)
+  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.unPauseMember(DBMySQL, group_seq, member_seq, group_member_seq)
+  await GroupService.unPauseMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
 
   const output = new StdObject();
   output.add('result', true);
@@ -124,8 +123,20 @@ routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/pause', Auth.isAuthenti
 
 routes.post('/:group_seq(\\d+)/invite', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_info, group_seq } = await checkGroupAuth(DBMySQL, req)
-  await GroupService.inviteGroupMembers(DBMySQL, group_seq, member_info, req.body)
+  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
+  log.d(req, group_member_info.toJSON(), member_info.toJSON(), req.body, token_info.getServiceDomain());
+  await GroupService.inviteGroupMembers(DBMySQL, group_member_info, member_info, req.body, token_info.getServiceDomain())
+
+  const output = new StdObject();
+  output.add('result', true);
+  res.json(output);
+}));
+
+routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/invite', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const { group_member_info } = await checkGroupAuth(DBMySQL, req)
+  const group_member_seq = getGroupMemberSeq(req)
+  await GroupService.deleteInviteMail(DBMySQL, group_member_info, group_member_seq)
 
   const output = new StdObject();
   output.add('result', true);

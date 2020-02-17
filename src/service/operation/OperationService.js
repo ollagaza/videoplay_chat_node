@@ -132,6 +132,7 @@ const OperationServiceClass = class {
   };
 
   deleteGroupMemberOperations = async (group_seq, member_seq) => {
+    log.debug(this.log_prefix, '[deleteGroupMemberOperations]', group_seq, member_seq)
     const operation_model = this.getOperationModel()
     await operation_model.setGroupMemberOperationState(group_seq, member_seq, 'D')
     const operation_list = await operation_model.getGroupMemberOperationList(group_seq, member_seq);

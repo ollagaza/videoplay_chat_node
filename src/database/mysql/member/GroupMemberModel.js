@@ -17,8 +17,8 @@ export default class GroupMemberModel extends MySQLModel {
       'member.user_name', 'member.user_nickname', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used'
     ];
     this.member_group_select = [
-      'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
-      'group_member.status AS group_member_status', 'group_member.join_date',
+      'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
+      'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size'
     ];
@@ -36,6 +36,7 @@ export default class GroupMemberModel extends MySQLModel {
     this.group_invite_private_fields = [
       'invite_code', 'invite_status', 'join_member_seq', 'grade', 'group_member_status', 'group_seq', 'group_type', 'group_status'
     ]
+    this.group_member_private_fields = [ 'member_seq', 'invite_email' ]
   }
 
 
@@ -60,10 +61,11 @@ export default class GroupMemberModel extends MySQLModel {
     return params
   }
 
-  createGroupMember = async (group_info, member_seq, grade, max_storage_size) => {
+  createGroupMember = async (group_info, member_info, grade, max_storage_size) => {
     const group_member_info = {
       group_seq: group_info.seq,
-      member_seq,
+      member_seq: member_info.seq,
+      invite_email: member_info.email_address,
       max_storage_size: max_storage_size ? max_storage_size : group_info.storage_size,
       used_storage_size: 0,
       grade: grade,
@@ -80,26 +82,13 @@ export default class GroupMemberModel extends MySQLModel {
     return group_member_info
   }
 
-  getGroupMemberInfo = async (group_seq, member_seq, private_keys = null) => {
-    const filter = {
-      group_seq,
-      member_seq
+  getGroupMemberQuery = (member_seq = null, group_seq = null, group_member_seq = null, status = null) => {
+    const filter = {}
+    if (member_seq) {
+      filter['group_member.member_seq'] = member_seq
     }
-    const query_result = await this.findOne(filter)
-    return new GroupMemberInfo(query_result, private_keys)
-  }
-
-  getGroupMemberInfoBySeq = async (group_member_seq, private_keys = null) => {
-    const filter = {
-      seq: group_member_seq
-    }
-    const query_result = await this.findOne(filter)
-    return new GroupMemberInfo(query_result, private_keys)
-  }
-
-  getGroupMemberQuery = (member_seq, group_seq = null, status = null) => {
-    const filter = {
-      'group_member.member_seq': member_seq
+    if (group_member_seq) {
+      filter['group_member.seq'] = group_member_seq
     }
     if (group_seq) {
       filter['group_member.group_seq'] = group_seq
@@ -120,16 +109,23 @@ export default class GroupMemberModel extends MySQLModel {
   }
 
   getMemberGroupList = async (member_seq, status = null, private_keys = null) => {
-    const query = this.getGroupMemberQuery(member_seq, null, status)
+    const query = this.getGroupMemberQuery(member_seq, null, null, status)
     const query_result = await query
-    return this.getFindResultList(query_result, private_keys)
+    return this.getFindResultList(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
   getMemberGroupInfoWithGroup = async (group_seq, member_seq, status = null, private_keys = null) => {
-    const query = this.getGroupMemberQuery(member_seq, group_seq, status)
+    const query = this.getGroupMemberQuery(member_seq, group_seq, null, status)
     query.first()
     const query_result = await query
-    return new GroupMemberInfo(query_result, private_keys)
+    return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
+  }
+
+  getGroupMemberInfoBySeq = async (group_member_seq, private_keys = null) => {
+    const query = this.getGroupMemberQuery(null, null, group_member_seq)
+    query.first()
+    const query_result = await query
+    return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
   getGroupMemberList = async (group_seq, status = null, paging = {}, search_text = null, order = null) => {
@@ -158,7 +154,6 @@ export default class GroupMemberModel extends MySQLModel {
 
     const query_result = await this.queryPaginated(query, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
     query_result.data = this.getFindResultList(query_result.data, null)
-    log.debug(this.log_prefix, '[getGroupMemberList]', query_result.data)
     return query_result
   }
 
@@ -249,13 +244,6 @@ export default class GroupMemberModel extends MySQLModel {
     const update_result = await this.update(filter, update_params)
     log.debug(this.log_prefix, '[restoreMemberStatus]', update_result)
     return update_result
-  }
-
-  updateStorageUsedSizeByGroupMemberSeq = async (group_member_seq, used_storage_size) => {
-    const filter = {
-      seq: group_member_seq
-    }
-    return await this.updateStorageUsedSize(filter, used_storage_size)
   }
 
   updateStorageUsedSizeByMemberSeq = async (group_seq, member_seq, used_storage_size) => {
@@ -379,5 +367,15 @@ export default class GroupMemberModel extends MySQLModel {
     const update_result = await this.update(filter, update_params)
     log.debug(this.log_prefix, '[inviteConfirm]', update_result)
     return update_result
+  }
+
+  deleteInviteInfo = async (group_seq, group_member_seq) => {
+    const filter = {
+      seq: group_member_seq,
+      group_seq
+    }
+    const delete_result = await this.delete(filter)
+    log.debug(this.log_prefix, '[deleteInviteInfo]', delete_result)
+    return delete_result
   }
 }
