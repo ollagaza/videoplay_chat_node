@@ -98,7 +98,7 @@ export default class MemberModel extends MySQLModel {
   findMembers = async (searchText) => {
     const find_user_results = await this.findPaginated(searchText, null, null, null, searchText.page_navigation);
     if (!find_user_results.data || find_user_results.data.length === 0) {
-      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
+      return new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
     return find_user_results;
   };
@@ -137,7 +137,7 @@ export default class MemberModel extends MySQLModel {
   };
 
   updateLastLogin = async (member_seq) => {
-    return await this.update({seq: member_seq}, {"modify_date": this.database.raw('NOW()')});
+    return await this.update({seq: member_seq}, {"lastlogin": this.database.raw('NOW()')});
   };
 
   updateProfileImage = async (member_seq, profile_image_path) => {
@@ -166,11 +166,4 @@ export default class MemberModel extends MySQLModel {
     const result = await this.update({ seq: member_seq }, update_info);
     return result;
   }
-
-  updateAdminUserData = async (setData, search_option = null) => {
-    if (_.includes(setData, 'now')) {
-
-    }
-    return await this.update(search_option, setData);
-  };
 }

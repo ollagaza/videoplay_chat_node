@@ -11,6 +11,7 @@ import MemberLogService from './MemberLogService'
 import PaymentService from '../payment/PaymentService'
 import MemberModel from '../../database/mysql/member/MemberModel';
 import MemberSubModel from '../../database/mysql/member/MemberSubModel';
+import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
@@ -58,6 +59,13 @@ const MemberServiceClass = class {
       return new MemberSubModel(database)
     }
     return new MemberSubModel(DBMySQL)
+  }
+
+  getAdminMemberModel = (database = null) => {
+    if (database) {
+      return new AdminMemberModel(database)
+    }
+    return new AdminMemberModel(DBMySQL)
   }
 
   getMemberInfo = async (database, member_seq) => {
@@ -422,24 +430,6 @@ const MemberServiceClass = class {
     const member_model = this.getMemberModel(database)
     const member_list = await member_model.getMemberList(search_option)
     return member_list
-  }
-
-  updateAdminMembers = async (database, setData, search_option = null) => {
-    const searchObj = {
-      is_new: true,
-      query: [],
-    };
-    _.forEach(setData, (value, key) => {
-      if (value === 'now') {
-        setData[key] = database.raw('NOW()');
-      }
-    });
-    _.forEach(search_option, (value, key) => {
-      searchObj.query[key] = value;
-    });
-    const member_model = this.getMemberModel(database)
-    const update_Result = await member_model.updateAdminUserData(setData, searchObj)
-    return update_Result
   }
 }
 
