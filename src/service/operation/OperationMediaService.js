@@ -69,9 +69,9 @@ const OperationMediaServiceClass = class {
       "is_trans_complete": 1
     };
 
-    const thumbnail_path = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
-    if (thumbnail_path) {
-      update_params.thumbnail = thumbnail_path
+    const thumbnail_result = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
+    if (thumbnail_result) {
+      update_params.thumbnail = thumbnail_result.path
     }
 
     const operation_media_model = this.getOperationMediaModel(database)
@@ -83,6 +83,11 @@ const OperationMediaServiceClass = class {
       media_info,
       smil_info,
     }
+  }
+
+  updateStreamUrl = async (database, operation_info, stream_url) => {
+    const operation_media_model = this.getOperationMediaModel(database)
+    await operation_media_model.updateStreamUrl(operation_info.seq, stream_url)
   }
 }
 
