@@ -32,11 +32,6 @@ export default class OperationMediaModel extends MySQLModel {
     return await this.update({ operation_seq }, update_params);
   };
 
-  updateVideoInfo = async (operation_info, video_info) => {
-    video_info.setKeys(['fps', 'width', 'height', 'total_time', 'total_frame']);
-    return await this.update({operation_seq: operation_info.seq}, video_info.toJSON());
-  };
-
   reSetOperationMedia = async (operation_info) => {
     const update_params = {
       "video_file_name": null,

@@ -263,7 +263,7 @@ export default class OperationModel extends MySQLModel {
   }
 
   getGroupUsedStorageSize = async (filter) => {
-    const query = this.database.select([ this.database.raw('SUM(operation_storage.origin_video_size) AS total_size') ])
+    const query = this.database.select([ this.database.raw('SUM(operation_storage.total_file_size) AS total_size') ])
     query.from('operation')
     query.innerJoin("operation_storage", "operation_storage.operation_seq", "operation.seq")
     query.where(filter)

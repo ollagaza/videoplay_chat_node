@@ -19,19 +19,50 @@ const TranscoderSyncServiceClass = class {
     this.log_prefix = '[TranscoderSyncService]'
   }
 
-  getOperationInfo = async (database, content_id) => {
+  getOperationInfoByContentId = async (database, content_id) => {
     return await OperationService.getOperationInfoByContentId(database, content_id)
   }
 
-  onTranscodingComplete = async (database, content_id, video_file_name, smil_file_name, error) => {
+  onTranscodingComplete = async (content_id, video_file_name, smil_file_name, request) => {
     if (Util.isEmpty(content_id) || Util.isEmpty(video_file_name) || Util.isEmpty(smil_file_name)) {
       throw new StdObject(1, '잘못된 파라미터', 400);
     }
-    const { operation_info, operation_model } = await this.getOperationInfo(content_id)
+    const { operation_info } = await this.getOperationInfoByContentId(DBMySQL, content_id)
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400);
     }
-    await OperationMediaService.updateTranscodingComplete(database, operation_info, video_file_name, smil_file_name)
+
+    try {
+      const update_result = await OperationMediaService.updateTranscodingComplete(DBMySQL, operation_info, video_file_name, smil_file_name)
+    } catch (error) {
+      log.error(this.log_prefix, '[onTranscodingComplete]', error)
+      let error_str = null;
+      if (error.toJSON) {
+        error_str = JSON.stringify(error.toJSON())
+      } else if (error.stack) {
+        error_str = JSON.stringify(error.stack)
+      } else if (error.message) {
+        error_str = error.message
+      } else {
+        error_str = error.toString()
+      }
+      await this.onTranscodingError(content_id, error_str, request)
+    }
+  }
+
+  onTranscodingError = async (content_id, message, request) => {
+    if (Util.isEmpty(content_id)) {
+      throw new StdObject(1, '잘못된 파라미터', 400);
+    }
+
+    const { operation_info } = await this.getOperationInfoByContentId(DBMySQL, content_id)
+    const service_error_model = new ServiceErrorModel(DBMySQL);
+    if (operation_info.isEmpty()) {
+      await service_error_model.createServiceError('trans', null, content_id, message, request);
+    } else {
+      await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E');
+      await service_error_model.createServiceError('trans', operation_info.seq, content_id, message, request);
+    }
   }
 }
 

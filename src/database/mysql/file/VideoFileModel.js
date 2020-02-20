@@ -6,6 +6,7 @@ import Util from '../../../utils/baseutil'
 import log from '../../../libs/logger'
 
 import FileInfo from '../../../wrapper/file/FileInfo'
+import OperationService from '../../../service/operation/OperationService'
 
 export default class VideoFileModel extends MySQLModel {
   constructor(database) {
@@ -119,27 +120,6 @@ export default class VideoFileModel extends MySQLModel {
 
   deleteByStorageSeq = async (storage_seq) => {
     await this.delete({storage_seq: storage_seq});
-  };
-
-  createVideoThumbnail = async (origin_video_path, operation_info) => {
-    const dimension = await Util.getVideoDimension(origin_video_path);
-    log.d(null, 'createVideoThumbnail', origin_video_path, dimension);
-    if (!dimension.error && dimension.width && dimension.height) {
-
-      const thumbnail_path = Util.removePathSEQ(operation_info.media_path) + 'Thumb' + Constants.SEP + Date.now() + '.jpg';
-      log.d(null, 'createVideoThumbnail - thumbnail_path', origin_video_path, thumbnail_path);
-      const thumbnail_full_path = operation_info.media_root + thumbnail_path;
-
-      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212);
-      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160);
-
-      const execute_result = await Util.getThumbnail(origin_video_path, thumbnail_full_path, 0, thumb_width, thumb_height);
-      if ( execute_result.success && ( await Util.fileExists(thumbnail_full_path) ) ) {
-        log.d(null, 'createVideoThumbnail - success', origin_video_path, thumbnail_path);
-        return thumbnail_path;
-      }
-    }
-    return null;
   };
 
   createAndUpdateVideoThumbnail = async (origin_video_path, operation_info, file_seq) => {

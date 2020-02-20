@@ -13,8 +13,11 @@ export default class ServiceErrorModel extends MySQLModel {
     this.log_prefix = '[ServiceErrorModel]'
   }
 
-  createServiceError = async (error_type, operation_seq, content_id, message, req) => {
-    const error_info = new ServiceErrorInfo({ error_type, operation_seq, content_id, message })
+  createServiceError = async (error_type, operation_seq, content_id, message, request) => {
+    const request_url = request ? request.originalUrl : null
+    const request_method = request ? request.method : null
+    const request_body = request ? JSON.stringify(request.body) : null
+    const error_info = new ServiceErrorInfo({ error_type, operation_seq, content_id, message, request_url, request_method, request_body })
     const create_info = error_info.toJSON()
     await this.create(create_info, 'seq')
 
@@ -24,8 +27,8 @@ export default class ServiceErrorModel extends MySQLModel {
       const subject = '[MTEG ERROR] Api Request Error'
       let context = ''
       context += `요청 일자: ${Util.currentFormattedDate()}<br/>\n`
-      if (req) {
-        context += `${req.method} ${req.originalUrl}<br/><br/>\n`
+      if (request) {
+        context += `${request_method} ${request_url}<br/><br/>\n`
       }
       context += Util.nlToBr(message)
       await send_mail.sendMailHtml(mail_to, subject, context)

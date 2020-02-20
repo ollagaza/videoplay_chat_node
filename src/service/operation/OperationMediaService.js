@@ -30,22 +30,31 @@ const OperationMediaServiceClass = class {
     return await operation_media_model.getOperationMediaInfo(operation_info)
   }
 
-  getProxyVideoInfo = async (directory_info, smil_file_name) => {
+  getSmilInfo = async (directory_info, smil_file_name) => {
     if (!smil_file_name) {
       smil_file_name = ServiceConfig.get('default_smil_file_name');
     }
-    const smil_info = await new SmilInfo().loadFromXml(directory_info.media_origin, smil_file_name);
+    return await new SmilInfo().loadFromXml(directory_info.origin, smil_file_name);
+  }
+
+  getProxyVideoInfo = (smil_info) => {
     return smil_info.isEmpty() ? { name: null, resolution: ServiceConfig.get('proxy_max_resolution') } : smil_info.findProxyVideoInfo();
   };
 
   updateTranscodingComplete = async (database, operation_info, video_file_name, smil_file_name) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-    const media_result = await Util.getMediaInfo(directory_info.media_origin + '/' + video_file_name)
+    const trans_video_file_path = directory_info.origin + video_file_name
+    if (!(await Util.fileExists(trans_video_file_path))) {
+      throw new StdObject(-1, '트랜스코딩된 동영상 파일이 존재하지 않습니다.', 400)
+    }
+    const media_result = await Util.getMediaInfo(trans_video_file_path)
     if (!media_result.success || media_result.media_type !== Constants.VIDEO) {
       throw new StdObject(-1, '동영상 파일이 아닙니다.', 400)
     }
     const media_info = media_result.media_info
-    const proxy_info = await this.getProxyVideoInfo(directory_info, smil_file_name);
+    const smil_info = await this.getSmilInfo(directory_info, smil_file_name)
+    const proxy_info = this.getProxyVideoInfo(smil_info);
+    const is_trans_complete = !!proxy_info.name
 
     const update_params = {
       "video_file_name": video_file_name,
@@ -57,11 +66,23 @@ const OperationMediaServiceClass = class {
       "total_time": media_info.duration,
       "smil_file_name": smil_file_name,
       "proxy_max_height": proxy_info.resolution,
-      "is_trans_complete": proxy_info.name ? 1 : 0
+      "is_trans_complete": 1
     };
+
+    const thumbnail_path = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
+    if (thumbnail_path) {
+      update_params.thumbnail = thumbnail_path
+    }
 
     const operation_media_model = this.getOperationMediaModel(database)
     await operation_media_model.updateTransComplete(operation_info.seq, update_params)
+
+    return {
+      directory_info,
+      is_trans_complete,
+      media_info,
+      smil_info,
+    }
   }
 }
 

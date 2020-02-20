@@ -122,7 +122,6 @@ const on_complete = Wrap(async(req, res) => {
         throw new StdObject(video_info.error_code, video_info.message, 500);
       }
       await operation_model.updateAnalysisComplete(operation_seq, true);
-      await new OperationMediaModel(DBMySQL).updateVideoInfo(operation_info, video_info);
       await syncOne(req, token_info, operation_seq);
 
       is_complete = true;
