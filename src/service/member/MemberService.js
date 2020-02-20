@@ -7,6 +7,7 @@ import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
+import GroupService from './GroupService'
 import MemberLogService from './MemberLogService'
 import PaymentService from '../payment/PaymentService'
 import MemberModel from '../../database/mysql/member/MemberModel';
@@ -167,6 +168,7 @@ const MemberServiceClass = class {
     }
     await PaymentService.createDefaultPaymentResult(database, create_member_info.seq)
     await MemberLogService.memberJoinLog(database, create_member_info.seq)
+    await GroupService.createPersonalGroup(database, create_member_info)
   }
 
   modifyMemberInfo = async (database, member_seq, member_info, add_log = true) => {
@@ -326,7 +328,7 @@ const MemberServiceClass = class {
     const output = new StdObject(-1, '프로필 업로드 실패');
 
     const media_root = ServiceConfig.get('media_root');
-    const upload_path = member_info.user_media_path + `_upload_${Constants.SEP}profile`;
+    const upload_path = member_info.user_media_path + `/profile`;
     const upload_full_path = media_root + upload_path;
     if (!(await Util.fileExists(upload_full_path))) {
       await Util.createDirectory(upload_full_path);
@@ -340,7 +342,7 @@ const MemberServiceClass = class {
     }
 
     const origin_image_path = upload_file_info.path;
-    const resize_image_path = upload_path + Constants.SEP + Util.getRandomId() + '.png';
+    const resize_image_path = `${upload_path}/${Util.getRandomId()}.png`;
     const resize_image_full_path = media_root + resize_image_path;
     const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
 

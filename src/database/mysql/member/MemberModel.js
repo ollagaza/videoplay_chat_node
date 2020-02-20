@@ -66,10 +66,9 @@ export default class MemberModel extends MySQLModel {
 
     const member = member_info.toJSON();
 
-    member.user_media_path = Constants.SEP + member_info.user_id + Constants.SEP;
+    member.user_media_path = `/user/${Util.getContentId()}`;
 
-    const service_info = ServiceConfig.getServiceInfo();
-    const media_root = service_info.media_root;
+    const media_root = ServiceConfig.get('media_root');
 
     if ( !( await Util.fileExists(media_root + member.user_media_path) ) ) {
       await Util.createDirectory(media_root + member.user_media_path);
@@ -107,7 +106,7 @@ export default class MemberModel extends MySQLModel {
     member_info.setAutoTrim(true);
     const member = member_info.toJSON();
     const find_user_result = await this.findOne({user_name: member.user_name, email_address: member.email_address});
-    
+
     if (!find_user_result || !find_user_result.seq) {
       throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
