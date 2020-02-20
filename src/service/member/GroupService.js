@@ -85,7 +85,7 @@ const GroupServiceClass = class {
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size
     }
-    return await this.createGroupInfo(database, create_group_info, member_info.seq, 'personal', options)
+    return await this.createGroupInfo(database, create_group_info, member_info, 'personal', options)
   }
 
   createEnterpriseGroup = async (database, group_type, member_info, options = {}) => {
