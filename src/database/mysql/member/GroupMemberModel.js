@@ -20,7 +20,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
       'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
-      'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size'
+      'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path'
     ];
 
     this.group_invite_select = [
@@ -36,7 +36,7 @@ export default class GroupMemberModel extends MySQLModel {
     this.group_invite_private_fields = [
       'invite_code', 'invite_status', 'join_member_seq', 'grade', 'group_member_status', 'group_seq', 'group_type', 'group_status'
     ]
-    this.group_member_private_fields = [ 'member_seq', 'invite_email' ]
+    this.group_member_private_fields = [ 'member_seq', 'media_path' ]
   }
 
 
@@ -128,12 +128,21 @@ export default class GroupMemberModel extends MySQLModel {
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
-  getGroupMemberList = async (group_seq, status = null, paging = {}, search_text = null, order = null) => {
+  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null) => {
     const filter = {
       group_seq
     }
-    if (status) {
-      filter['group_member.status'] = status
+    if (member_type && member_type !== 'all') {
+      if (member_type === 'active') {
+        filter['group_member.status'] = 'Y'
+      } else if (member_type === 'pause') {
+        filter['group_member.status'] = 'P'
+      } else if (member_type === 'delete') {
+        filter['group_member.status'] = 'D'
+      } else if (member_type === 'invite') {
+        filter['group_member.status'] = 'N'
+        filter['group_member.invite_status'] = 'Y'
+      }
     }
     const query = this.database.select(this.group_member_select)
     query.from('group_member');
@@ -307,7 +316,7 @@ export default class GroupMemberModel extends MySQLModel {
       invite_date: this.database.raw('NOW()')
     }
     const query_result = await this.update(filter, update_params)
-    log.debug(this.log_prefix, query_result)
+    log.debug(this.log_prefix, '[resetInviteInfo]', query_result)
     return query_result
   }
 
@@ -377,5 +386,26 @@ export default class GroupMemberModel extends MySQLModel {
     const delete_result = await this.delete(filter)
     log.debug(this.log_prefix, '[deleteInviteInfo]', delete_result)
     return delete_result
+  }
+
+  getGroupMemberSummary = async (group_seq) => {
+    const filter = {
+      group_seq: group_seq
+    }
+    const select_fields = []
+    select_fields.push(this.database.raw("COUNT(*) AS total_count"))
+    select_fields.push(this.database.raw("SUM(IF(`status` != 'N', 1, 0)) AS member_count"))
+    select_fields.push(this.database.raw("SUM(IF(`status` = 'Y', 1, 0)) AS active_count"))
+    select_fields.push(this.database.raw("SUM(IF(`status` = 'P', 1, 0)) AS pause_count"))
+    select_fields.push(this.database.raw("SUM(IF(`status` = 'D', 1, 0)) AS delete_count"))
+    select_fields.push(this.database.raw("SUM(IF(`status` = 'N' AND invite_status = 'Y', 1, 0)) AS invite_count"))
+    const query = this.database.select(select_fields)
+    query.from(this.table_name)
+    query.where(filter)
+    query.first()
+
+    const query_result = await query
+    log.debug(this.log_prefix, '[getGroupMemberSummary]', query_result)
+    return query_result
   }
 }

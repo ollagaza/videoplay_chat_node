@@ -4,9 +4,17 @@ import Role from '../../constants/roles'
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
+import OperationMediaService from './OperationMediaService'
 import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
-import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
+import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
+import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
+import { UserDataModel } from '../../database/mongodb/UserData'
+import OperationInfo from '../../wrapper/operation/OperationInfo'
+import Constants from '../../constants/constants'
+import VideoFileModel from '../../database/mysql/file/VideoFileModel'
+import ReferFileModel from '../../database/mysql/file/ReferFileModel'
+import querystring from 'querystring';
 
 const OperationServiceClass = class {
   constructor () {
@@ -27,18 +35,78 @@ const OperationServiceClass = class {
     return new OperationStorageModel(DBMySQL)
   }
 
-  getOperationMediaModel = (database = null) => {
-    if (database) {
-      return new OperationMediaModel(database)
+  createOperation = async (database, group_member_info, member_seq, operation_data, operation_metadata) => {
+    const output = new StdObject();
+    let is_success = false;
+
+    const input_operation_data = new OperationInfo().getByRequestBody(operation_data)
+    if (input_operation_data.isEmpty()) {
+      throw new StdObject(-1, '수술 정보가 없습니다.', 500)
     }
-    return new OperationMediaModel(DBMySQL)
+    const operation_info = input_operation_data.toJSON();
+    const content_id = Util.getContentId();
+    const group_media_path = group_member_info.media_path;
+    operation_info.group_seq = group_member_info.group_seq;
+    operation_info.member_seq = member_seq;
+    operation_info.media_path = `${group_media_path}/operation/${content_id}/`;
+    operation_info.created_by_user = 1;
+    operation_info.content_id = content_id;
+    // operation_info.status = 'N';
+
+    await database.transaction(async(transaction) => {
+      const operation_model = new OperationModel(transaction);
+      await operation_model.createOperationNew(operation_info);
+      if (!operation_info || !operation_info.seq) {
+        throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
+      }
+
+      await OperationMediaService.createOperationMediaInfo(operation_info);
+      await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info);
+
+      output.add('operation_seq', operation_info.seq);
+
+      is_success = true;
+    });
+
+    if (is_success) {
+      await this.createOperationDirectory(operation_info);
+
+      try {
+        await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
+        await OperationMetadataModel.createOperationMetadata(operation_info, operation_metadata);
+        await UserDataModel.updateByMemberSeq(member_seq, { operation_type: operation_info.operation_type });
+      } catch (error) {
+        log.error(this.log_prefix, '[createOperation]', 'create metadata error', error);
+      }
+    }
+    return output;
+  }
+
+  deleteOperation = async (database, token_info, operation_seq) => {
+    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info)
+    await this.deleteOperationByInfo(operation_info)
+  }
+
+  deleteOperationByInfo = async (operation_info) => {
+    const operation_model = this.getOperationModel()
+    await operation_model.deleteOperation(operation_info);
+
+    (
+      async (operation_info) => {
+        try {
+          await this.deleteOperationFiles(operation_info)
+        } catch (error) {
+          log.error(this.log_prefix, '', error)
+        }
+      }
+    )(operation_info)
   }
 
   getMediaDirectory = (operation_info) => {
-    return operation_info.media_directory;
+    return ServiceConfig.get('media_root') + operation_info.media_path;
   }
   getTransVideoDirectory = (operation_info) => {
-    return Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
+    return ServiceConfig.get('trans_video_root') + operation_info.media_path;
   }
 
   getOperationListByRequest = async (database, token_info, request) => {
@@ -82,53 +150,61 @@ const OperationServiceClass = class {
     return { operation_info, operation_model };
   };
 
-  createOperationDirectory = async (operation_info) => {
-    const media_directory = this.getMediaDirectory(operation_info);
-    const trans_video_directory = this.getTransVideoDirectory(operation_info)
+  getOperationInfoByContentId = async (database, content_id) => {
+    const operation_model = this.getOperationModel(database);
+    const operation_info = await operation_model.getOperationInfoByContentId(content_id)
 
-    await Util.createDirectory(media_directory + "SEQ");
-    await Util.createDirectory(media_directory + "Custom");
-    await Util.createDirectory(media_directory + "REF");
-    await Util.createDirectory(media_directory + "Thumb");
-    await Util.createDirectory(media_directory + "Trash");
-    await Util.createDirectory(trans_video_directory + "SEQ");
+    return { operation_info, operation_model };
+  };
+
+  getOperationDirectoryInfo = (operation_info) => {
+    const media_path = operation_info.media_path
+    const media_directory = this.getMediaDirectory(operation_info);
+    const trans_server_root = ServiceConfig.get('trans_server_root')
+    return {
+      "root": media_directory,
+      "origin": media_directory + "origin",
+      "video": media_directory + "video",
+      "other": media_directory + "other",
+      "image": media_directory + "image",
+      "temp": media_directory + "temp",
+      "media_path": media_path,
+      "media_origin": media_path + "origin",
+      "media_video": media_path + "video",
+      "media_other": media_path + "other",
+      "media_image": media_path + "image",
+      "media_temp": media_path + "temp",
+      "trans_origin": trans_server_root + media_path + "origin",
+      "trans_video": trans_server_root + media_path + "video",
+      "trans_temp": trans_server_root + media_path + "temp",
+    }
+  }
+
+  createOperationDirectory = async (operation_info) => {
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+
+    await Util.createDirectory(directory_info.video);
+    await Util.createDirectory(directory_info.other);
+    await Util.createDirectory(directory_info.image);
+    await Util.createDirectory(directory_info.temp);
   };
 
   deleteOperationDirectory = async (operation_info, delete_video = false) => {
-    const media_directory = this.getMediaDirectory(operation_info);
-    const trans_video_directory = this.getTransVideoDirectory(operation_info)
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
 
-    await Util.deleteDirectory(media_directory + "Custom");
-    await Util.deleteDirectory(media_directory + "Trash");
-    await Util.deleteDirectory(media_directory + "INX1");
-    await Util.deleteDirectory(media_directory + "INX2");
-    await Util.deleteDirectory(media_directory + "INX3");
+    await Util.deleteDirectory(directory_info.other);
+    await Util.deleteDirectory(directory_info.image);
 
     if (delete_video) {
-      await Util.deleteDirectory(media_directory + "SEQ");
-      await Util.deleteDirectory(trans_video_directory + "SEQ");
+      await Util.deleteDirectory(directory_info.video);
+      await Util.createDirectory(directory_info.temp);
     }
-  };
-
-  deleteMetaFiles = async (operation_info) => {
-    const media_directory = this.getMediaDirectory(operation_info);
-
-    await Util.deleteFile(media_directory + "Index1.xml");
-    await Util.deleteFile(media_directory + "Index2.xml");
-    await Util.deleteFile(media_directory + "Custom.xml");
-    await Util.deleteFile(media_directory + "History.xml");
-    await Util.deleteFile(media_directory + "Report.xml");
-    await Util.deleteFile(media_directory + "Clip.xml");
   };
 
   deleteOperationFiles = async (operation_info) => {
-    const media_directory = this.getMediaDirectory(operation_info);
-    const trans_video_directory = this.getTransVideoDirectory(operation_info)
-
-    await Util.deleteDirectory(media_directory);
-    if (media_directory !== trans_video_directory) {
-      await Util.deleteDirectory(trans_video_directory);
-    }
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    await Util.deleteDirectory(directory_info.root);
+    // TODO: 클라우드 파일 삭제 로직 추가 필요
   };
 
   deleteGroupMemberOperations = async (group_seq, member_seq) => {
@@ -138,15 +214,20 @@ const OperationServiceClass = class {
     const operation_list = await operation_model.getGroupMemberOperationList(group_seq, member_seq);
 
     (
-      async () => {
+      async (operation_list) => {
         await this.deleteOperationByList(operation_list)
       }
-    )()
+    )(operation_list)
   }
 
   deleteOperationByList = async (operation_list) => {
     for (let i = 0; i < operation_list.length; i++) {
       const operation_info = operation_list[i]
+      try {
+        await this.deleteOperationByInfo(operation_info);
+      } catch (error) {
+        log.debug(this.log_prefix, '[deleteOperationByList]', error)
+      }
     }
   }
 
@@ -158,6 +239,109 @@ const OperationServiceClass = class {
   getGroupMemberStorageUsedSize = async (database, group_seq, member_seq) => {
     const operation_model = this.getOperationModel(database)
     return await operation_model.getGroupMemberStorageUsedSize(group_seq, member_seq)
+  }
+
+  getVideoIndexList = async (operation_seq) => {
+    const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq);
+    return video_index_info.index_list ? video_index_info.index_list : [];
+  }
+
+  uploadOperationFile = async (database, request, response, token_info, operation_seq, file_type) => {
+    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info);
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    const storage_seq = operation_info.storage_seq;
+    let media_directory;
+    if (file_type !== 'refer') {
+      media_directory = directory_info.origin;
+    } else {
+      media_directory = directory_info.other;
+    }
+
+    if ( !( await Util.fileExists(media_directory) ) ) {
+      await Util.createDirectory(media_directory);
+    }
+
+    if (file_type === 'refer') {
+      await Util.uploadByRequest(request, response, 'target', media_directory, Util.getRandomId());
+    } else {
+      await Util.uploadByRequest(request, response, 'target', media_directory);
+    }
+    const upload_file_info = request.file;
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+    }
+    upload_file_info.new_file_name = request.new_file_name;
+
+    let upload_seq = null;
+    await DBMySQL.transaction(async(transaction) => {
+      let file_model = null;
+      if (file_type !== 'refer') {
+        file_model = new VideoFileModel(transaction);
+        upload_seq = await file_model.createVideoFile(upload_file_info, storage_seq, directory_info.media_origin);
+      } else {
+        file_model = new ReferFileModel(transaction);
+        upload_seq = await file_model.createReferFile(upload_file_info, storage_seq, directory_info.media_other);
+      }
+
+      if (!upload_seq) {
+        throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500);
+      }
+
+      if (file_type !== 'refer') {
+        const origin_video_path = upload_file_info.path;
+        await file_model.createAndUpdateVideoThumbnail(origin_video_path, operation_info, upload_seq);
+      }
+
+      await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);
+    });
+
+    return upload_seq
+  }
+
+  requestAnalysis = async (database, token_info, operation_seq) => {
+    let api_request_result = null;
+    let is_execute_success = false;
+    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info);
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+
+    await database.transaction(async(transaction) => {
+      const operation_model = this.getOperationModel(transaction)
+      const operation_update_param = {};
+      operation_update_param.analysis_status = 'R';
+
+      const content_id = operation_info.content_id;
+      const query_data = {
+        "DirPath": directory_info.trans_origin,
+        "ContentID": content_id
+      };
+      const query_str = querystring.stringify(query_data);
+
+      const request_options = {
+        hostname: ServiceConfig.get('trans_server_domain'),
+        port: ServiceConfig.get('trans_server_port'),
+        path: ServiceConfig.get('trans_start_api') + '?' + query_str,
+        method: 'GET'
+      };
+      const api_url = 'http://' + ServiceConfig.get('trans_server_domain') + ':' + ServiceConfig.get('trans_server_port') + ServiceConfig.get('trans_start_api') + '?' + query_str;
+      log.debug(this.log_prefix, '[requestAnalysis]', 'trans api url', api_url);
+      try {
+        api_request_result = await Util.httpRequest(request_options, false);
+        is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+      } catch (error) {
+        log.error(this.log_prefix, '[requestAnalysis]', 'trans api url', api_url, error);
+      }
+
+      if (is_execute_success) {
+        await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param));
+      } else {
+        throw new StdObject(-1, '비디오 분석 요청 실패', 500);
+      }
+    });
+  }
+
+  isDuplicateOperationCode = async (database, group_seq, member_seq, operation_code) => {
+    const operation_model = this.getOperationModel(database)
+    return operation_model.isDuplicateOperationCode(group_seq, member_seq, operation_code)
   }
 
   migrationGroupSeq = async (database, member_seq, group_seq) => {

@@ -162,11 +162,7 @@ export default class OperationModel extends MySQLModel {
     return await this.update({"seq": operation_seq}, {is_review: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
-  updateMigChipStatus = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {mig_clip: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
-  };
-
-  createOperation = async (body, member_seq, created_by_user = true, status = null, use_new_clip_api = true) => {
+  createOperation = async (body, member_seq, created_by_user = true, status = null) => {
     const member_info = await new MemberModel(this.database).getMemberInfo(member_seq);
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(-1, '회원정보가 없습니다.', 401)
@@ -178,7 +174,6 @@ export default class OperationModel extends MySQLModel {
     operation_info.media_path = user_media_path + 'operation' + Constants.SEP + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
     operation_info.created_by_user = created_by_user ? 1 : 0;
     operation_info.content_id = content_id;
-    operation_info.mig_clip = use_new_clip_api ? 1 : 0;
     if (status) {
       operation_info.status = status;
     }
@@ -194,8 +189,15 @@ export default class OperationModel extends MySQLModel {
     return operation_info;
   };
 
-  isDuplicateOperationCode = async (member_seq, operation_code) => {
-    const where = {"member_seq": member_seq, "operation_code": operation_code};
+  createOperationNew = async (operation_info) => {
+    const operation_seq = await this.create(operation_info, 'seq');
+    operation_info.seq = operation_seq;
+
+    return operation_info;
+  };
+
+  isDuplicateOperationCode = async (group_seq, member_seq, operation_code) => {
+    const where = {"group_seq": group_seq, "member_seq": member_seq, "operation_code": operation_code};
     const total_count = await this.getTotalCount(where);
 
     return total_count > 0;

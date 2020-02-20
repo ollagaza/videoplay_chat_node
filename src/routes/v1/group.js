@@ -44,6 +44,15 @@ routes.get('/:group_seq(\\d+)/auth', Auth.isAuthenticated(Role.DEFAULT), Wrap(as
   res.json(output);
 }));
 
+routes.get('/:group_seq(\\d+)/summary', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const { group_seq } = await checkGroupAuth(DBMySQL, req, false)
+  const group_summary = await GroupService.getGroupSummary(DBMySQL, group_seq)
+  const output = new StdObject();
+  output.adds(group_summary)
+  res.json(output);
+}));
+
 routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
   const { group_seq } = await checkGroupAuth(DBMySQL, req)
