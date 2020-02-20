@@ -28,26 +28,8 @@ export default class OperationMediaModel extends MySQLModel {
     return await this.create(create_params, 'seq');
   };
 
-  getProxyVideoInfo = async (operation_info, origin_file_name, smil_file_name) => {
-    if (!smil_file_name) {
-      smil_file_name = ServiceConfig.get('default_smil_file_name');
-    }
-    const trans_video_directory = Util.getMediaDirectory(ServiceConfig.get('trans_video_root'), operation_info.media_path);
-    const smil_info = await new SmilInfo().loadFromXml(trans_video_directory, smil_file_name);
-    return smil_info.isEmpty() ? { name: null, resolution: ServiceConfig.get('proxy_max_resolution') } : smil_info.findProxyVideoInfo();
-  };
-
-  updateTransComplete = async (operation_info, trans_info) => {
-    const proxy_info = await this.getProxyVideoInfo(operation_info, trans_info.video_file_name, trans_info.smil_file_name);
-    const update_params = {
-      "video_file_name": trans_info.video_file_name,
-      "proxy_file_name": proxy_info.name,
-      "smil_file_name": trans_info.smil_file_name,
-      "proxy_max_height": proxy_info.resolution,
-      "is_trans_complete": proxy_info.name ? 1 : 0,
-      "modify_date": this.database.raw('NOW()')
-    };
-    return await this.update({operation_seq: operation_info.seq}, update_params);
+  updateTransComplete = async (operation_seq, update_params) => {
+    return await this.update({ operation_seq }, update_params);
   };
 
   updateVideoInfo = async (operation_info, video_info) => {

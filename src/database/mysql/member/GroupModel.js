@@ -10,14 +10,7 @@ export default class GroupModel extends MySQLModel {
     this.table_name = 'group_info'
     this.selectable_fields = ['*']
     this.log_prefix = '[GroupModel]'
-
-    this.group_member_list_select = [
-      'group_invite.seq AS group_invite_seq', 'group_invite.status AS group_invite_status', 'group_invite.email AS group_invite_email',
-      'group_invite.confirm_date AS invite_confirm_date', 'group_invite.error_message',
-      'group_member.seq AS group_member_seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade', 'group_member.status AS group_member_status',
-      'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq',
-      'member.user_name', 'member.user_nickname', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used'
-    ];
+    this.group_private_fields = ['member_seq', 'content_id', 'media_path', 'start_date', 'reg_date', 'modify_date']
   }
 
   getParams = (group_info, is_set_modify_date = true, ignore_empty = true) => {
@@ -52,14 +45,29 @@ export default class GroupModel extends MySQLModel {
 
   getGroupInfo = async  (group_seq, private_keys = null) => {
     const filter = {
-      group_seq
+      seq: group_seq
     }
     const query_result = await this.findOne(filter)
-    return new GroupInfo(query_result, private_keys)
+    return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
   }
 
-  getGroupStatistics = async (group_seq) => {
-
+  getGroupInfoWithProduct = async  (group_seq, private_keys = null) => {
+    const filter = {
+      'group_info.seq': group_seq
+    }
+    this.group_with_product_select = [
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
+      'group_info.group_name', 'group_info.expire_date AS group_expire_date',
+      'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
+      'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc'
+    ];
+    const query = this.database.select(this.group_with_product_select)
+    query.from(this.table_name)
+    query.leftOuterJoin('payment_list', { "payment_list.code": "group_info.pay_code" })
+    query.where(filter)
+    query.first()
+    const query_result = await query
+    return new GroupInfo(query_result)
   }
 
   changePlan = async (group_seq, pay_code, storage_size, start_date, expire_date) => {

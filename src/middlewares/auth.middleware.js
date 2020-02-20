@@ -16,7 +16,7 @@ const setResponseHeader = (res, token_info) => {
     return
   }
   res.setHeader('authorization', 'Bearer ' + token_info.getToken())
-  res.setHeader('auth-remain', '' + token_info.getRemainTime())
+  res.setHeader('auth-expire', '' + token_info.getExpireTime())
   res.setHeader('auth-role', '' + token_info.getRole())
 }
 
@@ -30,7 +30,7 @@ const getToken = (req) => {
 }
 
 const generateTokenByMemberInfo = (member_info, un_limit = false) => {
-  const expire = un_limit ? Number.MAX_VALUE : 24 * HOUR
+  const expire = Util.getCurrentTimestamp() + (un_limit ? Number.MAX_VALUE : 24 * HOUR)
   const token_info = new TokenInfo()
   token_info.setTokenByMemberInfo(member_info)
 
@@ -44,7 +44,7 @@ const generateTokenByMemberInfo = (member_info, un_limit = false) => {
   return {
     'token_info': token_info,
     'token': token,
-    'remain': expire
+    'expire': expire
   }
 }
 
@@ -61,6 +61,7 @@ const isAuthenticated = (require_roles) => {
       const token_info = verify_result.get('token_info')
       token_info.setLang(getLanguage(req))
       token_info.setGroupSeq(getGroupSeq(req))
+      token_info.setServiceDomain(getServiceDomain(req))
       req.token_info = token_info
       setResponseHeader(res, req.token_info)
       next()
@@ -143,7 +144,7 @@ const getTokenResult = async (res, member_info, role) => {
   const output = new StdObject()
   if (token_result != null && token_result.token != null) {
     output.add('token', token_result.token)
-    output.add('remain_time', token_result.remain)
+    output.add('expire', token_result.expire)
     output.add('member_seq', member_info.seq)
     output.add('role', token_result.token_info.getRole())
     setResponseHeader(res, token_result.token_info)
@@ -168,6 +169,10 @@ const getLanguage = (req) => {
 
 const getGroupSeq = (req) => {
   return Util.parseInt(req.headers.group_seq, 0)
+}
+
+const getServiceDomain = (req) => {
+  return req.headers.service_domain
 }
 
 export default {

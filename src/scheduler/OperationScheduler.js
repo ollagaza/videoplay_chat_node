@@ -152,7 +152,7 @@ class OperationScheduler {
       "operation_name": sync_info.key,
       "operation_date": Util.today()
     };
-    const operation_info = await operation_model.createOperation(operation, sync_info.member_seq, true, 'D');
+    const operation_info = await operation_model.createOperation(null, operation, sync_info.member_seq, true, 'D');
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }

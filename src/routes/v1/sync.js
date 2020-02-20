@@ -125,7 +125,6 @@ const syncOne = async (req, token_info, operation_seq) => {
   const media_directory = operation_info.media_directory;
 
   await OperationService.createOperationDirectory(operation_info);
-  await OperationService.deleteMetaFiles(operation_info);
 
   log.d(req, `${log_prefix} hawkeye index list api`);
 

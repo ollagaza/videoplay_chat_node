@@ -416,6 +416,9 @@ const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
   if (value === undefined || value === null) {
     return true;
   }
+  if (value instanceof Date) {
+    return false
+  }
   if (isNumber(value)) {
     return false;
   }
