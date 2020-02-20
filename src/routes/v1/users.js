@@ -8,6 +8,7 @@ import DBMySQL from '../../database/knex-mysql';
 import MemberService from '../../service/member/MemberService'
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
+import log from '../../libs/logger'
 
 const routes = Router();
 
@@ -279,7 +280,7 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.L
 routes.post('/verify/user_id', Wrap(async(req, res) => {
   req.accepts('application/json');
   const user_id = req.body.user_id;
-  const is_duplicate = await MemberService.isDuplicateId(user_id);
+  const is_duplicate = await MemberService.isDuplicateId(DBMySQL, user_id);
 
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
@@ -290,7 +291,7 @@ routes.post('/verify/user_id', Wrap(async(req, res) => {
 routes.post('/verify/nickname', Wrap(async(req, res) => {
   req.accepts('application/json');
   const nickname = req.body.nickname;
-  const is_duplicate = await MemberService.isDuplicateNickname(nickname);
+  const is_duplicate = await MemberService.isDuplicateNickname(DBMySQL, nickname);
 
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
@@ -306,6 +307,20 @@ routes.get('/:member_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wra
   }
 
   const user_data = await MemberService.getMemberMetadata(member_seq)
+
+  const output = new StdObject();
+  output.add('user_data', user_data);
+  res.json(output);
+}));
+
+routes.put('/:member_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = Util.parseInt(req.params.member_seq);
+  if(!MemberService.checkMyToken(token_info, member_seq)){
+    throw new StdObject(-1, "잘못된 요청입니다.", 403);
+  }
+
+  const user_data = await MemberService.updateMemberMetadata(member_seq, req.body.changes)
 
   const output = new StdObject();
   output.add('user_data', user_data);
@@ -333,8 +348,7 @@ routes.post('/finds', Wrap(async(req, res) => {
   const output = new StdObject();
   const search_text = req.body.searchText;
 
-  const find_user_info_list = MemberService.findMembers(DBMySQL, search_text)
-
+  const find_user_info_list = await MemberService.findMembers(DBMySQL, search_text)
   output.add('user_data', find_user_info_list);
   output.add("searchText", search_text);
 

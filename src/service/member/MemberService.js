@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
 import Auth from '../../middlewares/auth.middleware';
@@ -10,6 +11,7 @@ import MemberLogService from './MemberLogService'
 import PaymentService from '../payment/PaymentService'
 import MemberModel from '../../database/mysql/member/MemberModel';
 import MemberSubModel from '../../database/mysql/member/MemberSubModel';
+import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
@@ -24,9 +26,10 @@ const MemberServiceClass = class {
       'license_no', 'license_image_path', 'special_no',
       'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
-      'graduation_year', 'interrest_code', 'interrest_text'];
+      'graduation_year', 'interrest_code', 'interrest_text',
+      'member_seq'];
 
-    this.member_sub_private_fields = ['regist_date', 'modify_date', 'user_id', 'password',
+    this.member_sub_private_fields = ['seq', 'regist_date', 'modify_date', 'user_id', 'password',
       'user_nickname', 'user_name', 'gender', 'email_address',
       'mail_acceptance', 'birth_day', 'cellphone', 'tel',
       'user_media_path', 'profile_image_path', 'certkey', 'used',
@@ -58,9 +61,53 @@ const MemberServiceClass = class {
     return new MemberSubModel(DBMySQL)
   }
 
+  getAdminMemberModel = (database = null) => {
+    if (database) {
+      return new AdminMemberModel(database)
+    }
+    return new AdminMemberModel(DBMySQL)
+  }
+
   getMemberInfo = async (database, member_seq) => {
     const { member_info } = await this.getMemberInfoWidthModel(database, member_seq)
     return member_info
+  }
+
+  isActiveMember = (member_info) => {
+    if (!member_info || member_info.isEmpty() || !member_info.seq) {
+      return false
+    }
+    return Util.parseInt(member_info.used, 0) === 1
+  }
+
+  getMemberStateError = (member_info) => {
+    const output = new StdObject()
+    if (this.isActiveMember(member_info)) {
+      output.error = -1
+      output.message = '등록된 회원이 아닙니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 0) {
+      output.error = -2
+      output.message = '회원가입 승인이 완료되지 않았습니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 2) {
+      output.error = -3
+      output.message = '탈퇴처리된 계정입니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 3) {
+      output.error = -4
+      output.message = '휴면처리된 계정입니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 4) {
+      output.error = -5
+      output.message = '사용중지된 계정입니다.'
+      output.httpStatusCode = 403
+    } else if (member_info.used === 5) {
+      output.error = -6
+      output.message = '사용제제된 계정입니다.'
+      output.httpStatusCode = 403
+    }
+    return output
   }
 
   getMemberInfoWidthModel = async (database, member_seq) => {
@@ -118,8 +165,8 @@ const MemberServiceClass = class {
     if (!create_member_info.seq){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
-    await MemberLogService.memberJoinLog(database, create_member_info.seq)
     await PaymentService.createDefaultPaymentResult(database, create_member_info.seq)
+    await MemberLogService.memberJoinLog(database, create_member_info.seq)
   }
 
   modifyMemberInfo = async (database, member_seq, member_info, add_log = true) => {
@@ -337,16 +384,52 @@ const MemberServiceClass = class {
     return user_data
   }
 
+  updateMemberMetadata = async (member_seq, changes) => {
+    return await UserDataModel.updateByMemberSeq(member_seq, changes);
+  }
+
   leaveMember = async (database, member_seq, leave_text) => {
     const member_model = this.getMemberModel(database)
     await member_model.leaveMember(member_seq)
     await MemberLogService.memberLeaveLog(database, member_seq, leave_text)
   }
 
-  findMembers = async (database, search_text) => {
+  findMembers = async (database, params, page_navigation) => {
+    const searchObj = {
+      is_new: true,
+      query: [],
+      page_navigation: page_navigation,
+    };
+    _.forEach(params, (value, key) => {
+      searchObj.query[key] = value;
+    });
+
+    log.debug(this.log_prefix, searchObj.query);
+
     const member_model = this.getMemberModel(database)
-    const find_users = await member_model.findMembers(search_text);
-    return find_users
+    const member_sub_model = this.getMemberSubModel(database)
+    const find_users = await member_model.findMembers(searchObj);
+
+    searchObj.query = [];
+    searchObj.query = [{ member_seq: _.concat('in', _.map(find_users.data, 'seq')) }]
+
+    const find_sub_users = await member_sub_model.findMembers(searchObj);
+    const res = [];
+    _.keyBy(find_users.data, data => {
+      if (_.find(find_sub_users, { member_seq: data.seq })) {
+        res.push(_.merge(data, _.find(find_sub_users, { member_seq: data.seq })));
+      } else {
+        res.push(_.merge(data));
+      }
+    });
+    find_users.data = new MemberInfo(res)
+    return find_users;
+  }
+
+  getMemberList = async (database, search_option = null) => {
+    const member_model = this.getMemberModel(database)
+    const member_list = await member_model.getMemberList(search_option)
+    return member_list
   }
 }
 

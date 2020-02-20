@@ -809,6 +809,7 @@ export default {
   "timeStrToSecond": timeStrToSecond,
 
   "secondToTimeStr": secondToTimeStr,
+  "dateFormatter": dateFormatter,
 
   "today": (format='yyyy-mm-dd') => { return dateFormatter(new Date().getTime(), format); },
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },

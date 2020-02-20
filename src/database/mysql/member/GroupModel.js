@@ -10,6 +10,14 @@ export default class GroupModel extends MySQLModel {
     this.table_name = 'group_info'
     this.selectable_fields = ['*']
     this.log_prefix = '[GroupModel]'
+
+    this.group_member_list_select = [
+      'group_invite.seq AS group_invite_seq', 'group_invite.status AS group_invite_status', 'group_invite.email AS group_invite_email',
+      'group_invite.confirm_date AS invite_confirm_date', 'group_invite.error_message',
+      'group_member.seq AS group_member_seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade', 'group_member.status AS group_member_status',
+      'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq',
+      'member.user_name', 'member.user_nickname', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used'
+    ];
   }
 
   getParams = (group_info, is_set_modify_date = true, ignore_empty = true) => {
@@ -28,11 +36,12 @@ export default class GroupModel extends MySQLModel {
     if (is_set_modify_date) {
       params.modify_date = this.database.raw('NOW()')
     }
+    return params
   }
 
   createGroup = async (group_info) => {
     const create_params = this.getParams(group_info)
-    const group_seq = this.create(create_params, 'seq')
+    const group_seq = await this.create(create_params, 'seq')
     group_info.seq = group_seq
     if (!(group_info instanceof GroupInfo)) {
       return new GroupInfo(group_info)
@@ -45,8 +54,12 @@ export default class GroupModel extends MySQLModel {
     const filter = {
       group_seq
     }
-    const query_result = this.findOne(filter)
+    const query_result = await this.findOne(filter)
     return new GroupInfo(query_result, private_keys)
+  }
+
+  getGroupStatistics = async (group_seq) => {
+
   }
 
   changePlan = async (group_seq, pay_code, storage_size, start_date, expire_date) => {

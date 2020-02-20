@@ -1,9 +1,10 @@
+import _ from 'lodash';
 import ServiceConfig from '../../../service/service-config';
 import Constants from '../../../constants/constants'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import StdObject from '../../../wrapper/std-object'
-
+import log from "../../../libs/logger";
 import MemberInfo from "../../../wrapper/member/MemberInfo";
 
 export default class MemberModel extends MySQLModel {
@@ -17,7 +18,7 @@ export default class MemberModel extends MySQLModel {
       'license_no', 'license_image_path', 'special_no',
       'major', 'major_sub', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
-      'graduation_year', 'interrest_code', 'interrest_text'
+      'graduation_year', 'interrest_code', 'interrest_text', 'member_seq'
     ]
     this.log_prefix = '[MemberModel]'
   }
@@ -30,6 +31,18 @@ export default class MemberModel extends MySQLModel {
       return Util.hash(`mt_${Util.md5(password)}_eg`);
     }
   };
+
+  getMemberList = async (search_options = null, page_options = null) => {
+    let filter = search_options
+    const member_list = []
+    const query_result = await this.find(filter)
+    if (query_result) {
+      for (let i = 0; i < query_result.length; i++) {
+        member_list.push(new MemberInfo(query_result[i], this.private_fields))
+      }
+    }
+    return member_list
+  }
 
   getMemberInfo = async (member_seq) => {
     const query_result = await this.findOne({seq: member_seq});
@@ -76,45 +89,25 @@ export default class MemberModel extends MySQLModel {
       member_info.password = this.encryptPassword(member_info.password);
     }
     const member = member_info.toJSON();
+    log.debug(this.log_prefix, member);
     const result = await this.update({seq: member_seq}, member);
 
     return result;
   };
 
   findMembers = async (searchText) => {
-    const find_user_results = await this.find(
-      {
-        "is_new": true,
-        "query": [
-          {
-            "user_id": ["not", "aaa"],
-          },
-          {
-            "$or": [
-              {
-                "user_id": ["like", searchText],
-              },
-              {
-                "user_name": ["like", searchText]
-              }
-            ]
-          },
-          {
-            "used": ["notin", 0, 2, 3, 4, 5],
-          }
-        ]
-      }
-    );
-    if (!find_user_results || find_user_results.length === 0) {
-      throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
+    const find_user_results = await this.findPaginated(searchText, null, null, null, searchText.page_navigation);
+    if (!find_user_results.data || find_user_results.data.length === 0) {
+      return new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
-    return new MemberInfo(find_user_results);
+    return find_user_results;
   };
 
   findMemberId = async (member_info) => {
     member_info.setAutoTrim(true);
     const member = member_info.toJSON();
     const find_user_result = await this.findOne({user_name: member.user_name, email_address: member.email_address});
+    
     if (!find_user_result || !find_user_result.seq) {
       throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }
@@ -144,7 +137,7 @@ export default class MemberModel extends MySQLModel {
   };
 
   updateLastLogin = async (member_seq) => {
-    return await this.update({seq: member_seq}, {"modify_date": this.database.raw('NOW()')});
+    return await this.update({seq: member_seq}, {"lastlogin": this.database.raw('NOW()')});
   };
 
   updateProfileImage = async (member_seq, profile_image_path) => {

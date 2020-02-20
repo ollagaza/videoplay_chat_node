@@ -156,10 +156,15 @@ export default class MysqlModel {
   }
 
   update = async (filters, params) => {
-    return await this.database
+    const oKnex = this.database
       .update(params)
       .from(this.table_name)
-      .where(filters)
+
+      if (filters) {
+        queryWhere(oKnex, filters)
+      }
+
+      return oKnex;
   }
 
   updateIn = async (key, in_array, params, filters = null) => {
@@ -184,9 +189,9 @@ export default class MysqlModel {
     return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group)
   }
 
-  findPaginated = async ({ list_count = 20, page = 1, page_count = 10, no_paging = 'n', ...filters }, columns=null, order=null) => {
-    const oKnex = this.queryBuilder(filters, columns, order);
-    return await this.queryPaginated(oKnex, list_count, page, page_count, no_paging);
+  findPaginated = async (filters = null, columns = null, order = null, group = null, pages = null) => {
+    const oKnex = this.queryBuilder(filters, columns, order, group);
+    return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count = 10);
   };
 
   async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
@@ -212,21 +217,20 @@ export default class MysqlModel {
     ]);
 
 
-    if (use_paging) {
-      list_count = total_count;
+    if (!use_paging) {
       cur_page = 1;
     }
 
     // 번호 매기기
     let virtual_no = total_count - (cur_page - 1) * list_count;
     for(let i = 0; i < data.length; i++) {
-      await new Promise(resolve => process.nextTick(resolve));
-      data[i] = { ...data[i], _no: virtual_no-- };
+      data[i]['_no'] = virtual_no;
+      virtual_no--;
     }
 
     const total_page = Math.ceil(total_count / list_count) || 1;
 
-    return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count) }
+    return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count, list_count) }
   }
 
   async find (filters = null, columns = null, order = null, group = null) {

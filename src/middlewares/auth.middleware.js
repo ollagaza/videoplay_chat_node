@@ -4,6 +4,7 @@ import TokenInfo from '../wrapper/token-info'
 import Role from '../constants/roles'
 import Config from '../config/config'
 import Constants from '../constants/constants'
+import Util from '../utils/baseutil'
 
 const IS_DEV = Config.isDev()
 
@@ -57,7 +58,10 @@ const isAuthenticated = (require_roles) => {
 
     const verify_result = await verifyToken(req, require_roles)
     if (verify_result.isSuccess()) {
-      req.token_info = verify_result.get('token_info')
+      const token_info = verify_result.get('token_info')
+      token_info.setLang(getLanguage(req))
+      token_info.setGroupSeq(getGroupSeq(req))
+      req.token_info = token_info
       setResponseHeader(res, req.token_info)
       next()
     } else {
@@ -162,11 +166,16 @@ const getLanguage = (req) => {
   return lang
 }
 
+const getGroupSeq = (req) => {
+  return Util.parseInt(req.headers.group_seq, 0)
+}
+
 export default {
   'setResponseHeader': setResponseHeader,
   'generateTokenByMemberInfo': generateTokenByMemberInfo,
   'isAuthenticated': isAuthenticated,
   'verifyToken': verifyToken,
   'getTokenResult': getTokenResult,
-  'getLanguage': getLanguage
+  'getLanguage': getLanguage,
+  'getGroupSeq': getGroupSeq
 }

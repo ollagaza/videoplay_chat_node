@@ -4,12 +4,17 @@ import Role from '../../../constants/roles'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import StdObject from '../../../wrapper/std-object'
+import log from '../../../libs/logger'
 
 import OperationMediaModel from './OperationMediaModel';
 import OperationInfo from '../../../wrapper/operation/OperationInfo';
 import MemberModel from '../member/MemberModel';
 
-const join_select = ['operation.*', 'member.user_name', 'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.seq as storage_seq', 'operation_storage.clip_count', 'operation_storage.report_count', 'operation_storage.service_video_count'];
+const join_select = [
+  'operation.*', 'member.user_name', 'operation_storage.seq as storage_seq',
+  'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
+  'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
+];
 
 export default class OperationModel extends MySQLModel {
   constructor(database) {
@@ -33,35 +38,27 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperationInfoWithMediaInfo(query_result, import_media_info);
   };
 
-  getOperationInfo = async (operation_seq, token_info, check_owner=true) => {
+  getOperationInfo = async (operation_seq) => {
     const where = {"operation.seq": operation_seq};
-    if (check_owner && token_info.getRole() <= Role.MEMBER) {
-      where.member_seq = token_info.getId();
-    }
-
     return await this.getOperation(where, true);
   };
 
-  getOperationInfoListPage = async (params, token_info, query_params, asc=false)  => {
-    const page = params && params.page ? params.page : 1;
-    const list_count = params && params.list_count ? params.list_count : 20;
-    const page_count = params && params.page_count ? params.page_count : 10;
+  getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc=false)  => {
+    const page = page_params.page | 1;
+    const list_count = page_params.list_count | 20;
+    const page_count = page_params.page_count | 10;
 
     const query = this.database.select(join_select);
     query.from('operation');
     query.innerJoin("member", "member.seq", "operation.member_seq");
     query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
+    query.andWhere('group_seq', group_seq);
     query.whereIn('status', ['Y', 'T']);
-    if (token_info.getRole() <= Role.MEMBER) {
-      query.andWhere('member_seq', token_info.getId());
+    if (filter_params.analysis_complete) {
+      query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
     }
-    if (query_params) {
-      if (!Util.isNull(query_params.analysis_complete)) {
-        query.andWhere('is_analysis_complete', Util.isTrue(query_params.analysis_complete) ? 1 : 0);
-      }
-      if (!Util.isNull(query_params.status)) {
-        query.andWhere('status', query_params.status.toUpperCase());
-      }
+    if (filter_params.status) {
+      query.andWhere('status', filter_params.status.toUpperCase());
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
@@ -70,11 +67,11 @@ export default class OperationModel extends MySQLModel {
     }
     query.orderBy(order_by.name, order_by.direction);
 
-    const paging_result = await this.queryPaginated(query, list_count, page, page_count, params.no_paging);
+    const paging_result = await this.queryPaginated(query, list_count, page, page_count, page_params.no_paging);
 
     const result = [];
 
-    if (paging_result !== null && paging_result.data != null) {
+    if (paging_result && paging_result.data) {
       for (const key in paging_result.data) {
         let query_result = paging_result.data[key];
         result.push(this.getOperationInfoByResult(query_result));
@@ -264,16 +261,27 @@ export default class OperationModel extends MySQLModel {
   }
 
   getGroupUsedStorageSize = async (filter) => {
-    const query = this.database.select([ 'SUM(operation_storage.total_file_size) AS total_size' ])
+    const query = this.database.select([ this.database.raw('SUM(operation_storage.origin_video_size) AS total_size') ])
     query.from('operation')
     query.innerJoin("operation_storage", "operation_storage.operation_seq", "operation.seq")
     query.where(filter)
     query.whereIn('status', ['Y', 'T'])
+    query.first()
 
-    const query_result = this.findOne(query)
+    const query_result = await query
+    log.debug(this.log_prefix, '[getGroupUsedStorageSize]', filter, query_result)
     if (!query_result || !query_result.total_size) {
       return 0
     }
+    log.debug(this.log_prefix, '[getGroupUsedStorageSize - return]', filter, query_result.total_size, Util.parseInt(query_result.total_size))
     return Util.parseInt(query_result.total_size)
+  }
+
+  getOperationListByMemberSeq = async (member_seq) => {
+    return await this.find({ member_seq })
+  }
+
+  migrationGroupSeq = async (member_seq, group_seq) => {
+    return await this.update({"member_seq": member_seq}, { group_seq });
   }
 }

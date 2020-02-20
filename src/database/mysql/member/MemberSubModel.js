@@ -1,6 +1,7 @@
 import ServiceConfig from '../../../service/service-config';
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
+import StdObject from '../../../wrapper/std-object'
 import { MedicalModel } from '../../mongodb/Medical';
 import { InterrestModel } from '../../mongodb/interrest';
 
@@ -18,12 +19,12 @@ export default class MemberSubModel extends MySQLModel {
       'mail_acceptance', 'birth_day', 'cellphone', 'tel',
       'user_media_path', 'profile_image_path', 'certkey', 'used',
       'hospcode', 'hospname', 'treatcode', 'treatname',
-      'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
+      'etc1', 'etc2', 'etc3', 'etc4', 'etc5', 'seq'
     ]
     this.log_prefix = '[MemberSubModel]'
   }
 
-  getMemberSubInfo = async (lang, member_seq) => {
+  getMemberSubInfo = async (member_seq, lang) => {
     const query_result = await this.findOne({member_seq: member_seq});
     const member_info = new MemberInfo(query_result);
     const medical = await MedicalModel.findAll();
@@ -57,12 +58,18 @@ export default class MemberSubModel extends MySQLModel {
       return await this.update({member_seq: member_seq}, member);
     } else {
       const member = member_info.toJSON();
-      member.seq = member_seq;
+      member.member_seq = member_seq;
       return await this.create(member);
     }
   };
 
   updateProfileImage = async (member_seq, profile_image_path) => {
     return await this.update( { member_seq: member_seq }, { profile_image_path: profile_image_path } );
+  };
+
+  findMembers = async (searchText) => {
+    const find_user_results = await this.find(searchText);
+    
+    return find_user_results;
   };
 }
