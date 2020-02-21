@@ -166,7 +166,7 @@ const MemberServiceClass = class {
     if (!create_member_info.seq){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
-    await PaymentService.createDefaultPaymentResult(database, create_member_info.seq)
+    await PaymentService.createDefaultPaymentResult(database, request_body.payData, create_member_info.seq)
     await MemberLogService.memberJoinLog(database, create_member_info.seq)
     await GroupService.createPersonalGroup(database, create_member_info)
   }

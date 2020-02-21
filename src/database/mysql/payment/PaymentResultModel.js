@@ -24,11 +24,10 @@ export default class PaymentResultModel extends MySQLModel {
     return await oKnex;
   };
 
-  createPaymentResultByMemberSeq = async (member_seq) => {
-    const create_params = {
-      buyer_seq: member_seq,
-      paid_at: this.database.raw('NOW()')
-    }
+  createPaymentResultByMemberSeq = async (payData, member_seq) => {
+    const create_params = payData;
+    create_params.buyer_seq = member_seq;
+    create_params.paid_at = this.database.raw('NOW()');
 
     return await this.create(create_params);
   };

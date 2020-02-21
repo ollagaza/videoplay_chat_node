@@ -35,9 +35,9 @@ const PaymentServiceClass = class {
     return result;
   };
 
-  createDefaultPaymentResult = async (database, member_seq) => {
+  createDefaultPaymentResult = async (database, payData, member_seq) => {
     const payment_result_model = this.getPaymentResultModel(database)
-    await payment_result_model.createPaymentResultByMemberSeq(member_seq)
+    await payment_result_model.createPaymentResultByMemberSeq(payData, member_seq)
   }
 
   insertPayment = async (database, pg_data) => {
