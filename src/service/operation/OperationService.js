@@ -52,11 +52,9 @@ const OperationServiceClass = class {
     operation_info.media_path = `${group_media_path}/operation/${content_id}/`;
     operation_info.created_by_user = 1;
     operation_info.content_id = content_id;
-    // operation_info.status = 'N';
-
 
     const operation_model = new OperationModel(database);
-    await operation_model.createOperationNew(operation_info);
+    await operation_model.createOperationWithGroup(operation_info);
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }

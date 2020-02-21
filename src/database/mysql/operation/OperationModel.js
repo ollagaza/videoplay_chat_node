@@ -189,7 +189,7 @@ export default class OperationModel extends MySQLModel {
     return operation_info;
   };
 
-  createOperationNew = async (operation_info) => {
+  createOperationWithGroup = async (operation_info) => {
     const operation_seq = await this.create(operation_info, 'seq');
     operation_info.seq = operation_seq;
 
