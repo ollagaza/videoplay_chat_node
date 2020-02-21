@@ -45,6 +45,7 @@ const GroupServiceClass = class {
 
   checkGroupAuth = async (database, req, group_seq_from_token = true, check_group_auth = true, throw_exception = false) => {
     const { token_info, member_seq, group_seq } = this.getBaseInfo(req, group_seq_from_token)
+    log.debug(this.log_prefix, '[checkGroupAuth]', token_info, `member_seq: ${member_seq}, group_seq: ${group_seq}`, `group_seq_from_token: ${group_seq_from_token}, check_group_auth: ${check_group_auth}, throw_exception: ${throw_exception}`)
     const member_info = await MemberService.getMemberInfo(database, member_seq)
     if (!MemberService.isActiveMember(member_info)) {
       throw MemberService.getMemberStateError(member_info)
