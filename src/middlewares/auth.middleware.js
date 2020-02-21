@@ -63,7 +63,6 @@ const isAuthenticated = (require_roles) => {
       token_info.setGroupSeq(getGroupSeq(req))
       token_info.setServiceDomain(getServiceDomain(req))
       req.token_info = token_info
-      setResponseHeader(res, req.token_info)
       next()
     } else {
       return res.status(verify_result.httpStatusCode).send(verify_result)
