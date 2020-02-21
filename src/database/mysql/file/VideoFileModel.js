@@ -50,46 +50,11 @@ export default class VideoFileModel extends MySQLModel {
   };
 
   deleteSelectedFiles = async (file_seq_list) => {
-    const oKnex = this.database
-      .select(this.selectable_fields)
-      .from(this.table_name)
-      .whereIn('seq', file_seq_list);
-    const result_list = await oKnex;
-    if (!result_list || result_list.length <= 0) {
-      return true;
-    }
-
     await this.database
       .from(this.table_name)
       .whereIn('seq', file_seq_list)
       .del();
-
-    (async() => {
-      const service_info = ServiceConfig.getServiceInfo();
-      const trans_video_root = service_info.trans_video_root;
-
-      for (let i = 0; i < result_list.length; i++) {
-        const file_info = result_list[i];
-        const target_path = trans_video_root + file_info.file_path;
-        await Util.deleteFile(target_path);
-      }
-    })();
-
     return true;
-  };
-
-  createVideoFileByPath = async (operation_info, storage_seq, video_file_path) => {
-    const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
-    const file_name = path.basename(video_file_path);
-    const file_info = (await new FileInfo().getByFilePath(video_file_path, media_path, file_name)).toJSON();
-    file_info.storage_seq = storage_seq;
-
-    if (file_info.file_type === Constants.VIDEO) {
-      file_info.thumbnail = this.createVideoThumbnail(video_file_path, operation_info);
-      await this.create(file_info, 'seq');
-      return file_info;
-    }
-    return null;
   };
 
   createVideoFileByFileInfo = async (operation_info, storage_seq, file_info, make_thumbnail = true) => {
@@ -120,14 +85,5 @@ export default class VideoFileModel extends MySQLModel {
 
   deleteByStorageSeq = async (storage_seq) => {
     await this.delete({storage_seq: storage_seq});
-  };
-
-  createAndUpdateVideoThumbnail = async (origin_video_path, operation_info, file_seq) => {
-    const thumbnail_path = await this.createVideoThumbnail(origin_video_path, operation_info);
-    try {
-      await this.updateThumb(file_seq, thumbnail_path);
-    } catch (error) {
-      log.e(null, 'VideoFileModel.createVideoThumbnail', error);
-    }
   };
 }

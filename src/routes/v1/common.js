@@ -18,14 +18,14 @@ routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(re
   const member_model = new MemberModel(DBMySQL);
   const member_info = await member_model.getMemberInfo(member_seq);
   const media_root = ServiceConfig.get('media_root');
-  const upload_path = member_info.user_media_path + "_upload_" + Constants.SEP + "image";
+  const upload_path = member_info.user_media_path + "image";
   const upload_full_path = media_root + upload_path;
   if (!(await Util.fileExists(upload_full_path))) {
     await Util.createDirectory(upload_full_path);
   }
 
   const new_file_name = Util.getRandomId();
-  const upload_file_path = upload_full_path + Constants.SEP + new_file_name;
+  const upload_file_path = upload_full_path + '/' + new_file_name;
   await Util.uploadByRequest(req, res, 'image', upload_full_path, new_file_name);
   const upload_file_info = req.file;
   if (Util.isEmpty(upload_file_info) || !(await Util.fileExists(upload_file_path))) {

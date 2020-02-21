@@ -8,7 +8,6 @@ import log from "../../libs/logger";
 import OperationService from '../operation/OperationService'
 import OperationMediaService from '../operation/OperationMediaService'
 import GroupService from '../member/GroupService'
-import OperationModel from '../../database/mysql/operation/OperationModel'
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import Constants from '../../constants/constants'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
@@ -18,6 +17,19 @@ import IndexInfo from '../../wrapper/xml/IndexInfo'
 const SyncServiceClass = class {
   constructor () {
     this.log_prefix = '[SyncService]'
+  }
+
+  getOperationInfoBySeq = async (operation_seq) => {
+    const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
+    }
+    return operation_info
+  }
+
+  onAnalysisCompleteBySeq = async (operation_seq, move_file_cloud = true, is_sync_hwakeye = false) => {
+    const operation_info = this.getOperationInfoBySeq(operation_seq)
+    await this.onAnalysisComplete(operation_info, move_file_cloud, is_sync_hwakeye)
   }
 
   onAnalysisComplete = async (operation_info, move_file_cloud = true, is_sync_hwakeye = false) => {
@@ -46,8 +58,6 @@ const SyncServiceClass = class {
       throw new StdObject(-1, '동영상 파일이 아닙니다.', 400)
     }
     const media_info = media_result.media_info
-    const smil_info = await OperationMediaService.getSmilInfo(directory_info, operation_media_info.smil_file_name)
-
     let index_info_list = [];
     if (is_sync_hwakeye) {
       index_info_list = await this.getIndexInfoByHawkeye(content_id, media_info, log_info)
@@ -103,7 +113,11 @@ const SyncServiceClass = class {
       }
     }
     if (adaptive_list.length > 0) {
-      stream_url = `${directory_info.media_video}Trans_,${adaptive_list.join(',')},.mp4.smil`
+      if (adaptive_list.length === 1) {
+        stream_url = `Trans_,${adaptive_list[0]},.mp4`
+      } else {
+        stream_url = `Trans_,${adaptive_list.join(',')},.mp4.smil`
+      }
     }
     log.debug(this.log_prefix, log_info, 'check and mode video files', `origin_video_size: ${origin_video_size}, origin_video_count: ${origin_video_count}, trans_video_size: ${trans_video_size}, trans_video_count: ${trans_video_count}`)
 
@@ -132,8 +146,7 @@ const SyncServiceClass = class {
       log.debug(this.log_prefix, log_info, `update storage info complete. storage_seq: ${storage_seq}`);
 
       const analysis_status = move_file_cloud === false ? 'Y' : 'M'
-      const operation_model = new OperationModel(transaction);
-      await operation_model.updateAnalysisStatus(operation_seq, analysis_status);
+      await OperationService.updateAnalysisStatus(transaction, operation_seq, analysis_status);
       log.debug(this.log_prefix, log_info, `sync complete`);
 
       await GroupService.updateMemberUsedStorage(transaction, group_seq, member_seq)
@@ -156,6 +169,19 @@ const SyncServiceClass = class {
     }
 
     log.debug(this.log_prefix, log_info, `end`);
+  }
+
+  onOperationVideoFileCopyCompeteBySeq = async (operation_seq, response_data) => {
+    const operation_info = this.getOperationInfoBySeq(operation_seq)
+    await this.onOperationVideoFileCopyCompete(operation_info, response_data)
+  }
+
+  onOperationVideoFileCopyCompete = async (operation_info, response_data) => {
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
+    }
+    const status = response_data && response_data.result_status ? response_data.result_status : 'E'
+    await OperationService.updateAnalysisStatus(DBMySQL, operation_info.seq, status);
   }
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {

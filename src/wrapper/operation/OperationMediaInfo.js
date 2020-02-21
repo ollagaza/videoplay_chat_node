@@ -24,14 +24,15 @@ export default class OperationMediaInfo extends JsonWrapper {
     if (this.is_trans_complete) {
       // const url_prefix = operation_info.url_prefix;
       const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+      const proxy_file_name = Util.isEmpty(this.proxy_file_name) ? this.video_file_name : this.proxy_file_name
 
       this.origin_video_url = directory_info.url_video + this.video_file_name;
-      this.proxy_video_url = directory_info.url_video + this.proxy_file_name;
+      this.proxy_video_url = directory_info.url_video + proxy_file_name;
 
       if (Util.isEmpty(this.stream_url)){
-        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + this.video_file_name + '/playlist.m3u8';
+        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + proxy_file_name + '/playlist.m3u8';
       } else {
-        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + this.stream_url + '/playlist.m3u8';
+        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + this.stream_url + '/playlist.m3u8';
       }
     }
   };

@@ -54,11 +54,11 @@ const OperationMediaServiceClass = class {
     const media_info = media_result.media_info
     const smil_info = await this.getSmilInfo(directory_info, smil_file_name)
     const proxy_info = this.getProxyVideoInfo(smil_info);
-    const is_trans_complete = !!proxy_info.name
+    const proxy_file_name = Util.isEmpty(proxy_info.name) ? video_file_name : proxy_info.name
 
     const update_params = {
       "video_file_name": video_file_name,
-      "proxy_file_name": proxy_info.name,
+      "proxy_file_name": proxy_file_name,
       "fps": media_info.fps,
       "width": media_info.width,
       "height": media_info.height,
@@ -79,7 +79,6 @@ const OperationMediaServiceClass = class {
 
     return {
       directory_info,
-      is_trans_complete,
       media_info,
       smil_info,
     }
