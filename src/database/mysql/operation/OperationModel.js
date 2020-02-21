@@ -99,7 +99,7 @@ export default class OperationModel extends MySQLModel {
       operation_info.media_directory = Util.getMediaDirectory(service_info.media_root, operation_info.media_path);
       operation_info.trans_directory = Util.getMediaDirectory(service_info.trans_video_root, operation_info.media_path);
       operation_info.url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
-      operation_info.vod_url_prefix = Util.getUrlPrefix(service_info.static_video_prefix, operation_info.media_path);
+      operation_info.vod_url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
     }
 
     return operation_info;
@@ -263,7 +263,7 @@ export default class OperationModel extends MySQLModel {
   }
 
   getGroupUsedStorageSize = async (filter) => {
-    const query = this.database.select([ this.database.raw('SUM(operation_storage.origin_video_size) AS total_size') ])
+    const query = this.database.select([ this.database.raw('SUM(operation_storage.total_file_size) AS total_size') ])
     query.from('operation')
     query.innerJoin("operation_storage", "operation_storage.operation_seq", "operation.seq")
     query.where(filter)

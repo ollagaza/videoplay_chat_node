@@ -3,7 +3,7 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import StdObject from '../../../wrapper/std-object'
 import { MedicalModel } from '../../mongodb/Medical';
-import { InterrestModel } from '../../mongodb/interrest';
+import { InterrestModel } from '../../mongodb/Interrest';
 
 import MemberInfo from "../../../wrapper/member/MemberInfo";
 
@@ -69,7 +69,7 @@ export default class MemberSubModel extends MySQLModel {
 
   findMembers = async (searchText) => {
     const find_user_results = await this.find(searchText);
-    
+
     return find_user_results;
   };
 }

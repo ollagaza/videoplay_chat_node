@@ -1,5 +1,4 @@
 import StdObject from '../wrapper/std-object'
-import log from '../libs/logger'
 import Config from '../config/config'
 import ServiceErrorModel from '../database/mysql/service-error-model'
 import db_mysql from '../database/knex-mysql'
@@ -40,9 +39,8 @@ export default (fn) => {
         }
       }
 
-      log.e(req, 'Wrap.catch', error);
       (async () => {
-        await new ServiceErrorModel(db_mysql).createServiceError('api', null, `${req.method} ${req.originalUrl}`, JSON.stringify(error_object.toJSON()))
+        await new ServiceErrorModel(db_mysql).createServiceError('api', null, null, JSON.stringify(error_object.toJSON()), req)
       })()
 
       return next(error_object)

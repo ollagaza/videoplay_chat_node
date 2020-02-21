@@ -4,6 +4,7 @@ import Role from '../../constants/roles'
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
+import GroupService from '../member/GroupService'
 import OperationMediaService from './OperationMediaService'
 import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
@@ -53,14 +54,15 @@ const OperationServiceClass = class {
     operation_info.content_id = content_id;
     // operation_info.status = 'N';
 
-    await database.transaction(async(transaction) => {
-      const operation_model = new OperationModel(transaction);
-      await operation_model.createOperationNew(operation_info);
-      if (!operation_info || !operation_info.seq) {
-        throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
-      }
 
-      await OperationMediaService.createOperationMediaInfo(operation_info);
+    const operation_model = new OperationModel(database);
+    await operation_model.createOperationNew(operation_info);
+    if (!operation_info || !operation_info.seq) {
+      throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
+    }
+
+    await database.transaction(async(transaction) => {
+      await OperationMediaService.createOperationMediaInfo(database, operation_info);
       await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info);
 
       output.add('operation_seq', operation_info.seq);
@@ -88,15 +90,18 @@ const OperationServiceClass = class {
   }
 
   deleteOperationByInfo = async (operation_info) => {
-    const operation_model = this.getOperationModel()
-    await operation_model.deleteOperation(operation_info);
+    DBMySQL.transaction(async(transaction) => {
+      const operation_model = this.getOperationModel(transaction)
+      await operation_model.deleteOperation(operation_info);
+      await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq);
+    });
 
     (
       async (operation_info) => {
         try {
           await this.deleteOperationFiles(operation_info)
         } catch (error) {
-          log.error(this.log_prefix, '', error)
+          log.error(this.log_prefix, '[deleteOperationByInfo]', error)
         }
       }
     )(operation_info)
@@ -161,22 +166,29 @@ const OperationServiceClass = class {
     const media_path = operation_info.media_path
     const media_directory = this.getMediaDirectory(operation_info);
     const trans_server_root = ServiceConfig.get('trans_server_root')
+    const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
     return {
       "root": media_directory,
-      "origin": media_directory + "origin",
-      "video": media_directory + "video",
-      "other": media_directory + "other",
-      "image": media_directory + "image",
-      "temp": media_directory + "temp",
+      "origin": media_directory + "origin/",
+      "video": media_directory + "video/",
+      "other": media_directory + "other/",
+      "image": media_directory + "image/",
+      "temp": media_directory + "temp/",
       "media_path": media_path,
-      "media_origin": media_path + "origin",
-      "media_video": media_path + "video",
-      "media_other": media_path + "other",
-      "media_image": media_path + "image",
-      "media_temp": media_path + "temp",
-      "trans_origin": trans_server_root + media_path + "origin",
-      "trans_video": trans_server_root + media_path + "video",
-      "trans_temp": trans_server_root + media_path + "temp",
+      "media_origin": media_path + "origin/",
+      "media_video": media_path + "video/",
+      "media_other": media_path + "other/",
+      "media_image": media_path + "image/",
+      "media_temp": media_path + "temp/",
+      "trans_origin": trans_server_root + media_path + "origin/",
+      "trans_video": trans_server_root + media_path + "video/",
+      "trans_temp": trans_server_root + media_path + "temp/",
+      "url_prefix": url_prefix,
+      "url_origin": url_prefix + "origin/",
+      "url_video": url_prefix + "video/",
+      "url_other": url_prefix + "other/",
+      "url_image": url_prefix + "image/",
+      "url_temp": url_prefix + "temp/",
     }
   }
 
@@ -289,14 +301,43 @@ const OperationServiceClass = class {
 
       if (file_type !== 'refer') {
         const origin_video_path = upload_file_info.path;
-        await file_model.createAndUpdateVideoThumbnail(origin_video_path, operation_info, upload_seq);
+        const thumbnail_info = await this.createOperationVideoThumbnail(origin_video_path, operation_info)
+        if (thumbnail_info) {
+          await file_model.updateThumb(upload_seq, thumbnail_info.path)
+        }
       }
 
       await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);
+      await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
     });
 
     return upload_seq
   }
+
+  createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0) => {
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    const dimension = await Util.getVideoDimension(origin_video_path);
+    if (!dimension.error && dimension.width && dimension.height) {
+      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212);
+      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160);
+      const file_id = Util.getRandomId();
+      const thumbnail_file_name = `thumb_${file_id}.png`
+      const thumbnail_image_path = `${directory_info.image}${thumbnail_file_name}`
+
+      const get_thumbnail_result = await Util.getThumbnail(origin_video_path, thumbnail_image_path, second, thumb_width, thumb_height)
+      if ( get_thumbnail_result.success && ( await Util.fileExists(thumbnail_image_path) ) ) {
+        return {
+          file_id: file_id,
+          file_name: thumbnail_file_name,
+          full: thumbnail_image_path,
+          path: `${directory_info.media_image}${thumbnail_file_name}`
+        }
+      } else {
+        log.error(this.log_prefix, '[updateTranscodingComplete]', '[Util.getThumbnail]',get_thumbnail_result)
+      }
+    }
+    return null;
+  };
 
   requestAnalysis = async (database, token_info, operation_seq) => {
     let api_request_result = null;
@@ -374,6 +415,11 @@ const OperationServiceClass = class {
         }
       }
     }
+  }
+
+  updateAnalysisStatus = async (database, operation_info, status) => {
+    const operation_model = this.getOperationModel(database)
+    await operation_model.updateAnalysisStatus(operation_info.seq, status);
   }
 }
 
