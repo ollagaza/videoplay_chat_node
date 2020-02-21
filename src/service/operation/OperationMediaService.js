@@ -54,11 +54,11 @@ const OperationMediaServiceClass = class {
     const media_info = media_result.media_info
     const smil_info = await this.getSmilInfo(directory_info, smil_file_name)
     const proxy_info = this.getProxyVideoInfo(smil_info);
-    const is_trans_complete = !!proxy_info.name
+    const proxy_file_name = Util.isEmpty(proxy_info.name) ? video_file_name : proxy_info.name
 
     const update_params = {
       "video_file_name": video_file_name,
-      "proxy_file_name": proxy_info.name,
+      "proxy_file_name": proxy_file_name,
       "fps": media_info.fps,
       "width": media_info.width,
       "height": media_info.height,
@@ -69,9 +69,9 @@ const OperationMediaServiceClass = class {
       "is_trans_complete": 1
     };
 
-    const thumbnail_path = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
-    if (thumbnail_path) {
-      update_params.thumbnail = thumbnail_path
+    const thumbnail_result = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
+    if (thumbnail_result) {
+      update_params.thumbnail = thumbnail_result.path
     }
 
     const operation_media_model = this.getOperationMediaModel(database)
@@ -79,10 +79,14 @@ const OperationMediaServiceClass = class {
 
     return {
       directory_info,
-      is_trans_complete,
       media_info,
       smil_info,
     }
+  }
+
+  updateStreamUrl = async (database, operation_info, stream_url) => {
+    const operation_media_model = this.getOperationMediaModel(database)
+    await operation_media_model.updateStreamUrl(operation_info.seq, stream_url)
   }
 }
 

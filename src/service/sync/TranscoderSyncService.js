@@ -1,17 +1,11 @@
-import { Router } from 'express';
-import querystring from 'querystring';
 import ServiceConfig from '../../service/service-config';
-import Wrap from '../../utils/express-async';
 import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
+import SyncService from './SyncService'
 import OperationService from '../operation/OperationService'
 import OperationMediaService from '../operation/OperationMediaService'
-import SendMail from '../../libs/send-mail';
-import OperationModel from '../../database/mysql/operation/OperationModel';
-import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
 import ServiceErrorModel from '../../database/mysql/service-error-model';
 
 const TranscoderSyncServiceClass = class {
@@ -34,6 +28,8 @@ const TranscoderSyncServiceClass = class {
 
     try {
       const update_result = await OperationMediaService.updateTranscodingComplete(DBMySQL, operation_info, video_file_name, smil_file_name)
+      // await SyncService.onAnalysisComplete(operation_info)
+      await SyncService.onAnalysisComplete(operation_info, false)
     } catch (error) {
       log.error(this.log_prefix, '[onTranscodingComplete]', error)
       let error_str = null;

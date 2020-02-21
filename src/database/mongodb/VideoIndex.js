@@ -94,7 +94,7 @@ video_index_info_schema.statics.updateIndexListByOperation = function( operation
   if (member_seq !== null) {
     filter.member_seq = member_seq;
   }
-  return this.updateOne( filter, update );
+  return this.updateOne( filter, update, { upsert: true } );
 };
 
 video_index_info_schema.statics.findOneByOperation = function( operation_seq, member_seq = null, projection = null ) {
