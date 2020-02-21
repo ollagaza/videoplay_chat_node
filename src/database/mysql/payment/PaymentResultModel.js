@@ -29,6 +29,10 @@ export default class PaymentResultModel extends MySQLModel {
     create_params.buyer_seq = member_seq;
     create_params.paid_at = this.database.raw('NOW()');
 
+    if (typeof create_params.custom_data !== 'string') {
+      create_params.custom_data = JSON.stringify(create_params.custom_data);
+    }
+
     return await this.create(create_params);
   };
 
