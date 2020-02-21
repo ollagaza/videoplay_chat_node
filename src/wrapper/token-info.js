@@ -13,6 +13,17 @@ export default class TokenInfo {
     }
   }
 
+  toJSON = () => {
+    return {
+      group_seq: this.group_seq,
+      id: this.id,
+      service_domain: this.service_domain,
+      role: this.role,
+      token: this.token,
+      expire_time: this.expire_time
+    }
+  }
+
   setTokenByMemberInfo (member_info) {
     this.id = Util.parseInt(member_info.seq, 0) // member table seq
     this.role = Util.parseInt(member_info.role, Role.NONE) // 권한 코드. 나중에 쓸지도 모름.
