@@ -500,12 +500,12 @@ const getMediaInfo = async (media_path) => {
       media_type: Constants.NO_MEDIA,
       media_info: {}
     };
-    log.debug(log_prefix, '[getMediaInfo]', execute_result.out);
 
     try{
       if (execute_result.success && execute_result.out) {
         const media_info_xml = await loadXmlString(execute_result.out);
         const media_info = JsonPath.value(media_info_xml, '$..media[*].track');
+        log.debug(log_prefix, "[getMediaInfo - JsonPath.value(media_info_xml, '$..media[*].track')]", media_info);
         if (media_info && media_info.length > 0) {
           for (let i = 0; i < media_info.length; i++) {
             const track = media_info[i];
