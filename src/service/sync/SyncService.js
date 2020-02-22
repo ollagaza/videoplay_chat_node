@@ -54,6 +54,7 @@ const SyncServiceClass = class {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const trans_video_file_path = directory_info.origin + operation_media_info.video_file_name
     const media_result = await Util.getMediaInfo(trans_video_file_path)
+    log.debug(this.log_prefix, log_info, 'media_result', media_result)
     if (!media_result.success || media_result.media_type !== Constants.VIDEO) {
       throw new StdObject(-1, '동영상 파일이 아닙니다.', 400)
     }

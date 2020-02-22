@@ -41,6 +41,7 @@ if (Constants.SEP === '/') {
   PATH_EXP = new RegExp(/\\/, 'g');
 }
 
+const log_prefix = "[baseutil]";
 
 const convert = (from_charset, to_charset, str) => {
   const iconv = new Iconv.Iconv(from_charset, to_charset);
@@ -94,14 +95,14 @@ const fileExists = async (file_path, permission=null) => {
     try {
       fs.access(file_path, permission, (error) => {
         if (error) {
-          // log.e(null, 'Util.fileExists', error);
+          // log.error(log_prefix, 'Util.fileExists', error);
           resolve(false);
         } else {
           resolve(true);
         }
       });
     } catch (e) {
-      log.e(null, 'fileExists', file_path, e);
+      log.error(log_prefix, 'fileExists', file_path, e);
       resolve(false);
     }
   });
@@ -112,7 +113,7 @@ const fileExists = async (file_path, permission=null) => {
 const readFile = async (file_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(file_path) ) ) {
-      log.d(null, 'Util.readFile', `file not exists. path=${file_path}`);
+      log.debug(log_prefix, 'Util.readFile', `file not exists. path=${file_path}`);
       resolve(null);
     } else {
       const read_stream = fs.createReadStream(file_path);
@@ -125,7 +126,7 @@ const readFile = async (file_path) => {
         resolve(Buffer.concat(body).toString());
       });
       read_stream.on('error', function(error){
-        log.e(null, 'Util.readFile', `path=${file_path}`, error);
+        log.error(log_prefix, 'Util.readFile', `path=${file_path}`, error);
         resolve(null);
       });
     }
@@ -144,7 +145,7 @@ const writeFile = async (file_path, context) => {
     });
 
     write_stream.on('error', function(error){
-      log.e(null, 'Util.writeFile', `path=${file_path}`, error);
+      log.error(log_prefix, 'Util.writeFile', `path=${file_path}`, error);
       resolve(false);
     });
 
@@ -158,15 +159,15 @@ const writeFile = async (file_path, context) => {
 const deleteFile = async (target_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
-      log.d(null, 'Util.deleteFile', `file not exists. path=${target_path}`);
+      log.debug(log_prefix, 'Util.deleteFile', `file not exists. path=${target_path}`);
       resolve(true);
     } else {
       fs.unlink(target_path, (error) => {
         if (error) {
-          log.e(null, 'Util.deleteFile', `path=${target_path}`, error);
+          log.error(log_prefix, 'Util.deleteFile', `path=${target_path}`, error);
           resolve(false);
         } else {
-          log.d(null, 'Util.deleteFile', `path=${target_path}`);
+          log.debug(log_prefix, 'Util.deleteFile', `path=${target_path}`);
           resolve(true);
         }
       });
@@ -179,23 +180,23 @@ const deleteFile = async (target_path) => {
 const renameFile = async (target_path, dest_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
-      log.d(null, 'Util.renameFile', `file not exists. target_path=${target_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file not exists. target_path=${target_path}`);
       resolve(false);
     } else if ( ( await fileExists(dest_path) ) ) {
-      log.d(null, 'Util.renameFile', `file already exists. dest_path=${dest_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file already exists. dest_path=${dest_path}`);
       resolve(false);
     } else {
       try {
         fs.rename(target_path, dest_path, (error) => {
           if (error) {
-            log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+            log.error(log_prefix, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
             resolve(false);
           } else {
             resolve(true);
           }
         });
       } catch (error) {
-        log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+        log.error(log_prefix, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
         resolve(false);
       }
     }
@@ -207,23 +208,23 @@ const renameFile = async (target_path, dest_path) => {
 const copyFile = async (target_path, dest_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
-      log.d(null, 'Util.renameFile', `file not exists. target_path=${target_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file not exists. target_path=${target_path}`);
       resolve(false);
     } else if ( await fileExists(dest_path) ) {
-      log.d(null, 'Util.renameFile', `file already exists. target_path=${dest_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file already exists. target_path=${dest_path}`);
       resolve(false);
     } else {
       try {
         fs.copyFile(target_path, dest_path, (error) => {
           if (error) {
-            log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+            log.error(log_prefix, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
             resolve(false);
           } else {
             resolve(true);
           }
         });
       } catch (error) {
-        log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+        log.error(log_prefix, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
         resolve(false);
       }
     }
@@ -235,12 +236,12 @@ const copyFile = async (target_path, dest_path) => {
 const getFileStat = async (file_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(file_path) ) ) {
-      log.d(null, 'Util.getFileStat', `file not exists. path=${file_path}`);
+      log.debug(log_prefix, 'Util.getFileStat', `file not exists. path=${file_path}`);
       resolve(null);
     } else {
       fs.stat(file_path, (error, stats) => {
         if (error) {
-          log.e(null, 'Util.getFileStat', `path=${file_path}`, error);
+          log.error(log_prefix, 'Util.getFileStat', `path=${file_path}`, error);
           resolve(null);
         } else {
           resolve(stats);
@@ -255,12 +256,12 @@ const getFileStat = async (file_path) => {
 const createDirectory = async (dir_path) => {
   const async_func = new Promise( async resolve => {
     if ( ( await fileExists(dir_path) ) ) {
-      log.d(null, 'Util.createDirectory', `directory already exists. path=${dir_path}`);
+      log.debug(log_prefix, 'Util.createDirectory', `directory already exists. path=${dir_path}`);
       resolve(true);
     } else {
       fs.mkdir(dir_path, { recursive: true }, (error) => {
         if (error) {
-          log.e(null, 'Util.createDirectory', `path=${dir_path}`, error);
+          log.error(log_prefix, 'Util.createDirectory', `path=${dir_path}`, error);
           resolve(false);
         } else {
           resolve(true);
@@ -279,7 +280,7 @@ const removeDirectory = async (dir_path) => {
     } else {
       fs.rmdir(dir_path, (error) => {
         if (error) {
-          log.e(null, 'Util.removeDirectory', `path=${dir_path}`, error);
+          log.error(log_prefix, 'Util.removeDirectory', `path=${dir_path}`, error);
           resolve(false);
         } else {
           resolve(true);
@@ -298,25 +299,25 @@ const deleteDirectory = async (path) => {
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
       const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
-      log.d(null, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
+      log.debug(log_prefix, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
     } else {
       const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      log.d(null, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
+      log.debug(log_prefix, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
     }
   }
   const delete_root_result = await removeDirectory( path );
-  log.d(null, 'delete root dir', path, delete_root_result);
+  log.debug(log_prefix, 'delete root dir', path, delete_root_result);
 };
 
 const getDirectoryFileList = async (directory_path, dirent = true) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(directory_path) ) ) {
-      log.d(null, 'Util.getDirectoryFileList', `directory not exists. path=${directory_path}`);
+      log.debug(log_prefix, 'Util.getDirectoryFileList', `directory not exists. path=${directory_path}`);
       resolve([]);
     } else {
       fs.readdir(directory_path, {withFileTypes: dirent}, (error, files) => {
         if (error) {
-          log.e(null, 'Util.getDirectoryFileList', `path=${directory_path}`, error);
+          log.error(log_prefix, 'Util.getDirectoryFileList', `path=${directory_path}`, error);
           resolve([]);
         } else {
           resolve(files);
@@ -357,7 +358,7 @@ const loadXmlString = async (context) => {
     try {
       result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
     } catch (error) {
-      log.e(null, 'Util.loadXmlString', error);
+      log.error(log_prefix, 'Util.loadXmlString', error);
     }
   }
   return result;
@@ -485,7 +486,7 @@ const execute = async (command) => {
     result.out = exec_result.stdout;
   }
   catch(error) {
-    log.e(null, 'Util.execute', error);
+    log.error(log_prefix, 'Util.execute', error);
     result.message = error.message;
   }
   return result;
@@ -499,6 +500,7 @@ const getMediaInfo = async (media_path) => {
       media_type: Constants.NO_MEDIA,
       media_info: {}
     };
+    log.debug(log_prefix, '[getMediaInfo]', execute_result.out);
 
     try{
       if (execute_result.success && execute_result.out) {
@@ -539,7 +541,7 @@ const getMediaInfo = async (media_path) => {
         }
       }
     } catch (error) {
-      log.e(null, "getMediaInfo", error, execute_result);
+      log.error(log_prefix, "getMediaInfo", error, execute_result);
     }
 
     resolve(media_result);
@@ -559,7 +561,7 @@ const getVideoDimension = async (video_path) => {
     result.width = dimensions.width;
     result.height = dimensions.height;
   } catch(error) {
-    log.e(null, "getVideoDimension", error);
+    log.error(log_prefix, "getVideoDimension", error);
     result.message = error.message;
   }
   return result;
@@ -575,7 +577,7 @@ const getVideoDuration = async (video_path) => {
     result.success = true;
     result.duration = duration;
   } catch(error) {
-    log.e(null, "getVideoDuration", error);
+    log.error(log_prefix, "getVideoDuration", error);
     result.message = error.message;
   }
   return result;
@@ -826,18 +828,18 @@ export default {
     let result = {};
     let context = null;
     if ( !( await fileExists(xml_file_path) ) ) {
-      log.d(null, "Util.loadXmlFile", `${xml_file_path} not exists`);
+      log.debug(log_prefix, "Util.loadXmlFile", `${xml_file_path} not exists`);
       return result;
     }
 
     try {
       context = await readFile(xml_file_path);
     } catch (error) {
-      log.e(null, 'Util.loadXmlFile', error);
+      log.error(log_prefix, 'Util.loadXmlFile', error);
       return result;
     }
     if (context == null) {
-      log.d(null, "Util.loadXmlFile", xml_file_path + ' context is empty');
+      log.debug(log_prefix, "Util.loadXmlFile", xml_file_path + ' context is empty');
       return result;
     }
 
@@ -920,7 +922,7 @@ export default {
     try{
       return aes256.decrypt(ServiceConfig.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
     } catch (error) {
-      log.e(null, 'Util.decrypt', error);
+      log.error(log_prefix, 'Util.decrypt', error);
       return null;
     }
   },
@@ -982,7 +984,7 @@ export default {
       });
 
       req.on('error', err => {
-        log.d(null, "Util.httpRequest", err);
+        log.debug(log_prefix, "Util.httpRequest", err);
         reject(err);
       });
 
@@ -1015,7 +1017,7 @@ export default {
         request_params.json = true;
       }
     }
-    log.d(null, request_params);
+    log.debug(log_prefix, request_params);
 
     const forward = request(request_params);
     try{
