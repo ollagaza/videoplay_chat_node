@@ -129,7 +129,6 @@ const SyncServiceClass = class {
 
       const operation_storage_model = new OperationStorageModel(transaction);
       const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
-      log.debug(this.log_prefix, log_info, 'operation_storage_info', operation_storage_info)
       const storage_seq = operation_storage_info.seq;
       operation_info.storage_seq = storage_seq;
 
@@ -188,7 +187,7 @@ const SyncServiceClass = class {
     const total_second = media_info.duration
     log.debug(this.log_prefix, '[getIndexInfoByMedia]', log_info, total_frame, total_second, media_info)
     const fps = media_info.fps
-    const step_second = 600
+    const step_second = 300
     const index_file_list = [];
     const url_prefix = ServiceConfig.get('static_storage_prefix')
     for (let second = 0; second < total_second; second += step_second) {
