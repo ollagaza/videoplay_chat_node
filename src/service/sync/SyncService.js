@@ -129,7 +129,7 @@ const SyncServiceClass = class {
 
       const operation_storage_model = new OperationStorageModel(transaction);
       const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
-
+      log.debug(this.log_prefix, log_info, 'operation_storage_info', operation_storage_info)
       const storage_seq = operation_storage_info.seq;
       operation_info.storage_seq = storage_seq;
 
@@ -143,10 +143,9 @@ const SyncServiceClass = class {
 
       await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info);
       await operation_storage_model.updateStorageSummary(storage_seq);
-      log.debug(this.log_prefix, log_info, `update storage info complete. storage_seq: ${storage_seq}`);
 
       const analysis_status = move_file_cloud === false ? 'Y' : 'M'
-      await OperationService.updateAnalysisStatus(transaction, operation_seq, analysis_status);
+      await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status);
       log.debug(this.log_prefix, log_info, `sync complete`);
 
       await GroupService.updateMemberUsedStorage(transaction, group_seq, member_seq)
@@ -187,7 +186,7 @@ const SyncServiceClass = class {
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {
     const total_frame = media_info.frame_count
     const total_second = media_info.duration
-    log.debug(this.log_prefix, log_info, total_frame, total_second, media_info)
+    log.debug(this.log_prefix, '[getIndexInfoByMedia]', log_info, total_frame, total_second, media_info)
     const fps = media_info.fps
     const step_second = 600
     const index_file_list = [];

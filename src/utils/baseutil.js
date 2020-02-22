@@ -504,9 +504,7 @@ const getMediaInfo = async (media_path) => {
     try{
       if (execute_result.success && execute_result.out) {
         const media_info_xml = await loadXmlString(execute_result.out);
-        log.debug(log_prefix, "[getMediaInfo - media_info_xml]", media_info_xml);
         const media_info = JsonPath.value(media_info_xml, '$..track');
-        log.debug(log_prefix, "[getMediaInfo - JsonPath.value(media_info_xml, '$..track')]", media_info);
         if (media_info && media_info.length > 0) {
           for (let i = 0; i < media_info.length; i++) {
             const track = media_info[i];
