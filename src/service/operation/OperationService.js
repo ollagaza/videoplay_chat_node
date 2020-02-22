@@ -331,7 +331,7 @@ const OperationServiceClass = class {
           path: `${directory_info.media_image}${thumbnail_file_name}`
         }
       } else {
-        log.error(this.log_prefix, '[updateTranscodingComplete]', '[Util.getThumbnail]',get_thumbnail_result)
+        log.error(this.log_prefix, '[updateTranscodingComplete]', '[Util.getThumbnail]', get_thumbnail_result)
       }
     }
     return null;
