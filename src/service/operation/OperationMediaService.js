@@ -48,6 +48,7 @@ const OperationMediaServiceClass = class {
       throw new StdObject(-1, '트랜스코딩된 동영상 파일이 존재하지 않습니다.', 400)
     }
     const media_result = await Util.getMediaInfo(trans_video_file_path)
+    log.debug(this.log_prefix, '[updateTranscodingComplete]', 'media_result', media_result)
     if (!media_result.success || media_result.media_type !== Constants.VIDEO) {
       throw new StdObject(-1, '동영상 파일이 아닙니다.', 400)
     }
