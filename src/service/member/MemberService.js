@@ -19,6 +19,7 @@ import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import MemberTemplate from '../../template/mail/member.template';
 import SendMail from '../../libs/send-mail'
+import BaseUtil from '../../utils/baseutil'
 
 const MemberServiceClass = class {
   constructor () {
@@ -27,8 +28,8 @@ const MemberServiceClass = class {
       'license_no', 'license_image_path', 'special_no',
       'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
-      'graduation_year', 'interrest_code', 'interrest_text',
-      'member_seq'];
+      'graduation_year', 'interrest_code', 'interrest_text', 'member_seq'
+      ];
 
     this.member_sub_private_fields = ['seq', 'regist_date', 'modify_date', 'user_id', 'password',
       'user_nickname', 'user_name', 'gender', 'email_address',
@@ -150,26 +151,6 @@ const MemberServiceClass = class {
 
   getMemberInfoByToken = async (database, token_info) => {
     return await this.getMemberInfo(database, token_info.getId())
-  }
-
-  createMember = async (database, request_body) => {
-    const member_info = new MemberInfo(request_body, ['password_confirm', 'url_prefix', 'request_domain', 'payData']);
-    member_info.checkDefaultParams();
-    member_info.checkUserId();
-    member_info.checkPassword();
-    member_info.checkUserName();
-    member_info.checkUserNickname();
-    member_info.checkEmailAddress();
-
-    const member_model = this.getMemberModel(database)
-    const create_member_info = await member_model.createMember(member_info)
-    if (!create_member_info.seq){
-      throw new StdObject(-1, '회원정보 생성 실패', 500);
-    }
-    log.debug(this.log_prefix, 'createmember', request_body.payData)
-    await PaymentService.createDefaultPaymentResult(database, request_body.payData, create_member_info.seq)
-    await MemberLogService.memberJoinLog(database, create_member_info.seq)
-    await GroupService.createPersonalGroup(database, create_member_info)
   }
 
   modifyMemberInfo = async (database, member_seq, member_info, add_log = true) => {
@@ -379,6 +360,11 @@ const MemberServiceClass = class {
     return await member_model.isDuplicateNickname(user_id);
   }
 
+  isDuplicatelicense_no = async (database, license_no) => {
+    const member_model = this.getMemberSubModel(database)
+    return await member_model.isDuplicateLicense_no(license_no);
+  }
+
   getMemberMetadata = async (member_seq) => {
     let user_data = await UserDataModel.findByMemberSeq(member_seq, '-_id -member_seq -created_date -modify_date');
     if (!user_data) {
@@ -433,6 +419,31 @@ const MemberServiceClass = class {
     const member_model = this.getMemberModel(database)
     const member_list = await member_model.getMemberList(search_option)
     return member_list
+  }
+
+  createMember = async (database, params) => {
+    const member_info = new MemberInfo(params.user_info, ['password_confirm']);
+    const member_sub_info = new MemberInfo(params.user_sub_info);
+    member_info.checkDefaultParams();
+    member_info.checkUserId();
+    member_info.checkPassword();
+    member_info.checkUserName();
+    member_info.checkUserNickname();
+    member_info.checkEmailAddress();
+
+    const member_model = this.getMemberModel(database)
+    const create_member_info = await member_model.createMember(member_info)
+    if (!create_member_info.seq){
+      throw new StdObject(-1, '회원정보 생성 실패', 500);
+    }
+
+    const update_member_sub_result = await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
+
+    await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq)
+    await MemberLogService.memberJoinLog(database, create_member_info.seq)
+    await GroupService.createPersonalGroup(database, create_member_info)
+
+    return member_info;
   }
 }
 

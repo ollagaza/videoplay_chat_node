@@ -14,6 +14,7 @@ import MemberSubModel from '../../database/mysql/member/MemberSubModel';
 import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { MedicalModel } from '../../database/mongodb/Medical';
+import { InterrestModel } from '../../database/mongodb/Interrest';
 import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
@@ -264,8 +265,50 @@ const AdminMemberServiceClass = class {
     return output;
   }
 
-  getMongoData = async() => {
-    return await MedicalModel.findAll();
+  getMongoData = async(getDataParam, getLangParam) => {
+    let output = new StdObject();
+    let result_data = null;
+    
+    switch (getLangParam) {
+      case 'eng':
+        switch (getDataParam) {
+          case 'medical':
+            result_data = await MedicalModel.findAll()
+            output.add('medical', result_data[0]._doc.eng);
+            break;
+          case 'interrest':
+            result_data = await InterrestModel.findAll()
+            output.add('interrest', result_data[0]._doc.eng);
+            break;
+          default:
+            result_data = await MedicalModel.findAll()
+            output.add('medical', result_data[0]._doc.eng);
+            result_data = await InterrestModel.findAll()
+            output.add('interrest', result_data[0]._doc.eng);
+            break;
+        }
+        break;
+      default:
+        switch (getDataParam) {
+          case 'medical':
+            result_data = await MedicalModel.findAll()
+            output.add('medical', result_data[0]._doc.kor);
+            break;
+          case 'interrest':
+            result_data = await InterrestModel.findAll()
+            output.add('interrest', result_data[0]._doc.kor);
+            break;
+          default:
+            result_data = await MedicalModel.findAll()
+            output.add('medical', result_data[0]._doc.kor);
+            result_data = await InterrestModel.findAll()
+            output.add('interrest', result_data[0]._doc.kor);
+            break;
+        }
+        break;
+    }
+
+    return output;
   }
 }
 

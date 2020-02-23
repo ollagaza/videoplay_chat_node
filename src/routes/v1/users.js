@@ -6,9 +6,13 @@ import Role from "../../constants/roles";
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import MemberService from '../../service/member/MemberService'
+import AdminMemberService from '../../service/member/AdminMemberService'
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import log from '../../libs/logger'
+import baseutil from '../../utils/baseutil';
+import ServiceConfig from '../../service/service-config';
+import _ from 'lodash';
 
 const routes = Router();
 
@@ -151,60 +155,48 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
  *           $ref: "#/definitions/DefaultResponse"
  *
  */
-routes.post('/', Wrap(async(req, res) => {
-  req.accepts('application/json');
+routes.post('/', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async(req, res) => {
+  const output = new StdObject();
+  const params = JSON.parse(req.body.params);
+
+  _.forEach(req.files, (value) => {
+    if (value[0].fieldname === 'profile_image') {
+      params.user_info.profile_image_path = '/common/' + value[0].filename;
+    } else if (value[0].fieldname === 'licens_image') {
+      params.user_sub_info.license_image_path = '/common/' + value[0].filename;
+    }
+  })
 
   // 커밋과 롤백은 자동임
   await DBMySQL.transaction(async(transaction) => {
-    await MemberService.createMember(transaction, req.body);
+    const result = await MemberService.createMember(transaction, params);
+    output.add('info', result);
   });
 
-  res.json(new StdObject());
+  res.json(output);
 }));
 
-/**
- * @swagger
- * /users/{member_seq}:
- *  put:
- *    summary: "회원정보를 수정한다"
- *    tags: [Users]
- *    security:
- *    - access_token: []
- *    consumes:
- *    - "application/json"
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "member_seq"
- *      in: "path"
- *      description: "회원 고유번호"
- *      required: true
- *      type: "integer"
- *    - name: "body"
- *      in: "body"
- *      description: "수정 할 회원 정보"
- *      required: true
- *      schema:
- *        $ref: "#/definitions/UserModifyInfo"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
-routes.put('/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
-  req.accepts('application/json');
-
+routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
 
   if(!MemberService.checkMyToken(token_info, member_seq)){
     throw new StdObject(-1, "잘못된 요청입니다.", 403);
   }
+  log.debug(req.body.params)
+  const params = JSON.parse(req.body.params);
 
-  const member_info = new MemberInfo(req.body, MemberService.member_private_fields);
-  const member_sub_info = new MemberInfoSub(req.body, MemberService.member_sub_private_fields);
+  _.forEach(req.files, (value) => {
+    if (value[0].fieldname === 'profile_image') {
+      params.user_info.profile_image_path = '/common/' + value[0].filename;
+    } else if (value[0].fieldname === 'licens_image') {
+      params.user_sub_info.license_image_path = '/common/' + value[0].filename;
+    }
+  })
+
+
+  const member_info = new MemberInfo(params.user_info);
+  const member_sub_info = new MemberInfoSub(params.user_sub_info);
 
   member_info.checkUserNickname();
   member_info.checkEmailAddress();
@@ -299,6 +291,17 @@ routes.post('/verify/nickname', Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.post('/verify/license_no', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const license_no = req.body.license_no;
+  const is_duplicate = await MemberService.isDuplicatelicense_no(DBMySQL, license_no);
+
+  const output = new StdObject();
+  output.add('is_verify', !is_duplicate);
+
+  res.json(output);
+}));
+
 routes.get('/:member_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
@@ -352,6 +355,21 @@ routes.post('/finds', Wrap(async(req, res) => {
   output.add('user_data', find_user_info_list);
   output.add("searchText", search_text);
 
+  res.json(output);
+}));
+
+routes.post('/getMongoData', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const getDataParam = req.body.getData;
+  const getLangParam = req.body.getLang;
+  let output = null;
+
+  try {
+    output = await AdminMemberService.getMongoData(getDataParam, getLangParam);
+  } catch(exception) {
+    output.error = -1;
+    output.message = exception.message;
+  }
   res.json(output);
 }));
 

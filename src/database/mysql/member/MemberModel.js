@@ -66,7 +66,7 @@ export default class MemberModel extends MySQLModel {
 
     const member = member_info.toJSON();
 
-    member.user_media_path = `/user/${member.user_id}`;
+    member.user_media_path = `/user/${member.user_id}/`;
 
     const media_root = ServiceConfig.get('media_root');
 
@@ -156,7 +156,7 @@ export default class MemberModel extends MySQLModel {
 
     return total_count > 0;
   };
-
+  
   leaveMember = async (member_seq) => {
     const update_info = {
       "used": "2",

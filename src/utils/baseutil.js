@@ -449,30 +449,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null) => {
-  const async_func = new Promise( (resolve, reject) => {
-    const uploader = multer({
-      storage,
-      limits: {
-        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
-      }
-    }).single(key);
-    req.upload_directory = upload_directory;
-    req.new_file_name = new_file_name;
-    uploader(req, res, error => {
-      if (error) {
-        log.e(req, error);
-        reject(error);
-      } else {
-        log.d(req, 'on upload job finished');
-        resolve(true);
-      }
-    });
-  });
-
-  return await async_func;
-};
-
 const execute = async (command) => {
   const result = {
     success: false,
@@ -803,7 +779,70 @@ const addDay = (day, format = 'YYYY-MM-DD') => {
   return calc_date.format(format)
 }
 
+const uploadImageFile = async (user_info, req, res, key = 'image') => {
+  const media_root = ServiceConfig.get('media_root');
+  const upload_path = user_info.user_media_path + "image";
+  const upload_full_path = media_root + upload_path;
+  if (!(await fileExists(upload_full_path))) {
+    await createDirectory(upload_full_path);
+  }
+
+  const new_file_name = getRandomId();
+  const upload_file_path = upload_full_path + '/' + new_file_name;
+  await uploadByRequest(req, res, key, upload_full_path, new_file_name);
+  const upload_file_info = req.file;
+  if (isEmpty(upload_file_info) || !(await fileExists(upload_file_path))) {
+    log.e(req, 'upload fail', upload_file_info);
+    throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+  }
+  const file_type = await getFileType(upload_file_path, new_file_name);
+  if (file_type !== 'image') {
+    log.e(req, 'file type is not image', upload_file_info, file_type);
+    await deleteFile(upload_file_path);
+    throw new StdObject(-1, '이미지만 업로드 가능합니다.', 400);
+  }
+  const image_url = getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
+  return { image_url: image_url, image_path: upload_path + Constants.SEP + new_file_name };
+}
+
+const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null) => {
+  const async_func = new Promise( (resolve, reject) => {
+    const uploader = multer({
+      storage,
+      limits: {
+        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+      }
+    }).single(key);
+    req.upload_directory = upload_directory;
+    req.new_file_name = new_file_name;
+    uploader(req, res, error => {
+      if (error) {
+        log.e(req, error);
+        reject(error);
+      } else {
+        log.d(req, 'on upload job finished');
+        resolve(true);
+      }
+    });
+  });
+
+  return await async_func;
+};
+
+const storate = multer.diskStorage({
+  destination : (req, file, cb) => {
+    cb(null, ServiceConfig.get('common_root'))
+  },
+  limits: {
+    fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+  },
+  filename : (req, file, cb) => {
+    cb(null, getRandomId())
+  },
+})
+
 export default {
+  "common_path_upload" : multer({ storage : storate }),
   "convert": convert,
 
   "removePathSEQ": removePathSEQ,
@@ -1077,5 +1116,6 @@ export default {
   urlToPath,
   getFileExt,
   getRandomNumber,
-  getFileType
+  getFileType,
+  uploadImageFile
 };

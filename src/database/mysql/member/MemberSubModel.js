@@ -72,4 +72,11 @@ export default class MemberSubModel extends MySQLModel {
 
     return find_user_results;
   };
+
+  isDuplicateLicense_no = async (license_no) => {
+    const where = {"license_no": license_no};
+    const total_count = await this.getTotalCount(where);
+
+    return total_count > 0;
+  };
 }
