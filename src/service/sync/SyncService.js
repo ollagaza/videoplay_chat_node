@@ -54,7 +54,6 @@ const SyncServiceClass = class {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const trans_video_file_path = directory_info.origin + operation_media_info.video_file_name
     const media_result = await Util.getMediaInfo(trans_video_file_path)
-    log.debug(this.log_prefix, log_info, 'media_result', media_result)
     if (!media_result.success || media_result.media_type !== Constants.VIDEO) {
       throw new StdObject(-1, '동영상 파일이 아닙니다.', 400)
     }
@@ -130,7 +129,6 @@ const SyncServiceClass = class {
 
       const operation_storage_model = new OperationStorageModel(transaction);
       const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
-
       const storage_seq = operation_storage_info.seq;
       operation_info.storage_seq = storage_seq;
 
@@ -144,10 +142,9 @@ const SyncServiceClass = class {
 
       await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info);
       await operation_storage_model.updateStorageSummary(storage_seq);
-      log.debug(this.log_prefix, log_info, `update storage info complete. storage_seq: ${storage_seq}`);
 
       const analysis_status = move_file_cloud === false ? 'Y' : 'M'
-      await OperationService.updateAnalysisStatus(transaction, operation_seq, analysis_status);
+      await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status);
       log.debug(this.log_prefix, log_info, `sync complete`);
 
       await GroupService.updateMemberUsedStorage(transaction, group_seq, member_seq)
@@ -188,8 +185,9 @@ const SyncServiceClass = class {
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {
     const total_frame = media_info.frame_count
     const total_second = media_info.duration
+    log.debug(this.log_prefix, '[getIndexInfoByMedia]', log_info, total_frame, total_second, media_info)
     const fps = media_info.fps
-    const step_second = 600
+    const step_second = 300
     const index_file_list = [];
     const url_prefix = ServiceConfig.get('static_storage_prefix')
     for (let second = 0; second < total_second; second += step_second) {
