@@ -22,7 +22,7 @@ export default class FindPasswordModel extends MySQLModel {
       "expire_time": expire_time
     };
 
-    const seq = await super.create(params);
+    const seq = await this.create(params);
     params.seq = seq;
     return params;
   };

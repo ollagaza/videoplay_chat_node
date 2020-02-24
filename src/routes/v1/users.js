@@ -230,7 +230,7 @@ routes.put('/change_password/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAU
 routes.post('/find/id', Wrap(async(req, res) => {
   req.accepts('application/json');
 
-  const output = MemberService.findMemberId(DBMySQL, req.body)
+  const output = await MemberService.findMemberId(DBMySQL, req.body)
   res.json(output);
 }));
 
