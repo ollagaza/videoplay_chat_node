@@ -5,7 +5,7 @@ import SocketManager from './socket-manager'
 import BaseUtil from '../utils/baseutil'
 
 const initDirectorys = async () => {
-  const upload_full_path = ServiceConfig('common_root');
+  const upload_full_path = ServiceConfig.get('common_root');
   if (!(await BaseUtil.fileExists(upload_full_path))) {
     await BaseUtil.createDirectory(upload_full_path);
   }
@@ -16,7 +16,7 @@ export default {
     await MongoDB.init()
     await ServiceConfig.init()
     await CodeSceneService.init()
-    await SocketManager.init()
     await initDirectorys()
+    await SocketManager.init()
   }
 }
