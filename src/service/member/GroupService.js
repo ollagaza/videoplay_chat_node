@@ -90,14 +90,14 @@ const GroupServiceClass = class {
 
     // TODO: 결제처리 완료되면 삭제
     const create_result = await this.createGroupInfo(database, create_group_info, member_info, 'personal', options)
-    await this.createEnterpriseGroup(database, 'H', member_info, options)
+    await this.createEnterpriseGroup(database, member_info, options)
     return create_result
   }
 
-  createEnterpriseGroup = async (database, group_type, member_info, options = {}) => {
+  createEnterpriseGroup = async (database, member_info, options = {}) => {
     const create_group_info = {
       member_seq: member_info.seq,
-      group_type,
+      group_type: 'G',
       status: 'F',
       group_name: member_info.user_name,
       storage_size: 0,
