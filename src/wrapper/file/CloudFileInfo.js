@@ -1,8 +1,6 @@
 import Constants from '../../constants/constants';
-import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
-import Constants from '../../constants/constants'
 
 /*
 {
