@@ -30,9 +30,11 @@ export default class OperationMediaInfo extends JsonWrapper {
       this.proxy_video_url = directory_info.url_video + proxy_file_name;
 
       if (Util.isEmpty(this.stream_url)){
-        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + proxy_file_name + '/playlist.m3u8';
+        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + proxy_file_name + '/master.m3u8';
+        this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + directory_info.media_video + proxy_file_name + '/manifest.mpd';
       } else {
-        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + this.stream_url + '/playlist.m3u8';
+        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + this.stream_url + '/master.m3u8';
+        this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + directory_info.media_video + this.stream_url + '/manifest.mpd';
       }
     }
   };
