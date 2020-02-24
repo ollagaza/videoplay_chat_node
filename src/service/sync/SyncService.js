@@ -115,7 +115,7 @@ const SyncServiceClass = class {
     }
     if (adaptive_list.length > 0) {
       if (adaptive_list.length === 1) {
-        stream_url = `Trans_,${adaptive_list[0]},.mp4`
+        stream_url = `Trans_${adaptive_list[0]}.mp4`
       } else {
         stream_url = `Trans_,${adaptive_list.join(',')},.mp4.smil`
       }
