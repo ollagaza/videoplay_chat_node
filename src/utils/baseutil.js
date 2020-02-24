@@ -1027,6 +1027,7 @@ export default {
       });
 
       if (post_data) {
+        log.debug(log_prefix, '[httpRequest]', 'post_data', post_data)
         req.write(post_data);
       }
       req.end();

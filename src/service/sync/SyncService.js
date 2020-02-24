@@ -21,7 +21,7 @@ const SyncServiceClass = class {
   }
 
   getOperationInfoBySeq = async (operation_seq) => {
-    const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
+    const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
     }
@@ -165,7 +165,7 @@ const SyncServiceClass = class {
     }
     if (move_file_cloud) {
       try {
-        const request_result = await CloudFileService.requestMoveFile(directory_info.media_video, true, '/analysis/complete', 'POST', { operation_seq })
+        const request_result = await CloudFileService.requestMoveFile(directory_info.media_video, true, '/api/storage/operation/analysis/complete', 'POST', { operation_seq })
         log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveFile]', `file_path: ${directory_info.media_video}`,request_result)
       } catch(error) {
         log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveFile]', error)
@@ -175,17 +175,17 @@ const SyncServiceClass = class {
     log.debug(this.log_prefix, log_info, `end`);
   }
 
-  onOperationVideoFileCopyCompeteBySeq = async (operation_seq, response_data) => {
-    const operation_info = this.getOperationInfoBySeq(operation_seq)
-    await this.onOperationVideoFileCopyCompete(operation_info, response_data)
-  }
-
-  onOperationVideoFileCopyCompete = async (operation_info, response_data) => {
-    if (!operation_info || operation_info.isEmpty()) {
-      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
+  onOperationVideoFileCopyCompeteByRequest = async (response_data) => {
+    if (!response_data || !response_data.operation_seq) {
+      throw new StdObject(-1, '잘못된 요청입니다.', 400)
     }
-    const status = response_data && response_data.result_status ? response_data.result_status : 'E'
-    await OperationService.updateAnalysisStatus(DBMySQL, operation_info.seq, status);
+    const operation_seq = response_data.operation_seq
+    const operation_info = await this.getOperationInfoBySeq(operation_seq)
+    const status = response_data.is_success ? 'Y' : 'E'
+    if (!response_data.is_success) {
+      log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', response_data)
+    }
+    return await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status);
   }
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {

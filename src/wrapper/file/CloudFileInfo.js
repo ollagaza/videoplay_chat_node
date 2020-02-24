@@ -66,7 +66,7 @@ export default class CloudFileInfo {
   setResponseOption = (response_url, method = 'POST', hostname = null, port = null) => {
     this.response_options = {
       "hostname": hostname ? hostname : ServiceConfig.get('api_server_domain'),
-      "port": port ? port : ServiceConfig.get('storage_server_port'),
+      "port": port ? port : ServiceConfig.get('api_server_port'),
       "path": response_url,
       "method": method
     }

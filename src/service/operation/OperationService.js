@@ -6,6 +6,7 @@ import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 import GroupService from '../member/GroupService'
 import OperationMediaService from './OperationMediaService'
+import CloudFileService from '../cloud/CloudFileService'
 import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
@@ -208,6 +209,7 @@ const OperationServiceClass = class {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     await Util.deleteDirectory(directory_info.root);
     // TODO: 클라우드 파일 삭제 로직 추가 필요
+    await CloudFileService.requestDeleteFile(directory_info.media_path, true)
   };
 
   deleteGroupMemberOperations = async (group_seq, member_seq) => {
