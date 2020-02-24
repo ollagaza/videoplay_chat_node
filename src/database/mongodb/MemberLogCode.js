@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import LogCode_BasicData from '../../data/Mongo_MemberLogCodes_Data';
 
 const Schema = mongoose.Schema;
 
@@ -11,6 +12,11 @@ const getFieldInfos = () => {
 const schema_field_infos = getFieldInfos();
 
 const logcode_schema = new Schema(schema_field_infos, { strict: false });
+
+logcode_schema.statics.InsertDefaultData = function () {
+  const model = new this(LogCode_BasicData);
+  return model.save();
+};
 
 logcode_schema.statics.findAll = function () {
   return this.find({});

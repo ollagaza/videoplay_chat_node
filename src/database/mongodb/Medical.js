@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Medaical_BasicData from '../../data/Mongo_Medicals_Data';
 
 const Schema = mongoose.Schema;
 
@@ -11,6 +12,11 @@ const getFieldInfos = () => {
 const schema_field_infos = getFieldInfos();
 
 const medical_schema = new Schema(schema_field_infos, { strict: false });
+
+medical_schema.statics.InsertDefaultData = function () {
+  const model = new this(Medaical_BasicData);
+  return model.save();
+};
 
 medical_schema.statics.findAll = function () {
   return this.find({});
