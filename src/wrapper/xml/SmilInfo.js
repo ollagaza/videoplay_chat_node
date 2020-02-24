@@ -28,8 +28,8 @@ export default class SmilInfo extends JsonWrapper {
     this.is_empty = true;
   }
 
-  loadFromXml = async (media_directory, smil_file_name) => {
-    const smil_xml_info = await Util.loadXmlFile(media_directory, smil_file_name);
+  loadFromXml = async (file_path, smil_file_name) => {
+    const smil_xml_info = await Util.loadXmlFile(file_path, smil_file_name);
     if (smil_xml_info && smil_xml_info.smil && smil_xml_info.smil.body) {
       const body_node = _.isArray(smil_xml_info.smil.body) ? smil_xml_info.smil.body[0] : smil_xml_info.smil.body;
       const switch_node = _.isArray(body_node.switch) ? body_node.switch[0] : body_node.switch;

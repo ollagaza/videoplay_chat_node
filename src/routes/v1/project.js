@@ -9,6 +9,7 @@ import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
+import GroupService from '../../service/member/GroupService'
 import MemberModel from '../../database/mysql/member/MemberModel';
 import {VideoProjectField, VideoProjectModel} from '../../database/mongodb/VideoProject';
 import SequenceModel from '../../models/sequence/SequenceModel';
@@ -24,7 +25,7 @@ const getMemberInfo = async (database, member_seq) => {
 };
 
 routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
+  const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const video_project_list = await VideoProjectModel.findByGroupSeq(token_info.getGroupSeq(), '-sequence_list');
 
   const output = new StdObject();
@@ -33,6 +34,7 @@ routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res)
 }));
 
 routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const project_seq = req.params.project_seq;
   const video_project = await VideoProjectModel.findOneById(project_seq);
 
@@ -43,17 +45,13 @@ routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), W
 
 routes.post('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-
-  const token_info = req.token_info;
-  const member_seq = token_info.getId();
+  const { member_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const data = req.body;
 
-  const member_info = await getMemberInfo(DBMySQL, member_seq);
   const service_info = ServiceConfig.getServiceInfo();
   const content_id = Util.getContentId();
   const media_root = service_info.media_root;
-  const user_media_path = member_info.user_media_path;
-  const project_path = user_media_path + "VideoProject" + Constants.SEP + content_id + Constants.SEP;
+  const project_path = `${group_member_info.media_path}/studio/${content_id}/`;
 
   await Util.createDirectory(media_root + project_path);
   data.group_seq = token_info.getGroupSeq();

@@ -90,19 +90,7 @@ export default class OperationModel extends MySQLModel {
   };
 
   getOperationInfoByResult = (query_result) => {
-    const service_info = ServiceConfig.getServiceInfo();
-    query_result.media_root = service_info.media_root;
-
-    const operation_info = new OperationInfo(query_result);
-
-    if (operation_info.media_root) {
-      operation_info.media_directory = Util.getMediaDirectory(service_info.media_root, operation_info.media_path);
-      operation_info.trans_directory = Util.getMediaDirectory(service_info.trans_video_root, operation_info.media_path);
-      operation_info.url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
-      operation_info.vod_url_prefix = Util.getUrlPrefix(service_info.static_storage_prefix, operation_info.media_path);
-    }
-
-    return operation_info;
+    return new OperationInfo(query_result)
   };
 
   getOperationInfoWithMediaInfo = async (query_result, import_media_info=false) => {
@@ -115,8 +103,6 @@ export default class OperationModel extends MySQLModel {
     if (import_media_info === true) {
       const media_info = await new OperationMediaModel(this.database).getOperationMediaInfo(operation_info);
       operation_info.setMediaInfo(media_info);
-      operation_info.origin_video_path = operation_info.media_directory + media_info.video_source;
-      operation_info.trans_video_path = operation_info.trans_directory + media_info.video_source;
     }
 
     return operation_info;
@@ -205,11 +191,6 @@ export default class OperationModel extends MySQLModel {
 
   getOperationInfoByContentId = async (content_id) => {
     const where = {"content_id": content_id};
-    return await this.getOperation(where, false);
-  };
-
-  getUnSyncOperationInfo = async (member_seq) => {
-    const where = {"member_seq": member_seq, analysis_status: 'N', 'is_analysis_complete': 0, status: 'Y'};
     return await this.getOperation(where, false);
   };
 

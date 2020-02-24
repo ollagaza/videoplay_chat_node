@@ -1,10 +1,5 @@
 import mongoose from 'mongoose';
-import _ from "lodash";
 import Util from '../../utils/baseutil';
-import StdObject from "../../wrapper/std-object";
-import log from "../../libs/logger";
-import ServiceConfig from '../../service/service-config';
-import Constants from '../../constants/constants';
 
 const Schema = mongoose.Schema;
 
@@ -113,110 +108,7 @@ video_index_info_schema.statics.deleteByOperation = function( operation_seq, mem
   return this.findOneAndDelete( filter );
 };
 
-const addVideoIndex = async (operation_info, second) => {
-  const operation_seq = operation_info.seq;
-  const media_info = operation_info.media_info;
-  const fps = media_info.fps;
-  const target_frame = Math.round(second * fps);
-
-  const video_index_info = await video_index_info_model.findOneByOperation(operation_seq);
-  let index_info_list = video_index_info.index_list;
-  const total_count = index_info_list.length;
-  let copy_index_info = null;
-
-  for (let i = 0; i < total_count; i++) {
-    const index_info = index_info_list[i];
-    const start_frame = index_info.start_frame;
-    const end_frame = index_info.end_frame;
-
-    log.d(null, start_frame, end_frame, target_frame);
-
-    if (start_frame === target_frame) {
-      throw new StdObject(-1, '동일한 인덱스 존재합니다.', 400);
-    } else if(i === 0 && target_frame < start_frame){
-      copy_index_info = index_info;
-      break;
-    } else if (target_frame > start_frame && target_frame <= end_frame) {
-      copy_index_info = index_info;
-      break;
-    }
-  }
-
-  let end_time;
-  let end_frame;
-  if (null === copy_index_info) {
-    end_frame = media_info.total_frame;
-    end_time = media_info.total_time;
-    if (total_count > 0) {
-      copy_index_info = index_info_list[total_count - 1];
-    }
-  }
-  else {
-    end_frame = copy_index_info.end_frame;
-    end_time = copy_index_info.end_time;
-  }
-  if (copy_index_info) {
-    copy_index_info.end_frame = target_frame - 1;
-    copy_index_info.end_time = second;
-  }
-
-  const index_file_name = `index_original_${target_frame}_${Date.now()}.jpg`;
-  const thumbnail_file_name = `index_thumbnail_${target_frame}_${Date.now()}.jpg`;
-
-  const original_url = operation_info.url_prefix + 'Thumb/' + index_file_name;
-  const add_index = {};
-  add_index.thumbnail_url = operation_info.url_prefix + 'Thumb/' + thumbnail_file_name;
-  add_index.original_url = original_url;
-  add_index.creator = 'user';
-  add_index.unique_id = "user/" + index_file_name;
-  add_index.start_time = second;
-  add_index.start_frame = target_frame;
-  add_index.end_time = end_time;
-  add_index.end_frame = end_frame;
-
-  index_info_list.push(add_index);
-  index_info_list = _.sortBy(index_info_list, index_info => index_info.start_frame);
-
-  const media_directory = operation_info.media_directory;
-  const trans_video_path = operation_info.trans_video_path;
-  const save_directory = media_directory + 'Thumb';
-  if ( !( await Util.fileExists(save_directory) ) ) {
-    await Util.createDirectory(save_directory);
-  }
-
-  const original_index_image_path = save_directory + Constants.SEP + index_file_name;
-  let execute_result = await Util.getThumbnail(trans_video_path, original_index_image_path, second);
-  if (!execute_result.success) {
-    log.e(null, `IndexModel.addIndex execute error [${execute_result.command}]`, execute_result);
-    throw new StdObject(-1, '인덱스 추출 실패', 400);
-  }
-  if ( !( await Util.fileExists(original_index_image_path) ) ) {
-    log.e(null, `IndexModel.addIndex file not exists [${execute_result.command}]`, execute_result);
-    throw new StdObject(-1, '인덱스 파일 저장 실패', 400);
-  }
-
-  try {
-    const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212);
-    const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160);
-    const thumb_index_image_path = save_directory + Constants.SEP + thumbnail_file_name;
-    execute_result = await Util.getThumbnail(trans_video_path, thumb_index_image_path, second, thumb_width, thumb_height);
-
-    if (!execute_result.success) {
-      log.e(null, `IndexModel.addIndex thumb execute error [${execute_result.command}]`, execute_result);
-    } else if ( !( await Util.fileExists(original_index_image_path) ) ) {
-      log.e(null, `IndexModel.addIndex thumb file not exists [${execute_result.command}]`, execute_result);
-    }
-  } catch (error) {
-    add_index.thumbnail_url = add_index.original_url;
-  }
-
-  await video_index_info_model.updateIndexListByOperation(operation_seq, index_info_list);
-
-  return {add_index_info: add_index, total_index_count: index_info_list.length};
-};
-
 const video_index_info_model = mongoose.model( 'VideoIndexInfo', video_index_info_schema );
 
 export const VideoIndexInfoModel = video_index_info_model;
 export const VideoIndexInfoField = getFieldInfos;
-export const AddVideoIndex = addVideoIndex;

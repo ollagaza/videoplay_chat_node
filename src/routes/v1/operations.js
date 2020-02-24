@@ -12,8 +12,8 @@ import log from "../../libs/logger";
 import GroupService from '../../service/member/GroupService';
 import OperationService from '../../service/operation/OperationService';
 import OperationClipService from '../../service/operation/OperationClipService';
+import OperationMediaService from '../../service/operation/OperationMediaService';
 import OperationModel from '../../database/mysql/operation/OperationModel';
-import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
 import VideoFileModel from '../../database/mysql/file/VideoFileModel';
 import ReferFileModel from '../../database/mysql/file/ReferFileModel';
@@ -24,8 +24,7 @@ import { UserDataModel } from '../../database/mongodb/UserData';
 const routes = Router();
 
 routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
-
+  const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, token_info, req);
 
   const output = new StdObject();
@@ -34,10 +33,10 @@ routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
 }));
 
 routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
+  const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
 
-  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info, true, true);
   const output = new StdObject();
   output.add('operation_info', operation_info);
 
@@ -54,9 +53,8 @@ routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => 
 
 routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const token_info = req.token_info;
+  const { token_info, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
-  const member_seq = token_info.getId();
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
@@ -300,9 +298,10 @@ routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(Role.LOGIN_US
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info, true, true);
+  const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
   const output = new StdObject();
-  output.add('download_url', operation_info.media_info.origin_video_url);
+  output.add('download_url', directory_info.url_video + operation_info.media_info.video_file_name);
   res.json(output);
 }));
 
@@ -364,7 +363,7 @@ routes.get('/:operation_seq(\\d+)/media_info', Auth.isAuthenticated(Role.LOGIN_U
   const operation_seq = req.params.operation_seq;
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const operation_media_info = await new OperationMediaModel(DBMySQL).getOperationMediaInfo(operation_info);
+  const operation_media_info = await OperationMediaService.getOperationMediaInfo(DBMySQL, operation_info);
 
   const output = new StdObject();
   output.add('operation_media_info', operation_media_info);

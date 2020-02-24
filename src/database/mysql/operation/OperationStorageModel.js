@@ -65,8 +65,8 @@ export default class OperationStorageModel extends MySQLModel {
 
   updateStorageSummary = async (storage_seq) => {
     const update_params = {
-      "total_file_size": this.database.raw('index1_file_size + index2_file_size + origin_video_size + refer_file_size'),
-      "total_file_count": this.database.raw('origin_video_count + trans_video_count + refer_file_count'),
+      "total_file_size": this.database.raw('origin_video_size + refer_file_size'),
+      "total_file_count": this.database.raw('origin_video_count + refer_file_count'),
       "modify_date": this.database.raw('NOW()')
     };
     await this.update({seq: storage_seq}, update_params);
@@ -96,8 +96,8 @@ export default class OperationStorageModel extends MySQLModel {
 
   migrationTotalFileSize = async () => {
     const update_params = {
-      "total_file_size": this.database.raw('index1_file_size + index2_file_size + origin_video_size + trans_video_size + refer_file_size'),
-      "total_file_count": this.database.raw('origin_video_count + trans_video_count + refer_file_count')
+      "total_file_size": this.database.raw('origin_video_size + refer_file_size'),
+      "total_file_count": this.database.raw('origin_video_count + refer_file_count')
     }
     return await this.update({ }, update_params);
   }

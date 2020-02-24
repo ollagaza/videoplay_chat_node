@@ -1,3 +1,4 @@
+import querystring from 'querystring';
 import DBMySQL from '../../database/knex-mysql'
 import ServiceConfig from '../../service/service-config';
 import Role from '../../constants/roles'
@@ -13,10 +14,8 @@ import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
 import { UserDataModel } from '../../database/mongodb/UserData'
 import OperationInfo from '../../wrapper/operation/OperationInfo'
-import Constants from '../../constants/constants'
 import VideoFileModel from '../../database/mysql/file/VideoFileModel'
 import ReferFileModel from '../../database/mysql/file/ReferFileModel'
-import querystring from 'querystring';
 
 const OperationServiceClass = class {
   constructor () {
@@ -127,7 +126,12 @@ const OperationServiceClass = class {
     return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
   }
 
-  getOperationInfo = async (database, operation_seq, token_info, check_owner= true) => {
+  setMediaInfo = async (database, operation_info) => {
+    const media_info = await OperationMediaService.getOperationMediaInfo(database, operation_info)
+    operation_info.setMediaInfo(media_info)
+  }
+
+  getOperationInfo = async (database, operation_seq, token_info, check_owner= true, import_media_info = false) => {
     const operation_model = this.getOperationModel(database);
     const operation_info = await operation_model.getOperationInfo(operation_seq);
 
@@ -144,12 +148,20 @@ const OperationServiceClass = class {
       }
     }
 
+    if (import_media_info) {
+      await this.setMediaInfo(database, operation_info)
+    }
+
     return { operation_info, operation_model };
   };
 
-  getOperationInfoByContentId = async (database, content_id) => {
+  getOperationInfoByContentId = async (database, content_id, import_media_info = false) => {
     const operation_model = this.getOperationModel(database);
     const operation_info = await operation_model.getOperationInfoByContentId(content_id)
+
+    if (import_media_info) {
+      await this.setMediaInfo(database, operation_info)
+    }
 
     return { operation_info, operation_model };
   };
@@ -159,6 +171,7 @@ const OperationServiceClass = class {
     const media_directory = ServiceConfig.get('media_root') + media_path;
     const trans_server_root = ServiceConfig.get('trans_server_root')
     const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
+    const content_path = operation_info.content_id + '/'
     return {
       "root": media_directory,
       "origin": media_directory + "origin/",
@@ -174,13 +187,18 @@ const OperationServiceClass = class {
       "media_temp": media_path + "temp/",
       "trans_origin": trans_server_root + media_path + "origin/",
       "trans_video": trans_server_root + media_path + "video/",
-      "trans_temp": trans_server_root + media_path + "temp/",
       "url_prefix": url_prefix,
       "url_origin": url_prefix + "origin/",
       "url_video": url_prefix + "video/",
       "url_other": url_prefix + "other/",
       "url_image": url_prefix + "image/",
       "url_temp": url_prefix + "temp/",
+      "content_path": content_path,
+      "content_origin": content_path + "origin/",
+      "content_video": content_path + "video/",
+      "content_other": content_path + "other/",
+      "content_image": content_path + "image/",
+      "content_temp": content_path + "temp/",
     }
   }
 
@@ -401,11 +419,12 @@ const OperationServiceClass = class {
       if (operation_list[i].status !== 'D') {
         const operation_info = await operation_model.getOperationInfoWithMediaInfo(operation_list[i], true)
         operation_info.setIgnoreEmpty(true)
-        if (operation_info.trans_video_path) {
-          const file_size = await Util.getFileSize(operation_info.trans_video_path)
-          log.debug(this.log_prefix, '[migrationOriginVideoSize]', file_size, operation_info.toJSON())
-          await operation_storage_model.migrationOriginVideoSize(operation_info.seq, file_size)
-        }
+        // const origin_video_directory = operation_info.media_path
+        // if (operation_info.trans_video_path) {
+        //   const file_size = await Util.getFileSize(operation_info.trans_video_path)
+        //   log.debug(this.log_prefix, '[migrationOriginVideoSize]', file_size, operation_info.toJSON())
+        //   await operation_storage_model.migrationOriginVideoSize(operation_info.seq, file_size)
+        // }
       }
     }
   }
