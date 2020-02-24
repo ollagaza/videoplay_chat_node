@@ -120,12 +120,11 @@ routes.post('/', Wrap(async(req, res) => {
     await MemberService.checkPassword(DBMySQL, member_info, password);
   }
 
-  const member_seq = member_info.seq;
-
-  const has_auth_mail = await new MemberAuthMailModel(DBMySQL).hasAuthMail(member_seq);
-  if (has_auth_mail) {
-    throw new StdObject(-1, "이메일 인증 후 사용 가능합니다.", 400);
-  }
+  // const member_seq = member_info.seq;
+  // const has_auth_mail = await new MemberAuthMailModel(DBMySQL).hasAuthMail(member_seq);
+  // if (has_auth_mail) {
+  //   throw new StdObject(-1, "이메일 인증 후 사용 가능합니다.", 400);
+  // }
   const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
   return res.json(output);
 }));

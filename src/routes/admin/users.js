@@ -50,7 +50,7 @@ routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   });
 
   await DBMySQL.transaction(async(transaction) => {
-    await AdminMemberService.sendMailforMemberChangeUsed(transaction, output, output.variables.appr_code, updateData, output.variables.search_option);
+    await AdminMemberService.sendMailforMemberChangeUsed(transaction, output, output.variables.appr_code, updateData, output.variables.search_option, req.token_info.getServiceDomain());
   });
 
   res.json(output);

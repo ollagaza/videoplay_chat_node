@@ -221,11 +221,12 @@ const AdminMemberServiceClass = class {
     return output
   }
 
-  sendMailforMemberChangeUsed = async (database, output, appr_code, setData, search_option = null) => {
+  sendMailforMemberChangeUsed = async (database, output, appr_code, setData, ServiceDomain, search_option = null) => {
     const adminmember_model = this.getAdminMemberModel(database)
     const sned_mail_users = await adminmember_model.findMembersforNonPagenation(search_option);
     _.forEach(sned_mail_users, async (value) => {
       let send_mail_result = null;
+      value.service_domain = ServiceDomain;
       value.regist_date = value.regist_date ? Util.dateFormatter(value.regist_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_start_date = value.stop_start_date ? Util.dateFormatter(value.stop_start_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_end_date = value.stop_end_date ? Util.dateFormatter(value.stop_end_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
