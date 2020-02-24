@@ -13,6 +13,7 @@ import Constants from '../../constants/constants'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import BatchOperationQueueModel from '../../database/mysql/batch/BatchOperationQueueModel'
 import IndexInfo from '../../wrapper/xml/IndexInfo'
+import CloudFileService from '../cloud/CloudFileService'
 
 const SyncServiceClass = class {
   constructor () {
@@ -163,7 +164,12 @@ const SyncServiceClass = class {
       }
     }
     if (move_file_cloud) {
-
+      try {
+        const request_result = await CloudFileService.requestMoveFile(directory_info.media_video, true, '/analysis/complete', 'POST', { operation_seq })
+        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveFile]', `file_path: ${directory_info.media_video}`,request_result)
+      } catch(error) {
+        log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveFile]', error)
+      }
     }
 
     log.debug(this.log_prefix, log_info, `end`);

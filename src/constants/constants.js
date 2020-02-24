@@ -2,8 +2,6 @@ import path from 'path'
 
 const SEP = path.sep
 
-const LOCAL = 'local'
-
 const NONE = 'none'
 const NO_MEDIA = 100
 
@@ -36,8 +34,11 @@ const TOKEN_SECRET = 'dpxldlwlTjwlqnr'
 
 const GB = 1024 * 1024 * 1024;
 
+const ARCHIVE = 'archive'
+const OBJECT = 'object'
+const LOCAL = 'local'
+
 export default {
-  'LOCAL': LOCAL,
   'NONE': NONE,
   'NO_MEDIA': NO_MEDIA,
   'TEXT': TEXT,
@@ -66,5 +67,8 @@ export default {
   'SEP': SEP,
   'TOKEN_SECRET': TOKEN_SECRET,
   'GB': GB,
-  'TIMESTAMP': TIMESTAMP
+  'TIMESTAMP': TIMESTAMP,
+  'ARCHIVE': ARCHIVE,
+  'OBJECT': OBJECT,
+  'LOCAL': LOCAL
 }

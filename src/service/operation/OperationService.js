@@ -105,13 +105,6 @@ const OperationServiceClass = class {
     )(operation_info)
   }
 
-  getMediaDirectory = (operation_info) => {
-    return ServiceConfig.get('media_root') + operation_info.media_path;
-  }
-  getTransVideoDirectory = (operation_info) => {
-    return ServiceConfig.get('trans_video_root') + operation_info.media_path;
-  }
-
   getOperationListByRequest = async (database, token_info, request) => {
     const request_query = request.query | {};
     const page_params = {};
@@ -162,7 +155,7 @@ const OperationServiceClass = class {
 
   getOperationDirectoryInfo = (operation_info) => {
     const media_path = operation_info.media_path
-    const media_directory = this.getMediaDirectory(operation_info);
+    const media_directory = ServiceConfig.get('media_root') + media_path;
     const trans_server_root = ServiceConfig.get('trans_server_root')
     const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
     return {
