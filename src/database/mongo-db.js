@@ -5,6 +5,7 @@ import Config from '../config/config'
 import log from '../libs/logger'
 import Constants from '../constants/constants'
 
+
 const ENV = Config.getEnv()
 const database_config = Config.isLocal() ? mongodb_config[Constants.LOCAL] : mongodb_config[ENV]
 
@@ -22,17 +23,22 @@ const init = async () => {
       useFindAndModify: true,
       useUnifiedTopology: true
     })
-      .then(() => {
-        log.d(null, 'Successfully connected to mongodb')
-        resolve(true)
-      })
-      .catch((error) => {
-        log.e(null, 'mongodb connection error', error)
-        resolve(false)
-      })
+    .then(() => {
+      log.d(null, 'Successfully connected to mongodb')
+      defaultMongoCollections();
+      resolve(true)
+    })
+    .catch((error) => {
+      log.e(null, 'mongodb connection error', error)
+      resolve(false)
+    })
   })
 
   return await async_func
+}
+
+const defaultMongoCollections = async () => {
+
 }
 
 export default {
