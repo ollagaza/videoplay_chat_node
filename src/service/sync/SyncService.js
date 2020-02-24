@@ -184,8 +184,11 @@ const SyncServiceClass = class {
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {
     const total_frame = media_info.frame_count
-    const total_second = media_info.duration
-    log.debug(this.log_prefix, '[getIndexInfoByMedia]', log_info, total_frame, total_second, media_info)
+    let total_second = media_info.duration
+    if (ServiceConfig.get('use_media_info_millisecond') === 'Y') {
+      total_second /= 1000
+    }
+    log.debug(this.log_prefix, '[getIndexInfoByMedia]', log_info, total_frame, ServiceConfig.get('use_media_info_millisecond'), media_info.duration, total_second, media_info)
     const fps = media_info.fps
     const step_second = 300
     const index_file_list = [];
