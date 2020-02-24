@@ -305,7 +305,7 @@ const GroupServiceClass = class {
       admin_name: member_info.user_name,
       invite_code,
       message: Util.nlToBr(invite_message),
-      btn_link_url: `${service_domain}/invite/group/${encrypt_invite_code}`
+      btn_link_url: `${service_domain}/v2/invite/group/${encrypt_invite_code}`
     }
     const body = GroupMailTemplate.inviteGroupMember(template_data, !invite_message)
     const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body);
