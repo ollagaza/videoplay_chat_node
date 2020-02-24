@@ -188,12 +188,9 @@ routes.post('/:operation_seq(\\d+)/phase', Auth.isAuthenticated(Role.DEFAULT), W
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
   const create_result = await OperationClipService.createPhase(operation_info, req.body.phase_desc);
-  const phase_id = create_result._id;
-  await OperationClipService.setPhase(phase_id, req.body.clip_id_list);
-
   const output = new StdObject();
-  output.add('phase', create_result);
-  output.add('phase_id', phase_id);
+  output.add('phase', create_result.phase_info);
+  output.add('phase_id', create_result.phase_id);
   res.json(output);
 }));
 
@@ -213,7 +210,7 @@ routes.put('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role.DE
 routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const operation_seq = req.params.operation_seq;
   const phase_id = req.params.phase_id;
-  const delete_result = await OperationClipService.deletePhase(operation_seq, phase_id);
+  await OperationClipService.deletePhase(operation_seq, phase_id);
   const update_result = await OperationClipService.unsetPhase(operation_seq, phase_id);
 
   const output = new StdObject();
