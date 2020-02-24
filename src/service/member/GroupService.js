@@ -110,7 +110,7 @@ const GroupServiceClass = class {
     const member_seq = member_info.seq
     const content_id = Util.getContentId()
     create_group_info.content_id = content_id
-    create_group_info.media_path = `/${root_directory_name}/${content_id}/`
+    create_group_info.media_path = `/${root_directory_name}/${content_id}`
     create_group_info.pay_code = 'free'
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
