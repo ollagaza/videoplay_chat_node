@@ -2,14 +2,9 @@ import { Router } from 'express';
 import querystring from 'querystring';
 import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
-import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
 import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
-import SendMail from '../../libs/send-mail';
 import TranscoderSyncService from '../../service/sync/TranscoderSyncService';
-import { syncOne } from './sync';
 
 const routes = Router();
 

@@ -12,49 +12,9 @@ import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
 import ServiceErrorModel from '../../database/mysql/service-error-model';
 import VideoInfo from "../../wrapper/xml/VideoInfo";
-import { syncOne } from './sync';
+// import { syncOne } from './sync';
 
 const routes = Router();
-
-
-/**
- * @swagger
- * tags:
- *  name: Hawkeye
- *  description: 호크아이 연동
- *
- */
-
-/**
- * @swagger
- * /hawkeye/complete:
- *  get:
- *    summary: "호크아이 분석 완료 상태 업데이트"
- *    tags: [Hawkeye]
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "content_id"
- *      in: "query"
- *      description: "콘텐츠ID"
- *      required: true
- *      type: "string"
- *    - name: success
- *      in: "query"
- *      type: "string"
- *      description: "처리 결과. 성공: true or 1. 그 외 실패"
- *      required: true
- *    - name: error
- *      in: "query"
- *      type: "string"
- *      description: "에러 정보"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
 
 const on_complete = Wrap(async(req, res) => {
   const token_info = req.token_info;
@@ -122,7 +82,7 @@ const on_complete = Wrap(async(req, res) => {
         throw new StdObject(video_info.error_code, video_info.message, 500);
       }
       await operation_model.updateAnalysisComplete(operation_seq, true);
-      await syncOne(req, token_info, operation_seq);
+      // await syncOne(req, token_info, operation_seq);
 
       is_complete = true;
       result = new StdObject();
