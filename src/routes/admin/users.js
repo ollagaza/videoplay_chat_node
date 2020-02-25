@@ -7,6 +7,7 @@ import Role from "../../constants/roles";
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import AdminMemberService from '../../service/member/AdminMemberService'
+import service_config from "../../service/service-config";
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 
@@ -50,7 +51,7 @@ routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   });
 
   await DBMySQL.transaction(async(transaction) => {
-    await AdminMemberService.sendMailforMemberChangeUsed(transaction, output, output.variables.appr_code, updateData, output.variables.search_option, req.token_info.getServiceDomain());
+    await AdminMemberService.sendMailforMemberChangeUsed(transaction, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option);
   });
 
   res.json(output);

@@ -136,6 +136,7 @@ const verifyToken = async (req, require_roles = null) => {
 }
 
 const getTokenResult = async (res, member_info, role) => {
+
   member_info.role = role
 
   const token_result = await generateTokenByMemberInfo(member_info)

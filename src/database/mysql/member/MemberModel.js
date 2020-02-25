@@ -156,7 +156,14 @@ export default class MemberModel extends MySQLModel {
 
     return total_count > 0;
   };
-  
+
+  isDuplicateEmail = async (email_address) => {
+    const where = {"email_address": email_address};
+    const total_count = await this.getTotalCount(where);
+
+    return total_count > 0;
+  };
+
   leaveMember = async (member_seq) => {
     const update_info = {
       "used": "2",

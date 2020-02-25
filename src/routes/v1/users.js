@@ -16,50 +16,6 @@ import _ from 'lodash';
 
 const routes = Router();
 
-/**
- * @swagger
- * tags:
- *  name: Users
- *  description: 회원정보 조회, 수정
- *
- */
-
-/**
- * @swagger
- * /users/me:
- *  get:
- *    summary: "토큰에 저장된 정보로 본인의 정보 확인"
- *    tags: [Users]
- *    security:
- *    - access_token: []
- *    produces:
- *    - "application/json"
- *    responses:
- *      200:
- *        description: "회원정보"
- *        schema:
- *          type: "object"
- *          properties:
- *            error:
- *              type: "integer"
- *              description: "에러코드"
- *              default: 0
- *            message:
- *              type: "string"
- *              description: "에러 메시지"
- *              default: ""
- *            httpStatusCode:
- *              type: "integer"
- *              description: "HTTP Status Code"
- *              default: 200
- *            variables:
- *              type: "object"
- *              description: "결과 정보"
- *              properties:
- *                member_info:
- *                  $ref: "#definitions/UserInfo"
- *
- */
 routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const lang = Auth.getLanguage(req);
   const token_info = req.token_info;
@@ -73,48 +29,6 @@ routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) =>
   res.json(output);
 }));
 
-/**
- * @swagger
- * /users/{member_seq}:
- *  get:
- *    summary: "회원 고유번호로 회원정보 찾기"
- *    tags: [Users]
- *    security:
- *    - access_token: []
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "member_seq"
- *      in: "path"
- *      description: "회원 고유번호"
- *      required: true
- *      type: "integer"
- *    responses:
- *      200:
- *        description: "회원정보"
- *        schema:
- *          type: "object"
- *          properties:
- *            error:
- *              type: "integer"
- *              description: "에러코드"
- *              default: 0
- *            message:
- *              type: "string"
- *              description: "에러 메시지"
- *              default: ""
- *            httpStatusCode:
- *              type: "integer"
- *              description: "HTTP Status Code"
- *              default: 200
- *            variables:
- *              type: "object"
- *              description: "결과 정보"
- *              properties:
- *                member_info:
- *                  $ref: "#definitions/UserInfo"
- *
- */
 routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
@@ -131,30 +45,6 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   res.json(output);
 }));
 
-/**
- * @swagger
- * /users:
- *  post:
- *    summary: "회원을 생성하고 인증메일을 발송한다"
- *    tags: [Users]
- *    consumes:
- *    - "application/json"
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "body"
- *      in: "body"
- *      description: "회원 가입 정보"
- *      required: true
- *      schema:
- *        $ref: "#/definitions/UserCreateInfo"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
 routes.post('/', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async(req, res) => {
   const output = new StdObject();
   const params = JSON.parse(req.body.params);
@@ -284,6 +174,17 @@ routes.post('/verify/nickname', Wrap(async(req, res) => {
   req.accepts('application/json');
   const nickname = req.body.nickname;
   const is_duplicate = await MemberService.isDuplicateNickname(DBMySQL, nickname);
+
+  const output = new StdObject();
+  output.add('is_verify', !is_duplicate);
+
+  res.json(output);
+}));
+
+routes.post('/verify/email_address', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const email_address = req.body.email_address;
+  const is_duplicate = await MemberService.isDuplicateEmail(DBMySQL, email_address);
 
   const output = new StdObject();
   output.add('is_verify', !is_duplicate);
