@@ -181,6 +181,17 @@ routes.post('/verify/nickname', Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.post('/verify/email_address', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const email_address = req.body.email_address;
+  const is_duplicate = await MemberService.isDuplicateEmail(DBMySQL, email_address);
+
+  const output = new StdObject();
+  output.add('is_verify', !is_duplicate);
+
+  res.json(output);
+}));
+
 routes.post('/verify/license_no', Wrap(async(req, res) => {
   req.accepts('application/json');
   const license_no = req.body.license_no;

@@ -360,6 +360,11 @@ const MemberServiceClass = class {
     return await member_model.isDuplicateNickname(user_id);
   }
 
+  isDuplicateEmail = async (database, email_address) => {
+    const member_model = this.getMemberModel(database)
+    return await member_model.isDuplicateEmail(email_address);
+  }
+
   isDuplicatelicense_no = async (database, license_no) => {
     const member_model = this.getMemberSubModel(database)
     return await member_model.isDuplicateLicense_no(license_no);
