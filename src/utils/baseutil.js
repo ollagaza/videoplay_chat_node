@@ -470,59 +470,66 @@ const execute = async (command) => {
 
 const getMediaInfo = async (media_path) => {
   const async_func = new Promise( async (resolve) => {
-    const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`);
+    const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`)
     const media_result = {
       success: false,
       media_type: Constants.NO_MEDIA,
       media_info: {}
-    };
+    }
 
     try{
       if (execute_result.success && execute_result.out) {
-        const media_info_xml = await loadXmlString(execute_result.out);
-        const media_info = JsonPath.value(media_info_xml, '$..track');
+        const media_info_xml = await loadXmlString(execute_result.out)
+        const media_info = JsonPath.value(media_info_xml, '$..track')
         if (media_info && media_info.length > 0) {
           for (let i = 0; i < media_info.length; i++) {
-            const track = media_info[i];
+            const track = media_info[i]
             if (track.$ && track.$.type) {
               const track_type = track.$.type.toLowerCase();
+              const duration = Math.round(getFloat(getXmlText(track.Duration)))
+              const width = getInt(getXmlText(track.Width))
+              const height = getInt(getXmlText(track.Height))
+              const fps = Math.max(getFloat(getXmlText(track.FrameRate)), getFloat(getXmlText(track.Frame_rate)))
+              const frame_count = Math.max(getFloat(getXmlText(track.FrameCount)), getFloat(getXmlText(track.Frame_count)))
+              const sample_rate = Math.max(getFloat(getXmlText(track.SamplingRate)), getFloat(getXmlText(track.Sampling_rate)))
+              const bit_depth = Math.max(getFloat(getXmlText(track.BitDepth)), getFloat(getXmlText(track.Bit_depth)))
               if (track_type === Constants.VIDEO) {
-                media_result.media_type = Constants.VIDEO;
-                media_result.media_info.width = getInt(getXmlText(track.Width));
-                media_result.media_info.height = getInt(getXmlText(track.Height));
-                media_result.media_info.fps = getFloat(getXmlText(track.FrameRate));
-                media_result.media_info.frame_count = getInt(getXmlText(track.FrameCount));
-                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
-                media_result.success = true;
-                break;
+                media_result.media_type = Constants.VIDEO
+                media_result.media_info.width = width
+                media_result.media_info.height = height
+                media_result.media_info.fps = fps
+                media_result.media_info.frame_count = frame_count
+                media_result.media_info.duration = duration
+                media_result.media_info.bit_depth = bit_depth
+                media_result.success = true
+                break
               } else if (track_type === Constants.AUDIO) {
-                media_result.media_type = Constants.AUDIO;
-                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
-                media_result.media_info.sample_rate = Math.round(getFloat(getXmlText(track.SamplingRate)));
-                media_result.media_info.bit_depth = Math.round(getFloat(getXmlText(track.BitDepth)));
-                media_result.success = true;
-                break;
+                media_result.media_type = Constants.AUDIO
+                media_result.media_info.duration = duration
+                media_result.media_info.sample_rate = sample_rate
+                media_result.success = true
+                break
               } else if (track_type === Constants.IMAGE) {
-                media_result.media_type = Constants.IMAGE;
-                media_result.media_info.width = getInt(getXmlText(track.Width));
-                media_result.media_info.height = getInt(getXmlText(track.Height));
-                media_result.success = true;
-                break;
+                media_result.media_type = Constants.IMAGE
+                media_result.media_info.width = width
+                media_result.media_info.height = height
+                media_result.success = true
+                break
               } else {
-                media_result.success = false;
+                media_result.success = false
               }
             }
           }
         }
       }
     } catch (error) {
-      log.error(log_prefix, "getMediaInfo", error, execute_result);
+      log.error(log_prefix, "getMediaInfo", error, execute_result)
     }
 
-    resolve(media_result);
-  });
+    resolve(media_result)
+  })
 
-  return await async_func;
+  return await async_func
 };
 
 const getVideoDimension = async (video_path) => {
