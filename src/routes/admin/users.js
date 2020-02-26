@@ -30,9 +30,10 @@ routes.post('/memberlist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req
   req.accepts('application/json');
   const output = new StdObject();
   const searchParam = req.body.searchObj;
+  const searchOrder = req.body.searchOrder;
   const page_navigation = req.body.page_navigation;
 
-  const find_user_info_list = await AdminMemberService.adminfindMembers(DBMySQL, searchParam, page_navigation)
+  const find_user_info_list = await AdminMemberService.adminfindMembers(DBMySQL, searchParam, searchOrder, page_navigation)
 
   output.add('user_data', find_user_info_list);
   output.add("searchObj", searchParam);
