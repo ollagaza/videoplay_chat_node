@@ -251,8 +251,9 @@ routes.post('/finds', Wrap(async(req, res) => {
   req.accepts('application/json');
   const output = new StdObject();
   const search_text = req.body.searchText;
+  const page_navigation = req.body.page_navigation;
 
-  const find_user_info_list = await MemberService.findMembers(DBMySQL, search_text)
+  const find_user_info_list = await MemberService.findMembers(DBMySQL, search_text, page_navigation)
   output.add('user_data', find_user_info_list);
   output.add("searchText", search_text);
 
