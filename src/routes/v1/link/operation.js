@@ -7,8 +7,10 @@ import StdObject from '../../../wrapper/std-object';
 import OperationLinkService from "../../../service/operation/OperationLinkService";
 import OperationService from "../../../service/operation/OperationService";
 import OperationClipService from '../../../service/operation/OperationClipService'
+import GroupService from '../../../service/member/GroupService'
 import log from '../../../libs/logger'
 import Util from '../../../utils/baseutil'
+import { OperationMetadataModel } from '../../../database/mongodb/OperationMetadata'
 
 const routes = Router();
 
@@ -39,10 +41,13 @@ const getOperationInfoByCode = async (request, import_media_info = false, only_w
   }
 }
 
-routes.get('/check/:link_code', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.get('/check/:link_code', Wrap(async (req, res, next) => {
   const link_code = req.params.link_code
-  const check_result = await OperationLinkService.checkOperationLinkByCode(DBMySQL, link_code)
-  res.json(check_result);
+  const link_info = await OperationLinkService.checkOperationLinkByCode(DBMySQL, link_code)
+
+  const output = new StdObject()
+  output.add('link_info', link_info)
+  res.json(output);
 }));
 
 routes.post('/check/password/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
@@ -58,6 +63,7 @@ routes.post('/check/password/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT
 }));
 
 routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
   const link_info = await OperationLinkService.getOperationLink(DBMySQL, operation_seq)
   const link_info_json = link_info.toJSON()
@@ -69,8 +75,9 @@ routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(asy
 }));
 
 routes.post('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
-  const link_info = await OperationLinkService.createOperationLink(operation_seq)
+  const link_info = await OperationLinkService.createOperationLink(operation_seq, req.body.is_link)
 
   const link_info_json = link_info.toJSON()
   link_info_json.use_password = link_info.password
@@ -80,10 +87,22 @@ routes.post('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(as
   res.json(output);
 }));
 
-routes.put('/:operation_seq(\\d+)/options', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.put('/:link_seq(\\d+)/options', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   req.accepts('application/json');
-  const operation_seq = req.params.operation_seq;
-  const result = await OperationLinkService.setLinkOptionByOperation(operation_seq, req.body)
+  const link_seq = req.params.link_seq;
+  const result = await OperationLinkService.setLinkOptionBySeq(link_seq, req.body)
+
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output);
+}));
+
+routes.delete('/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  req.accepts('application/json');
+  const link_seq = req.params.link_seq;
+  const result = await OperationLinkService.deleteOperationLinkBySeq(link_seq)
 
   const output = new StdObject()
   output.add('result', result)
@@ -96,6 +115,16 @@ routes.get('/view/:link_code', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (r
   const output = new StdObject()
   output.add('link_info', link_info)
   output.add('operation_info', operation_info)
+  res.json(output);
+}));
+
+routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const { operation_seq } = await getOperationInfoByCode(req, true)
+  const operation_metadata = await OperationMetadataModel.findByOperationSeq(operation_seq);
+
+  const output = new StdObject();
+  output.add('operation_metadata', operation_metadata);
+
   res.json(output);
 }));
 
@@ -137,24 +166,6 @@ routes.put('/view/:link_code/clip/:clip_id', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output);
 }));
 
-routes.put('/view/:link_code/clip/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  const { phase_id } = await getOperationInfoByCode(req, false, true)
-
-  const result = await OperationClipService.setPhase(phase_id, req.body)
-  const output = new StdObject();
-  output.add('result', result);
-  res.json(output);
-}));
-
-routes.delete('/view/:link_code/clip/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  const { operation_seq, phase_id } = await getOperationInfoByCode(req, false, true)
-
-  const result = await OperationClipService.unsetPhaseOne(operation_seq, phase_id, req.body)
-  const output = new StdObject();
-  output.add('result', result);
-  res.json(output);
-}));
-
 routes.delete('/view/:link_code/clip/:clip_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { clip_id, operation_info } = await getOperationInfoByCode(req, false, true)
 
@@ -171,6 +182,24 @@ routes.post('/view/:link_code/phase', Auth.isAuthenticated(Role.DEFAULT), Wrap(a
   const output = new StdObject();
   output.add('phase', create_result.phase_info);
   output.add('phase_id', create_result.phase_id);
+  res.json(output);
+}));
+
+routes.delete('/view/:link_code/clip/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const { operation_seq, phase_id } = await getOperationInfoByCode(req, false, true)
+
+  const result = await OperationClipService.unsetPhaseOne(operation_seq, phase_id, req.body)
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
+routes.put('/view/:link_code/clip/phase/:phase_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const { phase_id } = await getOperationInfoByCode(req, false, true)
+
+  const result = await OperationClipService.setPhase(phase_id, req.body)
+  const output = new StdObject();
+  output.add('result', result);
   res.json(output);
 }));
 

@@ -5,6 +5,7 @@ import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import OperationLinkModel from '../../database/mysql/operation/OperationLinkModel'
 import OperationService from './OperationService'
+import GroupService from '../member/GroupService'
 
 const OperationLinkServiceClass = class {
   constructor () {
@@ -29,20 +30,24 @@ const OperationLinkServiceClass = class {
   }
 
   getOperationLinkByCode = async (database, link_code) => {
-    const link_info = Util.decrypt(link_code)
-    if (!link_info || !link_info.seq || !link_info.key) {
+    let link_info = Util.decrypt(link_code)
+    if (!link_info) {
       throw new StdObject(-1, '사용할 수 없는 링크입니다.', 400)
     }
-
-    const operation_link_info = await this.getOperationLinkBySeq(link_info.seq)
-    log.debug(this.log_prefix, '', operation_link_info.random_key, link_info.key)
-    if (!operation_link_info || operation_link_info.isEmpty() || operation_link_info.random_key !== link_info.key) {
+    link_info = JSON.parse(link_info)
+    if (!link_info || !link_info.seq || !link_info.key) {
       throw new StdObject(-2, '사용할 수 없는 링크입니다.', 400)
+    }
+
+    const operation_link_info = await this.getOperationLinkBySeq(database, link_info.seq)
+    log.debug(this.log_prefix, '[getOperationLinkByCode]', operation_link_info.random_key, link_info.key)
+    if (!operation_link_info || operation_link_info.isEmpty() || operation_link_info.random_key !== link_info.key) {
+      throw new StdObject(-3, '사용할 수 없는 링크입니다.', 400)
     }
 
     if (operation_link_info.expire_date) {
       if (operation_link_info.expire_date < Util.today('yyyy-mm-dd')) {
-        throw new StdObject(-3, '만료된 링크입니다.', 400)
+        throw new StdObject(-4, '만료된 링크입니다.', 400)
       }
     }
 
@@ -51,12 +56,24 @@ const OperationLinkServiceClass = class {
 
   checkOperationLinkByCode = async (database, link_code) => {
     const operation_link_info = await this.getOperationLinkByCode(database, link_code)
+    const { operation_info } = await OperationService.getOperationInfo(database, operation_link_info.operation_seq, null, false, false)
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(-5, '공유된 수술/시술이 없습니다.', 400)
+    }
+    if (operation_info.status !== 'Y') {
+      throw new StdObject(-6, '삭제된 수술/시술 입니다.', 400)
+    }
+    const group_info = await GroupService.getGroupInfo(database, operation_info.group_seq)
+    if (group_info.status !== 'Y' && group_info.status !== 'F') {
+      throw new StdObject(-7, '사용이 중지된 사용자입니다.', 400)
+    }
 
-    const output = new StdObject()
-    output.add('use_password', !Util.isEmpty(operation_link_info.password))
-    output.add('link_seq', operation_link_info.seq)
-
-    return output
+    return {
+      use_password: !Util.isEmpty(operation_link_info.password),
+      link_seq: operation_link_info.seq,
+      group_name: group_info.group_name,
+      operation_name: operation_info.operation_name
+    }
   }
 
   checkLinkPassword = async (database, link_seq, password) => {
@@ -64,16 +81,18 @@ const OperationLinkServiceClass = class {
     return operation_link_info.password === Util.hash(password)
   }
 
-  createOperationLink = async (operation_seq) => {
-    let operation_link_info = await this.getOperationLink(DBMySQL, operation_seq)
-    if (operation_link_info && !operation_link_info.isEmpty()) {
-
-      return operation_link_info
+  createOperationLink = async (operation_seq, is_link) => {
+    let operation_link_info = null;
+    if (is_link) {
+      operation_link_info = await this.getOperationLink(DBMySQL, operation_seq)
+      if (operation_link_info && !operation_link_info.isEmpty()) {
+        return operation_link_info
+      }
     }
 
     await DBMySQL.transaction(async(transaction) => {
       const operation_link_model = this.getOperationLinkModel(transaction)
-      const link_seq = await operation_link_model.createOperationLink(operation_seq)
+      const link_seq = await operation_link_model.createOperationLink(operation_seq, is_link)
 
       const random_key = Util.getRandomString()
       const link_code_params = {
@@ -87,18 +106,18 @@ const OperationLinkServiceClass = class {
     return await this.getOperationLink(DBMySQL, operation_seq)
   }
 
-  deleteOperationLink = async (operation_seq) => {
+  deleteOperationLinkBySeq = async (link_seq) => {
     const operation_link_model = this.getOperationLinkModel()
-    return await operation_link_model.deleteByOperation(operation_seq)
+    return await operation_link_model.deleteBySeq(link_seq)
   }
 
-  setLinkOptionByOperation = async (operation_seq, request_body) => {
+  setLinkOptionBySeq = async (link_seq, request_body) => {
     const link_type = request_body.link_type
     const password = request_body.password
     const expire_date = request_body.expire_date
     const hash_password = password ? Util.hash(password) : null
     const operation_link_model = this.getOperationLinkModel()
-    return await operation_link_model.setLinkOptionByOperation(operation_seq, link_type, hash_password, expire_date)
+    return await operation_link_model.setLinkOptionBySeq(link_seq, link_type, hash_password, expire_date)
   }
 }
 

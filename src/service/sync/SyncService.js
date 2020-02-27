@@ -196,7 +196,7 @@ const SyncServiceClass = class {
     }
     log.debug(this.log_prefix, '[getIndexInfoByMedia]', log_info, total_frame, ServiceConfig.get('use_media_info_millisecond'), media_info.duration, total_second, media_info)
     const fps = media_info.fps
-    const step_second = 300
+    const step_second = Util.parseInt(ServiceConfig.get('index_thumbnail_delay'), 60)
     const index_file_list = [];
     const url_prefix = ServiceConfig.get('static_storage_prefix')
     for (let second = 0; second < total_second; second += step_second) {

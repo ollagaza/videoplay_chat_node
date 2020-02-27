@@ -10,12 +10,13 @@ export default class OperationLinkModel extends MySQLModel {
     this.table_name = 'operation_link'
     this.selectable_fields = ['*']
     this.log_prefix = '[OperationLinkModel]'
-    this.default_private_key = ['seq', 'operation_seq', 'random_key', 'password', 'reg_date']
+    this.default_private_key = ['operation_seq', 'random_key', 'password', 'reg_date']
   }
 
-  createOperationLink = async (operation_seq) => {
+  createOperationLink = async (operation_seq, is_link) => {
     const create_params = {
-      operation_seq: operation_seq
+      operation_seq: operation_seq,
+      is_link: is_link ? 1 : 0
     }
     return await this.create(create_params, 'seq')
   }
@@ -24,12 +25,8 @@ export default class OperationLinkModel extends MySQLModel {
     await this.update({ seq: link_seq }, { random_key, link_code })
   }
 
-  setOperationLinkByOperation = async (operation_seq, random_key, link_code) => {
-    await this.update({ operation_seq: operation_seq }, { random_key, link_code })
-  }
-
   getLinkInfoByOperation = async (operation_seq) => {
-    const find_result = await this.findOne( { operation_seq: operation_seq } )
+    const find_result = await this.findOne( { operation_seq: operation_seq, is_link: true } )
     return new JsonWrapper(find_result, this.default_private_key)
   }
 
@@ -38,11 +35,11 @@ export default class OperationLinkModel extends MySQLModel {
     return new JsonWrapper(find_result, this.default_private_key)
   }
 
-  deleteByOperation = async (operation_seq) => {
-    return await this.delete( { operation_seq: operation_seq } )
+  deleteBySeq = async (link_seq) => {
+    return await this.delete( { seq: link_seq } )
   }
 
-  setLinkOptionByOperation = async (operation_seq, link_type, password, expire_date) => {
+  setLinkOptionBySeq = async (operation_seq, link_type, password, expire_date) => {
     const update_params = {
       link_type,
       password,

@@ -64,7 +64,7 @@ const OperationClipServiceClass = class {
   createPhase = async (operation_info, request_body) => {
     const phase_info = await OperationClipModel.createPhase(operation_info, request_body.phase_desc)
     const phase_id = phase_info._id;
-    await this.setPhase(phase_id, request_body.clip_id_list);
+    await this.setPhase(phase_id, request_body);
     return {
       phase_info,
       phase_id
