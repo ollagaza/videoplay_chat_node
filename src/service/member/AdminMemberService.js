@@ -149,7 +149,7 @@ const AdminMemberServiceClass = class {
     }
   }
 
-  adminfindMembers = async (database, params, page_navigation) => {
+  adminfindMembers = async (database, params, order = null, page_navigation) => {
     const searchObj = {
       is_new: true,
       query: [],
@@ -161,7 +161,7 @@ const AdminMemberServiceClass = class {
 
     const member_model = this.getMemberModel(database)
     const member_sub_model = this.getMemberSubModel(database)
-    const find_users = await member_model.findMembers(searchObj);
+    const find_users = await member_model.findMembers(searchObj, order);
 
     if (find_users.error !== -1) {
       searchObj.query = [];
@@ -262,14 +262,14 @@ const AdminMemberServiceClass = class {
     });
 
     output.add('is_send', true)
-    
+
     return output;
   }
 
   getMongoData = async(getDataParam, getLangParam) => {
     let output = new StdObject();
     let result_data = null;
-    
+
     switch (getLangParam) {
       case 'eng':
         switch (getDataParam) {

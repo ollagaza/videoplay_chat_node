@@ -94,8 +94,8 @@ export default class MemberModel extends MySQLModel {
     return result;
   };
 
-  findMembers = async (searchText) => {
-    const find_user_results = await this.findPaginated(searchText, null, null, null, searchText.page_navigation);
+  findMembers = async (searchText, searchOrder = null) => {
+    const find_user_results = await this.findPaginated(searchText, null, searchOrder, null, searchText.page_navigation);
     if (!find_user_results.data || find_user_results.data.length === 0) {
       return new StdObject(-1, '등록된 회원 정보가 없습니다.', 400);
     }

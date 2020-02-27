@@ -20,6 +20,7 @@ const SocketManagerClass = class extends EventEmitter {
       autoConnect: true,
       reconnection: true,
       reconnectionDelay: 60000,
+      reconnectionDelayMax: 60000,
       timeout: 1000,
       query: {
         uId: this.uId,
