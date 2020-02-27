@@ -51,9 +51,13 @@ routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
     output = await AdminMemberService.updateMemberUsedforSendMail(transaction, updateData, search_option)
   });
 
-  await DBMySQL.transaction(async(transaction) => {
-    await AdminMemberService.sendMailforMemberChangeUsed(transaction, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option);
-  });
+  (async () => {
+    try {
+      await AdminMemberService.sendMailforMemberChangeUsed(DBMySQL, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option);
+    } catch (e) {
+      log.e(req, e);
+    }
+  })();
 
   res.json(output);
 }));
