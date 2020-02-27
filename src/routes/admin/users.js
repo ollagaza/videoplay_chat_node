@@ -51,14 +51,18 @@ routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
     output = await AdminMemberService.updateMemberUsedforSendMail(transaction, updateData, search_option)
   });
 
-  await DBMySQL.transaction(async(transaction) => {
-    await AdminMemberService.sendMailforMemberChangeUsed(transaction, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option);
-  });
+  (async () => {
+    try {
+      await AdminMemberService.sendMailforMemberChangeUsed(DBMySQL, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option);
+    } catch (e) {
+      log.e(req, e);
+    }
+  })();
 
   res.json(output);
 }));
 
-routes.post('/getMongoData', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/getMongoData', Wrap(async(req, res) => {
   req.accepts('application/json');
   const getDataParam = req.body.getData;
   const getLangParam = req.body.getLang;
@@ -67,16 +71,8 @@ routes.post('/getMongoData', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(r
 
   try {
     if (getDataParam === 'medical') {
-      switch (getLangParam) {
-        case 'eng':
-          result_data = await AdminMemberService.getMongoData();
-          output.add('medical', result_data[0]._doc.eng);
-          break;
-        default:
-          result_data = await AdminMemberService.getMongoData();
-          output.add('medical', result_data[0]._doc.kor);
-          break;
-      }
+      result_data = await AdminMemberService.getMongoData(getLangParam);
+      output.add('medical', result_data);
     }
   } catch(exception) {
     output.error = -1;

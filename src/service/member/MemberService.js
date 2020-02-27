@@ -388,7 +388,7 @@ const MemberServiceClass = class {
     await MemberLogService.memberLeaveLog(database, member_seq, leave_text)
   }
 
-  findMembers = async (database, params, page_navigation) => {
+  findMembers = async (database, params, page_navigation = null) => {
     const searchObj = {
       is_new: true,
       query: [],

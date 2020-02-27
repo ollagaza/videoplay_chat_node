@@ -266,46 +266,24 @@ const AdminMemberServiceClass = class {
     return output;
   }
 
-  getMongoData = async(getDataParam, getLangParam) => {
+  getMongoData = async(getDataParam, getLangParam = 'kor') => {
     let output = new StdObject();
     let result_data = null;
 
-    switch (getLangParam) {
-      case 'eng':
-        switch (getDataParam) {
-          case 'medical':
-            result_data = await MedicalModel.findAll()
-            output.add('medical', result_data[0]._doc.eng);
-            break;
-          case 'interrest':
-            result_data = await InterrestModel.findAll()
-            output.add('interrest', result_data[0]._doc.eng);
-            break;
-          default:
-            result_data = await MedicalModel.findAll()
-            output.add('medical', result_data[0]._doc.eng);
-            result_data = await InterrestModel.findAll()
-            output.add('interrest', result_data[0]._doc.eng);
-            break;
-        }
+    switch (getDataParam) {
+      case 'medical':
+        result_data = await MedicalModel.findAll()
+        output.add('medical', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
+        break;
+      case 'interrest':
+        result_data = await InterrestModel.findAll()
+        output.add('interrest', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
         break;
       default:
-        switch (getDataParam) {
-          case 'medical':
-            result_data = await MedicalModel.findAll()
-            output.add('medical', result_data[0]._doc.kor);
-            break;
-          case 'interrest':
-            result_data = await InterrestModel.findAll()
-            output.add('interrest', result_data[0]._doc.kor);
-            break;
-          default:
-            result_data = await MedicalModel.findAll()
-            output.add('medical', result_data[0]._doc.kor);
-            result_data = await InterrestModel.findAll()
-            output.add('interrest', result_data[0]._doc.kor);
-            break;
-        }
+        result_data = await MedicalModel.findAll()
+        output.add('medical', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
+        result_data = await InterrestModel.findAll()
+        output.add('interrest', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
         break;
     }
 
