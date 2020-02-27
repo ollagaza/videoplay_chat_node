@@ -21,7 +21,7 @@ const getOperationInfoByCode = async (request, import_media_info = false, only_w
   }
   const link_info = await OperationLinkService.getOperationLinkByCode(DBMySQL, link_code)
   if (only_writer) {
-    if (link_info.link_type !== 'W') {
+    if (link_info.auth !== OperationLinkService.AUTH_WRITE) {
       throw new StdObject(-2, '권한이 없습니다.', 403)
     }
   }
@@ -62,28 +62,43 @@ routes.post('/check/password/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.get('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
-  const link_info = await OperationLinkService.getOperationLink(DBMySQL, operation_seq)
-  const link_info_json = link_info.toJSON()
-  link_info_json.use_password = link_info.password
+  const link_info_list = await OperationLinkService.getOperationLinkList(DBMySQL, operation_seq, OperationLinkService.TYPE_EMAIL)
 
   const output = new StdObject()
-  output.add('link_info', link_info_json)
+  output.add('link_info_list', link_info_list)
   res.json(output);
 }));
 
-routes.post('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.get('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
-  const link_info = await OperationLinkService.createOperationLink(operation_seq, req.body.is_link)
-
-  const link_info_json = link_info.toJSON()
-  link_info_json.use_password = link_info.password
+  const link_info_list = await OperationLinkService.getOperationLinkList(DBMySQL, operation_seq, OperationLinkService.TYPE_STATIC)
 
   const output = new StdObject()
-  output.add('link_info', link_info_json)
+  output.add('link_info_list', link_info_list)
+  res.json(output);
+}));
+
+routes.post('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+  const { member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_seq = req.params.operation_seq;
+  const link_info_list = await OperationLinkService.createOperationLinkByEmailList(operation_seq, member_info, req.body, token_info.getServiceDomain())
+
+  const output = new StdObject()
+  output.add('send_count', link_info_list.length)
+  res.json(output);
+}));
+
+routes.post('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_seq = req.params.operation_seq;
+  const link_info = await OperationLinkService.createOperationLinkOne(operation_seq, req.body)
+
+  const output = new StdObject()
+  output.add('link_info', link_info)
   res.json(output);
 }));
 
@@ -119,7 +134,7 @@ routes.get('/view/:link_code', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (r
 }));
 
 routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const { operation_seq } = await getOperationInfoByCode(req, true)
+  const { operation_seq } = await getOperationInfoByCode(req, false)
   const operation_metadata = await OperationMetadataModel.findByOperationSeq(operation_seq);
 
   const output = new StdObject();

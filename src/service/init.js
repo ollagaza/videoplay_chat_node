@@ -17,6 +17,6 @@ export default {
     await ServiceConfig.init()
     await CodeSceneService.init()
     await initDirectorys()
-    await SocketManager.init()
+    // await SocketManager.init()
   }
 }
