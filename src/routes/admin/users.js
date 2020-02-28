@@ -66,13 +66,11 @@ routes.post('/getMongoData', Wrap(async(req, res) => {
   req.accepts('application/json');
   const getDataParam = req.body.getData;
   const getLangParam = req.body.getLang;
-  let result_data = null;
   let output = new StdObject();
 
   try {
     if (getDataParam === 'medical') {
-      result_data = await AdminMemberService.getMongoData(getLangParam);
-      output.add('medical', result_data);
+      output = await AdminMemberService.getMongoData(getDataParam, getLangParam);
     }
   } catch(exception) {
     output.error = -1;
