@@ -226,6 +226,22 @@ const OperationLinkServiceClass = class {
     const operation_link_model = this.getOperationLinkModel()
     return await operation_link_model.setLinkOptionBySeq(link_seq, auth, hash_password, expire_date, enable_download, change_password)
   }
+
+  hasLink = async (database, operation_seq) => {
+    const link_count = await this.getLinkCount(database, operation_seq)
+    const has_link = link_count > 0
+    await this.updateOperationLinkState(DBMySQL, operation_seq, has_link);
+    return has_link
+  }
+
+  getLinkCount = async (database, operation_seq) => {
+    const operation_link_model = this.getOperationLinkModel(database)
+    return await operation_link_model.getLinkCount(operation_seq)
+  }
+
+  updateOperationLinkState = async (database, operation_seq, has_link) => {
+    await OperationService.updateLinkState(database, operation_seq, has_link)
+  }
 }
 
 const operation_link_service = new OperationLinkServiceClass()

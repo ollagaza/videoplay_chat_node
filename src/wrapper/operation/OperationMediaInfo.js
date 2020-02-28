@@ -1,4 +1,3 @@
-import Constants from '../../constants/constants';
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
@@ -26,8 +25,7 @@ export default class OperationMediaInfo extends JsonWrapper {
       const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
       const proxy_file_name = Util.isEmpty(this.proxy_file_name) ? this.video_file_name : this.proxy_file_name
 
-      this.origin_video_url = directory_info.url_video + this.video_file_name;
-      this.proxy_video_url = directory_info.url_video + proxy_file_name;
+      this.origin_video_url = directory_info.media_video + this.video_file_name;
 
       if (Util.isEmpty(this.stream_url)){
         this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + proxy_file_name + '/master.m3u8';

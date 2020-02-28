@@ -1,5 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import JsonWrapper from '../../../wrapper/json-wrapper'
+import log from '../../../libs/logger'
 
 export default class OperationLinkModel extends MySQLModel {
   constructor(database) {
@@ -92,4 +93,15 @@ export default class OperationLinkModel extends MySQLModel {
     }
     return await this.update( { seq: link_seq }, update_params )
   }
+
+  getLinkCount = async (operation_seq) => {
+    const where = { operation_seq };
+    try {
+      const total_count = await this.getTotalCount(where)
+      return total_count
+    } catch (error) {
+      log.error(this.log_prefix, '[getLinkCount]', error)
+      return 0
+    }
+  };
 }

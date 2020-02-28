@@ -11,6 +11,9 @@ import GroupService from '../../../service/member/GroupService'
 import log from '../../../libs/logger'
 import Util from '../../../utils/baseutil'
 import { OperationMetadataModel } from '../../../database/mongodb/OperationMetadata'
+import ReferFileModel from '../../../database/mysql/file/ReferFileModel'
+import VideoFileModel from '../../../database/mysql/file/VideoFileModel'
+import OperationStorageModel from '../../../database/mysql/operation/OperationStorageModel'
 
 const routes = Router();
 
@@ -82,6 +85,16 @@ routes.get('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), W
   res.json(output);
 }));
 
+routes.get('/:operation_seq(\\d+)/has_link', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_seq = req.params.operation_seq;
+  const has_link = await OperationLinkService.hasLink(DBMySQL, operation_seq)
+
+  const output = new StdObject()
+  output.add('has_link', has_link)
+  res.json(output);
+}));
+
 routes.post('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
   const { member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
@@ -133,13 +146,70 @@ routes.get('/view/:link_code', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (r
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/edit/:link_code', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const { operation_info, member_seq } = await getOperationInfoByCode(req, true)
+  const update_result = await OperationService.updateOperation(DBMySQL, member_seq, operation_info, req.body)
+  res.json(update_result);
+}));
+
+routes.get('/view/:link_code/metadata', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const { operation_seq } = await getOperationInfoByCode(req, false)
   const operation_metadata = await OperationMetadataModel.findByOperationSeq(operation_seq);
 
   const output = new StdObject();
   output.add('operation_metadata', operation_metadata);
 
+  res.json(output);
+}));
+
+routes.get('/view/:link_code/files', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const { operation_info } = await getOperationInfoByCode(req, false)
+  const storage_seq = operation_info.storage_seq;
+
+  const output = new StdObject();
+  output.add('refer_files', await new ReferFileModel(DBMySQL).referFileList(storage_seq));
+  res.json(output);
+}));
+
+routes.post('/edit/:link_code/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const { operation_info } = await getOperationInfoByCode(req, false)
+  const file_type = req.params.file_type;
+  const upload_seq = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type)
+
+  const output = new StdObject();
+  output.add('upload_seq', upload_seq);
+  res.json(output);
+}));
+
+routes.delete('/edit/:link_code/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const output = new StdObject();
+  const file_type = req.params.file_type;
+  if (file_type !== 'refer') {
+    res.json(output);
+  }
+
+  const file_seq_list = req.body.file_seq_list;
+  if (!file_seq_list || file_seq_list.length <= 0) {
+    throw new StdObject(-1, '대상파일 정보가 없습니다', 400);
+  }
+
+  const { operation_info } = await getOperationInfoByCode(req, false)
+
+  await DBMySQL.transaction(async(transaction) => {
+    const storage_seq = operation_info.storage_seq;
+    await new ReferFileModel(transaction).deleteSelectedFiles(file_seq_list);
+    await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);
+  });
+
+  res.json(output);
+}));
+
+routes.get('/view/:link_code/video/url', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const { operation_info } = await getOperationInfoByCode(req, true)
+  const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+  const output = new StdObject();
+  output.add('download_url', directory_info.cdn_video + operation_info.media_info.video_file_name);
   res.json(output);
 }));
 

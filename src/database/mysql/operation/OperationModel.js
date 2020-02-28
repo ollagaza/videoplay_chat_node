@@ -1,14 +1,9 @@
-import ServiceConfig from '../../../service/service-config';
-import Constants from '../../../constants/constants'
-import Role from '../../../constants/roles'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
-import StdObject from '../../../wrapper/std-object'
 import log from '../../../libs/logger'
 
 import OperationMediaModel from './OperationMediaModel';
 import OperationInfo from '../../../wrapper/operation/OperationInfo';
-import MemberModel from '../member/MemberModel';
 
 const join_select = [
   'operation.*', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
@@ -112,10 +107,6 @@ export default class OperationModel extends MySQLModel {
     await this.delete({ "seq": operation_info.seq });
   };
 
-  updateStatusNormal = async (operation_seq, member_seq) => {
-    return await this.update({"seq": operation_seq, "member_seq": member_seq}, {status: 'Y', "modify_date": this.database.raw('NOW()')});
-  };
-
   updateStatusTrash = async (operation_seq_list, member_seq, is_delete) => {
     return await this.updateIn("seq", operation_seq_list, {status: is_delete ? 'Y' : 'T', "modify_date": this.database.raw('NOW()')}, { member_seq });
   };
@@ -132,47 +123,12 @@ export default class OperationModel extends MySQLModel {
     return await this.update({"seq": operation_seq}, {analysis_status: status ? status.toUpperCase() : 'N', "modify_date": this.database.raw('NOW()')});
   };
 
-  updateSharingStatus = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {is_sharing: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
-  };
-
   updateAnalysisComplete = async (operation_seq, status) => {
     return await this.update({"seq": operation_seq}, {is_analysis_complete: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
   };
 
   updateAnalysisProgress = async (operation_seq, progress) => {
     return await this.update({"seq": operation_seq}, {progress: progress, "modify_date": this.database.raw('NOW()')});
-  };
-
-  updateReviewStatus = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {is_review: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
-  };
-
-  createOperation = async (body, member_seq, created_by_user = true, status = null) => {
-    const member_info = await new MemberModel(this.database).getMemberInfo(member_seq);
-    if (!member_info || member_info.isEmpty()) {
-      throw new StdObject(-1, '회원정보가 없습니다.', 401)
-    }
-    const operation_info = new OperationInfo().getByRequestBody(body).toJSON();
-    const content_id = Util.getContentId();
-    const user_media_path = member_info.user_media_path;
-    operation_info.member_seq = member_seq;
-    operation_info.media_path = user_media_path + 'operation' + Constants.SEP + content_id + Constants.SEP + 'SEQ' + Constants.SEP;
-    operation_info.created_by_user = created_by_user ? 1 : 0;
-    operation_info.content_id = content_id;
-    if (status) {
-      operation_info.status = status;
-    }
-
-    const operation_seq = await this.create(operation_info, 'seq');
-    operation_info.seq = operation_seq;
-
-    const service_info = ServiceConfig.getServiceInfo();
-    const media_root = service_info.media_root;
-    operation_info.media_root = media_root;
-    operation_info.media_directory = Util.getMediaDirectory(media_root, operation_info.media_path);
-
-    return operation_info;
   };
 
   createOperationWithGroup = async (operation_info) => {
@@ -262,6 +218,10 @@ export default class OperationModel extends MySQLModel {
 
   getOperationListByMemberSeq = async (member_seq) => {
     return await this.find({ member_seq })
+  }
+
+  updateLinkState = async (operation_seq, has_link) => {
+    return await this.update({"seq": operation_seq}, { has_link: has_link ? 1 : 0, "modify_date": this.database.raw('NOW()') });
   }
 
   migrationGroupSeq = async (member_seq, group_seq) => {

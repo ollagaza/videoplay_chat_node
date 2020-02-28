@@ -43,7 +43,7 @@ operation_metadata_schema.statics.createOperationMetadata = function( operation_
   return model.save();
 };
 
-operation_metadata_schema.statics.updateByOperationSeq = function( operation_info, operation_type, update ) {
+operation_metadata_schema.statics.updateByOperationInfo = function( operation_info, operation_type, update ) {
   update.operation_seq = operation_info.seq;
   update.member_seq = operation_info.member_seq;
   update.content_id = operation_info.content_id;

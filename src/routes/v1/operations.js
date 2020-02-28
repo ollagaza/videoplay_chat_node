@@ -1,9 +1,6 @@
 import { Router } from 'express';
-import querystring from 'querystring';
-import semver from 'semver';
 import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
-import Util from '../../utils/baseutil';
 import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
 import StdObject from '../../wrapper/std-object';
@@ -58,29 +55,8 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
-  const update_operation_info = new OperationInfo().getByRequestBody(req.body.operation_info);
-  if (operation_info.isEmpty()) {
-    throw new StdObject(-1, '잘못된 요청입니다.', 400);
-  }
-
-  const output = new StdObject();
-  await DBMySQL.transaction(async(transaction) => {
-    const result = await new OperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info);
-    const metadata_result = await OperationMetadataModel.updateByOperationSeq(operation_info, update_operation_info.operation_type, req.body.meta_data);
-    log.d(req, 'metadata_result', metadata_result);
-    if (!metadata_result || !metadata_result._id) {
-      throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400);
-    }
-    output.add('result', result);
-  });
-  try {
-    const user_data_result = await UserDataModel.updateByMemberSeq(member_seq, { operation_type: update_operation_info.operation_type });
-    log.d(req, 'user_data_result', user_data_result);
-  } catch (error) {
-    log.e(req, 'update user_data error', error);
-  }
-
-  res.json(output);
+  const update_result = await OperationService.updateOperation(DBMySQL, member_seq, operation_info, req.body)
+  res.json(update_result);
 }));
 
 routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
@@ -289,7 +265,7 @@ routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(Role.LOGIN_US
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info, true, true);
   const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
   const output = new StdObject();
-  output.add('download_url', directory_info.url_video + operation_info.media_info.video_file_name);
+  output.add('download_url', directory_info.cdn_video + operation_info.media_info.video_file_name);
   res.json(output);
 }));
 
@@ -301,7 +277,7 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.LOGIN_USER),
   const storage_seq = operation_info.storage_seq;
 
   const output = new StdObject();
-  output.add('video_files', await new VideoFileModel(DBMySQL).videoFileList(storage_seq));
+  // output.add('video_files', await new VideoFileModel(DBMySQL).videoFileList(storage_seq));
   output.add('refer_files', await new ReferFileModel(DBMySQL).referFileList(storage_seq));
 
   res.json(output);
@@ -310,8 +286,9 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.LOGIN_USER),
 routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
   const file_type = req.params.file_type;
-  const upload_seq = await OperationService.uploadOperationFile(DBMySQL, req, res, token_info, operation_seq, file_type)
+  const upload_seq = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type)
 
   const output = new StdObject();
   output.add('upload_seq', upload_seq);
@@ -384,5 +361,7 @@ routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap
   output.add('clip_list', clip_list);
   res.json(output);
 }));
+
+
 
 export default routes;

@@ -82,6 +82,30 @@ const OperationServiceClass = class {
     return output;
   }
 
+  updateOperation = async (database, member_seq, operation_info, request_body) => {
+    const operation_seq = operation_info.seq;
+    const update_operation_info = new OperationInfo().getByRequestBody(request_body.operation_info);
+    if (operation_info.isEmpty()) {
+      throw new StdObject(-1, '잘못된 요청입니다.', 400);
+    }
+
+    const output = new StdObject();
+    await DBMySQL.transaction(async(transaction) => {
+      const result = await new OperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info);
+      const metadata_result = await OperationMetadataModel.updateByOperationInfo(operation_info, update_operation_info.operation_type, request_body.meta_data);
+      if (!metadata_result || !metadata_result._id) {
+        throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400);
+      }
+      output.add('result', result);
+    });
+    try {
+      await UserDataModel.updateByMemberSeq(member_seq, { operation_type: update_operation_info.operation_type });
+    } catch (error) {
+      log.error(this.log_prefix, '[updateOperation]', 'update user_data error', error);
+    }
+    return output;
+  }
+
   deleteOperation = async (database, token_info, operation_seq) => {
     const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info)
     await this.deleteOperationByInfo(operation_info)
@@ -171,6 +195,7 @@ const OperationServiceClass = class {
     const media_directory = ServiceConfig.get('media_root') + media_path;
     const trans_server_root = ServiceConfig.get('trans_server_root')
     const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
+    const cdn_url = ServiceConfig.get('cdn_url') + media_path
     const content_path = operation_info.content_id + '/'
     return {
       "root": media_directory,
@@ -193,6 +218,10 @@ const OperationServiceClass = class {
       "url_other": url_prefix + "other/",
       "url_image": url_prefix + "image/",
       "url_temp": url_prefix + "temp/",
+      "cdn_prefix": cdn_url,
+      "cdn_video": cdn_url + "video/",
+      "cdn_other": cdn_url + "other/",
+      "cdn_image": cdn_url + "image/",
       "content_path": content_path,
       "content_origin": content_path + "origin/",
       "content_video": content_path + "video/",
@@ -269,8 +298,7 @@ const OperationServiceClass = class {
     return video_index_info.index_list ? video_index_info.index_list : [];
   }
 
-  uploadOperationFile = async (database, request, response, token_info, operation_seq, file_type) => {
-    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info);
+  uploadOperationFile = async (database, request, response, operation_info, file_type) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     const storage_seq = operation_info.storage_seq;
     let media_directory;
@@ -394,6 +422,11 @@ const OperationServiceClass = class {
   isDuplicateOperationCode = async (database, group_seq, member_seq, operation_code) => {
     const operation_model = this.getOperationModel(database)
     return operation_model.isDuplicateOperationCode(group_seq, member_seq, operation_code)
+  }
+
+  updateLinkState = async (database, operation_seq, has_link) => {
+    const operation_model = this.getOperationModel(database)
+    await operation_model.updateLinkState(operation_seq, has_link)
   }
 
   migrationGroupSeq = async (database, member_seq, group_seq) => {
