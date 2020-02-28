@@ -90,12 +90,14 @@ const OperationLinkServiceClass = class {
       use_password: !Util.isEmpty(operation_link_info.password),
       link_seq: operation_link_info.seq,
       group_name: group_info.group_name,
-      operation_name: operation_info.operation_name
+      operation_name: operation_info.operation_name,
+      is_writer: operation_link_info.auth === this.AUTH_WRITE,
+      enable_download: operation_link_info.enable_download > 0,
     }
   }
 
   checkLinkPassword = async (database, link_seq, password) => {
-    const operation_link_info = await this.getOperationLinkBySeq(link_seq)
+    const operation_link_info = await this.getOperationLinkBySeq(database, link_seq)
     return operation_link_info.password === Util.hash(password)
   }
 
