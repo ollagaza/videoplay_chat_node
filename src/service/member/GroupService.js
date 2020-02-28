@@ -154,7 +154,7 @@ const GroupServiceClass = class {
   getGroupMemberList = async (database, group_seq, request) => {
     const request_body = request.body ? request.body : {}
     const request_paging = request_body.paging ? request_body.paging : {}
-    const request_order = request_body.request_order ? request_body.request_order : null
+    const request_order = request_body.order ? request_body.order : null
     const search_text = request_body.search_text ? request_body.search_text : null
     const member_type = request_body.member_type ? request_body.member_type : null
 
