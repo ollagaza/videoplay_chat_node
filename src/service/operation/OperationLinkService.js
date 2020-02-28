@@ -1,4 +1,3 @@
-import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
@@ -106,13 +105,14 @@ const OperationLinkServiceClass = class {
     const auth = request_body.auth
     const password = request_body.password ? Util.hash(request_body.password) : null
     const expire_date = request_body.expire_date
+    const enable_download = request_body.enable_download
     const email_list = request_body.email_list
     const send_message = request_body.send_message
     const success_list = []
     for (let i = 0; i < email_list.length; i++) {
       const share_email = email_list[i]
       try {
-        const link_info = await this.createOperationLink(operation_seq, link_type, auth, share_email, password, expire_date)
+        const link_info = await this.createOperationLink(operation_seq, link_type, auth, share_email, password, expire_date, enable_download)
         const link_info_json = link_info.toJSON()
         link_info_json.use_password = !!link_info.password
         success_list.push(link_info_json)
@@ -196,7 +196,7 @@ const OperationLinkServiceClass = class {
         const operation_link_model = this.getOperationLinkModel(transaction)
         link_seq = await operation_link_model.createOperationLink(operation_seq, link_type, auth, share_email, password, expire_date, enable_download)
 
-        const random_key = Util.getRandomString()
+        const random_key = Util.getRandomString(4)
         const link_code_params = {
           key: random_key,
           seq: link_seq,
@@ -219,9 +219,10 @@ const OperationLinkServiceClass = class {
     const password = request_body.password
     const expire_date = request_body.expire_date
     const enable_download = request_body.enable_download
+    const change_password = request_body.change_password
     const hash_password = password ? Util.hash(password) : null
     const operation_link_model = this.getOperationLinkModel()
-    return await operation_link_model.setLinkOptionBySeq(link_seq, auth, hash_password, expire_date, enable_download)
+    return await operation_link_model.setLinkOptionBySeq(link_seq, auth, hash_password, expire_date, enable_download, change_password)
   }
 }
 

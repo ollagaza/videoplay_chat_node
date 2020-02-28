@@ -1,7 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
 import JsonWrapper from '../../../wrapper/json-wrapper'
-import StdObject from '../../../wrapper/std-object'
 
 export default class OperationLinkModel extends MySQLModel {
   constructor(database) {
@@ -17,8 +15,9 @@ export default class OperationLinkModel extends MySQLModel {
     const create_params = {
       operation_seq,
       link_type,
-      share_email,
+      auth,
       password,
+      share_email,
       expire_date,
       enable_download
     }
@@ -81,13 +80,15 @@ export default class OperationLinkModel extends MySQLModel {
     return await this.delete( { seq: link_seq } )
   }
 
-  setLinkOptionBySeq = async (link_seq, auth, password = null, expire_date = null, enable_download = false) => {
+  setLinkOptionBySeq = async (link_seq, auth, password = null, expire_date = null, enable_download = false, change_password = true) => {
     const update_params = {
       auth,
-      password,
       expire_date: expire_date ? expire_date : null,
       enable_download: enable_download === true ? 1: 0,
       modify_date: this.database.raw('NOW()')
+    }
+    if (change_password) {
+      update_params.password = password
     }
     return await this.update( { seq: link_seq }, update_params )
   }
