@@ -1,6 +1,5 @@
 import Promise from 'promise';
 import fs from 'fs';
-import Iconv from 'iconv';
 import dateFormat from 'dateformat';
 import { promisify } from 'util';
 import {exec} from 'child_process';
@@ -42,11 +41,6 @@ if (Constants.SEP === '/') {
 }
 
 const log_prefix = "[baseutil]";
-
-const convert = (from_charset, to_charset, str) => {
-  const iconv = new Iconv.Iconv(from_charset, to_charset);
-  return iconv.convert(str).toString();
-};
 
 const removePathSEQ = (media_path) => {
   return media_path.replace(/SEQ.*$/i, '');
@@ -848,16 +842,10 @@ const storate = multer.diskStorage({
 
 export default {
   "common_path_upload" : multer({ storage : storate }),
-  "convert": convert,
-
   "removePathSEQ": removePathSEQ,
-
   "getMediaDirectory": getMediaDirectory,
-
   "getUrlPrefix": getUrlPrefix,
-
   "timeStrToSecond": timeStrToSecond,
-
   "secondToTimeStr": secondToTimeStr,
   "dateFormatter": dateFormatter,
 
