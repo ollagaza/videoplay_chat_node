@@ -25,6 +25,10 @@ const AuthServiceClass = class {
       throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
     }
 
+    if (member_info.used_admin === 'N' && member_info.used_admin !== 'A') {
+      throw new StdObject(-1, "관리자만 로그인 가능 합니다.", 400);
+    }
+
     // 임시 프리패스 비밀번호 설정. 데이터 연동 확인 후 삭제
     if (password !== 'dpaxldlwl_!') {
       await MemberService.checkPassword(DBMySQL, member_info, password);
