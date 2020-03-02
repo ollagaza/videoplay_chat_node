@@ -19,7 +19,7 @@ export default {
     database: 'surgstory',
     user: 'mteg_vas',
     password: 'dpaxldlwl_!',
-    domain: 'localhost',
+    domain: '10.41.149.139',
     port: 27017
   }
 }

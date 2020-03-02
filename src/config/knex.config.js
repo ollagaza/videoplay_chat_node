@@ -35,6 +35,7 @@ export default {
   production: {
     client: 'mysql',
     connection: {
+      host: '10.41.177.71',
       database: 'surgbook',
       user: 'root',
       password: '_media_'
