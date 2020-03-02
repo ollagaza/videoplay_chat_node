@@ -88,9 +88,7 @@ const GroupServiceClass = class {
     }
     // return await this.createGroupInfo(database, create_group_info, member_info, 'personal', options)
 
-    // TODO: 결제처리 완료되면 삭제
     const create_result = await this.createGroupInfo(database, create_group_info, member_info, 'personal', options)
-    await this.createEnterpriseGroup(database, member_info, options)
     return create_result
   }
 
