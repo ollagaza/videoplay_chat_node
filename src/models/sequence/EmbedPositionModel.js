@@ -1,5 +1,5 @@
-import Constants from '@/config/constants';
-import util from '@/utils/baseutil';
+import Constants from '../../constants/constants'
+import Util from '../../utils/baseutil'
 
 export default class EmbedPositionModel {
   constructor() {
@@ -16,16 +16,16 @@ export default class EmbedPositionModel {
     if (json) {
       this._horizon = json.horizon;
       this._vertical = json.vertical;
-      if (!util.isFalse(json.left) && util.isNumber(json.left)) {
+      if (!Util.isFalse(json.left) && Util.isNumber(json.left)) {
         this._left = parseFloat(json.left);
       }
-      if (!util.isFalse(json.right) && util.isNumber(json.right)) {
+      if (!Util.isFalse(json.right) && Util.isNumber(json.right)) {
         this._right = parseFloat(json.right);
       }
-      if (!util.isFalse(json.top) && util.isNumber(json.top)) {
+      if (!Util.isFalse(json.top) && Util.isNumber(json.top)) {
         this._top = parseFloat(json.top);
       }
-      if (!util.isFalse(json.bottom) && util.isNumber(json.bottom)) {
+      if (!Util.isFalse(json.bottom) && Util.isNumber(json.bottom)) {
         this._bottom = parseFloat(json.bottom);
       }
       this._isUse = true;

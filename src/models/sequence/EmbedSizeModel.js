@@ -1,5 +1,5 @@
-import Constants from '@/config/constants';
-import util from '@/utils/baseutil';
+import Constants from '../../constants/constants'
+import Util from '../../utils/baseutil'
 
 export default class EmbedSizeModel {
   constructor() {
@@ -14,16 +14,16 @@ export default class EmbedSizeModel {
     if (json) {
       this._width = json.width;
       this._height = json.height;
-      if (util.isNumber(this._width)) {
+      if (Util.isNumber(this._width)) {
         this._width = parseFloat(this._width);
       }
-      if (util.isNumber(this._height)) {
+      if (Util.isNumber(this._height)) {
         this._height = parseFloat(this._height);
       }
-      if (!util.isFalse(json.maxWidth) && util.isNumber(json.maxWidth)) {
+      if (!Util.isFalse(json.maxWidth) && Util.isNumber(json.maxWidth)) {
         this._maxWidth = parseFloat(json.maxWidth);
       }
-      if (!util.isFalse(json.maxHeight) && util.isNumber(json.maxHeight)) {
+      if (!Util.isFalse(json.maxHeight) && Util.isNumber(json.maxHeight)) {
         this._maxHeight = parseFloat(json.maxHeight);
       }
       this._isUse = true;
@@ -41,7 +41,7 @@ export default class EmbedSizeModel {
         if (this._maxWidth) {
           style += ` max-width: ${this._maxWidth}px;`;
         }
-      } else if (util.isNumber(this._width)) {
+      } else if (Util.isNumber(this._width)) {
         style += ` width: ${this._width}px;`;
       }
       if (this._height === Constants.MAX) {
@@ -50,7 +50,7 @@ export default class EmbedSizeModel {
         if (this._maxHeight) {
           style += ` max-width: ${this._maxHeight}px;`;
         }
-      } else if (util.isNumber(this._height)) {
+      } else if (Util.isNumber(this._height)) {
         style += ` height: ${this._height}px;`;
       }
     }
@@ -66,7 +66,7 @@ export default class EmbedSizeModel {
       } else {
         return width_limit;
       }
-    } else if (util.isNumber(this._width)) {
+    } else if (Util.isNumber(this._width)) {
       return this._width;
     }
     return width_limit;
@@ -81,7 +81,7 @@ export default class EmbedSizeModel {
       } else {
         return height_limit;
       }
-    } else if (util.isNumber(this._height)) {
+    } else if (Util.isNumber(this._height)) {
       return this._height;
     }
     return height_limit;
@@ -147,7 +147,7 @@ export default class EmbedSizeModel {
       if (this._maxWidth) {
         json.MaxWidth = Math.round(this._maxWidth * scale);
       }
-    } else if (util.isNumber(this._width)) {
+    } else if (Util.isNumber(this._width)) {
       json.Width = Math.round(this._width * scale);
     }
     if (this._height === Constants.MAX) {
@@ -157,7 +157,7 @@ export default class EmbedSizeModel {
       if (this._maxHeight) {
         json.MaxHeight = Math.round(this._maxHeight * scale);
       }
-    } else if (util.isNumber(this._height)) {
+    } else if (Util.isNumber(this._height)) {
       json.Height = Math.round(this._height * scale);
     }
 

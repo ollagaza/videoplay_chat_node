@@ -1,65 +1,26 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import querystring from 'querystring';
-import Wrap from '@/utils/express-async';
-import Auth from '@/middlewares/auth.middleware';
-import Util from '@/utils/baseutil';
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import OperationModel from '@/models/OperationModel';
-import OperationMediaModel from '@/models/OperationMediaModel';
-import ServiceErrorModel from '@/models/ServiceErrorModel';
-import SendMail from '@/classes/SendMail';
-import {syncOne} from '@/routes/v1/sync';
-import service_config from '@/config/service.config';
-import VideoInfo from "@/classes/surgbook/VideoInfo";
-import log from "@/classes/Logger";
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import log from "../../libs/logger";
+import SendMail from '../../libs/send-mail';
+import OperationModel from '../../database/mysql/operation/OperationModel';
+import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
+import ServiceErrorModel from '../../database/mysql/service-error-model';
+import VideoInfo from "../../wrapper/xml/VideoInfo";
+// import { syncOne } from './sync';
 
 const routes = Router();
-
-/**
- * @swagger
- * tags:
- *  name: Hawkeye
- *  description: 호크아이 연동
- *
- */
-
-/**
- * @swagger
- * /hawkeye/complete:
- *  get:
- *    summary: "호크아이 분석 완료 상태 업데이트"
- *    tags: [Hawkeye]
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "content_id"
- *      in: "query"
- *      description: "콘텐츠ID"
- *      required: true
- *      type: "string"
- *    - name: success
- *      in: "query"
- *      type: "string"
- *      description: "처리 결과. 성공: true or 1. 그 외 실패"
- *      required: true
- *    - name: error
- *      in: "query"
- *      type: "string"
- *      description: "에러 정보"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
 
 const on_complete = Wrap(async(req, res) => {
   const token_info = req.token_info;
   const query_str = querystring.stringify(req.query);
   log.d(req, 'api 호출', query_str);
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
 
   const content_id = req.query.content_id;
   const cid = req.query.cid;
@@ -93,7 +54,7 @@ const on_complete = Wrap(async(req, res) => {
         throw new StdObject(1, '잘못된 파라미터', 400);
       }
 
-      const operation_model = new OperationModel({ database });
+      const operation_model = new OperationModel(DBMySQL);
       const operation_info = await operation_model.getOperationInfoByContentId(content_id);
       if (!operation_info || operation_info.isEmpty()) {
         throw new StdObject(2, `등록된 컨텐츠가 없습니다. [content_id=${content_id}]`, 400);
@@ -121,8 +82,7 @@ const on_complete = Wrap(async(req, res) => {
         throw new StdObject(video_info.error_code, video_info.message, 500);
       }
       await operation_model.updateAnalysisComplete(operation_seq, true);
-      await new OperationMediaModel({ database }).updateVideoInfo(operation_info, video_info);
-      await syncOne(req, token_info, operation_seq);
+      // await syncOne(req, token_info, operation_seq);
 
       is_complete = true;
       result = new StdObject();
@@ -131,7 +91,7 @@ const on_complete = Wrap(async(req, res) => {
         throw new StdObject(1, '잘못된 파라미터', 400);
       }
 
-      const operation_model = new OperationModel({ database });
+      const operation_model = new OperationModel(DBMySQL);
       const operation_info = await operation_model.getOperationInfoByContentId(cid);
       if (!operation_info || operation_info.isEmpty()) {
         throw new StdObject(2, `등록된 컨텐츠가 없습니다. [cid=${cid}]`, 400);
@@ -154,7 +114,7 @@ const on_complete = Wrap(async(req, res) => {
       result.stack = error.stack;
     }
     log.e(req, error);
-    await new ServiceErrorModel({ database }).createServiceError('hawkeye', operation_seq, content_id, JSON.stringify(result));
+    await new ServiceErrorModel(DBMySQL).createServiceError('hawkeye', operation_seq, content_id, JSON.stringify(result));
   }
 
   if (service_info.send_process_mail === 'Y' && is_complete) {
@@ -176,8 +136,8 @@ const on_complete = Wrap(async(req, res) => {
 });
 
 const on_error = async (content_id, state) => {
-  const operation_model = new OperationModel({ database });
-  const service_error_model = new ServiceErrorModel({ database });
+  const operation_model = new OperationModel(DBMySQL);
+  const service_error_model = new ServiceErrorModel(DBMySQL);
   const operation_info = await operation_model.getOperationInfoByContentId(content_id);
   const message = `state: ${state}`;
   if (operation_info.isEmpty()) {

@@ -1,87 +1,40 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import querystring from 'querystring';
-import service_config from '@/config/service.config';
-import roles from "@/config/roles";
-import Auth from '@/middlewares/auth.middleware';
-import Wrap from '@/utils/express-async';
-import Util from '@/utils/baseutil';
-import database from '@/config/database';
-import StdObject from '@/classes/StdObject';
-import log from "@/classes/Logger";
-import MemberModel from '@/models/MemberModel';
-import {VideoProjectField, VideoProjectModel} from '@/db/mongodb/model/VideoProject';
-import ContentIdManager from '@/classes/ContentIdManager';
-import SequenceModel from '@/models/sequence/SequenceModel';
-import Constants from '@/config/constants';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import Constants from '../../constants/constants';
+import StdObject from '../../wrapper/std-object';
+import DBMySQL from '../../database/knex-mysql';
+import log from "../../libs/logger";
+import GroupService from '../../service/member/GroupService'
+import MemberModel from '../../database/mysql/member/MemberModel';
+import {VideoProjectField, VideoProjectModel} from '../../database/mongodb/VideoProject';
+import SequenceModel from '../../models/sequence/SequenceModel';
 
 const routes = Router();
 
-/**
- * @swagger
- * tags:
- *  name: Trans
- *  description: 트랜스코더 연동
- *
- */
-
-/**
- * @swagger
- * /trans/complete:
- *  get:
- *    summary: "트랜스코더의 진행 상태를 업데이트 한다."
- *    tags: [Trans]
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "content_id"
- *      in: "query"
- *      description: "콘텐츠ID"
- *      required: true
- *      type: "string"
- *    - name: success
- *      in: "query"
- *      type: "string"
- *      description: "처리 결과. 성공: true or 1. 그 외 실패"
- *      required: true
- *    - name: video_file_name
- *      in: "query"
- *      type: "string"
- *      description: "병합이 완료된 고화질 동영상 파일 이름"
- *    - name: smil_file_name
- *      in: "query"
- *      type: "string"
- *      description: "smil 파일 이름"
- *    - name: error
- *      in: "query"
- *      type: "string"
- *      description: "에러 정보"
- *    responses:
- *      200:
- *        description: "성공여부"
- *        schema:
- *           $ref: "#/definitions/DefaultResponse"
- *
- */
-
 const getMemberInfo = async (database, member_seq) => {
-  const member_info = await new MemberModel({ database: database }).getMemberInfo(member_seq);
+  const member_info = await new MemberModel(database).getMemberInfo(member_seq);
   if (!member_info || member_info.isEmpty()) {
     throw new StdObject(-1, '회원정보가 없습니다.', 401);
   }
   return member_info;
 };
 
-routes.get('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
-  const member_seq = token_info.getId();
-  const video_project_list = await VideoProjectModel.findByMemberSeq(member_seq, '-sequence_list');
+routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const video_project_list = await VideoProjectModel.findByGroupSeq(token_info.getGroupSeq(), '-sequence_list');
 
   const output = new StdObject();
   output.add('video_project_list', video_project_list);
   res.json(output);
 }));
 
-routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const project_seq = req.params.project_seq;
   const video_project = await VideoProjectModel.findOneById(project_seq);
 
@@ -90,27 +43,25 @@ routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), 
   res.json(output);
 }));
 
-routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-
-  const token_info = req.token_info;
-  const member_seq = token_info.getId();
+  const { member_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const data = req.body;
 
-  const member_info = await getMemberInfo(database, member_seq);
-  const service_info = service_config.getServiceInfo();
-  const content_id = await ContentIdManager.getContentId();
+  const service_info = ServiceConfig.getServiceInfo();
+  const content_id = Util.getContentId();
   const media_root = service_info.media_root;
-  const user_media_path = member_info.user_media_path;
-  const project_path = user_media_path + "VideoProject" + Constants.SEP + content_id + Constants.SEP;
+  const project_path = `${group_member_info.media_path}/studio/${content_id}/`;
 
   await Util.createDirectory(media_root + project_path);
+  data.group_seq = token_info.getGroupSeq();
   data.member_seq = member_seq;
   data.content_id = content_id;
   data.project_path = project_path;
   data.parent_directory = data.parent_directory || '';
 
   const fields = VideoProjectField();
+  fields.group_seq.require = true;
   fields.member_seq.require = true;
   fields.content_id.require = true;
   fields.project_name.require = true;
@@ -127,7 +78,7 @@ routes.post('/video', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, re
   res.json(output);
 }));
 
-routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const data = req.body;
   data.sequence_count = data.sequence_list ? data.sequence_list.length : 0;
@@ -149,7 +100,7 @@ routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), 
   res.json(output);
 }));
 
-routes.put('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const project_seq = req.params.project_seq;
   const result = await VideoProjectModel.updateFavorite(project_seq, true);
 
@@ -159,7 +110,7 @@ routes.put('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGI
   res.json(output);
 }));
 
-routes.delete('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const project_seq = req.params.project_seq;
   const result = await VideoProjectModel.updateFavorite(project_seq, false);
 
@@ -169,7 +120,7 @@ routes.delete('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(roles.L
   res.json(output);
 }));
 
-routes.put('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
   const member_seq = token_info.getId();
@@ -182,12 +133,12 @@ routes.put('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(re
   res.json(output);
 }));
 
-routes.delete('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
-  const member_seq = token_info.getId();
+  const group_seq = token_info.getGroupSeq();
   const id_list = req.body.id_list;
-  const result = await VideoProjectModel.updateStatus(member_seq, id_list, 'Y');
+  const result = await VideoProjectModel.updateStatus(group_seq, id_list, 'Y');
 
   const output = new StdObject();
   output.add('result', result);
@@ -195,25 +146,25 @@ routes.delete('/video/trash', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async
   res.json(output);
 }));
 
-routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const token_info = req.token_info;
-  const member_seq = token_info.getId();
+  const group_seq = token_info.getGroupSeq();
   const project_seq = req.params.project_seq;
-  const result = await VideoProjectModel.deleteById(member_seq, project_seq);
+  const result = await VideoProjectModel.deleteById(group_seq, project_seq);
   const output = new StdObject();
   output.add('result', result);
   res.json(output);
   if (result && result.project_path) {
     (async () => {
-      const service_info = service_config.getServiceInfo();
+      const service_info = ServiceConfig.getServiceInfo();
       const media_root = service_info.media_root;
       await Util.deleteDirectory(media_root + result.project_path);
     })();
   }
 }));
 
-routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const project_seq = req.params.project_seq;
   const video_project = await VideoProjectModel.findOneById(project_seq);
@@ -227,7 +178,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
   output.add('status', 'R');
   res.json(output);
   (async() => {
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const directory = service_info.media_root + result.project_path;
     let sep_pattern = "/";
     if (Constants.SEP === "\\") {
@@ -292,12 +243,12 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(roles.LOGIN_U
 }));
 
 
-routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = token_info.getId();
-  const member_model = new MemberModel({ database });
+  const member_model = new MemberModel(DBMySQL);
   const member_info = await member_model.getMemberInfo(member_seq);
-  const media_root = service_config.get('media_root');
+  const media_root = ServiceConfig.get('media_root');
   const upload_path = member_info.user_media_path + "_upload_" + Constants.SEP + "project" + Constants.SEP + "image";
   const upload_full_path = media_root + upload_path;
   if (!(await Util.fileExists(upload_full_path))) {
@@ -312,7 +263,7 @@ routes.put('/upload/image', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(r
   }
 
   log.d(req, upload_file_info);
-  const image_url = Util.getUrlPrefix(service_config.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
+  const image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
   const output = new StdObject();
   output.add('image_url', image_url);
   res.json(output);
@@ -346,13 +297,13 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
       throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
     }
     const path_url = Util.pathToUrl(video_project.project_path);
-    const service_info = service_config.getServiceInfo();
+    const service_info = ServiceConfig.getServiceInfo();
     const video_directory = service_info.media_root + video_project.project_path;
     const video_file_path = video_directory + process_info.video_file_name;
     const total_size = await Util.getDirectoryFileSize(video_directory);
     const video_file_size = await Util.getFileSize(video_file_path);
-    process_info.download_url = Util.pathToUrl(service_config.get('static_storage_prefix')) + path_url + process_info.video_file_name;
-    process_info.stream_url = service_config.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
+    process_info.download_url = Util.pathToUrl(ServiceConfig.get('static_storage_prefix')) + path_url + process_info.video_file_name;
+    process_info.stream_url = ServiceConfig.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
     process_info.total_size = total_size;
     process_info.video_file_size = video_file_size;
 
@@ -368,12 +319,12 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
   res.send(is_success ? 'ok' : 'fail');
 }));
 
-routes.post('/video/operation', Auth.isAuthenticated(roles.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/video/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const operation_seq_list = req.body.operation_seq_list;
   const token_info = req.token_info;
-  const member_seq = token_info.getId();
-  const video_project_list = await VideoProjectModel.findByOperationSeq(member_seq, operation_seq_list, '-sequence_list');
+  const group_seq = token_info.getGroupSeq();
+  const video_project_list = await VideoProjectModel.findByOperationSeq(group_seq, operation_seq_list, '-sequence_list');
 
   const output = new StdObject();
   output.add('video_project_list', video_project_list);

@@ -1,55 +1,12 @@
-import {Router} from 'express';
-import Wrap from '@/utils/express-async';
-import database from '@/config/database';
-import StdObject from "@/classes/StdObject";
-import MemberModel from '@/models/MemberModel';
-import MedicalSubject from '@/data/MedicalSubject';
+import { Router } from 'express';
+import Wrap from '../../utils/express-async';
+import StdObject from '../../wrapper/std-object';
+import ServiceConfig from '../../service/service-config'
 
-/**
- * @swagger
- * tags:
- *  name: Data
- *  description: 권한이 필요하지 않은 각종 자료 조회 (병원, 부서, 배너 등등)
- *
- */
+import MedicalSubject from '../../data/MedicalSubject';
 
 const routes = Router();
 
-/**
- * @swagger
- * /data/timestamp:
- *  get:
- *    summary: "서버시간 조회"
- *    tags: [Data]
- *    produces:
- *    - "application/json"
- *    responses:
- *      200:
- *        description: "서버시간"
- *        schema:
- *          type: "object"
- *          properties:
- *            error:
- *              type: "integer"
- *              description: "에러코드"
- *              default: 0
- *            message:
- *              type: "string"
- *              description: "에러 메시지"
- *              default: ""
- *            httpStatusCode:
- *              type: "integer"
- *              description: "HTTP Status Code"
- *              default: 200
- *            variables:
- *              type: "object"
- *              description: "결과 정보"
- *              properties:
- *                timestamp:
- *                  type: "integer"
- *                  description: "서버시간 timestamp"
- *
- */
 routes.get('/timestamp', Wrap(async(req, res) => {
   const now = Date.now();
   const output = new StdObject();
@@ -58,60 +15,15 @@ routes.get('/timestamp', Wrap(async(req, res) => {
   res.json(output);
 }));
 
-
 routes.get('/medical_subject', Wrap(async(req, res) => {
   const output = new StdObject();
   output.add('medical_subject', MedicalSubject.getJson());
   res.json(output);
 }));
 
-/**
- * @swagger
- * /data/new_join_users:
- *  get:
- *    summary: "신규 가입자 목록"
- *    tags: [Data]
- *    produces:
- *    - "application/json"
- *    parameters:
- *    - name: "list_count"
- *      in: "query"
- *      description: "목록 최대 개수"
- *      required: false
- *      type: "integer"
- *      default: 10
- *    responses:
- *      200:
- *        description: "최근 가입자 목록"
- *        schema:
- *          type: "object"
- *          properties:
- *            new_user_list:
- *              type: "array"
- *              description: "가입자 정보"
- *              items:
- *                type: "string"
- *
- */
-routes.get('/new_join_users', Wrap(async(req, res) => {
-  let list_count = 10;
-  if (req.query.list_count) {
-    list_count = req.query.list_count;
-  }
-
-  const oMemberModel = new MemberModel({ database });
-  const query_result = await oMemberModel.getBannerNewUserList(list_count);
+routes.get('/socket_url', Wrap(async(req, res) => {
   const output = new StdObject();
-
-  if (query_result && query_result.length > 0){
-    const output_list = new Array();
-    for (let i = 0; i < query_result.length; i++) {
-      const result = query_result[i];
-      output_list.push(result.hostital_name + ' ' + result.user_name.substr(0, 1) + "OO 교수님이 가입하셨습니다.");
-    }
-    output.add('new_user_list', output_list);
-  }
-
+  output.add('url', ServiceConfig.get('socket_front_server_ip'));
   res.json(output);
 }));
 

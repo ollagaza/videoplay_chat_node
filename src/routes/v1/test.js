@@ -1,29 +1,26 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import _ from 'lodash';
-import querystring from 'querystring';
-import wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import SendMail from '@/classes/SendMail';
-import FileInfo from '@/classes/surgbook/FileInfo';
-import Util from '@/utils/baseutil';
-import Auth from '@/middlewares/auth.middleware';
-import log from "@/classes/Logger";
-import roles from "@/config/roles";
-import mime from "mime-types";
-import service_config from "@/config/service.config";
-import config from "@/config/config";
-import ContentIdManager from '@/classes/ContentIdManager'
-import {VideoProjectModel} from '@/db/mongodb/model/VideoProject';
-import SequenceModel from '@/models/sequence/SequenceModel';
-import text2png from "../../utils/textToImage";
-import Constants from '@/config/constants';
-
-const IS_DEV = config.isDev();
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import Util from '../../utils/baseutil';
+import Auth from '../../middlewares/auth.middleware';
+import Role from "../../constants/roles";
+import Constants from '../../constants/constants';
+import StdObject from '../../wrapper/std-object';
+import log from "../../libs/logger";
 
 const routes = Router();
 
+import Config from "../../config/config";
+import SequenceModel from '../../models/sequence/SequenceModel';
+import { VideoProjectModel } from '../../database/mongodb/VideoProject';
+
+import IndexInfo from "../../wrapper/xml/IndexInfo";
+
+const IS_DEV = Config.isDev();
+
 if (IS_DEV) {
-  routes.get('/video/:project_seq(\\d+)/:scale', wrap(async(req, res) => {
+  routes.get('/video/:project_seq(\\d+)/:scale', Wrap(async(req, res) => {
     const project_seq = req.params.project_seq;
     const scale = Util.parseFloat(req.params.scale, 1);
     const video_project = await VideoProjectModel.findOneById(project_seq);
@@ -49,12 +46,12 @@ if (IS_DEV) {
       }
     };
 
-    await Util.writeXmlFile(service_config.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json);
+    await Util.writeXmlFile(ServiceConfig.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json);
 
     res.json(video_xml_json);
   }));
 
-  routes.get('/media', wrap(async (req, res) => {
+  routes.get('/media', Wrap(async (req, res) => {
     const file_name = 'birdman.mkv';
     const url = 'd:\\\\movie\\마녀.mkv';
     const media_info = await Util.getMediaInfo(url);
@@ -65,12 +62,12 @@ if (IS_DEV) {
     res.json(result);
   }));
 
-  routes.get('/co/:code', wrap(async (req, res) => {
+  routes.get('/co/:code', Wrap(async (req, res) => {
     const code = req.params.code;
     res.send(Util.colorCodeToHex(code));
   }));
 
-  routes.get('/crypto', wrap(async (req, res) => {
+  routes.get('/crypto', Wrap(async (req, res) => {
     const data = {
       r: Util.getRandomString(5),
       s: 155
@@ -86,12 +83,12 @@ if (IS_DEV) {
     res.json(output);
   }));
 
-  routes.get('/token', wrap(async (req, res) => {
+  routes.get('/token', Wrap(async (req, res) => {
     const result = await Auth.verifyToken(req);
     res.json(result);
   }));
 
-  routes.get('/uuid', wrap(async (req, res) => {
+  routes.get('/uuid', Wrap(async (req, res) => {
     const uuid = await Util.getUuid();
     const output = new StdObject();
     output.add('uuid', uuid);
@@ -99,18 +96,18 @@ if (IS_DEV) {
     res.json(output);
   }));
 
-  routes.get('/forward', wrap(async (req, res, next) => {
+  routes.get('/forward', Wrap(async (req, res, next) => {
     const url = 'http://localhost:3000/api/v1/operations/9/request/analysis';
     const admin_member_info = {
       seq: 0,
-      role: roles.ADMIN
+      role: Role.ADMIN
     };
     const token_result = Auth.generateTokenByMemberInfo(admin_member_info);
     const forward_result = await Util.forward(url, 'POST', token_result.token);
     res.json(forward_result);
   }));
 
-  routes.post('/burning', wrap(async (req, res, next) => {
+  routes.post('/burning', Wrap(async (req, res, next) => {
     req.accepts('application/json');
     req.setTimeout(0);
     log.d(req, req.body);
@@ -175,7 +172,7 @@ if (IS_DEV) {
                 "data": seq_list
               };
               if (random_key) {
-                request_data.key = await ContentIdManager.getContentId();
+                request_data.key = Util.getContentId();
               } else {
                 request_data.key = directory_name;
               }
@@ -190,7 +187,7 @@ if (IS_DEV) {
     }
   }));
 
-  routes.delete('/dir', wrap(async (req, res, next) => {
+  routes.delete('/dir', Wrap(async (req, res, next) => {
     req.accepts('application/json');
     req.setTimeout(0);
     log.d(req, req.body);
@@ -201,7 +198,7 @@ if (IS_DEV) {
     res.send(true);
   }));
 
-  routes.get('/err', wrap(async (req, res, next) => {
+  routes.get('/err', Wrap(async (req, res, next) => {
 
     const result1 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smi");
     const result2 = await Util.fileExists("\\\\192.168.0.112\\data_trans\\dev\\media\\test\\operation\\6227f7a0-d923-11e9-bcaf-81e66f898cf9\\SEQ\\PlayList.smil");
@@ -212,6 +209,114 @@ if (IS_DEV) {
       result2,
       result3
     });
+  }));
+
+  const getHawkeyeXmlInfo = async (req, log_prefix) => {
+    const index_list_api_options = {
+      hostname: 'localhost',
+      port: 80,
+      path: '/test/ErrorReportImage.xml',
+      method: 'GET'
+    };
+    const index_list_api_url = 'http://localhost/test/ErrorReportImage.xml';
+    log.d(req, `${log_prefix} hawkeye index list api url: ${index_list_api_url}`);
+
+    const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
+    const index_list_xml_info = await Util.loadXmlString(index_list_request_result);
+    if (!index_list_xml_info || index_list_xml_info.errorcode || Util.isEmpty(index_list_xml_info.errorreport) || Util.isEmpty(index_list_xml_info.errorreport.frameinfo)) {
+      if (index_list_xml_info && index_list_xml_info.errorcode && index_list_xml_info.errorcode.state) {
+        throw new StdObject(3, Util.getXmlText(index_list_xml_info.errorcode.state), 500);
+      } else {
+        throw new StdObject(3, "XML 파싱 오류", 500);
+      }
+    }
+
+    let index_info_list = [];
+    const index_info_map = {};
+    const range_index_list = [];
+    const tag_map = {};
+    const tag_info_map = {};
+    let frame_info = index_list_xml_info.errorreport.frameinfo;
+    if (frame_info) {
+      if (_.isArray(frame_info)) {
+        frame_info = frame_info[0];
+      }
+      const index_xml_list = frame_info.item;
+      if (index_xml_list) {
+        for (let i = 0; i < index_xml_list.length; i++) {
+          const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i], false);
+          if (!index_info.isEmpty()) {
+            const type_code = index_info.code;
+            if (index_info.is_range) {
+              range_index_list.push(index_info);
+            } else {
+              const saved_index_info = index_info_map[index_info.start_frame];
+              if (saved_index_info) {
+                saved_index_info.tag_map[type_code] = true;
+              } else {
+                index_info_map[index_info.start_frame] = index_info;
+              }
+            }
+            tag_map[type_code] = true;
+            if (!tag_info_map[type_code]) {
+              tag_info_map[type_code] = {
+                code: type_code,
+                name: index_info.state,
+                total_frame: 0,
+                last_end_frame: 0,
+                uptime: 0,
+                uptime_list: [],
+              };
+            }
+          }
+        }
+      }
+      const set_range_tags = (index_info) => {
+        const start_frame = index_info.start_frame;
+        range_index_list.forEach((range_info) => {
+          if (range_info.start_frame <= start_frame && range_info.end_frame >= start_frame) {
+            index_info.tag_map[range_info.code] = true;
+          }
+        });
+      };
+      index_info_list = _.orderBy(index_info_map, ['start_frame'], ['asc']);
+      let prev_info = index_info_list[0];
+      for (let i = 1; i < index_info_list.length; i++) {
+        const current_info = index_info_list[i];
+        prev_info.end_frame = current_info.start_frame - 1;
+        prev_info.end_time = current_info.start_time;
+        set_range_tags(current_info);
+        current_info.tags = _.keys(current_info.tag_map);
+        prev_info = current_info;
+      }
+      for (let i = 1; i < index_info_list.length; i++) {
+        const index_info = index_info_list[i];
+        if (index_info.end_frame <= 0) break;
+        for (let j = 0; j < index_info.tags.length; j++) {
+          const tag_info = tag_info_map[index_info.tags[j]];
+          tag_info.total_frame += index_info.end_frame - index_info.start_frame;
+          tag_info.uptime += index_info.end_time - index_info.start_time;
+          if (tag_info.last_end_frame !== index_info.start_frame) {
+            tag_info.uptime_list.push({ start_time: index_info.start_time, end_time: index_info.end_time });
+          } else {
+            tag_info.uptime_list[tag_info.uptime_list.length - 1].end_time = index_info.end_time;
+          }
+          tag_info.last_end_frame = index_info.end_frame + 1;
+        }
+      }
+    }
+    const result = {};
+    result.tags = _.keys(tag_map);
+    result.index_info_list = index_info_list;
+    result.tag_info_map = tag_info_map;
+    return result;
+  };
+
+  routes.get('/idx', Wrap(async (req, res, next) => {
+    const index_info_list = await getHawkeyeXmlInfo(req, '[test]');
+    const result = new StdObject();
+    result.add('index_info_list', index_info_list);
+    res.json(result);
   }));
 }
 

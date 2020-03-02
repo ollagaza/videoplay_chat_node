@@ -1,6 +1,6 @@
 import {Router} from 'express';
-import config from '@/config/config';
-import log from "@/classes/Logger";
+import Config from '../config/config';
+import log from "../libs/logger";
 
 require('babel-plugin-require-context-hook/register')();
 
@@ -84,7 +84,7 @@ files.keys().forEach((key) => {
 
   if (files(key).default) {
     if (demon_regex.test(key)) {
-      if (!config.isDemon()) {
+      if (!Config.isDemon()) {
         return;
       }
     }

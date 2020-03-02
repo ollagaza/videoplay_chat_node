@@ -1,30 +1,19 @@
-import {Router} from 'express';
-import bodyParser from 'body-parser';
-import {exec} from 'child_process';
-import roles from "@/config/roles";
-import Wrap from '@/utils/express-async';
-import StdObject from '@/classes/StdObject';
-import database from '@/config/database';
-import MemberModel from '@/models/MemberModel';
-import MemberAuthMailModel from '@/models/MemberAuthMailModel';
-import Util from '@/utils/baseutil';
+import { Router } from 'express';
+import { exec } from 'child_process';
+import ServiceConfig from '../../service/service-config';
+import Wrap from '../../utils/express-async';
+import StdObject from '../../wrapper/std-object';
+import log from "../../libs/logger";
 
 const routes = Router();
 
 const sSiteCode = "BQ102";
 const sSitePW = "KebrTmErp7KG";
 
-const sModulePath = "D:\\00_Works\\02_Project\\00_Surgstory\\40_본인인증\\CertServiceModule\\Window\\CPClient.exe";
-
 const sAuthType = "M";
 const sPopGubun = "Y";
 const sCustomize = "";
 const sGender = "";
-
-// const sReturnUrl = "https://www.surgstory.com/certresult";
-// const sErrorUrl = "https://www.surgstory.com/certresult";
-const sReturnUrl = "http://192.168.0.12/certresult.php";
-const sErrorUrl = "http://192.168.0.12/certresult.php";
 
 routes.get('/checkNice', Wrap(async(req, res) => {
   const sDate = new Date();
@@ -34,11 +23,14 @@ routes.get('/checkNice', Wrap(async(req, res) => {
   let sEncData = "";
   let sRtnMSG = "";
 
+  const sModulePath = ServiceConfig.get('cert_path');
+  const sReturnUrl = ServiceConfig.get('cert_result_url');
+
   sPlaincData = "7:REQ_SEQ" + sCPRequest.length + ":" + sCPRequest +
                 "8:SITECODE" + sSiteCode.length + ":" + sSiteCode +
                 "9:AUTH_TYPE" + sAuthType.length + ":" + sAuthType +
                 "7:RTN_URL" + sReturnUrl.length + ":" + sReturnUrl +
-                "7:ERR_URL" + sErrorUrl.length + ":" + sErrorUrl +
+                "7:ERR_URL" + sReturnUrl.length + ":" + sReturnUrl +
                 "11:POPUP_GUBUN" + sPopGubun.length + ":" + sPopGubun +
                 "9:CUSTOMIZE" + sCustomize.length + ":" + sCustomize +
                 "6:GENDER" + sGender.length + ":" + sGender ;
@@ -51,15 +43,13 @@ routes.get('/checkNice', Wrap(async(req, res) => {
   });
 
   child.on("close", () => {
-    console.log(sEncData);
-      
-    if (sEncData == "-1") {
+    if (sEncData === "-1") {
       sRtnMSG = "암/복호화 시스템 오류입니다.";
-    } else if (sEncData == "-2") {
+    } else if (sEncData === "-2") {
       sRtnMSG = "암호화 처리 오류입니다.";
-    } else if (sEncData == "-3") {
+    } else if (sEncData === "-3") {
       sRtnMSG = "암호화 데이터 오류 입니다.";
-    } else if (sEncData == "-9") {
+    } else if (sEncData === "-9") {
       sRtnMSG = "입력값 오류 : 암호화 처리시, 필요한 파라미터 값을 확인해 주시기 바랍니다.";
     } else {
       sRtnMSG = "";
@@ -76,15 +66,16 @@ routes.post('/certResult', Wrap(async(req, res) => {
   req.accepts('application/json');
 
   const encodeData = req.body.EncodeData;
+  const sModulePath = ServiceConfig.get('cert_path');
 
   let sDecData = "";
   let cmd = "";
-  
-  if( /^0-9a-zA-Z+\/=/.test(encodeData) == true){
-    sRtnMSG = "입력값 오류";
-    requestnumber = "";
-    authtype = "";
-    errcode = "";
+
+  if( /^0-9a-zA-Z+\/=/.test(encodeData) === true){
+    let sRtnMSG = "입력값 오류";
+    let requestnumber = "";
+    let authtype = "";
+    let errcode = "";
 
     const output = new StdObject();
     output.add('sRtnMSG', sRtnMSG);
@@ -97,7 +88,7 @@ routes.post('/certResult', Wrap(async(req, res) => {
     if (encodeData !== "") {
       cmd = sModulePath + " " + "DEC" + " " + sSiteCode + " " + sSitePW + " " + encodeData;
     }
-    
+
     const child = exec(cmd, {encoding: "euc-kr"});
     child.stdout.on("data", (data) => {
         sDecData += data;
@@ -107,17 +98,17 @@ routes.post('/certResult', Wrap(async(req, res) => {
       const output = new StdObject();
       let sRtnMSG = "";
 
-      if (sDecData == "-1") {
+      if (sDecData === "-1") {
         sRtnMSG = "암/복호화 시스템 오류";
-      } else if (sDecData == "-4") {
+      } else if (sDecData === "-4") {
         sRtnMSG = "복호화 처리 오류";
-      } else if (sDecData == "-5") {
+      } else if (sDecData === "-5") {
         sRtnMSG = "HASH값 불일치 - 복호화 데이터는 리턴됨";
-      } else if (sDecData == "-6") {
+      } else if (sDecData === "-6") {
         sRtnMSG = "복호화 데이터 오류";
-      } else if (sDecData == "-9") {
+      } else if (sDecData === "-9") {
         sRtnMSG = "입력값 오류";
-      } else if (sDecData == "-12") {
+      } else if (sDecData === "-12") {
         sRtnMSG = "사이트 비밀번호 오류";
       } else {
         output.add('resultData', {
@@ -125,6 +116,7 @@ routes.post('/certResult', Wrap(async(req, res) => {
           'responsenumber': decodeURIComponent(GetValue(sDecData , "RES_SEQ")),
           'authtype': decodeURIComponent(GetValue(sDecData , "AUTH_TYPE")),
           'errcode': decodeURIComponent(GetValue(sDecData , "ERR_CODE")),
+          'errmsg': sRtnMSG,
           'name': decodeURIComponent(GetValue(sDecData , "UTF8_NAME")),
           'birthdate': decodeURIComponent(GetValue(sDecData , "BIRTHDATE")),
           'gender': decodeURIComponent(GetValue(sDecData , "GENDER")),
@@ -135,7 +127,6 @@ routes.post('/certResult', Wrap(async(req, res) => {
           'mobileco': decodeURIComponent(GetValue(sDecData , "MOBILE_CO")),
         });
       }
-      console.log(output);
       res.json(output);
     });
   }
@@ -144,12 +135,11 @@ routes.post('/certResult', Wrap(async(req, res) => {
 function GetValue(plaindata , key){
   let arrData = plaindata.split(":");
   let value = "";
-  for (let i in arrData) {
-    var item = arrData[i];
-    if (item.indexOf(key) == 0) {
-      let valLen = parseInt(item.replace(key, ""));
-      arrData[i++];
-      value = arrData[i].substr(0 ,valLen);
+  for (let i = 0; i < arrData.length; i++) {
+    const item = arrData[i];
+    if (item.indexOf(key) === 0) {
+      let valLen = parseInt(item.replace(key, "").trim());
+      value = arrData[++i].substr(0 ,valLen);
       break;
     }
   }

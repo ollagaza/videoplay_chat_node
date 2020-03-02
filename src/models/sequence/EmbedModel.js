@@ -1,15 +1,16 @@
-import Constants from '@/config/constants';
-import util from '@/utils/baseutil';
+import Constants from '../../constants/constants'
+import Util from '../../utils/baseutil'
+import text2png from "../../libs/text-to-image"
+import log from '../../libs/logger'
+
 import EmbedBackgroundColorModel from './EmbedBackgroundColorModel';
 import EmbedFontModel from './EmbedFontModel';
 import EmbedPositionModel from './EmbedPositionModel';
 import EmbedSizeModel from './EmbedSizeModel';
-import logger from "@/classes/Logger";
-import text2png from "@/utils/textToImage";
 
 export default class EmbedModel {
   constructor(type) {
-    this._id = util.getRandomId();
+    this._id = Util.getRandomId();
     this._name = '';
     this._isUse = false;
     this._type = type;
@@ -30,6 +31,7 @@ export default class EmbedModel {
     this._stream_info = null;
     this._operation_seq = 0;
     this._origin_video_url = null;
+    this.log_prefix = '[SequenceModel]'
   }
 
   get id() {
@@ -44,7 +46,7 @@ export default class EmbedModel {
       this._src = json.src || '';
       this._videoStartTime = parseFloat(json.videoStartTime || 0);
       this._videoEndTime = parseFloat(json.videoEndTime || 0);
-      this._multiLine = util.isTrue(json.multiLine || false);
+      this._multiLine = Util.isTrue(json.multiLine || false);
       this._padding = parseFloat(json.padding || 0);
       this._resize = json.resize || Constants.NONE;
       this._thumbnail = json.thumbnail || null;
@@ -144,7 +146,7 @@ export default class EmbedModel {
     return this._src;
   }
   set src(value) {
-    this._src = util.trim(value);
+    this._src = Util.trim(value);
   }
 
   get videoStartTime() {
@@ -261,7 +263,7 @@ export default class EmbedModel {
       "Type": this._type,
     };
 
-    if (util.isEmpty(this._src)) {
+    if (Util.isEmpty(this._src)) {
       return null;
     }
 
@@ -270,9 +272,9 @@ export default class EmbedModel {
       json.Src = this._src;
       json.Type = this._type;
     } else if (this._type === Constants.IMAGE) {
-      json.Src = util.urlToPath(this._src, true);
+      json.Src = Util.urlToPath(this._src, true);
     } else if (this._type === Constants.VIDEO) {
-      json.Src = util.urlToPath(this._origin_video_url, true);
+      json.Src = Util.urlToPath(this._origin_video_url, true);
       json.VideoStartTime = this._videoStartTime;
       json.VideoEndTime = this._videoEndTime;
     } else {
@@ -289,7 +291,7 @@ export default class EmbedModel {
     if (this._position.isUse) json.Position = this._position.getXmlJson(scale);
 
     if (this._type === Constants.VIDEO) {
-      logger.debug('getXmlJson', this._origin_video_url, util.urlToPath(this._origin_video_url), json);
+      log.debug(this.log_prefix, '[getXmlJson]', this._origin_video_url, Util.urlToPath(this._origin_video_url), json);
     }
 
     return json;
@@ -317,8 +319,8 @@ export default class EmbedModel {
     const image_file_path = file_path + this._id + '.png';
     const editor_image_file_path = editor_server_directory + this._id + '.png';
     const image_info = await text2png(this._src, options);
-    const write_result = await util.writeFile(image_file_path, image_info.data);
-    logger.debug(image_file_path, this._id, write_result, editor_image_file_path);
+    const write_result = await Util.writeFile(image_file_path, image_info.data);
+    log.debug(this.log_prefix, '[createTextImage]', image_file_path, this._id, write_result, editor_image_file_path);
 
     this._type = Constants.IMAGE;
     this._src = editor_image_file_path;

@@ -1,8 +1,7 @@
 import Promise from 'promise';
 import fs from 'fs';
-import Iconv from 'iconv';
 import dateFormat from 'dateformat';
-import {promisify} from 'util';
+import { promisify } from 'util';
 import {exec} from 'child_process';
 import _ from 'lodash';
 import xml2js from 'xml2js';
@@ -15,18 +14,20 @@ import path from 'path';
 import multer from 'multer';
 import crypto from 'crypto';
 import request from 'request-promise';
-import getDimension from 'get-video-dimensions';
-import getDuration from 'get-video-duration';
+import GetDimension from 'get-video-dimensions';
+import GetDuration from 'get-video-duration';
 import JsonPath from "jsonpath";
-import service_config from '@/config/service.config';
-import constants from '@/config/constants';
-import log from "@/classes/Logger";
-import StdObject from '@/classes/StdObject';
-import Constants from '@/config/constants';
 import mime from "mime-types";
+import moment from 'moment'
+import ServiceConfig from '../service/service-config';
+import log from "../libs/logger";
+import StdObject from '../wrapper/std-object';
+import Constants from '../constants/constants';
 
 const XML_PARSER = new xml2js.Parser({trim: true});
 const XML_BUILDER = new xml2js.Builder({trim: true, cdata: true});
+const XML_TO_JSON = new xml2js.Parser({trim: true, explicitArray: false});
+
 
 const RANDOM_KEY_SPACE = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000;
@@ -39,11 +40,7 @@ if (Constants.SEP === '/') {
   PATH_EXP = new RegExp(/\\/, 'g');
 }
 
-
-const convert = (from_charset, to_charset, str) => {
-  const iconv = new Iconv.Iconv(from_charset, to_charset);
-  return iconv.convert(str).toString();
-};
+const log_prefix = "[baseutil]";
 
 const removePathSEQ = (media_path) => {
   return media_path.replace(/SEQ.*$/i, '');
@@ -92,14 +89,14 @@ const fileExists = async (file_path, permission=null) => {
     try {
       fs.access(file_path, permission, (error) => {
         if (error) {
-          // log.e(null, 'Util.fileExists', error);
+          // log.error(log_prefix, 'Util.fileExists', error);
           resolve(false);
         } else {
           resolve(true);
         }
       });
     } catch (e) {
-      log.e(null, 'fileExists', file_path, e);
+      log.error(log_prefix, 'fileExists', file_path, e);
       resolve(false);
     }
   });
@@ -110,7 +107,7 @@ const fileExists = async (file_path, permission=null) => {
 const readFile = async (file_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(file_path) ) ) {
-      log.d(null, 'Util.readFile', `file not exists. path=${file_path}`);
+      log.debug(log_prefix, 'Util.readFile', `file not exists. path=${file_path}`);
       resolve(null);
     } else {
       const read_stream = fs.createReadStream(file_path);
@@ -123,7 +120,7 @@ const readFile = async (file_path) => {
         resolve(Buffer.concat(body).toString());
       });
       read_stream.on('error', function(error){
-        log.e(null, 'Util.readFile', `path=${file_path}`, error);
+        log.error(log_prefix, 'Util.readFile', `path=${file_path}`, error);
         resolve(null);
       });
     }
@@ -142,7 +139,7 @@ const writeFile = async (file_path, context) => {
     });
 
     write_stream.on('error', function(error){
-      log.e(null, 'Util.writeFile', `path=${file_path}`, error);
+      log.error(log_prefix, 'Util.writeFile', `path=${file_path}`, error);
       resolve(false);
     });
 
@@ -156,15 +153,15 @@ const writeFile = async (file_path, context) => {
 const deleteFile = async (target_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
-      log.d(null, 'Util.deleteFile', `file not exists. path=${target_path}`);
+      log.debug(log_prefix, 'Util.deleteFile', `file not exists. path=${target_path}`);
       resolve(true);
     } else {
       fs.unlink(target_path, (error) => {
         if (error) {
-          log.e(null, 'Util.deleteFile', `path=${target_path}`, error);
+          log.error(log_prefix, 'Util.deleteFile', `path=${target_path}`, error);
           resolve(false);
         } else {
-          log.d(null, 'Util.deleteFile', `path=${target_path}`);
+          log.debug(log_prefix, 'Util.deleteFile', `path=${target_path}`);
           resolve(true);
         }
       });
@@ -177,23 +174,23 @@ const deleteFile = async (target_path) => {
 const renameFile = async (target_path, dest_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
-      log.d(null, 'Util.renameFile', `file not exists. target_path=${target_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file not exists. target_path=${target_path}`);
       resolve(false);
     } else if ( ( await fileExists(dest_path) ) ) {
-      log.d(null, 'Util.renameFile', `file already exists. dest_path=${dest_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file already exists. dest_path=${dest_path}`);
       resolve(false);
     } else {
       try {
         fs.rename(target_path, dest_path, (error) => {
           if (error) {
-            log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+            log.error(log_prefix, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
             resolve(false);
           } else {
             resolve(true);
           }
         });
       } catch (error) {
-        log.e(null, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+        log.error(log_prefix, 'Util.renameFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
         resolve(false);
       }
     }
@@ -205,23 +202,23 @@ const renameFile = async (target_path, dest_path) => {
 const copyFile = async (target_path, dest_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
-      log.d(null, 'Util.renameFile', `file not exists. target_path=${target_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file not exists. target_path=${target_path}`);
       resolve(false);
     } else if ( await fileExists(dest_path) ) {
-      log.d(null, 'Util.renameFile', `file already exists. target_path=${dest_path}`);
+      log.debug(log_prefix, 'Util.renameFile', `file already exists. target_path=${dest_path}`);
       resolve(false);
     } else {
       try {
         fs.copyFile(target_path, dest_path, (error) => {
           if (error) {
-            log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+            log.error(log_prefix, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
             resolve(false);
           } else {
             resolve(true);
           }
         });
       } catch (error) {
-        log.e(null, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
+        log.error(log_prefix, 'Util.copyFile', `target_path=${target_path}, dest_path=${dest_path}`, error);
         resolve(false);
       }
     }
@@ -233,12 +230,12 @@ const copyFile = async (target_path, dest_path) => {
 const getFileStat = async (file_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(file_path) ) ) {
-      log.d(null, 'Util.getFileStat', `file not exists. path=${file_path}`);
+      log.debug(log_prefix, 'Util.getFileStat', `file not exists. path=${file_path}`);
       resolve(null);
     } else {
       fs.stat(file_path, (error, stats) => {
         if (error) {
-          log.e(null, 'Util.getFileStat', `path=${file_path}`, error);
+          log.error(log_prefix, 'Util.getFileStat', `path=${file_path}`, error);
           resolve(null);
         } else {
           resolve(stats);
@@ -253,12 +250,12 @@ const getFileStat = async (file_path) => {
 const createDirectory = async (dir_path) => {
   const async_func = new Promise( async resolve => {
     if ( ( await fileExists(dir_path) ) ) {
-      log.d(null, 'Util.createDirectory', `directory already exists. path=${dir_path}`);
+      log.debug(log_prefix, 'Util.createDirectory', `directory already exists. path=${dir_path}`);
       resolve(true);
     } else {
       fs.mkdir(dir_path, { recursive: true }, (error) => {
         if (error) {
-          log.e(null, 'Util.createDirectory', `path=${dir_path}`, error);
+          log.error(log_prefix, 'Util.createDirectory', `path=${dir_path}`, error);
           resolve(false);
         } else {
           resolve(true);
@@ -277,7 +274,7 @@ const removeDirectory = async (dir_path) => {
     } else {
       fs.rmdir(dir_path, (error) => {
         if (error) {
-          log.e(null, 'Util.removeDirectory', `path=${dir_path}`, error);
+          log.error(log_prefix, 'Util.removeDirectory', `path=${dir_path}`, error);
           resolve(false);
         } else {
           resolve(true);
@@ -296,25 +293,25 @@ const deleteDirectory = async (path) => {
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
       const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
-      log.d(null, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
+      log.debug(log_prefix, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
     } else {
       const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      log.d(null, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
+      log.debug(log_prefix, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
     }
   }
   const delete_root_result = await removeDirectory( path );
-  log.d(null, 'delete root dir', path, delete_root_result);
+  log.debug(log_prefix, 'delete root dir', path, delete_root_result);
 };
 
 const getDirectoryFileList = async (directory_path, dirent = true) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(directory_path) ) ) {
-      log.d(null, 'Util.getDirectoryFileList', `directory not exists. path=${directory_path}`);
+      log.debug(log_prefix, 'Util.getDirectoryFileList', `directory not exists. path=${directory_path}`);
       resolve([]);
     } else {
       fs.readdir(directory_path, {withFileTypes: dirent}, (error, files) => {
         if (error) {
-          log.e(null, 'Util.getDirectoryFileList', `path=${directory_path}`, error);
+          log.error(log_prefix, 'Util.getDirectoryFileList', `path=${directory_path}`, error);
           resolve([]);
         } else {
           resolve(files);
@@ -355,7 +352,7 @@ const loadXmlString = async (context) => {
     try {
       result = await promisify(XML_PARSER.parseString.bind(XML_PARSER))(context);
     } catch (error) {
-      log.e(null, 'Util.loadXmlString', error);
+      log.error(log_prefix, 'Util.loadXmlString', error);
     }
   }
   return result;
@@ -414,6 +411,9 @@ const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
   if (value === undefined || value === null) {
     return true;
   }
+  if (value instanceof Date) {
+    return false
+  }
   if (isNumber(value)) {
     return false;
   }
@@ -443,30 +443,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null) => {
-  const async_func = new Promise( (resolve, reject) => {
-    const uploader = multer({
-      storage,
-      limits: {
-        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
-      }
-    }).single(key);
-    req.upload_directory = upload_directory;
-    req.new_file_name = new_file_name;
-    uploader(req, res, error => {
-      if (error) {
-        log.e(req, error);
-        reject(error);
-      } else {
-        log.d(req, 'on upload job finished');
-        resolve(true);
-      }
-    });
-  });
-
-  return await async_func;
-};
-
 const execute = async (command) => {
   const result = {
     success: false,
@@ -480,7 +456,7 @@ const execute = async (command) => {
     result.out = exec_result.stdout;
   }
   catch(error) {
-    log.e(null, 'Util.execute', error);
+    log.error(log_prefix, 'Util.execute', error);
     result.message = error.message;
   }
   return result;
@@ -488,59 +464,66 @@ const execute = async (command) => {
 
 const getMediaInfo = async (media_path) => {
   const async_func = new Promise( async (resolve) => {
-    const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`);
+    const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`)
     const media_result = {
       success: false,
-      media_type: constants.NO_MEDIA,
+      media_type: Constants.NO_MEDIA,
       media_info: {}
-    };
+    }
 
     try{
       if (execute_result.success && execute_result.out) {
-        const media_info_xml = await loadXmlString(execute_result.out);
-        const media_info = JsonPath.value(media_info_xml, '$..media[*].track');
+        const media_info_xml = await loadXmlString(execute_result.out)
+        const media_info = JsonPath.value(media_info_xml, '$..track')
         if (media_info && media_info.length > 0) {
           for (let i = 0; i < media_info.length; i++) {
-            const track = media_info[i];
+            const track = media_info[i]
             if (track.$ && track.$.type) {
               const track_type = track.$.type.toLowerCase();
-              if (track_type === constants.VIDEO) {
-                media_result.media_type = constants.VIDEO;
-                media_result.media_info.width = getInt(getXmlText(track.Width));
-                media_result.media_info.height = getInt(getXmlText(track.Height));
-                media_result.media_info.fps = getFloat(getXmlText(track.FrameRate));
-                media_result.media_info.frame_count = getInt(getXmlText(track.FrameCount));
-                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
-                media_result.success = true;
-                break;
-              } else if (track_type === constants.AUDIO) {
-                media_result.media_type = constants.AUDIO;
-                media_result.media_info.duration = Math.round(getFloat(getXmlText(track.Duration)));
-                media_result.media_info.sample_rate = Math.round(getFloat(getXmlText(track.SamplingRate)));
-                media_result.media_info.bit_depth = Math.round(getFloat(getXmlText(track.BitDepth)));
-                media_result.success = true;
-                break;
-              } else if (track_type === constants.IMAGE) {
-                media_result.media_type = constants.IMAGE;
-                media_result.media_info.width = getInt(getXmlText(track.Width));
-                media_result.media_info.height = getInt(getXmlText(track.Height));
-                media_result.success = true;
-                break;
+              const duration = Math.round(getFloat(getXmlText(track.Duration)))
+              const width = getInt(getXmlText(track.Width))
+              const height = getInt(getXmlText(track.Height))
+              const fps = Math.max(getFloat(getXmlText(track.FrameRate)), getFloat(getXmlText(track.Frame_rate)))
+              const frame_count = Math.max(getFloat(getXmlText(track.FrameCount)), getFloat(getXmlText(track.Frame_count)))
+              const sample_rate = Math.max(getFloat(getXmlText(track.SamplingRate)), getFloat(getXmlText(track.Sampling_rate)))
+              const bit_depth = Math.max(getFloat(getXmlText(track.BitDepth)), getFloat(getXmlText(track.Bit_depth)))
+              if (track_type === Constants.VIDEO) {
+                media_result.media_type = Constants.VIDEO
+                media_result.media_info.width = width
+                media_result.media_info.height = height
+                media_result.media_info.fps = fps
+                media_result.media_info.frame_count = frame_count
+                media_result.media_info.duration = duration
+                media_result.media_info.bit_depth = bit_depth
+                media_result.success = true
+                break
+              } else if (track_type === Constants.AUDIO) {
+                media_result.media_type = Constants.AUDIO
+                media_result.media_info.duration = duration
+                media_result.media_info.sample_rate = sample_rate
+                media_result.success = true
+                break
+              } else if (track_type === Constants.IMAGE) {
+                media_result.media_type = Constants.IMAGE
+                media_result.media_info.width = width
+                media_result.media_info.height = height
+                media_result.success = true
+                break
               } else {
-                media_result.success = false;
+                media_result.success = false
               }
             }
           }
         }
       }
     } catch (error) {
-      log.e(null, "getMediaInfo", error, execute_result);
+      log.error(log_prefix, "getMediaInfo", error, execute_result)
     }
 
-    resolve(media_result);
-  });
+    resolve(media_result)
+  })
 
-  return await async_func;
+  return await async_func
 };
 
 const getVideoDimension = async (video_path) => {
@@ -549,12 +532,12 @@ const getVideoDimension = async (video_path) => {
     message: ''
   };
   try {
-    const dimensions = await getDimension(video_path);
+    const dimensions = await GetDimension(video_path);
     result.success = true;
     result.width = dimensions.width;
     result.height = dimensions.height;
   } catch(error) {
-    log.e(null, "getVideoDimension", error);
+    log.error(log_prefix, "getVideoDimension", error);
     result.message = error.message;
   }
   return result;
@@ -566,11 +549,11 @@ const getVideoDuration = async (video_path) => {
     message: ''
   };
   try {
-    const duration = await getDuration.getVideoDurationInSeconds(video_path);
+    const duration = await GetDuration.getVideoDurationInSeconds(video_path);
     result.success = true;
     result.duration = duration;
   } catch(error) {
-    log.e(null, "getVideoDuration", error);
+    log.error(log_prefix, "getVideoDuration", error);
     result.message = error.message;
   }
   return result;
@@ -587,7 +570,7 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
 
     const w_ratio = dimension.width / width;
     const h_ratio = dimension.height / height;
-    let crop_option = '';
+    let crop_option;
     if (w_ratio >= h_ratio) {
       crop_option = `crop=in_h*${width}/${height}:in_h`;
     } else {
@@ -667,7 +650,7 @@ const isFalse = (value) => {
 };
 
 const urlToPath = (url, editor_path = false) => {
-  const service_info = service_config.getServiceInfo();
+  const service_info = ServiceConfig.getServiceInfo();
   const check_regex = /^\/static\/(index|storage|video)\/(.+)$/g;
   const result = check_regex.exec(url);
   if (result && result.length === 3) {
@@ -780,22 +763,97 @@ const getFileType = async (file_path, file_name) => {
   return mime_type;
 };
 
+const getCurrentTimestamp = () => {
+  const now = Date.now()
+  return Math.floor(now / 1000)
+}
+
+const addDay = (day, format = 'YYYY-MM-DD') => {
+  const calc_date = moment().add(day, 'days')
+  if (format == null) {
+    return calc_date.toDate()
+  } else if (format === Constants.TIMESTAMP) {
+    return calc_date.unix()
+  }
+  return calc_date.format(format)
+}
+
+const uploadImageFile = async (user_info, req, res, key = 'image') => {
+  const media_root = ServiceConfig.get('media_root');
+  const upload_path = user_info.user_media_path + "image";
+  const upload_full_path = media_root + upload_path;
+  if (!(await fileExists(upload_full_path))) {
+    await createDirectory(upload_full_path);
+  }
+
+  const new_file_name = getRandomId();
+  const upload_file_path = upload_full_path + '/' + new_file_name;
+  await uploadByRequest(req, res, key, upload_full_path, new_file_name);
+  const upload_file_info = req.file;
+  if (isEmpty(upload_file_info) || !(await fileExists(upload_file_path))) {
+    log.e(req, 'upload fail', upload_file_info);
+    throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+  }
+  const file_type = await getFileType(upload_file_path, new_file_name);
+  if (file_type !== 'image') {
+    log.e(req, 'file type is not image', upload_file_info, file_type);
+    await deleteFile(upload_file_path);
+    throw new StdObject(-1, '이미지만 업로드 가능합니다.', 400);
+  }
+  const image_url = getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
+  return { image_url: image_url, image_path: upload_path + Constants.SEP + new_file_name };
+}
+
+const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null) => {
+  const async_func = new Promise( (resolve, reject) => {
+    const uploader = multer({
+      storage,
+      limits: {
+        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+      }
+    }).single(key);
+    req.upload_directory = upload_directory;
+    req.new_file_name = new_file_name;
+    uploader(req, res, error => {
+      if (error) {
+        log.e(req, error);
+        reject(error);
+      } else {
+        log.d(req, 'on upload job finished');
+        resolve(true);
+      }
+    });
+  });
+
+  return await async_func;
+};
+
+const storate = multer.diskStorage({
+  destination : (req, file, cb) => {
+    cb(null, ServiceConfig.get('common_root'))
+  },
+  limits: {
+    fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+  },
+  filename : (req, file, cb) => {
+    cb(null, getRandomId())
+  },
+})
+
 export default {
-  "convert": convert,
-
+  "common_path_upload" : multer({ storage : storate }),
   "removePathSEQ": removePathSEQ,
-
   "getMediaDirectory": getMediaDirectory,
-
   "getUrlPrefix": getUrlPrefix,
-
   "timeStrToSecond": timeStrToSecond,
-
   "secondToTimeStr": secondToTimeStr,
+  "dateFormatter": dateFormatter,
 
   "today": (format='yyyy-mm-dd') => { return dateFormatter(new Date().getTime(), format); },
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
   "currentFormattedDate": (format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(new Date().getTime(), format); },
+  'getCurrentTimestamp': getCurrentTimestamp,
+  'addDay': addDay,
 
   "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name;
@@ -803,18 +861,18 @@ export default {
     let result = {};
     let context = null;
     if ( !( await fileExists(xml_file_path) ) ) {
-      log.d(null, "Util.loadXmlFile", `${xml_file_path} not exists`);
+      log.debug(log_prefix, "Util.loadXmlFile", `${xml_file_path} not exists`);
       return result;
     }
 
     try {
       context = await readFile(xml_file_path);
     } catch (error) {
-      log.e(null, 'Util.loadXmlFile', error);
+      log.error(log_prefix, 'Util.loadXmlFile', error);
       return result;
     }
     if (context == null) {
-      log.d(null, "Util.loadXmlFile", xml_file_path + ' context is empty');
+      log.debug(log_prefix, "Util.loadXmlFile", xml_file_path + ' context is empty');
       return result;
     }
 
@@ -890,14 +948,14 @@ export default {
       plain_text = plain_data;
     }
 
-    return base64url.encode(aes256.encrypt(service_config.get('crypto_key'), plain_text), 'utf-8');
+    return base64url.encode(aes256.encrypt(ServiceConfig.get('crypto_key'), plain_text), 'utf-8');
   },
 
   "decrypt": (encrypted_data) => {
     try{
-      return aes256.decrypt(service_config.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
+      return aes256.decrypt(ServiceConfig.get('crypto_key'), base64url.decode(encrypted_data, 'utf-8'));
     } catch (error) {
-      log.e(null, 'Util.decrypt', error);
+      log.error(log_prefix, 'Util.decrypt', error);
       return null;
     }
   },
@@ -920,6 +978,18 @@ export default {
 
   "getContentId": () => {
     return uuidv1();
+  },
+
+  "getXmlToJson": (xml) => {
+    return new Promise((resolve, reject) => {
+      XML_TO_JSON.parseString(xml, function (err, json) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(json);
+        }
+      });
+    });
   },
 
   "httpRequest": (options, post_data, is_https=false) => {
@@ -947,11 +1017,12 @@ export default {
       });
 
       req.on('error', err => {
-        log.d(null, "Util.httpRequest", err);
+        log.debug(log_prefix, "Util.httpRequest", err);
         reject(err);
       });
 
       if (post_data) {
+        log.debug(log_prefix, '[httpRequest]', 'post_data', post_data)
         req.write(post_data);
       }
       req.end();
@@ -980,7 +1051,7 @@ export default {
         request_params.json = true;
       }
     }
-    log.d(null, request_params);
+    log.debug(log_prefix, request_params);
 
     const forward = request(request_params);
     try{
@@ -1039,5 +1110,6 @@ export default {
   urlToPath,
   getFileExt,
   getRandomNumber,
-  getFileType
+  getFileType,
+  uploadImageFile
 };

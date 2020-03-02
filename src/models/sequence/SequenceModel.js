@@ -1,11 +1,12 @@
-import util from '@/utils/baseutil';
+import Util from '../../utils/baseutil'
+import log from '../../libs/logger'
+
 import EmbedModel from './EmbedModel';
 import EmbedBackgroundColorModel from './EmbedBackgroundColorModel';
-import logger from "@/classes/Logger";
 
 export default class SequenceModel {
   constructor(type = null) {
-    this._id = util.getRandomId();
+    this._id = Util.getRandomId();
     this._type = type;
     this._duration = 0;
     this._virtualStartTime = 0;
@@ -15,6 +16,7 @@ export default class SequenceModel {
     this._backGroundColor.isUse = true;
     this._templateName = null;
     this._operation_seq_list = [];
+    this.log_prefix = '[SequenceModel]'
   }
 
   get id() {
@@ -22,7 +24,7 @@ export default class SequenceModel {
   }
 
   init = (json) => {
-    if (util.isEmpty(json)) {
+    if (Util.isEmpty(json)) {
       return this;
     }
     this._type = json.type;
@@ -121,7 +123,7 @@ export default class SequenceModel {
     const embeddings = [];
     for (let i = 0; i < this._embeddings.length; i++) {
       const embed = this._embeddings[i];
-      if (embed.isUse && !util.isEmpty(embed.src)) {
+      if (embed.isUse && !Util.isEmpty(embed.src)) {
         embeddings.push(embed.toJSON());
       }
     }
@@ -145,10 +147,10 @@ export default class SequenceModel {
     const embeddings = [];
     for (let i = 0; i < this._embeddings.length; i++) {
       const embed = this._embeddings[i];
-      if (embed.isUse && !util.isEmpty(embed.src)) {
+      if (embed.isUse && !Util.isEmpty(embed.src)) {
         embeddings.push(await embed.getXmlJson(scale, file_path, editor_server_directory));
       } else {
-        logger.debug('embed empty', embed.toJSON());
+        log.debug(this.log_prefix, '[getXmlJson]', 'embed empty', embed.toJSON());
       }
     }
     json.Embedding = embeddings;
