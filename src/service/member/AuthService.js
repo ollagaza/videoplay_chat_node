@@ -37,7 +37,7 @@ const AuthServiceClass = class {
 
     switch (member_info.used) {
       case 0:
-        throw new StdObject(-1, "회원 가입 승인이 완료되지 않았습니다.", 400);
+        throw new StdObject(-1, "회원 가입 승인이 완료되지 않았습니다.<br/>승인이 완료되면 알려드리겠습니다.", 400);
       case 2:
         throw new StdObject(-1, "관리자에 의하여 강제 탈퇴 되었습니다.", 400);
       case 3:
