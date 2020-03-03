@@ -6,6 +6,7 @@ import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 import GroupService from '../member/GroupService'
+import OperationFileService from './OperationFileService'
 import OperationMediaService from './OperationMediaService'
 import CloudFileService from '../cloud/CloudFileService'
 import OperationModel from '../../database/mysql/operation/OperationModel';
@@ -14,8 +15,6 @@ import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
 import { UserDataModel } from '../../database/mongodb/UserData'
 import OperationInfo from '../../wrapper/operation/OperationInfo'
-import VideoFileModel from '../../database/mysql/file/VideoFileModel'
-import ReferFileModel from '../../database/mysql/file/ReferFileModel'
 
 const OperationServiceClass = class {
   constructor () {
@@ -202,12 +201,14 @@ const OperationServiceClass = class {
       "origin": media_directory + "origin/",
       "video": media_directory + "video/",
       "other": media_directory + "other/",
+      "refer": media_directory + "refer/",
       "image": media_directory + "image/",
       "temp": media_directory + "temp/",
       "media_path": media_path,
       "media_origin": media_path + "origin/",
       "media_video": media_path + "video/",
       "media_other": media_path + "other/",
+      "media_refer": media_path + "refer/",
       "media_image": media_path + "image/",
       "media_temp": media_path + "temp/",
       "trans_origin": trans_server_root + media_path + "origin/",
@@ -216,16 +217,19 @@ const OperationServiceClass = class {
       "url_origin": url_prefix + "origin/",
       "url_video": url_prefix + "video/",
       "url_other": url_prefix + "other/",
+      "url_refer": url_prefix + "refer/",
       "url_image": url_prefix + "image/",
       "url_temp": url_prefix + "temp/",
       "cdn_prefix": cdn_url,
       "cdn_video": cdn_url + "video/",
       "cdn_other": cdn_url + "other/",
+      "cdn_refer": cdn_url + "refer/",
       "cdn_image": cdn_url + "image/",
       "content_path": content_path,
       "content_origin": content_path + "origin/",
       "content_video": content_path + "video/",
       "content_other": content_path + "other/",
+      "content_refer": content_path + "refer/",
       "content_image": content_path + "image/",
       "content_temp": content_path + "temp/",
     }
@@ -236,6 +240,7 @@ const OperationServiceClass = class {
 
     await Util.createDirectory(directory_info.video);
     await Util.createDirectory(directory_info.other);
+    await Util.createDirectory(directory_info.refer);
     await Util.createDirectory(directory_info.image);
     await Util.createDirectory(directory_info.temp);
   };
@@ -243,7 +248,7 @@ const OperationServiceClass = class {
   deleteOperationDirectory = async (operation_info, delete_video = false) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
 
-    await Util.deleteDirectory(directory_info.other);
+    await Util.deleteDirectory(directory_info.refer);
     await Util.deleteDirectory(directory_info.image);
 
     if (delete_video) {
@@ -255,7 +260,6 @@ const OperationServiceClass = class {
   deleteOperationFiles = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     await Util.deleteDirectory(directory_info.root);
-    // TODO: 클라우드 파일 삭제 로직 추가 필요
     await CloudFileService.requestDeleteFile(directory_info.media_path, true)
   };
 
@@ -302,17 +306,17 @@ const OperationServiceClass = class {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     const storage_seq = operation_info.storage_seq;
     let media_directory;
-    if (file_type !== 'refer') {
+    if (file_type !== OperationFileService.TYPE_REFER) {
       media_directory = directory_info.origin;
     } else {
-      media_directory = directory_info.other;
+      media_directory = directory_info.refer;
     }
 
     if ( !( await Util.fileExists(media_directory) ) ) {
       await Util.createDirectory(media_directory);
     }
 
-    if (file_type === 'refer') {
+    if (file_type === OperationFileService.TYPE_REFER) {
       await Util.uploadByRequest(request, response, 'target', media_directory, Util.getRandomId());
     } else {
       await Util.uploadByRequest(request, response, 'target', media_directory);
@@ -325,25 +329,14 @@ const OperationServiceClass = class {
 
     let upload_seq = null;
     await DBMySQL.transaction(async(transaction) => {
-      let file_model = null;
-      if (file_type !== 'refer') {
-        file_model = new VideoFileModel(transaction);
-        upload_seq = await file_model.createVideoFile(upload_file_info, storage_seq, directory_info.media_origin);
+      if (file_type !== OperationFileService.TYPE_REFER) {
+        upload_seq = await OperationFileService.createVideoFileInfo(transaction, operation_info, upload_file_info, false);
       } else {
-        file_model = new ReferFileModel(transaction);
-        upload_seq = await file_model.createReferFile(upload_file_info, storage_seq, directory_info.media_other);
+        upload_seq = await OperationFileService.createReferFileInfo(transaction, operation_info, upload_file_info);
       }
 
       if (!upload_seq) {
         throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500);
-      }
-
-      if (file_type !== 'refer') {
-        const origin_video_path = upload_file_info.path;
-        const thumbnail_info = await this.createOperationVideoThumbnail(origin_video_path, operation_info)
-        if (thumbnail_info) {
-          await file_model.updateThumb(upload_seq, thumbnail_info.path)
-        }
       }
 
       await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);

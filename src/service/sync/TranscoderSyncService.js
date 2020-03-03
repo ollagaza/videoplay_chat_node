@@ -27,10 +27,8 @@ const TranscoderSyncServiceClass = class {
     }
 
     try {
-      const update_result = await OperationMediaService.updateTranscodingComplete(DBMySQL, operation_info, video_file_name, smil_file_name)
+      await OperationMediaService.updateTranscodingComplete(DBMySQL, operation_info, video_file_name, smil_file_name)
       await SyncService.onAnalysisComplete(operation_info)
-      // TODO: cloud storage 연동 완료되면 삭제
-      // await SyncService.onAnalysisComplete(operation_info, false)
     } catch (error) {
       log.error(this.log_prefix, '[onTranscodingComplete]', error)
       let error_str = null;

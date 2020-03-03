@@ -429,20 +429,6 @@ const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
   return _.isEmpty(value);
 };
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.resolve(req.upload_directory));
-  },
-  filename: function (req, file, cb) {
-    if (req.new_file_name) {
-      cb(null, req.new_file_name);
-    } else {
-      req.new_file_name = 'upload_' + file.originalname;
-      cb(null, req.new_file_name);
-    }
-  },
-});
-
 const execute = async (command) => {
   const result = {
     success: false,
@@ -778,6 +764,20 @@ const addDay = (day, format = 'YYYY-MM-DD') => {
   return calc_date.format(format)
 }
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.resolve(req.upload_directory));
+  },
+  filename: function (req, file, cb) {
+    if (req.new_file_name) {
+      cb(null, req.new_file_name);
+    } else {
+      req.new_file_name = 'upload_' + file.originalname;
+      cb(null, req.new_file_name);
+    }
+  },
+});
+
 const uploadImageFile = async (user_info, req, res, key = 'image') => {
   const media_root = ServiceConfig.get('media_root');
   const upload_path = user_info.user_media_path + "image";
@@ -833,7 +833,7 @@ const storate = multer.diskStorage({
     cb(null, ServiceConfig.get('common_root'))
   },
   limits: {
-    fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+    fileSize: 20 * 1024 * 1024, ///< 20MB 제한
   },
   filename : (req, file, cb) => {
     cb(null, getRandomId())

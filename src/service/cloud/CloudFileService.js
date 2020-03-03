@@ -20,11 +20,26 @@ const CloudFileServiceClass = class {
     for (let i = 0; i < directory_file_list.length; i++) {
       const file_info = directory_file_list[i]
       if (file_info.isFile()) {
-        file_list.push({ "origin_file_name": file_info.name })
+        file_list.push(this.getFileObject(file_info.name))
       }
     }
     log.debug(this.log_prefix, '[getFileList] - file_list', ServiceConfig.get('media_root') + file_path, file_list)
     return file_list
+  }
+
+  getFileListByFileNameList = async (root_path, file_name_list) => {
+    const file_list = []
+    for (let i = 0; i < file_name_list.length; i++) {
+      const file_name = file_name_list[i]
+      if (await Util.fileExists(root_path + file_name)) {
+        file_list.push(this.getFileObject(file_name))
+      }
+    }
+    return file_list
+  }
+
+  getFileObject = (file_name) => {
+    return { "origin_file_name": file_name }
   }
 
   requestMoveFile = async (file_path, is_folder = true, response_url = null, method = 'POST', response_data = null) => {
@@ -83,8 +98,13 @@ const CloudFileServiceClass = class {
         cloud_file_info.setResponseData(response_data)
       }
     }
-    log.debug(this.log_prefix, '[requestApi]', request_options, cloud_file_info.toJSON())
-    return await Util.httpRequest(request_options, JSON.stringify(cloud_file_info.toJSON()))
+
+    try {
+      const request_result = await Util.httpRequest(request_options, JSON.stringify(cloud_file_info.toJSON()))
+      log.debug(this.log_prefix, '[requestApi]', request_options, cloud_file_info.toJSON(), request_result)
+    } catch (error) {
+      log.error(this.log_prefix, '[requestApi]', request_options, cloud_file_info.toJSON(), error)
+    }
   }
 }
 
