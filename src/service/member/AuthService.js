@@ -18,6 +18,7 @@ const AuthServiceClass = class {
 
     const user_id = req_body.user_id;
     const password = req_body.password;
+    const admin = req_body.admin;
 
     const member_info = await MemberService.getMemberInfoById(DBMySQL, user_id)
 
@@ -25,7 +26,7 @@ const AuthServiceClass = class {
       throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
     }
 
-    if (member_info.used_admin === 'N' && member_info.used_admin !== 'A') {
+    if (admin === 'Y' && member_info.used_admin !== 'A') {
       throw new StdObject(-1, "관리자만 로그인 가능 합니다.", 400);
     }
 
