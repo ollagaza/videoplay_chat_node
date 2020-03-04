@@ -150,27 +150,6 @@ const writeFile = async (file_path, context) => {
   return await async_func;
 };
 
-const deleteFile = async (target_path) => {
-  const async_func = new Promise( async resolve => {
-    if ( !( await fileExists(target_path) ) ) {
-      log.debug(log_prefix, 'Util.deleteFile', `file not exists. path=${target_path}`);
-      resolve(true);
-    } else {
-      fs.unlink(target_path, (error) => {
-        if (error) {
-          log.error(log_prefix, 'Util.deleteFile', `path=${target_path}`, error);
-          resolve(false);
-        } else {
-          log.debug(log_prefix, 'Util.deleteFile', `path=${target_path}`);
-          resolve(true);
-        }
-      });
-    }
-  });
-
-  return await async_func;
-};
-
 const renameFile = async (target_path, dest_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
@@ -286,6 +265,27 @@ const removeDirectory = async (dir_path) => {
   return await async_func;
 };
 
+const deleteFile = async (target_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(target_path) ) ) {
+      // log.debug(log_prefix, 'Util.deleteFile', `file not exists. path=${target_path}`);
+      resolve(true);
+    } else {
+      fs.unlink(target_path, (error) => {
+        if (error) {
+          log.error(log_prefix, 'Util.deleteFile', `path=${target_path}`, error);
+          resolve(false);
+        } else {
+          // log.debug(log_prefix, 'Util.deleteFile', `path=${target_path}`);
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
 const deleteDirectory = async (path) => {
   const file_list = await getDirectoryFileList(path);
   for (let i = 0; i < file_list.length; i++) {
@@ -293,14 +293,14 @@ const deleteDirectory = async (path) => {
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
       const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
-      log.debug(log_prefix, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
+      // log.debug(log_prefix, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
     } else {
       const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      log.debug(log_prefix, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
+      // log.debug(log_prefix, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
     }
   }
   const delete_root_result = await removeDirectory( path );
-  log.debug(log_prefix, 'delete root dir', path, delete_root_result);
+  // log.debug(log_prefix, 'delete root dir', path, delete_root_result);
 };
 
 const getDirectoryFileList = async (directory_path, dirent = true) => {

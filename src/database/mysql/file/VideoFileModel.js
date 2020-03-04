@@ -17,10 +17,7 @@ export default class VideoFileModel extends MySQLModel {
     this.log_prefix = '[VideoFileModel]'
   }
 
-  createVideoFile = async (upload_file_info, storage_seq, media_path) => {
-    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, media_path)).toJSON();
-    file_info.storage_seq = storage_seq;
-
+  createVideoFile = async (file_info) => {
     return await this.create(file_info, 'seq');
   };
 

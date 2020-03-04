@@ -200,7 +200,7 @@ export default class MysqlModel {
     cur_page = parseInt(cur_page);
     page_count = parseInt(page_count);
 
-    const use_paging = (!no_paging || no_paging.toLowerCase() !== 'y');
+    const use_paging = (no_paging && no_paging.toLowerCase() === 'y');
 
     const oCountKnex = this.database.from(oKnex.clone().as('list'));
     const oDataListKnex = oKnex.clone();

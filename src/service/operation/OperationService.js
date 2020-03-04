@@ -107,11 +107,11 @@ const OperationServiceClass = class {
 
   deleteOperation = async (database, token_info, operation_seq) => {
     const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info)
-    await this.deleteOperationByInfo(operation_info)
+    return await this.deleteOperationByInfo(operation_info)
   }
 
   deleteOperationByInfo = async (operation_info) => {
-    DBMySQL.transaction(async(transaction) => {
+    await DBMySQL.transaction(async(transaction) => {
       const operation_model = this.getOperationModel(transaction)
       await operation_model.deleteOperation(operation_info);
       await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq);
@@ -126,6 +126,8 @@ const OperationServiceClass = class {
         }
       }
     )(operation_info)
+
+    return true
   }
 
   getOperationListByRequest = async (database, token_info, request) => {

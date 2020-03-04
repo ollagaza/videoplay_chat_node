@@ -58,8 +58,10 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
-  await OperationService.deleteOperation(DBMySQL, token_info, operation_seq)
+  const delete_result = await OperationService.deleteOperation(DBMySQL, token_info, operation_seq)
   const output = new StdObject();
+  output.add('result', delete_result)
+  output.add('operation_seq', operation_seq)
   res.json(output);
 }));
 

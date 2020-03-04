@@ -74,6 +74,9 @@ const OperationFileServiceClass = class {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const refer_file_model = this.getReferFileModel(database)
 
+    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, directory_info.media_refer)).toJSON();
+    file_info.storage_seq = operation_info.storage_seq;
+
     const file_name = upload_file_info.new_file_name
     let is_moved = false
     try {
@@ -82,8 +85,9 @@ const OperationFileServiceClass = class {
     } catch (error) {
       log.error(this.log_prefix, '[createReferFileInfo]', 'NaverObjectStorageService.moveFile', error)
     }
+    file_info.is_moved = is_moved
 
-    return await refer_file_model.createReferFile(upload_file_info, operation_info.storage_seq, directory_info.media_refer, is_moved)
+    return await refer_file_model.createReferFile(file_info)
   }
 
   createVideoFileInfo = async (database, operation_info, upload_file_info, create_thumbnail = false) => {
@@ -95,8 +99,12 @@ const OperationFileServiceClass = class {
       thumbnail_path = thumbnail_info.path
     }
 
+    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, directory_info.media_origin)).toJSON();
+    file_info.storage_seq = operation_info.storage_seq
+    file_info.thumbnail = thumbnail_path
+
     const video_file_model = this.getVideoFileModel(database)
-    return await video_file_model.createVideoFile(upload_file_info, operation_info.storage_seq, directory_info.media_origin, thumbnail_path)
+    return await video_file_model.createVideoFile(file_info)
   }
 
   deleteFileList = async (database, operation_info, file_seq_list, file_type = this.TYPE_REFER) => {
