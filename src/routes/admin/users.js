@@ -10,6 +10,7 @@ import AdminMemberService from '../../service/member/AdminMemberService'
 import service_config from "../../service/service-config";
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
+import MemberService from "../../service/member/MemberService";
 
 const routes = Router();
 
@@ -23,6 +24,23 @@ routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) =>
   output.add('member_info', member_info.member_info);
   output.add('member_sub_info', member_info.member_sub_info);
 
+  res.json(output);
+}));
+
+routes.post('/getMem', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = req.body.member_seq;
+  const lang = 'kor';
+
+  if (!token_info) {
+    throw new StdObject(-1, "잘못된 요청입니다.", 403);
+  }
+
+  // const member_info = await MemberService.getMemberInfo(member_seq);
+  const member_info = await MemberService.getMemberInfoWithSub(DBMySQL, member_seq, lang);
+  const output = new StdObject();
+  output.add('member_info', member_info.member_info);
+  output.add('member_sub_info', member_info.member_sub_info);
   res.json(output);
 }));
 
