@@ -1,4 +1,5 @@
 import path from 'path'
+import config from '../config/config'
 
 const SEP = path.sep
 
@@ -30,9 +31,13 @@ const MODIFY = 'modify'
 const PREVIEW = 'preview'
 const TIMESTAMP = 'timestamp'
 
-const TOKEN_SECRET = 'dpxldlwlTjwlqnr'
+let TOKEN_SECRET = 'dpxldlwlTjwlqnr'
+if (config.isRelease()) {
+  TOKEN_SECRET = 'dpaxldlwl.surgstory.com'
+}
 
 const GB = 1024 * 1024 * 1024;
+const MAX_ARCHIVE_FILE_SIZE = GB;
 
 const ARCHIVE = 'archive'
 const OBJECT = 'object'
@@ -70,5 +75,6 @@ export default {
   'TIMESTAMP': TIMESTAMP,
   'ARCHIVE': ARCHIVE,
   'OBJECT': OBJECT,
-  'LOCAL': LOCAL
+  'LOCAL': LOCAL,
+  'MAX_ARCHIVE_FILE_SIZE': MAX_ARCHIVE_FILE_SIZE
 }

@@ -8,12 +8,10 @@ import OperationLinkService from "../../../service/operation/OperationLinkServic
 import OperationService from "../../../service/operation/OperationService";
 import OperationClipService from '../../../service/operation/OperationClipService'
 import GroupService from '../../../service/member/GroupService'
-import log from '../../../libs/logger'
 import Util from '../../../utils/baseutil'
 import { OperationMetadataModel } from '../../../database/mongodb/OperationMetadata'
-import ReferFileModel from '../../../database/mysql/file/ReferFileModel'
-import VideoFileModel from '../../../database/mysql/file/VideoFileModel'
 import OperationStorageModel from '../../../database/mysql/operation/OperationStorageModel'
+import OperationFileService from '../../../service/operation/OperationFileService'
 
 const routes = Router();
 
@@ -44,7 +42,7 @@ const getOperationInfoByCode = async (request, import_media_info = false, only_w
   }
 }
 
-routes.get('/check/:link_code', Wrap(async (req, res, next) => {
+routes.get('/check/:link_code', Wrap(async (req, res) => {
   const link_code = req.params.link_code
   const link_info = await OperationLinkService.checkOperationLinkByCode(DBMySQL, link_code)
 
@@ -53,7 +51,7 @@ routes.get('/check/:link_code', Wrap(async (req, res, next) => {
   res.json(output);
 }));
 
-routes.post('/check/password/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.post('/check/password/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json');
   const link_seq = req.params.link_seq
   const password = req.body.password
@@ -65,7 +63,7 @@ routes.post('/check/password/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.get('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
   const link_info_list = await OperationLinkService.getOperationLinkList(DBMySQL, operation_seq, OperationLinkService.TYPE_EMAIL)
@@ -75,7 +73,7 @@ routes.get('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wr
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.get('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
   const link_info_list = await OperationLinkService.getOperationLinkList(DBMySQL, operation_seq, OperationLinkService.TYPE_STATIC)
@@ -85,7 +83,7 @@ routes.get('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), W
   res.json(output);
 }));
 
-routes.get('/:operation_seq(\\d+)/has_link', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.get('/:operation_seq(\\d+)/has_link', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
   const has_link = await OperationLinkService.hasLink(DBMySQL, operation_seq)
@@ -95,7 +93,7 @@ routes.get('/:operation_seq(\\d+)/has_link', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output);
 }));
 
-routes.post('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.post('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
   const link_info_list = await OperationLinkService.createOperationLinkByEmailList(operation_seq, member_info, req.body, token_info.getServiceDomain())
@@ -105,7 +103,7 @@ routes.post('/:operation_seq(\\d+)/email', Auth.isAuthenticated(Role.DEFAULT), W
   res.json(output);
 }));
 
-routes.post('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.post('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
   const link_info = await OperationLinkService.createOperationLinkOne(operation_seq, req.body)
@@ -115,7 +113,7 @@ routes.post('/:operation_seq(\\d+)/static', Auth.isAuthenticated(Role.DEFAULT), 
   res.json(output);
 }));
 
-routes.put('/:link_seq(\\d+)/options', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.put('/:link_seq(\\d+)/options', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   req.accepts('application/json');
   const link_seq = req.params.link_seq;
@@ -126,7 +124,7 @@ routes.put('/:link_seq(\\d+)/options', Auth.isAuthenticated(Role.DEFAULT), Wrap(
   res.json(output);
 }));
 
-routes.delete('/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.delete('/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   req.accepts('application/json');
   const link_seq = req.params.link_seq;
@@ -137,7 +135,7 @@ routes.delete('/:link_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async
   res.json(output);
 }));
 
-routes.get('/view/:link_code', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res, next) => {
+routes.get('/view/:link_code', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { link_info, operation_info } = await getOperationInfoByCode(req, true)
 
   const output = new StdObject()
@@ -165,10 +163,9 @@ routes.get('/view/:link_code/metadata', Auth.isAuthenticated(Role.LOGIN_USER), W
 
 routes.get('/view/:link_code/files', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const { operation_info } = await getOperationInfoByCode(req, false)
-  const storage_seq = operation_info.storage_seq;
-
+  const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info)
   const output = new StdObject();
-  output.add('refer_files', await new ReferFileModel(DBMySQL).referFileList(storage_seq));
+  output.add('refer_files', refer_file_list);
   res.json(output);
 }));
 
@@ -185,20 +182,20 @@ routes.post('/edit/:link_code/files/:file_type', Auth.isAuthenticated(Role.LOGIN
 routes.delete('/edit/:link_code/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const output = new StdObject();
   const file_type = req.params.file_type;
-  if (file_type !== 'refer') {
+  if (file_type !== OperationFileService.TYPE_REFER) {
     res.json(output);
   }
 
   const file_seq_list = req.body.file_seq_list;
   if (!file_seq_list || file_seq_list.length <= 0) {
-    throw new StdObject(-1, '대상파일 정보가 없습니다', 400);
+    throw new StdObject(-1, '잘못된 요청입니다.', 400);
   }
 
   const { operation_info } = await getOperationInfoByCode(req, false)
 
   await DBMySQL.transaction(async(transaction) => {
     const storage_seq = operation_info.storage_seq;
-    await new ReferFileModel(transaction).deleteSelectedFiles(file_seq_list);
+    await OperationFileService.deleteReferFileList(transaction, operation_info, file_seq_list);
     await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);
   });
 

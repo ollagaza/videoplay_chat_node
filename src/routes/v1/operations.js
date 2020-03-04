@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
 import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
@@ -10,13 +9,10 @@ import GroupService from '../../service/member/GroupService';
 import OperationService from '../../service/operation/OperationService';
 import OperationClipService from '../../service/operation/OperationClipService';
 import OperationMediaService from '../../service/operation/OperationMediaService';
+import OperationFileService from '../../service/operation/OperationFileService';
 import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
-import VideoFileModel from '../../database/mysql/file/VideoFileModel';
-import ReferFileModel from '../../database/mysql/file/ReferFileModel';
-import OperationInfo from "../../wrapper/operation/OperationInfo";
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata';
-import { UserDataModel } from '../../database/mongodb/UserData';
 
 const routes = Router();
 
@@ -62,8 +58,10 @@ routes.put('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq;
-  await OperationService.deleteOperation(DBMySQL, token_info, operation_seq)
+  const delete_result = await OperationService.deleteOperation(DBMySQL, token_info, operation_seq)
   const output = new StdObject();
+  output.add('result', delete_result)
+  output.add('operation_seq', operation_seq)
   res.json(output);
 }));
 
@@ -274,11 +272,9 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.LOGIN_USER),
   const operation_seq = req.params.operation_seq;
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const storage_seq = operation_info.storage_seq;
-
+  const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_REFER)
   const output = new StdObject();
-  // output.add('video_files', await new VideoFileModel(DBMySQL).videoFileList(storage_seq));
-  output.add('refer_files', await new ReferFileModel(DBMySQL).referFileList(storage_seq));
+  output.add('refer_files', refer_file_list);
 
   res.json(output);
 }));
@@ -308,15 +304,11 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Rol
 
   const output = new StdObject();
 
-  await DBMySQL.transaction(async(transaction) => {
-    const { operation_info } = await OperationService.getOperationInfo(transaction, operation_seq, token_info);
-    const storage_seq = operation_info.storage_seq;
-    if (file_type !== 'refer') {
-      await new VideoFileModel(transaction).deleteSelectedFiles(file_seq_list);
-    } else {
-      await new ReferFileModel(transaction).deleteSelectedFiles(file_seq_list);
-    }
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
 
+  await DBMySQL.transaction(async(transaction) => {
+    const storage_seq = operation_info.storage_seq;
+    await OperationFileService.deleteFileList(transaction, operation_info, file_seq_list, file_type);
     await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type);
   });
 

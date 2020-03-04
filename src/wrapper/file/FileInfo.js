@@ -1,37 +1,7 @@
 import Constants from '../../constants/constants';
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
-
-/**
- * @swagger
- * definitions:
- *  FileInfo:
- *    type: "object"
- *    description: "파일 정보"
- *    properties:
- *      seq:
- *        type: "integer"
- *        description: "파일 고유 번호"
- *      storage_seq:
- *        type: "integer"
- *        description: "저장공간 고유 번호"
- *      file_name:
- *        type: "string"
- *        description: "파일 이름"
- *      file_size:
- *        type: "string"
- *        description: "파일 용량"
- *      file_type:
- *        type: "string"
- *        description: "파일 종류"
- *      url:
- *        type: "string"
- *        description: "파일 다운로드 url"
- *      thumbnail_url:
- *        type: "string"
- *        description: "썸네일 url"
- *
- */
+import ServiceConfig from '../../service/service-config'
 
 export default class FileInfo extends JsonWrapper {
   constructor(data = null, private_keys = []) {
@@ -41,33 +11,41 @@ export default class FileInfo extends JsonWrapper {
     ]);
   }
 
-  setUrl = (media_root) => {
+  setUrl = () => {
+    const cloud_url = ServiceConfig.get('static_cloud_prefix')
+    const static_url = ServiceConfig.get('static_storage_prefix')
     if (this.file_path) {
-      this.url = Util.pathToUrl(media_root + this.file_path, false);
+      if (this.is_moved) {
+        this.url = cloud_url + this.file_path
+      } else {
+        this.url = static_url + this.file_path
+      }
     }
     if (this.thumbnail) {
-      this.thumbnail_url = Util.pathToUrl(media_root + this.thumbnail);
+      this.thumbnail_url = static_url + this.thumbnail;
     }
 
     return this;
   };
 
   getByUploadFileInfo = async (upload_file_info, media_path) => {
-    this.setIgnoreEmpty(true);
+    this.setIgnoreEmpty(true)
 
     this.setKeys([
-      'file_name', 'file_size', 'file_type', 'file_path'
-    ]);
+      'file_name', 'file_size', 'file_type', 'file_path', 'is_moved'
+    ])
 
-    this.file_name = upload_file_info.originalname;
-    this.file_size = upload_file_info.size;
-    this.file_path = media_path + Constants.SEP + upload_file_info.new_file_name;
-
-    this.file_type = await Util.getFileType(upload_file_info.path, this.file_name);
+    this.file_name = upload_file_info.originalname
+    this.file_size = upload_file_info.size
+    this.file_path = media_path + upload_file_info.new_file_name
+    this.file_type = await Util.getFileType(upload_file_info.path, this.file_name)
+    if (upload_file_info.is_moved) {
+      this.is_moved = 1
+    }
 
     this.is_empty = false;
 
-    return this;
+    return this
   };
 
   getByFilePath = async (absolute_file_path, media_path, file_name) => {

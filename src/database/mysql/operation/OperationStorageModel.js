@@ -1,5 +1,6 @@
 import Role from '../../../constants/roles'
 import MySQLModel from '../../mysql-model'
+import OperationFileService from '../../../service/operation/OperationFileService'
 import OperationStorageInfo from '../../../wrapper/operation/OperationStorageInfo'
 import VideoFileModel from '../file/VideoFileModel'
 import ReferFileModel from '../file/ReferFileModel'
@@ -40,13 +41,13 @@ export default class OperationStorageModel extends MySQLModel {
   updateUploadFileSize = async (storage_seq, file_type, update_summary=true) => {
     let file_size_info = null;
     let update_params = {};
-    if (file_type === 'all' || file_type === 'video') {
+    if (file_type === OperationFileService.TYPE_ALL || file_type === OperationFileService.TYPE_VIDEO) {
       file_size_info = await new VideoFileModel(this.database).videoFileSummary(storage_seq);
       let total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0;
       update_params.origin_video_size = total_size;
       update_params.origin_video_count = (file_size_info.total_count ? parseInt(file_size_info.total_count) : 0);
     }
-    if (file_type === 'all' || file_type === 'refer') {
+    if (file_type === OperationFileService.TYPE_ALL || file_type === OperationFileService.TYPE_REFER) {
       file_size_info = await new ReferFileModel(this.database).referFileSummary(storage_seq);
       let total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0;
       update_params.refer_file_size = total_size;
