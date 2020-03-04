@@ -225,7 +225,7 @@ const NaverObjectStorageClass = class {
   downloadFile = async (remote_path, remote_file_name, download_directory, download_file_name, bucket_name = null, client = null) => {
     remote_path = Util.removePathSlash(remote_path)
     remote_file_name = Util.removePathSlash(remote_file_name)
-    download_directory = Util.removePathSlash(download_directory)
+    download_directory = Util.removePathLastSlash(download_directory)
     download_file_name = Util.removePathSlash(download_file_name)
     await this.beforeDownload(download_directory, download_file_name)
     const storage_client = this.getStorageClient(client)

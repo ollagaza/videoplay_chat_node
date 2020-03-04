@@ -160,6 +160,8 @@ const NaverArchiveStorageClass = class {
   }
 
   uploadFileOne = async (local_file_path, remote_path, remote_file_name, remote_bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const content_type_header = await this.getContentTypeHeader(local_file_path)
     const bucket = await this.getBucket(remote_bucket_name, client)
     const remote_file_path = remote_file_name !== null ? `${remote_path}/${remote_file_name}` : remote_path
@@ -277,6 +279,8 @@ const NaverArchiveStorageClass = class {
   downloadFile = async (remote_path, remote_file_name, download_directory, download_file_name, bucket_name = null, client = null) => {
     remote_path = Util.removePathSlash(remote_path)
     remote_file_name = Util.removePathSlash(remote_file_name)
+    download_directory = Util.removePathLastSlash(download_directory)
+    download_file_name = Util.removePathSlash(download_file_name)
     const bucket = await this.getBucket(bucket_name, client)
     await this.beforeDownload(download_directory, download_file_name)
     const file_stream = fs.createWriteStream(download_directory + '/' + download_file_name, {flags:'a'})
@@ -311,6 +315,7 @@ const NaverArchiveStorageClass = class {
   }
 
   copyFileToObject = async (archive_path, archive_file_name, object_path, object_file_name, download_directory, archive_bucket_name = null, object_bucket_name = null, client = null) => {
+    download_directory = Util.removePathSlash(download_directory)
     const download_file_name = Util.getRandomId()
     const download_file_path = download_directory + '/' + download_file_name
     log.debug(this.log_prefix, '[copyFileToObject]', `download to ${download_file_path}. origin: ${archive_bucket_name}/${archive_path}/${archive_file_name}, copy: ${object_bucket_name}/${object_path}/${object_file_name}`)
@@ -323,6 +328,8 @@ const NaverArchiveStorageClass = class {
   }
 
   deleteFile = async (remote_path, remote_file_name = null, bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const storage_client = await this.getStorageClient(client)
     const bucket = await this.getBucket(bucket_name, storage_client)
     const target_path = remote_file_name ? `${remote_path}/${remote_file_name}` : `${remote_path}`
@@ -368,7 +375,7 @@ const NaverArchiveStorageClass = class {
     let query = null
     if (remote_path) {
       query = {}
-      query.prefix = `${remote_path.replace(/\/$/g, '')}/`,
+      query.prefix = `${Util.removePathLastSlash(remote_path)}/`
       query.delimiter  = `/`
     }
     const extra_header = {}
@@ -381,9 +388,9 @@ const NaverArchiveStorageClass = class {
         const content_info = folder_object_list[i]
         if (this.isSubDirectory(content_info)) {
           log.debug(this.log_prefix, '[getFolderObjectList]', content_info, content_info.subdir)
-          directory_list.push(content_info.subdir.replace(/[/]+$/, ''))
+          directory_list.push(Util.removePathLastSlash(content_info.subdir))
         } else if (this.isDirectory(content_info)) {
-          directory_list.push(content_info.name.replace(/[/]+$/, ''))
+          directory_list.push(Util.removePathLastSlash(content_info.name))
         } else {
           file_list.push(content_info.name)
         }
