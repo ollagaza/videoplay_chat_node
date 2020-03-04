@@ -12,11 +12,11 @@ export default class FileInfo extends JsonWrapper {
   }
 
   setUrl = () => {
-    const cdn_url = ServiceConfig.get('cdn_url')
+    const cloud_url = ServiceConfig.get('static_cloud_prefix')
     const static_url = ServiceConfig.get('static_storage_prefix')
     if (this.file_path) {
       if (this.is_moved) {
-        this.url = cdn_url + this.file_path
+        this.url = cloud_url + this.file_path
       } else {
         this.url = static_url + this.file_path
       }

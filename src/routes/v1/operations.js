@@ -270,7 +270,7 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.LOGIN_USER),
   const operation_seq = req.params.operation_seq;
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info)
+  const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_REFER)
   const output = new StdObject();
   output.add('refer_files', refer_file_list);
 

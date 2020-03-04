@@ -13,9 +13,10 @@ export default class ReferFileModel extends MySQLModel {
     this.log_prefix = '[ReferFileModel]'
   }
 
-  createReferFile = async (upload_file_info, storage_seq, media_path) => {
+  createReferFile = async (upload_file_info, storage_seq, media_path, is_moved = false) => {
     const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, media_path)).toJSON();
     file_info.storage_seq = storage_seq;
+    file_info.is_moved = is_moved
 
     return await this.create(file_info, 'seq');
   };

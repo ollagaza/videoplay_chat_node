@@ -50,13 +50,13 @@ const OperationFileServiceClass = class {
 
   getReferFileList = async (database, operation_info) => {
     const refer_file_model = this.getReferFileModel(database)
-    const result_list = refer_file_model.getReferFileList(operation_info.storage_seq)
+    const result_list = await refer_file_model.getReferFileList(operation_info.storage_seq)
     return this.getFileInfoList(result_list)
   }
 
   getVideoFileList = async (database, operation_info) => {
     const video_file_model = this.getVideoFileModel(database)
-    const result_list = video_file_model.getVideoFileList(operation_info.storage_seq)
+    const result_list = await video_file_model.getVideoFileList(operation_info.storage_seq)
     return this.getFileInfoList(result_list)
   }
 
@@ -75,8 +75,15 @@ const OperationFileServiceClass = class {
     const refer_file_model = this.getReferFileModel(database)
 
     const file_name = upload_file_info.new_file_name
-    await NaverObjectStorageService.moveFile(upload_file_info.path, directory_info.media_refer, file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
-    return await refer_file_model.createReferFile(upload_file_info, operation_info.storage_seq, directory_info.media_refer)
+    let is_moved = false
+    try {
+      await NaverObjectStorageService.moveFile(upload_file_info.path, directory_info.media_refer, file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
+      is_moved = true
+    } catch (error) {
+      log.error(this.log_prefix, '[createReferFileInfo]', 'NaverObjectStorageService.moveFile', error)
+    }
+
+    return await refer_file_model.createReferFile(upload_file_info, operation_info.storage_seq, directory_info.media_refer, is_moved)
   }
 
   createVideoFileInfo = async (database, operation_info, upload_file_info, create_thumbnail = false) => {

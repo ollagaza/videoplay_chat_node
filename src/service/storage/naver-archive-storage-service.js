@@ -128,6 +128,8 @@ const NaverArchiveStorageClass = class {
   }
 
   uploadFolder = async (local_file_path, remote_path, remote_bucket_name = null, client = null) => {
+    local_file_path = Util.removePathLastSlash(local_file_path)
+    remote_path = Util.removePathSlash(remote_path)
     const storage_client = await this.getStorageClient(client)
     const file_list = await Util.getDirectoryFileList(local_file_path)
     for (let i = 0; i < file_list.length; i++) {
@@ -145,6 +147,8 @@ const NaverArchiveStorageClass = class {
     if (!(await Util.fileExists(local_file_path))) {
       return false
     }
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const storage_client = await this.getStorageClient(client)
     const file_info = await Util.getFileStat(local_file_path)
     log.debug(this.log_prefix, '[uploadFile]', `remote path: ${remote_path}, remote_file_name path: ${remote_file_name}, local_file_path: ${local_file_path}`, file_info.size, file_info.size > Constants.MAX_ARCHIVE_FILE_SIZE)
@@ -191,6 +195,8 @@ const NaverArchiveStorageClass = class {
   }
 
   getMetadata = async (remote_path, remote_file_name = null, bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const storage_client = await this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
     const target_path = remote_file_name ? `${target_bucket_name}/${remote_path}/${remote_file_name}` : `${target_bucket_name}/${remote_path}`
@@ -269,6 +275,8 @@ const NaverArchiveStorageClass = class {
   }
 
   downloadFile = async (remote_path, remote_file_name, download_directory, download_file_name, bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const bucket = await this.getBucket(bucket_name, client)
     await this.beforeDownload(download_directory, download_file_name)
     const file_stream = fs.createWriteStream(download_directory + '/' + download_file_name, {flags:'a'})

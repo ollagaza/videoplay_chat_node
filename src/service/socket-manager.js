@@ -7,7 +7,7 @@ import ServiceConfig from './service-config';
 const SocketManagerClass = class extends EventEmitter {
   constructor () {
     super()
-    this.log_prefix = '[SocketManagerClass]'
+    this.log_prefix = '[SocketManager]'
   }
 
   init = async() => {
@@ -29,31 +29,31 @@ const SocketManagerClass = class extends EventEmitter {
     })
 
     this.socket.on('connect', () => {
-      log.d(null, 'Connect socket.id : ', this.socket.id);
+      log.debug(this.log_prefix, '[connect]', 'Connect socket.id : ', this.socket.id);
     })
 
     this.socket.on('disconnet', () => {
-      log.d(null, 'Disconnect socket.id : ', this.socket.id);
+      log.debug(this.log_prefix, '[disconnet]', 'Disconnect socket.id : ', this.socket.id);
     })
 
     this.socket.on('reconnect', (attemptNumber) => {
-      log.d(null, 'reconnect attemptNum:', attemptNumber, ' Socket ID:', this.socket.id);
+      log.debug(this.log_prefix, '[reconnect]', 'reconnect attemptNum:', attemptNumber, ' Socket ID:', this.socket.id);
     })
 
     this.socket.on('reconnecting', (attemptNumber) => {
-      log.d(null, 'reconnecting attemptNum:', attemptNumber, ' Socket ID:', this.socket.id);
+      log.debug(this.log_prefix, '[reconnecting]', 'reconnecting attemptNum:', attemptNumber, ' Socket ID:', this.socket.id);
     })
 
     this.socket.on('reconnect_error', (error) => {
-      log.d(null, 'Reconnect Error:', error);
+      log.debug(this.log_prefix, '[reconnect_error]', 'Reconnect Error:', error);
     })
 
     this.socket.on('error', (error) => {
-      log.d(null, 'Error:', error);
+      log.debug(this.log_prefix, '[error]', 'Error:', error);
     })
 
     this.socket.on('connect_error', (error) => {
-      log.d(null, 'Connect Error:', error);
+      log.debug(this.log_prefix, '[connect_error]', 'Connect Error:', error);
     })
 
     this.socket.on('status', this.onStatus)

@@ -840,7 +840,19 @@ const storate = multer.diskStorage({
   },
 })
 
+const remove_path_slash_regex = /^[/]*(.+)([^/]+)[/]*$/
+const removePathSlash = (path) => {
+  if (!path) return ''
+  return path.replace(remove_path_slash_regex, '$1$2')
+}
+const removePathLastSlash = (path) => {
+  if (!path) return ''
+  return path.replace(/\/+$/, '');
+}
+
 export default {
+  removePathSlash,
+  removePathLastSlash,
   "common_path_upload" : multer({ storage : storate }),
   "removePathSEQ": removePathSEQ,
   "getMediaDirectory": getMediaDirectory,

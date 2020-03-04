@@ -63,6 +63,8 @@ const NaverObjectStorageClass = class {
 
   uploadFolder = async (local_file_path, remote_path, remote_bucket_name = null) => {
     const file_list = await Util.getDirectoryFileList(local_file_path)
+    local_file_path = Util.removePathLastSlash(local_file_path)
+    remote_path = Util.removePathSlash(remote_path)
     let folder_file_list = []
     let upload_file_list = []
     for (let i = 0; i < file_list.length; i++) {
@@ -86,6 +88,8 @@ const NaverObjectStorageClass = class {
     if (!(await Util.fileExists(local_file_path))) {
       return false
     }
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
     const remote_file_path = remote_file_name !== null ? `${remote_path}/${remote_file_name}` : remote_path
@@ -100,6 +104,8 @@ const NaverObjectStorageClass = class {
   }
 
   getMetadata = async (remote_path, remote_file_name = null, bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
     const target_path = remote_file_name ? `${remote_path}/${remote_file_name}` : `${remote_path}`
@@ -171,6 +177,8 @@ const NaverObjectStorageClass = class {
   }
 
   deleteFile = async (remote_path, remote_file_name = null, bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
     const storage_client = this.getStorageClient(client)
     const target_path = remote_file_name ? `${remote_path}/${remote_file_name}` : `${remote_path}`
     log.debug(this.log_prefix, '[deleteFile]', `remote_path: ${remote_path}, remote_file_name: ${remote_file_name}, target_path: ${target_path}`);
@@ -189,6 +197,7 @@ const NaverObjectStorageClass = class {
   }
 
   downloadFolder = async (remote_path, download_directory, bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
     const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client);
@@ -214,6 +223,10 @@ const NaverObjectStorageClass = class {
   }
 
   downloadFile = async (remote_path, remote_file_name, download_directory, download_file_name, bucket_name = null, client = null) => {
+    remote_path = Util.removePathSlash(remote_path)
+    remote_file_name = Util.removePathSlash(remote_file_name)
+    download_directory = Util.removePathSlash(download_directory)
+    download_file_name = Util.removePathSlash(download_file_name)
     await this.beforeDownload(download_directory, download_file_name)
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
@@ -265,6 +278,7 @@ const NaverObjectStorageClass = class {
   }
 
   copyFileToArchive = async (object_path, object_file_name, archive_path, archive_file_name, download_directory, object_bucket_name = null, archive_bucket_name = null, client = null) => {
+    download_directory = Util.removePathSlash(download_directory)
     const download_file_name = Util.getRandomId()
     const download_file_path = download_directory + '/' + download_file_name
     log.debug(this.log_prefix, '[copyFileToObject]', `download to ${download_file_path}. origin: ${object_bucket_name}/${object_path}/${object_file_name}, copy: ${archive_bucket_name}/${archive_path}/${archive_file_name}`)
@@ -281,7 +295,7 @@ const NaverObjectStorageClass = class {
 
     const params = {
       Bucket: target_bucket_name,
-      Prefix: `${remote_path.replace(/\/$/g, '')}/`,
+      Prefix: `${Util.removePathLastSlash(remote_path)}/`,
       Delimiter: '/'
     };
     const directory_list = [];
@@ -292,7 +306,7 @@ const NaverObjectStorageClass = class {
       if (folder_object_list.CommonPrefixes) {
         for (let i = 0; i < folder_object_list.CommonPrefixes.length; i++) {
           const content_info = folder_object_list.CommonPrefixes[i]
-          directory_list.push(content_info.Prefix.replace(/[/]+$/, ''))
+          directory_list.push(Util.removePathLastSlash(content_info.Prefix))
         }
       }
       if (folder_object_list.Contents) {

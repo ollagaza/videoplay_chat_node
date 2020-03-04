@@ -194,7 +194,7 @@ const OperationServiceClass = class {
     const media_directory = ServiceConfig.get('media_root') + media_path;
     const trans_server_root = ServiceConfig.get('trans_server_root')
     const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
-    const cdn_url = ServiceConfig.get('cdn_url') + media_path
+    const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
     const content_path = operation_info.content_id + '/'
     return {
       "root": media_directory,
