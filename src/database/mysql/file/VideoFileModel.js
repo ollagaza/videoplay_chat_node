@@ -17,10 +17,7 @@ export default class VideoFileModel extends MySQLModel {
     this.log_prefix = '[VideoFileModel]'
   }
 
-  createVideoFile = async (upload_file_info, storage_seq, media_path) => {
-    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, media_path)).toJSON();
-    file_info.storage_seq = storage_seq;
-
+  createVideoFile = async (file_info) => {
     return await this.create(file_info, 'seq');
   };
 
@@ -29,17 +26,10 @@ export default class VideoFileModel extends MySQLModel {
     return await this.findOne({storage_seq: storage_seq, status: 'Y'}, select);
   };
 
-  videoFileList = async (storage_seq) => {
-    const service_info = ServiceConfig.getServiceInfo();
-    const result_list = await this.find({storage_seq: storage_seq, status: 'Y'});
-    const list = [];
-    if (result_list) {
-      for (let i = 0; i < result_list.length; i++) {
-        list.push(new FileInfo(result_list[i]).setUrl(service_info.static_storage_prefix));
-      }
-    }
-    return list;
+  getVideoFileList = async (storage_seq) => {
+    return await this.find({ storage_seq: storage_seq, status: 'Y' });
   };
+
 
   updateThumb = async (file_seq, thumbnail_path) => {
     await this.update({seq: file_seq}, {thumbnail: thumbnail_path})
@@ -50,11 +40,21 @@ export default class VideoFileModel extends MySQLModel {
   };
 
   deleteSelectedFiles = async (file_seq_list) => {
+    const query = this.database
+      .select(this.selectable_fields)
+      .from(this.table_name)
+      .whereIn('seq', file_seq_list);
+    const result_list = await query;
+    if (!result_list || result_list.length <= 0) {
+      return [];
+    }
+
     await this.database
       .from(this.table_name)
       .whereIn('seq', file_seq_list)
       .del();
-    return true;
+
+    return result_list;
   };
 
   createVideoFileByFileInfo = async (operation_info, storage_seq, file_info, make_thumbnail = true) => {

@@ -1,14 +1,14 @@
 import MongoDB from '../database/mongo-db'
 import ServiceConfig from '../service/service-config'
 import CodeSceneService from './code/CodeSceneService'
+import NaverArchiveStorageService from './storage/naver-archive-storage-service'
+import NaverObjectStorageService from './storage/naver-object-storage-service'
 import SocketManager from './socket-manager'
-import BaseUtil from '../utils/baseutil'
+import Util from '../utils/baseutil'
 
-const initDirectorys = async () => {
-  const upload_full_path = ServiceConfig.get('common_root');
-  if (!(await BaseUtil.fileExists(upload_full_path))) {
-    await BaseUtil.createDirectory(upload_full_path);
-  }
+const initDirectories = async () => {
+  await Util.createDirectory(ServiceConfig.get('common_root'));
+  await Util.createDirectory(ServiceConfig.get('temp_directory_root'));
 };
 
 export default {
@@ -16,7 +16,9 @@ export default {
     await MongoDB.init()
     await ServiceConfig.init()
     await CodeSceneService.init()
-    await initDirectorys()
-    // await SocketManager.init()
+    await initDirectories()
+    await SocketManager.init()
+    await NaverArchiveStorageService.init()
+    await NaverObjectStorageService.init()
   }
 }
