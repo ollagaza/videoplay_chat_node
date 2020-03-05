@@ -1,8 +1,9 @@
 import EventEmitter from 'events'
-import io from 'socket.io-client';
-import log from '../libs/logger';
-import Util from '../utils/baseutil';
-import ServiceConfig from './service-config';
+import io from 'socket.io-client'
+import log from '../libs/logger'
+import Util from '../utils/baseutil'
+import ServiceConfig from './service-config'
+// import GroupService from './member/GroupService'
 
 const SocketManagerClass = class extends EventEmitter {
   constructor () {
@@ -86,13 +87,32 @@ const SocketManagerClass = class extends EventEmitter {
   }
 
   sendToFrontOne = async (user_id, data = null) => {
-    const request_data = data ? data : {}
-    request_data.uid = user_id
-    this.socket.emit('sendFrontMsg', request_data);
+    this.socket.emit('sendFrontMsg', user_id, data);
+  }
+
+  sendToFrontMulti = async (user_id_list, data = null) => {
+    this.socket.emit('sendMsgMulti', user_id_list, data);
   }
 
   sendToFrontAll = async (request_data) => {
     this.socket.emit('sendFrontGloMsg', request_data);
+  }
+
+  onGroupStorageInfoChange = async (group_seq, user_id_list, title, message, sub_type = null, click_type = null, operation_seq = null) => {
+    const data = {
+      type: 'groupStorageInfoChange',
+      group_seq
+    }
+    if (sub_type) data.sub_type = sub_type
+    if (click_type) data.click_type = click_type
+    if (operation_seq) data.operation_seq = operation_seq
+    const socket_data = {
+      type: 'pushNotice',
+      title,
+      message,
+      data
+    }
+    await this.sendToFrontMulti(user_id_list, socket_data)
   }
 }
 

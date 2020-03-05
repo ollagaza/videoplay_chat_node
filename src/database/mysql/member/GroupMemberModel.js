@@ -181,6 +181,28 @@ export default class GroupMemberModel extends MySQLModel {
     return result_list
   }
 
+  getActiveGroupMemberIdList = async (group_seq) => {
+    const filter = {
+      'group_member_info.group_seq': group_seq,
+      'group_member_info.status': 'Y',
+    }
+    this.group_member_id_select = [
+      'member_info.user_id AS user_id'
+    ];
+    const query = this.database.select(this.group_member_id_select)
+    query.from(this.table_name)
+    query.leftOuterJoin('member_info', { "group_member_info.member_seq": "member_info.seq" })
+    query.where(filter)
+    const query_result = await query
+    const user_id_list = []
+    if (query_result && query_result.length) {
+      for (let i = 0; i < query_result.length; i++) {
+        user_id_list.push(query_result[i].user_id)
+      }
+    }
+    return user_id_list
+  }
+
   getGroupMemberCount = async (group_seq, status) => {
     const select = ['COUNT(*) AS total_count']
     const filter = {
@@ -266,6 +288,17 @@ export default class GroupMemberModel extends MySQLModel {
   updateStorageUsedSize = async (filter, used_storage_size) => {
     const update_params = {
       used_storage_size,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update(filter, update_params)
+  }
+
+  updateGroupMemberMaxStorageSize = async (group_seq, max_storage_size) => {
+    const filter = {
+      group_seq,
+    }
+    const update_params = {
+      max_storage_size,
       modify_date: this.database.raw('NOW()')
     }
     return await this.update(filter, update_params)

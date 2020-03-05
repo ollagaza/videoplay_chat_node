@@ -764,6 +764,26 @@ const addDay = (day, format = 'YYYY-MM-DD') => {
   return calc_date.format(format)
 }
 
+const addMonth = (month, format = 'YYYY-MM-DD') => {
+  const calc_date = moment().add(month, 'months')
+  if (format == null) {
+    return calc_date.toDate()
+  } else if (format === Constants.TIMESTAMP) {
+    return calc_date.unix()
+  }
+  return calc_date.format(format)
+}
+
+const addYear = (year, format = 'YYYY-MM-DD') => {
+  const calc_date = moment().add(year, 'years')
+  if (format == null) {
+    return calc_date.toDate()
+  } else if (format === Constants.TIMESTAMP) {
+    return calc_date.unix()
+  }
+  return calc_date.format(format)
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.resolve(req.upload_directory));
@@ -866,6 +886,8 @@ export default {
   "currentFormattedDate": (format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(new Date().getTime(), format); },
   'getCurrentTimestamp': getCurrentTimestamp,
   'addDay': addDay,
+  'addMonth': addMonth,
+  'addYear': addYear,
 
   "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name;
