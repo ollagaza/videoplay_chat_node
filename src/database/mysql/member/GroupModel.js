@@ -2,6 +2,7 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import GroupInfo from '../../../wrapper/member/GroupInfo'
 import log from '../../../libs/logger'
+import DBMySQL from "../../knex-mysql";
 
 export default class GroupModel extends MySQLModel {
   constructor (database) {
@@ -90,5 +91,18 @@ export default class GroupModel extends MySQLModel {
       modify_date: this.database.raw('NOW()')
     }
     return await this.update(filter, update_params)
+  }
+
+  updatePayment_to_Group_info = async (filter, pay_code, storage_size, expire_month_code) => {
+    const group_info = {
+      pay_code: pay_code,
+      storage_size: storage_size,
+      start_date: DBMySQL.raw('NOW()'),
+      expire_date: expire_month_code === 'year' ? DBMySQL.raw('DATE_ADD(NOW(), INTERVAL 12 MONTH)') : DBMySQL.raw('DATE_ADD(NOW(), INTERVAL 1 MONTH)'),
+      modify_date: DBMySQL.raw('NOW()'),
+    };
+
+    const update_result = await this.update(filter, group_info);
+    return update_result;
   }
 }

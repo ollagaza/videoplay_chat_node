@@ -1,6 +1,10 @@
+import log from '../../libs/logger';
+import request from 'request';
 import DBMySQL from '../../database/knex-mysql'
 import PaymentModel from '../../database/mysql/payment/PaymentModel'
 import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel'
+import Payment_Subscribe_List_Model from '../../database/mysql/payment/Payment_Subscribe_List_Model'
+import Serviceconfig from '../service-config';
 
 const PaymentServiceClass = class {
   constructor () {
@@ -54,6 +58,43 @@ const PaymentServiceClass = class {
     result = await payment_result_model.putPaymentModify(pg_data);
 
     return result;
+  };
+
+  getPayment_subscribe_list = async (database) => {
+    let result = null;
+    const payment_result_model = this.getPaymentResultModel(database);
+    result = await payment_result_model.putPaymentModify(pg_data);
+
+    return result;
+  };
+
+  getImportToken = async () => {
+    const Options = {
+      headers: {'Content-Type': 'application/json'},
+      url: 'https://api.iamport.kr/users/getToken',
+      body: {
+        imp_key: Serviceconfig.get('import_api_key'),
+        imp_secret: Serviceconfig.get('import_api_secret'),
+      }
+    };
+    request.post(Options, (err, res, result) => {
+      log.debug(result);
+      return result.access_token;
+    });
+  };
+
+  sendIamport_subScribe = async () => {
+    const Options = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': this.getImportToken(),
+      },
+      url: 'https://api.iamport.kr/subscribe/onetime',
+      body: {}
+    };
+    request.post(Options, (err, res, result) => {
+      log.debug(result);
+    });
   };
 }
 

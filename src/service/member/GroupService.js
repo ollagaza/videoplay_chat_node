@@ -587,6 +587,16 @@ const GroupServiceClass = class {
       group_summary
     }
   }
+
+  // 아래 함수는 결재 완료 후 group_info에 필요한 데이터만 업데이트 용으로 사용합니다.
+  // 추 후 group_member에도 업데이트 할 예정이므로 파라미터만 추가 해 놓습니다.
+  // 2020.03.04 NJH
+  updatePaymenttoGroup = async (database, filter, pay_code, storage_size, expire_month_code) => {
+    const group_info_model = this.getGroupModel(database);
+    const result = await group_info_model.updatePayment_to_Group_info(filter, pay_code, storage_size, expire_month_code)
+
+    return result;
+  }
 }
 
 const group_service = new GroupServiceClass()
