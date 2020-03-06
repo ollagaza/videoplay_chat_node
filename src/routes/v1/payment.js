@@ -68,6 +68,9 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const token_info = req.token_info;
     const member_seq = token_info.getId();
 
+
+    log.d(req, '[req.body]', req.body)
+
     const pg_data = req.body.pg_data;
     const pay_data = req.body.pay_data;
     const moneys = req.body.moneys;
@@ -76,6 +79,7 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const payment_update = await PaymentService.updatePayment(DBMySQL, pg_data);
 
     if (pg_data.success) {
+      log.d(req, '[pg_data.success] - pay_data', pay_data)
       const pay_code = pay_data.code;
       let storage_size = 0
       const expire_month_code = moneys.pay;
