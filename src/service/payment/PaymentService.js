@@ -1,9 +1,8 @@
 import log from '../../libs/logger';
-import request from 'request';
 import DBMySQL from '../../database/knex-mysql'
 import PaymentModel from '../../database/mysql/payment/PaymentModel'
 import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel'
-import Payment_Subscribe_List_Model from '../../database/mysql/payment/Payment_Subscribe_List_Model'
+import Payment_SubscribeModel from '../../database/mysql/payment/Payment_SubscribeModel'
 import Serviceconfig from '../service-config';
 
 const PaymentServiceClass = class {
@@ -23,6 +22,13 @@ const PaymentServiceClass = class {
       return new PaymentResultModel(database)
     }
     return new PaymentResultModel(DBMySQL)
+  }
+
+  getSubscribeModel = (database = null) => {
+    if (database) {
+      return new Payment_SubscribeModel(database)
+    }
+    return new Payment_SubscribeModel(DBMySQL)
   }
 
   getPaymentList = async (database, lang='Kor') => {
@@ -60,41 +66,25 @@ const PaymentServiceClass = class {
     return result;
   };
 
-  getPayment_subscribe_list = async (database) => {
+  insertSubscribe = async (database, pg_data) => {
     let result = null;
-    const payment_result_model = this.getPaymentResultModel(database);
-    result = await payment_result_model.putPaymentModify(pg_data);
+    const subscribeModel = this.getSubscribeModel(database);
+    result = await subscribeModel.putSubscribeCreate(pg_data);
 
     return result;
   };
 
-  getImportToken = async () => {
-    const Options = {
-      headers: {'Content-Type': 'application/json'},
-      url: 'https://api.iamport.kr/users/getToken',
-      body: {
-        imp_key: Serviceconfig.get('import_api_key'),
-        imp_secret: Serviceconfig.get('import_api_secret'),
-      }
-    };
-    request.post(Options, (err, res, result) => {
-      log.debug(result);
-      return result.access_token;
-    });
+  updateSubscribe = async (database, pg_data) => {
+    let result = null;
+    const subscribeModel = this.getSubscribeModel(database);
+    result = await subscribeModel.putSubscribeModify(pg_data);
+
+    return result;
   };
 
-  sendIamport_subScribe = async () => {
-    const Options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': this.getImportToken(),
-      },
-      url: 'https://api.iamport.kr/subscribe/onetime',
-      body: {}
-    };
-    request.post(Options, (err, res, result) => {
-      log.debug(result);
-    });
+  getSubscribe_list = async (database, filters) => {
+    let result = null;
+    return result;
   };
 }
 

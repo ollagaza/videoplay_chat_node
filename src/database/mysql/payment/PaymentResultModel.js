@@ -40,7 +40,7 @@ export default class PaymentResultModel extends MySQLModel {
     if (typeof pg_data.custom_data !== 'string') {
       pg_data.custom_data = JSON.stringify(pg_data.custom_data);
     }
-
+    pg_data.paid_at = pg_data.paid_at === undefined ? null : this.database.raw(`FROM_UNIXTIME(${pg_data.paid_at})`)
     return await this.create(pg_data);
   };
 
