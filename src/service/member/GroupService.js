@@ -663,6 +663,7 @@ const GroupServiceClass = class {
     const payment_info = {
       pay_code,
       storage_size,
+      status: pay_code === 'free' ? 'F' : 'Y',
       start_date,
       expire_date
     }
@@ -671,8 +672,8 @@ const GroupServiceClass = class {
     let group_info = null
     await database.transaction(async(transaction) => {
       const group_model = this.getGroupModel(transaction);
-      group_info = group_model.getGroupInfoByMemberSeqAndGroupType(member_seq, group_type)
-      if (group_info) {
+      group_info = await group_model.getGroupInfoByMemberSeqAndGroupType(member_seq, group_type)
+      if (group_info && !group_info.isEmpty()) {
         await group_model.changePlan(group_info, payment_info)
       } else {
         if (group_type === 'G') {
