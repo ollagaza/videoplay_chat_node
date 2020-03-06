@@ -7,6 +7,7 @@ import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import MemberService from './MemberService'
 import OperationService from '../operation/OperationService'
+import SocketManager from '../socket-manager'
 import GroupModel from '../../database/mysql/member/GroupModel';
 import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
 import SendMail from '../../libs/send-mail'
@@ -231,6 +232,11 @@ const GroupServiceClass = class {
     return await group_member_model.getActiveGroupMemberIdList(group_seq)
   }
 
+  getAdminGroupMemberIdList = async (database, group_seq) => {
+    const group_member_model = this.getGroupMemberModel(database)
+    return await group_member_model.getAdminGroupMemberIdList(group_seq)
+  }
+
   inviteGroupMembers = async (database, group_member_info, member_info, request_body, service_domain) => {
     const group_seq = group_member_info.group_seq
     log.debug(this.log_prefix, '[inviteGroupMembers]', group_member_info.toJSON(), member_info.toJSON(), request_body, service_domain)
@@ -393,12 +399,19 @@ const GroupServiceClass = class {
     return output
   }
 
-  joinGroup = async (database, invite_seq, member_seq, invite_code) => {
+  joinGroup = async (database, invite_seq, member_info, invite_code) => {
+    const member_seq = member_info.seq
     invite_code = `${invite_code}`.toUpperCase()
     const group_member_model = this.getGroupMemberModel(database)
     const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
 
     await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size)
+
+    const message_info = {
+      title: '신규 회원 가입',
+      message: `'${member_info.user_name}'님이 '${group_invite_info.group_name}'팀에 가입하셨습니다.`
+    }
+    await this.noticeGroupAdmin(group_invite_info.group_seq, null, message_info)
 
     return group_invite_info.group_seq
   }
@@ -411,13 +424,19 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database)
     await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_ADMIN)
 
+    const title = `'${group_member_info.group_name}'팀의 SurgStory 관리자가 되었습니다.`
+    const message_info = {
+      title: '팀 관리자 권한 변경',
+      message: title
+    }
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, null, message_info)
+
     if (!group_member_info.invite_email) {
       return
     }
 
     (
       async () => {
-        const title = `${group_member_info.group_name}의 SurgStory 관리자가 되었습니다.`
         const template_data = {
           service_domain,
           group_name: group_member_info.group_name,
@@ -438,6 +457,14 @@ const GroupServiceClass = class {
     }
     const group_member_model = this.getGroupMemberModel(database)
     await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_NORMAL)
+
+    const title = `'${group_member_info.group_name}'팀의 SurgStory 관리자 권한이 해제되었습니다.`
+    const message_info = {
+      title: '팀 관리자 권한 변경',
+      message: title,
+      notice_type: 'alert'
+    }
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, null, message_info)
   }
 
   deleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, is_delete_operation= true) => {
@@ -456,13 +483,20 @@ const GroupServiceClass = class {
     await group_member_model.banMember(group_member_seq, group_member_info.member_seq, used_storage_size)
     await this.updateGroupUsedStorage(database, group_seq)
 
+    const title = `${group_member_info.group_name}의 SurgStory 팀원에서 제외되었습니다.`
+    const message_info = {
+      title: '팀 사용 불가',
+      message: title,
+      notice_type: 'alert'
+    }
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroupForce', message_info)
+
     if (!group_member_info.invite_email) {
       return
     }
 
     (
       async () => {
-        const title = `${group_member_info.group_name}의 Surgstory 팀원에서 제외되었습니다.`
         const template_data = {
           service_domain,
           group_name: group_member_info.group_name,
@@ -478,13 +512,20 @@ const GroupServiceClass = class {
 
   unDeleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
     await this.restoreMemberState(database, group_member_info, group_member_seq)
+
+    const title = `${group_member_info.group_name}의 SurgStory 팀원으로 복원되었습니다.`
+    const message_info = {
+      title: title,
+      message: '그룹을 선택하려면 클릭하세요.'
+    }
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroup', message_info)
+
     if (!group_member_info.invite_email) {
       return
     }
 
     (
       async () => {
-        const title = `${group_member_info.group_name}의 Surgstory 팀원으로 복원되었습니다.`
         const template_data = {
           service_domain,
           group_name: group_member_info.group_name,
@@ -506,13 +547,20 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database)
     await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE);
 
+    const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단 되었습니다.`
+    const message_info = {
+      title: '팀 사용 불가',
+      message: title,
+      notice_type: 'alert'
+    }
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroupForce', message_info)
+
     if (!group_member_info.invite_email) {
       return
     }
 
     (
       async () => {
-        const title = `${group_member_info.group_name}의 SurgStory 사용이 일시중단 되었습니다.`
         const template_data = {
           service_domain,
           group_name: group_member_info.group_name,
@@ -528,6 +576,12 @@ const GroupServiceClass = class {
 
   unPauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
     await this.restoreMemberState(database, group_member_info, group_member_seq);
+    const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단이 해제 되었습니다.`
+    const message_info = {
+      title: title,
+      message: '그룹을 선택하려면 클릭하세요.'
+    }
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroup', message_info)
 
     if (!group_member_info.invite_email) {
       return
@@ -535,7 +589,6 @@ const GroupServiceClass = class {
 
     (
       async () => {
-        const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단이 해제 되었습니다.`
         const template_data = {
           service_domain,
           group_name: group_member_info.group_name,
@@ -638,6 +691,70 @@ const GroupServiceClass = class {
       return Util.addYear(1, Constants.TIMESTAMP)
     }
     return Util.addMonth(1, Constants.TIMESTAMP)
+  }
+
+  noticeGroupAdmin = async (group_seq, action_type = null, message_info = null) => {
+    const admin_id_list = await this.getAdminGroupMemberIdList(DBMySQL, group_seq)
+    if (!admin_id_list || !admin_id_list.length) {
+      return
+    }
+    const data = {
+      type: 'groupMemberStateChange',
+      group_seq
+    }
+    if (action_type) data.action_type = action_type
+
+    const socket_data = {
+      data
+    }
+    if (message_info) {
+      message_info.type = 'pushNotice'
+      socket_data.message_info = message_info
+    }
+    await SocketManager.sendToFrontMulti(admin_id_list, socket_data)
+  }
+
+  onGroupMemberStateChange = async (group_seq, group_member_seq, action_type = null, message_info = null) => {
+    const group_member_model = this.getGroupMemberModel(DBMySQL)
+    const user_id = await group_member_model.getGroupMemberId(group_member_seq)
+    if (!user_id) {
+      return
+    }
+    const data = {
+      type: 'groupMemberStateChange',
+      group_seq
+    }
+    if (action_type) data.action_type = action_type
+
+    const socket_data = {
+      data
+    }
+    if (message_info) {
+      message_info.type = 'pushNotice'
+      socket_data.message_info = message_info
+    }
+    await SocketManager.sendToFrontOne(user_id, socket_data)
+  }
+
+  onGroupStorageInfoChange = async (group_seq, sub_type = null, action_type = null, operation_seq_list = null, message_info = null) => {
+    const user_id_list = await this.getActiveGroupMemberIdList(DBMySQL, group_seq)
+    if (!user_id_list || !user_id_list.length) return
+    const data = {
+      type: 'groupStorageInfoChange',
+      group_seq
+    }
+    if (sub_type) data.sub_type = sub_type
+    if (action_type) data.action_type = action_type
+    if (operation_seq_list) data.operation_seq_list = operation_seq_list
+
+    const socket_data = {
+      data
+    }
+    if (message_info) {
+      message_info.type = 'pushNotice'
+      socket_data.message_info = message_info
+    }
+    await SocketManager.sendToFrontMulti(user_id_list, socket_data)
   }
 }
 

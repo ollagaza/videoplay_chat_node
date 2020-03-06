@@ -14,7 +14,6 @@ import OperationStorageModel from '../../database/mysql/operation/OperationStora
 import BatchOperationQueueModel from '../../database/mysql/batch/BatchOperationQueueModel'
 import IndexInfo from '../../wrapper/xml/IndexInfo'
 import CloudFileService from '../cloud/CloudFileService'
-import SocketManager from '../socket-manager'
 
 const SyncServiceClass = class {
   constructor () {
@@ -214,13 +213,12 @@ const SyncServiceClass = class {
   }
 
   sendMessageToSocket = async (operation_info) => {
-    const group_seq = operation_info.group_seq
-    const user_id_list = await GroupService.getActiveGroupMemberIdList(null, group_seq)
-    const title = '수술 분석이 완료되었습니다.'
-    const message = `'${operation_info.operation_name}'수술 분석이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
     const sub_type = 'analysisComplete'
-    const click_type = 'moveCuration'
-    await SocketManager.onGroupStorageInfoChange(group_seq, user_id_list, title, message, sub_type, click_type, operation_info.seq)
+    const message_info = {
+      title: '수술 분석이 완료되었습니다.',
+      message: `'${operation_info.operation_name}'수술 분석이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
+    }
+    await GroupService.onGroupStorageInfoChange(operation_info.group_seq, sub_type, 'moveCuration', [ operation_info.seq ], message_info)
   }
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {

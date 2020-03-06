@@ -11,7 +11,6 @@ import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import log from '../../libs/logger'
 import baseutil from '../../utils/baseutil';
-import ServiceConfig from '../../service/service-config';
 import _ from 'lodash';
 
 const routes = Router();

@@ -91,28 +91,11 @@ const SocketManagerClass = class extends EventEmitter {
   }
 
   sendToFrontMulti = async (user_id_list, data = null) => {
-    this.socket.emit('sendMsgMulti', user_id_list, data);
+    this.socket.emit('sendFrontMsgMulti', user_id_list, data);
   }
 
   sendToFrontAll = async (request_data) => {
     this.socket.emit('sendFrontGloMsg', request_data);
-  }
-
-  onGroupStorageInfoChange = async (group_seq, user_id_list, title, message, sub_type = null, click_type = null, operation_seq = null) => {
-    const data = {
-      type: 'groupStorageInfoChange',
-      group_seq
-    }
-    if (sub_type) data.sub_type = sub_type
-    if (click_type) data.click_type = click_type
-    if (operation_seq) data.operation_seq = operation_seq
-    const socket_data = {
-      type: 'pushNotice',
-      title,
-      message,
-      data
-    }
-    await this.sendToFrontMulti(user_id_list, socket_data)
   }
 }
 
