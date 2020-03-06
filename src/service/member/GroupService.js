@@ -654,6 +654,7 @@ const GroupServiceClass = class {
   // 추 후 group_member에도 업데이트 할 예정이므로 파라미터만 추가 해 놓습니다.
   // 2020.03.04 NJH
   updatePaymentToGroup = async (database, filter, pay_code, storage_size, expire_month_code) => {
+    log.debug(this.log_prefix, '[updatePaymentToGroup]', filter, pay_code, storage_size, expire_month_code)
     const member_seq = filter.member_seq
     const group_type = filter.group_type
     const start_date = Util.getCurrentTimestamp()
@@ -662,6 +663,7 @@ const GroupServiceClass = class {
     const payment_info = {
       pay_code,
       storage_size,
+      status: pay_code === 'free' ? 'F' : 'Y',
       start_date,
       expire_date
     }
@@ -670,8 +672,8 @@ const GroupServiceClass = class {
     let group_info = null
     await database.transaction(async(transaction) => {
       const group_model = this.getGroupModel(transaction);
-      group_info = group_model.getGroupInfoByMemberSeqAndGroupType(member_seq, group_type)
-      if (group_info) {
+      group_info = await group_model.getGroupInfoByMemberSeqAndGroupType(member_seq, group_type)
+      if (group_info && !group_info.isEmpty()) {
         await group_model.changePlan(group_info, payment_info)
       } else {
         if (group_type === 'G') {
