@@ -93,7 +93,7 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
         group_type: pay_data.group === 'person' ? 'P' : 'G',
       };
 
-      const groupUpdate = await group_service.updatePaymenttoGroup(DBMySQL, filter, pay_code, storage_size, expire_month_code);
+      const groupUpdate = await group_service.updatePaymentToGroup(DBMySQL, filter, pay_code, storage_size, expire_month_code);
 
       res.json(new StdObject(0,'정상결제 되었습니다.', 200));
     }
