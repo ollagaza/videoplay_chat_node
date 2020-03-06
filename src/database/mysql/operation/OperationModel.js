@@ -6,7 +6,7 @@ import OperationMediaModel from './OperationMediaModel';
 import OperationInfo from '../../../wrapper/operation/OperationInfo';
 
 const join_select = [
-  'operation.*', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
+  'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
 ];

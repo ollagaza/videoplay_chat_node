@@ -1,5 +1,4 @@
 import ServiceConfig from '../../../service/service-config';
-import Constants from '../../../constants/constants'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 
@@ -14,10 +13,7 @@ export default class ReferFileModel extends MySQLModel {
     this.log_prefix = '[ReferFileModel]'
   }
 
-  createReferFile = async (upload_file_info, storage_seq, media_path) => {
-    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, media_path)).toJSON();
-    file_info.storage_seq = storage_seq;
-
+  createReferFile = async (file_info) => {
     return await this.create(file_info, 'seq');
   };
 
@@ -26,16 +22,8 @@ export default class ReferFileModel extends MySQLModel {
     return await this.findOne({storage_seq: storage_seq, status: 'Y'}, select);
   };
 
-  referFileList = async (storage_seq) => {
-    const service_info = ServiceConfig.getServiceInfo();
-    const result_list = await this.find({storage_seq: storage_seq, status: 'Y'});
-    const list = [];
-    if (result_list) {
-      for (let i = 0; i < result_list.length; i++) {
-        list.push(new FileInfo(result_list[i]).setUrl(service_info.static_storage_prefix));
-      }
-    }
-    return list;
+  getReferFileList = async (storage_seq) => {
+    return await this.find({ storage_seq: storage_seq, status: 'Y' });
   };
 
   deleteAll = async (storage_seq) => {
@@ -43,13 +31,13 @@ export default class ReferFileModel extends MySQLModel {
   };
 
   deleteSelectedFiles = async (file_seq_list) => {
-    const oKnex = this.database
+    const query = this.database
       .select(this.selectable_fields)
       .from(this.table_name)
       .whereIn('seq', file_seq_list);
-    const result_list = await oKnex;
+    const result_list = await query;
     if (!result_list || result_list.length <= 0) {
-      return true;
+      return null;
     }
 
     await this.database
@@ -57,17 +45,6 @@ export default class ReferFileModel extends MySQLModel {
       .whereIn('seq', file_seq_list)
       .del();
 
-    (async () => {
-      const service_info = ServiceConfig.getServiceInfo();
-      const media_root = service_info.media_root;
-
-      for (let i = 0; i < result_list.length; i++) {
-        const file_info = result_list[i];
-        const target_path = media_root + file_info.file_path;
-        await Util.deleteFile(target_path);
-      }
-    })();
-
-    return true;
+    return result_list;
   };
 }

@@ -150,27 +150,6 @@ const writeFile = async (file_path, context) => {
   return await async_func;
 };
 
-const deleteFile = async (target_path) => {
-  const async_func = new Promise( async resolve => {
-    if ( !( await fileExists(target_path) ) ) {
-      log.debug(log_prefix, 'Util.deleteFile', `file not exists. path=${target_path}`);
-      resolve(true);
-    } else {
-      fs.unlink(target_path, (error) => {
-        if (error) {
-          log.error(log_prefix, 'Util.deleteFile', `path=${target_path}`, error);
-          resolve(false);
-        } else {
-          log.debug(log_prefix, 'Util.deleteFile', `path=${target_path}`);
-          resolve(true);
-        }
-      });
-    }
-  });
-
-  return await async_func;
-};
-
 const renameFile = async (target_path, dest_path) => {
   const async_func = new Promise( async resolve => {
     if ( !( await fileExists(target_path) ) ) {
@@ -286,6 +265,27 @@ const removeDirectory = async (dir_path) => {
   return await async_func;
 };
 
+const deleteFile = async (target_path) => {
+  const async_func = new Promise( async resolve => {
+    if ( !( await fileExists(target_path) ) ) {
+      // log.debug(log_prefix, 'Util.deleteFile', `file not exists. path=${target_path}`);
+      resolve(true);
+    } else {
+      fs.unlink(target_path, (error) => {
+        if (error) {
+          log.error(log_prefix, 'Util.deleteFile', `path=${target_path}`, error);
+          resolve(false);
+        } else {
+          // log.debug(log_prefix, 'Util.deleteFile', `path=${target_path}`);
+          resolve(true);
+        }
+      });
+    }
+  });
+
+  return await async_func;
+};
+
 const deleteDirectory = async (path) => {
   const file_list = await getDirectoryFileList(path);
   for (let i = 0; i < file_list.length; i++) {
@@ -293,14 +293,14 @@ const deleteDirectory = async (path) => {
     if (file.isDirectory()) {
       await deleteDirectory( path + Constants.SEP + file.name );
       const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
-      log.debug(log_prefix, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
+      // log.debug(log_prefix, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
     } else {
       const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      log.debug(log_prefix, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
+      // log.debug(log_prefix, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
     }
   }
   const delete_root_result = await removeDirectory( path );
-  log.debug(log_prefix, 'delete root dir', path, delete_root_result);
+  // log.debug(log_prefix, 'delete root dir', path, delete_root_result);
 };
 
 const getDirectoryFileList = async (directory_path, dirent = true) => {
@@ -428,20 +428,6 @@ const isEmpty = (value, allow_blank = false, allow_empty_array = false) => {
   }
   return _.isEmpty(value);
 };
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.resolve(req.upload_directory));
-  },
-  filename: function (req, file, cb) {
-    if (req.new_file_name) {
-      cb(null, req.new_file_name);
-    } else {
-      req.new_file_name = 'upload_' + file.originalname;
-      cb(null, req.new_file_name);
-    }
-  },
-});
 
 const execute = async (command) => {
   const result = {
@@ -778,6 +764,40 @@ const addDay = (day, format = 'YYYY-MM-DD') => {
   return calc_date.format(format)
 }
 
+const addMonth = (month, format = 'YYYY-MM-DD') => {
+  const calc_date = moment().add(month, 'months')
+  if (format == null) {
+    return calc_date.toDate()
+  } else if (format === Constants.TIMESTAMP) {
+    return calc_date.unix()
+  }
+  return calc_date.format(format)
+}
+
+const addYear = (year, format = 'YYYY-MM-DD') => {
+  const calc_date = moment().add(year, 'years')
+  if (format == null) {
+    return calc_date.toDate()
+  } else if (format === Constants.TIMESTAMP) {
+    return calc_date.unix()
+  }
+  return calc_date.format(format)
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.resolve(req.upload_directory));
+  },
+  filename: function (req, file, cb) {
+    if (req.new_file_name) {
+      cb(null, req.new_file_name);
+    } else {
+      req.new_file_name = 'upload_' + file.originalname;
+      cb(null, req.new_file_name);
+    }
+  },
+});
+
 const uploadImageFile = async (user_info, req, res, key = 'image') => {
   const media_root = ServiceConfig.get('media_root');
   const upload_path = user_info.user_media_path + "image";
@@ -833,14 +853,26 @@ const storate = multer.diskStorage({
     cb(null, ServiceConfig.get('common_root'))
   },
   limits: {
-    fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+    fileSize: 20 * 1024 * 1024, ///< 20MB 제한
   },
   filename : (req, file, cb) => {
     cb(null, getRandomId())
   },
 })
 
+const remove_path_slash_regex = /^[/]*(.+)([^/]+)[/]*$/
+const removePathSlash = (path) => {
+  if (!path) return ''
+  return path.replace(remove_path_slash_regex, '$1$2')
+}
+const removePathLastSlash = (path) => {
+  if (!path) return ''
+  return path.replace(/\/+$/, '');
+}
+
 export default {
+  removePathSlash,
+  removePathLastSlash,
   "common_path_upload" : multer({ storage : storate }),
   "removePathSEQ": removePathSEQ,
   "getMediaDirectory": getMediaDirectory,
@@ -854,6 +886,8 @@ export default {
   "currentFormattedDate": (format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(new Date().getTime(), format); },
   'getCurrentTimestamp': getCurrentTimestamp,
   'addDay': addDay,
+  'addMonth': addMonth,
+  'addYear': addYear,
 
   "loadXmlFile": async (directory, xml_file_name) => {
     const xml_file_path = directory + xml_file_name;

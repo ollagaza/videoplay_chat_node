@@ -122,15 +122,16 @@ const SyncServiceClass = class {
     }
     log.debug(this.log_prefix, log_info, 'check and mode video files', `origin_video_size: ${origin_video_size}, origin_video_count: ${origin_video_count}, trans_video_size: ${trans_video_size}, trans_video_count: ${trans_video_count}`)
 
+    let operation_storage_model = new OperationStorageModel(DBMySQL);
+    const operation_storage_info = await operation_storage_model.getOperationStorageInfo(operation_info);
+    const storage_seq = operation_storage_info.seq;
+
     let is_complete = false
+    let analysis_status = null
     await DBMySQL.transaction(async(transaction) => {
       if (stream_url) {
         await OperationMediaService.updateStreamUrl(transaction, operation_info, stream_url)
       }
-
-      const operation_storage_model = new OperationStorageModel(transaction);
-      const operation_storage_info = await operation_storage_model.getOperationStorageInfoNotExistsCreate(operation_info);
-      const storage_seq = operation_storage_info.seq;
       operation_info.storage_seq = storage_seq;
 
       const update_storage_info = {};
@@ -141,10 +142,11 @@ const SyncServiceClass = class {
       update_storage_info.index2_file_size = 0;
       update_storage_info.index2_file_count = index_info_list.length;
 
+      operation_storage_model = new OperationStorageModel(DBMySQL);
       await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info);
       await operation_storage_model.updateStorageSummary(storage_seq);
 
-      const analysis_status = move_file_cloud === false ? 'Y' : 'M'
+      analysis_status = move_file_cloud === false ? 'Y' : 'M'
       await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status);
       log.debug(this.log_prefix, log_info, `sync complete`);
 
@@ -166,10 +168,13 @@ const SyncServiceClass = class {
     if (move_file_cloud) {
       try {
         const request_result = await CloudFileService.requestMoveFile(directory_info.media_video, true, '/api/storage/operation/analysis/complete', 'POST', { operation_seq })
-        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveFile]', `file_path: ${directory_info.media_video}`,request_result)
+        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveFile] - video', `file_path: ${directory_info.media_video}`,request_result)
       } catch(error) {
         log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveFile]', error)
       }
+    }
+    if (analysis_status === 'Y') {
+      this.sendAnalysisCompleteMessage(operation_info)
     }
 
     log.debug(this.log_prefix, log_info, `end`);
@@ -185,7 +190,35 @@ const SyncServiceClass = class {
     if (!response_data.is_success) {
       log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', response_data)
     }
-    return await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status);
+    await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status);
+
+    if (status === 'Y') {
+      this.sendAnalysisCompleteMessage(operation_info)
+    }
+
+    return true
+  }
+
+  sendAnalysisCompleteMessage = async (operation_info) => {
+    if (!operation_info || !operation_info.user_id) return
+    (
+      async () => {
+        try {
+          await this.sendMessageToSocket(operation_info)
+        } catch (error) {
+          log.error(this.log_prefix, '[sendAnalysisCompleteMessage]', error)
+        }
+      }
+    )()
+  }
+
+  sendMessageToSocket = async (operation_info) => {
+    const sub_type = 'analysisComplete'
+    const message_info = {
+      title: '수술 분석이 완료되었습니다.',
+      message: `'${operation_info.operation_name}'수술 분석이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
+    }
+    await GroupService.onGroupStorageInfoChange(operation_info.group_seq, sub_type, 'moveCuration', [ operation_info.seq ], message_info)
   }
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {

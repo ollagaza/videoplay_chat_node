@@ -99,9 +99,9 @@ routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenticat
 
 routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
+  const { group_member_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.changeGradeNormal(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
+  await GroupService.changeGradeNormal(DBMySQL, group_member_info, group_member_seq)
 
   const output = new StdObject();
   output.add('result', true);
@@ -167,11 +167,10 @@ routes.get('/invite/:invite_code', Auth.isAuthenticated(), Wrap(async(req, res) 
 
 routes.post('/join/:invite_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
-  log.d(req, member_seq)
+  const { member_info } = await checkGroupAuth(DBMySQL, req, false)
   const invite_seq = Util.parseInt(req.params.invite_seq, 0)
   const invite_code = req.body.invite_code
-  const group_seq = await GroupService.joinGroup(DBMySQL, invite_seq, member_seq, invite_code)
+  const group_seq = await GroupService.joinGroup(DBMySQL, invite_seq, member_info, invite_code)
 
   const output = new StdObject();
   output.add('group_seq', group_seq);
