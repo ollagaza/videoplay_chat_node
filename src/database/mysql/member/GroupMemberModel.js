@@ -37,6 +37,10 @@ export default class GroupMemberModel extends MySQLModel {
       'invite_code', 'invite_status', 'join_member_seq', 'grade', 'group_member_status', 'group_seq', 'group_type', 'group_status'
     ]
     this.group_member_private_fields = [ 'member_seq', 'media_path' ]
+
+    this.group_member_seq_select = [
+      'member.seq AS member_seq'
+    ];
   }
 
 
@@ -181,49 +185,56 @@ export default class GroupMemberModel extends MySQLModel {
     return result_list
   }
 
-  getActiveGroupMemberIdList = async (group_seq) => {
+  getActiveGroupMemberSeqList = async (group_seq) => {
     const filter = {
       'group_member.group_seq': group_seq,
       'group_member.status': 'Y',
     }
-    this.group_member_id_select = [
-      'member.user_id AS user_id'
-    ];
-    const query = this.database.select(this.group_member_id_select)
+    const query = this.database.select(this.group_member_seq_select)
     query.from(this.table_name)
     query.leftOuterJoin('member', { "group_member.member_seq": "member.seq" })
     query.where(filter)
     const query_result = await query
-    const user_id_list = []
+    const user_seq_list = []
     if (query_result && query_result.length) {
       for (let i = 0; i < query_result.length; i++) {
-        user_id_list.push(query_result[i].user_id)
+        user_seq_list.push(query_result[i].member_seq)
       }
     }
-    return user_id_list
+    return user_seq_list
   }
 
-  getAdminGroupMemberIdList = async (group_seq) => {
+  getAdminGroupMemberSeqList = async (group_seq) => {
     const filter = {
       'group_member.group_seq': group_seq,
       'group_member.status': 'Y'
     }
-    this.group_member_id_select = [
-      'member.user_id AS user_id'
-    ];
-    const query = this.database.select(this.group_member_id_select)
+    const query = this.database.select(this.group_member_seq_select)
     query.from(this.table_name)
     query.leftOuterJoin('member', { "group_member.member_seq": "member.seq" })
     query.where(filter)
     query.whereIn('group_member.grade', ['A', 'O'])
     const query_result = await query
-    const user_id_list = []
+    const user_seq_list = []
     if (query_result && query_result.length) {
       for (let i = 0; i < query_result.length; i++) {
-        user_id_list.push(query_result[i].user_id)
+        user_seq_list.push(query_result[i].member_seq)
       }
     }
-    return user_id_list
+    return user_seq_list
+  }
+
+  getGroupMemberSeq = async (group_member_seq) => {
+    const filter = {
+      'group_member.seq': group_member_seq
+    }
+    const query = this.database.select(this.group_member_seq_select)
+    query.from(this.table_name)
+    query.leftOuterJoin('member', { "group_member.member_seq": "member.seq" })
+    query.where(filter)
+    query.first()
+    const query_result = await query
+    return query_result && query_result.member_seq ? query_result.member_seq : null
   }
 
   getGroupMemberCount = async (group_seq, status) => {
@@ -463,21 +474,5 @@ export default class GroupMemberModel extends MySQLModel {
     const query_result = await query
     log.debug(this.log_prefix, '[getGroupMemberSummary]', query_result)
     return query_result
-  }
-
-  getGroupMemberId = async (group_member_seq) => {
-    const filter = {
-      'group_member.seq': group_member_seq
-    }
-    this.group_member_id_select = [
-      'member.user_id AS user_id'
-    ];
-    const query = this.database.select(this.group_member_id_select)
-    query.from(this.table_name)
-    query.leftOuterJoin('member', { "group_member.member_seq": "member.seq" })
-    query.where(filter)
-    query.first()
-    const query_result = await query
-    return query_result && query_result.user_id ? query_result.user_id : null
   }
 }

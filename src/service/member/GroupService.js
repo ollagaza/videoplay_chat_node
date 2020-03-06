@@ -227,14 +227,14 @@ const GroupServiceClass = class {
     return await group_model.getGroupInfoWithProduct(group_seq, private_keys)
   }
 
-  getActiveGroupMemberIdList = async (database, group_seq) => {
+  getActiveGroupMemberSeqList = async (database, group_seq) => {
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getActiveGroupMemberIdList(group_seq)
+    return await group_member_model.getActiveGroupMemberSeqList(group_seq)
   }
 
-  getAdminGroupMemberIdList = async (database, group_seq) => {
+  getAdminGroupMemberSeqList = async (database, group_seq) => {
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getAdminGroupMemberIdList(group_seq)
+    return await group_member_model.getAdminGroupMemberSeqList(group_seq)
   }
 
   inviteGroupMembers = async (database, group_member_info, member_info, request_body, service_domain) => {
@@ -703,7 +703,7 @@ const GroupServiceClass = class {
   }
 
   noticeGroupAdmin = async (group_seq, action_type = null, message_info = null) => {
-    const admin_id_list = await this.getAdminGroupMemberIdList(DBMySQL, group_seq)
+    const admin_id_list = await this.getAdminGroupMemberSeqList(DBMySQL, group_seq)
     if (!admin_id_list || !admin_id_list.length) {
       return
     }
@@ -725,7 +725,7 @@ const GroupServiceClass = class {
 
   onGroupMemberStateChange = async (group_seq, group_member_seq, message_info = null, type = 'groupMemberStateChange', action_type = 'groupSelect') => {
     const group_member_model = this.getGroupMemberModel(DBMySQL)
-    const user_id = await group_member_model.getGroupMemberId(group_member_seq)
+    const user_id = await group_member_model.getGroupMemberSeq(group_member_seq)
     if (!user_id) {
       return
     }
@@ -746,7 +746,7 @@ const GroupServiceClass = class {
   }
 
   onGroupStateChange = async (group_seq, sub_type = null, action_type = null, operation_seq_list = null, message_info = null, reload_operation_list = true) => {
-    const user_id_list = await this.getActiveGroupMemberIdList(DBMySQL, group_seq)
+    const user_id_list = await this.getActiveGroupMemberSeqList(DBMySQL, group_seq)
     if (!user_id_list || !user_id_list.length) return
     const data = {
       type: 'groupStorageInfoChange',
