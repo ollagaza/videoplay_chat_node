@@ -1,19 +1,6 @@
-import ServiceConfig from '../../service/service-config';
-import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
-import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
-import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
-import MemberModel from '../../database/mysql/member/MemberModel';
-import MemberSubModel from '../../database/mysql/member/MemberSubModel';
 import MemberLogModel from '../../database/mysql/member/MemberLogModel';
-import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
-import { UserDataModel } from '../../database/mongodb/UserData';
-import MemberInfo from "../../wrapper/member/MemberInfo";
-import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
-import MemberTemplate from '../../template/mail/member.template';
 
 const MemberLogServiceClass = class {
   constructor () {

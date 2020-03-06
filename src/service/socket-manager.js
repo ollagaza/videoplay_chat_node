@@ -1,8 +1,9 @@
 import EventEmitter from 'events'
-import io from 'socket.io-client';
-import log from '../libs/logger';
-import Util from '../utils/baseutil';
-import ServiceConfig from './service-config';
+import io from 'socket.io-client'
+import log from '../libs/logger'
+import Util from '../utils/baseutil'
+import ServiceConfig from './service-config'
+// import GroupService from './member/GroupService'
 
 const SocketManagerClass = class extends EventEmitter {
   constructor () {
@@ -86,9 +87,11 @@ const SocketManagerClass = class extends EventEmitter {
   }
 
   sendToFrontOne = async (user_id, data = null) => {
-    const request_data = data ? data : {}
-    request_data.uid = user_id
-    this.socket.emit('sendFrontMsg', request_data);
+    this.socket.emit('sendFrontMsg', user_id, data);
+  }
+
+  sendToFrontMulti = async (user_id_list, data = null) => {
+    this.socket.emit('sendFrontMsgMulti', user_id_list, data);
   }
 
   sendToFrontAll = async (request_data) => {
