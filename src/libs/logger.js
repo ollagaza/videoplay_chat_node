@@ -3,6 +3,8 @@ import Config from '../config/config'
 
 const IS_DEV = Config.isDev()
 const LOG_PATH = Config.getLogPath()
+const LOG_LEVEL = Config.getLogLevel()
+const log_level = LOG_LEVEL ? LOG_LEVEL : (IS_DEV ? 'DEBUG' : 'INFO')
 
 const logger_config = {
   appenders: {
@@ -17,7 +19,7 @@ const logger_config = {
     }
   },
   categories: {
-    default: { appenders: ['out', 'app'], level: IS_DEV ? 'DEBUG' : 'INFO' },
+    default: { appenders: ['out', 'app'], level: log_level },
     access: { appenders: ['out', 'access'], level: 'ALL' }
   },
   pm2: true,

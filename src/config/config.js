@@ -2,6 +2,7 @@ const ENV = process.env.NODE_ENV === 'development' ? 'development' : 'production
 const IS_RELEASE = ENV === 'production'
 const IS_DEV = ENV === 'development'
 const LOG_PATH = process.env.LOG_PATH ? process.env.LOG_PATH : 'logs'
+const LOG_LEVEL = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : null
 const IS_DEMON = process.env.SERVER_MODE === 'demon'
 const PRINT_DB_LOG = process.env.PRINT_DB_LOG === true || process.env.PRINT_DB_LOG === 'true'
 const IS_LOCAL = process.env.LOCAL === true || process.env.LOCAL === 'true'
@@ -41,5 +42,9 @@ export default {
 
   getLogPath: () => {
     return LOG_PATH
+  },
+
+  getLogLevel: () => {
+    return LOG_LEVEL
   }
 }
