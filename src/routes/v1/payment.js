@@ -8,6 +8,7 @@ import DBMySQL from '../../database/knex-mysql';
 import PaymentService from '../../service/payment/PaymentService';
 import IamportApiService from '../../service/payment/IamportApiService';
 import group_service from "../../service/member/GroupService";
+import log from "../../libs/logger"
 
 const routes = Router();
 
@@ -97,7 +98,8 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
 
       res.json(new StdObject(0,'정상결제 되었습니다.', 200));
     }
-  } catch (e) {
+  } catch (error) {
+    log.e(req, error)
     throw new StdObject(-1, '결재 중 오류가 발생 하였습니다.', 400);
   }
 }));
