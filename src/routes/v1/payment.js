@@ -8,6 +8,7 @@ import DBMySQL from '../../database/knex-mysql';
 import PaymentService from '../../service/payment/PaymentService';
 import IamportApiService from '../../service/payment/IamportApiService';
 import group_service from "../../service/member/GroupService";
+import log from "../../libs/logger"
 
 const routes = Router();
 
@@ -67,6 +68,9 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const token_info = req.token_info;
     const member_seq = token_info.getId();
 
+
+    log.d(req, '[req.body]', req.body)
+
     const pg_data = req.body.pg_data;
     const pay_data = req.body.pay_data;
     const moneys = req.body.moneys;
@@ -75,6 +79,7 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const payment_update = await PaymentService.updatePayment(DBMySQL, pg_data);
 
     if (pg_data.success) {
+      log.d(req, '[pg_data.success] - pay_data', pay_data)
       const pay_code = pay_data.code;
       let storage_size = 0
       const expire_month_code = moneys.pay;
@@ -97,7 +102,8 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
 
       res.json(new StdObject(0,'정상결제 되었습니다.', 200));
     }
-  } catch (e) {
+  } catch (error) {
+    log.e(req, error)
     throw new StdObject(-1, '결재 중 오류가 발생 하였습니다.', 400);
   }
 }));

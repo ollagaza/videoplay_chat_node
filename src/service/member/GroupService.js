@@ -654,6 +654,7 @@ const GroupServiceClass = class {
   // 추 후 group_member에도 업데이트 할 예정이므로 파라미터만 추가 해 놓습니다.
   // 2020.03.04 NJH
   updatePaymentToGroup = async (database, filter, pay_code, storage_size, expire_month_code) => {
+    log.debug(this.log_prefix, '[updatePaymentToGroup]', filter, pay_code, storage_size, expire_month_code)
     const member_seq = filter.member_seq
     const group_type = filter.group_type
     const start_date = Util.getCurrentTimestamp()
