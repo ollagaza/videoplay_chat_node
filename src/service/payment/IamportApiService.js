@@ -86,7 +86,7 @@ const IamportApiServiceClass = class {
         });
       return access_token;
     } catch (e) {
-      throw new StdObject(-1, e.message, 400)
+      throw new StdObject(-1, e, 400)
     }
   };
 
@@ -122,7 +122,7 @@ const IamportApiServiceClass = class {
       });
       return result;
     } catch (e) {
-      throw new StdObject(-1, e.message, 400)
+      throw new StdObject(-1, e, 400)
     }
   };
 
@@ -146,7 +146,7 @@ const IamportApiServiceClass = class {
         });
       return result;
     } catch (e) {
-      throw new StdObject(-1, e.message, 400)
+      throw new StdObject(-1, e, 400)
     }
   };
 
@@ -178,7 +178,7 @@ const IamportApiServiceClass = class {
         });
       return result;
     } catch (e) {
-      throw new StdObject(-1, e.message, 400)
+      throw new StdObject(-1, e, 400)
     }
   };
 }
