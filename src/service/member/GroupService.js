@@ -429,7 +429,7 @@ const GroupServiceClass = class {
       title: '팀 관리자 권한 변경',
       message: title
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, null, message_info)
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'enableGroupAdmin', null)
 
     if (!group_member_info.invite_email) {
       return
@@ -464,7 +464,7 @@ const GroupServiceClass = class {
       message: title,
       notice_type: 'alert'
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, null, message_info)
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableGroupAdmin', null)
   }
 
   deleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, is_delete_operation= true) => {
@@ -489,7 +489,7 @@ const GroupServiceClass = class {
       message: title,
       notice_type: 'alert'
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroupForce', message_info)
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableUseGroup', null)
 
     if (!group_member_info.invite_email) {
       return
@@ -518,7 +518,7 @@ const GroupServiceClass = class {
       title: title,
       message: '그룹을 선택하려면 클릭하세요.'
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroup', message_info)
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info)
 
     if (!group_member_info.invite_email) {
       return
@@ -553,7 +553,7 @@ const GroupServiceClass = class {
       message: title,
       notice_type: 'alert'
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroupForce', message_info)
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableUseGroup', null)
 
     if (!group_member_info.invite_email) {
       return
@@ -581,7 +581,7 @@ const GroupServiceClass = class {
       title: title,
       message: '그룹을 선택하려면 클릭하세요.'
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, 'selectGroup', message_info)
+    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info)
 
     if (!group_member_info.invite_email) {
       return
@@ -685,6 +685,13 @@ const GroupServiceClass = class {
       await this.updateGroupMemberMaxStorageSize(database, group_info.seq, storage_size)
     })
 
+    const sub_type = 'planChange'
+    const message_info = {
+      title: '팀 플랜이 변경되었습니다.',
+      message: `'${group_info.group_name}'팀 플랜이 변경되었습니다.`
+    }
+    await this.onGroupStateChange(group_info.seq, sub_type, null, null, message_info, false)
+
     return group_info;
   }
 
@@ -716,17 +723,17 @@ const GroupServiceClass = class {
     await SocketManager.sendToFrontMulti(admin_id_list, socket_data)
   }
 
-  onGroupMemberStateChange = async (group_seq, group_member_seq, action_type = null, message_info = null) => {
+  onGroupMemberStateChange = async (group_seq, group_member_seq, message_info = null, type = 'groupMemberStateChange', action_type = 'groupSelect') => {
     const group_member_model = this.getGroupMemberModel(DBMySQL)
     const user_id = await group_member_model.getGroupMemberId(group_member_seq)
     if (!user_id) {
       return
     }
     const data = {
-      type: 'groupMemberStateChange',
-      group_seq
+      type,
+      group_seq,
+      action_type
     }
-    if (action_type) data.action_type = action_type
 
     const socket_data = {
       data
@@ -738,12 +745,13 @@ const GroupServiceClass = class {
     await SocketManager.sendToFrontOne(user_id, socket_data)
   }
 
-  onGroupStorageInfoChange = async (group_seq, sub_type = null, action_type = null, operation_seq_list = null, message_info = null) => {
+  onGroupStateChange = async (group_seq, sub_type = null, action_type = null, operation_seq_list = null, message_info = null, reload_operation_list = true) => {
     const user_id_list = await this.getActiveGroupMemberIdList(DBMySQL, group_seq)
     if (!user_id_list || !user_id_list.length) return
     const data = {
       type: 'groupStorageInfoChange',
-      group_seq
+      group_seq,
+      reload_operation_list
     }
     if (sub_type) data.sub_type = sub_type
     if (action_type) data.action_type = action_type

@@ -218,7 +218,7 @@ const SyncServiceClass = class {
       title: '수술 분석이 완료되었습니다.',
       message: `'${operation_info.operation_name}'수술 분석이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
     }
-    await GroupService.onGroupStorageInfoChange(operation_info.group_seq, sub_type, 'moveCuration', [ operation_info.seq ], message_info)
+    await GroupService.onGroupStateChange(operation_info.group_seq, sub_type, 'moveCuration', [ operation_info.seq ], message_info)
   }
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {
