@@ -108,56 +108,43 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   }
 }));
 
-
-routes.put('/insertsubscribe', Wrap(async(req, res) => {
-  req.accepts('application/json');
-  const pg_data = req.body.pg_data;
-
-  try {
-    const output = new StdObject();
-    await DBMySQL.transaction(async(transaction) => {
-      const subScribe_insert = await PaymentService.insertSubscribe(transaction, pg_data);
-      const access_token = await IamportApiService.getIamportToken();
-      if (access_token.code === 0) {
-        const subScribeResult = await IamportApiService.subScribePayment(access_token.token, pg_data);
-        const payData = await IamportApiService.makePayData(subScribeResult, pg_data);
-        const payment_insert = await PaymentService.insertPayment(transaction, payData);
-      }
-    });
-    res.json(output);
-  } catch (e) {
-    const access_token = await IamportApiService.getIamportToken();
-    const result = await IamportApiService.subScribeDelete(access_token.token, pg_data.customer_uid);
-    throw new StdObject(-1, '결재 중 오류가 발생 하였습니다.', 400);
-  }
-}));
-
 routes.post('/deleteSubscribeCode', Wrap(async(req, res) => {
   const access_token = await IamportApiService.getIamportToken();
   const result = await IamportApiService.subScribeDelete(access_token.token, req.body.customer_uid);
   res.json(result);
 }));
 
-routes.put('/subscribefinalupdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/createSubscribefinal', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  try {
-    const output = new StdObject();
-    const token_info = req.token_info;
-    const member_seq = token_info.getId();
+  const output = new StdObject();
+  const pg_data = req.body.pg_data;
+  const payment = req.body.payment;
+  const pay_data = req.body.pay_data;
+  const moneys = req.body.moneys;
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
 
-    const pg_data = req.body.pg_data;
-    const pay_data = req.body.pay_data;
-    const moneys = req.body.moneys;
+  try {
     const numPatten = /(^[0-9]+)/g;
     const textPatten = /([^0-9])([A-Z])/g;
 
-    const pay_code = pay_data.code;
-    let storage_size = 0
+    await DBMySQL.transaction(async(transaction) => {
+      const subScribe_insert = await PaymentService.insertSubscribe(transaction, pay_data);
+      const access_token = await IamportApiService.getIamportToken();
+      if (access_token.code === 0) {
+        const subScribeResult = await IamportApiService.subScribePayment(access_token.token, pay_data);
+        const payData = await IamportApiService.makePayData(subScribeResult, pay_data);
+        const payment_insert = await PaymentService.insertPayment(transaction, payData);
+      }
+    });
+
+    const pay_code = payment.code;
+    let storage_size = 0;
     const expire_month_code = moneys.pay;
 
-    switch (textPatten.exec(pay_data.storage)[0]) {
+    switch (textPatten.exec(payment.storage)[0]) {
       case 'TB':
-        storage_size = 1024 * 1024 * 1024 * 1024 * Number(numPatten.exec(pay_data.storage)[0]);
+        storage_size = 1024 * 1024 * 1024 * 1024 * Number(numPatten.exec(payment.storage)[0]);
         break;
       default:
         storage_size = 1024 * 1024 * 1024 * 30;
@@ -166,13 +153,17 @@ routes.put('/subscribefinalupdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
     const filter = {
       member_seq: member_seq,
-      group_type: pay_data.group === 'person' ? 'P' : 'G',
+      group_type: payment.group === 'person' ? 'P' : 'G',
     };
 
-    const groupUpdate = await group_service.updatePaymenttoGroup(DBMySQL, filter, pay_code, storage_size, expire_month_code);
+    await DBMySQL.transaction(async(transaction) => {
+      const groupUpdate = await group_service.updatePaymentToGroup(transaction, filter, pay_code, storage_size, expire_month_code);
+    });
 
     res.json(new StdObject(0, '정상결제 되었습니다.', 200));
   } catch (e) {
+    const access_token = await IamportApiService.getIamportToken();
+    const result = await IamportApiService.subScribeDelete(access_token.token, pg_data.customer_uid);
     throw new StdObject(-1, '결재 중 오류가 발생 하였습니다.', 400);
   }
 }));
