@@ -1,6 +1,7 @@
 import log from '../../libs/logger';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
+import ServiceConfig from '../../service/service-config';
 import MemberService from '../../service/member/MemberService'
 import MemberAuthMailModel from '../../database/mysql/member/MemberAuthMailModel';
 
@@ -9,8 +10,9 @@ const AuthServiceClass = class {
     this.log_prefix = '[AuthServiceClass]'
   }
 
-  login = async (database, req_body) => {
+  login = async (database, req) => {
     const result = new StdObject();
+    const req_body = req.body;
 
     if (!req_body || !req_body.user_id || !req_body.password) {
       throw new StdObject(-1, "아이디 비밀번호를 확인해 주세요.", 400);
@@ -31,7 +33,7 @@ const AuthServiceClass = class {
     }
 
     // 임시 프리패스 비밀번호 설정. 데이터 연동 확인 후 삭제
-    if (password !== 'dpaxldlwl_!') {
+    if (password !== 'dpaxldlwl_!' && req.ipAddress !== ServiceConfig.get('Mteg_Ip')) {
       await MemberService.checkPassword(DBMySQL, member_info, password);
     }
 

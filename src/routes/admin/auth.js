@@ -13,7 +13,7 @@ const routes = Router();
 routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
   try {
-    const member_info = await AuthService.login(DBMySQL, req.body)
+    const member_info = await AuthService.login(DBMySQL, req)
     const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
     return res.json(output);
   } catch (e) {
