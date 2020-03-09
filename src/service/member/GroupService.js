@@ -19,7 +19,7 @@ const GroupServiceClass = class {
     this.GROUP_TYPE_PERSONAL = 'P'
     this.GROUP_TYPE_ENTERPRISE = 'G'
     this.GROUP_STATUS_FREE = 'F'
-    this.GROUP_STATUS_ENABLE = 'F'
+    this.GROUP_STATUS_ENABLE = 'Y'
     this.GROUP_STATUS_PLAN_EXPIRE = 'E'
     this.GROUP_STATUS_DISABLE = 'N'
     this.MEMBER_STATUS_ENABLE = 'Y'
@@ -327,6 +327,7 @@ const GroupServiceClass = class {
     }
     const body = GroupMailTemplate.inviteGroupMember(template_data, !invite_message)
     const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body);
+    log.debug(this.log_prefix, '[inviteGroupMember]', group_member_seq, email_address, title, send_mail_result.toJSON())
     if (send_mail_result.isSuccess() === false) {
       await group_member_model.updateInviteStatus(group_member_seq, 'E', send_mail_result.message)
       return
@@ -369,6 +370,7 @@ const GroupServiceClass = class {
       throw new StdObject(-3, '만료된 초대코드입니다.', 400)
     }
     if (group_invite_info.group_status !== this.GROUP_STATUS_ENABLE || group_invite_info.group_type === this.GROUP_TYPE_PERSONAL) {
+      log.debug(this.log_prefix, '[getInviteGroupInfo]', 'check group status', group_invite_info.group_status, this.GROUP_STATUS_ENABLE, group_invite_info.group_type, this.GROUP_TYPE_PERSONAL)
       throw new StdObject(-4, '가입이 불가능한 팀입니다.', 400)
     }
     if (member_seq) {
