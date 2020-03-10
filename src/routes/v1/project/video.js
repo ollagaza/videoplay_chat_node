@@ -1,108 +1,74 @@
 import { Router } from 'express';
 import querystring from 'querystring';
-import ServiceConfig from '../../service/service-config';
-import Wrap from '../../utils/express-async';
-import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
-import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import GroupService from '../../service/member/GroupService'
-import MemberModel from '../../database/mysql/member/MemberModel';
-import {VideoProjectField, VideoProjectModel} from '../../database/mongodb/VideoProject';
-import SequenceModel from '../../models/sequence/SequenceModel';
+import ServiceConfig from '../../../service/service-config';
+import Wrap from '../../../utils/express-async';
+import Util from '../../../utils/baseutil';
+import Auth from '../../../middlewares/auth.middleware';
+import Role from "../../../constants/roles";
+import Constants from '../../../constants/constants';
+import StdObject from '../../../wrapper/std-object';
+import DBMySQL from '../../../database/knex-mysql';
+import log from "../../../libs/logger";
+import GroupService from '../../../service/member/GroupService'
+import VideoProjectService from '../../../service/project/VideoProjectService'
+import MemberModel from '../../../database/mysql/member/MemberModel';
+import {VideoProjectField, VideoProjectModel} from '../../../database/mongodb/VideoProject';
+import SequenceModel from '../../../models/sequence/SequenceModel';
 
 const routes = Router();
 
-const getMemberInfo = async (database, member_seq) => {
-  const member_info = await new MemberModel(database).getMemberInfo(member_seq);
-  if (!member_info || member_info.isEmpty()) {
-    throw new StdObject(-1, '회원정보가 없습니다.', 401);
+const getProjectSeq = (request) => {
+  if (request && request.params) {
+    return Util.parseInt(request.params.project_seq, 0)
   }
-  return member_info;
-};
+  return 0
+}
 
-routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const video_project_list = await VideoProjectModel.findByGroupSeq(token_info.getGroupSeq(), '-sequence_list');
+  const video_project_list = await VideoProjectService.getVideoProjectList(token_info.getGroupSeq());
 
   const output = new StdObject();
   output.add('video_project_list', video_project_list);
   res.json(output);
 }));
 
-routes.get('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const project_seq = req.params.project_seq;
-  const video_project = await VideoProjectModel.findOneById(project_seq);
+  const project_seq = getProjectSeq(req);
+  const video_project = await VideoProjectService.getVideoProjectInfo(project_seq);
 
   const output = new StdObject();
   output.add('video_project', video_project);
   res.json(output);
 }));
 
-routes.post('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { member_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const data = req.body;
-
-  const service_info = ServiceConfig.getServiceInfo();
-  const content_id = Util.getContentId();
-  const media_root = service_info.media_root;
-  const project_path = `${group_member_info.media_path}/studio/${content_id}/`;
-
-  await Util.createDirectory(media_root + project_path);
-  data.group_seq = token_info.getGroupSeq();
-  data.member_seq = member_seq;
-  data.content_id = content_id;
-  data.project_path = project_path;
-  data.parent_directory = data.parent_directory || '';
-
-  const fields = VideoProjectField();
-  fields.group_seq.require = true;
-  fields.member_seq.require = true;
-  fields.content_id.require = true;
-  fields.project_name.require = true;
-  fields.project_path.require = true;
-  fields.total_time.require = true;
-  fields.sequence_list.require = true;
-
-  const payload = Util.getPayload(data, fields);
-
-  const result = await VideoProjectModel.createVideoProject(payload);
+  const { member_seq, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const result = await VideoProjectService.createVideoProject(group_member_info, member_seq, req)
 
   const output = new StdObject();
   output.add('result', result);
   res.json(output);
 }));
 
-routes.put('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const data = req.body;
-  data.sequence_count = data.sequence_list ? data.sequence_list.length : 0;
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const project_seq = getProjectSeq(req);
 
-  const project_seq = req.params.project_seq;
-
-  const fields = VideoProjectField();
-  fields.project_name.require = true;
-  fields.sequence_list.require = true;
-  fields.operation_seq_list.require = true;
-  fields.sequence_list.require = true;
-
-  const payload = Util.getPayload(data, fields);
-
-  const result = await VideoProjectModel.updateFromEditor(project_seq, payload);
+  const result = await VideoProjectService.modifyVideoProject(project_seq, req)
 
   const output = new StdObject();
   output.add('result', result);
   res.json(output);
 }));
 
-routes.put('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const project_seq = req.params.project_seq;
-  const result = await VideoProjectModel.updateFavorite(project_seq, true);
+routes.put('/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const project_seq = getProjectSeq(req);
+  const result = await VideoProjectService.updateFavorite(project_seq, true);
 
   const output = new StdObject();
   output.add('result', result);
@@ -110,9 +76,10 @@ routes.put('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN
   res.json(output);
 }));
 
-routes.delete('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const project_seq = req.params.project_seq;
-  const result = await VideoProjectModel.updateFavorite(project_seq, false);
+routes.delete('/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const project_seq = getProjectSeq(req);
+  const result = await VideoProjectService.updateFavorite(project_seq, false);
 
   const output = new StdObject();
   output.add('result', result);
@@ -120,12 +87,10 @@ routes.delete('/video/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LO
   res.json(output);
 }));
 
-routes.put('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const token_info = req.token_info;
-  const member_seq = token_info.getId();
-  const id_list = req.body.id_list;
-  const result = await VideoProjectModel.updateStatus(member_seq, id_list, 'T');
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const result = await VideoProjectService.updateStatus(req, group_seq, 'T');
 
   const output = new StdObject();
   output.add('result', result);
@@ -133,12 +98,10 @@ routes.put('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req
   res.json(output);
 }));
 
-routes.delete('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const token_info = req.token_info;
-  const group_seq = token_info.getGroupSeq();
-  const id_list = req.body.id_list;
-  const result = await VideoProjectModel.updateStatus(group_seq, id_list, 'Y');
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const result = await VideoProjectService.updateStatus(req, group_seq, 'Y');
 
   const output = new StdObject();
   output.add('result', result);
@@ -146,25 +109,18 @@ routes.delete('/video/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(
   res.json(output);
 }));
 
-routes.delete('/video/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.delete('/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const token_info = req.token_info;
-  const group_seq = token_info.getGroupSeq();
-  const project_seq = req.params.project_seq;
-  const result = await VideoProjectModel.deleteById(group_seq, project_seq);
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const project_seq = getProjectSeq(req);
+
+  const result = await VideoProjectService.deleteVideoProject(group_seq, project_seq)
   const output = new StdObject();
   output.add('result', result);
   res.json(output);
-  if (result && result.project_path) {
-    (async () => {
-      const service_info = ServiceConfig.getServiceInfo();
-      const media_root = service_info.media_root;
-      await Util.deleteDirectory(media_root + result.project_path);
-    })();
-  }
 }));
 
-routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/make/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const project_seq = req.params.project_seq;
   const video_project = await VideoProjectModel.findOneById(project_seq);
@@ -243,7 +199,7 @@ routes.post('/video/make/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_US
 }));
 
 
-routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/:project_seq(\\d+)/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = token_info.getId();
   const member_model = new MemberModel(DBMySQL);
@@ -269,7 +225,7 @@ routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(re
   res.json(output);
 }));
 
-routes.get('/video/make/process', Wrap(async(req, res) => {
+routes.get('/make/process', Wrap(async(req, res) => {
   const content_id = req.query.ContentID;
   const process_info = {
     status: req.query.Status,
@@ -319,7 +275,7 @@ routes.get('/video/make/process', Wrap(async(req, res) => {
   res.send(is_success ? 'ok' : 'fail');
 }));
 
-routes.post('/video/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const operation_seq_list = req.body.operation_seq_list;
   const token_info = req.token_info;

@@ -52,7 +52,7 @@ export default class CloudFileInfo {
     this.content_id = Util.getContentId()
     this.is_folder = true
     this.origin_type = Constants.LOCAL
-    this.origin_bucket = ServiceConfig.get('media_root')
+    this.origin_bucket = ServiceConfig.get('storage_server_root')
     this.origin_path = null
     this.remote_type = Constants.OBJECT
     this.remote_bucket = ServiceConfig.get('object_storage_bucket_name')

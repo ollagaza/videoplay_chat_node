@@ -60,7 +60,7 @@ export default class FileInfo extends JsonWrapper {
     this.full_path = absolute_file_path;
     this.file_name = file_name;
     this.file_size = file_size;
-    this.file_path = media_path + Constants.SEP + this.file_name;
+    this.file_path = media_path + '/' + this.file_name;
 
     this.file_type = await Util.getFileType(absolute_file_path, file_name);
 

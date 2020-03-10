@@ -9,7 +9,7 @@ import MemberService from '../../service/member/MemberService'
 import GroupService from '../../service/member/GroupService'
 import OperationService from '../../service/operation/OperationService'
 import OperationClipService from '../../service/operation/OperationClipService'
-import VideoProjectService from '../../service/video/VideoProjectService'
+import VideoProjectService from '../../service/project/VideoProjectService'
 
 const routes = Router();
 

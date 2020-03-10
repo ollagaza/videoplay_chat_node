@@ -18,7 +18,7 @@ routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(re
   const member_model = new MemberModel(DBMySQL);
   const member_info = await member_model.getMemberInfo(member_seq);
   const media_root = ServiceConfig.get('media_root');
-  const upload_path = member_info.user_media_path + "image";
+  const upload_path = member_info.user_media_path + "/image";
   const upload_full_path = media_root + upload_path;
   if (!(await Util.fileExists(upload_full_path))) {
     await Util.createDirectory(upload_full_path);
