@@ -10,7 +10,7 @@ export default class PaymentModel extends MySQLModel {
   }
 
   getPaymentList = async (lang) => {
-    const result = await this.find({lang: lang});
+    const result = await this.find({ lang: lang, is_visible: 1 });
 
     return result;
   };
