@@ -294,7 +294,7 @@ const StudioServiceClass = class {
       // await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
       // await Util.deleteFile(video_directory + 'video_project.xml')
       await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
-      await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
+      // await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
 
       const directory_file_size = await Util.getDirectoryFileSize(video_directory);
       process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name;
