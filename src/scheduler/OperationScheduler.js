@@ -188,7 +188,7 @@ class OperationScheduler {
   //     log.d(null, this.log_prefix, 'copyFiles - file_info', origin_file, file_info.toJSON());
   //     if (file_info.file_type === Constants.VIDEO) {
   //       const copy_file_name = 'copy_' + file_name;
-  //       const video_file_path = video_directory + Constants.SEP + copy_file_name;
+  //       const video_file_path = video_directory + '/' + copy_file_name;
   //       log.d(null, this.log_prefix, 'copyFiles - copy', origin_file, video_file_path);
   //       const copy_result = await Util.copyFile(origin_file, video_file_path);
   //       if (!copy_result) {
@@ -200,7 +200,7 @@ class OperationScheduler {
   //       const media_path = Util.removePathSEQ(operation_info.media_path) + 'SEQ';
   //       file_info.full_path = video_file_path;
   //       file_info.file_name = copy_file_name;
-  //       file_info.file_path = media_path + Constants.SEP + copy_file_name;
+  //       file_info.file_path = media_path + '/' + copy_file_name;
   //       video_file_list.push(file_info);
   //
   //       log.d(null, this.log_prefix, 'copyFiles - copy complete', origin_file, video_file_path);

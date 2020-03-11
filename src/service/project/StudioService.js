@@ -8,12 +8,13 @@ import { VideoProjectField, VideoProjectModel } from '../../database/mongodb/Vid
 import StdObject from '../../wrapper/std-object'
 import SequenceModel from '../../models/sequence/SequenceModel'
 import Constants from '../../constants/constants'
+import NaverObjectStorageService from '../storage/naver-object-storage-service'
 
 const StudioServiceClass = class {
   constructor () {
     this.log_prefix = '[StudioService]'
-    this.DOWNLOAD_SUFFIX = '/download/'
-    this.TEMP_SUFFIX = '/temp/'
+    this.DOWNLOAD_SUFFIX = 'download/'
+    this.TEMP_SUFFIX = 'temp/'
   }
 
   getVideoProjectList = async (group_seq) => {
@@ -132,7 +133,7 @@ const StudioServiceClass = class {
 
   requestDownloadVideoFiles = async (group_member_info, video_project_info) => {
     const media_root = ServiceConfig.get('media_root');
-    const download_path = video_project_info.project_path + this.DOWNLOAD_SUFFIX
+    const download_path = video_project_info.project_path + '/' + this.DOWNLOAD_SUFFIX
     const download_directory = media_root + download_path
     if ( !( await Util.fileExists(download_directory) ) ) {
       await Util.createDirectory(download_directory)
@@ -187,9 +188,9 @@ const StudioServiceClass = class {
       log.error(this.log_prefix, '[requestMakeProject]', "can't find project info", project_seq);
       return
     }
-    const service_info = ServiceConfig.getServiceInfo()
-    const directory = ServiceConfig.get('media_root') + video_project_info.project_path
-    const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + video_project_info.project_path
+    const project_path = video_project_info.project_path + '/'
+    const directory = ServiceConfig.get('media_root') + project_path
+    const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
     const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
     const temp_directory = directory + this.TEMP_SUFFIX
     await Util.deleteDirectory(temp_directory)
@@ -202,7 +203,7 @@ const StudioServiceClass = class {
     for (let i = 0; i < sequence_list.length; i++) {
       const sequence_model = new SequenceModel().init(sequence_list[i]);
       if (sequence_model.type) {
-        sequence_model_list.push(await sequence_model.getXmlJson(i, scale, directory, editor_server_directory, editor_server_download_directory));
+        sequence_model_list.push(await sequence_model.getXmlJson(i, scale, directory, editor_server_directory, editor_server_download_directory, this.TEMP_SUFFIX));
       }
     }
 
@@ -230,25 +231,25 @@ const StudioServiceClass = class {
     const query_str = querystring.stringify(query_data);
 
     const request_options = {
-      hostname: service_info.auto_editor_server_domain,
-      port: service_info.auto_editor_server_port,
-      path: service_info.auto_editor_merge_api + '?' + query_str,
+      hostname: ServiceConfig.get('auto_editor_server_domain'),
+      port: ServiceConfig.get('auto_editor_server_port'),
+      path: ServiceConfig.get('auto_editor_merge_api') + '?' + query_str,
       method: 'GET'
     };
 
-    // const api_url = 'http://' + service_info.auto_editor_server_domain + ':' + service_info.auto_editor_server_port + service_info.auto_editor_merge_api + '?' + query_str;
-    // log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url);
-    //
-    // let api_request_result = null;
-    // let is_execute_success = false;
-    // try {
-    //   api_request_result = await Util.httpRequest(request_options, false);
-    //   is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
-    // } catch (error) {
-    //   log.error(this.log_prefix, '[requestMakeProject]', 'request error', error);
-    //   api_request_result = error.message;
-    // }
-    // log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_execute_success, api_url, api_request_result);
+    const api_url = 'http://' + ServiceConfig.get('auto_editor_server_domain') + ':' + ServiceConfig.get('auto_editor_server_port') + ServiceConfig.get('auto_editor_merge_api') + '?' + query_str;
+    log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url);
+
+    let api_request_result = null;
+    let is_execute_success = false;
+    try {
+      api_request_result = await Util.httpRequest(request_options, false);
+      is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+    } catch (error) {
+      log.error(this.log_prefix, '[requestMakeProject]', 'request error', error);
+      api_request_result = error.message;
+    }
+    log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_execute_success, api_url, api_request_result);
   }
 
   updateMakeProcess = async (request) => {
@@ -282,15 +283,23 @@ const StudioServiceClass = class {
       if (Util.isEmpty(video_project)) {
         throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
       }
-      const path_url = Util.pathToUrl(video_project.project_path);
-      const service_info = ServiceConfig.getServiceInfo();
-      const video_directory = service_info.media_root + video_project.project_path;
+      const project_path = video_project.project_path + '/'
+      const video_directory = ServiceConfig.get('media_root') + project_path
       const video_file_path = video_directory + process_info.video_file_name;
-      const total_size = await Util.getDirectoryFileSize(video_directory);
       const video_file_size = await Util.getFileSize(video_file_path);
-      process_info.download_url = Util.pathToUrl(ServiceConfig.get('static_storage_prefix')) + path_url + process_info.video_file_name;
-      process_info.stream_url = ServiceConfig.get('hls_streaming_url') + path_url + process_info.smil_file_name + '/playlist.m3u8';
-      process_info.total_size = total_size;
+
+      await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
+
+      await Util.deleteFile(video_directory + process_info.smil_file_name)
+      // await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
+      // await Util.deleteFile(video_directory + 'video_project.xml')
+      await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
+      await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
+
+      const directory_file_size = await Util.getDirectoryFileSize(video_directory);
+      process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name;
+      process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8';
+      process_info.total_size = directory_file_size + video_file_size;
       process_info.video_file_size = video_file_size;
 
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'Y', 100, process_info);

@@ -38,10 +38,10 @@ routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(re
     await Util.deleteFile(upload_file_path);
     throw new StdObject(-1, '이미지만 업로드 가능합니다.', 400);
   }
-  const image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
+  const image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + '/' + new_file_name);
   const output = new StdObject();
   output.add('image_url', image_url);
-  output.add('image_path', upload_path + Constants.SEP + new_file_name);
+  output.add('image_path', upload_path + '/' + new_file_name);
   res.json(output);
 }));
 

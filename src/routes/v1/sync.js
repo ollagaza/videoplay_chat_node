@@ -146,8 +146,8 @@ import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex';
 //   }
 //
 //   const smil_info = await new SmilInfo().loadFromXml(trans_media_directory, operation_media_info.smil_file_name);
-//   const trans_video_directory = trans_media_directory + 'SEQ' + Constants.SEP;
-//   const video_directory = media_directory + 'SEQ' + Constants.SEP;
+//   const trans_video_directory = trans_media_directory + 'SEQ' + '/';
+//   const video_directory = media_directory + 'SEQ' + '/';
 //   const is_directory_sperated = trans_video_directory !== video_directory;
 //   const add_video_file_list = [];
 //   let origin_video_size = 0;
@@ -312,7 +312,7 @@ import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex';
 //   await VideoIndexInfoModel.deleteByOperation(operation_info.seq);
 //   await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
 //
-//   const seq_directory = media_directory + 'SEQ' + Constants.SEP;
+//   const seq_directory = media_directory + 'SEQ' + '/';
 //
 //   let smil_info = null;
 //   if (!operation_media_info.isEmpty()){
@@ -349,7 +349,7 @@ import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex';
 //   for (let i = 0; i < file_list.length; i++) {
 //     const file = file_list[i];
 //     if (file.isFile()) {
-//       const target_file = seq_directory + Constants.SEP + file.name;
+//       const target_file = seq_directory + '/' + file.name;
 //       if (trans_reg.test(file.name)) {
 //         await Util.deleteFile(target_file);
 //         continue;

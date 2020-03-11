@@ -257,7 +257,7 @@ export default class EmbedModel {
     return json;
   };
 
-  getXmlJson = async (scale, file_path, editor_server_directory, editor_server_download_directory) => {
+  getXmlJson = async (scale, file_path, editor_server_directory, editor_server_download_directory, temp_suffix) => {
     const json = {
       "Type": this._type,
     };
@@ -267,18 +267,20 @@ export default class EmbedModel {
     }
 
     if (this._type === Constants.TEXT) {
-      await this.createTextImage(file_path, editor_server_directory);
-      json.Src = this._src;
+      await this.createTextImage(file_path, editor_server_directory, temp_suffix);
+      json.Src = this._src
       json.Type = this._type;
     } else if (this._type === Constants.IMAGE) {
-      json.Src = Util.urlToPath(this._src, true);
+      json.Src = this._src
+      log.debug(this.log_prefix, '[getXmlJson]', this._src, json.Src)
     } else if (this._type === Constants.VIDEO) {
-      json.Src = this.video_name;
+      json.Src = editor_server_download_directory + Util.getFileName(this.video_name);
       json.VideoStartTime = this._videoStartTime;
       json.VideoEndTime = this._videoEndTime;
     } else {
       return null;
     }
+    json.Src = Util.urlToPath(json.Src, true);
 
     json.MultiLine = this._multiLine;
     json.Padding = Math.round(this._padding * scale);
@@ -289,14 +291,10 @@ export default class EmbedModel {
     if (this._size.isUse) json.Size = this._size.getXmlJson(scale);
     if (this._position.isUse) json.Position = this._position.getXmlJson(scale);
 
-    if (this._type === Constants.VIDEO) {
-      log.debug(this.log_prefix, '[getXmlJson]', this._video_name, Util.urlToPath(this._video_name), json);
-    }
-
     return json;
   };
 
-  createTextImage = async (file_path, editor_server_directory) => {
+  createTextImage = async (file_path, editor_server_directory, temp_suffix) => {
     const font_file_name = this._font.bold ? 'NotoSansCJKkr-Medium' : 'NotoSansCJKkr-Regular';
     const font_name = this._font.bold ? 'Noto Sans CJK KR Medium' : 'Noto Sans CJK KR Regular';
     const options = {
@@ -311,13 +309,13 @@ export default class EmbedModel {
       maxHeight: this._size.getMaxHeight(),
       multiLine: this._multiLine,
       localFontName: font_file_name,
-      localFontPath: process.cwd() + Constants.SEP + 'font' + Constants.SEP + font_file_name + '.otf',
+      localFontPath: process.cwd() + '/' + 'font' + '/' + font_file_name + '.otf',
       startX: this._position.getStartX(),
       startY: this._position.getStartY()
     };
 
-    const image_file_path = file_path + '/temp/' + this._id + '.png';
-    const editor_image_file_path = editor_server_directory + '/temp/' + this._id + '.png';
+    const image_file_path = file_path + temp_suffix + this._id + '.png';
+    const editor_image_file_path = editor_server_directory + temp_suffix + this._id + '.png';
     const image_info = await text2png(this._src, options);
     const write_result = await Util.writeFile(image_file_path, image_info.data);
     log.debug(this.log_prefix, '[createTextImage]', image_file_path, this._id, write_result, editor_image_file_path);
