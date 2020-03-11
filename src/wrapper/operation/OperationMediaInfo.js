@@ -9,7 +9,7 @@ export default class OperationMediaInfo extends JsonWrapper {
 
     this.setKeys([
       'video_file_name', 'fps', 'width', 'height', 'total_frame', 'total_time',
-      'origin_video_url', 'proxy_video_url', ' is_trans_complete',
+      'video_name', ' is_trans_complete',
       'hls_streaming_url', 'dash_streaming_url', 'proxy_max_height'
     ]);
 
@@ -25,7 +25,7 @@ export default class OperationMediaInfo extends JsonWrapper {
       const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
       const proxy_file_name = Util.isEmpty(this.proxy_file_name) ? this.video_file_name : this.proxy_file_name
 
-      this.origin_video_url = directory_info.media_video + this.video_file_name;
+      this.video_name = directory_info.content_video + this.video_file_name;
 
       if (Util.isEmpty(this.stream_url)){
         this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + directory_info.media_video + proxy_file_name + '/master.m3u8';

@@ -669,7 +669,7 @@ const urlToPath = (url, editor_path = false) => {
     }
     let sep = Constants.SEP;
     if (editor_path) {
-      sep = service_info.auto_editor_sep;
+      // sep = service_info.auto_editor_sep;
     }
     path += sep + result[2].replace(/\//g, sep);
     return path;
@@ -680,6 +680,8 @@ const urlToPath = (url, editor_path = false) => {
 const getRandomId = () => `${Math.floor(Date.now() / 1000)}_${getRandomString(5)}`;
 
 const getFileExt = file_name => path.extname(file_name || '.').toLowerCase().substr(1);
+const getFileName = file_name => path.basename(file_name)
+const getDirectoryName = file_name => path.dirname(file_name)
 
 const getXmlText = (element) => {
   if (!element) {
@@ -917,7 +919,7 @@ export default {
   "loadXmlString": loadXmlString,
 
   "writeXmlFile": async (directory, xml_file_name, context_json) => {
-    const xml_file_path = directory + xml_file_name;
+    const xml_file_path = removePathLastSlash(directory) + '/' + xml_file_name;
 
     const xml = XML_BUILDER.buildObject(JSON.parse(JSON.stringify(context_json)));
     await writeFile(xml_file_path, xml);
@@ -1143,6 +1145,8 @@ export default {
   isFalse,
   urlToPath,
   getFileExt,
+  getFileName,
+  getDirectoryName,
   getRandomNumber,
   getFileType,
   uploadImageFile

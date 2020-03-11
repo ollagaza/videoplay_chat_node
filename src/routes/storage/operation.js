@@ -15,14 +15,4 @@ routes.post('/analysis/complete', Wrap(async(req, res) => {
   res.json(output)
 }));
 
-routes.post('/refer_files/complete', Wrap(async(req, res) => {
-  req.accepts('application/json');
-  const response_data = req.body
-  const update_result = await SyncService.onOperationVideoFileCopyCompeteByRequest(response_data)
-
-  const output = new StdObject()
-  output.add('result', update_result)
-  res.json(output)
-}));
-
 export default routes;

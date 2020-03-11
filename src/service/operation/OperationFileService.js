@@ -162,13 +162,13 @@ const OperationFileServiceClass = class {
     const cloud_file_list = []
     for (let i = 0; i < file_info_list.length; i++) {
       const file_info = file_info_list[i];
-      const file_name = path.basename(file_info.file_path);
+      const file_name = Util.getFileName(file_info.file_path);
       const target_path = media_root + file_info.file_path;
       await Util.deleteFile(target_path);
       cloud_file_list.push(file_name)
     }
 
-    await CloudFileService.requestDeleteFileList(file_base_path, cloud_file_list, false)
+    await CloudFileService.requestDeleteObjectFileList(file_base_path, cloud_file_list, false)
   }
 }
 

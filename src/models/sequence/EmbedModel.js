@@ -2,7 +2,6 @@ import Constants from '../../constants/constants'
 import Util from '../../utils/baseutil'
 import text2png from "../../libs/text-to-image"
 import log from '../../libs/logger'
-
 import EmbedBackgroundColorModel from './EmbedBackgroundColorModel';
 import EmbedFontModel from './EmbedFontModel';
 import EmbedPositionModel from './EmbedPositionModel';
@@ -30,7 +29,7 @@ export default class EmbedModel {
 
     this._stream_info = null;
     this._operation_seq = 0;
-    this._origin_video_url = null;
+    this._video_name = null;
     this.log_prefix = '[SequenceModel]'
   }
 
@@ -59,7 +58,7 @@ export default class EmbedModel {
 
       this._stream_info = json.stream_info;
       this._operation_seq = json.operation_seq || 0;
-      this._origin_video_url = json.origin_video_url;
+      this._video_name = json.video_name;
 
       this._isUse = true;
     }
@@ -228,12 +227,12 @@ export default class EmbedModel {
     this._placeholder = value;
   }
 
-  get origin_video_url() {
-    return this._origin_video_url;
+  get video_name() {
+    return this._video_name;
   }
 
-  set origin_video_url(value) {
-    this._origin_video_url = value;
+  set video_name(value) {
+    this._video_name = value;
   }
 
   toJSON = () => {
@@ -258,7 +257,7 @@ export default class EmbedModel {
     return json;
   };
 
-  getXmlJson = async (scale, file_path, editor_server_directory) => {
+  getXmlJson = async (scale, file_path, editor_server_directory, editor_server_download_directory) => {
     const json = {
       "Type": this._type,
     };
@@ -274,7 +273,7 @@ export default class EmbedModel {
     } else if (this._type === Constants.IMAGE) {
       json.Src = Util.urlToPath(this._src, true);
     } else if (this._type === Constants.VIDEO) {
-      json.Src = Util.urlToPath(this._origin_video_url, true);
+      json.Src = this.video_name;
       json.VideoStartTime = this._videoStartTime;
       json.VideoEndTime = this._videoEndTime;
     } else {
@@ -291,14 +290,15 @@ export default class EmbedModel {
     if (this._position.isUse) json.Position = this._position.getXmlJson(scale);
 
     if (this._type === Constants.VIDEO) {
-      log.debug(this.log_prefix, '[getXmlJson]', this._origin_video_url, Util.urlToPath(this._origin_video_url), json);
+      log.debug(this.log_prefix, '[getXmlJson]', this._video_name, Util.urlToPath(this._video_name), json);
     }
 
     return json;
   };
 
   createTextImage = async (file_path, editor_server_directory) => {
-    const font_name = this._font.bold ? 'NanumBarunGothicBold' : 'NanumBarunGothic';
+    const font_file_name = this._font.bold ? 'NotoSansCJKkr-Medium' : 'NotoSansCJKkr-Regular';
+    const font_name = this._font.bold ? 'Noto Sans CJK KR Medium' : 'Noto Sans CJK KR Regular';
     const options = {
       fontSize: this._font.size,
       fontName: font_name,
@@ -310,14 +310,14 @@ export default class EmbedModel {
       maxWidth: this._size.getMaxWidth(),
       maxHeight: this._size.getMaxHeight(),
       multiLine: this._multiLine,
-      localFontName: font_name,
-      localFontPath: process.cwd() + Constants.SEP + 'font' + Constants.SEP + font_name + '.ttf',
+      localFontName: font_file_name,
+      localFontPath: process.cwd() + Constants.SEP + 'font' + Constants.SEP + font_file_name + '.otf',
       startX: this._position.getStartX(),
       startY: this._position.getStartY()
     };
 
-    const image_file_path = file_path + this._id + '.png';
-    const editor_image_file_path = editor_server_directory + this._id + '.png';
+    const image_file_path = file_path + '/temp/' + this._id + '.png';
+    const editor_image_file_path = editor_server_directory + '/temp/' + this._id + '.png';
     const image_info = await text2png(this._src, options);
     const write_result = await Util.writeFile(image_file_path, image_info.data);
     log.debug(this.log_prefix, '[createTextImage]', image_file_path, this._id, write_result, editor_image_file_path);

@@ -9,7 +9,7 @@ import MemberService from '../../service/member/MemberService'
 import GroupService from '../../service/member/GroupService'
 import OperationService from '../../service/operation/OperationService'
 import OperationClipService from '../../service/operation/OperationClipService'
-import VideoProjectService from '../../service/project/VideoProjectService'
+import StudioService from '../../service/project/StudioService'
 
 const routes = Router();
 
@@ -21,7 +21,7 @@ const create_new_group = async (req, transaction, member_info) => {
   const group_seq = group_info.seq
   await OperationService.migrationGroupSeq(transaction, member_seq, group_seq)
   await OperationClipService.migrationGroupSeq(member_seq, group_seq)
-  await VideoProjectService.migrationGroupSeq(member_seq, group_seq)
+  await StudioService.migrationGroupSeq(member_seq, group_seq)
   await GroupService.updateMemberUsedStorage(transaction, group_seq, member_seq)
 
   group_info.setIgnoreEmpty(true)
@@ -55,7 +55,7 @@ routes.post('/', Wrap(async(req, res) => {
           const group_seq = group_info.group_seq
           if (group_info.group_type === 'P') {
             has_personal_group = true
-            await VideoProjectService.migrationGroupSeq(member_seq, group_seq)
+            await StudioService.migrationGroupSeq(member_seq, group_seq)
           }
           const operation_list_page = await OperationService.getOperationList(DBMySQL, group_seq)
           const operation_list = operation_list_page.data
