@@ -1,5 +1,5 @@
 export default class StdObject {
-  constructor (error, message, httpStatusCode) {
+  constructor (error, message, httpStatusCode, data = null) {
     this.error = 0 ///< 에러 코드 (0이면 에러 아님)
     this.message = 'success' ///< 에러 메세지 (success이면 에러 아님)
     this.variables = {} ///< 추가 변수
@@ -9,10 +9,10 @@ export default class StdObject {
     error = typeof error !== 'undefined' ? error : 0
     message = typeof message !== 'undefined' ? message : 'success'
     httpStatusCode = typeof httpStatusCode !== 'undefined' ? httpStatusCode : 200
-    this.init(error, message, httpStatusCode)
+    this.init(error, message, httpStatusCode, data)
   }
 
-  init (error, message, httpStatusCode) {
+  init (error, message, httpStatusCode, data = null) {
     error = typeof error !== 'undefined' ? error : 0
     message = typeof message !== 'undefined' ? message : 'success'
     httpStatusCode = typeof httpStatusCode !== 'undefined' ? httpStatusCode : 200
@@ -20,6 +20,9 @@ export default class StdObject {
     this.setError(error)
     this.setMessage(message)
     this.setHttpStatusCode(httpStatusCode)
+    if (data) {
+      this.adds(data)
+    }
   }
 
   setError (error) {

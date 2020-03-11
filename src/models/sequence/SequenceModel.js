@@ -3,6 +3,7 @@ import log from '../../libs/logger'
 
 import EmbedModel from './EmbedModel';
 import EmbedBackgroundColorModel from './EmbedBackgroundColorModel';
+import Constants from '../../constants/constants'
 
 export default class SequenceModel {
   constructor(type = null) {
@@ -48,7 +49,7 @@ export default class SequenceModel {
   };
 
   get type() {
-    return this._type;
+    return String(this._type);
   }
 
   get backGroundColor() {
@@ -134,27 +135,38 @@ export default class SequenceModel {
     return json;
   };
 
-  getXmlJson = async (index, scale = 1, file_path, editor_server_directory) => {
+  getXmlJson = async (index, scale = 1, file_path, editor_server_directory, editor_server_download_directory, temp_suffix) => {
     const json = {
       "Index": index,
       "Type": this._type,
       "Duration": this._duration,
       "VirtualStartTime": this._virtualStartTime,
       "VirtualEndTime": this._virtualEndTime
-    };
-    if (this._backGroundColor.isUse) json.BackGround = this._backGroundColor.getXmlJson();
+    }
+    if (this._backGroundColor.isUse) json.BackGround = this._backGroundColor.getXmlJson()
 
-    const embeddings = [];
+    const embeddings = []
     for (let i = 0; i < this._embeddings.length; i++) {
-      const embed = this._embeddings[i];
+      const embed = this._embeddings[i]
       if (embed.isUse && !Util.isEmpty(embed.src)) {
-        embeddings.push(await embed.getXmlJson(scale, file_path, editor_server_directory));
+        embeddings.push(await embed.getXmlJson(scale, file_path, editor_server_directory, editor_server_download_directory, temp_suffix))
       } else {
-        log.debug(this.log_prefix, '[getXmlJson]', 'embed empty', embed.toJSON());
+        log.debug(this.log_prefix, '[getXmlJson]', 'embed empty', embed.toJSON())
       }
     }
     json.Embedding = embeddings;
 
-    return json;
+    return json
   };
+
+  getVideoName = () => {
+    for (let i = 0; i < this._embeddings.length; i++) {
+      const embed = this._embeddings[i]
+      if (embed.type === Constants.VIDEO) {
+        if (embed.isUse && !Util.isEmpty(embed.video_name)) {
+          return embed.video_name
+        }
+      }
+    }
+  }
 }

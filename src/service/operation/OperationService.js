@@ -195,6 +195,7 @@ const OperationServiceClass = class {
     const media_path = operation_info.media_path
     const media_directory = ServiceConfig.get('media_root') + media_path;
     const trans_server_root = ServiceConfig.get('trans_server_root')
+    const storage_server_root = ServiceConfig.get('storage_server_root')
     const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
     const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
     const content_path = operation_info.content_id + '/'
@@ -215,6 +216,9 @@ const OperationServiceClass = class {
       "media_temp": media_path + "temp/",
       "trans_origin": trans_server_root + media_path + "origin/",
       "trans_video": trans_server_root + media_path + "video/",
+      "storage_path": storage_server_root + media_path,
+      "storage_origin": storage_server_root + media_path + "origin/",
+      "storage_video": storage_server_root + media_path + "video/",
       "url_prefix": url_prefix,
       "url_origin": url_prefix + "origin/",
       "url_video": url_prefix + "video/",
@@ -262,7 +266,7 @@ const OperationServiceClass = class {
   deleteOperationFiles = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     await Util.deleteDirectory(directory_info.root);
-    await CloudFileService.requestDeleteFile(directory_info.media_path, true)
+    await CloudFileService.requestDeleteObjectFile(directory_info.media_path, true)
   };
 
   deleteGroupMemberOperations = async (group_seq, member_seq) => {

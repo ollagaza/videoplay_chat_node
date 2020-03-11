@@ -136,8 +136,8 @@ if (IS_DEV) {
         const file = file_list[i];
         if (file.isDirectory()) {
           const directory_name = file.name;
-          const target_dir = root_dir + Constants.SEP + directory_name;
-          const seq_dir = target_dir + Constants.SEP + 'SEQ';
+          const target_dir = root_dir + '/' + directory_name;
+          const seq_dir = target_dir + '/' + 'SEQ';
           const seq_file_list = await Util.getDirectoryFileList(seq_dir);
           log.d(req, i, seq_dir);
           if (seq_file_list) {
@@ -151,7 +151,7 @@ if (IS_DEV) {
               if (file_ext === 'smil') {
                 continue;
               }
-              const seq_path = seq_dir + Constants.SEP + seq_file.name;
+              const seq_path = seq_dir + '/' + seq_file.name;
               const file_info = await Util.getFileStat(seq_path);
               if (file_info.size <= 0) {
                 continue;
