@@ -42,15 +42,15 @@ const CloudFileServiceClass = class {
     return { "origin_file_name": file_name }
   }
 
-  requestMoveFile = async (file_path, is_folder = true, response_url = null, method = 'POST', response_data = null) => {
+  requestMoveToObject = async (file_path, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
     let file_list = null
     if (!is_folder) {
       file_list = await this.getFileList(file_path)
     }
-    return await this.requestMoveFileByList(file_path, file_list, is_folder, response_url, method, response_data)
+    return await this.requestMoveToObjectByList(file_path, file_list, is_folder, content_id, response_url, response_data, method)
   }
 
-  requestMoveFileByList = async (file_path, file_list = null, is_folder = true, response_url = null, method = 'POST', response_data = null) => {
+  requestMoveToObjectByList = async (file_path, file_list = null, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
     if (!is_folder && (!file_list || file_list.length === 0)) {
       return false
     }
@@ -59,19 +59,50 @@ const CloudFileServiceClass = class {
     cloud_file_info.is_folder = is_folder
     cloud_file_info.remote_path = file_path
     cloud_file_info.file_list = file_list
+    if (content_id) {
+      cloud_file_info.content_id = content_id
+    }
 
-    return await this.requestApi(this.MOVE, cloud_file_info, response_url, method, response_data)
+    return await this.requestApi(this.MOVE, cloud_file_info, response_url, response_data, method)
   }
 
-  requestDeleteFile = async (file_path, is_folder = true, response_url = null, method = 'POST', response_data = null) => {
+  requestDownloadObject = async (download_path, file_path, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
     let file_list = null
     if (!is_folder) {
       file_list = await this.getFileList(file_path)
     }
-    return await this.requestDeleteFileList(file_path, file_list, is_folder, response_url, method, response_data)
+    return await this.requestDownloadObjectByList(file_path, file_list, is_folder, content_id, response_url, response_data, method)
   }
 
-  requestDeleteFileList = async (file_path, file_list = null, is_folder = true, response_url = null, method = 'POST', response_data = null) => {
+  requestDownloadObjectByList = async (download_path, file_path, file_list = null, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
+    if (!is_folder && (!file_list || file_list.length === 0)) {
+      return false
+    }
+    const cloud_file_info = new CloudFileInfo()
+    cloud_file_info.origin_type = Constants.OBJECT
+    cloud_file_info.origin_bucket = ServiceConfig.get('object_storage_bucket_name')
+    cloud_file_info.origin_path = file_path
+    cloud_file_info.is_folder = is_folder
+    cloud_file_info.remote_type = Constants.LOCAL
+    cloud_file_info.remote_bucket = ServiceConfig.get('storage_server_root')
+    cloud_file_info.remote_path = download_path
+    cloud_file_info.file_list = file_list
+    if (content_id) {
+      cloud_file_info.content_id = content_id
+    }
+
+    return await this.requestApi(this.COPY, cloud_file_info, response_url, response_data, method)
+  }
+
+  requestDeleteObjectFile = async (file_path, is_folder = true, response_url = null, response_data = null, method = 'POST') => {
+    let file_list = null
+    if (!is_folder) {
+      file_list = await this.getFileList(file_path)
+    }
+    return await this.requestDeleteObjectFileList(file_path, file_list, is_folder, response_url, response_data, method)
+  }
+
+  requestDeleteObjectFileList = async (file_path, file_list = null, is_folder = true, response_url = null, response_data = null, method = 'POST') => {
     const cloud_file_info = new CloudFileInfo()
     cloud_file_info.origin_path = file_path
     cloud_file_info.is_folder = is_folder
@@ -79,10 +110,10 @@ const CloudFileServiceClass = class {
     cloud_file_info.origin_bucket = ServiceConfig.get('object_storage_bucket_name')
     cloud_file_info.file_list = file_list
 
-    return await this.requestApi(this.DELETE, cloud_file_info, response_url, method, response_data)
+    return await this.requestApi(this.DELETE, cloud_file_info, response_url, response_data, method)
   }
 
-  requestApi = async (api_type, cloud_file_info, response_url = null, method = 'POST', response_data = null) => {
+  requestApi = async (api_type, cloud_file_info, response_url = null, response_data = null, method = 'POST') => {
     const request_options = {
       hostname: ServiceConfig.get('storage_server_domain'),
       port: ServiceConfig.get('storage_server_port'),

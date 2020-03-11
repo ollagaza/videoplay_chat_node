@@ -87,7 +87,7 @@ export default class IndexInfo extends JsonWrapper {
       origin_file = origin_file.replace(seq_exp, '/');
       thumb_file = thumb_file.replace(seq_exp, '/');
     }
-    const image_file_name = path.basename(origin_file);
+    const image_file_name = Util.getFileName(origin_file);
 
     // log.d(null, index_directory, hawkeye_xml_info.orithumb, origin_file, thumb_file);
     // log.d(null, index_directory + origin_file, index_directory + thumb_file);

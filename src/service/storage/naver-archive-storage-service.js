@@ -181,7 +181,7 @@ const NaverArchiveStorageClass = class {
     if (split_file_info_list && split_file_info_list.length) {
       for (let i = 0; i < split_file_info_list.length; i++) {
         const split_file_path = split_file_info_list[i];
-        const split_file_name = path.basename(split_file_path);
+        const split_file_name = Util.getFileName(split_file_path);
         await this.uploadFileOne(remote_file_path, split_file_name, split_file_path, target_bucket_name, storage_client)
         slo_remote_path_list.push({
           path: `/${target_bucket_name}/${remote_file_path}/${split_file_name}`

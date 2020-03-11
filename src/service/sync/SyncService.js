@@ -167,10 +167,10 @@ const SyncServiceClass = class {
     }
     if (move_file_cloud) {
       try {
-        const request_result = await CloudFileService.requestMoveFile(directory_info.media_video, true, '/api/storage/operation/analysis/complete', 'POST', { operation_seq })
-        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveFile] - video', `file_path: ${directory_info.media_video}`,request_result)
+        const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq })
+        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`,request_result)
       } catch(error) {
-        log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveFile]', error)
+        log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
       }
     }
     if (analysis_status === 'Y') {

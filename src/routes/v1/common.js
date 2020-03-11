@@ -18,7 +18,7 @@ routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(re
   const member_model = new MemberModel(DBMySQL);
   const member_info = await member_model.getMemberInfo(member_seq);
   const media_root = ServiceConfig.get('media_root');
-  const upload_path = member_info.user_media_path + "image";
+  const upload_path = member_info.user_media_path + "/image";
   const upload_full_path = media_root + upload_path;
   if (!(await Util.fileExists(upload_full_path))) {
     await Util.createDirectory(upload_full_path);
@@ -38,10 +38,10 @@ routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(re
     await Util.deleteFile(upload_file_path);
     throw new StdObject(-1, '이미지만 업로드 가능합니다.', 400);
   }
-  const image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
+  const image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + '/' + new_file_name);
   const output = new StdObject();
   output.add('image_url', image_url);
-  output.add('image_path', upload_path + Constants.SEP + new_file_name);
+  output.add('image_path', upload_path + '/' + new_file_name);
   res.json(output);
 }));
 

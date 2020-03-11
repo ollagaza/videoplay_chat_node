@@ -34,7 +34,7 @@ const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000;
 const NEW_LINE_REGEXP = /\r?\n/g;
 
 let PATH_EXP;
-if (Constants.SEP === '/') {
+if ('/' === '/') {
   PATH_EXP = new RegExp(/\//, 'g');
 } else {
   PATH_EXP = new RegExp(/\\/, 'g');
@@ -291,12 +291,12 @@ const deleteDirectory = async (path) => {
   for (let i = 0; i < file_list.length; i++) {
     const file = file_list[i];
     if (file.isDirectory()) {
-      await deleteDirectory( path + Constants.SEP + file.name );
-      const delete_directory_result = await removeDirectory( path + Constants.SEP + file.name );
-      // log.debug(log_prefix, 'delete sub dir', path + Constants.SEP + file.name, delete_directory_result);
+      await deleteDirectory( path + '/' + file.name );
+      const delete_directory_result = await removeDirectory( path + '/' + file.name );
+      // log.debug(log_prefix, 'delete sub dir', path + '/' + file.name, delete_directory_result);
     } else {
-      const delete_file_result = await deleteFile( path + Constants.SEP + file.name );
-      // log.debug(log_prefix, 'delete sub file', path + Constants.SEP + file.name, delete_file_result);
+      const delete_file_result = await deleteFile( path + '/' + file.name );
+      // log.debug(log_prefix, 'delete sub file', path + '/' + file.name, delete_file_result);
     }
   }
   const delete_root_result = await removeDirectory( path );
@@ -329,7 +329,7 @@ const getDirectoryFileSize = async (directory_path) => {
   for (let i = 0; i < file_list.length; i++) {
     const file = file_list[i];
     if (file.isFile()) {
-      const file_info = await getFileStat(directory_path + Constants.SEP + file.name);
+      const file_info = await getFileStat(directory_path + '/' + file.name);
       if (file_info && file_info.size) {
         file_size += file_info.size;
       }
@@ -639,47 +639,53 @@ const urlToPath = (url, editor_path = false) => {
   const service_info = ServiceConfig.getServiceInfo();
   const check_regex = /^\/static\/(index|storage|video)\/(.+)$/g;
   const result = check_regex.exec(url);
+  let sep = '/';
+  if (editor_path) {
+    // sep = service_info.auto_editor_sep;
+  }
+  let path = null;
   if (result && result.length === 3) {
-    let path = '';
+    let prefix = null;
     const url_type = result[1];
     switch (url_type) {
       case 'index':
         if (editor_path) {
-          path = service_info.auto_editor_index_root;
+          prefix = service_info.auto_editor_index_root;
         } else {
-          path = service_info.hawkeye_data_directory;
+          prefix = service_info.hawkeye_data_directory;
         }
         break;
       case 'storage':
         if (editor_path) {
-          path = service_info.auto_editor_file_root;
+          prefix = service_info.auto_editor_file_root;
         } else {
-          path = service_info.media_root;
+          prefix = service_info.media_root;
         }
         break;
       case 'video':
         if (editor_path) {
-          path = service_info.auto_editor_video_root;
+          prefix = service_info.auto_editor_video_root;
         } else {
-          path = service_info.trans_video_root;
+          prefix = service_info.trans_video_root;
         }
         break;
       default:
-        return url;
+        break
     }
-    let sep = Constants.SEP;
-    if (editor_path) {
-      sep = service_info.auto_editor_sep;
-    }
-    path += sep + result[2].replace(/\//g, sep);
-    return path;
+    path = (prefix ? prefix + sep : '') + result[2]
+  } else {
+    path = url
   }
-  return url;
+  path = path.replace(/\//g, sep);
+  // log.debug(log_prefix, '[urlToPath]', url, path)
+  return path
 };
 
 const getRandomId = () => `${Math.floor(Date.now() / 1000)}_${getRandomString(5)}`;
 
 const getFileExt = file_name => path.extname(file_name || '.').toLowerCase().substr(1);
+const getFileName = file_name => path.basename(file_name)
+const getDirectoryName = file_name => path.dirname(file_name)
 
 const getXmlText = (element) => {
   if (!element) {
@@ -820,8 +826,8 @@ const uploadImageFile = async (user_info, req, res, key = 'image') => {
     await deleteFile(upload_file_path);
     throw new StdObject(-1, '이미지만 업로드 가능합니다.', 400);
   }
-  const image_url = getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + Constants.SEP + new_file_name);
-  return { image_url: image_url, image_path: upload_path + Constants.SEP + new_file_name };
+  const image_url = getUrlPrefix(ServiceConfig.get('static_storage_prefix'), upload_path + '/' + new_file_name);
+  return { image_url: image_url, image_path: upload_path + '/' + new_file_name };
 }
 
 const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null) => {
@@ -917,7 +923,7 @@ export default {
   "loadXmlString": loadXmlString,
 
   "writeXmlFile": async (directory, xml_file_name, context_json) => {
-    const xml_file_path = directory + xml_file_name;
+    const xml_file_path = removePathLastSlash(directory) + '/' + xml_file_name;
 
     const xml = XML_BUILDER.buildObject(JSON.parse(JSON.stringify(context_json)));
     await writeFile(xml_file_path, xml);
@@ -1143,6 +1149,8 @@ export default {
   isFalse,
   urlToPath,
   getFileExt,
+  getFileName,
+  getDirectoryName,
   getRandomNumber,
   getFileType,
   uploadImageFile
