@@ -172,10 +172,15 @@ const StudioServiceClass = class {
 
   onDownloadComplete = async (response_data) => {
     log.debug(this.log_prefix, '[onDownloadComplete]', response_data)
-    if (!response_data || !response_data.is_success || !response_data.project_seq) {
-      throw new StdObject(-1, '', 400, { response_data } )
+    if (!response_data || !response_data.project_seq) {
+      throw new StdObject(-1, '잘못된 요청입니다.', 400, { response_data } )
+    }
+    if (!response_data.is_success) {
+      await VideoProjectModel.updateRequestStatus(response_data.project_seq, 'E', 0);
+      throw new StdObject(-2, '원본 동영상파일 다운로드에 실패하였습니다.', 400, { response_data } )
     }
     await this.requestMakeProject(response_data.project_seq)
+    return true
   }
 
   requestMakeProject = async (project_seq) => {
@@ -283,18 +288,25 @@ const StudioServiceClass = class {
       if (Util.isEmpty(video_project)) {
         throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
       }
+      const project_seq = video_project._id
       const project_path = video_project.project_path + '/'
       const video_directory = ServiceConfig.get('media_root') + project_path
       const video_file_path = video_directory + process_info.video_file_name;
+
+      if ( !(await Util.fileExists(video_file_path)) ) {
+        await VideoProjectModel.updateRequestStatus(project_seq, 'E', 100);
+        throw new StdObject(5, '동영상 파일이 없습니다.', 400);
+      }
+
       const video_file_size = await Util.getFileSize(video_file_path);
 
       await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
 
       await Util.deleteFile(video_directory + process_info.smil_file_name)
-      // await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
-      // await Util.deleteFile(video_directory + 'video_project.xml')
+      await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
+      await Util.deleteFile(video_directory + 'video_project.xml')
       await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
-      // await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
+      await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
 
       const directory_file_size = await Util.getDirectoryFileSize(video_directory);
       process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name;

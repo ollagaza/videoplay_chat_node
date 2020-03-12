@@ -868,11 +868,11 @@ const storate = multer.diskStorage({
 
 const remove_path_slash_regex = /^[/]*(.+)([^/]+)[/]*$/
 const removePathSlash = (path) => {
-  if (!path) return ''
+  if (!path) return null
   return path.replace(remove_path_slash_regex, '$1$2')
 }
 const removePathLastSlash = (path) => {
-  if (!path) return ''
+  if (!path) return null
   return path.replace(/\/+$/, '');
 }
 
