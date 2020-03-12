@@ -7,6 +7,7 @@ import ServiceConfig from '../service-config'
 import Util from '../../utils/baseutil'
 import NaverArchiveStorageService from './naver-archive-storage-service'
 import _ from 'lodash'
+import StdObject from '../../wrapper/std-object'
 
 const NaverObjectStorageClass = class {
   constructor () {
@@ -62,6 +63,9 @@ const NaverObjectStorageClass = class {
   }
 
   uploadFolder = async (local_file_path, remote_path, remote_bucket_name = null) => {
+    if (!(await Util.fileExists(local_file_path))) {
+      throw new StdObject(101, `file not exists - ${local_file_path}`, 400)
+    }
     const file_list = await Util.getDirectoryFileList(local_file_path)
     local_file_path = Util.removePathLastSlash(local_file_path)
     remote_path = Util.removePathSlash(remote_path)
@@ -86,7 +90,7 @@ const NaverObjectStorageClass = class {
 
   uploadFile = async (local_file_path, remote_path, remote_file_name, bucket_name = null, client = null, acl = null) => {
     if (!(await Util.fileExists(local_file_path))) {
-      return false
+      throw new StdObject(102, `file not exists - ${local_file_path}`, 400)
     }
     remote_path = Util.removePathSlash(remote_path)
     remote_file_name = Util.removePathSlash(remote_file_name)
@@ -189,10 +193,12 @@ const NaverObjectStorageClass = class {
   }
 
   beforeDownload = async (download_directory, download_file_name = null) => {
-    await Util.createDirectory(download_directory)
-    if (download_file_name) {
-      const download_file_path = download_directory + '/' + download_file_name
-      await Util.deleteFile(download_file_path)
+    const download_file_path = download_file_name ? `${download_directory}/${download_file_name}` : download_directory
+    await Util.deleteFile(download_file_path)
+    const directory = Util.getDirectoryName(download_file_path)
+    const create_result = await Util.createDirectory(directory)
+    if ( !create_result ) {
+      throw new StdObject(102, `can't create directory. download_directory: ${download_directory}, download_file_name: ${download_file_name}, download_file_path: ${download_file_path}, directory: ${directory}`, 400)
     }
   }
 
@@ -235,6 +241,7 @@ const NaverObjectStorageClass = class {
       Bucket: target_bucket_name,
       Key: remote_file_path
     }
+    log.debug(this.log_prefix, '[downloadFile]', remote_path, remote_file_name, download_directory, download_file_name, bucket_name, params)
     const download_file_path = download_directory + '/' + download_file_name
     const file_stream = fs.createWriteStream(download_file_path, {flags:'a'})
     const download_promise = new Promise((resolve, reject) => {

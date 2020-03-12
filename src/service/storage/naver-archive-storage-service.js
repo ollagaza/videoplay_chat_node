@@ -128,6 +128,9 @@ const NaverArchiveStorageClass = class {
   }
 
   uploadFolder = async (local_file_path, remote_path, remote_bucket_name = null, client = null) => {
+    if (!(await Util.fileExists(local_file_path))) {
+      throw new StdObject(101, `file not exists - ${local_file_path}`, 400)
+    }
     local_file_path = Util.removePathLastSlash(local_file_path)
     remote_path = Util.removePathSlash(remote_path)
     const storage_client = await this.getStorageClient(client)
@@ -145,7 +148,7 @@ const NaverArchiveStorageClass = class {
 
   uploadFile = async (local_file_path, remote_path, remote_file_name, remote_bucket_name = null, client = null) => {
     if (!(await Util.fileExists(local_file_path))) {
-      return false
+      throw new StdObject(102, `file not exists - ${local_file_path}`, 400)
     }
     remote_path = Util.removePathSlash(remote_path)
     remote_file_name = Util.removePathSlash(remote_file_name)
@@ -181,7 +184,7 @@ const NaverArchiveStorageClass = class {
     if (split_file_info_list && split_file_info_list.length) {
       for (let i = 0; i < split_file_info_list.length; i++) {
         const split_file_path = split_file_info_list[i];
-        const split_file_name = Util.getFileName(split_file_path);
+        const split_file_name = path.basename(split_file_path);
         await this.uploadFileOne(remote_file_path, split_file_name, split_file_path, target_bucket_name, storage_client)
         slo_remote_path_list.push({
           path: `/${target_bucket_name}/${remote_file_path}/${split_file_name}`
@@ -244,10 +247,14 @@ const NaverArchiveStorageClass = class {
     await Util.deleteFile(local_file_path)
   }
 
-  beforeDownload = async (download_directory, download_file_name) => {
-    const download_file_path = download_directory + '/' + download_file_name
-    await Util.createDirectory(download_directory)
+  beforeDownload = async (download_directory, download_file_name = null) => {
+    const download_file_path = download_file_name ? `${download_directory}/${download_file_name}` : download_directory
     await Util.deleteFile(download_file_path)
+    const directory = Util.getDirectoryName(download_file_path)
+    const create_result = await Util.createDirectory(directory)
+    if ( !create_result ) {
+      throw new StdObject(102, `can't create directory. download_directory: ${download_directory}, download_file_name: ${download_file_name}, download_file_path: ${download_file_path}, directory: ${directory}`, 400)
+    }
   }
 
   downloadFolder = async (remote_path, download_directory, bucket_name = null, client = null) => {

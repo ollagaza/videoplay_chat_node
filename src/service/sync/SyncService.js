@@ -156,13 +156,17 @@ const SyncServiceClass = class {
     });
 
     if (is_sync_complete) {
-      await new BatchOperationQueueModel(DBMySQL).onJobComplete(operation_seq);
+      // await new BatchOperationQueueModel(DBMySQL).onJobComplete(operation_seq);
     }
 
     if (is_complete) {
       for (let i = 0; i < move_file_list.length; i++) {
         const move_file_info = move_file_list[i]
         await Util.renameFile(move_file_info.target, move_file_info.dest)
+      }
+      // TODO: 부산대 테스트 끝나면 아래 조건 제거
+      if (operation_info.group_seq !== 30) {
+        await Util.deleteDirectory(directory_info.origin)
       }
     }
     if (move_file_cloud) {
