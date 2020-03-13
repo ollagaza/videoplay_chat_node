@@ -65,6 +65,27 @@ routes.post('/', baseutil.common_path_upload.fields([{ name: 'profile_image' }, 
   res.json(output);
 }));
 
+routes.post('/noCheckCreate', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async(req, res) => {
+  const output = new StdObject();
+  const params = JSON.parse(req.body.params);
+
+  _.forEach(req.files, (value) => {
+    if (value[0].fieldname === 'profile_image') {
+      params.user_info.profile_image_path = '/common/' + value[0].filename;
+    } else if (value[0].fieldname === 'licens_image') {
+      params.user_sub_info.license_image_path = '/common/' + value[0].filename;
+    }
+  })
+
+  // 커밋과 롤백은 자동임
+  await DBMySQL.transaction(async(transaction) => {
+    const result = await MemberService.noCheckCreateMember(transaction, params);
+    output.add('info', result);
+  });
+
+  res.json(output);
+}));
+
 routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);

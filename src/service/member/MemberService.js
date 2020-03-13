@@ -450,6 +450,24 @@ const MemberServiceClass = class {
 
     return member_info;
   }
+
+  noCheckCreateMember = async (database, params) => {
+    const member_info = new MemberInfo(params.user_info, ['password_confirm']);
+    const member_sub_info = new MemberInfo(params.user_sub_info);
+    const member_model = this.getMemberModel(database)
+    const create_member_info = await member_model.createMember(member_info)
+    if (!create_member_info.seq){
+      throw new StdObject(-1, '회원정보 생성 실패', 500);
+    }
+
+    const update_member_sub_result = await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
+
+    await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq)
+    await MemberLogService.memberJoinLog(database, create_member_info.seq)
+    await GroupService.createPersonalGroup(database, create_member_info)
+
+    return member_info;
+  }
 }
 
 const member_service = new MemberServiceClass()
