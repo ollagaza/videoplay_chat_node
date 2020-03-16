@@ -58,6 +58,14 @@ export default class GroupModel extends MySQLModel {
     return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
   }
 
+  getMemberGroupInfoAll = async  (member_seq, private_keys = null) => {
+    const filter = {
+      member_seq: member_seq
+    }
+    const query_result = await this.find(filter)
+    return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
+  }
+
   getGroupInfoByMemberSeqAndGroupType = async  (member_seq, group_type) => {
     const filter = {
       member_seq,

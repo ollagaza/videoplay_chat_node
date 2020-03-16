@@ -660,7 +660,7 @@ const GroupServiceClass = class {
     const member_seq = filter.member_seq
     const group_type = filter.group_type
     const start_date = Util.getCurrentTimestamp()
-    const expire_date = this.getExpireTimeStamp(expire_month_code)
+    const expire_date = expire_month_code === null ? null : this.getExpireTimeStamp(expire_month_code)
 
     const payment_info = {
       pay_code,
@@ -767,6 +767,13 @@ const GroupServiceClass = class {
       socket_data.message_info = message_info
     }
     await SocketManager.sendToFrontMulti(user_id_list, socket_data)
+  }
+
+  getUserGroupInfo = async (database, member_seq) => {
+    const group_info_model = this.getGroupModel(database);
+    const group_info_result = await group_info_model.getMemberGroupInfoAll(member_seq);
+
+    return group_info_result;
   }
 }
 

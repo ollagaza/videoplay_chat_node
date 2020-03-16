@@ -9,8 +9,18 @@ export default class PaymentModel extends MySQLModel {
     this.log_prefix = '[PaymentModel]'
   }
 
-  getPaymentList = async (lang) => {
-    const result = await this.find({ lang: lang, is_visible: 1 });
+  getPaymentList = async (lang = 'kor', group_type = null) => {
+    const searchObj = {
+      is_new: true,
+      query: [
+        { is_visible: 1 },
+        { lang: lang }
+      ],
+    };
+    if (group_type) {
+      searchObj.query.push({ group: ['in', 'free', group_type] });
+    }
+    const result = await this.find(searchObj);
 
     return result;
   };

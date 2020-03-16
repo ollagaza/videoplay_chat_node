@@ -126,11 +126,13 @@ const IamportApiServiceClass = class {
     }
   };
 
-  subScribeDelete = async (access_token, customer_uid) => {
+  subScribeDelete = async (customer_uid) => {
+    const access_token = await this.getIamportToken();
+
     const Options = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': access_token,
+        'Authorization': access_token.token,
       },
       url: `https://api.iamport.kr/subscribe/customers/${customer_uid}`,
       method: 'DELETE',
@@ -150,30 +152,48 @@ const IamportApiServiceClass = class {
     }
   };
 
-  paymentCancel = async (access_token, pg_data) => {
-    const Options = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': access_token,
-      },
-      url: 'https://api.iamport.kr/payments/cancel',
-      form: {
-        imp_uid: '',
-        merchant_uid: '',
-        amount: 0,
-        tax_free: 0,
-        checksum: 0,
-        reason: '',
-        refund_holder: '',
-        refund_bank: '',
-        refund_account: '',
-      },
-      json: true
-    };
-    const result = {};
+  paymentCancel = async (last_data, reason_text, cancel_type) => {
     try {
+      const access_token = await this.getIamportToken();
+      const diffDay = util.dayDiffenrence(last_data.paid_at);
+      let amount = 0;
+
+      if (diffDay > 7) {
+        if (cancel_type === 'C') {
+          amount = (last_data.amount * (31 - diffDay));
+        } else  {
+          amount = (last_data.amount * (31 - diffDay) / 30) * 0.7;
+        }
+        amount = Math.ceil(Math.ceil(amount / 10) * 10);
+      } else {
+        amount = last_data.amount;
+      }
+      const Options = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': access_token.token,
+        },
+        method: 'POST',
+        url: 'https://api.iamport.kr/payments/cancel',
+        form: {
+          imp_uid: last_data.imp_uid,
+          merchant_uid: last_data.merchant_uid,
+          amount: amount,
+          tax_free: 0,
+          checksum: null,
+          reason: reason_text,
+          refund_holder: '',
+          refund_bank: '',
+          refund_account: '',
+        },
+        json: true
+      };
+
+      const result = {};
       await request(Options)
         .then(({code, message, response}) => {
+          result.code = code;
+          result.message = message;
           result.response = response;
         });
       return result;
