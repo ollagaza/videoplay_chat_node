@@ -14,6 +14,12 @@ export default class Payment_SubscribeModel extends MySQLModel {
     return await oKnex;
   };
 
+  getSubScribeOne = async (filters) => {
+    filters.used = 'Y';
+    const oKnex = this.findOne(filters);
+    return await oKnex;
+  };
+
   createStand_subScribe = async  (data) => {
     if (typeof data.custom_data !== 'string') {
       data.custom_data = JSON.stringify(data.custom_data);
@@ -30,12 +36,14 @@ export default class Payment_SubscribeModel extends MySQLModel {
     return await this.create(pg_data);
   };
 
-  putSubscribeModify = async (pg_data) => {
-    if (typeof pg_data.custom_data !== 'string') {
-      pg_data.custom_data = JSON.stringify(pg_data.custom_data);
-    }
+  SubscribeNotUsedModify = async (old_customer_uid) => {
+    const updateData = {
+      used: 'N'
+    };
+    return await this.update({ customer_uid: old_customer_uid }, updateData);
+  };
 
-    pg_data.modify_date = this.database.raw('NOW()');
-    return await this.update({ merchant_uid: pg_data.merchant_uid }, pg_data);
+  putSubscribeDelete = async (customer_uid) => {
+    return await this.delete({ customer_uid: customer_uid });
   };
 }

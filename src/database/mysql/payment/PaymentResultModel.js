@@ -9,20 +9,35 @@ export default class PaymentResultModel extends MySQLModel {
     this.log_prefix = '[PaymentResultModel]'
   }
 
-  getPaymentResult = async(member_seq) => {
+  getPaymentResult = async(member_seq, group) => {
     const oKnex = this.database.raw(`
     select list.*, result.*
     from payment_result result
-    inner join payment_list list on list.code = json_extract(result.custom_data, '$.code')
+    inner join payment_list list on list.code = json_extract(result.custom_data, '$.code') and list.group = '${group}'
     where result.success = 1
       and buyer_seq = ${member_seq}
-      and result.customer_uid is null
+      and payment_code != 'free'
+      and result.cancelled_at is null
       and date_format(result.paid_at, '%Y%m') between date_format(date_sub(NOW(), interval 6 month), '%Y%m') and date_format(date_add(NOW(), interval 5 month), '%Y%m')
     order by result.paid_at	desc
     `);
 
     return await oKnex;
   };
+
+  getPaymentLastResult = async(member_seq) => {
+    const oKnex = this.database.raw(`
+    select result.*
+    from payment_result result
+    where result.success = 1
+      and result.buyer_seq = ${member_seq}
+      and result.payment_code != 'free'
+      and result.customer_uid is null
+    order by result.paid_at	desc
+    `);
+
+    return await oKnex;
+  }
 
   createPaymentResultByMemberSeq = async (payData, member_seq) => {
     const create_params = payData;
@@ -50,6 +65,7 @@ export default class PaymentResultModel extends MySQLModel {
     }
 
     pg_data.paid_at = pg_data.paid_at === undefined ? null : this.database.raw(`FROM_UNIXTIME(${pg_data.paid_at})`)
+    pg_data.cancelled_at = pg_data.cancelled_at === undefined ? null : this.database.raw(`FROM_UNIXTIME(${pg_data.cancelled_at})`)
     pg_data.modify_date = this.database.raw('NOW()');
     return await this.update({ merchant_uid: pg_data.merchant_uid }, pg_data);
   };

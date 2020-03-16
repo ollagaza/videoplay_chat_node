@@ -37,11 +37,13 @@ routes.get('/paymentlist', Wrap(async(req, res) => {
 
 routes.post('/paymentResult', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json');
+  const group_type = req.body.group_type;
   const token_info = req.token_info;
   const member_seq = token_info.getId();
-  const output = new StdObject();
-  const result = await PaymentService.getPaymentResult(DBMySQL, member_seq);
-  output.add('result', result);
+  const group_info = await group_service.getUserGroupInfo(DBMySQL, member_seq);
+  const output = await PaymentService.getPaymentResult(DBMySQL, member_seq, group_type);
+
+  output.add('group_info', group_info);
   res.json(output);
 }));
 
@@ -67,10 +69,6 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const output = new StdObject();
     const token_info = req.token_info;
     const member_seq = token_info.getId();
-
-
-    log.d(req, '[req.body]', req.body)
-
     const pg_data = req.body.pg_data;
     const pay_data = req.body.pay_data;
     const moneys = req.body.moneys;
@@ -108,10 +106,28 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   }
 }));
 
+routes.post('/getScribeInfo', Wrap(async(req, res) => {
+  try {
+    req.accepts('application/json');
+    const member_seq = req.body.member_seq;
+    const output = new StdObject();
+    const subScribe = await PaymentService.getSubScribetoBuyerSeq(DBMySQL, member_seq);
+    output.add('subScribe', subScribe);
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, '오류가 발생 하였습니다.', 400);
+  }
+}));
+
 routes.post('/deleteSubscribeCode', Wrap(async(req, res) => {
-  const access_token = await IamportApiService.getIamportToken();
-  const result = await IamportApiService.subScribeDelete(access_token.token, req.body.customer_uid);
-  res.json(result);
+  try {
+    const subScribeDelete_data = await PaymentService.deleteSubscribe(req.body.customer_uid);
+    const result = await IamportApiService.subScribeDelete(req.body.customer_uid);
+    res.json(result);
+  } catch (e) {
+    log.e(req, e)
+    throw new StdObject(-1, '오류가 발생 하였습니다.', 400);
+  }
 }));
 
 routes.put('/createSubscribefinal', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
@@ -127,9 +143,12 @@ routes.put('/createSubscribefinal', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
   try {
     const numPatten = /(^[0-9]+)/g;
     const textPatten = /([^0-9])([A-Z])/g;
+    const customer_uid = await PaymentService.chkCustomer_uid(DBMySQL, pay_data.customer_uid);
 
-    await DBMySQL.transaction(async(transaction) => {
-      const subScribe_insert = await PaymentService.insertSubscribe(transaction, pay_data);
+    await DBMySQL.transaction(async (transaction) => {
+      if (!customer_uid) {
+        const subScribe_insert = await PaymentService.insertSubscribe(transaction, pay_data);
+      }
       const access_token = await IamportApiService.getIamportToken();
       if (access_token.code === 0) {
         const subScribeResult = await IamportApiService.subScribePayment(access_token.token, pay_data);
@@ -156,15 +175,80 @@ routes.put('/createSubscribefinal', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
       group_type: payment.group === 'person' ? 'P' : 'G',
     };
 
-    await DBMySQL.transaction(async(transaction) => {
+    await DBMySQL.transaction(async (transaction) => {
       const groupUpdate = await group_service.updatePaymentToGroup(transaction, filter, pay_code, storage_size, expire_month_code);
     });
 
     res.json(new StdObject(0, '정상결제 되었습니다.', 200));
   } catch (e) {
-    const access_token = await IamportApiService.getIamportToken();
-    const result = await IamportApiService.subScribeDelete(access_token.token, pg_data.customer_uid);
+    const result = await IamportApiService.subScribeDelete(pg_data.customer_uid);
     throw new StdObject(-1, '결재 중 오류가 발생 하였습니다.', 400);
+  }
+}));
+
+routes.put('/updatesubscribe', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+  const old_customer_uid = req.body.old_customer_uid;
+  const pg_data = req.body.pg_data;
+
+  try {
+    await DBMySQL.transaction(async (transaction) => {
+      const subScribe_insert = await PaymentService.insertSubscribe(transaction, pg_data);
+      const updateResult = await PaymentService.usedUpdateSubscribe(transaction, old_customer_uid);
+    });
+
+    const result = await IamportApiService.subScribeDelete(old_customer_uid);
+    res.json(new StdObject(0, '정상 등록 되었습니다.', 200));
+  } catch (e) {
+    const result = await IamportApiService.subScribeDelete(pg_data.customer_uid);
+    throw new StdObject(-1, `결재 변경 중 오류가 발생 하였습니다.\n${e}`, 400);
+  }
+}));
+
+routes.post('/payment_cancel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+  const options = req.body.options;
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+
+  try {
+    const result = await IamportApiService.paymentCancel(options.last_payment, options.cancel_text, options.cancel_type);
+
+    if (options.cancel_type !== 'C' && options.last_payment.customer_uid !== null) {
+      const subScribeDelete_result = await IamportApiService.subScribeDelete(options.last_payment.customer_uid);
+      const subScribeDelete_data = await PaymentService.deleteSubscribe(DBMySQL, options.last_payment.customer_uid);
+    }
+
+    const pg_data = {
+      merchant_uid: result.response.merchant_uid,
+      cancel_amount: result.response.cancel_amount,
+      cancel_history: JSON.stringify(result.response.cancel_history),
+      cancel_reason: result.response.cancel_reason,
+      cancel_receipt_urls: JSON.stringify(result.response.cancel_receipt_urls),
+      cancelled_at: result.response.cancelled_at,
+    };
+
+    const pay_code = 'free';
+    const storage_size = 1024 * 1024 * 1024 * 30;
+    const expire_month_code = null;
+
+    const filter = {
+      member_seq: member_seq,
+      group_type: 'P',
+    };
+
+    await DBMySQL.transaction(async(transaction) => {
+      const payment_update = await PaymentService.updatePayment(DBMySQL, pg_data);
+      if (options.cancel_type !== 'C') {
+        const groupUpdate = await group_service.updatePaymentToGroup(transaction, filter, pay_code, storage_size, expire_month_code);
+      }
+    });
+
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, '취소 중 오류가 발생 하였습니다.', 400);
   }
 }));
 

@@ -61,9 +61,8 @@ routes.post('/paymentResult', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req
   req.accepts('application/json');
   const token_info = req.token_info;
   const member_seq = token_info.getId();
-  const output = new StdObject();
-  const result = await PaymentService.getPaymentResult(DBMySQL, member_seq);
-  output.add('result', result);
+  const output = await PaymentService.getPaymentResult(DBMySQL, member_seq);
+
   res.json(output);
 }));
 export default routes;

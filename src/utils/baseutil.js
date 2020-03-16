@@ -967,6 +967,12 @@ export default {
   "getDirectoryFileSize": getDirectoryFileSize,
   "getFileSize": getFileSize,
 
+  "dayDiffenrence": (date) => {
+    const toDay = moment(new Date(), "YYYYMMDD");
+    const diffDate = moment(date, "YYYYMMDD");
+
+    return toDay.diff(diffDate, "days");
+  },
   "hourDifference": (target_date) => {
     const time_diff = Math.abs(target_date.getTime() - Date.now());
     return Math.ceil(time_diff / (1000 * 3600));
