@@ -83,15 +83,10 @@ export default class IndexInfo extends JsonWrapper {
 
     let origin_file = Util.getXmlText(hawkeye_xml_info.orithumb).replace(hawkeye_root_regex, '');
     let thumb_file = Util.getXmlText(hawkeye_xml_info.thumb).replace(hawkeye_root_regex, '');
-    if (Constants.SEP !== '\\') {
-      origin_file = origin_file.replace(seq_exp, '/');
-      thumb_file = thumb_file.replace(seq_exp, '/');
-    }
+    origin_file = origin_file.replace(seq_exp, '/');
+    thumb_file = thumb_file.replace(seq_exp, '/');
     const image_file_name = Util.getFileName(origin_file);
 
-    // log.d(null, index_directory, hawkeye_xml_info.orithumb, origin_file, thumb_file);
-    // log.d(null, index_directory + origin_file, index_directory + thumb_file);
-    // log.d(null, await Util.fileExists(index_directory + origin_file, fs.constants.R_OK), await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK));
     if (check_file_exists) {
       if ( !( await Util.fileExists(index_directory + origin_file, fs.constants.R_OK) ) || !( await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK) ) ) {
         return this;
@@ -107,8 +102,8 @@ export default class IndexInfo extends JsonWrapper {
     this.start_time = Util.parseFloat(time[0], 0);
     this.end_time = Util.parseFloat(time[1], 0);
 
-    this.original_url = service_info.static_index_prefix + Util.pathToUrl(origin_file);
-    this.thumbnail_url = service_info.static_index_prefix + Util.pathToUrl(thumb_file);
+    this.original_url = service_info.static_index_prefix + origin_file;
+    this.thumbnail_url = service_info.static_index_prefix + thumb_file;
     this.creator = "system";
     this.unique_id = "system/" + image_file_name;
     const code = Util.getXmlText(hawkeye_xml_info.type);

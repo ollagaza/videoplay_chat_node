@@ -8,14 +8,21 @@ import Role from "../../constants/roles";
 import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
 import log from "../../libs/logger";
+import querystring from 'querystring'
+import Config from "../../config/config";
+
+import IndexInfo from "../../wrapper/xml/IndexInfo";
+import VideoInfo from "../../wrapper/xml/VideoInfo";
+
+import DBMySQL from '../../database/knex-mysql'
+import SequenceModel from '../../models/sequence/SequenceModel';
+import { VideoProjectModel } from '../../database/mongodb/VideoProject';
+import OperationService from '../../service/operation/OperationService'
+import OperationExpansionDataService from "../../service/operation/OperationExpansionDataService"
+import OperationAnalysisService from "../../service/operation/OperationAnalysisService"
 
 const routes = Router();
 
-import Config from "../../config/config";
-import SequenceModel from '../../models/sequence/SequenceModel';
-import { VideoProjectModel } from '../../database/mongodb/VideoProject';
-
-import IndexInfo from "../../wrapper/xml/IndexInfo";
 
 const IS_DEV = Config.isDev();
 
@@ -211,14 +218,42 @@ if (IS_DEV) {
     });
   }));
 
-  const getHawkeyeXmlInfo = async (req, log_prefix) => {
-    const index_list_api_options = {
-      hostname: 'localhost',
-      port: 80,
-      path: '/test/ErrorReportImage.xml',
+  const getHawkeyeMediaInfo = async (req, log_prefix, media_id) => {
+    const media_info_data = {
+      "MediaID": media_id
+    };
+    const media_info_api_params = querystring.stringify(media_info_data);
+    const media_info_api_options = {
+      hostname: '192.168.0.58',
+      port: 8080,
+      path: '/VCSAdminServer/ErrorReportMediaInfo.jsp?' + media_info_api_params,
       method: 'GET'
     };
-    const index_list_api_url = 'http://localhost/test/ErrorReportImage.xml';
+    const media_info_api_url = 'http://192.168.0.58:8080/VCSAdminServer/ErrorReportMediaInfo.jsp?' + media_info_api_params;
+    log.d(req, `${log_prefix} hawkeye media info api url: ${media_info_api_url}`);
+
+    const media_info_request_result = await Util.httpRequest(media_info_api_options, false);
+    return new VideoInfo().getFromHawkEyeXML(await Util.loadXmlString(media_info_request_result));
+  };
+
+  const getHawkeyeIndexInfo = async (req, log_prefix, media_id, media_info) => {
+    const total_frame = media_info.total_frame;
+    const total_time = media_info.total_time;
+    const fps = media_info.fps;
+    log.d(req, media_info.toJSON());
+    const fps_sec = 1 / fps;
+    const index_list_data = {
+      "MediaID": media_id,
+      "CountOfPage": 2000
+    };
+    const index_list_api_params = querystring.stringify(index_list_data);
+    const index_list_api_options = {
+      hostname: '192.168.0.58',
+      port: 8080,
+      path: '/VCSAdminServer/ErrorReportImage.jsp?' + index_list_api_params,
+      method: 'GET'
+    };
+    const index_list_api_url = 'http://192.168.0.58:8080/VCSAdminServer/ErrorReportImage.jsp?' + index_list_api_params;
     log.d(req, `${log_prefix} hawkeye index list api url: ${index_list_api_url}`);
 
     const index_list_request_result = await Util.httpRequest(index_list_api_options, false);
@@ -235,7 +270,8 @@ if (IS_DEV) {
     const index_info_map = {};
     const range_index_list = [];
     const tag_map = {};
-    const tag_info_map = {};
+    const type_analysis_map = {};
+    let total_action_count = 0;
     let frame_info = index_list_xml_info.errorreport.frameinfo;
     if (frame_info) {
       if (_.isArray(frame_info)) {
@@ -247,6 +283,9 @@ if (IS_DEV) {
           const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i], false);
           if (!index_info.isEmpty()) {
             const type_code = index_info.code;
+            if (index_info.start_frame > 1 && index_info.start_time <= 0) {
+              index_info.start_time = index_info.start_frame * fps_sec;
+            }
             if (index_info.is_range) {
               range_index_list.push(index_info);
             } else {
@@ -257,65 +296,114 @@ if (IS_DEV) {
                 index_info_map[index_info.start_frame] = index_info;
               }
             }
-            tag_map[type_code] = true;
-            if (!tag_info_map[type_code]) {
-              tag_info_map[type_code] = {
+            if (!type_analysis_map[type_code]) {
+              type_analysis_map[type_code] = {
                 code: type_code,
                 name: index_info.state,
                 total_frame: 0,
                 last_end_frame: 0,
                 uptime: 0,
-                uptime_list: [],
+                uptime_rate: 0,
+                action_count: 0,
+                timeline: [],
               };
             }
           }
         }
       }
-      const set_range_tags = (index_info) => {
-        const start_frame = index_info.start_frame;
-        range_index_list.forEach((range_info) => {
-          if (range_info.start_frame <= start_frame && range_info.end_frame >= start_frame) {
-            index_info.tag_map[range_info.code] = true;
-          }
-        });
-      };
       index_info_list = _.orderBy(index_info_map, ['start_frame'], ['asc']);
       let prev_info = index_info_list[0];
       for (let i = 1; i < index_info_list.length; i++) {
         const current_info = index_info_list[i];
         prev_info.end_frame = current_info.start_frame - 1;
         prev_info.end_time = current_info.start_time;
-        set_range_tags(current_info);
+        set_range_tags(range_index_list, current_info);
         current_info.tags = _.keys(current_info.tag_map);
         prev_info = current_info;
       }
+      prev_info.end_frame = total_frame;
+      prev_info.end_time = total_time;
       for (let i = 1; i < index_info_list.length; i++) {
         const index_info = index_info_list[i];
         if (index_info.end_frame <= 0) break;
         for (let j = 0; j < index_info.tags.length; j++) {
-          const tag_info = tag_info_map[index_info.tags[j]];
+          const tag_info = type_analysis_map[index_info.tags[j]];
           tag_info.total_frame += index_info.end_frame - index_info.start_frame;
           tag_info.uptime += index_info.end_time - index_info.start_time;
+          tag_info.uptime_rate = tag_info.uptime / total_time;
           if (tag_info.last_end_frame !== index_info.start_frame) {
-            tag_info.uptime_list.push({ start_time: index_info.start_time, end_time: index_info.end_time });
+            tag_info.timeline.push({ start_time: index_info.start_time, end_time: index_info.end_time });
+            tag_info.action_count++;
+            tag_map[tag_info.code] = tag_info.action_count;
+            total_action_count++;
           } else {
-            tag_info.uptime_list[tag_info.uptime_list.length - 1].end_time = index_info.end_time;
+            tag_info.timeline[tag_info.timeline.length - 1].end_time = index_info.end_time;
           }
           tag_info.last_end_frame = index_info.end_frame + 1;
         }
       }
     }
     const result = {};
-    result.tags = _.keys(tag_map);
+    result.summary = {};
+    result.summary.tag_list = _.keys(tag_map);
+    result.summary.tag_count_map = tag_map;
+    result.summary.total_time = total_time;
+    result.summary.total_frame = total_frame;
+    result.summary.total_action_count = total_action_count;
+    result.summary.total_index_count = index_info_list.length;
+    result.summary.fps = fps;
     result.index_info_list = index_info_list;
-    result.tag_info_map = tag_info_map;
+    result.analysis_data = type_analysis_map;
     return result;
   };
 
-  routes.get('/idx', Wrap(async (req, res, next) => {
-    const index_info_list = await getHawkeyeXmlInfo(req, '[test]');
+  const set_range_tags = (range_index_list, index_info) => {
+    const start_frame = index_info.start_frame;
+    range_index_list.forEach((range_info) => {
+      if (range_info.start_frame <= start_frame && range_info.end_frame >= start_frame) {
+        index_info.tag_map[range_info.code] = true;
+      }
+    });
+  };
+
+  routes.post('/wiki', Wrap(async (req, res, next) => {
+    // const media_id_list = [
+    //   { "media_id": "bb36e1ad-efef-11e9-a6c3-b42e993001da", "operation_seq": 164, "content_id": "436250b0-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb2f0e05-efef-11e9-a6c3-b42e993001da", "operation_seq": 165, "content_id": "4fbb7a80-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb27334c-efef-11e9-a6c3-b42e993001da", "operation_seq": 166, "content_id": "5b2e14e0-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb1fb19c-efef-11e9-a6c3-b42e993001da", "operation_seq": 167, "content_id": "666aab20-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb17dec5-efef-11e9-a6c3-b42e993001da", "operation_seq": 168, "content_id": "73571440-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb101954-efef-11e9-a6c3-b42e993001da", "operation_seq": 169, "content_id": "860ad450-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb088eb1-efef-11e9-a6c3-b42e993001da", "operation_seq": 170, "content_id": "92cf4310-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb74ed0c-efef-11e9-a6c3-b42e993001da", "operation_seq": 171, "content_id": "9e0c0060-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb55fc73-efef-11e9-a6c3-b42e993001da", "operation_seq": 172, "content_id": "a8b6ddf0-f974-11e9-86a1-779d69c7b70d" },
+    //   { "media_id": "bb46b9e1-efef-11e9-a6c3-b42e993001da", "operation_seq": 173, "content_id": "b4857b00-f974-11e9-86a1-779d69c7b70d" }
+    // ];
+    const media_id_list = req.body.media_id_list
+    const query_result = {};
+    for (let i = 0; i < media_id_list.length; i++) {
+      try {
+        const { operation_info } = await OperationService.getOperationInfo(DBMySQL, media_id_list[i].operation_seq, null, false, false)
+        const media_info = await getHawkeyeMediaInfo(req, '[test]', media_id_list[i].media_id);
+        const index_info = await getHawkeyeIndexInfo(req, '[test]', media_id_list[i].media_id, media_info);
+        const delete_result = await OperationAnalysisService.deleteOperationAnalysisOperationSeq(operation_info.seq);
+        const analysis_result = await OperationAnalysisService.createOperationAnalysis(operation_info, index_info.summary, index_info.analysis_data);
+        const expansion_result = await OperationExpansionDataService.createOperationExpansionData(DBMySQL, operation_info, index_info.summary);
+        query_result[media_id_list[i].media_id] = {
+          delete_result,
+          analysis_result,
+          expansion_result
+        };
+      } catch (error) {
+        log.error(req, '[test]', error.stack)
+        res.send(error.message);
+        return
+      }
+    }
+
     const result = new StdObject();
-    result.add('index_info_list', index_info_list);
+    // result.add('index_info_list', index_info_list);
+    result.adds(query_result);
     res.json(result);
   }));
 }
