@@ -59,7 +59,7 @@ export default class MemberSubModel extends MySQLModel {
     } else {
       const member = member_info.toJSON();
       member.member_seq = member_seq;
-      return await this.create(member);
+      return await this.create(member, 'seq');
     }
   };
 
