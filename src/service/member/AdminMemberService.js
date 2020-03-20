@@ -171,7 +171,9 @@ const AdminMemberServiceClass = class {
       const res = [];
       _.keyBy(find_users.data, data => {
         if (_.find(find_sub_users, { member_seq: data.seq })) {
-          res.push(_.merge(data, _.find(find_sub_users, { member_seq: data.seq })));
+          const sub_user = _.find(find_sub_users, { member_seq: data.seq });
+          delete sub_user.seq;
+          res.push(_.merge(data, sub_user));
         } else {
           res.push(_.merge(data));
         }
