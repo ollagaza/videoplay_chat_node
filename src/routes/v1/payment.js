@@ -223,6 +223,7 @@ routes.post('/payment_cancel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
 
     const pg_data = {
       merchant_uid: result.response.merchant_uid,
+      status: result.response.status ? result.response.status : 'cancelled',
       cancel_amount: result.response.cancel_amount,
       cancel_history: JSON.stringify(result.response.cancel_history),
       cancel_reason: result.response.cancel_reason,

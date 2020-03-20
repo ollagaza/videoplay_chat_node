@@ -191,7 +191,7 @@ export default class MysqlModel {
 
   findPaginated = async (filters = null, columns = null, order = null, group = null, pages = null) => {
     const oKnex = this.queryBuilder(filters, columns, order, group);
-    return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count = 10);
+    return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count, pages.no_paging);
   };
 
   async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
@@ -200,7 +200,7 @@ export default class MysqlModel {
     cur_page = parseInt(cur_page);
     page_count = parseInt(page_count);
 
-    const use_paging = (no_paging && no_paging.toLowerCase() === 'y');
+    const use_paging = (no_paging && no_paging.toLowerCase() !== 'y');
 
     const oCountKnex = this.database.from(oKnex.clone().as('list'));
     const oDataListKnex = oKnex.clone();
