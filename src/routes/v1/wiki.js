@@ -3,6 +3,7 @@ import log from "../../libs/logger";
 import wrap from '../../utils/express-async'
 import StdObject from '../../wrapper/std-object'
 import OperationExpansionDataService from "../../service/operation/OperationExpansionDataService"
+import OperationAnalysisService from "../../service/operation/OperationAnalysisService"
 import DBMySQL from '../../database/knex-mysql'
 import Auth from '../../middlewares/auth.middleware'
 import Role from "../../constants/roles"
@@ -73,9 +74,11 @@ routes.get('/contents/:wiki_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), wrap
     return
   }
   const clip_list = await OperationClipService.findByOperationSeq(wiki_info.operation_seq)
+  const analysis_result = await OperationAnalysisService.getOperationAnalysisByOperationSeq(wiki_info.operation_seq)
 
   result.add('operation_info', operation_info);
   result.add('clip_list', clip_list);
+  result.add('analysis_result', analysis_result);
 
   res.json(result);
 }));

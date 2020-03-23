@@ -382,12 +382,12 @@ if (IS_DEV) {
         const expansion_result = await OperationExpansionDataService.createOperationExpansionData(DBMySQL, operation_info, index_info.summary);
         const video_index_result = await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info.index_info_list)
         query_result[media_id_list[i].media_id] = {
-          delete_expansion_result,
-          delete_analysis_result,
-          delete_video_index_result,
-          analysis_result,
-          expansion_result,
-          video_index_result
+          delete_expansion_result: !Util.isEmpty(delete_expansion_result),
+          delete_analysis_result: !Util.isEmpty(delete_analysis_result),
+          delete_video_index_result: !Util.isEmpty(delete_video_index_result),
+          analysis_result: !Util.isEmpty(analysis_result),
+          expansion_result: !Util.isEmpty(expansion_result),
+          video_index_result: !Util.isEmpty(video_index_result)
         };
       } catch (error) {
         log.error(req, '[test]', error.stack)
