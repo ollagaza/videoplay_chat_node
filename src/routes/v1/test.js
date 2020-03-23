@@ -20,6 +20,7 @@ import { VideoProjectModel } from '../../database/mongodb/VideoProject';
 import OperationService from '../../service/operation/OperationService'
 import OperationExpansionDataService from "../../service/operation/OperationExpansionDataService"
 import OperationAnalysisService from "../../service/operation/OperationAnalysisService"
+import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 
 const routes = Router();
 
@@ -367,18 +368,6 @@ if (IS_DEV) {
   };
 
   routes.post('/wiki', Wrap(async (req, res, next) => {
-    // const media_id_list = [
-    //   { "media_id": "bb36e1ad-efef-11e9-a6c3-b42e993001da", "operation_seq": 164, "content_id": "436250b0-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb2f0e05-efef-11e9-a6c3-b42e993001da", "operation_seq": 165, "content_id": "4fbb7a80-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb27334c-efef-11e9-a6c3-b42e993001da", "operation_seq": 166, "content_id": "5b2e14e0-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb1fb19c-efef-11e9-a6c3-b42e993001da", "operation_seq": 167, "content_id": "666aab20-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb17dec5-efef-11e9-a6c3-b42e993001da", "operation_seq": 168, "content_id": "73571440-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb101954-efef-11e9-a6c3-b42e993001da", "operation_seq": 169, "content_id": "860ad450-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb088eb1-efef-11e9-a6c3-b42e993001da", "operation_seq": 170, "content_id": "92cf4310-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb74ed0c-efef-11e9-a6c3-b42e993001da", "operation_seq": 171, "content_id": "9e0c0060-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb55fc73-efef-11e9-a6c3-b42e993001da", "operation_seq": 172, "content_id": "a8b6ddf0-f974-11e9-86a1-779d69c7b70d" },
-    //   { "media_id": "bb46b9e1-efef-11e9-a6c3-b42e993001da", "operation_seq": 173, "content_id": "b4857b00-f974-11e9-86a1-779d69c7b70d" }
-    // ];
     const media_id_list = req.body.media_id_list
     const query_result = {};
     for (let i = 0; i < media_id_list.length; i++) {
@@ -386,13 +375,19 @@ if (IS_DEV) {
         const { operation_info } = await OperationService.getOperationInfo(DBMySQL, media_id_list[i].operation_seq, null, false, false)
         const media_info = await getHawkeyeMediaInfo(req, '[test]', media_id_list[i].media_id);
         const index_info = await getHawkeyeIndexInfo(req, '[test]', media_id_list[i].media_id, media_info);
-        const delete_result = await OperationAnalysisService.deleteOperationAnalysisOperationSeq(operation_info.seq);
+        const delete_expansion_result = await OperationExpansionDataService.deleteOperationExpansionDataByOperationSeq(DBMySQL, operation_info.seq)
+        const delete_analysis_result = await OperationAnalysisService.deleteOperationAnalysisOperationSeq(operation_info.seq);
+        const delete_video_index_result = await VideoIndexInfoModel.deleteByOperation(operation_info.seq)
         const analysis_result = await OperationAnalysisService.createOperationAnalysis(operation_info, index_info.summary, index_info.analysis_data);
         const expansion_result = await OperationExpansionDataService.createOperationExpansionData(DBMySQL, operation_info, index_info.summary);
+        const video_index_result = await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info.index_info_list)
         query_result[media_id_list[i].media_id] = {
-          delete_result,
+          delete_expansion_result,
+          delete_analysis_result,
+          delete_video_index_result,
           analysis_result,
-          expansion_result
+          expansion_result,
+          video_index_result
         };
       } catch (error) {
         log.error(req, '[test]', error.stack)
