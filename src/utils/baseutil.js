@@ -227,6 +227,7 @@ const getFileStat = async (file_path) => {
 };
 
 const createDirectory = async (dir_path) => {
+  if (!dir_path) return false
   const async_func = new Promise( async resolve => {
     if ( ( await fileExists(dir_path) ) ) {
       log.debug(log_prefix, 'Util.createDirectory', `directory already exists. path=${dir_path}`);

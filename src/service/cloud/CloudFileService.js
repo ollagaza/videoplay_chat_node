@@ -39,7 +39,7 @@ const CloudFileServiceClass = class {
   }
 
   getFileObject = (file_name) => {
-    return { "origin_file_name": file_name }
+    return { 'origin_file_name': file_name }
   }
 
   requestMoveToObject = async (file_path, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
@@ -122,7 +122,7 @@ const CloudFileServiceClass = class {
       headers: {
         'Content-Type': 'application/json'
       }
-    };
+    }
     if (response_url) {
       cloud_file_info.setResponseOption(response_url, method)
       if (response_data) {

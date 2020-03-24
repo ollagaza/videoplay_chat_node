@@ -16,11 +16,15 @@ import VideoInfo from "../../wrapper/xml/VideoInfo";
 
 import DBMySQL from '../../database/knex-mysql'
 import SequenceModel from '../../models/sequence/SequenceModel';
+import OperationModel from '../../database/mysql/operation/OperationModel';
 import { VideoProjectModel } from '../../database/mongodb/VideoProject';
 import OperationService from '../../service/operation/OperationService'
+import OperationClipService from '../../service/operation/OperationClipService'
 import OperationExpansionDataService from "../../service/operation/OperationExpansionDataService"
 import OperationAnalysisService from "../../service/operation/OperationAnalysisService"
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
+import MemberService from '../../service/member/MemberService'
+import { OperationClipModel } from '../../database/mongodb/OperationClip'
 
 const routes = Router();
 
@@ -400,6 +404,66 @@ if (IS_DEV) {
     // result.add('index_info_list', index_info_list);
     result.adds(query_result);
     res.json(result);
+  }));
+
+  const getClipListByMemberSeq = async (member_seq) => {
+    const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
+    const operation_model = new OperationModel(DBMySQL)
+    const operation_list = await operation_model.getOperationListByMemberSeq(member_seq)
+    log.debug('operation_list', operation_list)
+    const result = {}
+    result.user_id = member_info.user_id
+    result.user_name = member_info.user_name
+    result.operation_list = []
+    for (let i = 0; i < operation_list.length; i++) {
+      const operation = operation_list[i]
+      const operation_info = {}
+      operation_info.operation_id = operation.seq
+      operation_info.operation_name = operation.operation_name
+      operation_info.operation_code = operation.operation_code
+
+      const clip_list = await OperationClipService.findByOperationSeq(operation.seq)
+      if (clip_list.length <= 0) {
+        continue;
+      }
+
+      log.debug(`clip_list ${operation.seq}`, clip_list)
+      const sort_list = _.orderBy(clip_list, ['start_time', 'end_time'], ['asc', 'asc'])
+      const clip_result_list = []
+      sort_list.forEach((clip_info) => {
+        if (!clip_info.is_phase) {
+          clip_result_list.push({
+            start_sec: clip_info.start_time,
+            end_sec: clip_info.end_time,
+            start_time: Util.secondToTimeStr(clip_info.start_time),
+            end_time: Util.secondToTimeStr(clip_info.end_time),
+            desc: clip_info.desc,
+            thumbnail_url: 'https://nipa.surgstory.com' + clip_info.thumbnail_url.replace('Thumb_', ''),
+          })
+        }
+      });
+      operation_info.clip_list = clip_result_list
+      result.operation_list.push(operation_info)
+    }
+
+    return result;
+  }
+
+  routes.post('/clip_list', Wrap(async (req, res) => {
+    req.accepts('application/json');
+
+    const result = []
+    const member_seq_list = req.body.member_seq_list;
+    for (let i = 0; i < member_seq_list.length; i++) {
+      const clip_list = await getClipListByMemberSeq(member_seq_list[i])
+      result.push(clip_list)
+    }
+    res.json(result);
+  }));
+
+  routes.get('/clip_list/:member_seq', Wrap(async (req, res) => {
+    const member_seq = req.params.member_seq;
+    res.json(await getClipListByMemberSeq(member_seq));
   }));
 }
 
