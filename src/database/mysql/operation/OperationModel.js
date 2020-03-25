@@ -77,6 +77,15 @@ export default class OperationModel extends MySQLModel {
     return paging_result;
   };
 
+  getOperationInfoListByMember = async (member_seq) => {
+    const filters = {
+      member_seq,
+      status: 'Y',
+      is_analysis_complete: 1
+    }
+    return await this.find(filters, null, { name: "seq", direction: "asc" })
+  }
+
   updateOperationInfo = async (operation_seq, operation_info) => {
     operation_info.setIgnoreEmpty(true);
     const update_params = operation_info.toJSON();

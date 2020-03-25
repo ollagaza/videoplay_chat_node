@@ -78,10 +78,15 @@ export default class VideoInfo extends JsonWrapper {
       const height = Util.getXmlText(media_xml_info.videoheight);
       this.video_name = Util.getXmlText(media_xml_info.title);
       this.fps = Util.getXmlText(media_xml_info.videoframerate);
-      this.total_time = Util.isEmpty(total_time) ? 0 : total_time;
-      this.total_frame = Util.isEmpty(total_frame) ? 0 : total_frame;
-      this.width = Util.isEmpty(width) ? 0 : width;
-      this.height = Util.isEmpty(height) ? 0 : height;
+      if (media_xml_info.framerate) {
+        this.fps = parseFloat(Util.getXmlText(media_xml_info.framerate));
+      } else {
+        this.fps = parseFloat(Util.getXmlText(media_xml_info.videoframerate));
+      }
+      this.total_time = parseFloat(Util.isEmpty(total_time) ? 0 : total_time);
+      this.total_frame = parseInt(Util.isEmpty(total_frame) ? 0 : total_frame, 10);
+      this.width = parseFloat(Util.isEmpty(width) ? 0 : width);
+      this.height = parseFloat(Util.isEmpty(height) ? 0 : height);
 
       this.is_empty = false;
     } else {
