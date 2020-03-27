@@ -20,6 +20,7 @@ import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import MemberTemplate from '../../template/mail/member.template';
 import SendMail from '../../libs/send-mail'
 import BaseUtil from '../../utils/baseutil'
+import GroupMailTemplate from '../../template/mail/group.template'
 
 const MemberServiceClass = class {
   constructor () {
@@ -442,11 +443,25 @@ const MemberServiceClass = class {
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
 
-    const update_member_sub_result = await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
+    await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
 
     await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq)
     await MemberLogService.memberJoinLog(database, create_member_info.seq)
-    await GroupService.createPersonalGroup(database, create_member_info)
+    await GroupService.createPersonalGroup(database, create_member_info);
+
+    (
+      async() => {
+        let body = ''
+        body += `병원명: ${create_member_info.hospname}\n`
+        body += `이름: ${create_member_info.user_name}\n`
+        body += `아이디: ${create_member_info.user_id}\n`
+        body += `닉네임: ${create_member_info.user_nickname}\n`
+        body += `이메일: ${create_member_info.email_address}\n`
+        body += `연락처: ${create_member_info.cellphone}\n`
+        body += `가입일자: ${Util.currentFormattedDate()}\n`
+        await new SendMail().sendMailText(['jsbae@mteg.co.kr', 'leejs3635@mteg.co.kr'], 'Surgstory.com 회원가입.', body);
+      }
+    )()
 
     return member_info;
   }
