@@ -56,15 +56,16 @@ const getIndexModelList = (index_list) => {
   return index_model_list;
 };
 
-video_index_info_schema.statics.createVideoIndexInfo = function( payload, index_list = null ) {
+video_index_info_schema.statics.createVideoIndexInfo = function( payload, index_list = null, tags = [String] ) {
   const index_model_list = getIndexModelList(index_list);
   payload.index_list = index_model_list;
   payload.index_count = index_model_list.length;
+  payload.tags = tags;
   const model = new this(payload);
   return model.save();
 };
 
-video_index_info_schema.statics.createVideoIndexInfoByOperation = function( operation_info, index_list = null ) {
+video_index_info_schema.statics.createVideoIndexInfoByOperation = function( operation_info, index_list = null, tags = [String] ) {
   const fields = VideoIndexInfoField();
   fields.member_seq.require = true;
   fields.operation_seq.require = true;
@@ -75,7 +76,7 @@ video_index_info_schema.statics.createVideoIndexInfoByOperation = function( oper
   };
 
   const payload = Util.getPayload(data, fields);
-  return video_index_info_model.createVideoIndexInfo(payload, index_list);
+  return video_index_info_model.createVideoIndexInfo(payload, index_list, tags);
 };
 
 video_index_info_schema.statics.updateIndexListByOperation = function( operation_seq, index_list, member_seq = null ) {

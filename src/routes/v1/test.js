@@ -384,7 +384,7 @@ if (IS_DEV) {
         const delete_video_index_result = await VideoIndexInfoModel.deleteByOperation(operation_info.seq)
         const analysis_result = await OperationAnalysisService.createOperationAnalysis(operation_info, index_info.summary, index_info.analysis_data);
         const expansion_result = await OperationExpansionDataService.createOperationExpansionData(DBMySQL, operation_info, index_info.summary);
-        const video_index_result = await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info.index_info_list)
+        const video_index_result = await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info.index_info_list, index_info.summary.tag_list)
         query_result[media_id_list[i].media_id] = {
           delete_expansion_result: !Util.isEmpty(delete_expansion_result),
           delete_analysis_result: !Util.isEmpty(delete_analysis_result),
