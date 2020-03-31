@@ -131,22 +131,26 @@ export default class PaymentResultModel extends MySQLModel {
 
   getPaymentintoMemberList = async(filters, page_navigation) => {
     const select_fields = [
-      'payment_result.paid_at', 'payment_result.merchant_uid',
-      'member.user_name', 'member.user_id', 'payment_result.name',
-      // '\'0(0)\' as period', '\'0\' as visit_count',
-      'payment_result.pay_method',
-      'payment_result.status'
+      'payment_result.paid_at',
+      'payment_result.merchant_uid',
+      'member.user_name',
+      'member.user_id',
+      'payment_result.name',
+      this.database.raw('date_add(payment_result.paid_at, interval 1 month) as period'),
+      this.database.raw('concat(format(`payment_result`.`amount`, 0), \'원/월 (\', ifnull(json_extract(payment_result.custom_data, \'$.charsu\'), \'\'), \')\') as visit_count'),
+      this.database.raw('case payment_result.pay_method when \'card\' then \'카드\' else \'기타\' end pay_method'),
+      this.database.raw('case payment_result.status when \'ready\' then \'결제전\'  when \'paid\' then \'결제완료\' when \'cancelled\' then \'결제취소\' else ifnull(payment_result.error_msg, \'결제오류\') end status')
     ];
     const oKnex = this.database.select(select_fields);
     oKnex.from(this.table_name);
     oKnex.innerJoin('member', function() {
       this.on('member.seq', 'payment_result.buyer_seq');
     });
-    if (filters.where != undefined) {
-      oKnex.where(filters.where);
+    if (filters.query != undefined) {
+      await this.queryWhere(oKnex, filters);
     }
     if (filters.order != undefined) {
-      oKnex.orderBy(filters.order);
+      oKnex.orderBy(filters.order.name, filters.order.direction);
     } else {
       oKnex.orderBy('payment_result.paid_at','asc');
     }
@@ -154,5 +158,20 @@ export default class PaymentResultModel extends MySQLModel {
     const data = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging);
 
     return data;
+  };
+
+  getOrderInfo = async(merchant_uid) => {
+    const oKnex = this.database.raw(`select
+      pay_r.paid_at, pay_r.merchant_uid, pay_r.buyer_name, pay_l.name, pay_r.amount, pay_r.name 'order_name',
+      case pay_r.pay_method when 'card' then '카드' else '기타' end 'pay_method',
+      case pay_r.status when 'ready' then '결제전'  when 'paid' then '결제완료' when 'cancelled' then '결제취소' else ifnull(pay_r.error_msg, '알수없는 오류') end 'text_status',
+      mem.user_id, mem.user_type, mem.tel, mem.email_address, mem.cellphone,
+      pay_l.moneys, pay_r.status, pay_r.payment_code, pay_r.pay_code, mem.used_admin
+      from payment_result pay_r
+      inner join payment_list pay_l on pay_l.code = pay_r.payment_code
+      inner join \`member\` mem on mem.seq = pay_r.buyer_seq
+      where merchant_uid = '${merchant_uid}'`);
+
+    return oKnex;
   };
 }

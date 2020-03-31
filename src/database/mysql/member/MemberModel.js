@@ -172,4 +172,11 @@ export default class MemberModel extends MySQLModel {
     const result = await this.update({ seq: member_seq }, update_info);
     return result;
   }
+
+  getCertCount = async (cert) => {
+    const where = {"certkey": cert};
+    const total_count = await this.getTotalCount(where);
+
+    return total_count > 0;
+  }
 }

@@ -130,6 +130,14 @@ const MemberServiceClass = class {
     }
   }
 
+  chkCert = async (database, cert) => {
+    const member_model = this.getMemberModel(database)
+    const result = await member_model.getCertCount(cert);
+    const output = new StdObject();
+    output.add('result', result);
+    return output;
+  }
+
   getMemberInfoById = async (database, user_id) => {
     const member_model = this.getMemberModel(database)
     return await member_model.getMemberInfoById(user_id)
