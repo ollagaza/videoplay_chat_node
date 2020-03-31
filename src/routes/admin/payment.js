@@ -22,4 +22,11 @@ routes.post('/paymentintomember', Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.post('/getOrderInfo', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const merchant_uid = req.body.merchant_uid;
+  const output = await AdminPaymentService.getOrderInfo(DBMySQL, merchant_uid);
+  res.json(output);
+}));
+
 export default routes;

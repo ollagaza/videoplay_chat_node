@@ -256,4 +256,8 @@ export default class MysqlModel {
   arrayToSafeQuery = (columns) => {
     arrayToSafeQuery(this.database, columns)
   }
+
+  queryWhere = (oKnex, filter) => {
+    queryWhere(oKnex, filter);
+  }
 }

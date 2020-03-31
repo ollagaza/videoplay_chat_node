@@ -31,6 +31,7 @@ routes.get('/paymentlist', Wrap(async(req, res) => {
       result[group][payment_info[key].code] = payment_info[key];
     }
   });
+  output.add('paymentinfo_origin', payment_info);
   output.add('paymentinfo', result);
   res.json(output);
 }));

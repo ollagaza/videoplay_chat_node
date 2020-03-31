@@ -28,6 +28,14 @@ routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) =>
   res.json(output);
 }));
 
+routes.post('/check_cert', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const inputCert = req.body.cert;
+  const output = await MemberService.chkCert(DBMySQL, inputCert);
+
+  res.json(output);
+}));
+
 routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
   const member_seq = Util.parseInt(req.params.member_seq);
