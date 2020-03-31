@@ -257,7 +257,7 @@ export default class EmbedModel {
     return json;
   };
 
-  getXmlJson = async (scale, file_path, editor_server_directory, editor_server_download_directory, temp_suffix) => {
+  getXmlJson = async (scale, options) => {
     const json = {
       "Type": this._type,
     };
@@ -267,14 +267,18 @@ export default class EmbedModel {
     }
 
     if (this._type === Constants.TEXT) {
-      await this.createTextImage(file_path, editor_server_directory, temp_suffix);
+      await this.createTextImage(options.file_path, options.editor_server_directory, options.temp_suffix);
       json.Src = this._src
       json.Type = this._type;
     } else if (this._type === Constants.IMAGE) {
       json.Src = this._src
       log.debug(this.log_prefix, '[getXmlJson]', this._src, json.Src)
     } else if (this._type === Constants.VIDEO) {
-      json.Src = editor_server_download_directory + Util.getFileName(this.video_name);
+      if (options.use_cloud) {
+        json.Src = options.editor_server_download_directory + Util.getFileName(this.video_name);
+      } else {
+        json.Src = options.editor_server_group_video_directory + this.video_name;
+      }
       json.VideoStartTime = this._videoStartTime;
       json.VideoEndTime = this._videoEndTime;
     } else {

@@ -9,6 +9,8 @@ import StdObject from '../../wrapper/std-object'
 import SequenceModel from '../../models/sequence/SequenceModel'
 import Constants from '../../constants/constants'
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
+import GroupService from '../member/GroupService'
+import DBMySQL from '../../database/knex-mysql';
 
 const StudioServiceClass = class {
   constructor () {
@@ -126,9 +128,13 @@ const StudioServiceClass = class {
     if (!video_project_info || !video_project_info.sequence_list || video_project_info.sequence_list.length <= 0) {
       throw new StdObject(-1, '등록된 동영상 정보가 없습니다.', 400);
     }
-    await this.requestDownloadVideoFiles(group_member_info, video_project_info)
-    const update_result = await VideoProjectModel.updateRequestStatus(project_seq, 'R');
-    return update_result && update_result._id && update_result._id > 0
+    if (ServiceConfig.useCloud()) {
+      await this.requestDownloadVideoFiles(group_member_info, video_project_info)
+      const update_result = await VideoProjectModel.updateRequestStatus(project_seq, 'R');
+      return update_result && update_result._id && update_result._id > 0
+    } else {
+      await this.requestMakeProject(video_project_info)
+    }
   }
 
   requestDownloadVideoFiles = async (group_member_info, video_project_info) => {
@@ -179,24 +185,28 @@ const StudioServiceClass = class {
       await VideoProjectModel.updateRequestStatus(response_data.project_seq, 'E', 0);
       throw new StdObject(-2, '원본 동영상파일 다운로드에 실패하였습니다.', 400, { response_data } )
     }
-    await this.requestMakeProject(response_data.project_seq)
+    const video_project_info = await this.getVideoProjectInfo(response_data.project_seq)
+    if (!video_project_info || !video_project_info.sequence_list || video_project_info.sequence_list.length <= 0) {
+      throw new StdObject(-3, '등록된 동영상 정보가 없습니다.', 400);
+    }
+    await this.requestMakeProject(video_project_info)
     return true
   }
 
-  requestMakeProject = async (project_seq) => {
-    if (!project_seq) {
-      log.error(this.log_prefix, '[requestMakeProject]', "project_seq is not exists", project_seq);
-      return
-    }
-    const video_project_info = await this.getVideoProjectInfo(project_seq)
+  requestMakeProject = async (video_project_info) => {
     if (!video_project_info || !video_project_info._id) {
-      log.error(this.log_prefix, '[requestMakeProject]', "can't find project info", project_seq);
+      log.error(this.log_prefix, '[requestMakeProject]', "video_project_info is empty", video_project_info);
       return
     }
     const project_path = video_project_info.project_path + '/'
     const directory = ServiceConfig.get('media_root') + project_path
     const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
     const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
+    let editor_server_group_video_directory = null
+    if (ServiceConfig.useCloud() === false) {
+      const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
+      editor_server_group_video_directory = ServiceConfig.get('auto_editor_file_root') + group_info.media_path + '/operation/'
+    }
     const temp_directory = directory + this.TEMP_SUFFIX
     await Util.deleteDirectory(temp_directory)
     await Util.createDirectory(temp_directory)
@@ -205,10 +215,18 @@ const StudioServiceClass = class {
     const scale = 1;
     const sequence_list = video_project_info.sequence_list;
     const sequence_model_list = [];
+    const options = {
+      file_path: directory,
+      editor_server_directory: editor_server_directory,
+      editor_server_download_directory: editor_server_download_directory,
+      editor_server_group_video_directory: editor_server_group_video_directory,
+      temp_suffix: this.TEMP_SUFFIX,
+      use_cloud: ServiceConfig.useCloud()
+    }
     for (let i = 0; i < sequence_list.length; i++) {
       const sequence_model = new SequenceModel().init(sequence_list[i]);
       if (sequence_model.type) {
-        sequence_model_list.push(await sequence_model.getXmlJson(i, scale, directory, editor_server_directory, editor_server_download_directory, this.TEMP_SUFFIX));
+        sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options));
       }
     }
 
