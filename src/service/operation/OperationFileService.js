@@ -169,8 +169,9 @@ const OperationFileServiceClass = class {
       await Util.deleteFile(target_path);
       cloud_file_list.push(file_name)
     }
-
-    await CloudFileService.requestDeleteObjectFileList(file_base_path, cloud_file_list, false)
+    if (ServiceConfig.useCloud()) {
+      await CloudFileService.requestDeleteObjectFileList(file_base_path, cloud_file_list, false)
+    }
   }
 }
 

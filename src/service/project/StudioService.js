@@ -318,7 +318,9 @@ const StudioServiceClass = class {
 
       const video_file_size = await Util.getFileSize(video_file_path);
 
-      await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
+      if (ServiceConfig.useCloud()) {
+        await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
+      }
 
       await Util.deleteFile(video_directory + process_info.smil_file_name)
       await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
@@ -326,10 +328,16 @@ const StudioServiceClass = class {
       await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
       await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
 
-      const directory_file_size = await Util.getDirectoryFileSize(video_directory);
-      process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name;
-      process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8';
-      process_info.total_size = directory_file_size + video_file_size;
+      const directory_file_size = await Util.getDirectoryFileSize(video_directory)
+      if (ServiceConfig.useCloud()) {
+        process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name
+        process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8'
+        process_info.total_size = directory_file_size + video_file_size;
+      } else {
+        process_info.download_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
+        process_info.stream_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
+        process_info.total_size = directory_file_size;
+      }
       process_info.video_file_size = video_file_size;
 
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'Y', 100, process_info);
