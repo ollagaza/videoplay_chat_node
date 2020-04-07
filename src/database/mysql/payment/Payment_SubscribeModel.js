@@ -46,4 +46,15 @@ export default class Payment_SubscribeModel extends MySQLModel {
   putSubscribeDelete = async (customer_uid) => {
     return await this.delete({ customer_uid: customer_uid });
   };
+
+  getSubscribeList  = async (member_seq, searchOrder, page_navigation) => {
+    const columns = [
+      'customer_uid',
+      'card_name',
+      'card_number',
+      'regist_date',
+      this.database.raw('case when used = \'Y\' then \'현재결제코드\' else \'이전결제코드\' end used '),
+    ];
+    return this.findPaginated({ buyer_seq: member_seq }, columns, searchOrder, null, page_navigation);
+  };
 }

@@ -90,11 +90,13 @@ const IamportApiServiceClass = class {
     }
   };
 
-  subScribePayment = async (access_token, pg_data) => {
+  subScribePayment = async (pg_data) => {
+    const access_token = await this.getIamportToken();
+
     const Options = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': access_token,
+        'Authorization': access_token.token,
       },
       url: 'https://api.iamport.kr/subscribe/payments/again',
       method: 'POST',
@@ -160,9 +162,9 @@ const IamportApiServiceClass = class {
 
       if (diffDay > 7) {
         if (cancel_type === 'C') {
-          amount = (last_data.amount * (31 - diffDay));
+          amount = (last_data.amount / (31 - diffDay));
         } else  {
-          amount = (last_data.amount * (31 - diffDay) / 30) * 0.7;
+          amount = ((last_data.amount / (31 - diffDay)) / 30) * 0.7;
         }
         amount = Math.ceil(Math.ceil(amount / 10) * 10);
       } else {
@@ -185,6 +187,76 @@ const IamportApiServiceClass = class {
           refund_holder: '',
           refund_bank: '',
           refund_account: '',
+        },
+        json: true
+      };
+
+      const result = {};
+      await request(Options)
+        .then(({code, message, response}) => {
+          result.code = code;
+          result.message = message;
+          result.response = response;
+        });
+      return result;
+    } catch (e) {
+      throw new StdObject(-1, e, 400)
+    }
+  };
+
+  adminPaymentCancel = async (data, amount) => {
+    try {
+      const access_token = await this.getIamportToken();
+
+      const Options = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': access_token.token,
+        },
+        method: 'POST',
+        url: 'https://api.iamport.kr/payments/cancel',
+        form: {
+          imp_uid: data.imp_uid,
+          merchant_uid: data.merchant_uid,
+          amount: amount,
+          tax_free: 0,
+          checksum: null,
+          reason: '관리자 플랜취소',
+          refund_holder: '',
+          refund_bank: '',
+          refund_account: '',
+        },
+        json: true
+      };
+
+      const result = {};
+      await request(Options)
+        .then(({code, message, response}) => {
+          result.code = code;
+          result.message = message;
+          result.response = response;
+        });
+      return result;
+    } catch (e) {
+      throw new StdObject(-1, e, 400)
+    }
+  };
+
+  getSubscripbeInfo = async (customer_uid) => {
+    try {
+      const access_token = await this.getIamportToken();
+
+      const Options = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': access_token.token,
+        },
+        method: 'GET',
+        url: `https://api.iamport.kr/subscribe/customers?customer_uid[]=${customer_uid}`,
+        form: {
+          customer_uid: [
+            customer_uid
+          ],
         },
         json: true
       };
