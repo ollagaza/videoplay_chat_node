@@ -18,7 +18,9 @@ export default {
     await CodeSceneService.init()
     await initDirectories()
     await SocketManager.init()
-    await NaverArchiveStorageService.init()
-    await NaverObjectStorageService.init()
+    if (ServiceConfig.useCloud()) {
+      await NaverArchiveStorageService.init()
+      await NaverObjectStorageService.init()
+    }
   }
 }
