@@ -451,7 +451,9 @@ const execute = async (command) => {
 
 const getMediaInfo = async (media_path) => {
   const async_func = new Promise( async (resolve) => {
-    const execute_result = await execute(`mediainfo --Full --Output=XML "${media_path}"`)
+    const mediainfo_cmd = `mediainfo --Full --Output=XML "${media_path}"`
+    log.debug(log_prefix, '[getMediaInfo] - mediainfo_cmd', mediainfo_cmd)
+    const execute_result = await execute(mediainfo_cmd)
     const media_result = {
       success: false,
       media_type: Constants.NO_MEDIA,
