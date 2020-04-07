@@ -443,7 +443,7 @@ const MemberServiceClass = class {
     member_info.checkPassword();
     member_info.checkUserName();
     member_info.checkUserNickname();
-    member_info.checkEmailAddress();
+    // member_info.checkEmailAddress();
 
     const member_model = this.getMemberModel(database)
     const create_member_info = await member_model.createMember(member_info)

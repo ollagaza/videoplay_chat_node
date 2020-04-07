@@ -112,7 +112,7 @@ const PaymentServiceClass = class {
   chkCustomer_uid = async (database, customer_uid) => {
     const subscribeModel = this.getSubscribeModel(database);
     const chkCustomerUid = await subscribeModel.getSubScribeOne({ customer_uid: customer_uid });
-    return chkCustomerUid.length > 0 ? true : false;
+    return chkCustomerUid.customer_uid != undefined ? true : false;
   };
 
   getSubScribetoBuyerSeq = async (database, buyer_seq) => {

@@ -9,14 +9,24 @@ export default class PaymentResultModel extends MySQLModel {
     this.log_prefix = '[PaymentResultModel]'
   }
 
+  getPaymentResultOne = async(merchant_uid) => {
+    // const oKnex = this.database.raw(`
+    // select *
+    // from payment_result
+    // where merchant_uid = ${merchant_uid}
+    // `);
+
+    return await this.findOne({ merchant_uid });
+  };
+
   getPaymentResult = async(member_seq, group) => {
     const oKnex = this.database.raw(`
     select list.*, result.*
     from payment_result result
-    inner join payment_list list on list.code = json_extract(result.custom_data, '$.code') and list.group = '${group}'
+    inner join payment_list list on list.code = result.payment_code and list.group = '${group}'
     where result.success = 1
-      and buyer_seq = ${member_seq}
-      and payment_code != 'free'
+      and result.buyer_seq = ${member_seq}
+      and result.payment_code != 'free'
       and result.cancelled_at is null
       and date_format(result.paid_at, '%Y%m') between date_format(date_sub(NOW(), interval 6 month), '%Y%m') and date_format(date_add(NOW(), interval 5 month), '%Y%m')
     order by result.paid_at	desc
@@ -64,8 +74,12 @@ export default class PaymentResultModel extends MySQLModel {
       pg_data.custom_data = JSON.stringify(pg_data.custom_data);
     }
 
-    pg_data.paid_at = pg_data.paid_at === undefined ? null : this.database.raw(`FROM_UNIXTIME(${pg_data.paid_at})`)
-    pg_data.cancelled_at = pg_data.cancelled_at === undefined ? null : this.database.raw(`FROM_UNIXTIME(${pg_data.cancelled_at})`)
+    if (pg_data.paid_at !== undefined) {
+      pg_data.paid_at = pg_data.paid_at === undefined ? null : this.database.raw(`FROM_UNIXTIME(${pg_data.paid_at})`)
+    }
+    if (pg_data.cancelled_at !== undefined) {
+      pg_data.cancelled_at = pg_data.cancelled_at === undefined ? null : this.database.raw(`FROM_UNIXTIME(${pg_data.cancelled_at})`)
+    }
     pg_data.modify_date = this.database.raw('NOW()');
     return await this.update({ merchant_uid: pg_data.merchant_uid }, pg_data);
   };
@@ -136,10 +150,42 @@ export default class PaymentResultModel extends MySQLModel {
       'member.user_name',
       'member.user_id',
       'payment_result.name',
-      this.database.raw('date_add(payment_result.paid_at, interval 1 month) as period'),
+      this.database.raw('case when (instr(payment_result.pay_code, \'mow\') > 0 and instr(payment_result.pay_code, \'mpw\') > 0) then date_add(payment_result.paid_at, interval 1 month) else date_add(payment_result.paid_at, interval 1 year) end period'),
       this.database.raw('concat(format(`payment_result`.`amount`, 0), \'원/월 (\', ifnull(json_extract(payment_result.custom_data, \'$.charsu\'), \'\'), \')\') as visit_count'),
       this.database.raw('case payment_result.pay_method when \'card\' then \'카드\' else \'기타\' end pay_method'),
       this.database.raw('case payment_result.status when \'ready\' then \'결제전\'  when \'paid\' then \'결제완료\' when \'cancelled\' then \'결제취소\' else ifnull(payment_result.error_msg, \'결제오류\') end status')
+    ];
+    const oKnex = this.database.select(select_fields);
+    oKnex.from(this.table_name);
+    oKnex.innerJoin('member', function() {
+      this.on('member.seq', 'payment_result.buyer_seq');
+    });
+    if (filters.query != undefined) {
+      await this.queryWhere(oKnex, filters);
+    }
+    if (filters.order != undefined) {
+      oKnex.orderBy(filters.order.name, filters.order.direction);
+    } else {
+      oKnex.orderBy('payment_result.paid_at','asc');
+    }
+
+    const data = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging);
+
+    return data;
+  };
+
+  getPaymentCancelAndChangeList = async(filters, page_navigation) => {
+    const select_fields = [
+      'payment_result.paid_at',
+      'payment_result.merchant_uid',
+      'member.user_name',
+      'member.user_id',
+      'payment_result.name',
+      this.database.raw('case when (instr(payment_result.pay_code, \'mow\') > 0 and instr(payment_result.pay_code, \'mpw\') > 0) then date_add(payment_result.paid_at, interval 1 month) else date_add(payment_result.paid_at, interval 1 year) end period'),
+      'cancelled_at',
+      this.database.raw('case payment_result.status when \'ready\' then \'결제전\'  when \'paid\' then \'결제완료\' when \'cancelled\' then \'결제취소\' else ifnull(payment_result.error_msg, \'결제오류\') end `status`'),
+      this.database.raw('case when datediff(payment_result.cancelled_at, payment_result.paid_at) > 7 then ((payment_result.amount / (31 - datediff(payment_result.cancelled_at, payment_result.paid_at))) / 30) * 0.7 else payment_result.amount end refund_amount'),
+      'payment_result.cancel_amount',
     ];
     const oKnex = this.database.select(select_fields);
     oKnex.from(this.table_name);
@@ -165,13 +211,19 @@ export default class PaymentResultModel extends MySQLModel {
       pay_r.paid_at, pay_r.merchant_uid, pay_r.buyer_name, pay_l.name, pay_r.amount, pay_r.name 'order_name',
       case pay_r.pay_method when 'card' then '카드' else '기타' end 'pay_method',
       case pay_r.status when 'ready' then '결제전'  when 'paid' then '결제완료' when 'cancelled' then '결제취소' else ifnull(pay_r.error_msg, '알수없는 오류') end 'text_status',
-      mem.user_id, mem.user_type, mem.tel, mem.email_address, mem.cellphone,
-      pay_l.moneys, pay_r.status, pay_r.payment_code, pay_r.pay_code, mem.used_admin
+      mem.user_id, mem.user_type, mem.tel, mem.email_address, mem.cellphone, mem.seq,
+      pay_l.moneys, pay_r.status, pay_r.payment_code, pay_r.pay_code, mem.used_admin,
+      pay_s.card_name, pay_s.card_number
       from payment_result pay_r
       inner join payment_list pay_l on pay_l.code = pay_r.payment_code
+      left outer join payment_subscribe pay_s on pay_s.customer_uid = pay_r.customer_uid
       inner join \`member\` mem on mem.seq = pay_r.buyer_seq
-      where merchant_uid = '${merchant_uid}'`);
+      where pay_r.merchant_uid = '${merchant_uid}'`);
 
     return oKnex;
+  };
+
+  getMemberPaymentAllList = async(member_seq, searchOrder, page_navigation) => {
+    return this.findPaginated({ buyer_seq: member_seq }, null, searchOrder, null, page_navigation);
   };
 }
