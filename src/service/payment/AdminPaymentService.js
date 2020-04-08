@@ -123,6 +123,10 @@ const PaymentServiceClass = class {
             orderInfo.progress_code = 'C';
             orderInfo.progress_status = '결제취소';
             break;
+          case null:
+            orderInfo.progress_code = 'C';
+            orderInfo.progress_status = '결제정보없음';
+            break;
           default:
             orderInfo.progress_code = 'S';
             orderInfo.progress_status = '정상';
@@ -133,6 +137,10 @@ const PaymentServiceClass = class {
           case 'cancelled':
             orderInfo.progress_code = 'C';
             orderInfo.progress_status = '결제취소';
+            break;
+          case null:
+            orderInfo.progress_code = 'C';
+            orderInfo.progress_status = '결제정보없음';
             break;
           default:
             orderInfo.progress_code = 'E';
