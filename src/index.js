@@ -7,7 +7,7 @@ const { PORT = 3000 } = process.env;
 
 process.env.HOSTNAME = os.hostname();
 
-app.listen(PORT, async () => {
+app.listen(PORT, "0.0.0.0", async () => {
   log.d(null, `Listening on port ${PORT} -> PID: ${process.pid }`)
   await InitService.init()
 });
