@@ -14,9 +14,9 @@ const MemberLogServiceClass = class {
     return new MemberLogModel(DBMySQL)
   }
 
-  createMemberLog = async (database, member_seq, code, text = "") => {
+  createMemberLog = async (database, member_seq, code, text = "", ip = null, used = 'Y') => {
     const member_log_model = this.getMemberLogModel(database)
-    return member_log_model.createMemberLog(member_seq, code, text)
+    return member_log_model.createMemberLog(member_seq, code, text, ip, used)
   }
 
   memberJoinLog = async (database, member_seq) => {
