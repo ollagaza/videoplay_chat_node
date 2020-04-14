@@ -14,8 +14,8 @@ routes.post('/', Wrap(async(req, res) => {
   try {
     const member_info = await AuthService.login(DBMySQL, req)
     const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
-    // const ip = req.headers['x-forwarded-for'] ||  req.connection.remoteAddress;
-    // await MemberLogService.createMemberLog(DBMySQL, member_info.seq, '0000', 'login', ip, 'N');
+    const ip = req.headers['x-forwarded-for'] ||  req.connection.remoteAddress;
+    await MemberLogService.createMemberLog(DBMySQL, member_info.seq, '0000', 'login', ip, 'N');
     return res.json(output);
   } catch (e) {
     const output = e;
