@@ -10,11 +10,13 @@ export default class MemberLogModel extends MySQLModel {
     this.log_prefix = '[MemberLogModel]'
   }
 
-  createMemberLog = async (seq, code, text = "") => {
+  createMemberLog = async (seq, code, text = "", ip = null, used = 'Y') => {
     const memberLog = {
       member_seq: seq,
       log_code: code,
       log_text: text,
+      used_ipaddress: ip,
+      used: used,
     };
 
     return await this.create(memberLog);
@@ -23,6 +25,7 @@ export default class MemberLogModel extends MySQLModel {
   getMemberLog = async (lang, seq) => {
     const memberLog = {
       member_seq: seq,
+      used: 'Y',
     }
     const fieldSet = ["log_code", "log_text", "date_format(regist_date, '%Y%m%d') keydate", "date_format(regist_date, '%Y%m%d%H%i') regist_date"];
     const resultContent = {};

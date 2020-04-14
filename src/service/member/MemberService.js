@@ -319,7 +319,8 @@ const MemberServiceClass = class {
     const output = new StdObject(-1, '프로필 업로드 실패');
 
     const media_root = ServiceConfig.get('media_root');
-    const upload_path = member_info.user_media_path + `/profile`;
+    // const upload_path = member_info.user_media_path + `/profile`;
+    const upload_path = `/common`;
     const upload_full_path = media_root + upload_path;
     if (!(await Util.fileExists(upload_full_path))) {
       await Util.createDirectory(upload_full_path);
@@ -443,7 +444,7 @@ const MemberServiceClass = class {
     member_info.checkPassword();
     member_info.checkUserName();
     member_info.checkUserNickname();
-    member_info.checkEmailAddress();
+    // member_info.checkEmailAddress();
 
     const member_model = this.getMemberModel(database)
     const create_member_info = await member_model.createMember(member_info)

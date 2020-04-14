@@ -148,14 +148,15 @@ routes.put('/createSubscribefinal', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
     await DBMySQL.transaction(async (transaction) => {
       if (!customer_uid) {
+        const addSubScribeData = await IamportApiService.getSubscripbeInfo(pay_data.customer_uid);
+        pay_data.card_code = addSubScribeData.response[0].card_code;
+        pay_data.card_name = addSubScribeData.response[0].card_name;
+        pay_data.card_number = addSubScribeData.response[0].card_number;
         const subScribe_insert = await PaymentService.insertSubscribe(transaction, pay_data);
       }
-      const access_token = await IamportApiService.getIamportToken();
-      if (access_token.code === 0) {
-        const subScribeResult = await IamportApiService.subScribePayment(access_token.token, pay_data);
-        const payData = await IamportApiService.makePayData(subScribeResult, pay_data);
-        const payment_insert = await PaymentService.insertPayment(transaction, payData);
-      }
+      const subScribeResult = await IamportApiService.subScribePayment(pay_data);
+      const payData = await IamportApiService.makePayData(subScribeResult, pay_data);
+      const payment_insert = await PaymentService.insertPayment(transaction, payData);
     });
 
     const pay_code = payment.code;
