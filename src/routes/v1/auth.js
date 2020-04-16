@@ -15,10 +15,14 @@ routes.post('/', Wrap(async(req, res) => {
     const member_info = await AuthService.login(DBMySQL, req)
     const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
     let ip = '';
-    if (req.headers['x-forwarded-for'].indexOf(',') !== -1) {
-      ip = req.headers['x-forwarded-for'].split(',')[0];
+    if (req.headers['x-forwarded-for']) {
+      if (req.headers['x-forwarded-for'].indexOf(',') !== -1) {
+        ip = req.headers['x-forwarded-for'].split(',')[0];
+      } else {
+        ip = req.headers['x-forwarded-for']
+      }
     } else {
-      ip = req.headers['x-forwarded-for']
+      ip = req.connection.remoteAddress;
     }
     await MemberLogService.createMemberLog(DBMySQL, member_info.seq, '0000', 'login', ip, 'N');
     return res.json(output);
