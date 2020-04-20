@@ -44,9 +44,9 @@ const ServiceConfigClass = class {
     return this.service_config_map[key];
   }
 
-  useCloud = () => {
-    let use_cloud = this.service_config_map['use_cloud'] ? this.service_config_map['use_cloud'] : 'y'
-    return use_cloud.toLowerCase() !== 'n';
+  isVacs = () => {
+    let is_vacs = this.service_config_map['is_vacs'] ? this.service_config_map['is_vacs'] : 'n'
+    return is_vacs.toLowerCase() === 'y';
   }
 }
 

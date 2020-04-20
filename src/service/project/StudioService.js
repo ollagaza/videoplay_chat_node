@@ -128,12 +128,12 @@ const StudioServiceClass = class {
     if (!video_project_info || !video_project_info.sequence_list || video_project_info.sequence_list.length <= 0) {
       throw new StdObject(-1, '등록된 동영상 정보가 없습니다.', 400);
     }
-    if (ServiceConfig.useCloud()) {
+    if (ServiceConfig.isVacs()) {
+      await this.requestMakeProject(video_project_info)
+    } else {
       await this.requestDownloadVideoFiles(group_member_info, video_project_info)
       const update_result = await VideoProjectModel.updateRequestStatus(project_seq, 'R');
       return update_result && update_result._id && update_result._id > 0
-    } else {
-      await this.requestMakeProject(video_project_info)
     }
   }
 
@@ -203,7 +203,7 @@ const StudioServiceClass = class {
     const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
     const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
     let editor_server_group_video_directory = null
-    if (ServiceConfig.useCloud() === false) {
+    if (ServiceConfig.isVacs()) {
       const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
       editor_server_group_video_directory = ServiceConfig.get('auto_editor_file_root') + group_info.media_path + '/operation/'
     }
@@ -221,7 +221,7 @@ const StudioServiceClass = class {
       editor_server_download_directory: editor_server_download_directory,
       editor_server_group_video_directory: editor_server_group_video_directory,
       temp_suffix: this.TEMP_SUFFIX,
-      use_cloud: ServiceConfig.useCloud()
+      is_vacs: ServiceConfig.isVacs()
     }
     for (let i = 0; i < sequence_list.length; i++) {
       const sequence_model = new SequenceModel().init(sequence_list[i]);
@@ -318,7 +318,7 @@ const StudioServiceClass = class {
 
       const video_file_size = await Util.getFileSize(video_file_path);
 
-      if (ServiceConfig.useCloud()) {
+      if (ServiceConfig.isVacs() === false) {
         await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
       }
 
@@ -329,14 +329,14 @@ const StudioServiceClass = class {
       await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
 
       const directory_file_size = await Util.getDirectoryFileSize(video_directory)
-      if (ServiceConfig.useCloud()) {
-        process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name
-        process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8'
-        process_info.total_size = directory_file_size + video_file_size;
-      } else {
+      if (ServiceConfig.isVacs()) {
         process_info.download_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
         process_info.stream_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
         process_info.total_size = directory_file_size;
+      } else {
+        process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name
+        process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8'
+        process_info.total_size = directory_file_size + video_file_size;
       }
       process_info.video_file_size = video_file_size;
 

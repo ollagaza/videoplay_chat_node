@@ -79,7 +79,7 @@ const OperationFileServiceClass = class {
 
     const file_name = upload_file_info.new_file_name
     let is_moved = false
-    if (ServiceConfig.useCloud()) {
+    if (ServiceConfig.isVacs() === false) {
       try {
         await NaverObjectStorageService.moveFile(upload_file_info.path, directory_info.media_refer, file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
         is_moved = true
@@ -169,7 +169,7 @@ const OperationFileServiceClass = class {
       await Util.deleteFile(target_path);
       cloud_file_list.push(file_name)
     }
-    if (ServiceConfig.useCloud()) {
+    if (ServiceConfig.isVacs() === false) {
       await CloudFileService.requestDeleteObjectFileList(file_base_path, cloud_file_list, false)
     }
   }

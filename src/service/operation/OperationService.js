@@ -266,7 +266,7 @@ const OperationServiceClass = class {
   deleteOperationFiles = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     await Util.deleteDirectory(directory_info.root);
-    if (ServiceConfig.useCloud()) {
+    if (ServiceConfig.isVacs() === false) {
       await CloudFileService.requestDeleteObjectFile(directory_info.media_path, true)
     }
   };
