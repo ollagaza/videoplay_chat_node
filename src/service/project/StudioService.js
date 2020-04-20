@@ -1,5 +1,4 @@
 import querystring from 'querystring';
-import path from 'path'
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil'
 import log from '../../libs/logger'
@@ -129,12 +128,14 @@ const StudioServiceClass = class {
       throw new StdObject(-1, '등록된 동영상 정보가 없습니다.', 400);
     }
     if (ServiceConfig.isVacs()) {
-      await this.requestMakeProject(video_project_info)
+      if (!await this.requestMakeProject(video_project_info)) {
+        throw new StdObject(-2, '동영상 제작요청에 실패하였습니다.', 400);
+      }
     } else {
       await this.requestDownloadVideoFiles(group_member_info, video_project_info)
-      const update_result = await VideoProjectModel.updateRequestStatus(project_seq, 'R');
-      return update_result && update_result._id && update_result._id > 0
     }
+    const update_result = await VideoProjectModel.updateRequestStatus(project_seq, 'R');
+    return update_result && update_result._id && update_result._id > 0
   }
 
   requestDownloadVideoFiles = async (group_member_info, video_project_info) => {
@@ -196,7 +197,7 @@ const StudioServiceClass = class {
   requestMakeProject = async (video_project_info) => {
     if (!video_project_info || !video_project_info._id) {
       log.error(this.log_prefix, '[requestMakeProject]', "video_project_info is empty", video_project_info);
-      return
+      return false
     }
     const project_path = video_project_info.project_path + '/'
     const directory = ServiceConfig.get('media_root') + project_path
@@ -264,15 +265,16 @@ const StudioServiceClass = class {
     log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url);
 
     let api_request_result = null;
-    let is_execute_success = false;
+    let is_request_success = false;
     try {
       api_request_result = await Util.httpRequest(request_options, false);
-      is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done';
+      is_request_success = api_request_result && api_request_result.toLowerCase() === 'done';
     } catch (error) {
       log.error(this.log_prefix, '[requestMakeProject]', 'request error', error);
       api_request_result = error.message;
     }
-    log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_execute_success, api_url, api_request_result);
+    log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_request_success, api_url, api_request_result);
+    return is_request_success
   }
 
   updateMakeProcess = async (request) => {
@@ -289,6 +291,7 @@ const StudioServiceClass = class {
     if (Util.isEmpty(process_info.status)) {
       throw new StdObject(1, '잘못된 파라미터', 400);
     }
+    let video_project = null
     let is_success = false;
     if (process_info.status === 'start') {
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'S', 0);
@@ -302,7 +305,7 @@ const StudioServiceClass = class {
         throw new StdObject(2, '결과파일 이름 누락', 400);
       }
 
-      const video_project = await VideoProjectModel.findOneByContentId(content_id);
+      video_project = await VideoProjectModel.findOneByContentId(content_id);
       if (Util.isEmpty(video_project)) {
         throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400);
       }
@@ -348,6 +351,16 @@ const StudioServiceClass = class {
       }
     } else {
       throw new StdObject(3, '잘못된 상태 값', 400);
+    }
+    if (video_project && is_success) {
+      const message_info = {
+        message: `'${video_project.project_name}'비디오 제작이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
+      }
+      const extra_data = {
+        project_seq: video_project._id,
+        reload_studio_page: true
+      }
+      await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
     }
     return is_success
   }

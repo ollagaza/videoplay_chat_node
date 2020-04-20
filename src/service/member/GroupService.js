@@ -715,14 +715,7 @@ const GroupServiceClass = class {
     }
     if (action_type) data.action_type = action_type
 
-    const socket_data = {
-      data
-    }
-    if (message_info) {
-      message_info.type = 'pushNotice'
-      socket_data.message_info = message_info
-    }
-    await SocketManager.sendToFrontMulti(admin_id_list, socket_data)
+    await this.sendToFrontMulti(admin_id_list, data, message_info)
   }
 
   onGroupMemberStateChange = async (group_seq, group_member_seq, message_info = null, type = 'groupMemberStateChange', action_type = 'groupSelect') => {
@@ -736,15 +729,7 @@ const GroupServiceClass = class {
       group_seq,
       action_type
     }
-
-    const socket_data = {
-      data
-    }
-    if (message_info) {
-      message_info.type = 'pushNotice'
-      socket_data.message_info = message_info
-    }
-    await SocketManager.sendToFrontOne(user_id, socket_data)
+    await this.sendToFrontOne(user_id, data, message_info)
   }
 
   onGroupStateChange = async (group_seq, sub_type = null, action_type = null, operation_seq_list = null, message_info = null, reload_operation_list = true) => {
@@ -759,6 +744,35 @@ const GroupServiceClass = class {
     if (action_type) data.action_type = action_type
     if (operation_seq_list) data.operation_seq_list = operation_seq_list
 
+    await this.sendToFrontMulti(user_id_list, data, message_info)
+  }
+
+  onGeneralGroupNotice =  async (group_seq, type, action_type = null, sub_type = null, message_info = null, extra_data = null) => {
+    const user_id_list = await this.getActiveGroupMemberSeqList(DBMySQL, group_seq)
+    if (!user_id_list || !user_id_list.length) return
+    const data = {
+      type,
+      group_seq,
+      ...extra_data
+    }
+    if (sub_type) data.sub_type = sub_type
+    if (action_type) data.action_type = action_type
+
+    await this.sendToFrontMulti(user_id_list, data, message_info)
+  }
+
+  sendToFrontOne = async (user_id, data, message_info) => {
+    const socket_data = {
+      data
+    }
+    if (message_info) {
+      message_info.type = 'pushNotice'
+      socket_data.message_info = message_info
+    }
+    await SocketManager.sendToFrontOne(user_id, socket_data)
+  }
+
+  sendToFrontMulti = async (user_id_list, data, message_info) => {
     const socket_data = {
       data
     }
@@ -770,10 +784,8 @@ const GroupServiceClass = class {
   }
 
   getUserGroupInfo = async (database, member_seq) => {
-    const group_info_model = this.getGroupModel(database);
-    const group_info_result = await group_info_model.getMemberGroupInfoAll(member_seq);
-
-    return group_info_result;
+    const group_info_model = this.getGroupModel(database)
+    return await group_info_model.getMemberGroupInfoAll(member_seq)
   }
 }
 
