@@ -1,9 +1,7 @@
 import _ from 'lodash';
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
@@ -16,11 +14,8 @@ import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
-import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import MemberTemplate from '../../template/mail/member.template';
 import SendMail from '../../libs/send-mail'
-import BaseUtil from '../../utils/baseutil'
-import GroupMailTemplate from '../../template/mail/group.template'
 
 const MemberServiceClass = class {
   constructor () {

@@ -78,7 +78,8 @@
     "moment": "^2.24.0",
     "aws-sdk": "^2.631.0",
     "url-parse": "^1.4.7",
-    "query-string": "^6.11.1"
+    "query-string": "^6.11.1",
+    "ssh-exec": "^2.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

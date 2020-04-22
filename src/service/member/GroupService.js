@@ -12,6 +12,7 @@ import GroupModel from '../../database/mysql/member/GroupModel';
 import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
 import SendMail from '../../libs/send-mail'
 import GroupMailTemplate from '../../template/mail/group.template'
+import VacsService from '../vacs/VacsService'
 
 const GroupServiceClass = class {
   constructor () {
@@ -137,7 +138,7 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
-    const group_member_info = await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
+    await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
 
     return group_info
   }
@@ -186,7 +187,13 @@ const GroupServiceClass = class {
 
   getGroupMemberInfo = async (database, group_seq, member_seq, status = null) => {
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
+    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
+    if (ServiceConfig.isVacs()) {
+      const vacs_storage_info = await VacsService.getCurrentStorageStatus()
+      group_member_info.group_used_storage_size = vacs_storage_info.used
+      group_member_info.group_max_storage_size = vacs_storage_info.total
+    }
+    return group_member_info
   }
 
   getGroupMemberInfoBySeq = async (database, group_member_seq) => {

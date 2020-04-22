@@ -19,6 +19,7 @@ import GetDuration from 'get-video-duration';
 import JsonPath from "jsonpath";
 import mime from "mime-types";
 import moment from 'moment'
+import SSH from 'ssh-exec'
 import ServiceConfig from '../service/service-config';
 import log from "../libs/logger";
 import StdObject from '../wrapper/std-object';
@@ -879,6 +880,31 @@ const removePathLastSlash = (path) => {
   return path.replace(/\/+$/, '');
 }
 
+const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpaxldlwl_!') => {
+  const async_func = new Promise( async resolve => {
+    SSH(cmd, {
+      host,
+      port,
+      user,
+      password
+    }, function (error, result, stderr) {
+      log.debug(log_prefix, '[sshExec]', error, result, stderr)
+      const response = {
+        success: true,
+        result
+      }
+      if (error) {
+        response.success = false
+        response.error = error
+        response.stderr = stderr
+      }
+      resolve(response)
+    })
+  })
+
+  return await async_func
+}
+
 export default {
   removePathSlash,
   removePathLastSlash,
@@ -1165,5 +1191,6 @@ export default {
   getDirectoryName,
   getRandomNumber,
   getFileType,
-  uploadImageFile
+  uploadImageFile,
+  sshExec
 };
