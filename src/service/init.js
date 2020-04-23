@@ -4,6 +4,7 @@ import CodeSceneService from './code/CodeSceneService'
 import NaverArchiveStorageService from './storage/naver-archive-storage-service'
 import NaverObjectStorageService from './storage/naver-object-storage-service'
 import SocketManager from './socket-manager'
+import VacsScheduler from '../scheduler/VacsScheduler'
 import Util from '../utils/baseutil'
 
 const initDirectories = async () => {
@@ -21,6 +22,8 @@ export default {
     if (ServiceConfig.isVacs() === false) {
       await NaverArchiveStorageService.init()
       await NaverObjectStorageService.init()
+    } else {
+      VacsScheduler.startSchedule()
     }
   }
 }
