@@ -94,8 +94,8 @@ const SocketManagerClass = class extends EventEmitter {
     this.socket.emit('sendFrontMsgMulti', user_id_list, data);
   }
 
-  sendToFrontAll = async (request_data) => {
-    this.socket.emit('sendFrontGloMsg', request_data);
+  sendToFrontAll = async (data) => {
+    this.socket.emit('sendFrontGloMsg', data);
   }
 }
 

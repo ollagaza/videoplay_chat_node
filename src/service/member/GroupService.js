@@ -157,7 +157,17 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getMemberGroupList(member_seq, status)
+    const group_member_list = await group_member_model.getMemberGroupList(member_seq, status)
+    if (ServiceConfig.isVacs()) {
+      const vacs_storage_info = await VacsService.getCurrentStorageStatus()
+      log.debug(this.log_prefix, '[getMemberGroupList]', '[vacs_storage_info]', vacs_storage_info)
+      for (let i = 0; i < group_member_list.length; i++) {
+        const group_member_info = group_member_list[i]
+        group_member_info.group_used_storage_size = vacs_storage_info.used_size
+        group_member_info.group_max_storage_size = vacs_storage_info.total_size
+      }
+    }
+    return group_member_list
   }
 
   getGroupMemberList = async (database, group_seq, request) => {
@@ -190,8 +200,8 @@ const GroupServiceClass = class {
     const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
     if (ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()
-      group_member_info.group_used_storage_size = vacs_storage_info.used
-      group_member_info.group_max_storage_size = vacs_storage_info.total
+      group_member_info.group_used_storage_size = vacs_storage_info.used_size
+      group_member_info.group_max_storage_size = vacs_storage_info.total_size
     }
     return group_member_info
   }

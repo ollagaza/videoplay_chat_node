@@ -888,7 +888,7 @@ const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpax
       user,
       password
     }, function (error, result, stderr) {
-      log.debug(log_prefix, '[sshExec]', error, result, stderr)
+      log.debug(log_prefix, '[sshExec]', cmd, error, result, stderr)
       const response = {
         success: true,
         result

@@ -9,6 +9,7 @@ import GroupService from '../member/GroupService'
 import OperationFileService from './OperationFileService'
 import OperationMediaService from './OperationMediaService'
 import CloudFileService from '../cloud/CloudFileService'
+import VacsService from '../vacs/VacsService'
 import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
@@ -77,6 +78,9 @@ const OperationServiceClass = class {
       } catch (error) {
         log.error(this.log_prefix, '[createOperation]', 'create metadata error', error);
       }
+      if (ServiceConfig.isVacs()) {
+        VacsService.increaseCount(1)
+      }
     }
     return output;
   }
@@ -121,6 +125,10 @@ const OperationServiceClass = class {
       async (operation_info) => {
         try {
           await this.deleteOperationFiles(operation_info)
+          if (ServiceConfig.isVacs()) {
+            VacsService.updateStorageInfo()
+            VacsService.increaseCount(0, 1)
+          }
         } catch (error) {
           log.error(this.log_prefix, '[deleteOperationByInfo]', error)
         }
@@ -418,6 +426,9 @@ const OperationServiceClass = class {
         throw new StdObject(-1, '비디오 분석 요청 실패', 500);
       }
     });
+    if (ServiceConfig.isVacs()) {
+      VacsService.updateStorageInfo()
+    }
   }
 
   isDuplicateOperationCode = async (database, group_seq, member_seq, operation_code) => {
@@ -466,6 +477,9 @@ const OperationServiceClass = class {
   updateAnalysisStatus = async (database, operation_info, status) => {
     const operation_model = this.getOperationModel(database)
     await operation_model.updateAnalysisStatus(operation_info.seq, status);
+    if (status === 'Y' && ServiceConfig.isVacs()) {
+      VacsService.updateStorageInfo()
+    }
   }
 }
 

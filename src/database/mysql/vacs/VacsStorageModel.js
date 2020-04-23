@@ -27,7 +27,7 @@ export default class VacsStorageModel extends MySQLModel {
   }
 
   getCurrentStorageStatus = async () => {
-    return await this.findOne(null, ['used_size', 'total_size', 'upload_count', 'delete_count', 'modify_date'], { name: "state_date", direction: "desc" })
+    return await this.findOne(null, ['*'], { name: "state_date", direction: "desc" })
   }
 
   increaseCount = async (date, upload_count = 0, delete_count = 0) => {

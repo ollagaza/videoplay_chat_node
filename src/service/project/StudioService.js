@@ -10,6 +10,7 @@ import Constants from '../../constants/constants'
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import GroupService from '../member/GroupService'
 import DBMySQL from '../../database/knex-mysql';
+import VacsService from '../vacs/VacsService'
 
 const StudioServiceClass = class {
   constructor () {
@@ -95,10 +96,15 @@ const StudioServiceClass = class {
           log.error(this.log_prefix, '[deleteProjectFiles]', 'Util.deleteDirectory', media_root + project_path,  error)
         }
 
-        try {
-          await CloudFileService.requestDeleteObjectFile(project_path, true)
-        } catch (error) {
-          log.error(this.log_prefix, '[deleteProjectFiles]', 'CloudFileService.requestDeleteObjectFile', project_path,  error)
+        if (ServiceConfig.isVacs() === false) {
+          try {
+            await CloudFileService.requestDeleteObjectFile(project_path, true)
+          } catch (error) {
+            log.error(this.log_prefix, '[deleteProjectFiles]', 'CloudFileService.requestDeleteObjectFile', project_path, error)
+          }
+        }
+        if (ServiceConfig.isVacs()) {
+          VacsService.updateStorageInfo()
         }
       }
     )(project_info);
@@ -361,6 +367,9 @@ const StudioServiceClass = class {
         reload_studio_page: true
       }
       await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+      if (ServiceConfig.isVacs()) {
+        VacsService.updateStorageInfo()
+      }
     }
     return is_success
   }
