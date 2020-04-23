@@ -5,7 +5,6 @@ export default {
       database: 'surgbook',
       user: 'root',
       password: '_media_',
-      timezone: 'GMT+9'
     },
     pool: {
       min: 10,
