@@ -4,7 +4,7 @@ export default {
     connection: {
       database: 'surgbook',
       user: 'root',
-      password: '_media_'
+      password: '_media_',
     },
     pool: {
       min: 10,
