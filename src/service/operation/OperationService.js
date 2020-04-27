@@ -481,6 +481,14 @@ const OperationServiceClass = class {
       VacsService.updateStorageInfo()
     }
   }
+
+  getVideoDownloadURL = (operation_info) => {
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    if (ServiceConfig.isVacs()) {
+      return directory_info.url_video + operation_info.media_info.video_file_name
+    }
+    return directory_info.cdn_video + operation_info.media_info.video_file_name
+  }
 }
 
 const operation_service = new OperationServiceClass()
