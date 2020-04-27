@@ -8,7 +8,7 @@ import VacsStorageModel from '../../database/mysql/vacs/VacsStorageModel'
 
 const VacsServiceClass = class {
   constructor() {
-    this.log_prefix = '[CodeSceneClass]'
+    this.log_prefix = '[VacsService]'
   }
 
   getVacsStorageModel = (database = null) => {
