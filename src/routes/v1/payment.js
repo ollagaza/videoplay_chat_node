@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { Router } from 'express';
 import Auth from '../../middlewares/auth.middleware';
 import Util from '../../utils/baseutil';
@@ -76,6 +77,7 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const numPatten = /(^[0-9]+)/g;
     const textPatten = /([^0-9])([A-Z])/g;
     const payment_update = await PaymentService.updatePayment(DBMySQL, pg_data);
+    const PMR_Insert_Seq = await PaymentService.InsertPMResult(DBMySQL, member_seq, pg_data, pay_data, moneys);
 
     if (pg_data.success) {
       log.d(req, '[pg_data.success] - pay_data', pay_data)
@@ -216,7 +218,8 @@ routes.post('/payment_cancel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   const member_seq = token_info.getId();
 
   try {
-    const result = await IamportApiService.paymentCancel(options.last_payment, options.cancel_text, options.cancel_type);
+    const iamport_result = await IamportApiService.paymentCancel(options.last_payment, options.cancel_text, options.cancel_type);
+    const PMR_result = await PaymentService.DeletePMResult(DBMySQL, member_seq, options.last_payment.merchant_uid);
 
     if (options.cancel_type !== 'C' && options.last_payment.customer_uid !== null) {
       const subScribeDelete_result = await IamportApiService.subScribeDelete(options.last_payment.customer_uid);
@@ -224,13 +227,13 @@ routes.post('/payment_cancel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
     }
 
     const pg_data = {
-      merchant_uid: result.response.merchant_uid,
-      status: result.response.status ? result.response.status : 'cancelled',
-      cancel_amount: result.response.cancel_amount,
-      cancel_history: JSON.stringify(result.response.cancel_history),
-      cancel_reason: result.response.cancel_reason,
-      cancel_receipt_urls: JSON.stringify(result.response.cancel_receipt_urls),
-      cancelled_at: result.response.cancelled_at,
+      merchant_uid: iamport_result.response.merchant_uid,
+      status: iamport_result.response.status ? iamport_result.response.status : 'cancelled',
+      cancel_amount: iamport_result.response.cancel_amount,
+      cancel_history: JSON.stringify(iamport_result.response.cancel_history),
+      cancel_reason: iamport_result.response.cancel_reason,
+      cancel_receipt_urls: JSON.stringify(iamport_result.response.cancel_receipt_urls),
+      cancelled_at: iamport_result.response.cancelled_at,
     };
 
     const pay_code = 'free';
@@ -251,6 +254,38 @@ routes.post('/payment_cancel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
 
     res.json(output);
   } catch (e) {
+    throw new StdObject(-1, '취소 중 오류가 발생 하였습니다.', 400);
+  }
+}));
+
+routes.post('/change_plan_all_cancel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+  const options = req.body.options;
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+
+  try {
+    const pasiblePaymentResultList = await PaymentService.getPosiblePaymentResultList(DBMySQL, member_seq);
+    _.forEach(pasiblePaymentResultList[0], async (value) => {
+      const iamport_result = await IamportApiService.paymentCancel(value, options.cancel_text, 'C');
+      await PaymentService.DeletePMResult(DBMySQL, member_seq, value.merchant_uid);
+
+      const pg_data = {
+        merchant_uid: iamport_result.response.merchant_uid,
+        status: iamport_result.response.status ? iamport_result.response.status : 'cancelled',
+        cancel_amount: iamport_result.response.cancel_amount,
+        cancel_history: JSON.stringify(iamport_result.response.cancel_history),
+        cancel_reason: iamport_result.response.cancel_reason,
+        cancel_receipt_urls: JSON.stringify(iamport_result.response.cancel_receipt_urls),
+        cancelled_at: iamport_result.response.cancelled_at,
+      };
+      const payment_update = await PaymentService.updatePayment(DBMySQL, pg_data);
+    });
+
+    res.json(output);
+  } catch (e) {
+    log.debug(e);
     throw new StdObject(-1, '취소 중 오류가 발생 하였습니다.', 400);
   }
 }));

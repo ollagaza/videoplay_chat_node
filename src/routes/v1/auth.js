@@ -6,6 +6,7 @@ import DBMySQL from '../../database/knex-mysql';
 import AuthService from '../../service/member/AuthService'
 import MemberService from '../../service/member/MemberService';
 import MemberLogService from '../../service/member/MemberLogService'
+import StdObject from "../../wrapper/std-object";
 
 const routes = Router();
 
@@ -27,8 +28,7 @@ routes.post('/', Wrap(async(req, res) => {
     await MemberLogService.createMemberLog(DBMySQL, member_info.seq, '0000', 'login', ip, 'N');
     return res.json(output);
   } catch (e) {
-    const output = e;
-    return res.json(output);
+    throw new StdObject(-1, '', 400);
   }
 }));
 

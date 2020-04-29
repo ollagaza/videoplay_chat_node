@@ -11,6 +11,8 @@ import service_config from "../../service/service-config";
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import MemberService from "../../service/member/MemberService";
+import baseutil from "../../utils/baseutil";
+import _ from "lodash";
 
 const routes = Router();
 
@@ -59,25 +61,31 @@ routes.post('/memberlist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req
   res.json(output);
 }));
 
-routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  req.accepts('application/json');
-  const updateData = req.body.setData;
-  const search_option = req.body.searchObj;
-  let output = new StdObject();
+routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+  const token_info = req.token_info;
+  const member_seq = Util.parseInt(req.params.member_seq);
+
+  const params = JSON.parse(req.body.params);
+
+  _.forEach(req.files, (value) => {
+    if (value[0].fieldname === 'profile_image') {
+      params.user_info.profile_image_path = '/common/' + value[0].filename;
+    } else if (value[0].fieldname === 'licens_image') {
+      params.user_sub_info.license_image_path = '/common/' + value[0].filename;
+    }
+  })
+
+  const member_info = new MemberInfo(params.user_info);
+  const member_sub_info = new MemberInfoSub(params.user_sub_info);
 
   await DBMySQL.transaction(async(transaction) => {
-    output = await AdminMemberService.updateMemberUsedforSendMail(transaction, updateData, search_option)
+    const result = await MemberService.modifyMemberWithSub(transaction, member_seq, member_info, member_sub_info)
+    if (!result) {
+      throw new StdObject(-1, '회원정보 수정 실패', 400);
+    }
   });
 
-  (async () => {
-    try {
-      await AdminMemberService.sendMailforMemberChangeUsed(DBMySQL, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option);
-    } catch (e) {
-      log.e(req, e);
-    }
-  })();
-
-  res.json(output);
+  res.json(new StdObject());
 }));
 
 routes.post('/getMongoData', Wrap(async(req, res) => {

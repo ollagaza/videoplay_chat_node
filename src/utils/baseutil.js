@@ -888,8 +888,8 @@ export default {
   "secondToTimeStr": secondToTimeStr,
   "dateFormatter": dateFormatter,
   "getDateDayAdd": (data, addDay = 0) => moment(new Date(data)).add(addDay, 'days').format('YYYY-MM-DD'),
-  "getDateMonthAdd": (data, addDay = 0) => moment(new Date(data)).add(addDay, 'month').format('YYYY-MM-DD'),
-  "getDateYearAdd": (data, addDay = 0) => moment(new Date(data)).add(addDay, 'year').format('YYYY-MM-DD'),
+  "getDateMonthAdd": (data, addMonth = 0) => moment(new Date(data)).add(addMonth, 'month').format('YYYY-MM-DD'),
+  "getDateYearAdd": (data, addYear = 0) => moment(new Date(data)).add(addYear, 'year').format('YYYY-MM-DD'),
 
   "today": (format='yyyy-mm-dd') => { return dateFormatter(new Date().getTime(), format); },
   "dateFormat": (timestamp, format='yyyy-mm-dd HH:MM:ss') => { return dateFormatter(timestamp, format); },
