@@ -21,15 +21,16 @@ export default class PaymentResultModel extends MySQLModel {
 
   getPaymentResult = async(member_seq, group) => {
     const oKnex = this.database.raw(`
-    select list.*, result.*
+    select list.*, result.*, pmr.*
     from payment_result result
     inner join payment_list list on list.code = result.payment_code and list.group = '${group}'
+    inner join payment_member_result pmr on pmr.payment_merchant_uid = result.merchant_uid and pmr.used = 'Y'
     where result.success = 1
       and result.buyer_seq = ${member_seq}
       and result.payment_code != 'free'
       and result.cancelled_at is null
-      and date_format(result.paid_at, '%Y%m') between date_format(date_sub(NOW(), interval 6 month), '%Y%m') and date_format(date_add(NOW(), interval 5 month), '%Y%m')
-    order by result.paid_at	desc
+      and date_format(result.paid_at, '%Y%m') between date_format(date_sub(NOW(), interval 6 month), '%Y%m') and date_format(date_add(NOW(), interval 6 month), '%Y%m')
+    order by pmr.payment_start_date asc
     `);
 
     return await oKnex;
@@ -70,7 +71,7 @@ export default class PaymentResultModel extends MySQLModel {
   };
 
   putPaymentModify = async (pg_data) => {
-    if (typeof pg_data.custom_data !== 'string') {
+    if (pg_data.custom_data !== undefined && typeof pg_data.custom_data !== 'string') {
       pg_data.custom_data = JSON.stringify(pg_data.custom_data);
     }
 
@@ -225,5 +226,21 @@ export default class PaymentResultModel extends MySQLModel {
 
   getMemberPaymentAllList = async(member_seq, searchOrder, page_navigation) => {
     return this.findPaginated({ buyer_seq: member_seq }, null, searchOrder, null, page_navigation);
+  };
+
+  getPosiblePaymentResultList = async(member_seq) => {
+    const oKnex = this.database.raw(`
+    select result.*, pmr.*
+    from payment_result result
+    inner join payment_member_result pmr on pmr.payment_merchant_uid = result.merchant_uid and pmr.used = 'Y'
+    where result.success = 1
+      and result.buyer_seq = ${member_seq}
+      and result.payment_code != 'free'
+      and result.cancelled_at is null
+      and date_format(result.paid_at, '%Y%m') >= date_format(NOW(), '%Y%m')
+    order by pmr.payment_start_date asc
+    `);
+
+    return await oKnex;
   };
 }
