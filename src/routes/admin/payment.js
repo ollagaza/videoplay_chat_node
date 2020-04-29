@@ -129,4 +129,13 @@ routes.post('/getChangePayment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   }
 }));
 
+routes.get('/paymentfreelist', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+
+  const payment_info = await PaymentService.getPaymentFreeList(DBMySQL, 'Kor');
+
+  output.add('paymentinfo', payment_info);
+  res.json(output);
+}));
 export default routes;

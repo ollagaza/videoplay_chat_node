@@ -48,6 +48,13 @@ const PaymentServiceClass = class {
     return payment_list;
   };
 
+  getPaymentFreeList = async (database, lang='Kor') => {
+    const payment_model = this.getPaymentModel(database);
+    const payment_list = await payment_model.getPaymentFreeList(lang);
+
+    return payment_list;
+  };
+
   getPaymentResult = async(database, member_seq, group_type, lang = 'kor') => {
     const output = new StdObject();
 

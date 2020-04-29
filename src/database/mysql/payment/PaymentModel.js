@@ -24,4 +24,18 @@ export default class PaymentModel extends MySQLModel {
 
     return result;
   };
+
+  getPaymentFreeList = async (lang = 'kor') => {
+    const searchObj = {
+      is_new: true,
+      query: [
+        { group: 'free' },
+        { lang: lang }
+      ],
+    };
+
+    const result = await this.find(searchObj);
+
+    return result;
+  };
 }
