@@ -1,9 +1,7 @@
 import _ from 'lodash';
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
@@ -16,11 +14,8 @@ import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
 import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
-import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import MemberTemplate from '../../template/mail/member.template';
 import SendMail from '../../libs/send-mail'
-import BaseUtil from '../../utils/baseutil'
-import GroupMailTemplate from '../../template/mail/group.template'
 
 const MemberServiceClass = class {
   constructor () {
@@ -446,8 +441,13 @@ const MemberServiceClass = class {
     member_info.checkUserNickname();
     // member_info.checkEmailAddress();
 
+    let is_confirm = false
+    if (ServiceConfig.isVacs()) {
+      is_confirm = true
+    }
+
     const member_model = this.getMemberModel(database)
-    const create_member_info = await member_model.createMember(member_info)
+    const create_member_info = await member_model.createMember(member_info, is_confirm)
     if (!create_member_info.seq){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }
@@ -458,19 +458,21 @@ const MemberServiceClass = class {
     await MemberLogService.memberJoinLog(database, create_member_info.seq)
     await GroupService.createPersonalGroup(database, create_member_info);
 
-    (
-      async() => {
-        let body = ''
-        body += `병원명: ${create_member_info.hospname}\n`
-        body += `이름: ${create_member_info.user_name}\n`
-        body += `아이디: ${create_member_info.user_id}\n`
-        body += `닉네임: ${create_member_info.user_nickname}\n`
-        body += `이메일: ${create_member_info.email_address}\n`
-        body += `연락처: ${create_member_info.cellphone}\n`
-        body += `가입일자: ${Util.currentFormattedDate()}\n`
-        await new SendMail().sendMailText(['jsbae@mteg.co.kr', 'leejs3635@mteg.co.kr'], 'Surgstory.com 회원가입.', body);
-      }
-    )()
+    if (ServiceConfig.isVacs() === false) {
+      (
+        async() => {
+          let body = ''
+          body += `병원명: ${create_member_info.hospname}\n`
+          body += `이름: ${create_member_info.user_name}\n`
+          body += `아이디: ${create_member_info.user_id}\n`
+          body += `닉네임: ${create_member_info.user_nickname}\n`
+          body += `이메일: ${create_member_info.email_address}\n`
+          body += `연락처: ${create_member_info.cellphone}\n`
+          body += `가입일자: ${Util.currentFormattedDate()}\n`
+          await new SendMail().sendMailText(['jsbae@mteg.co.kr', 'leejs3635@mteg.co.kr'], 'Surgstory.com 회원가입.', body);
+        }
+      )()
+    }
 
     return member_info;
   }
@@ -479,7 +481,7 @@ const MemberServiceClass = class {
     const member_info = new MemberInfo(params.user_info, ['password_confirm']);
     const member_sub_info = new MemberInfo(params.user_sub_info);
     const member_model = this.getMemberModel(database)
-    const create_member_info = await member_model.createMember(member_info)
+    const create_member_info = await member_model.createMember(member_info, true)
     if (!create_member_info.seq){
       throw new StdObject(-1, '회원정보 생성 실패', 500);
     }

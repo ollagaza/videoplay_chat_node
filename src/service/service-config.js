@@ -43,6 +43,11 @@ const ServiceConfigClass = class {
   get = (key) => {
     return this.service_config_map[key];
   }
+
+  isVacs = () => {
+    let is_vacs = this.service_config_map['is_vacs'] ? this.service_config_map['is_vacs'] : 'n'
+    return is_vacs.toLowerCase() === 'y';
+  }
 }
 
 const service_config = new ServiceConfigClass()

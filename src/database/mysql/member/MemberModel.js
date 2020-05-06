@@ -60,12 +60,14 @@ export default class MemberModel extends MySQLModel {
     return new MemberInfo(query_result, this.private_fields);
   };
 
-  createMember = async (member_info) => {
+  createMember = async (member_info, is_confirm = false) => {
     member_info.setAutoTrim(true);
-    member_info.password = this.encryptPassword(member_info.password);
-
     const member = member_info.toJSON();
 
+    if (is_confirm) {
+      member.used = 1
+    }
+    member.password = this.encryptPassword(member_info.password);
     member.user_media_path = `/user/${member.user_id}`;
 
     const media_root = ServiceConfig.get('media_root');

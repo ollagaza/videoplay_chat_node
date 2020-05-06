@@ -12,6 +12,7 @@ import GroupModel from '../../database/mysql/member/GroupModel';
 import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
 import SendMail from '../../libs/send-mail'
 import GroupMailTemplate from '../../template/mail/group.template'
+import VacsService from '../vacs/VacsService'
 
 const GroupServiceClass = class {
   constructor () {
@@ -137,7 +138,7 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
-    const group_member_info = await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
+    await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
 
     return group_info
   }
@@ -156,7 +157,17 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getMemberGroupList(member_seq, status)
+    const group_member_list = await group_member_model.getMemberGroupList(member_seq, status)
+    if (ServiceConfig.isVacs()) {
+      const vacs_storage_info = await VacsService.getCurrentStorageStatus()
+      log.debug(this.log_prefix, '[getMemberGroupList]', '[vacs_storage_info]', vacs_storage_info)
+      for (let i = 0; i < group_member_list.length; i++) {
+        const group_member_info = group_member_list[i]
+        group_member_info.group_used_storage_size = vacs_storage_info.used_size
+        group_member_info.group_max_storage_size = vacs_storage_info.total_size
+      }
+    }
+    return group_member_list
   }
 
   getGroupMemberList = async (database, group_seq, request) => {
@@ -186,7 +197,13 @@ const GroupServiceClass = class {
 
   getGroupMemberInfo = async (database, group_seq, member_seq, status = null) => {
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
+    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
+    if (ServiceConfig.isVacs()) {
+      const vacs_storage_info = await VacsService.getCurrentStorageStatus()
+      group_member_info.group_used_storage_size = vacs_storage_info.used_size
+      group_member_info.group_max_storage_size = vacs_storage_info.total_size
+    }
+    return group_member_info
   }
 
   getGroupMemberInfoBySeq = async (database, group_member_seq) => {
@@ -715,14 +732,7 @@ const GroupServiceClass = class {
     }
     if (action_type) data.action_type = action_type
 
-    const socket_data = {
-      data
-    }
-    if (message_info) {
-      message_info.type = 'pushNotice'
-      socket_data.message_info = message_info
-    }
-    await SocketManager.sendToFrontMulti(admin_id_list, socket_data)
+    await this.sendToFrontMulti(admin_id_list, data, message_info)
   }
 
   onGroupMemberStateChange = async (group_seq, group_member_seq, message_info = null, type = 'groupMemberStateChange', action_type = 'groupSelect') => {
@@ -736,15 +746,7 @@ const GroupServiceClass = class {
       group_seq,
       action_type
     }
-
-    const socket_data = {
-      data
-    }
-    if (message_info) {
-      message_info.type = 'pushNotice'
-      socket_data.message_info = message_info
-    }
-    await SocketManager.sendToFrontOne(user_id, socket_data)
+    await this.sendToFrontOne(user_id, data, message_info)
   }
 
   onGroupStateChange = async (group_seq, sub_type = null, action_type = null, operation_seq_list = null, message_info = null, reload_operation_list = true) => {
@@ -759,6 +761,35 @@ const GroupServiceClass = class {
     if (action_type) data.action_type = action_type
     if (operation_seq_list) data.operation_seq_list = operation_seq_list
 
+    await this.sendToFrontMulti(user_id_list, data, message_info)
+  }
+
+  onGeneralGroupNotice =  async (group_seq, type, action_type = null, sub_type = null, message_info = null, extra_data = null) => {
+    const user_id_list = await this.getActiveGroupMemberSeqList(DBMySQL, group_seq)
+    if (!user_id_list || !user_id_list.length) return
+    const data = {
+      type,
+      group_seq,
+      ...extra_data
+    }
+    if (sub_type) data.sub_type = sub_type
+    if (action_type) data.action_type = action_type
+
+    await this.sendToFrontMulti(user_id_list, data, message_info)
+  }
+
+  sendToFrontOne = async (user_id, data, message_info) => {
+    const socket_data = {
+      data
+    }
+    if (message_info) {
+      message_info.type = 'pushNotice'
+      socket_data.message_info = message_info
+    }
+    await SocketManager.sendToFrontOne(user_id, socket_data)
+  }
+
+  sendToFrontMulti = async (user_id_list, data, message_info) => {
     const socket_data = {
       data
     }
@@ -770,10 +801,8 @@ const GroupServiceClass = class {
   }
 
   getUserGroupInfo = async (database, member_seq) => {
-    const group_info_model = this.getGroupModel(database);
-    const group_info_result = await group_info_model.getMemberGroupInfoAll(member_seq);
-
-    return group_info_result;
+    const group_info_model = this.getGroupModel(database)
+    return await group_info_model.getMemberGroupInfoAll(member_seq)
   }
 }
 

@@ -28,12 +28,12 @@ const SyncServiceClass = class {
     return operation_info
   }
 
-  onAnalysisCompleteBySeq = async (operation_seq, move_file_cloud = true, is_sync_hwakeye = false) => {
+  onAnalysisCompleteBySeq = async (operation_seq, is_sync_hwakeye = false) => {
     const operation_info = this.getOperationInfoBySeq(operation_seq)
-    await this.onAnalysisComplete(operation_info, move_file_cloud, is_sync_hwakeye)
+    await this.onAnalysisComplete(operation_info, is_sync_hwakeye)
   }
 
-  onAnalysisComplete = async (operation_info, move_file_cloud = true, is_sync_hwakeye = false) => {
+  onAnalysisComplete = async (operation_info, is_sync_hwakeye = false) => {
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
     }
@@ -41,7 +41,7 @@ const SyncServiceClass = class {
     const group_seq = operation_info.group_seq
     const member_seq = operation_info.member_seq
     const content_id = operation_info.content_id
-    const log_info = `[onAnalysisComplete] [operation_seq: ${operation_seq}, content_id: ${content_id}, move_file_cloud: ${move_file_cloud}, is_sync_hwakeye: ${is_sync_hwakeye}]`
+    const log_info = `[onAnalysisComplete] [operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}, is_sync_hwakeye: ${is_sync_hwakeye}]`
     log.debug(this.log_prefix, log_info, `start`);
 
     const operation_media_info = await OperationMediaService.getOperationMediaInfo(DBMySQL, operation_info)
@@ -146,7 +146,7 @@ const SyncServiceClass = class {
       await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info);
       await operation_storage_model.updateStorageSummary(storage_seq);
 
-      analysis_status = move_file_cloud === false ? 'Y' : 'M'
+      analysis_status = ServiceConfig.isVacs() ? 'Y' : 'M'
       await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status);
       log.debug(this.log_prefix, log_info, `sync complete`);
 
@@ -169,7 +169,7 @@ const SyncServiceClass = class {
         await Util.deleteDirectory(directory_info.origin)
       }
     }
-    if (move_file_cloud) {
+    if (ServiceConfig.isVacs() === false) {
       try {
         const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq })
         log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`,request_result)
