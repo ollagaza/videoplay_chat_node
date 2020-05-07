@@ -469,6 +469,10 @@ if (IS_DEV) {
     res.json(await getClipListByMemberSeq(member_seq));
   }));
 
+  routes.get('/t', Wrap(async (req, res) => {
+    res.json(ServiceConfig.supporterEmailList());
+  }));
+
   routes.get('/ssh', Wrap(async (req, res) => {
     const cmd = 'sh /volume1/datas/storage_json.sh'
     const host = '192.168.0.26'

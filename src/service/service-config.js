@@ -7,6 +7,7 @@ const ServiceConfigClass = class {
   constructor () {
     this.log_prefix = '[ServiceConfigClass]'
     this.service_config_map = {}
+    this.supporter_email_list = null;
     SocketManager.on('onReloadServiceConfig', this.reload)
   }
 
@@ -21,6 +22,10 @@ const ServiceConfigClass = class {
         const config = config_list[i];
         this.service_config_map[config.key] = config.value;
       }
+    }
+
+    if (this.service_config_map['supporter_email_list']) {
+      this.supporter_email_list = JSON.parse(this.service_config_map['supporter_email_list'])
     }
     return true;
   }
@@ -47,6 +52,10 @@ const ServiceConfigClass = class {
   isVacs = () => {
     let is_vacs = this.service_config_map['is_vacs'] ? this.service_config_map['is_vacs'] : 'n'
     return is_vacs.toLowerCase() === 'y';
+  }
+
+  supporterEmailList = () => {
+    return this.supporter_email_list
   }
 }
 

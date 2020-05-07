@@ -458,9 +458,9 @@ const MemberServiceClass = class {
     await MemberLogService.memberJoinLog(database, create_member_info.seq)
     await GroupService.createPersonalGroup(database, create_member_info);
 
-    if (ServiceConfig.isVacs() === false) {
+    if (ServiceConfig.isVacs() === false && ServiceConfig.supporterEmailList()) {
       (
-        async() => {
+        async () => {
           let body = ''
           body += `병원명: ${create_member_info.hospname}\n`
           body += `이름: ${create_member_info.user_name}\n`
@@ -469,7 +469,11 @@ const MemberServiceClass = class {
           body += `이메일: ${create_member_info.email_address}\n`
           body += `연락처: ${create_member_info.cellphone}\n`
           body += `가입일자: ${Util.currentFormattedDate()}\n`
-          await new SendMail().sendMailText(['jsbae@mteg.co.kr', 'leejs3635@mteg.co.kr'], 'Surgstory.com 회원가입.', body);
+          try {
+            await new SendMail().sendMailText(ServiceConfig.supporterEmailList(), 'Surgstory.com 회원가입.', body);
+          } catch (e) {
+            log.error(this.log_prefix, '', e)
+          }
         }
       )()
     }
