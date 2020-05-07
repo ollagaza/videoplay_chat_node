@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import log from '../../libs/logger';
 import DBMySQL from '../../database/knex-mysql'
 import PaymentModel from '../../database/mysql/payment/PaymentModel'
@@ -200,6 +201,36 @@ const PaymentServiceClass = class {
       const deleteResult = await PMResult_Model.DeletePMResultData(member_seq, merchant_uid);
       return deleteResult;
     });
+  };
+
+  setPaymentFreeStorageAssign = async (database, member_seq, setDate) => {
+    try {
+      const payment_result_Model = this.getPaymentResultModel(database);
+      const PMResult_Model = this.getPayment_Member_Result_Model(database);
+      const buyerList = (await payment_result_Model.getBuyerSeqAndFreeList(member_seq))[0];
+
+      const setParam = {
+        payment_code: setDate.payment_code,
+      };
+
+      const setPMRParam = {
+        member_seq,
+        payment_merchant_uid: buyerList[0].merchant_uid,
+        payment_start_date: setDate.start_date,
+        payment_expire_date: setDate.expire_date,
+        payment_code: setDate.payment_code,
+        pay_code: 'free',
+        payment_type: 'once',
+        payment_count: '1',
+      };
+
+      const updatePaymentResult = await payment_result_Model.setMerchantUidFreeUpdate({ merchant_uid: buyerList[0].merchant_uid }, setParam);
+      const insertPMRResult = await PMResult_Model.CreatePMResultData(setPMRParam);
+
+      log.debug(buyerList);
+    } catch (e) {
+      throw e;
+    }
   };
 }
 

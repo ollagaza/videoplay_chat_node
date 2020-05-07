@@ -88,6 +88,27 @@ routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'pr
   res.json(new StdObject());
 }));
 
+routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const updateData = req.body.setData;
+  const search_option = req.body.searchObj;
+  let output = new StdObject();
+
+  await DBMySQL.transaction(async(transaction) => {
+    output = await AdminMemberService.updateMemberUsedforSendMail(transaction, updateData, search_option)
+  });
+
+  (async () => {
+    try {
+      await AdminMemberService.sendMailforMemberChangeUsed(DBMySQL, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option);
+    } catch (e) {
+      log.e(req, e);
+    }
+  })();
+
+  res.json(output);
+}));
+
 routes.post('/getMongoData', Wrap(async(req, res) => {
   req.accepts('application/json');
   const getDataParam = req.body.getData;

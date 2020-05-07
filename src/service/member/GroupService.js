@@ -672,12 +672,12 @@ const GroupServiceClass = class {
   // 아래 함수는 결재 완료 후 group_info에 필요한 데이터만 업데이트 용으로 사용합니다.
   // 추 후 group_member에도 업데이트 할 예정이므로 파라미터만 추가 해 놓습니다.
   // 2020.03.04 NJH
-  updatePaymentToGroup = async (database, filter, pay_code, storage_size, expire_month_code) => {
+  updatePaymentToGroup = async (database, filter, pay_code, storage_size, expire_month_code, toStart_date = null, toExpire_date = null) => {
     log.debug(this.log_prefix, '[updatePaymentToGroup]', filter, pay_code, storage_size, expire_month_code)
     const member_seq = filter.member_seq
     const group_type = filter.group_type
-    const start_date = Util.getCurrentTimestamp()
-    const expire_date = expire_month_code === null ? null : this.getExpireTimeStamp(expire_month_code)
+    const start_date = toStart_date !== null ? toStart_date : Util.getCurrentTimestamp()
+    const expire_date = toExpire_date !== null ? toExpire_date : expire_month_code === null ? null : this.getExpireTimeStamp(expire_month_code)
 
     const payment_info = {
       pay_code,

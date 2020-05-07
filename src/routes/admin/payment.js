@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import _ from 'lodash';
+import log from '../../libs/logger'
 import Auth from '../../middlewares/auth.middleware';
 import Util from '../../utils/baseutil';
 import Role from "../../constants/roles";
@@ -138,4 +140,35 @@ routes.get('/paymentfreelist', Wrap(async(req, res) => {
   output.add('paymentinfo', payment_info);
   res.json(output);
 }));
+
+routes.put('/freestorageassign', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+  const searchObj = req.body.searchObj;
+  const setDate = req.body.setDate;
+  try {
+    let storage_size = 0;
+    if (setDate.payment_code === 'free') {
+      storage_size = 1024 * 1024 * 1024 * 30;
+    } else {
+      storage_size = 1024 * 1024 * 1024 * 1024 * Number(setDate.payment_code.replace(/[^0-9]/g, ''));
+    }
+
+    _.forEach(searchObj[0].seq, async (value) => {
+      const filter = {
+        member_seq: value,
+        group_type: 'P',
+      };
+      await DBMySQL.transaction(async(transaction) => {
+        const setPaymentResult = await PaymentService.setPaymentFreeStorageAssign(transaction, value, setDate);
+        const groupUpdate = await group_service.updatePaymentToGroup(transaction, filter, setDate.payment_code, storage_size, null, setDate.start_date, setDate.expire_date);
+      });
+    });
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
+
+  res.json(output);
+}));
+
 export default routes;

@@ -27,7 +27,6 @@ export default class PaymentResultModel extends MySQLModel {
     inner join payment_member_result pmr on pmr.payment_merchant_uid = result.merchant_uid and pmr.used = 'Y'
     where result.success = 1
       and result.buyer_seq = ${member_seq}
-      and result.payment_code != 'free'
       and result.cancelled_at is null
       and date_format(result.paid_at, '%Y%m') between date_format(date_sub(NOW(), interval 6 month), '%Y%m') and date_format(date_add(NOW(), interval 6 month), '%Y%m')
     order by pmr.payment_start_date asc
@@ -242,5 +241,20 @@ export default class PaymentResultModel extends MySQLModel {
     `);
 
     return await oKnex;
+  };
+
+  getBuyerSeqAndFreeList = async (member_seq) => {
+    const oKnex = this.database.raw(`
+    select *
+    from payment_result result
+    where result.buyer_seq in (${typeof member_seq === 'object' ? member_seq.join(',') : member_seq})
+      and pay_method = 'free'
+    `);
+
+    return await oKnex;
+  };
+
+  setMerchantUidFreeUpdate = async (merchant_uid, setParam) => {
+    return this.update(merchant_uid, setParam);
   };
 }

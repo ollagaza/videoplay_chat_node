@@ -26,16 +26,10 @@ export default class PaymentModel extends MySQLModel {
   };
 
   getPaymentFreeList = async (lang = 'kor') => {
-    const searchObj = {
-      is_new: true,
-      query: [
-        { group: 'free' },
-        { lang: lang }
-      ],
-    };
+    const oKnex = this.database.select('*');
+    oKnex.from(this.table_name);
+    oKnex.where(this.database.raw('JSON_EXTRACT(moneys, \'$[0].pay\') = \'free\''));
 
-    const result = await this.find(searchObj);
-
-    return result;
+    return oKnex;
   };
 }
