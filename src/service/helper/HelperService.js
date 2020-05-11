@@ -39,6 +39,12 @@ const HelperServiceClass = class {
     return result;
   }
 
+  searchhelper = async  (database, keyword) => {
+    const helpermodel = this.getHelperModel(database);
+    const result = await helpermodel.getSearchResult(keyword);
+    return result;
+  }
+
   cudHelper = async (database, param, saveData) => {
     const helpermodel = this.getHelperModel(database);
     let result = null;
