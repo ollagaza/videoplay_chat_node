@@ -261,9 +261,9 @@ routes.get('/:operation_seq(\\d+)/video/url', Auth.isAuthenticated(Role.LOGIN_US
   const operation_seq = req.params.operation_seq;
 
   const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info, true, true);
-  const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+  const download_url = OperationService.getVideoDownloadURL(operation_info)
   const output = new StdObject();
-  output.add('download_url', directory_info.cdn_video + operation_info.media_info.video_file_name);
+  output.add('download_url', download_url);
   res.json(output);
 }));
 

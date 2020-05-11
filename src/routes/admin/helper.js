@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import striptags from "striptags";
 import Auth from '../../middlewares/auth.middleware';
 import Util from '../../utils/baseutil';
 import Role from "../../constants/roles";
@@ -29,6 +30,9 @@ routes.put('/cudhelper', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, 
   const output = new StdObject();
   const param = req.body.param;
   const saveData = req.body.saveData;
+  if (saveData.code !== 'css' && saveData.code !== 'script') {
+    saveData.search_text = striptags(saveData.tutorial_html);
+  }
   await helper_service.cudHelper(DBMySQL, param, saveData)
   output.add('result', param.seq);
   res.json(output);

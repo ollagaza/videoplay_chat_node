@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import _ from 'lodash';
+import Promise from 'promise'
 import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
 import Util from '../../utils/baseutil';
@@ -25,6 +26,8 @@ import OperationAnalysisService from "../../service/operation/OperationAnalysisS
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import MemberService from '../../service/member/MemberService'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
+
+import SSH from 'ssh-exec'
 
 const routes = Router();
 
@@ -465,6 +468,24 @@ if (IS_DEV) {
     const member_seq = req.params.member_seq;
     res.json(await getClipListByMemberSeq(member_seq));
   }));
+
+  routes.get('/t', Wrap(async (req, res) => {
+    res.json(ServiceConfig.supporterEmailList());
+  }));
+
+  routes.get('/ssh', Wrap(async (req, res) => {
+    const cmd = 'sh /volume1/datas/storage_json.sh'
+    const host = '192.168.0.26'
+
+    const ssh_result = await Util.sshExec(cmd, host, 20322);
+    if (ssh_result.success && ssh_result.result) {
+      res.json(JSON.parse(ssh_result.result));
+    } else {
+      res.json(ssh_result);
+    }
+  }));
+
+
 }
 
 export default routes;

@@ -204,9 +204,9 @@ routes.delete('/edit/:link_code/files/:file_type', Auth.isAuthenticated(Role.LOG
 
 routes.get('/view/:link_code/video/url', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const { operation_info } = await getOperationInfoByCode(req, true)
-  const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+  const download_url = OperationService.getVideoDownloadURL(operation_info)
   const output = new StdObject();
-  output.add('download_url', directory_info.cdn_video + operation_info.media_info.video_file_name);
+  output.add('download_url', download_url);
   res.json(output);
 }));
 

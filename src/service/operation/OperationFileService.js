@@ -79,11 +79,13 @@ const OperationFileServiceClass = class {
 
     const file_name = upload_file_info.new_file_name
     let is_moved = false
-    try {
-      await NaverObjectStorageService.moveFile(upload_file_info.path, directory_info.media_refer, file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
-      is_moved = true
-    } catch (error) {
-      log.error(this.log_prefix, '[createReferFileInfo]', 'NaverObjectStorageService.moveFile', error)
+    if (ServiceConfig.isVacs() === false) {
+      try {
+        await NaverObjectStorageService.moveFile(upload_file_info.path, directory_info.media_refer, file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
+        is_moved = true
+      } catch (error) {
+        log.error(this.log_prefix, '[createReferFileInfo]', 'NaverObjectStorageService.moveFile', error)
+      }
     }
     file_info.is_moved = is_moved
 
@@ -167,8 +169,9 @@ const OperationFileServiceClass = class {
       await Util.deleteFile(target_path);
       cloud_file_list.push(file_name)
     }
-
-    await CloudFileService.requestDeleteObjectFileList(file_base_path, cloud_file_list, false)
+    if (ServiceConfig.isVacs() === false) {
+      await CloudFileService.requestDeleteObjectFileList(file_base_path, cloud_file_list, false)
+    }
   }
 }
 

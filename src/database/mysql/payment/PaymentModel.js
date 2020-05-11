@@ -24,4 +24,12 @@ export default class PaymentModel extends MySQLModel {
 
     return result;
   };
+
+  getPaymentFreeList = async (lang = 'kor') => {
+    const oKnex = this.database.select('*');
+    oKnex.from(this.table_name);
+    oKnex.where(this.database.raw('JSON_EXTRACT(moneys, \'$[0].pay\') = \'free\''));
+
+    return oKnex;
+  };
 }

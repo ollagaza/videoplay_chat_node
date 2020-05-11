@@ -27,6 +27,14 @@ export default class HelperModel extends MySQLModel {
     return this.find(code);
   };
 
+  getSearchResult = async keyword => {
+    const oKnex = this.database.select('*')
+      .from(this.table_name);
+    oKnex.andWhereRaw('MATCH (search_text) AGAINST (? IN BOOLEAN MODE)', keyword);
+
+    return oKnex;
+  }
+
   createHelper = async saveData => {
     return this.create(saveData, 'seq');
   };
