@@ -181,10 +181,12 @@ routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.L
       throw new StdObject(-1, "잘못된 요청입니다.", 403);
     }
   }
-
-  const output = await MemberService.changeProfileImage(DBMySQL, member_seq, req, res)
-
-  res.json(output);
+  try {
+    const output = await MemberService.changeProfileImage(DBMySQL, member_seq, req, res)
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
 }));
 
 routes.post('/verify/user_id', Wrap(async(req, res) => {
