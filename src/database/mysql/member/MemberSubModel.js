@@ -40,13 +40,6 @@ export default class MemberSubModel extends MySQLModel {
     return member_info;
   };
 
-  createMember = async (member_seq, member_info) => {
-    member_info.setAutoTrim(true);
-    const member = member_info.toJSON();
-    member.seq = member_seq;
-    return await this.create(member);
-  };
-
   modifyMember = async (member_seq, member_info) => {
     const query_result = await this.findOne({member_seq: member_seq});
 
