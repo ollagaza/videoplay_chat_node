@@ -6,6 +6,7 @@ import DBMySQL from '../../database/knex-mysql';
 import AuthService from '../../service/member/AuthService'
 import MemberService from '../../service/member/MemberService';
 import MemberLogService from '../../service/member/MemberLogService'
+import StdObject from '../../wrapper/std-object'
 
 const routes = Router();
 
