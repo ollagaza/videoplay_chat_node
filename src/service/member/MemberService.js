@@ -329,6 +329,7 @@ const MemberServiceClass = class {
         throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
       }
 
+      log.debug(upload_file_info);
       const origin_image_path = upload_file_info.path;
       const resize_image_path = `${upload_path}/${Util.getRandomId()}.png`;
       const resize_image_full_path = media_root + resize_image_path;
