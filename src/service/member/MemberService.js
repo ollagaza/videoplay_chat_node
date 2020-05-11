@@ -337,7 +337,7 @@ const MemberServiceClass = class {
       const resize_image_full_path = media_root + resize_image_path;
       const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
 
-      await Util.deleteFile(origin_image_path);
+      // await Util.deleteFile(origin_image_path);
 
       if (resize_result.success) {
         const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
