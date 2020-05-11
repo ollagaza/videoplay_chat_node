@@ -322,7 +322,8 @@ const MemberServiceClass = class {
         await Util.createDirectory(upload_full_path);
       }
       try {
-        await Util.uploadByRequest(request, response, 'profile', upload_full_path, Util.getRandomId());
+        const new_file_name = Util.getRandomId();
+        await Util.uploadByRequest(request, response, 'profile', upload_full_path, new_file_name);
       } catch (e) {
         throw new StdObject(-1, e, 400);
       }

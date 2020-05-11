@@ -849,6 +849,10 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
         log.e(req, error);
         reject(error);
       } else {
+        log.debug(path.extname(req.new_file_name));
+        if (path.extname(req.new_file_name) === '') {
+          req.new_file_name = req.new_file_name + path.extname(req.file.originalname);
+        }
         log.d(req, 'on upload job finished');
         resolve(true);
       }
