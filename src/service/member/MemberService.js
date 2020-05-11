@@ -321,9 +321,11 @@ const MemberServiceClass = class {
       if (!(await Util.fileExists(upload_full_path))) {
         await Util.createDirectory(upload_full_path);
       }
-
-      await Util.uploadByRequest(request, response, 'profile', upload_full_path, Util.getRandomId());
-
+      try {
+        await Util.uploadByRequest(request, response, 'profile', upload_full_path, Util.getRandomId());
+      } catch (e) {
+        throw new StdObject(-1, e, 400);
+      }
       const upload_file_info = request.file;
       if (Util.isEmpty(upload_file_info)) {
         throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
@@ -340,14 +342,14 @@ const MemberServiceClass = class {
       if (resize_result.success) {
         const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
         if (update_profile_result) {
-          // if (!Util.isEmpty(member_info.profile_image_path)) {
-          //   await Util.deleteFile(media_root + member_info.profile_image_path);
-          // }
+          if (!Util.isEmpty(member_info.profile_image_path)) {
+            await Util.deleteFile(media_root + member_info.profile_image_path);
+          }
           output.error = 0;
           output.message = '';
           output.add('profile_image_url', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resize_image_path));
         } else {
-          // await Util.deleteFile(resize_image_full_path);
+          await Util.deleteFile(resize_image_full_path);
           output.error = -2;
         }
       } else {
