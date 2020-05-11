@@ -340,14 +340,14 @@ const MemberServiceClass = class {
       if (resize_result.success) {
         const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
         if (update_profile_result) {
-          if (!Util.isEmpty(member_info.profile_image_path)) {
-            await Util.deleteFile(media_root + member_info.profile_image_path);
-          }
+          // if (!Util.isEmpty(member_info.profile_image_path)) {
+          //   await Util.deleteFile(media_root + member_info.profile_image_path);
+          // }
           output.error = 0;
           output.message = '';
           output.add('profile_image_url', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resize_image_path));
         } else {
-          await Util.deleteFile(resize_image_full_path);
+          // await Util.deleteFile(resize_image_full_path);
           output.error = -2;
         }
       } else {
