@@ -17,23 +17,27 @@ routes.post('/searchHosp', Wrap(async(req, res) => {
   const path = ServiceConfig.get('search_hosp_path');
   const apiKey = ServiceConfig.get('search_hosp_key');
 
-  const params = '?ServiceKey=' + apiKey
-    + '&pageNo=' + pageNo
-    + '&numOfRows=' + pageRows
-    + '&QN=' + encodeURIComponent(searchText);
+  try {
+    const params = '?ServiceKey=' + apiKey
+      + '&pageNo=' + pageNo
+      + '&numOfRows=' + pageRows
+      + '&QN=' + encodeURIComponent(searchText);
 
-  const api_options = {
-        hostname: url,
-        path: path + params,
-        method: 'GET'
-      };
+    const api_options = {
+      hostname: url,
+      path: path + params,
+      method: 'GET'
+    };
 
-  const resultList = await Util.httpRequest(api_options, false);
-  const resultjson = await Util.getXmlToJson(resultList);
-  output.add("searchText", searchText);
-  output.add("resultList", resultjson);
+    const resultList = await Util.httpRequest(api_options, false);
+    const resultjson = await Util.getXmlToJson(resultList);
+    output.add("searchText", searchText);
+    output.add("resultList", resultjson);
 
-  res.json(output);
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
 }));
 
 routes.post('/searchUniv', Wrap(async(req, res) => {
@@ -47,22 +51,26 @@ routes.post('/searchUniv', Wrap(async(req, res) => {
   const path = ServiceConfig.get('search_univ_path');
   const apiKey = ServiceConfig.get('search_univ_key');
 
-  const params = '?apiKey=' + apiKey
-    + '&svcType=api&svcCode=SCHOOL&contentType=json&gubun=univ_list'
-    + '&thisPage=' + pageNo
-    + '&perPage=' + pageRows
-    + '&searchSchulNm=' + encodeURIComponent(searchText);
+  try {
+    const params = '?apiKey=' + apiKey
+      + '&svcType=api&svcCode=SCHOOL&contentType=json&gubun=univ_list'
+      + '&thisPage=' + pageNo
+      + '&perPage=' + pageRows
+      + '&searchSchulNm=' + encodeURIComponent(searchText);
 
-  const api_options = {
-        hostname: url,
-        path: path + params,
-        method: 'GET'
-      };
+    const api_options = {
+      hostname: url,
+      path: path + params,
+      method: 'GET'
+    };
 
-  const resultList = await Util.httpRequest(api_options, false);
-  output.add("searchText", searchText);
-  output.add("resultList", JSON.parse(resultList).dataSearch);
-  res.json(output);
+    const resultList = await Util.httpRequest(api_options, false);
+    output.add("searchText", searchText);
+    output.add("resultList", JSON.parse(resultList).dataSearch);
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
 }));
 
 export default routes;
