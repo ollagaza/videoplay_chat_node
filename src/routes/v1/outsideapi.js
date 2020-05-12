@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import log from '../../libs/logger';
 import ServiceConfig from '../../service/service-config';
 import Wrap from '../../utils/express-async';
 import Util from '../../utils/baseutil';
@@ -22,7 +23,7 @@ routes.post('/searchHosp', Wrap(async(req, res) => {
       + '&pageNo=' + pageNo
       + '&numOfRows=' + pageRows
       + '&QN=' + encodeURIComponent(searchText);
-
+    log.debug(params);
     const api_options = {
       hostname: url,
       path: path + params,
