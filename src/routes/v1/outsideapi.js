@@ -23,7 +23,7 @@ routes.post('/searchHosp', Wrap(async(req, res) => {
       + '&pageNo=' + pageNo
       + '&numOfRows=' + pageRows
       + '&QN=' + encodeURIComponent(searchText);
-    log.debug(params);
+
     const api_options = {
       hostname: url,
       path: path + params,
