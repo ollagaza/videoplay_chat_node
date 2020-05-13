@@ -53,6 +53,7 @@ const SyncServiceClass = class {
     }
 
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    await Util.createDirectory(directory_info.video)
     const trans_video_file_path = directory_info.origin + operation_media_info.video_file_name
     const media_result = await Util.getMediaInfo(trans_video_file_path)
     if (!media_result.success || media_result.media_type !== Constants.VIDEO) {
@@ -172,7 +173,7 @@ const SyncServiceClass = class {
     if (ServiceConfig.isVacs() === false) {
       try {
         const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq })
-        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`,request_result)
+        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
       } catch(error) {
         log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
       }

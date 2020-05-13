@@ -13,6 +13,7 @@ import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
 import SendMail from '../../libs/send-mail'
 import GroupMailTemplate from '../../template/mail/group.template'
 import VacsService from '../vacs/VacsService'
+import Auth from '../../middlewares/auth.middleware'
 
 const GroupServiceClass = class {
   constructor () {
@@ -198,7 +199,7 @@ const GroupServiceClass = class {
   getGroupMemberInfo = async (database, group_seq, member_seq, status = null) => {
     const group_member_model = this.getGroupMemberModel(database)
     const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
-    if (ServiceConfig.isVacs()) {
+    if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()
       group_member_info.group_used_storage_size = vacs_storage_info.used_size
       group_member_info.group_max_storage_size = vacs_storage_info.total_size
@@ -803,6 +804,29 @@ const GroupServiceClass = class {
   getUserGroupInfo = async (database, member_seq) => {
     const group_info_model = this.getGroupModel(database)
     return await group_info_model.getMemberGroupInfoAll(member_seq)
+  }
+
+  getAllPersonalGroupUserListForBox = async (database) => {
+    const result_list = []
+    const group_info_model = this.getGroupModel(database)
+    const user_list = await group_info_model.getAllPersonalGroupUserList()
+    log.debug(this.log_prefix, '[getAllPersonalGroupUserListForBox] - user_list', user_list)
+    for (let i = 0; i < user_list.length; i++) {
+      const user_info = user_list[i]
+      const member_info = {
+        "seq": user_info.member_seq,
+        "group_seq": user_info.group_seq
+      }
+      const treat_code = user_info.treatcode ? JSON.parse(user_info.treatcode) : null
+      const token_result = await Auth.getTokenResult(null, member_info, Role.API, true);
+      result_list.push({
+        "user_name": user_info.user_name,
+        "user_id": user_info.user_id,
+        "user_token": token_result.get('token'),
+        "course_name": treat_code && treat_code.length > 0 ? treat_code[0].text : ''
+      });
+    }
+    return result_list
   }
 }
 
