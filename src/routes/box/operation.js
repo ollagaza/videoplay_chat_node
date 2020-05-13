@@ -9,6 +9,7 @@ import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
 import OperationService from '../../service/operation/OperationService'
 import GroupService from '../../service/member/GroupService'
+import OperationModel from '../../database/mysql/operation/OperationModel'
 
 const routes = Router();
 
@@ -83,9 +84,11 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
 routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.BOX), Wrap(async(req, res) => {
   await checkMachine(req)
   const user_token_info = await getUserTokenInfo(req)
-
+  const member_seq = user_token_info.getId()
+  
   const operation_seq = req.params.operation_seq;
   await OperationService.requestAnalysis(DBMySQL, user_token_info, operation_seq)
+  await new OperationModel(DBMySQL).updateStatusTrash([ operation_seq ], member_seq, true);
 
   const output = new StdObject()
   output.add('url', ServiceConfig.get('service_url') + `/v2/curation/${operation_seq}`);
