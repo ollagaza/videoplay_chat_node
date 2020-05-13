@@ -130,12 +130,15 @@ const CloudFileServiceClass = class {
       }
     }
 
+    let request_result
     try {
-      const request_result = await Util.httpRequest(request_options, JSON.stringify(cloud_file_info.toJSON()))
+      request_result = await Util.httpRequest(request_options, JSON.stringify(cloud_file_info.toJSON()))
       log.debug(this.log_prefix, '[requestApi]', request_options, cloud_file_info.toJSON(), request_result)
     } catch (error) {
       log.error(this.log_prefix, '[requestApi]', request_options, cloud_file_info.toJSON(), error)
     }
+
+    return request_result
   }
 }
 

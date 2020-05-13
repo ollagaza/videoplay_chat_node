@@ -72,7 +72,10 @@ const isAuthenticated = (require_roles) => {
 
 const verifyToken = async (req, require_roles = null) => {
   const token = getToken(req)
+  return await verifyTokenByString(token, require_roles)
+}
 
+const verifyTokenByString = async (token, require_roles = null) => {
   if (!token) {
     return new StdObject(-1, '로그인 후 이용 가능합니다.', 401)
   }
@@ -135,11 +138,11 @@ const verifyToken = async (req, require_roles = null) => {
   return output
 }
 
-const getTokenResult = async (res, member_info, role) => {
+const getTokenResult = async (res, member_info, role, un_limit = false) => {
 
   member_info.role = role
 
-  const token_result = await generateTokenByMemberInfo(member_info)
+  const token_result = await generateTokenByMemberInfo(member_info, un_limit)
 
   const output = new StdObject()
   if (token_result != null && token_result.token != null) {
@@ -175,12 +178,33 @@ const getServiceDomain = (req) => {
   return req.headers.service_domain
 }
 
+const getMachineTokenResult = async (machine_info) => {
+  machine_info.role = Role.BOX;
+  const token_result = await generateTokenByMemberInfo(machine_info, true)
+
+  const output = new StdObject();
+  if (token_result != null && token_result.token != null) {
+    output.add("token", `Bearer ${token_result.token}`)
+    output.add('expire', token_result.expire)
+    output.add('group_seq', machine_info.group_seq)
+  }
+  else {
+    output.setError(-1);
+    output.setMessage("인증토큰 생성 실패");
+    output.httpStatusCode = 500;
+  }
+
+  return output;
+};
+
 export default {
   'setResponseHeader': setResponseHeader,
   'generateTokenByMemberInfo': generateTokenByMemberInfo,
   'isAuthenticated': isAuthenticated,
   'verifyToken': verifyToken,
+  'verifyTokenByString': verifyTokenByString,
   'getTokenResult': getTokenResult,
+  'getMachineTokenResult': getMachineTokenResult,
   'getLanguage': getLanguage,
   'getGroupSeq': getGroupSeq
 }
