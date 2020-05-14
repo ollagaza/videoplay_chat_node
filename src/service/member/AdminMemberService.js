@@ -268,6 +268,12 @@ const AdminMemberServiceClass = class {
     return output;
   }
 
+  getMembers = async(database, filter) => {
+    const admin_member_model = this.getAdminMemberModel(database);
+    const result = await admin_member_model.findMembers(filter);
+    return result;
+  }
+
   getMongoData = async(getDataParam, getLangParam = 'kor') => {
     let output = new StdObject();
     let result_data = null;
