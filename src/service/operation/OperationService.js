@@ -36,7 +36,7 @@ const OperationServiceClass = class {
     return new OperationStorageModel(DBMySQL)
   }
 
-  createOperation = async (database, group_member_info, member_seq, operation_data, operation_metadata) => {
+  createOperation = async (database, group_member_info, member_seq, operation_data, operation_metadata, status = null) => {
     const output = new StdObject();
     let is_success = false;
 
@@ -52,6 +52,9 @@ const OperationServiceClass = class {
     operation_info.media_path = `${group_media_path}/operation/${content_id}/`;
     operation_info.created_by_user = 1;
     operation_info.content_id = content_id;
+    if (status) {
+      operation_info.status = status;
+    }
 
     const operation_model = new OperationModel(database);
     await operation_model.createOperationWithGroup(operation_info);
@@ -74,7 +77,9 @@ const OperationServiceClass = class {
       try {
         await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
         await OperationMetadataModel.createOperationMetadata(operation_info, operation_metadata);
-        await UserDataModel.updateByMemberSeq(member_seq, { operation_type: operation_info.operation_type });
+        if (operation_info.operation_type) {
+          await UserDataModel.updateByMemberSeq(member_seq, { operation_type: operation_info.operation_type });
+        }
       } catch (error) {
         log.error(this.log_prefix, '[createOperation]', 'create metadata error', error);
       }
@@ -172,6 +177,9 @@ const OperationServiceClass = class {
       throw new StdObject(-1, '수술 정보가 존재하지 않습니다.', 400);
     }
     if (check_owner) {
+      if (!token_info) {
+        throw new StdObject(-98, '권한이 없습니다.', 403);
+      }
       if (operation_info.member_seq !== token_info.getId()) {
         if (token_info.getRole() !== Role.ADMIN) {
           if (operation_info.group_seq !== token_info.getGroupSeq()) {
@@ -318,7 +326,12 @@ const OperationServiceClass = class {
     return video_index_info.index_list ? video_index_info.index_list : [];
   }
 
-  uploadOperationFile = async (database, request, response, operation_info, file_type) => {
+  uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null) => {
+    const upload_result = await this.uploadOperationFileAndUpdate(database, request, response, operation_info, file_type, field_name)
+    return upload_result.upload_seq
+  }
+
+  uploadOperationFileAndUpdate = async (database, request, response, operation_info, file_type, field_name = null) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     const storage_seq = operation_info.storage_seq;
     let media_directory;
@@ -332,10 +345,11 @@ const OperationServiceClass = class {
       await Util.createDirectory(media_directory);
     }
 
+    const file_field_name = field_name ? field_name : 'target'
     if (file_type === OperationFileService.TYPE_REFER) {
-      await Util.uploadByRequest(request, response, 'target', media_directory, Util.getRandomId());
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId());
     } else {
-      await Util.uploadByRequest(request, response, 'target', media_directory);
+      await Util.uploadByRequest(request, response, file_field_name, media_directory);
     }
     const upload_file_info = request.file;
     if (Util.isEmpty(upload_file_info)) {
@@ -359,7 +373,15 @@ const OperationServiceClass = class {
       await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
     });
 
-    return upload_seq
+    const file_path = upload_file_info.path;
+    const file_url = ServiceConfig.get('service_url') + directory_info.url_origin + upload_file_info.new_file_name
+
+    const upload_result = {
+      upload_seq,
+      file_path,
+      file_url
+    }
+    return upload_result
   }
 
   createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0) => {
@@ -387,10 +409,10 @@ const OperationServiceClass = class {
     return null;
   };
 
-  requestAnalysis = async (database, token_info, operation_seq) => {
+  requestAnalysis = async (database, token_info, operation_seq, check_owner= true) => {
     let api_request_result = null;
     let is_execute_success = false;
-    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info);
+    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info, check_owner);
     const directory_info = this.getOperationDirectoryInfo(operation_info)
 
     await database.transaction(async(transaction) => {

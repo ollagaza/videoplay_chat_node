@@ -18,6 +18,11 @@ export default class GroupModel extends MySQLModel {
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
       'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc'
     ]
+    this.group_user_list = [
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
+      'group_info.group_name', 'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
+      'member.seq AS member_seq', 'member.user_id', 'member.user_name', 'member.treatcode'
+    ]
   }
 
   getParams = (group_info, is_set_modify_date = true, ignore_empty = true) => {
@@ -64,6 +69,20 @@ export default class GroupModel extends MySQLModel {
     }
     const query_result = await this.find(filter)
     return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
+  }
+
+  getAllPersonalGroupUserList = async () => {
+    const query = this.database
+      .select(this.group_user_list)
+      .from('group_info')
+      .innerJoin("member", { "member.seq": "group_info.member_seq" })
+      .where("group_info.group_type", "P")
+      .whereIn("group_info.status", ['Y', 'F'])
+      .orderBy("member.user_name", "ASC")
+
+    const query_result = await query
+    log.debug(this.log_prefix, '[getAllPersonalGroupUserList]', query_result)
+    return query_result
   }
 
   getGroupInfoByMemberSeqAndGroupType = async  (member_seq, group_type) => {
