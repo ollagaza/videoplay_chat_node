@@ -759,9 +759,9 @@ const getFileType = async (file_path, file_name) => {
   return mime_type;
 };
 
-const getCurrentTimestamp = () => {
+const getCurrentTimestamp = (is_millisecond = false) => {
   const now = Date.now()
-  return Math.floor(now / 1000)
+  return is_millisecond ? now : Math.floor(now / 1000)
 }
 
 const addDay = (day, format = 'YYYY-MM-DD') => {
@@ -1021,6 +1021,14 @@ export default {
     return crypto.createHash(hash_algorithm).update(text).digest('hex');
   },
 
+  "hmac": (key, message, hash_algorithm='sha256') => {
+    const hmac = crypto.createHmac(hash_algorithm, key)
+    hmac.write(message)
+    hmac.end()
+
+    return Buffer.from(hmac.read()).toString('base64')
+  },
+
   "encrypt": (plain_data) => {
     let plain_text;
     if (_.isObject(plain_data)) {
@@ -1073,7 +1081,7 @@ export default {
     });
   },
 
-  "httpRequest": (options, post_data, is_https=false) => {
+  "httpRequest": (options, post_data, is_https= false) => {
     return new Promise((resolve, reject) => {
       let req;
       if (is_https) {
@@ -1084,7 +1092,8 @@ export default {
 
       req.on('response', res => {
         if (res.statusCode < 200 || res.statusCode >= 300) {
-          return reject(new Error('statusCode=' + res.statusCode));
+          // log.error(res)
+          // return reject(new Error('statusCode=' + res.statusCode));
         }
 
         const body = [];
@@ -1093,7 +1102,12 @@ export default {
           body.push(Buffer.from(chunk));
         });
         res.on('end', () => {
-          resolve(Buffer.concat(body).toString());
+          const response_body = Buffer.concat(body).toString()
+          if (res.statusCode < 200 || res.statusCode >= 400) {
+            reject(new StdObject(-1, response_body, res.statusCode))
+          } else {
+            resolve(response_body);
+          }
         });
       });
 
@@ -1103,7 +1117,7 @@ export default {
       });
 
       if (post_data) {
-        log.debug(log_prefix, '[httpRequest]', 'post_data', post_data)
+        // log.debug(log_prefix, '[httpRequest]', 'post_data', post_data)
         req.write(post_data);
       }
       req.end();
