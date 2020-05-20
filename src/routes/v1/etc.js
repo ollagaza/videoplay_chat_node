@@ -5,6 +5,11 @@ import Role from "../../constants/roles";
 import StdObject from '../../wrapper/std-object';
 import ContactUsService from '../../service/etc/ContactUsService'
 import SendMail_Service from "../../service/etc/SendMailService";
+import Util from "../../utils/baseutil";
+import MemberService from "../../service/member/MemberService";
+import DBMySQL from "../../database/knex-mysql";
+import EditorService from "../../service/etc/EditorService";
+import ServiceConfig from "../../service/service-config";
 
 const routes = Router();
 
@@ -14,6 +19,44 @@ routes.post('/sendmail', Wrap(async (req, res) => {
     const result = new StdObject();
     result.add('result', is_send_success);
     res.json(result);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
+}));
+
+routes.put('/editorimage/:contentid', Wrap(async(req, res) => {
+  try {
+    const contentid = req.params.contentid;
+    const output = new StdObject();
+    const result = await EditorService.uploadEditorImage(contentid, req, res)
+    output.add('result', result);
+    output.add('path', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), `/editor/${contentid}/${result.filename}`));
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
+}));
+
+routes.post('/checkeditorimage', Wrap(async(req, res) => {
+  try {
+    const contentid = req.body.contentid;
+    const arrImages = req.body.arrImages;
+    const output = new StdObject();
+    const result = await EditorService.checkImageFiles(contentid, arrImages)
+    output.add('result', result);
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
+}));
+
+routes.post('/deletecontentdirectory', Wrap(async(req, res) => {
+  try {
+    const contentid = req.body.contentid;
+    const output = new StdObject();
+    const result = await EditorService.deleteContentDirectory(contentid)
+    output.add('result', result);
+    res.json(output);
   } catch (e) {
     throw new StdObject(-1, e, 400);
   }

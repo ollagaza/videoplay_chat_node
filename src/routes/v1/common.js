@@ -9,8 +9,15 @@ import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import MemberModel from '../../database/mysql/member/MemberModel';
+import baseutil from "../../utils/baseutil";
 
 const routes = Router();
+
+routes.post('/newcontentid', Wrap(async (req, res) => {
+  const output = new StdObject();
+  output.add('contentid', baseutil.getContentId());
+  res.json(output);
+}));
 
 routes.put('/upload/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
