@@ -27,8 +27,7 @@ import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import MemberService from '../../service/member/MemberService'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import group_template from '../../template/mail/group.template'
-import SendMail from '../../libs/send-mail-new'
-
+import SendMail from '../../libs/send-mail'
 import SSH from 'ssh-exec'
 
 const routes = Router();
