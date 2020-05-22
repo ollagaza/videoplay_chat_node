@@ -11,10 +11,10 @@ export default class JsonWrapper {
       return
     }
 
-    const private_key_map = {}
+    this.private_key_map = {}
     if (private_keys) {
       for (let i = 0; i < private_keys.length; i++) {
-        private_key_map[private_keys[i]] = private_keys[i]
+        this.private_key_map[private_keys[i]] = true
       }
     }
 
@@ -22,7 +22,7 @@ export default class JsonWrapper {
     const key_check_regexp = /^_/
 
     for (let key in data) {
-      if (private_key_map[key]) {
+      if (this.private_key_map[key]) {
         this[key] = data[key]
       } else if (key_check_regexp.test(key) === false) {
         this.json_keys.push(key)
@@ -58,6 +58,14 @@ export default class JsonWrapper {
     this.json_keys.push(key)
   }
 
+  addPrivateKey = (key) => {
+    this.private_key_map[key] = true;
+  }
+
+  removePrivateKey = (key) => {
+    this.private_key_map[key] = false;
+  }
+
   isEmpty = () => {
     return this.is_empty
   }
@@ -82,6 +90,9 @@ export default class JsonWrapper {
 
     for (let index in this.json_keys) {
       const key = this.json_keys[index]
+      if (this.private_key_map[key]) {
+        continue
+      }
       let value = this[key]
       if (this.ignore_empty && Util.isEmpty(value, true, true)) {
         continue

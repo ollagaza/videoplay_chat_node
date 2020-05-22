@@ -354,6 +354,9 @@ routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap
   res.json(output);
 }));
 
+routes.post('/folder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const { token_info, group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
 
+}));
 
 export default routes;

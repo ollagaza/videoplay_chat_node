@@ -60,7 +60,10 @@ const isAuthenticated = (require_roles) => {
     if (verify_result.isSuccess()) {
       const token_info = verify_result.get('token_info')
       token_info.setLang(getLanguage(req))
-      token_info.setGroupSeq(getGroupSeq(req))
+      const group_seq = getGroupSeq(req)
+      if (group_seq) {
+        token_info.setGroupSeq(group_seq)
+      }
       token_info.setServiceDomain(getServiceDomain(req))
       req.token_info = token_info
       next()
