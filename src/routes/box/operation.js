@@ -66,11 +66,10 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async(req, res) => {
 
 routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap(async(req, res) => {
   await checkMachine(req)
-  const user_token_info = await getUserTokenInfo(req)
 
   const operation_seq = req.params.operation_seq;
   const file_type = 'video';
-  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, user_token_info)
+  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
   log.d(req, 'operation_info', operation_info)
   const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file');
 
@@ -83,12 +82,9 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
 
 routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.BOX), Wrap(async(req, res) => {
   await checkMachine(req)
-  const user_token_info = await getUserTokenInfo(req)
-  const member_seq = user_token_info.getId()
-  
   const operation_seq = req.params.operation_seq;
-  await OperationService.requestAnalysis(DBMySQL, user_token_info, operation_seq)
-  await new OperationModel(DBMySQL).updateStatusTrash([ operation_seq ], member_seq, true);
+  await OperationService.requestAnalysis(DBMySQL, null, operation_seq, false)
+  await new OperationModel(DBMySQL).updateStatusTrash([ operation_seq ], null, true);
 
   const output = new StdObject()
   output.add('url', ServiceConfig.get('service_url') + `/v2/curation/${operation_seq}`);
