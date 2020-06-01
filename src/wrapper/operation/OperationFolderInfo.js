@@ -1,7 +1,7 @@
 import JsonWrapper from '../json-wrapper'
 
 const default_key_list = [
-  'seq', 'group_seq', 'folder_name', 'parent_folder_seq', 'parent_folder_list', 'status', 'depth',
+  'seq', 'group_seq', 'folder_name', 'parent_seq', 'parent_folder_list', 'status', 'depth',
   'access_type', 'access_users', 'reg_date', 'modify_date'
 ];
 

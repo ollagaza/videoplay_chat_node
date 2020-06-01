@@ -49,6 +49,12 @@ export default class OperationModel extends MySQLModel {
     query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     query.andWhere('group_seq', group_seq);
     query.whereIn('status', ['Y', 'T']);
+    log.debug(this.log_prefix, '[getOperationInfoListPage]', 'filter_params', filter_params)
+    if (filter_params.folder_seq) {
+      query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null));
+    } else {
+      query.whereNull('folder_seq');
+    }
     if (filter_params.analysis_complete) {
       query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
     }

@@ -144,7 +144,7 @@ const OperationServiceClass = class {
   }
 
   getOperationListByRequest = async (database, token_info, request) => {
-    const request_query = request.query | {};
+    const request_query = request.query ? request.query : {};
     const page_params = {};
     page_params.page = request_query.page
     page_params.list_count = request_query.list_count
@@ -153,13 +153,17 @@ const OperationServiceClass = class {
 
     const filter_params = {}
     filter_params.analysis_complete = request_query.analysis_complete
-    filter_params.analysis_complete = request_query.status
+    filter_params.status = request_query.status
+    filter_params.folder_seq = request_query.folder_seq
+
+    log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params)
 
     return await this.getOperationList(database, token_info.getGroupSeq(), page_params, filter_params)
   }
 
   getOperationList = async (database, group_seq, page_params = {}, filter_params = {}) => {
     page_params.no_paging = page_params.no_paging | 'n'
+    log.debug(this.log_prefix, '[getOperationList]', page_params, filter_params)
     const operation_model = this.getOperationModel(database);
     return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
   }

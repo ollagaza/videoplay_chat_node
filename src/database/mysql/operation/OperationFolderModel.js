@@ -1,7 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import log from "../../../libs/logger"
-import OperationFolderInfo from '../../../wrapper/operation/OperationFolderInfo'
 
 export default class OperationFolderModel extends MySQLModel {
   constructor(...args) {
@@ -14,7 +13,6 @@ export default class OperationFolderModel extends MySQLModel {
 
   createOperationFolder = async (folder_info) => {
     folder_info.setIgnoreEmpty(true)
-    folder_info.addPrivateKey('seq')
     const create_params = folder_info.toJSON()
     if (typeof create_params.parent_folder_list === 'object') {
       create_params.parent_folder_list = JSON.stringify(create_params.parent_folder_list)
@@ -28,20 +26,50 @@ export default class OperationFolderModel extends MySQLModel {
     return await this.create(create_params, 'seq')
   }
 
+  isValidFolderName = async (folder_name, parent_seq = null, folder_seq = null) => {
+    const filter = {
+      folder_name,
+      parent_seq
+    }
+    const find_result = await this.find(filter)
+    if (!find_result || find_result.length <= 0) {
+      return true
+    }
+    if (!folder_seq) {
+      return false
+    }
+    if (find_result.length === 1) {
+      if (find_result[0].seq === folder_seq) {
+        return true
+      }
+    }
+    return false
+  }
+
   deleteOperationFolder = async (folder_seq) => {
     return await this.delete({ seq: folder_seq })
   }
 
-  getFolderInfo = async (folder_seq) => {
-    return new OperationFolderInfo(await this.findOne({ seq: folder_seq }))
+  getFolderInfo = async (group_seq, folder_seq) => {
+    return await this.findOne({ group_seq, seq: folder_seq })
+  }
+
+  getParentFolders = async (group_seq, parent_folder_list) => {
+    const query = this.database.select(this.selectable_fields)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .whereIn('seq', parent_folder_list)
+      .orderBy("depth", "asc")
+    const result = await query
+    return result
   }
 
   getGroupFolders = async (group_seq) => {
     return await this.find({ group_seq: group_seq }, null, { name: "depth", direction: "asc" })
   }
 
-  getChildFolders = async (folder_seq) => {
-    return await this.find({ parent_seq: folder_seq })
+  getChildFolders = async (group_seq, folder_seq) => {
+    return await this.find({ group_seq, parent_seq: folder_seq }, null, { name: "folder_name", direction: "asc" })
   }
 
   updateOperationFolder = async (folder_seq, folder_info) => {
