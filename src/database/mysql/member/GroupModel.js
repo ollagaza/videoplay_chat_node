@@ -122,4 +122,32 @@ export default class GroupModel extends MySQLModel {
     const update_params = this.getParams(payment_info, true, false)
     return await this.update({ seq: group_info.seq }, update_params)
   }
+
+  UpdateFollowingCnt = async (member_seq, update_cnt) => {
+    if (update_cnt > 0) {
+      const update_params = {
+        following_count: this.database.raw('following_count + 1')
+      }
+      return await this.update({ seq: member_seq, group_type: 'P' }, update_params)
+    } else {
+      const update_params = {
+        following_count: this.database.raw('case when following_count != 0 then following_count - 1 else 0 end')
+      }
+      return await this.update({ seq: member_seq, group_type: 'P' }, update_params)
+    }
+  }
+
+  UpdateFollowerCnt = async (member_seq, update_cnt) => {
+    if (update_cnt > 0) {
+      const update_params = {
+        follower_count: this.database.raw('follower_count + 1')
+      }
+      return await this.update({ seq: member_seq, group_type: 'P' }, update_params)
+    } else {
+      const update_params = {
+        follower_count: this.database.raw('case when follower_count != 0 then follower_count - 1 else 0 end')
+      }
+      return await this.update({ seq: member_seq, group_type: 'P' }, update_params)
+    }
+  }
 }

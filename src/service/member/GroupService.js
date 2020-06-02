@@ -828,6 +828,26 @@ const GroupServiceClass = class {
     }
     return result_list
   }
+
+  UpdateGroupInfoFollowingCnt = async (database, member_seq, update_cnt) => {
+    try {
+      const group_info_model = this.getGroupModel(database);
+      const result = await group_info_model.UpdateFollowingCnt(member_seq, update_cnt);
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  UpdateGroupInfoFollowerCnt = async (database, member_seq, update_cnt) => {
+    try {
+      const group_info_model = this.getGroupModel(database);
+      const result = await group_info_model.UpdateFollowerCnt(member_seq, update_cnt);
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
 }
 
 const group_service = new GroupServiceClass()
