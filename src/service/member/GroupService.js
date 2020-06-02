@@ -14,6 +14,7 @@ import SendMail from '../../libs/send-mail'
 import GroupMailTemplate from '../../template/mail/group.template'
 import VacsService from '../vacs/VacsService'
 import Auth from '../../middlewares/auth.middleware'
+import GroupCountModel from "../../database/mysql/member/GroupCountsModel";
 
 const GroupServiceClass = class {
   constructor () {
@@ -45,6 +46,13 @@ const GroupServiceClass = class {
       return new GroupMemberModel(database)
     }
     return new GroupMemberModel(DBMySQL)
+  }
+
+  getGroupCountsModel = (database) => {
+    if (database) {
+      return new GroupCountModel(database)
+    }
+    return new GroupCountModel(DBMySQL)
   }
 
   getBaseInfo = (req, group_seq_from_token = true) => {
@@ -829,20 +837,34 @@ const GroupServiceClass = class {
     return result_list
   }
 
-  UpdateGroupInfoFollowingCnt = async (database, member_seq, update_cnt) => {
+  getGroupCountsInfo = async (database, group_seq) => {
     try {
-      const group_info_model = this.getGroupModel(database);
-      const result = await group_info_model.UpdateFollowingCnt(member_seq, update_cnt);
+      const groupcountmodel = this.getGroupCountsModel(database);
+      let result = await groupcountmodel.getCounts(group_seq)
+      if (result === undefined || result.length === 0) {
+        await groupcountmodel.createCounts(group_seq)
+        result = await groupcountmodel.getCounts(group_seq);
+      }
       return result;
     } catch (e) {
       throw e;
     }
   }
 
-  UpdateGroupInfoFollowerCnt = async (database, member_seq, update_cnt) => {
+  UpdateGroupInfoAddCnt = async (database, group_seq, field_name) => {
     try {
-      const group_info_model = this.getGroupModel(database);
-      const result = await group_info_model.UpdateFollowerCnt(member_seq, update_cnt);
+      const groupcountmodel = this.getGroupCountsModel(database);
+      const result = await groupcountmodel.AddCount(group_seq, field_name)
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  UpdateGroupInfoMinusCnt = async (database, group_seq, field_name) => {
+    try {
+      const groupcountmodel = this.getGroupCountsModel(database);
+      const result = await groupcountmodel.MinusCount(group_seq, field_name)
       return result;
     } catch (e) {
       throw e;

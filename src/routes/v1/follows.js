@@ -17,11 +17,11 @@ routes.post('/followlists', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
     const group_seq = token_info.getGroupSeq();
     const follwerLists = await FollowService.getFollowerLists(DBMySQL, group_seq)
     const follwingLists = await FollowService.getFollowingLists(DBMySQL, group_seq)
-    const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
+    const group_count_info = await GroupService.getGroupCountsInfo(DBMySQL, group_seq);
     const result = new StdObject();
     result.add('follower', follwerLists);
     result.add('following', follwingLists);
-    result.add('group_info', group_info);
+    result.add('group_count_info', group_count_info);
     res.json(result);
   } catch (e) {
     throw new StdObject(-1, e, 400);
@@ -47,8 +47,8 @@ routes.post('/registfollow', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
       };
       const follower_result = await FollowService.RegistFollower(transaction, follower_info)
 
-      const group_info_following_result = await GroupService.UpdateGroupInfoFollowingCnt(transaction, group_seq, 1);
-      const group_info_follower_result = await GroupService.UpdateGroupInfoFollowerCnt(transaction, follower_seq, 1);
+      const group_info_following_result = await GroupService.UpdateGroupInfoAddCnt(transaction, group_seq, 'following');
+      const group_info_follower_result = await GroupService.UpdateGroupInfoAddCnt(transaction, follower_seq, 'follower');
     });
 
     const result = new StdObject();
@@ -77,8 +77,8 @@ routes.post('/unregistfollow', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
       };
       const follower_result = await FollowService.UnRegistFollower(transaction, follower_info)
 
-      const group_info_following_result = await GroupService.UpdateGroupInfoFollowingCnt(transaction, group_seq, -1);
-      const group_info_follower_result = await GroupService.UpdateGroupInfoFollowerCnt(transaction, follower_seq, -1);
+      const group_info_following_result = await GroupService.UpdateGroupInfoMinusCnt(transaction, group_seq, 'following');
+      const group_info_follower_result = await GroupService.UpdateGroupInfoMinusCnt(transaction, follower_seq, 'follower');
     });
 
     const result = new StdObject();
