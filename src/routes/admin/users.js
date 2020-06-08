@@ -13,6 +13,7 @@ import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import MemberService from "../../service/member/MemberService";
 import baseutil from "../../utils/baseutil";
 import _ from "lodash";
+import MongoDataService from '../../service/common/MongoDataService'
 
 const routes = Router();
 
@@ -136,10 +137,9 @@ routes.post('/getMongoData', Wrap(async(req, res) => {
   let output = null;
 
   try {
-    output = await AdminMemberService.getMongoData(getDataParam, getLangParam);
+    output = await MongoDataService.getData(getDataParam, getLangParam);
   } catch(exception) {
-    output.error = -1;
-    output.message = exception.message;
+    output = new StdObject(-1, exception.message, 400)
   }
   res.json(output);
 }));

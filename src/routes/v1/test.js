@@ -29,6 +29,7 @@ import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import group_template from '../../template/mail/group.template'
 import SendMail from '../../libs/send-mail'
 import SSH from 'ssh-exec'
+import MongoDataService from '../../service/common/MongoDataService'
 
 const routes = Router();
 
@@ -492,6 +493,11 @@ if (IS_DEV) {
     const body = group_template.inviteGroupMember()
     const send_result = await new SendMail().sendMailHtml(mail_to, title, body, '황우중')
     res.json(send_result)
+  }));
+
+  routes.get('/data', Wrap(async (req, res) => {
+    const output = MongoDataService.getData()
+    res.json(output)
   }));
 }
 

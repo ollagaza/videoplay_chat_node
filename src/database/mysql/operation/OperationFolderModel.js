@@ -65,11 +65,15 @@ export default class OperationFolderModel extends MySQLModel {
   }
 
   getGroupFolders = async (group_seq) => {
-    return await this.find({ group_seq: group_seq }, null, { name: "depth", direction: "asc" })
+    return await this.find({ group_seq: group_seq, status: 'Y' }, null, [{ column: "depth", order: "asc" }, { column: 'folder_name', order: 'asc' }])
+  }
+
+  getGroupFolderLastUpdate = async (group_seq) => {
+    return await this.findOne({ group_seq: group_seq, status: 'Y' }, ['modify_date'], { name: "modify_date", direction: "desc" })
   }
 
   getChildFolders = async (group_seq, folder_seq) => {
-    return await this.find({ group_seq, parent_seq: folder_seq }, null, { name: "folder_name", direction: "asc" })
+    return await this.find({ group_seq, parent_seq: folder_seq, status: 'Y' }, null, { name: "folder_name", direction: "asc" })
   }
 
   updateOperationFolder = async (folder_seq, folder_info) => {

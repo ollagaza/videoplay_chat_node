@@ -19,6 +19,65 @@ const OperationFolderServiceClass = class {
     return new OperationFolderModel(DBMySQL)
   }
 
+  getGroupFolderInfo = async (database, group_seq) => {
+    const model = this.getOperationFolderModel(database)
+    const result_list = await model.getGroupFolders(group_seq)
+    const folder_map = {}
+    let last_update = null
+    result_list.forEach((result) => {
+      const folder_info = new OperationFolderInfo(result)
+      const seq = folder_info.seq
+      const str_seq = `folder_${seq}`
+      folder_map[str_seq] = folder_info
+      if (!last_update || last_update < folder_info.modify_date) {
+        last_update = folder_info.modify_date
+      }
+    })
+
+    log.debug(this.log_prefix, folder_map)
+    this.makeFolderTree(folder_map);
+
+    return {
+      folder_map,
+      // folder_tree: this.makeFolderTree(folder_map),
+      last_update
+    }
+  }
+
+  makeFolderTree = (folder_map) => {
+    // const folder_map = {}
+    // Object.keys(origin_folder_map).forEach((key) => {
+    //   folder_map[key] = origin_folder_map[key].toJSON()
+    // })
+    const folder_tree = {}
+    Object.keys(folder_map).forEach((key) => {
+      const folder_info = folder_map[key]
+      const seq = folder_info.seq
+      const parent_seq = folder_info.parent_seq
+
+      const str_seq = `folder_${seq}`
+      const str_parent_seq = `folder_${parent_seq}`
+      if (parent_seq) {
+        if (folder_map[str_parent_seq]) {
+          if (!folder_map[str_parent_seq].children) {
+            folder_map[str_parent_seq].children = {}
+          }
+          folder_map[str_parent_seq].children[str_seq] = folder_info
+        }
+      } else {
+        folder_tree[str_seq] = folder_info
+      }
+    })
+
+    return folder_tree
+  }
+
+  getGroupFolderLastUpdate = async (database, group_seq) => {
+    const model = this.getOperationFolderModel(database)
+    const query_result = await model.getGroupFolderLastUpdate(group_seq)
+    return query_result ? query_result.modify_date : null
+  }
+
   getFolderInfo = async (database, group_seq, folder_seq) => {
     const model = this.getOperationFolderModel(database)
     return new OperationFolderInfo(await model.getFolderInfo(group_seq, folder_seq))

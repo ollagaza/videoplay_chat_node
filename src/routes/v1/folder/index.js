@@ -11,6 +11,22 @@ import Util from '../../../utils/baseutil'
 
 const routes = Router();
 
+routes.get('/', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const group_folder_info = await OperationFolderService.getGroupFolderInfo(DBMySQL, group_seq)
+  const output = new StdObject()
+  output.adds(group_folder_info)
+  res.json(output)
+}))
+
+routes.get('/last_update', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const last_update = await OperationFolderService.getGroupFolderLastUpdate(DBMySQL, group_seq)
+  const output = new StdObject()
+  output.add('last_update', last_update)
+  res.json(output)
+}))
+
 routes.post('/', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const folder_info = await OperationFolderService.createOperationFolder(DBMySQL, req.body, group_seq)
