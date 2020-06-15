@@ -64,7 +64,7 @@ routes.get('/contents/:wiki_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), wrap
     res.json(result);
     return
   }
-  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, wiki_info.operation_seq, null, false, true)
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, wiki_info.operation_seq, null, false, true)
   if (!operation_info || operation_info.isEmpty()) {
     result.error = 2
     result.message = '수술정보가 존재하지 않습니다.'

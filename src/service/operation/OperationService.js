@@ -8,6 +8,7 @@ import log from '../../libs/logger'
 import GroupService from '../member/GroupService'
 import OperationFileService from './OperationFileService'
 import OperationMediaService from './OperationMediaService'
+import OperationDataService from './OperationDataService'
 import CloudFileService from '../cloud/CloudFileService'
 import VacsService from '../vacs/VacsService'
 import OperationModel from '../../database/mysql/operation/OperationModel';
@@ -36,7 +37,7 @@ const OperationServiceClass = class {
     return new OperationStorageModel(DBMySQL)
   }
 
-  createOperation = async (database, group_member_info, member_seq, operation_data, operation_metadata, status = null) => {
+  createOperation = async (database, member_info, group_member_info, operation_data, operation_metadata, status = null, request_body = null) => {
     const output = new StdObject();
     let is_success = false;
 
@@ -48,7 +49,7 @@ const OperationServiceClass = class {
     const content_id = Util.getContentId();
     const group_media_path = group_member_info.media_path;
     operation_info.group_seq = group_member_info.group_seq;
-    operation_info.member_seq = member_seq;
+    operation_info.member_seq = member_info.seq;
     operation_info.media_path = `${group_media_path}/operation/${content_id}/`;
     operation_info.created_by_user = 1;
     operation_info.content_id = content_id;
@@ -61,6 +62,7 @@ const OperationServiceClass = class {
     if (!operation_info || !operation_info.seq) {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
+    const operation_seq = operation_info.seq
 
     await database.transaction(async(transaction) => {
       await OperationMediaService.createOperationMediaInfo(database, operation_info);
@@ -78,13 +80,15 @@ const OperationServiceClass = class {
         await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
         await OperationMetadataModel.createOperationMetadata(operation_info, operation_metadata);
         if (operation_info.operation_type) {
-          await UserDataModel.updateByMemberSeq(member_seq, { operation_type: operation_info.operation_type });
+          await UserDataModel.updateByMemberSeq(member_info.seq, { operation_type: operation_info.operation_type });
         }
       } catch (error) {
         log.error(this.log_prefix, '[createOperation]', 'create metadata error', error);
       }
       if (ServiceConfig.isVacs()) {
         VacsService.increaseCount(1)
+      } else {
+        await OperationDataService.createOperationDataByRequest(member_info, group_member_info, operation_seq, request_body)
       }
     }
     return output;
@@ -173,11 +177,16 @@ const OperationServiceClass = class {
     operation_info.setMediaInfo(media_info)
   }
 
-  getOperationInfo = async (database, operation_seq, token_info, check_owner= true, import_media_info = false) => {
-    const operation_model = this.getOperationModel(database);
-    const operation_info = await operation_model.getOperationInfo(operation_seq);
+  getOperationInfoNoAuth = async (database, operation_seq) => {
+    const operation_model = this.getOperationModel(database)
+    const operation_info = await operation_model.getOperationInfo(operation_seq)
+    return { operation_info, operation_model }
+  }
 
-    if (operation_info == null || operation_info.isEmpty()) {
+  getOperationInfo = async (database, operation_seq, token_info, check_owner= true, import_media_info = false) => {
+    const { operation_info } = await this.getOperationInfoNoAuth(database, operation_seq);
+
+    if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(-1, '수술 정보가 존재하지 않습니다.', 400);
     }
     if (check_owner) {
@@ -197,7 +206,7 @@ const OperationServiceClass = class {
       await this.setMediaInfo(database, operation_info)
     }
 
-    return { operation_info, operation_model };
+    return operation_info
   };
 
   getOperationInfoByContentId = async (database, content_id, import_media_info = false) => {

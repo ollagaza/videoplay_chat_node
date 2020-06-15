@@ -381,7 +381,7 @@ if (IS_DEV) {
     const query_result = {};
     for (let i = 0; i < media_id_list.length; i++) {
       try {
-        const { operation_info } = await OperationService.getOperationInfo(DBMySQL, media_id_list[i].operation_seq, null, false, false)
+        const operation_info = await OperationService.getOperationInfo(DBMySQL, media_id_list[i].operation_seq, null, false, false)
         const media_info = await getHawkeyeMediaInfo(req, '[test]', media_id_list[i].media_id);
         const index_info = await getHawkeyeIndexInfo(req, '[test]', media_id_list[i].media_id, media_info);
         const delete_expansion_result = await OperationExpansionDataService.deleteOperationExpansionDataByOperationSeq(DBMySQL, operation_info.seq)

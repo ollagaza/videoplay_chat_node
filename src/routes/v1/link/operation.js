@@ -27,7 +27,7 @@ const getOperationInfoByCode = async (request, import_media_info = false, only_w
     }
   }
   const operation_seq = link_info.operation_seq
-  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, import_media_info)
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, import_media_info)
 
   const clip_id = request.params.clip_id
   const phase_id = request.params.phase_id
