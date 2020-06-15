@@ -18,24 +18,44 @@ const MessageServiceClass = class {
     }
   }
 
-  getReceiveLists = async (database, member_seq, params, page_navigation) => {
+  getReceiveCount  = async (database, group_seq) => {
+    try {
+      const msgModel = this.getMessageModel(database);
+      return await msgModel.getReceiveCount(group_seq);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  getReceiveLists = async (database, group_seq, params, page_navigation) => {
     try {
       const output = new StdObject();
       const msgModel = this.getMessageModel(database);
 
       const searchObj = {
         query: {
-          receive_seq: member_seq,
-          is_receive_del: 0,
+          is_new: true,
+          query: [
+            { receive_seq: group_seq },
+            { is_receive_del: 0 },
+          ],
         },
         order: {
           name: 'regist_date',
-          direction: 'asc',
+          direction: 'desc',
         }
       };
-      _.forEach(params, (value, key) => {
-        searchObj.query[key] = value;
-      });
+
+      if (params.searchText !== null) {
+        const searchParam = {
+          $or: [
+            { user_id: ['like', params.searchText] },
+            { user_nickname: ['like', params.searchText] },
+            { desc: ['like', params.searchText] },
+          ],
+        };
+        searchObj.query.query.push(searchParam);
+      }
 
       output.add('receiveList', await msgModel.getReceiveList(searchObj, page_navigation));
 
@@ -45,26 +65,37 @@ const MessageServiceClass = class {
     }
   }
 
-  getSendLists = async (database, member_seq, params, page_navigation) => {
+  getSendLists = async (database, group_seq, params, page_navigation) => {
     try {
       const output = new StdObject();
       const msgModel = this.getMessageModel(database);
 
       const searchObj = {
         query: {
-          send_seq: member_seq,
-          is_send_del: 0,
+          is_new: true,
+          query: [
+            { send_seq: group_seq },
+            { is_send_del: 0 },
+          ],
         },
         order: {
           name: 'regist_date',
-          direction: 'asc',
+          direction: 'desc',
         }
       };
-      _.forEach(params, (value, key) => {
-        searchObj.query[key] = value;
-      });
 
-      output.add('receiveList', await msgModel.getSendList(searchObj, page_navigation));
+      if (params.searchText !== null) {
+        const searchParam = {
+          $or: [
+            { user_id: ['like', params.searchText] },
+            { user_nickname: ['like', params.searchText] },
+            { desc: ['like', params.searchText] },
+          ],
+        };
+        searchObj.query.query.push(searchParam);
+      }
+
+      output.add('sendList', await msgModel.getSendList(searchObj, page_navigation));
 
       return output;
     } catch (e) {

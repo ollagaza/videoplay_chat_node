@@ -51,6 +51,17 @@ const FollowServiceClass = class {
     }
   }
 
+  getFollowing =  async (database, group_seq, following_seq) => {
+    try {
+      const followingModel = this.getFollowingModel(database);
+      const result = await followingModel.getFollowing(group_seq, following_seq);
+      await this.setProfileImage(result);
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   setProfileImage = async (result) => {
     if (result.length != 0) {
       _.forEach(result, (member_info) => {

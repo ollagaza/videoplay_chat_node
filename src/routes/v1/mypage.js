@@ -11,6 +11,7 @@ import GroupService from '../../service/member/GroupService';
 import ProFileService from '../../service/mypage/ProFileService';
 import ServiceConfig from "../../service/service-config";
 import member_service from "../../service/member/MemberService";
+import FollowService from "../../service/follow/FollowService";
 
 const routes = Router();
 
@@ -29,7 +30,7 @@ routes.post('/notice', Wrap(async(req, res) => {
   res.json(output);
 }));
 
-routes.post('/managechanner', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.post('/managechannel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json')
   const token_info = req.token_info
   const group_seq = token_info.getGroupSeq()
@@ -37,6 +38,26 @@ routes.post('/managechanner', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(
 
   output.add('group_counts', await GroupService.getGroupCountsInfo(DBMySQL, group_seq))
   output.add('profile_info', await ProFileService.getProFileInfo(DBMySQL, group_seq))
+
+  res.json(output);
+}));
+
+routes.post('/getuserchannel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json')
+  const token_info = req.token_info
+  const user_group_seq = token_info.getGroupSeq()
+  const mento_group_seq = req.body.group_seq;
+  let output = new StdObject()
+
+  if (mento_group_seq !== undefined) {
+    output.add('group_counts', await GroupService.getGroupCountsInfo(DBMySQL, mento_group_seq))
+    const profile_info = await ProFileService.getProFileInfo(DBMySQL, mento_group_seq)
+    output.add('profile_info', profile_info)
+    output.add('member_info', await member_service.getMemberInfo(DBMySQL, profile_info.member_seq))
+    output.add('followbutton', (await FollowService.getFollowing(DBMySQL, user_group_seq, mento_group_seq))[0])
+  } else {
+    throw new StdObject(-1, '잘못된 접근입니다', 400);
+  }
 
   res.json(output);
 }));

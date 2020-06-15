@@ -13,8 +13,7 @@ const routes = Router();
 
 routes.post('/followlists', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const token_info = req.token_info;
-    const group_seq = token_info.getGroupSeq();
+    const group_seq = req.body.group_seq
     const follwerLists = await FollowService.getFollowerLists(DBMySQL, group_seq)
     const follwingLists = await FollowService.getFollowingLists(DBMySQL, group_seq)
     const group_count_info = await GroupService.getGroupCountsInfo(DBMySQL, group_seq);
