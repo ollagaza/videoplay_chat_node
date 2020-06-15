@@ -26,7 +26,8 @@ import OperationAnalysisService from "../../service/operation/OperationAnalysisS
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import MemberService from '../../service/member/MemberService'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
-
+import group_template from '../../template/mail/group.template'
+import SendMail from '../../libs/send-mail'
 import SSH from 'ssh-exec'
 
 const routes = Router();
@@ -485,7 +486,13 @@ if (IS_DEV) {
     }
   }));
 
-
+  routes.get('/mail', Wrap(async (req, res) => {
+    const mail_to = ['황우중 <hwj@mteg.co.kr>', 'weather8128@naver.com']
+    const title = '이메일 발송 테스트'
+    const body = group_template.inviteGroupMember()
+    const send_result = await new SendMail().sendMailHtml(mail_to, title, body, '황우중')
+    res.json(send_result)
+  }));
 }
 
 export default routes;

@@ -1,5 +1,5 @@
 export default class StdObject {
-  constructor (error, message, httpStatusCode, data = null) {
+  constructor (error, message, httpStatusCode = 200, data = null) {
     this.error = 0 ///< 에러 코드 (0이면 에러 아님)
     this.message = 'success' ///< 에러 메세지 (success이면 에러 아님)
     this.variables = {} ///< 추가 변수

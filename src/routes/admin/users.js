@@ -109,6 +109,26 @@ routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   res.json(output);
 }));
 
+routes.post('/getMembers', Wrap(async(req, res) => {
+  req.accepts('application/json');
+  try {
+    const output = new StdObject();
+    const member_seqs = req.body.member_seqs;
+    const seq = _.concat(['in'], member_seqs);
+    const filter = {
+      is_new: true,
+      query: [
+        { seq }
+      ],
+    };
+    const result = await AdminMemberService.getMembers(DBMySQL, filter);
+    output.add('result', result);
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
+}));
+
 routes.post('/getMongoData', Wrap(async(req, res) => {
   req.accepts('application/json');
   const getDataParam = req.body.getData;
