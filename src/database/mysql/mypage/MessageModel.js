@@ -11,6 +11,10 @@ export default class MessageModel extends MySQLModel {
     this.log_prefix = '[MessageModel]'
   }
 
+  getReceiveCount = async(group_seq) => {
+    return await this.getTotalCount({ receive_seq: group_seq, is_view: 0 })
+  }
+
   getReceiveList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
@@ -19,14 +23,15 @@ export default class MessageModel extends MySQLModel {
       ];
     const oKnex = this.database.select(select_fields);
     oKnex.from(this.table_name);
-    oKnex.innerJoin('member', `${this.table_name}.send_seq`, 'member.seq');
+    oKnex.innerJoin('group_info', `${this.table_name}.send_seq`, 'group_info.seq');
+    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq');
     if (filters.query !== undefined) {
       await this.queryWhere(oKnex, filters.query);
     }
     if (filters.order !== undefined) {
       oKnex.orderBy(`${this.table_name}.${filters.order.name}`, filters.order.direction);
     } else {
-      oKnex.orderBy(`${this.table_name}.regist_date`,'asc');
+      oKnex.orderBy(`${this.table_name}.regist_date`,'desc');
     }
 
     const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging);
@@ -44,14 +49,15 @@ export default class MessageModel extends MySQLModel {
     ];
     const oKnex = this.database.select(select_fields);
     oKnex.from(this.table_name);
-    oKnex.innerJoin('member', `${this.table_name}.receive_seq`, 'member.seq');
+    oKnex.innerJoin('group_info', `${this.table_name}.receive_seq`, 'group_info.seq');
+    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq');
     if (filters.query !== undefined) {
       await this.queryWhere(oKnex, filters.query);
     }
     if (filters.order !== undefined) {
       oKnex.orderBy(`${this.table_name}.${filters.order.name}`, filters.order.direction);
     } else {
-      oKnex.orderBy(`${this.table_name}.regist_date`,'asc');
+      oKnex.orderBy(`${this.table_name}.regist_date`,'desc');
     }
 
     const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging);

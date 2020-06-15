@@ -12,12 +12,13 @@ routes.post('/getreceivelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   req.accepts('application/json');
   try {
     const token_info = req.token_info;
-    const member_seq = token_info.getId();
+    const group_seq = token_info.getGroupSeq();
     const searchParam = req.body.searchObj;
     const searchOrder = req.body.searchOrder;
     const page_navigation = req.body.page_navigation;
 
-    const output = await MessageService.getReceiveLists(DBMySQL, member_seq, searchParam, page_navigation);
+    const output = await MessageService.getReceiveLists(DBMySQL, group_seq, searchParam, page_navigation);
+    output.add("receiveCount", await MessageService.getReceiveCount(DBMySQL, group_seq));
     output.add("searchObj", searchParam);
 
     res.json(output);
@@ -30,12 +31,13 @@ routes.post('/getsendlist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(re
   req.accepts('application/json');
   try {
     const token_info = req.token_info;
-    const member_seq = token_info.getId();
+    const group_seq = token_info.getGroupSeq();
     const searchParam = req.body.searchObj;
     const searchOrder = req.body.searchOrder;
     const page_navigation = req.body.page_navigation;
 
-    const output = await MessageService.getSendLists(DBMySQL, member_seq, searchParam, page_navigation);
+    const output = await MessageService.getSendLists(DBMySQL, group_seq, searchParam, page_navigation);
+    output.add("receiveCount", await MessageService.getReceiveCount(DBMySQL, group_seq));
     output.add("searchObj", searchParam);
 
     res.json(output);

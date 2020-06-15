@@ -334,7 +334,7 @@ const MemberServiceClass = class {
 
       log.debug(upload_file_info);
       const origin_image_path = upload_file_info.path;
-      const resize_image_path = `${upload_path}/${Util.getRandomId()}.png`;
+      const resize_image_path = `${upload_path}/${Util.getRandomId()}.${Util.getFileExt(upload_file_info.filename)}`;
       const resize_image_full_path = media_root + resize_image_path;
       const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
 

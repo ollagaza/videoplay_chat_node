@@ -305,4 +305,15 @@ routes.post('/getMongoData', Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.post('/userProfileInfo', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+
+  try {
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}));
+
 export default routes;
