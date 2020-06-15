@@ -27,7 +27,10 @@ export default class FollowerModel extends MySQLModel {
     ]
     const oKnex = this.database.select(display_columns);
     oKnex.from(this.table_name);
-    oKnex.leftOuterJoin('following', 'following.following_seq', 'follower.follower_seq')
+    oKnex.leftOuterJoin('following', function() {
+      this.on('following.group_seq',  'follower.group_seq')
+        .andOn('following.following_seq','follower.follower_seq');
+    })
     oKnex.innerJoin('group_info', 'group_info.seq', 'follower.follower_seq');
     oKnex.innerJoin('member', 'member.seq', 'group_info.member_seq');
     oKnex.where('follower.group_seq', group_seq);
