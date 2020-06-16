@@ -51,6 +51,28 @@ const FollowServiceClass = class {
     }
   }
 
+  getInquiryFollowerLists = async (database, login_group_seq, inquiry_group_seq) => {
+    try {
+      const followerModel = this.getFollowerModel(database);
+      const result = await followerModel.getInquiryFollowerLists(login_group_seq, inquiry_group_seq);
+      await this.setProfileImage(result);
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  getInquiryFollowingLists = async (database, login_group_seq, inquiry_group_seq) => {
+    try {
+      const followingModel = this.getFollowingModel(database);
+      const result = await followingModel.getInquiryFollowingLists(login_group_seq, inquiry_group_seq);
+      await this.setProfileImage(result);
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   getFollowing =  async (database, group_seq, following_seq) => {
     try {
       const followingModel = this.getFollowingModel(database);

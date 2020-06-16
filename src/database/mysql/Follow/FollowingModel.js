@@ -30,6 +30,31 @@ export default class FollowingModel extends MySQLModel {
     return oKnex;
   };
 
+  getInquiryFollowingLists = async (login_group_seq, inquiry_group_seq) => {
+    const display_columns = [
+      'following.seq',
+      this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq',
+      'member.user_id', 'member.user_name', 'member.user_nickname', 'member.profile_image_path',
+      this.database.raw('case when count(following_login.seq) > 0 then 1 else 0 end following_chk'),
+    ]
+    const groupby_columns = [
+      'following.seq', 'member.user_name', 'member.user_nickname', 'member.profile_image_path'
+    ]
+    const oKnex = this.database.select(display_columns);
+    oKnex.from(this.table_name);
+    oKnex.leftOuterJoin(`${this.table_name} as following_login`, function() {
+      this.on('following_login.following_seq', 'following.following_seq')
+        .andOn('following_login.group_seq', login_group_seq);
+    });
+    oKnex.innerJoin('group_info', 'group_info.seq', 'following.following_seq');
+    oKnex.innerJoin('member', 'member.seq', 'group_info.member_seq');
+    oKnex.where('following.group_seq', inquiry_group_seq);
+    oKnex.groupBy(groupby_columns);
+
+    return oKnex;
+  };
+
+
   getFollowing = async (group_seq, following_seq) => {
     const display_columns = [
       'following.seq',

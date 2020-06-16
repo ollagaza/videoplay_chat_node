@@ -39,6 +39,30 @@ export default class FollowerModel extends MySQLModel {
     return oKnex;
   };
 
+  getInquiryFollowerLists = async (login_group_seq, inquiry_group_seq) => {
+    const display_columns = [
+      'follower.seq',
+      this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq',
+      'member.user_id', 'member.user_name', 'member.user_nickname', 'member.profile_image_path',
+      this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
+    ]
+    const groupby_columns = [
+      'follower.seq', 'member.user_name', 'member.user_nickname', 'member.profile_image_path'
+    ]
+    const oKnex = this.database.select(display_columns);
+    oKnex.from(this.table_name);
+    oKnex.leftOuterJoin('following', function() {
+      this.on('following.group_seq',  login_group_seq)
+        .andOn('following.following_seq','follower.follower_seq');
+    })
+    oKnex.innerJoin('group_info', 'group_info.seq', 'follower.follower_seq');
+    oKnex.innerJoin('member', 'member.seq', 'group_info.member_seq');
+    oKnex.where('follower.group_seq', inquiry_group_seq);
+    oKnex.groupBy(groupby_columns);
+
+    return oKnex;
+  };
+
   RegistFollower = async (follow_info) => {
     return this.create(follow_info);
   };
