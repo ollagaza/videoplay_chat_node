@@ -3,8 +3,8 @@ import Util from '../../utils/baseutil'
 
 const default_key_list = [
   'seq', 'operation_seq', 'group_seq', 'group_name', 'hospital', 'title', 'view_count', 'total_time',
-  'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html', 'status',
-  'is_complete', 'is_community', 'is_mentoring', 'mento_group_seq', 'reg_date', 'modify_date'
+  'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html',
+  'type', 'status', 'is_complete', 'mento_group_seq', 'reg_date', 'modify_date'
 ];
 
 export default class OperationFolderInfo extends JsonWrapper {
@@ -21,12 +21,6 @@ export default class OperationFolderInfo extends JsonWrapper {
     }
     if (data.is_complete != null) {
       this.is_complete = Util.parseInt(data.is_complete, 0) > 0;
-    }
-    if (data.is_community != null) {
-      this.is_community = Util.parseInt(data.is_community, 0) > 0;
-    }
-    if (data.is_mentoring != null) {
-      this.is_mentoring = Util.parseInt(data.is_mentoring, 0) > 0;
     }
   }
 }

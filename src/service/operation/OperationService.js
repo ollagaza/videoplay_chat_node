@@ -88,7 +88,8 @@ const OperationServiceClass = class {
       if (ServiceConfig.isVacs()) {
         VacsService.increaseCount(1)
       } else {
-        await OperationDataService.createOperationDataByRequest(member_info, group_member_info, operation_seq, request_body)
+        const operation_data_seq = await OperationDataService.createOperationDataByRequest(member_info, group_member_info, operation_seq, request_body)
+        output.add('operation_data_seq', operation_data_seq);
       }
     }
     return output;
