@@ -13,14 +13,20 @@ const routes = Router();
 
 routes.post('/followlists', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const group_seq = req.body.group_seq
-    const follwerLists = await FollowService.getFollowerLists(DBMySQL, group_seq)
-    const follwingLists = await FollowService.getFollowingLists(DBMySQL, group_seq)
-    const group_count_info = await GroupService.getGroupCountsInfo(DBMySQL, group_seq);
+    const token_info = req.token_info;
+    const login_group_seq = token_info.getGroupSeq();
+    const inquiry_group_seq = req.body.group_seq
     const result = new StdObject();
-    result.add('follower', follwerLists);
-    result.add('following', follwingLists);
-    result.add('group_count_info', group_count_info);
+
+    if (inquiry_group_seq === login_group_seq) {
+      result.add('follower', await FollowService.getFollowerLists(DBMySQL, inquiry_group_seq));
+      result.add('following', await FollowService.getFollowingLists(DBMySQL, inquiry_group_seq));
+    } else {
+      result.add('follower', await FollowService.getInquiryFollowerLists(DBMySQL, login_group_seq, inquiry_group_seq));
+      result.add('following', await FollowService.getInquiryFollowingLists(DBMySQL, login_group_seq, inquiry_group_seq));
+    }
+
+    result.add('group_count_info', await GroupService.getGroupCountsInfo(DBMySQL, inquiry_group_seq));
     res.json(result);
   } catch (e) {
     throw new StdObject(-1, e, 400);
