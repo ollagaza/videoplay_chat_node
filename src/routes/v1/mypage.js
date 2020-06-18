@@ -100,6 +100,7 @@ routes.post('/changeGroupCMFlag', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     await DBMySQL.transaction(async (transaction) => {
       const result = await ProFileService.changeCMFlag(transaction, group_seq, json_flag);
       output.add('result', result);
+      output.add('send_flag', json_flag);
     });
     res.json(output);
   } catch (e) {
