@@ -29,11 +29,41 @@ import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import group_template from '../../template/mail/group.template'
 import SendMail from '../../libs/send-mail'
 import SSH from 'ssh-exec'
+import socketManager from "../../service/socket-manager";
+import NotifyInfo from "../../wrapper/common/NotifyInfo";
 
 const routes = Router();
 
 
 const IS_DEV = Config.isDev();
+
+routes.get('/socket_test', Wrap(async(req, res) => {
+  const member_seq = req.body.member_seq;
+  const group_seq = req.body.group_seq;
+  const notifyinfo = new NotifyInfo();
+  notifyinfo.seq = 0
+  notifyinfo.notify_type = 'message'
+  notifyinfo.profile_image = null;
+  notifyinfo.regist_datetime = new Date();
+  notifyinfo.text = 'test'
+  const send_socket_message_info = {
+    message_info: {
+      title: 'test',
+      message: 'test',
+      notice_type: '',
+      type: 'globalNotice',
+    },
+    notifyinfo: notifyinfo.toJSON(),
+    data: {
+      type: null,
+      action_type: null
+    }
+  };
+
+  // await socketManager.sendToFrontOne(member_seq, send_socket_message_info);
+  await socketManager.sendToFrontAll(send_socket_message_info);
+  res.end();
+}));
 
 if (IS_DEV) {
   routes.get('/video/:project_seq(\\d+)/:scale', Wrap(async(req, res) => {

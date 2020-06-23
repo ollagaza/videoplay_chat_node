@@ -4,6 +4,8 @@ import log from "../../libs/logger";
 import MessageModel from "../../database/mysql/mypage/MessageModel";
 import _ from "lodash";
 import socketManager from "../socket-manager";
+import MemberLogService from "../member/MemberLogService";
+import NotifyService from '../etc/NotifyService'
 
 const MessageServiceClass = class {
   constructor () {
@@ -118,6 +120,7 @@ const MessageServiceClass = class {
     try {
       const msgModel = this.getMessageModel(database);
       const result = await msgModel.sendMessage(message_info);
+      const notifyinfo = await NotifyService.rtnSendMessage(database, message_info, null)
       const send_socket_message_info = {
         message_info: {
           title: '쪽지가 도착 하였습니다.',
@@ -125,6 +128,7 @@ const MessageServiceClass = class {
           notice_type: '',
           type: 'pushNotice',
         },
+        notifyinfo: notifyinfo.toJSON(),
         data: {
           type: null,
           action_type: null
@@ -133,6 +137,8 @@ const MessageServiceClass = class {
       await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info);
       send_socket_message_info.message_info.title = '쪽지가 발송 되었습니다.';
       await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info);
+      await MemberLogService.createMemberLog(DBMySQL, message_info.send_seq, '1003', '', null, 0, 1);
+
       return result;
     } catch (e) {
       throw e;

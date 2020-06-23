@@ -86,8 +86,8 @@ const SocketManagerClass = class extends EventEmitter {
     this.socket.emit('reloadServiceConfig')
   }
 
-  sendToFrontOne = async (user_id, data = null) => {
-    this.socket.emit('sendFrontMsg', user_id, data);
+  sendToFrontOne = async (member_seq, data = null) => {
+    this.socket.emit('sendFrontMsg', member_seq, data);
   }
 
   sendToFrontMulti = async (user_id_list, data = null) => {
