@@ -31,7 +31,7 @@ const OperationDataServiceClass = class {
     if (!operation_info) {
       return null
     }
-    const operation_data_info = new OperationDataInfo(request_body).toJSON()
+    const operation_data_info = new OperationDataInfo(request_body.operation_data).toJSON()
     operation_data_info.operation_seq = operation_seq
     operation_data_info.group_seq = group_member_info.group_seq
     operation_data_info.group_name = group_member_info.group_name
@@ -49,13 +49,13 @@ const OperationDataServiceClass = class {
     return operation_data_seq
   }
 
-  setThumbnailImage = async (operation_data_seq, request, response) => {
+  setThumbnailImage = async (operation_seq, request, response) => {
     const operation_data_model = this.getOperationDataModel()
-    const operation_data = await operation_data_model.getOperationData(operation_data_seq)
+    const operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_seq)
     if (!operation_data || operation_data.isEmpty()) {
       return null
     }
-    const { operation_info } = await OperationService.getOperationInfoNoAuth(DBMySQL, operation_data.operation_seq)
+    const { operation_info } = await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq)
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const media_directory = directory_info.image
     if ( !( await Util.fileExists(media_directory) ) ) {
@@ -70,7 +70,7 @@ const OperationDataServiceClass = class {
     }
 
     const thumbnail_path = directory_info.media_image + thumbnail_file_name
-    return await operation_data_model.updateThumbnailImage(operation_data_seq, thumbnail_path)
+    return await operation_data_model.updateThumbnailImage(operation_data.seq, thumbnail_path)
   }
 
   setThumbnailAuto = async (operation_seq, thumbnail_path) => {
@@ -79,6 +79,7 @@ const OperationDataServiceClass = class {
     if (!operation_data || operation_data.isEmpty()) {
       return null
     }
+    await operation_data_model.updateThumbnailImage(operation_data.seq, thumbnail_path)
   }
 }
 

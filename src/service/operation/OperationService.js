@@ -37,11 +37,11 @@ const OperationServiceClass = class {
     return new OperationStorageModel(DBMySQL)
   }
 
-  createOperation = async (database, member_info, group_member_info, operation_data, operation_metadata, status = null, request_body = null) => {
+  createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
     const output = new StdObject();
     let is_success = false;
 
-    const input_operation_data = new OperationInfo().getByRequestBody(operation_data)
+    const input_operation_data = new OperationInfo().getByRequestBody(request_body.operation_info)
     if (input_operation_data.isEmpty()) {
       throw new StdObject(-1, '수술 정보가 없습니다.', 500)
     }
@@ -78,7 +78,7 @@ const OperationServiceClass = class {
 
       try {
         await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info);
-        await OperationMetadataModel.createOperationMetadata(operation_info, operation_metadata);
+        await OperationMetadataModel.createOperationMetadata(operation_info, request_body.meta_data);
         if (operation_info.operation_type) {
           await UserDataModel.updateByMemberSeq(member_info.seq, { operation_type: operation_info.operation_type });
         }

@@ -6,7 +6,7 @@ export default class OperationInfo extends JsonWrapper {
     super(data, private_keys);
 
     this.setKeys([
-      'seq', 'list_no', 'operation_type', 'operation_code', 'operation_name', 'operation_date'
+      'seq', 'list_no', 'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq'
       , 'patient_age', 'patient_sex', 'hour', 'minute', 'status', 'analysis_status', 'is_favorite'
       , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress', 'has_link'
       , 'total_file_size', 'total_file_count', 'clip_count', 'index2_file_count', 'origin_video_count', 'trans_video_count'
@@ -38,7 +38,7 @@ export default class OperationInfo extends JsonWrapper {
 
   getByRequestBody = (body) => {
     this.setKeys([
-      'operation_type', 'operation_code', 'operation_name', 'operation_date'
+      'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq'
       , 'patient_age', 'patient_sex', 'hour', 'minute', 'media_path'
     ]);
 
