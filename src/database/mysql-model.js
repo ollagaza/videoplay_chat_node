@@ -23,7 +23,11 @@ const queryGenerator = (database, table_name, selectable_fields, filters = null,
   }
 
   if (order != null) {
-    oKnex.orderBy(order.name, order.direction)
+    if (_.isArray(order)) {
+      oKnex.orderBy(order)
+    } else {
+      oKnex.orderBy(order.name, order.direction)
+    }
   }
   return oKnex
 }

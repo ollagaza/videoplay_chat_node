@@ -10,7 +10,7 @@ import OperationStorageModel from '../../database/mysql/operation/OperationStora
 
 const OperationClipServiceClass = class {
   constructor () {
-    this.log_prefix = '[OperationClipServiceClass]'
+    this.log_prefix = '[OperationClipService]'
   }
 
   updateClipCount = async (operation_info, clip_count) => {

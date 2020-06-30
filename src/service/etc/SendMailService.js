@@ -25,7 +25,7 @@ const SendMailServiceClass = class {
       throw new StdObject(-1, '전송할 메일이 기록되지 않았습니다.', 400)
     }
 
-    await (
+    (
       async () => {
         const email_list = sendmail_data.email_list;
         if (!email_list || email_list.length <= 0) {

@@ -29,6 +29,9 @@ import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import group_template from '../../template/mail/group.template'
 import SendMail from '../../libs/send-mail'
 import SSH from 'ssh-exec'
+import MongoDataService from '../../service/common/MongoDataService'
+import HashtagModel from '../../database/mysql/operation/HashtagModel'
+import HashtagUseModel from '../../database/mysql/operation/HashtagUseModel'
 import socketManager from "../../service/socket-manager";
 import NotifyInfo from "../../wrapper/common/NotifyInfo";
 
@@ -410,7 +413,7 @@ if (IS_DEV) {
     const query_result = {};
     for (let i = 0; i < media_id_list.length; i++) {
       try {
-        const { operation_info } = await OperationService.getOperationInfo(DBMySQL, media_id_list[i].operation_seq, null, false, false)
+        const operation_info = await OperationService.getOperationInfo(DBMySQL, media_id_list[i].operation_seq, null, false, false)
         const media_info = await getHawkeyeMediaInfo(req, '[test]', media_id_list[i].media_id);
         const index_info = await getHawkeyeIndexInfo(req, '[test]', media_id_list[i].media_id, media_info);
         const delete_expansion_result = await OperationExpansionDataService.deleteOperationExpansionDataByOperationSeq(DBMySQL, operation_info.seq)
@@ -523,6 +526,61 @@ if (IS_DEV) {
     const send_result = await new SendMail().sendMailHtml(mail_to, title, body, '황우중')
     res.json(send_result)
   }));
+
+  routes.get('/data', Wrap(async (req, res) => {
+    const output = MongoDataService.getData()
+    res.json(output)
+  }));
+
+
+  routes.get('/tag', Wrap(async (req, res) => {
+    let result = {}
+
+    const tag_list = []
+    const start = Math.round(5 * Math.random())
+    const end = 6 + Math.round(15 * Math.random())
+    for (let i = start; i <= end; i++) {
+      tag_list.push('tag' + i)
+    }
+    result.tag_list = tag_list
+    const seq = 1 + Math.round(10 * Math.random())
+
+    await DBMySQL.transaction(async(transaction) => {
+      const model = new HashtagModel(transaction)
+      const tag_seq_list = await model.createHashtagList(tag_list)
+      const use_model = new HashtagUseModel(transaction)
+      await use_model.deleteUnUseTagList(tag_seq_list, seq, use_model.TYPE_OPERATION_DATA)
+      const tag_use_list = await use_model.updateHashtagUseList(1, tag_seq_list, seq, use_model.TYPE_OPERATION_DATA)
+      const tag_use_count_result = await use_model.updateHashtagCount(tag_seq_list)
+
+      result.tag_seq_list = tag_seq_list
+      result.tag_use_list = tag_use_list
+      result.tag_use_count_result = tag_use_count_result
+    })
+
+    res.json(result)
+  }));
+
+  routes.get('/tag2', Wrap(async (req, res) => {
+    const model = new HashtagUseModel(DBMySQL)
+    const count_result = await model.getGroupHashtagCount(1, 5)
+    res.json(count_result)
+  }));
+
+  routes.post('/tag3', Wrap(async (req, res) => {
+    req.accepts('application/json');
+    const tag = req.body.tag
+    const hashtag_list = Util.parseHashtag(tag)
+    const merge_str = Util.mergeHashtag(hashtag_list)
+    const result = {
+      tag,
+      hashtag_list,
+      merge_str
+    }
+    res.json(result)
+  }));
+
+
 }
 
 export default routes;
