@@ -16,12 +16,25 @@ export default class Content_CountsModel extends MySQLModel {
   }
 
   getMentoringLists = async (category_code) => {
-    const oKnex = this.database.select(this.selectable_fields)
+    const display_columns = [
+      'group_info.seq as group_seq', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
+      , 'member.user_name', 'member.hospname'
+      , 'group_counts.community', 'group_counts.mentoring', 'group_counts.follower'
+      , this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
+    ]
+    const groupby_columns = [
+      'group_info.seq', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
+      , 'member.user_name', 'member.hospname'
+      , 'group_counts.community', 'group_counts.mentoring', 'group_counts.follower'
+    ]
+    const oKnex = this.database.select(display_columns)
       .from('member')
       .innerJoin('group_info', function() {
         this.on('group_info.member_seq', 'member.seq')
           .andOn('group_info.is_mentoring', 1)
       })
+      .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
+      .leftOuterJoin('following', 'following.following_seq', 'group_info.seq')
       .leftOuterJoin('content_counts', function() {
         if (category_code !== 'all') {
           this.on('content_counts.group_seq', 'group_info.seq')
@@ -30,6 +43,7 @@ export default class Content_CountsModel extends MySQLModel {
           this.on('content_counts.group_seq', 'group_info.seq')
         }
       })
-    return await oKnex;
+      .groupBy(groupby_columns);
+    return oKnex;
   };
 }
