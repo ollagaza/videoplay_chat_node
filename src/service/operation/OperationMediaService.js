@@ -4,6 +4,7 @@ import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import OperationService from '../operation/OperationService'
+import OperationDataService from '../operation/OperationDataService'
 import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
 import SmilInfo from '../../wrapper/xml/SmilInfo'
 import Constants from '../../constants/constants'
@@ -73,6 +74,11 @@ const OperationMediaServiceClass = class {
     const thumbnail_result = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
     if (thumbnail_result) {
       update_params.thumbnail = thumbnail_result.path
+      try {
+        await OperationDataService.setThumbnailAuto(operation_info.seq, update_params.thumbnail)
+      } catch (error) {
+        log.error(this.log_prefix, '[updateTranscodingComplete ]', error)
+      }
     }
 
     const operation_media_model = this.getOperationMediaModel(database)

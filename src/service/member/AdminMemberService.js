@@ -1,43 +1,19 @@
 import _ from 'lodash';
 import ServiceConfig from '../service-config';
 import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
 import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import MemberLogService from './MemberLogService'
-import PaymentService from '../payment/PaymentService'
 import MemberModel from '../../database/mysql/member/MemberModel';
 import MemberSubModel from '../../database/mysql/member/MemberSubModel';
 import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
-import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
-import { MedicalModel } from '../../database/mongodb/Medical';
-import { InterrestModel } from '../../database/mongodb/Interrest';
-import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
-import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import SendMail from '../../libs/send-mail'
 import Admin_MemberTemplate from '../../template/mail/admin_member_mail.template';
 
 const AdminMemberServiceClass = class {
   constructor () {
     this.log_prefix = '[AdminMemberServiceClass]'
-    this.member_private_fields = ['password',
-      'license_no', 'license_image_path', 'special_no',
-      'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype',
-      'trainingcode', 'trainingname', 'universitycode', 'universityname',
-      'graduation_year', 'interrest_code', 'interrest_text',
-      'member_seq'];
-
-    this.member_sub_private_fields = ['seq', 'regist_date', 'modify_date', 'user_id', 'password',
-      'user_nickname', 'user_name', 'gender', 'email_address',
-      'mail_acceptance', 'birth_day', 'cellphone', 'tel',
-      'user_media_path', 'profile_image_path', 'certkey', 'used',
-      'hospcode', 'hospname', 'treatcode', 'treatname',
-      'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
-    ];
   }
 
   checkMyToken = (token_info, member_seq) => {
@@ -272,30 +248,6 @@ const AdminMemberServiceClass = class {
     const admin_member_model = this.getAdminMemberModel(database);
     const result = await admin_member_model.findMembers(filter);
     return result;
-  }
-
-  getMongoData = async(getDataParam, getLangParam = 'kor') => {
-    let output = new StdObject();
-    let result_data = null;
-
-    switch (getDataParam) {
-      case 'medical':
-        result_data = await MedicalModel.findAll()
-        output.add('medical', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
-        break;
-      case 'interrest':
-        result_data = await InterrestModel.findAll()
-        output.add('interrest', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
-        break;
-      default:
-        result_data = await MedicalModel.findAll()
-        output.add('medical', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
-        result_data = await InterrestModel.findAll()
-        output.add('interrest', _.sortBy(result_data[0]._doc[getLangParam], 'text'));
-        break;
-    }
-
-    return output;
   }
 }
 

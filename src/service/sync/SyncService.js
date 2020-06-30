@@ -21,7 +21,7 @@ const SyncServiceClass = class {
   }
 
   getOperationInfoBySeq = async (operation_seq) => {
-    const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
+    const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
     }

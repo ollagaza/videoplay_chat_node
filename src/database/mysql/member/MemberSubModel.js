@@ -2,9 +2,8 @@ import ServiceConfig from '../../../service/service-config';
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import StdObject from '../../../wrapper/std-object'
-import { MedicalModel } from '../../mongodb/Medical';
-import { InterrestModel } from '../../mongodb/Interrest';
 import MemberInfo from "../../../wrapper/member/MemberInfo";
+import MongoDataService from '../../../service/common/MongoDataService'
 import _ from "lodash";
 
 export default class MemberSubModel extends MySQLModel {
@@ -27,12 +26,8 @@ export default class MemberSubModel extends MySQLModel {
   getMemberSubInfo = async (member_seq, lang) => {
     const query_result = await this.findOne({member_seq: member_seq});
     const member_info = new MemberInfo(query_result);
-    const medical = await MedicalModel.findAll();
-    member_info.addKey('medical');
-    member_info.medical = _.sortBy(medical[0]._doc[lang], ['text'])
-    const interrest = await InterrestModel.findAll();
-    member_info.addKey('interrest');
-    member_info.interrest = interrest[0]._doc[lang]
+    member_info.medical = MongoDataService.getMedicalInfo(lang)
+    member_info.interrest = MongoDataService.getInterestInfo(lang)
     if (!member_info.isEmpty() && !Util.isEmpty(member_info.license_image_path)) {
       member_info.addKey('license_image_url');
       member_info.license_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.license_image_path);

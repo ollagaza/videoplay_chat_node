@@ -6,7 +6,7 @@ import Role from "../../constants/roles";
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import MemberService from '../../service/member/MemberService'
-import AdminMemberService from '../../service/member/AdminMemberService'
+import MongoDataService from '../../service/common/MongoDataService'
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import log from '../../libs/logger'
@@ -295,12 +295,10 @@ routes.post('/getMongoData', Wrap(async(req, res) => {
   const getDataParam = req.body.getData;
   const getLangParam = req.body.getLang;
   let output = null;
-
   try {
-    output = await AdminMemberService.getMongoData(getDataParam, getLangParam);
+    output = await MongoDataService.getData(getDataParam, getLangParam);
   } catch(exception) {
-    output.error = -1;
-    output.message = exception.message;
+    output = new StdObject(-1, exception.message, 400)
   }
   res.json(output);
 }));
