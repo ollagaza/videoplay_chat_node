@@ -112,7 +112,7 @@ export default class HashtagUseModel extends MySQLModel {
   getGroupHashtagCount = async (group_seq, limit = 10, type = null) => {
     const target_type = this.getTargetType(type)
     const query = this.database
-      .select('hashtag.hashtag as tag_name', 'hashtag.seq as tag_seq', this.database.raw('count(*) as cnt'))
+      .select('hashtag.hashtag as tag_name', 'hashtag.seq as tag_seq', this.database.raw('count(*) as use_cnt'))
       .from('hashtag_use')
       .innerJoin('hashtag', { "hashtag.seq": "hashtag_use.hashtag_seq" })
       .where('hashtag_use.group_seq', group_seq)
@@ -127,7 +127,6 @@ export default class HashtagUseModel extends MySQLModel {
     if (!query_result || !query_result.length || !query_result[0]) {
       return false
     }
-    log.debug(this.log_prefix, '[]', query_result)
     return query_result
   }
 }

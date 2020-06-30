@@ -13,6 +13,12 @@ export default class OperationDataModel extends MySQLModel {
   createOperationData = async (operation_data) => {
     operation_data.reg_date = this.database.raw('NOW()')
     operation_data.modify_date = this.database.raw('NOW()')
+    if (operation_data.hashtag_list) {
+      operation_data.hashtag_list = JSON.stringify(operation_data.hashtag_list)
+    }
+    if (operation_data.category_list) {
+      operation_data.category_list = JSON.stringify(operation_data.category_list)
+    }
     return await this.create(operation_data, 'seq')
   }
 
@@ -32,6 +38,17 @@ export default class OperationDataModel extends MySQLModel {
     }
     const update_params = {
       thumbnail: thumbnail_path,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update(filter, update_params)
+  }
+
+  updateThumbnailImageNotExists = async (operation_data_seq, thumbnail_path) => {
+    const filter = {
+      seq: operation_data_seq
+    }
+    const update_params = {
+      thumbnail: this.database.raw(`IF(\`thumbnail\` IS NULL, '${thumbnail_path}', \`thumbnail\`)`),
       modify_date: this.database.raw('NOW()')
     }
     return await this.update(filter, update_params)

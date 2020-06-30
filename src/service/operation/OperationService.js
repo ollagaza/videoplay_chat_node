@@ -120,7 +120,7 @@ const OperationServiceClass = class {
   }
 
   deleteOperation = async (database, token_info, operation_seq) => {
-    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info)
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info)
     return await this.deleteOperationByInfo(operation_info)
   }
 
@@ -426,7 +426,7 @@ const OperationServiceClass = class {
   requestAnalysis = async (database, token_info, operation_seq, check_owner= true) => {
     let api_request_result = null;
     let is_execute_success = false;
-    const { operation_info } = await this.getOperationInfo(database, operation_seq, token_info, check_owner);
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner);
     const directory_info = this.getOperationDirectoryInfo(operation_info)
 
     await database.transaction(async(transaction) => {

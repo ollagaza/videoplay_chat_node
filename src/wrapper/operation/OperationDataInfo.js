@@ -19,8 +19,10 @@ export default class OperationFolderInfo extends JsonWrapper {
     if (data.category_list && typeof data.category_list === 'string') {
       this.category_list = JSON.parse(data.category_list)
     }
-    if (data.is_complete != null) {
-      this.is_complete = Util.parseInt(data.is_complete, 0) > 0;
+    this.is_complete = Util.isTrue(data.is_complete)
+    this.is_open_refer_file = Util.isTrue(data.is_open_refer_file)
+    if (data.hashtag && typeof data.hashtag === 'string') {
+      this.hashtag_list = Util.parseHashtag(data.hashtag)
     }
   }
 }

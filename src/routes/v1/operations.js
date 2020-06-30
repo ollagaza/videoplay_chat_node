@@ -7,6 +7,7 @@ import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import GroupService from '../../service/member/GroupService';
 import OperationService from '../../service/operation/OperationService';
+import OperationDataService from '../../service/operation/OperationDataService';
 import OperationClipService from '../../service/operation/OperationClipService';
 import OperationMediaService from '../../service/operation/OperationMediaService';
 import OperationFileService from '../../service/operation/OperationFileService';
@@ -273,6 +274,17 @@ routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.LOGIN_USER),
   const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_REFER)
   const output = new StdObject();
   output.add('refer_files', refer_file_list);
+
+  res.json(output);
+}));
+
+
+routes.put('/:operation_seq(\\d+)/thumbnail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const thumbnail_url = await OperationDataService.setThumbnailImage(operation_seq, req, res)
+
+  const output = new StdObject();
+  output.add('thumbnail_url', thumbnail_url);
 
   res.json(output);
 }));

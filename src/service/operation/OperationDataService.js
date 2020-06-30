@@ -11,6 +11,7 @@ import striptags from 'striptags'
 import OperationFileService from './OperationFileService'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import ServiceConfig from '../service-config'
+import HashtagService from './HashtagService'
 
 const OperationDataServiceClass = class {
   constructor () {
@@ -31,7 +32,8 @@ const OperationDataServiceClass = class {
     if (!operation_info) {
       return null
     }
-    const operation_data_info = new OperationDataInfo(request_body.operation_data).toJSON()
+    const operation_data = request_body.operation_data
+    const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
     operation_data_info.operation_seq = operation_seq
     operation_data_info.group_seq = group_member_info.group_seq
     operation_data_info.group_name = group_member_info.group_name
@@ -41,10 +43,24 @@ const OperationDataServiceClass = class {
     operation_data_info.title = operation_info.operation_name
     operation_data_info.status = operation_info.status
     operation_data_info.is_complete = operation_info.analysis_status === 'Y'
-    operation_data_info.doc_text = striptags(operation_data_info.doc_html)
+    if (operation_data_info.doc_html) {
+      operation_data_info.doc_text = striptags(operation_data_info.doc_html)
+    }
 
     const operation_data_model = this.getOperationDataModel()
     const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
+
+    if (operation_data_seq && operation_data && operation_data.hashtag) {
+      (
+        async () => {
+          try {
+            await HashtagService.updateOperationHashtag(group_member_info.group_seq, operation_data.hashtag, operation_data_seq)
+          } catch (error) {
+            log.error(this.log_prefix, '[createOperationDataByRequest]', error)
+          }
+        }
+      )()
+    }
 
     return operation_data_seq
   }
@@ -61,8 +77,8 @@ const OperationDataServiceClass = class {
     if ( !( await Util.fileExists(media_directory) ) ) {
       await Util.createDirectory(media_directory)
     }
-    const thumbnail_file_name = operation_info.content_id
-    await Util.uploadByRequest(request, response, 'thumbnail', media_directory, thumbnail_file_name)
+    const thumbnail_file_name = 'thumbnail'
+    await Util.uploadByRequest(request, response, 'thumbnail', media_directory, thumbnail_file_name, true)
 
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
@@ -70,7 +86,9 @@ const OperationDataServiceClass = class {
     }
 
     const thumbnail_path = directory_info.media_image + thumbnail_file_name
-    return await operation_data_model.updateThumbnailImage(operation_data.seq, thumbnail_path)
+    const update_result = await operation_data_model.updateThumbnailImage(operation_data.seq, thumbnail_path)
+    log.debug(this.log_prefix, '[setThumbnailImage]', update_result)
+    return directory_info.url_image + thumbnail_file_name
   }
 
   setThumbnailAuto = async (operation_seq, thumbnail_path) => {
@@ -79,7 +97,7 @@ const OperationDataServiceClass = class {
     if (!operation_data || operation_data.isEmpty()) {
       return null
     }
-    await operation_data_model.updateThumbnailImage(operation_data.seq, thumbnail_path)
+    await operation_data_model.updateThumbnailImageNotExists(operation_data.seq, thumbnail_path)
   }
 }
 

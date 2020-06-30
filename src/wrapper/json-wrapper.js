@@ -40,30 +40,37 @@ export default class JsonWrapper {
 
   setThrowException = (value) => {
     this.thorw_exception = value
+    return this
   }
 
   setIgnoreEmpty = (value) => {
     this.ignore_empty = value
+    return this
   }
 
   setAutoTrim = (value) => {
     this.auto_trim = value
+    return this
   }
 
   setKeys = (keys = []) => {
     this.json_keys = keys
+    return this
   }
 
   addKey = (key) => {
     this.json_keys.push(key)
+    return this
   }
 
   addPrivateKey = (key) => {
     this.private_key_map[key] = true;
+    return this
   }
 
   removePrivateKey = (key) => {
     this.private_key_map[key] = false;
+    return this
   }
 
   isEmpty = () => {
@@ -76,6 +83,7 @@ export default class JsonWrapper {
 
   setExportXml = (value) => {
     this.export_xml = value
+    return this
   }
 
   toJSON = () => {
@@ -90,7 +98,7 @@ export default class JsonWrapper {
 
     for (let index in this.json_keys) {
       const key = this.json_keys[index]
-      if (this.private_key_map[key]) {
+      if (this.private_key_map && this.private_key_map[key]) {
         continue
       }
       let value = this[key]

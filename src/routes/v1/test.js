@@ -536,6 +536,21 @@ if (IS_DEV) {
     const count_result = await model.getGroupHashtagCount(1, 5)
     res.json(count_result)
   }));
+
+  routes.post('/tag3', Wrap(async (req, res) => {
+    req.accepts('application/json');
+    const tag = req.body.tag
+    const hashtag_list = Util.parseHashtag(tag)
+    const merge_str = Util.mergeHashtag(hashtag_list)
+    const result = {
+      tag,
+      hashtag_list,
+      merge_str
+    }
+    res.json(result)
+  }));
+
+
 }
 
 export default routes;
