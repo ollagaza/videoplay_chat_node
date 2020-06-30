@@ -34,11 +34,11 @@ export default class FollowingModel extends MySQLModel {
     const display_columns = [
       'following.seq',
       this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq',
-      'member.user_id', 'member.user_name', 'member.user_nickname', 'member.profile_image_path',
+      'member.user_id', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path',
       this.database.raw('case when count(following_login.seq) > 0 then 1 else 0 end following_chk'),
     ]
     const groupby_columns = [
-      'following.seq', 'member.user_name', 'member.user_nickname', 'member.profile_image_path'
+      'following.seq', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path'
     ]
     const oKnex = this.database.select(display_columns);
     oKnex.from(this.table_name);
@@ -59,11 +59,11 @@ export default class FollowingModel extends MySQLModel {
     const display_columns = [
       'following.seq',
       this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq',
-      'member.user_id', 'member.user_name', 'member.user_nickname', 'member.profile_image_path',
+      'member.user_id', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path',
       this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
     ]
     const groupby_columns = [
-      'following.seq', 'member.user_name', 'member.user_nickname', 'member.profile_image_path'
+      'following.seq', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path'
     ]
     const oKnex = this.database.select(display_columns);
     oKnex.from('group_info');

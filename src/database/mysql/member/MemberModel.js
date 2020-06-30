@@ -45,7 +45,13 @@ export default class MemberModel extends MySQLModel {
   }
 
   getMemberInfo = async (member_seq) => {
-    const query_result = await this.findOne({seq: member_seq});
+    const oKnex = this.database.select(['member.*', 'group_info.seq as group_seq', 'group_info.*'])
+      .from(this.table_name)
+      .innerJoin('group_info', 'group_info.member_seq', 'member.seq')
+      .where('member.seq', member_seq)
+      .first();
+    // const query_result = await this.findOne({seq: member_seq});
+    const query_result = await oKnex;
     if (query_result && query_result.regist_date) {
       query_result.regist_date = Util.dateFormat(query_result.regist_date.getTime());
     }
@@ -139,10 +145,6 @@ export default class MemberModel extends MySQLModel {
 
   updateLastLogin = async (member_seq) => {
     return await this.update({seq: member_seq}, {"lastlogin": this.database.raw('NOW()')});
-  };
-
-  updateProfileImage = async (member_seq, profile_image_path) => {
-    return await this.update( { seq: member_seq }, { profile_image_path: profile_image_path } );
   };
 
   isDuplicateId = async (user_id) => {
