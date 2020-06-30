@@ -167,6 +167,10 @@ const GroupServiceClass = class {
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
     const group_member_model = this.getGroupMemberModel(database)
     const group_member_list = await group_member_model.getMemberGroupList(member_seq, status)
+    for(let i = 0; i < group_member_list.length; i++) {
+      const group_member_info = group_member_list[i]
+      group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+    }
     if (ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()
       log.debug(this.log_prefix, '[getMemberGroupList]', '[vacs_storage_info]', vacs_storage_info)
@@ -207,6 +211,9 @@ const GroupServiceClass = class {
   getGroupMemberInfo = async (database, group_seq, member_seq, status = null) => {
     const group_member_model = this.getGroupMemberModel(database)
     const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
+    if (group_member_info.profile_image_path) {
+      group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+    }
     if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()
       group_member_info.group_used_storage_size = vacs_storage_info.used_size
@@ -870,6 +877,16 @@ const GroupServiceClass = class {
     try {
       const groupcountmodel = this.getGroupCountsModel(database);
       const result = await groupcountmodel.MinusCount(group_seq, field_name)
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  UpdateGroupProfileImage = async (database, group_seq, profile_image_path) => {
+    try {
+      const group_model = this.getGroupModel(database);
+      const result = await group_model.updateProfileImage(group_seq, profile_image_path)
       return result;
     } catch (e) {
       throw e;

@@ -163,4 +163,8 @@ export default class GroupModel extends MySQLModel {
       return await this.update({ seq: member_seq, group_type: 'P' }, update_params)
     }
   }
+  
+  updateProfileImage = async (group_seq, profile_image_path) => {
+    return await this.update( { seq: group_seq }, { profile_image_path: profile_image_path } );
+  };
 }

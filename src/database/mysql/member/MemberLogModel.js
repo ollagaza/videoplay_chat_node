@@ -59,11 +59,11 @@ export default class MemberLogModel extends MySQLModel {
 
   getNoticeListMemberLog = async (lang, seq) => {
     const memberLog = {
-      member_seq: seq,
-      notice_page: 0,
-      notice_list: 1,
+      'member_log.member_seq': seq,
+      'member_log.notice_page': 0,
+      'member_log.notice_list': 1,
     }
-    const fieldSet = ['member_log.seq', 'member_log.log_text', 'member_log.regist_date', 'member_log.is_view', 'member.profile_image_path'];
+    const fieldSet = ['member_log.seq', 'member_log.log_text', 'member_log.regist_date', 'member_log.is_view', 'group_info.profile_image_path'];
     const resultContent = [];
 
     const logCodes = await LogCodeModel.findAll();
@@ -72,6 +72,7 @@ export default class MemberLogModel extends MySQLModel {
     const oKnex = this.database.select(fieldSet);
     oKnex.from(this.table_name);
     oKnex.leftOuterJoin('member', 'member.seq', 'member_log.other_member_seq')
+    oKnex.innerJoin('group_info', 'group_info.member_seq', 'member.seq')
     oKnex.where(memberLog);
     const cnt_oKnex = oKnex.clone();
     cnt_oKnex.andWhere('member_log.is_view', '0')

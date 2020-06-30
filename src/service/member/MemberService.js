@@ -16,6 +16,7 @@ import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberTemplate from '../../template/mail/member.template';
 import SendMail from '../../libs/send-mail'
+import group_service from "./GroupService";
 
 const MemberServiceClass = class {
   constructor () {
@@ -114,10 +115,10 @@ const MemberServiceClass = class {
     if (member_info.isEmpty() || !member_info.seq) {
       throw new StdObject(-1, '회원정보가 존재하지 않습니다.', 400)
     }
-    if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
-      member_info.addKey('profile_image_url');
-      member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
-    }
+    // if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
+    //   member_info.addKey('profile_image_url');
+    //   member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
+    // }
 
     return {
       member_model,
@@ -315,8 +316,7 @@ const MemberServiceClass = class {
       const output = new StdObject(-1, '프로필 업로드 실패');
 
       const media_root = ServiceConfig.get('media_root');
-      // const upload_path = member_info.user_media_path + `/profile`;
-      const upload_path = `/common`;
+      const upload_path = member_info.user_media_path + `/profile`;
       const upload_full_path = media_root + upload_path;
       if (!(await Util.fileExists(upload_full_path))) {
         await Util.createDirectory(upload_full_path);
@@ -341,7 +341,7 @@ const MemberServiceClass = class {
       await Util.deleteFile(origin_image_path);
 
       if (resize_result.success) {
-        const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
+        const update_profile_result = await group_service.UpdateGroupProfileImage(database, member_info.group_seq, resize_image_path);
         if (update_profile_result) {
           if (!Util.isEmpty(member_info.profile_image_path)) {
             await Util.deleteFile(media_root + member_info.profile_image_path);
