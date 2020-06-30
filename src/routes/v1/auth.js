@@ -25,7 +25,8 @@ routes.post('/', Wrap(async(req, res) => {
     } else {
       ip = req.connection.remoteAddress;
     }
-    await MemberLogService.createMemberLog(DBMySQL, member_info.seq, '0000', 'login', ip, 'N');
+    await MemberLogService.createMemberLog(DBMySQL, member_info.seq, '0000', 'login', ip);
+    output.add('notify', await MemberLogService.getNoticeListMemberLog(DBMySQL, member_info.seq));
     return res.json(output);
   } catch (e) {
     throw new StdObject(-1, '로그인에 실패하였습니다. 잠시후에 다시 시도해 주세요.', 400)

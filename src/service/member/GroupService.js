@@ -837,6 +837,11 @@ const GroupServiceClass = class {
     return result_list
   }
 
+  getGroupSeqByMemberInfo = async (database, group_seq) => {
+    const group_info_model = this.getGroupModel(database);
+    return await group_info_model.getGroupSeqByMemberInfo(group_seq)
+  }
+
   getGroupCountsInfo = async (database, group_seq) => {
     try {
       const groupcountmodel = this.getGroupCountsModel(database);
