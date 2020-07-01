@@ -15,17 +15,15 @@ export default class Content_CountsModel extends MySQLModel {
     this.log_prefix = '[Content_CountsModel]'
   }
 
-  getMentoringLists = async (category_code) => {
+  getMentoringLists = async (category_code, group_seq) => {
     const display_columns = [
-      'group_info.seq as group_seq', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
+      'group_info.seq as group_seq', 'group_info.group_name', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
       , 'member.user_name', 'member.hospname'
       , 'group_counts.community', 'group_counts.mentoring', 'group_counts.follower'
       , this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
     ]
     const groupby_columns = [
-      'group_info.seq', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
-      , 'member.user_name', 'member.hospname'
-      , 'group_counts.community', 'group_counts.mentoring', 'group_counts.follower'
+      'group_info.seq'
     ]
     const oKnex = this.database.select(display_columns)
       .from('member')
@@ -34,7 +32,11 @@ export default class Content_CountsModel extends MySQLModel {
           .andOn('group_info.is_mentoring', 1)
       })
       .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
-      .leftOuterJoin('following', 'following.following_seq', 'group_info.seq')
+      .leftOuterJoin('following',
+        function() {
+          this.on('following.group_seq', '=', group_seq).andOn('following.following_seq', '=', 'group_info.seq')
+        }
+      )
       .leftOuterJoin('content_counts', function() {
         if (category_code !== 'all') {
           this.on('content_counts.group_seq', 'group_info.seq')

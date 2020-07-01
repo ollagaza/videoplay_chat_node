@@ -14,9 +14,9 @@ const MentoringServiceClass = class {
     return new Content_CountsModel(DBMySQL)
   }
 
-  getMentoringLists = async (database, category_code) => {
+  getMentoringLists = async (database, category_code, group_seq) => {
     const database_model = this.getContent_Counts_Model(database);
-    const result = database_model.getMentoringLists(category_code);
+    const result = database_model.getMentoringLists(category_code, group_seq);
     return result
   }
 }

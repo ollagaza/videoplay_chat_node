@@ -13,9 +13,12 @@ const routes = Router();
 
 routes.post('/getmentolist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
+  const token_info = req.token_info;
+  const group_seq = token_info.getGroupSeq()
+
   const output = new StdObject();
   const category_code = req.body.category_code;
-  const result = await MentoringService.getMentoringLists(DBMySQL, category_code)
+  const result = await MentoringService.getMentoringLists(DBMySQL, category_code, group_seq)
   _.forEach(result, (value) => {
     if (value.profile_image_path !== null) {
       value.profile_image_path = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), value.profile_image_path)
