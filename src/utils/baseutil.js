@@ -54,6 +54,9 @@ const getMediaDirectory = (media_root, media_path) => {
 };
 
 const getUrlPrefix = (media_root, media_path, remove_seq = true) => {
+  if (!media_path) {
+    return null
+  }
   let full_path = media_root + (remove_seq ? removePathSEQ(media_path) : media_path);
   full_path = full_path.replace(PATH_EXP, '/');
   full_path = full_path.replace(/^\/+/g, '');

@@ -7,6 +7,7 @@ import AuthService from '../../service/member/AuthService'
 import MemberService from '../../service/member/MemberService';
 import MemberLogService from '../../service/member/MemberLogService'
 import StdObject from '../../wrapper/std-object'
+import log from '../../libs/logger'
 
 const routes = Router();
 
@@ -29,6 +30,7 @@ routes.post('/', Wrap(async(req, res) => {
     output.add('notify', await MemberLogService.getNoticeListMemberLog(DBMySQL, member_info.seq));
     return res.json(output);
   } catch (e) {
+    log.e(req, e);
     throw new StdObject(-1, '로그인에 실패하였습니다. 잠시후에 다시 시도해 주세요.', 400)
   }
 }));
