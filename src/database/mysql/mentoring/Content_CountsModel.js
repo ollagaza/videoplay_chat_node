@@ -15,7 +15,7 @@ export default class Content_CountsModel extends MySQLModel {
     this.log_prefix = '[Content_CountsModel]'
   }
 
-  getMentoringLists = async (category_code) => {
+  getBestMentoringLists = async (category_code) => {
     const display_columns = [
       'group_info.seq as group_seq', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
       , 'member.user_name', 'member.hospname'

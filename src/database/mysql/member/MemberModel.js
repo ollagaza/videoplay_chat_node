@@ -45,7 +45,7 @@ export default class MemberModel extends MySQLModel {
   }
 
   getMemberInfo = async (member_seq) => {
-    const oKnex = this.database.select(['member.*', 'group_info.seq as group_seq', 'group_info.*'])
+    const oKnex = this.database.select(['member.*', 'group_info.seq as group_seq', 'group_info.profile_image_path'])
       .from(this.table_name)
       .innerJoin('group_info', 'group_info.member_seq', 'member.seq')
       .where('member.seq', member_seq)
