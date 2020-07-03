@@ -402,6 +402,13 @@ const isArray = (value) => {
   return _.isArray(value);
 };
 
+const isObject = (value) => {
+  if (!value) {
+    return false;
+  }
+  return _.isObject(value);
+};
+
 const isString = (value) => {
   if (value === '') {
     return true;
@@ -1206,6 +1213,7 @@ export default {
   isNumber,
   isString,
   isArray,
+  isObject,
   isTrue,
   isFalse,
   urlToPath,

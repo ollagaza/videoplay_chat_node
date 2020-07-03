@@ -853,13 +853,13 @@ const GroupServiceClass = class {
 
   getGroupCountsInfo = async (database, group_seq) => {
     try {
-      const groupcountmodel = this.getGroupCountsModel(database);
-      let result = await groupcountmodel.getCounts(group_seq)
-      if (result === undefined || result.length === 0) {
-        await groupcountmodel.createCounts(group_seq)
-        result = await groupcountmodel.getCounts(group_seq);
+      const group_count_model = this.getGroupCountsModel(database);
+      let group_count_info = await group_count_model.getCounts(group_seq)
+      if (!group_count_info || !group_count_info.seq) {
+        await group_count_model.createCounts(group_seq)
+        group_count_info = await group_count_model.getCounts(group_seq);
       }
-      return result;
+      return group_count_info;
     } catch (e) {
       throw e;
     }
@@ -867,8 +867,9 @@ const GroupServiceClass = class {
 
   UpdateGroupInfoAddCnt = async (database, group_seq, field_name) => {
     try {
-      const groupcountmodel = this.getGroupCountsModel(database);
-      const result = await groupcountmodel.AddCount(group_seq, field_name)
+      const group_count_model = this.getGroupCountsModel(database);
+      const group_count_info = await this.getGroupCountsInfo(database, group_seq)
+      const result = await group_count_model.AddCount(group_count_info.seq, field_name)
       return result;
     } catch (e) {
       throw e;
@@ -877,8 +878,9 @@ const GroupServiceClass = class {
 
   UpdateGroupInfoMinusCnt = async (database, group_seq, field_name) => {
     try {
-      const groupcountmodel = this.getGroupCountsModel(database);
-      const result = await groupcountmodel.MinusCount(group_seq, field_name)
+      const group_count_model = this.getGroupCountsModel(database);
+      const group_count_info = await this.getGroupCountsInfo(database, group_seq)
+      const result = await group_count_model.MinusCount(group_count_info.seq, field_name)
       return result;
     } catch (e) {
       throw e;

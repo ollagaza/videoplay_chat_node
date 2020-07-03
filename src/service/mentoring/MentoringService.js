@@ -1,6 +1,6 @@
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
-import Content_CountsModel from "../../database/mysql/mentoring/Content_CountsModel";
+import ContentCountsModel from "../../database/mysql/member/ContentCountsModel";
 
 const MentoringServiceClass = class {
   constructor() {
@@ -9,9 +9,9 @@ const MentoringServiceClass = class {
 
   getContent_Counts_Model  = (database = null) => {
     if (database) {
-      return new Content_CountsModel(database)
+      return new ContentCountsModel(database)
     }
-    return new Content_CountsModel(DBMySQL)
+    return new ContentCountsModel(DBMySQL)
   }
 
   getMentoringLists = async (database, category_code, group_seq) => {
