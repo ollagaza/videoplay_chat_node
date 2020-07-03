@@ -24,7 +24,7 @@ routes.post('/getmentolist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(r
       value.profile_image_path = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), value.profile_image_path)
     }
   })
-  output.add('mentolist', result);
+  output.add('bestmentolist', bsetMentoResult);
   res.json(output);
 }));
 

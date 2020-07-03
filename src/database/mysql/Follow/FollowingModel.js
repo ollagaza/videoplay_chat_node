@@ -19,7 +19,7 @@ export default class FollowingModel extends MySQLModel {
     const display_columns = [
       'following.seq',
       this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq',
-      'member.user_id', 'member.user_name', 'member.user_nickname', 'member.profile_image_path',
+      'member.user_id', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path',
     ]
     const oKnex = this.database.select(display_columns);
     oKnex.from(this.table_name);

@@ -115,10 +115,10 @@ const MemberServiceClass = class {
     if (member_info.isEmpty() || !member_info.seq) {
       throw new StdObject(-1, '회원정보가 존재하지 않습니다.', 400)
     }
-    // if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
-    //   member_info.addKey('profile_image_url');
-    //   member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
-    // }
+    if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
+      member_info.addKey('profile_image_url');
+      member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
+    }
 
     return {
       member_model,

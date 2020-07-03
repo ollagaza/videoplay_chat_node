@@ -214,7 +214,9 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database)
     const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
     if (group_member_info.profile_image_path) {
-      group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      if (group_member_info.profile_image_url !== null) {
+        group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
     }
     if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()

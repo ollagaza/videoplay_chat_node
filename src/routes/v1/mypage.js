@@ -71,9 +71,8 @@ routes.post('/updateprofile',
       const member_info = await member_service.getMemberInfo(DBMySQL, user_seq);
       const profile_dir = ServiceConfig.get('media_root') + '/' + member_info.user_id + '/profile';
       const directory_exits = await Util.createDirectory(profile_dir);
-      const move_file = '';
-      if (req.files.profile_image !== undefined) {
-        move_file = await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
+      if (directory_exits && req.files.profile_image !== undefined) {
+        await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
       }
 
       await DBMySQL.transaction(async (transaction) => {
