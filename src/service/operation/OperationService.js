@@ -513,8 +513,15 @@ const OperationServiceClass = class {
   updateAnalysisStatus = async (database, operation_info, status) => {
     const operation_model = this.getOperationModel(database)
     await operation_model.updateAnalysisStatus(operation_info.seq, status);
-    if (status === 'Y' && ServiceConfig.isVacs()) {
-      VacsService.updateStorageInfo()
+    if (status === 'Y') {
+      try {
+        await OperationDataService.onUpdateComplete(operation_info.seq)
+      } catch (error) {
+        log.error(this.log_prefix, '[updateAnalysisStatus] - OperationDataService.onUpdateComplete', operation_info.seq, error)
+      }
+      if (ServiceConfig.isVacs()) {
+        VacsService.updateStorageInfo()
+      }
     }
   }
 

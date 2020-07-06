@@ -1,16 +1,13 @@
-import _ from "lodash"
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import log from "../../libs/logger"
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import OperationDataInfo from '../../wrapper/operation/OperationDataInfo'
 import GroupService from '../member/GroupService'
+import ContentCountService from '../member/ContentCountService'
 import DBMySQL from '../../database/knex-mysql'
 import OperationService from './OperationService'
 import striptags from 'striptags'
-import OperationFileService from './OperationFileService'
-import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
-import ServiceConfig from '../service-config'
 import HashtagService from './HashtagService'
 
 const OperationDataServiceClass = class {
@@ -98,6 +95,38 @@ const OperationDataServiceClass = class {
       return null
     }
     await operation_data_model.updateThumbnailImageNotExists(operation_data.seq, thumbnail_path)
+  }
+
+  onUpdateComplete = async (operation_seq) => {
+    const operation_data_model = this.getOperationDataModel()
+    const operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_seq)
+    if (!operation_data || operation_data.isEmpty()) {
+      return null
+    }
+    const operation_data_seq = operation_data.seq
+    const group_seq = operation_data.group_seq
+
+    await operation_data_model.updateComplete(operation_data_seq)
+    // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
+
+    const group_count_field_name = ['video_count']
+    const content_count_field_name = [ContentCountService.VIDEO_COUNT]
+    if (operation_data.type === 'M') {
+      group_count_field_name.push('mentoring')
+      content_count_field_name.push(ContentCountService.MENTORING_COUNT)
+    } else if (operation_data.type === 'C') {
+      group_count_field_name.push('community')
+      content_count_field_name.push(ContentCountService.COMMUNITY_COUNT)
+    }
+    await GroupService.UpdateGroupInfoAddCnt(null, group_seq, group_count_field_name)
+
+    if (operation_data.category_list) {
+      for (let i = 0; i < operation_data.category_list.length; i++) {
+        const category_code = operation_data.category_list[i]
+        await ContentCountService.addContentCount(null, category_code, group_seq, content_count_field_name)
+      }
+      await ContentCountService.updateAllCount(null, group_seq)
+    }
   }
 }
 
