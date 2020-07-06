@@ -14,10 +14,32 @@ const MentoringServiceClass = class {
     return new Content_CountsModel(DBMySQL)
   }
 
-  getMentoringLists = async (database, category_code) => {
-    const database_model = this.getContent_Counts_Model(database);
-    const result = database_model.getBestMentoringLists(category_code);
-    return result
+  getBestMentoringLists = async (database, category_code, group_seq) => {
+    try {
+      const database_model = this.getContent_Counts_Model(database);
+      const result = database_model.getBestMentoringLists(category_code, group_seq);
+      return result
+    } catch (e) {
+      throw e;
+    }
+  }
+  getRecommendMentoringLists = async (database, category_code) => {
+    try {
+      const database_model = this.getContent_Counts_Model(database);
+      const result = database_model.getRecommendMentoringLists(category_code);
+      return result
+    } catch (e) {
+      throw e;
+    }
+  }
+  getSearchMentoringLists = async (database, sSearch) => {
+    try {
+      const database_model = this.getContent_Counts_Model(database);
+      const result = database_model.getSearchMentoringLists(sSearch);
+      return result
+    } catch (e) {
+      throw e;
+    }
   }
 }
 
