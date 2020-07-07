@@ -35,7 +35,7 @@ const HashtagServiceClass = class {
     await DBMySQL.transaction(async(transaction) => {
       const hashtag_use_model = this.getHashtagUseModel(transaction)
       await hashtag_use_model.deleteUnUseTagList(tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
-      await hashtag_use_model.updateHashtagUseList(1, tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
+      await hashtag_use_model.updateHashtagUseList(group_seq, tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
     })
 
     const hashtag_use_model = this.getHashtagUseModel(DBMySQL)
