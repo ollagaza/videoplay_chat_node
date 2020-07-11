@@ -53,6 +53,25 @@ const MongoDataServiceClass = class {
     }
     return output;
   }
+
+  getSearchData = (data_type = null, search_keyword = null, lang = 'kor') => {
+    let data = null;
+    if (data_type !== null && search_keyword !== null) {
+      switch (data_type) {
+        case this.MEDICAL:
+          data = this.getMedicalInfo(lang)
+          break;
+        case this.INTEREST:
+          data = this.getInterestInfo(lang)
+          break;
+        default:
+          break;
+      }
+    }
+    return _.filter(data, function(item) {
+      return item.text.indexOf(search_keyword) != -1 ? item : null;
+    })
+  }
 }
 
 const mongo_data_service = new MongoDataServiceClass()

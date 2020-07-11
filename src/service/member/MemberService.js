@@ -309,7 +309,7 @@ const MemberServiceClass = class {
     return output
   }
 
-  changeProfileImage = async (database, member_seq, request, response) => {
+  changeProfileImage = async (database, member_seq, group_seq, request, response) => {
     try {
       const {member_info, member_model} = await this.getMemberInfoWidthModel(database, member_seq);
 
@@ -341,7 +341,7 @@ const MemberServiceClass = class {
       await Util.deleteFile(origin_image_path);
 
       if (resize_result.success) {
-        const update_profile_result = await group_service.UpdateGroupProfileImage(database, member_info.group_seq, resize_image_path);
+        const update_profile_result = await group_service.UpdateGroupProfileImage(database, group_seq, resize_image_path);
         if (update_profile_result) {
           if (!Util.isEmpty(member_info.profile_image_path)) {
             await Util.deleteFile(media_root + member_info.profile_image_path);

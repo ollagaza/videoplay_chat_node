@@ -11,7 +11,7 @@ export default class ProFileModel extends MySQLModel {
     super(database)
 
     this.table_name = 'group_info'
-    this.selectable_fields = ['seq', 'member_seq', 'profile', 'is_channel', 'is_mentoring']
+    this.selectable_fields = ['seq', 'profile_image_path', 'member_seq', 'profile', 'is_channel', 'is_mentoring']
     this.log_prefix = '[ProFileModel]'
   }
 

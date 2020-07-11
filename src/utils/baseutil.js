@@ -927,9 +927,21 @@ const trim = (value) => {
   return _.trim(value);
 }
 
+const duplicateObject = async (originObject) => {
+  const returnObject = [];
+  _.forEach(originObject, (item) => {
+    const keyCheck = _.find(returnObject, item)
+    if (!keyCheck) {
+      returnObject.push(item);
+    }
+  })
+  return returnObject;
+}
+
 export default {
   removePathSlash,
   removePathLastSlash,
+  duplicateObject,
   "common_path_upload" : multer({ storage : storate }),
   "removePathSEQ": removePathSEQ,
   "getMediaDirectory": getMediaDirectory,
