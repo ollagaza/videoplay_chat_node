@@ -1,5 +1,6 @@
 import Util from '../../utils/baseutil'
 import DBMySQL from '../../database/knex-mysql'
+import log from "../../libs/logger";
 
 import HashtagModel from '../../database/mysql/operation/HashtagModel'
 import HashtagUseModel from '../../database/mysql/operation/HashtagUseModel'
@@ -43,6 +44,16 @@ const HashtagServiceClass = class {
       await hashtag_use_model.updateHashtagCount(tag_seq_list)
     } catch (error) {
       log.error(this.log_prefix, '[updateOperationHashtag]', error)
+    }
+  }
+  getSearchHashtag = async (database, sSearch) => {
+    try {
+      const hashtag_model = this.getHashtagModel(database);
+      const hashtag_search_result = await hashtag_model.getSearchHashtag(sSearch);
+
+      return hashtag_search_result;
+    } catch (error) {
+      log.error(this.log_prefix, '[getSearchHashtag]', error);
     }
   }
 }

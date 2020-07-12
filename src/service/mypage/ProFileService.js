@@ -26,6 +26,7 @@ const ProFileServiceClass = class {
       const profile_model = this.getProFileModel(database)
       const profileinfo = await profile_model.getProFileInfo(group_seq)
       const json_profileinfo = JSON.parse(profileinfo.profile);
+      profileinfo.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), profileinfo.profile_image_path)
       if (json_profileinfo !== null && json_profileinfo.image !== undefined) {
         json_profileinfo.image = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), json_profileinfo.image)
       }

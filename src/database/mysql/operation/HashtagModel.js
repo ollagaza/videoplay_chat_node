@@ -34,5 +34,15 @@ export default class HashtagModel extends MySQLModel {
     return result_list
   }
 
-
+  getSearchHashtag = async (sSearch) => {
+    try {
+      const query = this.database
+        .select('*')
+        .from('hashtag')
+        .where('hashtag.hashtag', 'like', `%${sSearch}%`)
+      return query
+    } catch (e) {
+      throw e;
+    }
+  }
 }

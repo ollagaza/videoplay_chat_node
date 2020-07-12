@@ -18,12 +18,12 @@ export default class FollowerModel extends MySQLModel {
   getFollowerLists = async group_seq => {
     const display_columns = [
       'follower.seq',
-      this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq',
+      this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq', 'group_info.group_name',
       'member.user_id', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path',
       this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
     ]
     const groupby_columns = [
-      'follower.seq', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path'
+      'follower.seq'
     ]
     const oKnex = this.database.select(display_columns);
     oKnex.from(this.table_name);
@@ -42,12 +42,12 @@ export default class FollowerModel extends MySQLModel {
   getInquiryFollowerLists = async (login_group_seq, inquiry_group_seq) => {
     const display_columns = [
       'follower.seq',
-      this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq',
+      this.database.raw('group_info.seq as group_seq'), 'group_info.member_seq', 'group_info.group_name',
       'member.user_id', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path',
       this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
     ]
     const groupby_columns = [
-      'follower.seq', 'member.user_name', 'member.user_nickname', 'group_info.profile_image_path'
+      'follower.seq'
     ]
     const oKnex = this.database.select(display_columns);
     oKnex.from(this.table_name);
