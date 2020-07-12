@@ -84,10 +84,11 @@ routes.post('/operationmentoreceivelist', Auth.isAuthenticated(Role.LOGIN_USER),
   req.accepts('application/json');
   const token_info = req.token_info;
   const group_seq = token_info.getGroupSeq()
+  const send_group_seq = req.body.group_seq
   const output = new StdObject();
 
   try {
-    output.add('operation_mento_receive_list', await MentoringService.getOperationMentoReceiveList(DBMySQL, group_seq))
+    output.add('operation_mento_receive_list', await MentoringService.getOperationMentoReceiveList(DBMySQL, send_group_seq === undefined ? group_seq : send_group_seq))
     res.json(output);
   } catch (e) {
     throw new StdObject(-1, e, 400);

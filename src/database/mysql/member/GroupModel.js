@@ -176,4 +176,12 @@ export default class GroupModel extends MySQLModel {
       .first();
     return query;
   }
+
+  getGroupInfoHashtag = async (group_seq) => {
+    return await this.findOne({ seq: group_seq }, ['hashtag'])
+  }
+
+  updateGroupInfoHashTag = async (group_seq, hashtag_json) => {
+    return await this.update({ seq: group_seq }, { hashtag: JSON.stringify(hashtag_json) })
+  }
 }
