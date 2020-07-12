@@ -125,7 +125,7 @@ routes.get('/view/:operation_data_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_US
     throw new StdObject(-3, '등록된 수술이 없습니다.', 400)
   }
   const clip_list = await OperationClipService.findByOperationSeq(operation_data_info.operation_seq);
-  const group_info = await GroupService.getGroupInfoToContentCount(DBMySQL, operation_data_info.operation_seq)
+  const group_info = await GroupService.getGroupInfoToGroupCounts(DBMySQL, operation_data_info.operation_seq)
 
   const output = new StdObject();
   output.add('operation_info', operation_info);
