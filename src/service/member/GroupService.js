@@ -898,6 +898,16 @@ const GroupServiceClass = class {
       throw e;
     }
   }
+
+  getGroupInfoToContentCount = async (database, group_seq) => {
+    try {
+      const group_model = this.getGroupModel(database);
+      const result = await group_model.getGroupInfoToContentCount(group_seq);
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
 }
 
 const group_service = new GroupServiceClass()
