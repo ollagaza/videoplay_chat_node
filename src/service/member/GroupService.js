@@ -899,10 +899,10 @@ const GroupServiceClass = class {
     }
   }
 
-  getGroupInfoToContentCount = async (database, group_seq) => {
+  getGroupInfoToGroupCounts = async (database, group_seq) => {
     try {
       const group_model = this.getGroupModel(database);
-      const result = await group_model.getGroupInfoToContentCount(group_seq);
+      const result = await group_model.getGroupInfoToGroupCounts(group_seq);
       return result;
     } catch (e) {
       throw e;
