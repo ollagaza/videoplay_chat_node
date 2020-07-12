@@ -63,12 +63,15 @@ const OperationServiceClass = class {
       throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
     }
     const operation_seq = operation_info.seq
+    output.add('operation_info', operation_info);
 
     await database.transaction(async(transaction) => {
-      await OperationMediaService.createOperationMediaInfo(database, operation_info);
-      await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info);
+      const operation_media_seq = await OperationMediaService.createOperationMediaInfo(database, operation_info);
+      const operation_storage_seq = await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info);
 
-      output.add('operation_seq', operation_info.seq);
+      output.add('operation_seq', operation_seq);
+      output.add('operation_media_seq', operation_media_seq);
+      output.add('operation_storage_seq', operation_storage_seq);
 
       is_success = true;
     });
@@ -92,6 +95,23 @@ const OperationServiceClass = class {
         output.add('operation_data_seq', operation_data_seq);
       }
     }
+    return output;
+  }
+
+  copyOperation = async (database, member_info, group_member_info, request_body, status = null) => {
+    const output = new StdObject();
+    let is_success = false;
+    const target_operation_seq = request_body.target_operation_seq
+    const target_operation_info = await this.getOperationInfoNoAuth(database, target_operation_seq)
+    const create_result = await this.createOperation(database, member_info, group_member_info, request_body, status)
+    const operation_seq = create_result.get('operation_seq')
+    const operation_media_seq = create_result.get('operation_media_seq')
+    const operation_storage_seq = create_result.get('operation_storage_seq')
+    const operation_info = create_result.get('operation_info')
+    const content_id = operation_info.content_id
+
+    await OperationMediaService.copyOperationMediaInfo(database, operation_seq, content_id, target_operation_seq)
+
     return output;
   }
 
@@ -182,6 +202,12 @@ const OperationServiceClass = class {
     const operation_model = this.getOperationModel(database)
     const operation_info = await operation_model.getOperationInfo(operation_seq)
     return { operation_info, operation_model }
+  }
+
+  getOperationInfoNoJoin = async (database, operation_seq) => {
+    const operation_model = this.getOperationModel(database)
+    const operation_info = await operation_model.getOperationInfoNoJoin(operation_seq)
+    return operation_info
   }
 
   getOperationInfo = async (database, operation_seq, token_info, check_owner= true, import_media_info = false) => {

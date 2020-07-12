@@ -31,6 +31,28 @@ const OperationMediaServiceClass = class {
     return await operation_media_model.getOperationMediaInfo(operation_info)
   }
 
+  getOperationMediaInfoByOperationSeq = async (database, operation_seq) => {
+    const operation_media_model = this.getOperationMediaModel(database)
+    return await operation_media_model.getOperationMediaInfoByOperationSeq(operation_seq)
+  }
+
+  copyOperationMediaInfo = async (database, operation_seq, content_id, target_operation_seq, target_content_id) => {
+    const target_media_info = await this.getOperationMediaInfoByOperationSeq(database, target_operation_seq)
+    if (target_media_info && !target_media_info.isEmpty()) {
+      target_media_info.setKeys([
+        'video_file_name', 'proxy_file_name', 'fps', 'width', 'height', 'proxy_max_height',
+        'total_time', 'total_frame', 'smil_file_name', ' is_trans_complete', 'stream_url', 'thumbnail'
+      ])
+      target_media_info.setIgnoreEmpty(true)
+      const media_info = target_media_info.toJSON()
+
+      const replace_regex = new RegExp(target_content_id, 'gi')
+      if (media_info.thumbnail) {
+        media_info.thumbnail = media_info.thumbnail.replace(replace_regex, content_id)
+      }
+    }
+  }
+
   getSmilInfo = async (directory_info, smil_file_name) => {
     if (!smil_file_name) {
       smil_file_name = ServiceConfig.get('default_smil_file_name');

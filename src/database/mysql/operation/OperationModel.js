@@ -20,6 +20,10 @@ export default class OperationModel extends MySQLModel {
     this.log_prefix = '[OperationModel]'
   }
 
+  getOperationInfoNoJoin = async (operation_seq) => {
+    return await this.findOne({ seq: operation_seq })
+  }
+
   getOperation = async (where, import_media_info) => {
     const query = this.database.select(join_select);
     query.from('operation');
