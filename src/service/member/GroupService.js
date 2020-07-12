@@ -903,6 +903,9 @@ const GroupServiceClass = class {
     try {
       const group_model = this.getGroupModel(database);
       const result = await group_model.getGroupInfoToGroupCounts(group_seq);
+      if (result && result.profile_image_path) {
+        result.profile_image_url = ServiceConfig.get('static_storage_prefix') + result.profile_image_path
+      }
       return result;
     } catch (e) {
       throw e;

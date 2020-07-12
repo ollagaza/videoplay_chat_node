@@ -16,6 +16,7 @@ import ServiceConfig from "../../service/service-config";
 import GroupService from "../../service/member/GroupService";
 import baseutil from "../../utils/baseutil";
 import OperationClipService from '../../service/operation/OperationClipService'
+import OperationFileService from '../../service/operation/OperationFileService'
 
 
 const routes = Router();
@@ -125,13 +126,15 @@ routes.get('/view/:operation_data_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_US
     throw new StdObject(-3, '등록된 수술이 없습니다.', 400)
   }
   const clip_list = await OperationClipService.findByOperationSeq(operation_data_info.operation_seq);
-  const group_info = await GroupService.getGroupInfoToGroupCounts(DBMySQL, operation_data_info.operation_seq)
+  const writer_info = await GroupService.getGroupInfoToGroupCounts(DBMySQL, operation_data_info.group_seq)
+  const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_REFER)
 
   const output = new StdObject();
   output.add('operation_info', operation_info);
   output.add('operation_data_info', operation_data_info);
   output.add('clip_list', clip_list);
-  output.add('group_info', group_info);
+  output.add('writer_info', writer_info);
+  output.add('refer_file_list', refer_file_list);
 
   res.json(output);
 }));
