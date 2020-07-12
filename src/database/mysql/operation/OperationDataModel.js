@@ -68,4 +68,18 @@ export default class OperationDataModel extends MySQLModel {
     }
     return await this.update(filter, update_params)
   }
+
+  setRejectMentoring = async (operation_data_seq) => {
+    try {
+      const filter = {
+        seq: operation_data_seq
+      }
+      const update_params = {
+        is_mento_complete: 'R'
+      }
+      return await this.update(filter, update_params)
+    } catch (e) {
+      throw e;
+    }
+  }
 }

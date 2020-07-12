@@ -128,6 +128,15 @@ const OperationDataServiceClass = class {
       await ContentCountService.updateAllCount(null, group_seq)
     }
   }
+
+  setRejectMentoring = async (operation_seq) => {
+    try {
+      const operation_data_model = this.getOperationDataModel()
+      return await operation_data_model.setRejectMentoring(operation_seq);
+    } catch (e) {
+      throw e;
+    }
+  }
 }
 
 const operation_data_service = new OperationDataServiceClass()

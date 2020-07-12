@@ -9,6 +9,7 @@ import MongoDataService from '../../service/common/MongoDataService'
 import HashtagService from '../../service/operation/HashtagService';
 import MentoringService from "../../service/mentoring/MentoringService";
 import FollowService from "../../service/follow/FollowService";
+import OperationDataService from '../../service/operation/OperationDataService'
 import Util from "../../utils/baseutil";
 import ServiceConfig from "../../service/service-config";
 import GroupService from "../../service/member/GroupService";
@@ -87,6 +88,18 @@ routes.post('/operationmentoreceivelist', Auth.isAuthenticated(Role.LOGIN_USER),
 
   try {
     output.add('operation_mento_receive_list', await MentoringService.getOperationMentoReceiveList(DBMySQL, group_seq))
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
+}));
+
+routes.post('/reject_operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const output = new StdObject();
+  const operation_data_seq = req.body.operation_data_seq;
+  try {
+    const result = await OperationDataService.setRejectMentoring(operation_data_seq);
     res.json(output);
   } catch (e) {
     throw new StdObject(-1, e, 400);

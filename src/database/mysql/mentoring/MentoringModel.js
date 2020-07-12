@@ -122,7 +122,7 @@ export default class MentoringModel extends MySQLModel {
   getOperationMentoReceiveList = async (group_seq) => {
     try {
       const display_columns = [
-        'operation_data.operation_seq', 'operation_data.is_mento_complete',
+        'operation_data.seq', 'operation_data.operation_seq', 'operation_data.is_mento_complete',
         'operation_data.title', 'operation_data.group_name',
         'operation_data.reg_date'
       ]
@@ -134,6 +134,7 @@ export default class MentoringModel extends MySQLModel {
           this.where('operation_data.type', 'M')
             .andWhere('operation_data.is_complete', '1')
             .andWhere('operation_data.mento_group_seq', group_seq)
+            .whereIn('operation_data.is_mento_complete', ['S', 'C'])
         })
         .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
       return oKnex;
