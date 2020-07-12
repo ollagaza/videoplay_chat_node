@@ -163,8 +163,17 @@ export default class GroupModel extends MySQLModel {
       return await this.update({ seq: member_seq, group_type: 'P' }, update_params)
     }
   }
-  
+
   updateProfileImage = async (group_seq, profile_image_path) => {
     return await this.update( { seq: group_seq }, { profile_image_path: profile_image_path } );
   };
+
+  getGroupInfoToContentCount = async (group_seq) => {
+    const query = this.database.select('*')
+      .from(this.table_name)
+      .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
+      .where('group_info.seq', group_seq)
+      .first();
+    return query;
+  }
 }
