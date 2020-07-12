@@ -4,6 +4,7 @@ import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import OperationService from '../operation/OperationService'
+import OperationDataService from '../operation/OperationDataService'
 import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
 import SmilInfo from '../../wrapper/xml/SmilInfo'
 import Constants from '../../constants/constants'
@@ -28,6 +29,28 @@ const OperationMediaServiceClass = class {
   getOperationMediaInfo = async (database, operation_info) => {
     const operation_media_model = this.getOperationMediaModel(database)
     return await operation_media_model.getOperationMediaInfo(operation_info)
+  }
+
+  getOperationMediaInfoByOperationSeq = async (database, operation_seq) => {
+    const operation_media_model = this.getOperationMediaModel(database)
+    return await operation_media_model.getOperationMediaInfoByOperationSeq(operation_seq)
+  }
+
+  copyOperationMediaInfo = async (database, operation_seq, content_id, target_operation_seq, target_content_id) => {
+    const target_media_info = await this.getOperationMediaInfoByOperationSeq(database, target_operation_seq)
+    if (target_media_info && !target_media_info.isEmpty()) {
+      target_media_info.setKeys([
+        'video_file_name', 'proxy_file_name', 'fps', 'width', 'height', 'proxy_max_height',
+        'total_time', 'total_frame', 'smil_file_name', ' is_trans_complete', 'stream_url', 'thumbnail'
+      ])
+      target_media_info.setIgnoreEmpty(true)
+      const media_info = target_media_info.toJSON()
+
+      const replace_regex = new RegExp(target_content_id, 'gi')
+      if (media_info.thumbnail) {
+        media_info.thumbnail = media_info.thumbnail.replace(replace_regex, content_id)
+      }
+    }
   }
 
   getSmilInfo = async (directory_info, smil_file_name) => {
@@ -73,6 +96,11 @@ const OperationMediaServiceClass = class {
     const thumbnail_result = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
     if (thumbnail_result) {
       update_params.thumbnail = thumbnail_result.path
+      try {
+        await OperationDataService.setThumbnailAuto(operation_info.seq, update_params.thumbnail)
+      } catch (error) {
+        log.error(this.log_prefix, '[updateTranscodingComplete ]', error)
+      }
     }
 
     const operation_media_model = this.getOperationMediaModel(database)

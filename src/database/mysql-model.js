@@ -23,7 +23,11 @@ const queryGenerator = (database, table_name, selectable_fields, filters = null,
   }
 
   if (order != null) {
-    oKnex.orderBy(order.name, order.direction)
+    if (_.isArray(order)) {
+      oKnex.orderBy(order)
+    } else {
+      oKnex.orderBy(order.name, order.direction)
+    }
   }
   return oKnex
 }
@@ -259,5 +263,107 @@ export default class MysqlModel {
 
   queryWhere = (oKnex, filter) => {
     queryWhere(oKnex, filter);
+  }
+
+  isNumber = (str) => {
+    try {
+      return !isNaN(parseFloat(str)) && isFinite(str);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  isArray = (value) => {
+    if (!value) {
+      return false;
+    }
+    return _.isArray(value);
+  }
+
+  isObject = (value) => {
+    if (!value) {
+      return false;
+    }
+    return _.isObject(value);
+  }
+
+  isString = (value) => {
+    if (value === '') {
+      return true;
+    }
+    if (!value) {
+      return false;
+    }
+    return _.isString(value);
+  }
+
+  getInt = (str, on_error_result=0) => {
+    if (this.isNumber(str)) {
+      try {
+        return parseInt(str, 10);
+      } catch (e) {
+        return on_error_result;
+      }
+    } else {
+      return on_error_result;
+    }
+  }
+
+  getAddCountQueryParams = (update_field, field_name_map = null) => {
+    const update_params = {}
+    let has_params = false
+    if (this.isArray(update_field)) {
+      update_field.forEach((field_name) => {
+        if (field_name_map && !field_name_map[field_name]) return
+        update_params[field_name] = this.database.raw(`\`${field_name}\` + 1`)
+        has_params = true
+      })
+    } else if (this.isString(update_field)) {
+      if (!field_name_map || field_name_map[update_field]) {
+        update_params[update_field] = this.database.raw(`\`${update_field}\` + 1`)
+        has_params = true
+      }
+    } else if (this.isObject(update_field)) {
+      Object.keys(update_field).forEach((field_name) => {
+        if (field_name_map && !field_name_map[field_name]) return
+        const add_count = this.getInt(update_field[field_name], 0)
+        if (add_count <= 0) return
+        update_params[field_name] = this.database.raw(`\`${field_name}\` + ${add_count}`)
+        has_params = true
+      })
+    }
+    if (!has_params) {
+      return null
+    }
+    return update_params
+  }
+
+  getMinusCountQueryParams = (update_field, field_name_map = null) => {
+    const update_params = {}
+    let has_params = false
+    if (this.isArray(update_field)) {
+      update_field.forEach((field_name) => {
+        if (field_name_map && !field_name_map[field_name]) return
+        update_params[field_name] = this.database.raw(`IF(\`${field_name}\` - 1 >= 0, \`${field_name}\` - 1, 0)`)
+        has_params = true
+      })
+    } else if (this.isString(update_field)) {
+      if (!field_name_map || field_name_map[update_field]) {
+        update_params[update_field] = this.database.raw(`IF(\`${update_field}\` - 1 >= 0, \`${update_field}\` - 1, 0)`)
+        has_params = true
+      }
+    } else if (this.isObject(update_field)) {
+      Object.keys(update_field).forEach((field_name) => {
+        if (field_name_map && !field_name_map[field_name]) return
+        const minus_count = this.parseInt(update_field[field_name], 0)
+        if (minus_count <= 0) return
+        update_params[field_name] = this.database.raw(`case when \`${field_name}\` - ${minus_count} >= 0 then \`${field_name}\` - ${minus_count} else 0 end`)
+        has_params = true
+      })
+    }
+    if (!has_params) {
+      return null
+    }
+    return update_params
   }
 }

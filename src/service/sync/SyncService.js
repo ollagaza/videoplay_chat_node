@@ -21,7 +21,7 @@ const SyncServiceClass = class {
   }
 
   getOperationInfoBySeq = async (operation_seq) => {
-    const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
+    const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
     }
@@ -92,7 +92,6 @@ const SyncServiceClass = class {
         const file_name = video_file.name;
         const file_size = await Util.getFileSize(directory_info.origin + file_name)
         const matches = file_name.match(trans_file_regex)
-        log.debug(this.log_prefix, `matches ${file_name}`, matches)
         if (matches) {
           if (file_name === operation_media_info.video_file_name) {
             origin_video_size += file_size
@@ -165,17 +164,21 @@ const SyncServiceClass = class {
         const move_file_info = move_file_list[i]
         await Util.renameFile(move_file_info.target, move_file_info.dest)
       }
-      // TODO: 부산대 테스트 끝나면 아래 조건 제거
-      if (operation_info.group_seq !== 30) {
+      if (ServiceConfig.isVacs()) {
         await Util.deleteDirectory(directory_info.origin)
-      }
-    }
-    if (ServiceConfig.isVacs() === false) {
-      try {
-        const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq })
-        log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
-      } catch(error) {
-        log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
+      } else {
+        try {
+          const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq })
+          log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
+        } catch(error) {
+          log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
+        }
+        try {
+          const request_result = await CloudFileService.requestMoveToArchive(directory_info.media_origin, true, operation_info.content_id)
+          log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToArchive] - origin', `file_path: ${directory_info.media_origin}`, request_result)
+        } catch (error) {
+          log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToArchive]', error)
+        }
       }
     }
     if (analysis_status === 'Y') {

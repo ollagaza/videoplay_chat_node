@@ -42,6 +42,18 @@ const CloudFileServiceClass = class {
     return { 'origin_file_name': file_name }
   }
 
+  getCloudFileInfo = (file_path, file_list = null, is_folder = true, content_id = null) => {
+    const cloud_file_info = new CloudFileInfo()
+    cloud_file_info.origin_path = file_path
+    cloud_file_info.is_folder = is_folder
+    cloud_file_info.remote_path = file_path
+    cloud_file_info.file_list = file_list
+    if (content_id) {
+      cloud_file_info.content_id = content_id
+    }
+    return cloud_file_info
+  }
+
   requestMoveToObject = async (file_path, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
     let file_list = null
     if (!is_folder) {
@@ -54,15 +66,24 @@ const CloudFileServiceClass = class {
     if (!is_folder && (!file_list || file_list.length === 0)) {
       return false
     }
-    const cloud_file_info = new CloudFileInfo()
-    cloud_file_info.origin_path = file_path
-    cloud_file_info.is_folder = is_folder
-    cloud_file_info.remote_path = file_path
-    cloud_file_info.file_list = file_list
-    if (content_id) {
-      cloud_file_info.content_id = content_id
-    }
+    const cloud_file_info = this.getCloudFileInfo(file_path, file_list, is_folder, content_id)
+    return await this.requestApi(this.MOVE, cloud_file_info, response_url, response_data, method)
+  }
 
+  requestMoveToArchive = async (file_path, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
+    let file_list = null
+    if (!is_folder) {
+      file_list = await this.getFileList(file_path)
+    }
+    return await this.requestMoveToArchiveByList(file_path, file_list, is_folder, content_id, response_url, response_data, method)
+  }
+
+  requestMoveToArchiveByList = async (file_path, file_list = null, is_folder = true, content_id = null, response_url = null, response_data = null, method = 'POST') => {
+    if (!is_folder && (!file_list || file_list.length === 0)) {
+      return false
+    }
+    const cloud_file_info = this.getCloudFileInfo(file_path, file_list, is_folder, content_id)
+    cloud_file_info.remote_type = Constants.ARCHIVE
     return await this.requestApi(this.MOVE, cloud_file_info, response_url, response_data, method)
   }
 

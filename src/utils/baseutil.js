@@ -54,6 +54,9 @@ const getMediaDirectory = (media_root, media_path) => {
 };
 
 const getUrlPrefix = (media_root, media_path, remove_seq = true) => {
+  if (!media_path) {
+    return null
+  }
   let full_path = media_root + (remove_seq ? removePathSEQ(media_path) : media_path);
   full_path = full_path.replace(PATH_EXP, '/');
   full_path = full_path.replace(/^\/+/g, '');
@@ -397,6 +400,13 @@ const isArray = (value) => {
     return false;
   }
   return _.isArray(value);
+};
+
+const isObject = (value) => {
+  if (!value) {
+    return false;
+  }
+  return _.isObject(value);
 };
 
 const isString = (value) => {
@@ -800,7 +810,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     if (req.new_file_name) {
-      if (path.extname(req.new_file_name) === '') {
+      if (req.disable_auto_ext !== true && path.extname(req.new_file_name) === '') {
         req.new_file_name = req.new_file_name + path.extname(file.originalname);
       }
       cb(null, req.new_file_name);
@@ -811,7 +821,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const uploadImageFile = async (user_info, req, res, key = 'image') => {
+const uploadImageFile = async (user_info, req, res, key = 'image', disable_auto_ext = false) => {
   const media_root = ServiceConfig.get('media_root');
   const upload_path = user_info.user_media_path + "image";
   const upload_full_path = media_root + upload_path;
@@ -821,7 +831,7 @@ const uploadImageFile = async (user_info, req, res, key = 'image') => {
 
   const new_file_name = getRandomId();
   const upload_file_path = upload_full_path + '/' + new_file_name;
-  await uploadByRequest(req, res, key, upload_full_path, new_file_name);
+  await uploadByRequest(req, res, key, upload_full_path, new_file_name, disable_auto_ext);
   const upload_file_info = req.file;
   if (isEmpty(upload_file_info) || !(await fileExists(upload_file_path))) {
     log.e(req, 'upload fail', upload_file_info);
@@ -837,7 +847,7 @@ const uploadImageFile = async (user_info, req, res, key = 'image') => {
   return { image_url: image_url, image_path: upload_path + '/' + new_file_name };
 }
 
-const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null) => {
+const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null, disable_auto_ext = false) => {
   const async_func = new Promise( (resolve, reject) => {
     const uploader = multer({
       storage,
@@ -847,6 +857,7 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
     }).single(key);
     req.upload_directory = upload_directory;
     req.new_file_name = new_file_name;
+    req.disable_auto_ext = disable_auto_ext;
     uploader(req, res, error => {
       if (error) {
         log.e(req, error);
@@ -858,7 +869,7 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
     });
   });
 
-  return await async_func;
+  return async_func;
 };
 
 const storate = multer.diskStorage({
@@ -905,12 +916,32 @@ const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpax
     })
   })
 
-  return await async_func
+  return async_func
+}
+
+const trim = (value) => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  return _.trim(value);
+}
+
+const duplicateObject = async (originObject) => {
+  const returnObject = [];
+  _.forEach(originObject, (item) => {
+    const keyCheck = _.find(returnObject, item)
+    if (!keyCheck) {
+      returnObject.push(item);
+    }
+  })
+  return returnObject;
 }
 
 export default {
   removePathSlash,
   removePathLastSlash,
+  duplicateObject,
   "common_path_upload" : multer({ storage : storate }),
   "removePathSEQ": removePathSEQ,
   "getMediaDirectory": getMediaDirectory,
@@ -967,13 +998,7 @@ export default {
 
   "isEmpty": isEmpty,
 
-  "trim": (value) => {
-    if (value === undefined || value === null) {
-      return '';
-    }
-
-    return _.trim(value);
-  },
+  "trim": trim,
 
   "getRandomString": getRandomString,
 
@@ -1200,6 +1225,7 @@ export default {
   isNumber,
   isString,
   isArray,
+  isObject,
   isTrue,
   isFalse,
   urlToPath,
@@ -1209,5 +1235,28 @@ export default {
   getRandomNumber,
   getFileType,
   uploadImageFile,
-  sshExec
+  sshExec,
+
+  parseHashtag: (hashtag) => {
+    const remove_special_char_regex = /[{}\[\]/?.,;:|)*~`!^\-+<>@$%&\\=('"]/gi
+    hashtag = hashtag.replace(remove_special_char_regex, '')
+
+    const tag_list = []
+    const clean_tag_regex = /#([^#^\s]+)/gi
+    let tag_search_result
+    while ((tag_search_result = clean_tag_regex.exec(hashtag)) !== null) {
+      if (tag_search_result) {
+        tag_list.push(tag_search_result[1])
+      }
+    }
+
+    return tag_list
+  },
+
+  mergeHashtag: (hashtag_list) => {
+    if (!hashtag_list || !hashtag_list.length) {
+      return ''
+    }
+    return '#' + hashtag_list.join(' #')
+  }
 };

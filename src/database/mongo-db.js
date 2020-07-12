@@ -5,7 +5,7 @@ import Config from '../config/config'
 import log from '../libs/logger'
 import Constants from '../constants/constants'
 import { MedicalModel } from './mongodb/Medical';
-import { InterrestModel } from './mongodb/Interrest';
+import { InterestModel } from './mongodb/Interest';
 import { LogCodeModel } from './mongodb/MemberLogCode';
 
 const ENV = Config.getEnv()
@@ -45,13 +45,13 @@ const defaultMongoCollections = async () => {
     await MedicalModel.InsertDefaultData();
   }
 
-  const interrest = await InterrestModel.findAll();
-  if (interrest.length === 0) {
-    await InterrestModel.InsertDefaultData();
+  const interest = await InterestModel.findAll();
+  if (interest.length === 0) {
+    await InterestModel.InsertDefaultData();
   }
 
-  const logcode = await LogCodeModel.findAll();
-  if (logcode.length === 0) {
+  const log_code = await LogCodeModel.findAll();
+  if (log_code.length === 0) {
     await LogCodeModel.InsertDefaultData();
   }
 }

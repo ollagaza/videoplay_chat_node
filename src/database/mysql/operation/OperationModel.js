@@ -20,6 +20,10 @@ export default class OperationModel extends MySQLModel {
     this.log_prefix = '[OperationModel]'
   }
 
+  getOperationInfoNoJoin = async (operation_seq) => {
+    return await this.findOne({ seq: operation_seq })
+  }
+
   getOperation = async (where, import_media_info) => {
     const query = this.database.select(join_select);
     query.from('operation');
@@ -49,6 +53,12 @@ export default class OperationModel extends MySQLModel {
     query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
     query.andWhere('group_seq', group_seq);
     query.whereIn('status', ['Y', 'T']);
+    log.debug(this.log_prefix, '[getOperationInfoListPage]', 'filter_params', filter_params)
+    if (filter_params.folder_seq) {
+      query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null));
+    } else {
+      query.whereNull('folder_seq');
+    }
     if (filter_params.analysis_complete) {
       query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
     }
@@ -126,10 +136,6 @@ export default class OperationModel extends MySQLModel {
 
   updateStatusFavorite = async (operation_seq, is_delete) => {
     return await this.update({"seq": operation_seq}, {is_favorite: is_delete ? 0 : 1, "modify_date": this.database.raw('NOW()')});
-  };
-
-  updateRequestStatus = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {request_status: status ? status.toUpperCase() : 'N', "modify_date": this.database.raw('NOW()')});
   };
 
   updateAnalysisStatus = async (operation_seq, status) => {

@@ -6,7 +6,7 @@ import Role from "../../constants/roles";
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import MemberService from '../../service/member/MemberService'
-import AdminMemberService from '../../service/member/AdminMemberService'
+import MongoDataService from '../../service/common/MongoDataService'
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import log from '../../libs/logger'
@@ -16,6 +16,7 @@ import _ from 'lodash';
 const routes = Router();
 
 routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
   const lang = Auth.getLanguage(req);
   const token_info = req.token_info;
   const member_seq = token_info.getId();
@@ -175,14 +176,15 @@ routes.post('/reset_password', Wrap(async(req, res) => {
 
 routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const token_info = req.token_info;
-  const member_seq = Util.parseInt(req.params.member_seq);
-  if (token_info.getId() !== member_seq){
+  const member_seq = token_info.getId()
+  const group_seq = Util.parseInt(req.params.member_seq);
+  if (token_info.getGroupSeq() !== group_seq){
     if(token_info.getRole() === Role.MEMBER){
       throw new StdObject(-1, "잘못된 요청입니다.", 403);
     }
   }
   try {
-    const output = await MemberService.changeProfileImage(DBMySQL, member_seq, req, res)
+    const output = await MemberService.changeProfileImage(DBMySQL, member_seq, group_seq, req, res)
     res.json(output);
   } catch (e) {
     throw new StdObject(-1, e, 400);
@@ -295,12 +297,10 @@ routes.post('/getMongoData', Wrap(async(req, res) => {
   const getDataParam = req.body.getData;
   const getLangParam = req.body.getLang;
   let output = null;
-
   try {
-    output = await AdminMemberService.getMongoData(getDataParam, getLangParam);
+    output = await MongoDataService.getData(getDataParam, getLangParam);
   } catch(exception) {
-    output.error = -1;
-    output.message = exception.message;
+    output = new StdObject(-1, exception.message, 400)
   }
   res.json(output);
 }));

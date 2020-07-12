@@ -16,6 +16,7 @@ import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberTemplate from '../../template/mail/member.template';
 import SendMail from '../../libs/send-mail'
+import group_service from "./GroupService";
 
 const MemberServiceClass = class {
   constructor () {
@@ -308,15 +309,14 @@ const MemberServiceClass = class {
     return output
   }
 
-  changeProfileImage = async (database, member_seq, request, response) => {
+  changeProfileImage = async (database, member_seq, group_seq, request, response) => {
     try {
       const {member_info, member_model} = await this.getMemberInfoWidthModel(database, member_seq);
 
       const output = new StdObject(-1, '프로필 업로드 실패');
 
       const media_root = ServiceConfig.get('media_root');
-      // const upload_path = member_info.user_media_path + `/profile`;
-      const upload_path = `/common`;
+      const upload_path = member_info.user_media_path + `/profile`;
       const upload_full_path = media_root + upload_path;
       if (!(await Util.fileExists(upload_full_path))) {
         await Util.createDirectory(upload_full_path);
@@ -341,7 +341,7 @@ const MemberServiceClass = class {
       await Util.deleteFile(origin_image_path);
 
       if (resize_result.success) {
-        const update_profile_result = await member_model.updateProfileImage(member_seq, resize_image_path);
+        const update_profile_result = await group_service.UpdateGroupProfileImage(database, group_seq, resize_image_path);
         if (update_profile_result) {
           if (!Util.isEmpty(member_info.profile_image_path)) {
             await Util.deleteFile(media_root + member_info.profile_image_path);

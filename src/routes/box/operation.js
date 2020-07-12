@@ -9,6 +9,7 @@ import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
 import OperationService from '../../service/operation/OperationService'
 import GroupService from '../../service/member/GroupService'
+import MemberService from '../../service/member/MemberService'
 import OperationModel from '../../database/mysql/operation/OperationModel'
 
 const routes = Router();
@@ -36,6 +37,7 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async(req, res) => {
   const user_token_info = await getUserTokenInfo(req)
   log.d(req, '[user_token_info]', user_token_info)
   const member_seq = user_token_info.getId()
+  const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
   const group_seq = user_token_info.setGroupSeq()
   const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
   if (group_member_info.isEmpty()) {
@@ -47,17 +49,21 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async(req, res) => {
   const operation_date = current_date.substr(0, 10);
   const hour = current_date.substr(11, 2);
   const minute = current_date.substr(14, 2);
-  const operation_data = {
+  const operation_info = {
     "operation_code": operation_name,
     "operation_name":  operation_name,
     "operation_date": operation_date,
     "hour": hour,
     "minute": minute,
   };
+  const request_body = {
+    operation_info,
+    meta_data: {}
+  }
 
   // (database, group_member_info, member_seq, operation_data, operation_metadata)
 
-  const create_operation_result = await OperationService.createOperation(DBMySQL, group_member_info, member_seq, operation_data, {}, 'D');
+  const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, request_body, 'D');
   const output = new StdObject();
   output.add('operation_id', create_operation_result.get('operation_seq'));
   output.add('operation_name', operation_name);
@@ -69,7 +75,7 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
 
   const operation_seq = req.params.operation_seq;
   const file_type = 'video';
-  const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
   log.d(req, 'operation_info', operation_info)
   const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file');
 

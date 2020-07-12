@@ -3,7 +3,6 @@ import Wrap from '../../utils/express-async';
 import Auth from '../../middlewares/auth.middleware';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
-import MemberLogModel from '../../database/mysql/member/MemberLogModel';
 import SocketManager from '../../service/socket-manager'
 import Role from "../../constants/roles";
 import Util from "../../utils/baseutil";
@@ -12,6 +11,7 @@ import ProFileService from '../../service/mypage/ProFileService';
 import ServiceConfig from "../../service/service-config";
 import member_service from "../../service/member/MemberService";
 import FollowService from "../../service/follow/FollowService";
+import MemberLogService from '../../service/member/MemberLogService';
 
 const routes = Router();
 
@@ -20,13 +20,9 @@ routes.post('/notice', Wrap(async(req, res) => {
   const user_seq = req.body.seq;
   const output = new StdObject();
 
-  await DBMySQL.transaction(async(transaction) => {
-    const oMemberLogModel = new MemberLogModel(transaction);
-    const lang = Auth.getLanguage(req);
-    const result = await oMemberLogModel.getMemberLog(lang, user_seq);
-    output.add("notices", result);
-  });
-
+  const lang = Auth.getLanguage(req);
+  const result = await MemberLogService.getNoticePageMemberLog(DBMySQL, user_seq, lang);
+  output.add("notices", result);
   res.json(output);
 }));
 
@@ -75,10 +71,16 @@ routes.post('/updateprofile',
       const member_info = await member_service.getMemberInfo(DBMySQL, user_seq);
       const profile_dir = ServiceConfig.get('media_root') + '/' + member_info.user_id + '/profile';
       const directory_exits = await Util.createDirectory(profile_dir);
-      const move_file = await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
+      if (directory_exits && req.files.profile_image !== undefined) {
+        await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
+      }
 
       await DBMySQL.transaction(async (transaction) => {
-        profile.image = `/${member_info.user_id}/profile/${req.files.profile_image[0].filename}`;
+        if (req.files.profile_image !== undefined) {
+          profile.image = `/${member_info.user_id}/profile/${req.files.profile_image[0].filename}`;
+        } else {
+          profile.image = '';
+        }
         const result = await ProFileService.updateProFileInfo(transaction, group_seq, JSON.stringify(profile));
         output.add('result', result);
         output.add('profile', profile);

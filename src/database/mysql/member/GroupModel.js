@@ -85,6 +85,19 @@ export default class GroupModel extends MySQLModel {
     return query_result
   }
 
+  getGroupSeqByMemberInfo = async  (group_seq) => {
+    const query = this.database
+      .select('member.*')
+      .from('group_info')
+      .innerJoin("member", { "member.seq": "group_info.member_seq" })
+      .where("group_info.seq", group_seq)
+      .first()
+
+    const query_result = await query
+    log.debug(this.log_prefix, '[getAllPersonalGroupUserList]', query_result)
+    return query_result
+  }
+
   getGroupInfoByMemberSeqAndGroupType = async  (member_seq, group_type) => {
     const filter = {
       member_seq,
@@ -150,4 +163,8 @@ export default class GroupModel extends MySQLModel {
       return await this.update({ seq: member_seq, group_type: 'P' }, update_params)
     }
   }
+  
+  updateProfileImage = async (group_seq, profile_image_path) => {
+    return await this.update( { seq: group_seq }, { profile_image_path: profile_image_path } );
+  };
 }

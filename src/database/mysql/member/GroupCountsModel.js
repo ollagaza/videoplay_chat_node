@@ -13,6 +13,13 @@ export default class GroupCountModel extends MySQLModel {
     this.table_name = 'group_counts'
     this.selectable_fields = ['*']
     this.log_prefix = '[GroupCountsModel]'
+    this.field_name_map = {
+      community: true,
+      mentoring: true,
+      follower: true,
+      following: true,
+      video_count: true
+    }
   }
 
   getCounts = async group_seq => {
@@ -23,15 +30,20 @@ export default class GroupCountModel extends MySQLModel {
     return this.create({ group_seq }, 'seq');
   }
 
-  AddCount = async (group_seq, update_field) => {
-    const params = {};
-    params[update_field] = this.database.raw(`${update_field} + 1`)
-    return await this.update({ group_seq: group_seq }, params)
+  AddCount = async (seq, update_field) => {
+    const params = this.getAddCountQueryParams(update_field, this.field_name_map)
+    if (!params) {
+      return false
+    }
+    return await this.update({ seq }, params)
   }
 
-  MinusCount = async (group_seq, update_field) => {
-    const params = {};
-    params[update_field] = this.database.raw(`case when ${update_field} != 0 then ${update_field} - 1 else 0 end`)
-    return await this.update({ group_seq: group_seq }, params)
+  MinusCount = async (seq, update_field) => {
+    const params = this.getMinusCountQueryParams(update_field, this.field_name_map)
+    if (!params) {
+      return false
+    }
+
+    return await this.update({ seq }, params)
   }
 }

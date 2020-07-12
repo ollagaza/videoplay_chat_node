@@ -74,7 +74,7 @@ const OperationLinkServiceClass = class {
 
   checkOperationLinkByCode = async (database, link_code) => {
     const operation_link_info = await this.getOperationLinkByCode(database, link_code)
-    const { operation_info } = await OperationService.getOperationInfo(database, operation_link_info.operation_seq, null, false, false)
+    const operation_info = await OperationService.getOperationInfo(database, operation_link_info.operation_seq, null, false, false)
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(-5, '공유된 수술/시술이 없습니다.', 400)
     }
@@ -102,7 +102,7 @@ const OperationLinkServiceClass = class {
   }
 
   createOperationLinkByEmailList = async (operation_seq, member_info, request_body, service_domain) => {
-    const { operation_info } = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
+    const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
     const link_type = this.LINK_TYPE_EMAIL
     const auth = request_body.auth
     const password = request_body.password ? Util.hash(request_body.password) : null

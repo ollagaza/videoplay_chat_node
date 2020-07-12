@@ -167,6 +167,12 @@ const GroupServiceClass = class {
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
     const group_member_model = this.getGroupMemberModel(database)
     const group_member_list = await group_member_model.getMemberGroupList(member_seq, status)
+    for(let i = 0; i < group_member_list.length; i++) {
+      const group_member_info = group_member_list[i]
+      if (group_member_info.profile_image_path) {
+        group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
+    }
     if (ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()
       log.debug(this.log_prefix, '[getMemberGroupList]', '[vacs_storage_info]', vacs_storage_info)
@@ -207,6 +213,11 @@ const GroupServiceClass = class {
   getGroupMemberInfo = async (database, group_seq, member_seq, status = null) => {
     const group_member_model = this.getGroupMemberModel(database)
     const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(group_seq, member_seq, status)
+    if (group_member_info.profile_image_path) {
+      if (group_member_info.profile_image_url !== null) {
+        group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
+    }
     if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()
       group_member_info.group_used_storage_size = vacs_storage_info.used_size
@@ -837,15 +848,20 @@ const GroupServiceClass = class {
     return result_list
   }
 
+  getGroupSeqByMemberInfo = async (database, group_seq) => {
+    const group_info_model = this.getGroupModel(database);
+    return await group_info_model.getGroupSeqByMemberInfo(group_seq)
+  }
+
   getGroupCountsInfo = async (database, group_seq) => {
     try {
-      const groupcountmodel = this.getGroupCountsModel(database);
-      let result = await groupcountmodel.getCounts(group_seq)
-      if (result === undefined || result.length === 0) {
-        await groupcountmodel.createCounts(group_seq)
-        result = await groupcountmodel.getCounts(group_seq);
+      const group_count_model = this.getGroupCountsModel(database);
+      let group_count_info = await group_count_model.getCounts(group_seq)
+      if (!group_count_info || !group_count_info.seq) {
+        await group_count_model.createCounts(group_seq)
+        group_count_info = await group_count_model.getCounts(group_seq);
       }
-      return result;
+      return group_count_info;
     } catch (e) {
       throw e;
     }
@@ -853,8 +869,9 @@ const GroupServiceClass = class {
 
   UpdateGroupInfoAddCnt = async (database, group_seq, field_name) => {
     try {
-      const groupcountmodel = this.getGroupCountsModel(database);
-      const result = await groupcountmodel.AddCount(group_seq, field_name)
+      const group_count_model = this.getGroupCountsModel(database);
+      const group_count_info = await this.getGroupCountsInfo(database, group_seq)
+      const result = await group_count_model.AddCount(group_count_info.seq, field_name)
       return result;
     } catch (e) {
       throw e;
@@ -863,8 +880,19 @@ const GroupServiceClass = class {
 
   UpdateGroupInfoMinusCnt = async (database, group_seq, field_name) => {
     try {
-      const groupcountmodel = this.getGroupCountsModel(database);
-      const result = await groupcountmodel.MinusCount(group_seq, field_name)
+      const group_count_model = this.getGroupCountsModel(database);
+      const group_count_info = await this.getGroupCountsInfo(database, group_seq)
+      const result = await group_count_model.MinusCount(group_count_info.seq, field_name)
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  UpdateGroupProfileImage = async (database, group_seq, profile_image_path) => {
+    try {
+      const group_model = this.getGroupModel(database);
+      const result = await group_model.updateProfileImage(group_seq, profile_image_path)
       return result;
     } catch (e) {
       throw e;

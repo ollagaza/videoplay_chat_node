@@ -18,6 +18,10 @@ export default class OperationMediaModel extends MySQLModel {
     return media_info
   }
 
+  getOperationMediaInfoByOperationSeq = async (operation_seq) => {
+    return new OperationMediaInfo(await this.findOne({ operation_seq }))
+  }
+
   createOperationMediaInfo = async (operation_info) => {
     const create_params = {
       operation_seq: operation_info.seq
@@ -46,11 +50,16 @@ export default class OperationMediaModel extends MySQLModel {
     return await this.update({operation_seq: operation_info.seq}, update_params)
   }
 
-  updateStreamUrl = async (seq, stream_url) => {
+  updateStreamUrl = async (operation_seq, stream_url) => {
     const update_params = {
       "stream_url": stream_url,
       "modify_date": this.database.raw('NOW()')
     }
-    return await this.update({ operation_seq: seq }, update_params)
+    return await this.update({ operation_seq }, update_params)
+  }
+
+  updateData = async (operation_seq, update_params) => {
+    update_params.modify_date = this.database.raw('NOW()')
+    return await this.update({ operation_seq }, update_params)
   }
 }
