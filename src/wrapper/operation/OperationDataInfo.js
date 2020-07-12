@@ -13,16 +13,18 @@ export default class OperationFolderInfo extends JsonWrapper {
 
     this.setKeys(default_key_list);
 
-    if (data.hashtag_list && typeof data.hashtag_list === 'string') {
-      this.hashtag_list = JSON.parse(data.hashtag_list)
-    }
-    if (data.category_list && typeof data.category_list === 'string') {
-      this.category_list = JSON.parse(data.category_list)
-    }
-    this.is_complete = Util.isTrue(data.is_complete)
-    this.is_open_refer_file = Util.isTrue(data.is_open_refer_file)
-    if (data.hashtag && typeof data.hashtag === 'string') {
-      this.hashtag_list = Util.parseHashtag(data.hashtag)
+    if (data) {
+      if (data.hashtag_list && typeof data.hashtag_list === 'string') {
+        this.hashtag_list = JSON.parse(data.hashtag_list)
+      }
+      if (data.category_list && typeof data.category_list === 'string') {
+        this.category_list = JSON.parse(data.category_list)
+      }
+      this.is_complete = Util.isTrue(data.is_complete)
+      this.is_open_refer_file = Util.isTrue(data.is_open_refer_file)
+      if (data.hashtag && typeof data.hashtag === 'string') {
+        this.hashtag_list = Util.parseHashtag(data.hashtag)
+      }
     }
   }
 }

@@ -24,6 +24,11 @@ const OperationDataServiceClass = class {
     return new OperationDataModel(DBMySQL)
   }
 
+  getOperationDataBySeq = async (database, operation_seq) => {
+    const operation_data_model = this.getOperationDataModel()
+    return await operation_data_model.getOperationDataByOperationSeq(operation_seq)
+  }
+
   createOperationDataByRequest = async (member_info, group_member_info, operation_seq, request_body) => {
     const { operation_info } = await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq)
     if (!operation_info) {

@@ -348,6 +348,16 @@ routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(Role.LOGIN_USE
   res.json(output);
 }));
 
+routes.get('/:operation_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const operation_seq = req.params.operation_seq;
+  const operation_data = await OperationDataService.getOperationDataBySeq(DBMySQL, operation_seq)
+
+  const output = new StdObject();
+  output.add('operation_data', operation_data);
+
+  res.json(output);
+}));
+
 routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info;
   let member_seq = req.params.member_seq;
