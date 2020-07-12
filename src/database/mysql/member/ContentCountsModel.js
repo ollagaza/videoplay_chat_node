@@ -57,6 +57,7 @@ export default class ContentCountsModel extends MySQLModel {
     ])
       .from(this.table_name)
       .where({ group_seq })
+      .whereNot('category_code', 'all')
       .first()
     const query_result = await query
     const result = {
