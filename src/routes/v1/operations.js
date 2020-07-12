@@ -356,7 +356,7 @@ routes.get('/:operation_seq(\\d+)/metadata', Auth.isAuthenticated(Role.LOGIN_USE
 
 routes.get('/:operation_seq(\\d+)/data', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const operation_seq = req.params.operation_seq;
-  const operation_data = await OperationDataService.getOperationDataBySeq(DBMySQL, operation_seq)
+  const operation_data = await OperationDataService.getOperationDataByOperationSeq(DBMySQL, operation_seq)
 
   const output = new StdObject();
   output.add('operation_data', operation_data);
