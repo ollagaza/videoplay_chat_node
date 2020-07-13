@@ -125,9 +125,9 @@ export default class MentoringModel extends MySQLModel {
   getOperationMentoReceiveList = async (group_seq) => {
     try {
       const display_columns = [
-        'operation_data.seq', 'operation_data.operation_seq', 'operation_data.is_mento_complete',
+        'operation_data.seq', 'operation_data.operation_seq','operation_data.is_mento_complete',
         'operation_data.title', 'operation_data.group_name',
-        'operation_data.reg_date'
+        'operation_data.reg_date', 'operation_data.group_seq', 'operation_data.mento_group_seq'
       ]
       const oKnex = this.database.select(display_columns)
         .from('operation_data')
