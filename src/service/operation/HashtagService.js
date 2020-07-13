@@ -2,6 +2,7 @@ import Util from '../../utils/baseutil'
 import DBMySQL from '../../database/knex-mysql'
 import log from "../../libs/logger";
 
+import GroupService from '../member/GroupService'
 import HashtagModel from '../../database/mysql/operation/HashtagModel'
 import HashtagUseModel from '../../database/mysql/operation/HashtagUseModel'
 
@@ -37,6 +38,10 @@ const HashtagServiceClass = class {
       const hashtag_use_model = this.getHashtagUseModel(transaction)
       await hashtag_use_model.deleteUnUseTagList(tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
       await hashtag_use_model.updateHashtagUseList(group_seq, tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
+    })
+
+    await DBMySQL.transaction(async (transaction) => {
+      await GroupService.updateGroupInfoHashTag(transaction, group_seq, hashtag_list)
     })
 
     const hashtag_use_model = this.getHashtagUseModel(DBMySQL)

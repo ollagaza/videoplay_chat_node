@@ -24,7 +24,12 @@ const OperationDataServiceClass = class {
     return new OperationDataModel(DBMySQL)
   }
 
-  getOperationDataBySeq = async (database, operation_seq) => {
+  getOperationData = async (database, operation_seq) => {
+    const operation_data_model = this.getOperationDataModel()
+    return await operation_data_model.getOperationData(operation_seq)
+  }
+
+  getOperationDataByOperationSeq = async (database, operation_seq) => {
     const operation_data_model = this.getOperationDataModel()
     return await operation_data_model.getOperationDataByOperationSeq(operation_seq)
   }

@@ -9,11 +9,14 @@ import MongoDataService from '../../service/common/MongoDataService'
 import HashtagService from '../../service/operation/HashtagService';
 import MentoringService from "../../service/mentoring/MentoringService";
 import FollowService from "../../service/follow/FollowService";
+import OperationService from '../../service/operation/OperationService'
 import OperationDataService from '../../service/operation/OperationDataService'
 import Util from "../../utils/baseutil";
 import ServiceConfig from "../../service/service-config";
 import GroupService from "../../service/member/GroupService";
 import baseutil from "../../utils/baseutil";
+import OperationClipService from '../../service/operation/OperationClipService'
+import OperationFileService from '../../service/operation/OperationFileService'
 
 
 const routes = Router();
@@ -84,10 +87,11 @@ routes.post('/operationmentoreceivelist', Auth.isAuthenticated(Role.LOGIN_USER),
   req.accepts('application/json');
   const token_info = req.token_info;
   const group_seq = token_info.getGroupSeq()
+  const send_group_seq = req.body.group_seq
   const output = new StdObject();
 
   try {
-    output.add('operation_mento_receive_list', await MentoringService.getOperationMentoReceiveList(DBMySQL, group_seq))
+    output.add('operation_mento_receive_list', await MentoringService.getOperationMentoReceiveList(DBMySQL, send_group_seq === undefined ? group_seq : send_group_seq))
     res.json(output);
   } catch (e) {
     throw new StdObject(-1, e, 400);
@@ -104,6 +108,36 @@ routes.post('/reject_operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   } catch (e) {
     throw new StdObject(-1, e, 400);
   }
+}));
+
+routes.get('/view/:operation_data_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_data_seq = req.params.operation_data_seq;
+
+  const operation_data_info = await OperationDataService.getOperationData(DBMySQL, operation_data_seq)
+  if (!operation_data_info || operation_data_info.isEmpty()) {
+    throw new StdObject(-1, '등록된 정보가 없습니다.', 400)
+  }
+  if (operation_data_info.mento_group_seq !== group_seq && operation_data_info.group_seq !== group_seq) {
+    throw new StdObject(-2, '접근 권한이 없습니다.', 403)
+  }
+  const { operation_info } = await OperationService.getOperationInfoNoAuth(DBMySQL, operation_data_info.operation_seq)
+  if (!operation_info || operation_info.isEmpty()) {
+    throw new StdObject(-3, '등록된 수술이 없습니다.', 400)
+  }
+  const clip_list = await OperationClipService.findByOperationSeq(operation_data_info.operation_seq);
+  const writer_info = await GroupService.getGroupInfoToGroupCounts(DBMySQL, operation_data_info.group_seq)
+  const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_REFER)
+
+  const output = new StdObject();
+  output.add('operation_info', operation_info);
+  output.add('operation_data_info', operation_data_info);
+  output.add('clip_list', clip_list);
+  output.add('writer_info', writer_info);
+  output.add('refer_file_list', refer_file_list);
+
+  res.json(output);
 }));
 
 export default routes;

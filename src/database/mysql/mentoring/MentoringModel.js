@@ -37,6 +37,7 @@ export default class MentoringModel extends MySQLModel {
         , 'member.user_name', 'member.hospname',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
         this.database.raw('ifnull(group_counts.follower, 0) as follower'),
+        this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
         'group_counts.follower'
         , this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
       ]
@@ -73,6 +74,7 @@ export default class MentoringModel extends MySQLModel {
         'group_info.seq as group_seq', 'group_info.group_name', 'member.hospname', 'group_info.hashtag', 'group_info.profile_image_path',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
         this.database.raw('ifnull(group_counts.follower, 0) as follower'),
+        this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
         'content_counts.sort_num'
       ]
       const oKnex = this.database.select(display_columns)
@@ -96,7 +98,8 @@ export default class MentoringModel extends MySQLModel {
         'group_info.seq as group_seq', 'group_info.group_name', 'group_info.hashtag', 'group_info.profile_image_path',
         'group_info.profile', 'member.hospname',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
-        this.database.raw('ifnull(group_counts.follower, 0) as follower')
+        this.database.raw('ifnull(group_counts.follower, 0) as follower'),
+        this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
       ]
       const oKnex = this.database.select(display_columns)
         .from('group_info')

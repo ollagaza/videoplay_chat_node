@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
 import Role from "../../constants/roles";
@@ -896,6 +897,62 @@ const GroupServiceClass = class {
       return result;
     } catch (e) {
       throw e;
+    }
+  }
+
+  getGroupInfoToGroupCounts = async (database, group_seq) => {
+    try {
+      const group_model = this.getGroupModel(database);
+      const result = await group_model.getGroupInfoToGroupCounts(group_seq);
+      if (result && result.profile_image_path) {
+        result.profile_image_url = ServiceConfig.get('static_storage_prefix') + result.profile_image_path
+      }
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  updateGroupInfoHashTag = async (database, group_seq, hashtag_list) => {
+    try {
+      const group_model = this.getGroupModel(database)
+      const group_hashtag = await group_model.getGroupInfoHashtag(group_seq)
+      let save_group_hashtag = [];
+      if (group_hashtag.hashtag === null) {
+        _.forEach(hashtag_list, (item) => {
+          const json_item = {
+            text: item,
+            count: 1,
+          }
+          save_group_hashtag.push(json_item);
+        })
+      } else {
+        save_group_hashtag = JSON.parse(group_hashtag.hashtag)
+        _.forEach(hashtag_list, (item) => {
+          const hashtag_check = _.filter(save_group_hashtag, function(hashtag) {
+            return hashtag.text === item;
+          })
+          if (hashtag_check.length > 0) {
+            const group_hashtag_item = _.find(save_group_hashtag, { text: item })
+            group_hashtag_item.count = group_hashtag_item.count + 1
+          } else {
+            const json_item = {
+              text: item,
+              count: 1,
+            }
+            save_group_hashtag.push(json_item);
+          }
+        })
+      }
+      
+      const sortby_save_group_hashtag = _.chain(save_group_hashtag)
+        .orderBy(['count'], ['desc'])
+        .take(10)
+        .value()
+
+      await group_model.updateGroupInfoHashTag(group_seq, sortby_save_group_hashtag);
+    } catch (e) {
+      log.error(this.log_prefix, '[updateGroupInfoHashTag]', e)
     }
   }
 }
