@@ -6,7 +6,7 @@ import StdObject from '../../wrapper/std-object';
 const routes = Router();
 
 routes.get('/reload', Wrap(async(req, res) => {
-  await ServiceConfig.load();
+  await ServiceConfig.reload();
   res.json(new StdObject());
 }));
 
