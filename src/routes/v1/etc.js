@@ -6,6 +6,7 @@ import StdObject from '../../wrapper/std-object';
 import DBMySQL from "../../database/knex-mysql";
 import Util from "../../utils/baseutil";
 import ServiceConfig from "../../service/service-config";
+import GroupService from '../../service/member/GroupService';
 import ContactUsService from '../../service/etc/ContactUsService'
 import SendMail_Service from "../../service/etc/SendMailService";
 import EditorService from "../../service/etc/EditorService";
@@ -23,13 +24,16 @@ routes.post('/sendmail', Wrap(async (req, res) => {
   }
 }));
 
-routes.put('/editorimage/:contentid', Wrap(async(req, res) => {
+routes.put('/editorimage/:contentid', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   try {
+    const token_info = req.token_info;
+    const group_seq = token_info.getGroupSeq();
+    const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
     const contentid = req.params.contentid;
     const output = new StdObject();
-    const result = await EditorService.uploadEditorImage(contentid, req, res)
+    const result = await EditorService.uploadEditorImage(contentid, group_info.media_path, req, res)
     output.add('result', result);
-    output.add('path', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), `/editor/${contentid}/${result.filename}`));
+    output.add('path', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), `${group_info.media_path}/editor/${result.filename}`));
     res.json(output);
   } catch (e) {
     throw new StdObject(-1, e, 400);
