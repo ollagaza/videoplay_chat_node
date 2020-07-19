@@ -169,10 +169,10 @@ routes.post('/:operation_data_seq(\\d+)/comment', Auth.isAuthenticated(Role.LOGI
 
 routes.get('/:operation_data_seq(\\d+)/comment/count', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const operation_data_seq = req.params.operation_data_seq
-  const comment_list = await MentoringCommentService.getCommentCount(DBMySQL, operation_data_seq)
+  const comment_count = await MentoringCommentService.getCommentCount(DBMySQL, operation_data_seq)
 
   const output = new StdObject();
-  output.add('comment_list', comment_list)
+  output.add('comment_count', comment_count)
   res.json(output);
 }));
 
@@ -192,7 +192,7 @@ routes.get('/:operation_data_seq(\\d+)/comment/:comment_seq(\\d+)', Auth.isAuthe
   res.json(output);
 }));
 
-routes.post('/:operation_data_seq(\\d+)/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.put('/:operation_data_seq(\\d+)/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   const operation_data_seq = req.params.operation_data_seq
   const comment_seq = req.params.comment_seq
@@ -211,6 +211,7 @@ routes.delete('/:operation_data_seq(\\d+)/comment/:comment_seq(\\d+)', Auth.isAu
 
   const output = new StdObject();
   output.add('result', result)
+
   res.json(output);
 }));
 
