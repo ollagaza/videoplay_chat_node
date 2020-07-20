@@ -62,28 +62,30 @@ routes.post('/updateprofile',
   Auth.isAuthenticated(Role.LOGIN_USER),
   Util.common_path_upload.fields([{ name: 'profile_image' }]), Wrap(async(req, res) => {
     const token_info = req.token_info
-    const user_seq = token_info.getId();
     const group_seq = token_info.getGroupSeq()
-    const profile = JSON.parse(req.body.profile);
+    const upload_type = req.body.upload_type;
+    let input_data = req.body.input_data;
     const output = new StdObject()
 
     try {
-      const member_info = await member_service.getMemberInfo(DBMySQL, user_seq);
-      const profile_dir = ServiceConfig.get('media_root') + '/' + member_info.user_id + '/profile';
-      const directory_exits = await Util.createDirectory(profile_dir);
-      if (directory_exits && req.files.profile_image !== undefined) {
-        await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
+      if (upload_type === 'image') {
+        const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
+        const profile_dir = ServiceConfig.get('media_root') + group_info.media_path + '/profile';
+        const directory_exits = await Util.createDirectory(profile_dir);
+        if (directory_exits && req.files.profile_image !== undefined) {
+          await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
+        }
+
+        if (req.files.profile_image !== undefined) {
+          input_data = `${group_info.media_path}/profile/${req.files.profile_image[0].filename}`;
+        } else {
+          input_data = '';
+        }
       }
 
       await DBMySQL.transaction(async (transaction) => {
-        if (req.files.profile_image !== undefined) {
-          profile.image = `/${member_info.user_id}/profile/${req.files.profile_image[0].filename}`;
-        } else {
-          profile.image = '';
-        }
-        const result = await ProFileService.updateProFileInfo(transaction, group_seq, JSON.stringify(profile));
+        const result = await ProFileService.updateProFileInfo(transaction, group_seq, upload_type, input_data);
         output.add('result', result);
-        output.add('profile', profile);
       });
       res.json(output);
     } catch (e) {
