@@ -257,7 +257,15 @@ const GroupServiceClass = class {
 
   getGroupInfo = async (database, group_seq, private_keys = null) => {
     const group_model = this.getGroupModel(database)
-    return await group_model.getGroupInfo(group_seq, private_keys)
+    const group_info = await group_model.getGroupInfo(group_seq, private_keys)
+    group_info.json_keys.push('profile_image_url')
+    group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
+    return group_info
+  }
+
+  getMemberSeqbyPersonalGroupInfo = async (database, member_seq, private_keys = null) => {
+    const group_model = this.getGroupModel(database)
+    return await group_model.getMemberSeqbyPersonalGroupInfo(member_seq, private_keys)
   }
 
   getGroupInfoWithProduct = async (database, group_seq, private_keys = null) => {
@@ -944,7 +952,7 @@ const GroupServiceClass = class {
           }
         })
       }
-      
+
       const sortby_save_group_hashtag = _.chain(save_group_hashtag)
         .orderBy(['count'], ['desc'])
         .take(10)
