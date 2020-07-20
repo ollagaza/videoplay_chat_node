@@ -8,6 +8,7 @@ import DBMySQL from "../../database/knex-mysql";
 import ServiceConfig from "../../service/service-config";
 import FollowService from "../../service/follow/FollowService";
 import GroupService from "../../service/member/GroupService";
+import MemberLogService from "../../service/member/MemberLogService";
 
 const routes = Router();
 
@@ -38,22 +39,27 @@ routes.post('/registfollow', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
     const token_info = req.token_info;
     const group_seq = token_info.getGroupSeq();
     const follower_seq = req.body.follower_seq;
+    const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
+    const follower_info = await GroupService.getGroupInfo(DBMySQL, follower_seq);
 
     await DBMySQL.transaction(async (transaction) => {
-      const following_info = {
+      const following = {
         group_seq: group_seq,
         following_seq: follower_seq,
       };
-      const following_result = await FollowService.RegistFollowing(transaction, following_info)
+      const following_result = await FollowService.RegistFollowing(transaction, following)
 
-      const follower_info = {
+      const follower = {
         group_seq: follower_seq,
         follower_seq: group_seq,
       };
-      const follower_result = await FollowService.RegistFollower(transaction, follower_info)
+      const follower_result = await FollowService.RegistFollower(transaction, follower)
 
       const group_info_following_result = await GroupService.UpdateGroupInfoAddCnt(transaction, group_seq, 'following');
       const group_info_follower_result = await GroupService.UpdateGroupInfoAddCnt(transaction, follower_seq, 'follower');
+
+      const log_text = `${group_info.group_name}님 께서 ${follower_info.group_name}님을 팔로우 하셨습니다.`;
+      await MemberLogService.createMemberLog(DBMySQL, group_seq, null, '0000', log_text, null, 1, 0);
     });
 
     const result = new StdObject();

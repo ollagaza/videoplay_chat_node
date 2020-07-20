@@ -13,9 +13,10 @@ export default class MemberLogModel extends MySQLModel {
     this.log_prefix = '[MemberLogModel]'
   }
 
-  createMemberLog = async (seq, code, text, ip, notice_page, notice_list, is_view) => {
+  createMemberLog = async (group_seq = null, member_seq = null, code, text, ip, notice_page, notice_list, is_view) => {
     const memberLog = {
-      member_seq: seq,
+      group_seq: group_seq,
+      member_seq: member_seq,
       log_code: code,
       log_text: text,
       used_ipaddress: ip,
@@ -27,17 +28,23 @@ export default class MemberLogModel extends MySQLModel {
     return await this.create(memberLog, 'seq');
   };
 
-  getNoticePageMemberLog = async (lang, seq) => {
-    const memberLog = {
-      member_seq: seq,
-      notice_page: 1,
-      notice_list: 0,
-    }
+  getNoticePageMemberLog = async (lang, group_seq, member_seq) => {
+    const filters = {
+      is_new: true,
+      query: [
+        { $or: [
+            {group_seq: group_seq},
+            {member_seq: member_seq},
+        ]},
+      {notice_page: 1},
+      {notice_list: 0},
+  ]
+  }
     const fieldSet = ["log_code", "log_text", "date_format(regist_date, '%Y%m%d') keydate", "date_format(regist_date, '%Y%m%d%H%i') regist_date"];
     const resultContent = {};
     const logCodes = await LogCodeModel.findAll();
     const langLogCodes = logCodes[0].codes[lang];
-    const result = await this.find(memberLog, fieldSet, { name: "regist_date", direction: "asc" }, null);
+    const result = await this.find(filters, fieldSet, { name: "regist_date", direction: "asc" }, null);
 
     Object.keys(result).forEach((key) => {
       if(langLogCodes[result[key].log_code] !== undefined) {

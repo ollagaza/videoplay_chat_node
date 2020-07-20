@@ -12,6 +12,7 @@ import MemberInfoSub from "../../wrapper/member/MemberInfoSub";
 import log from '../../libs/logger'
 import baseutil from '../../utils/baseutil';
 import _ from 'lodash';
+import GroupService from "../../service/member/GroupService";
 
 const routes = Router();
 
@@ -20,11 +21,17 @@ routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) =>
   const lang = Auth.getLanguage(req);
   const token_info = req.token_info;
   const member_seq = token_info.getId();
+  const group_seq = token_info.getGroupSeq();
   const member_info = await MemberService.getMemberInfoWithSub(DBMySQL, member_seq, lang);
 
   const output = new StdObject();
   output.add('member_info', member_info.member_info);
   output.add('member_sub_info', member_info.member_sub_info);
+
+  if (group_seq !== null) {
+    const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
+    output.add('group_info', group_info);
+  }
 
   res.json(output);
 }));

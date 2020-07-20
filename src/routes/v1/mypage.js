@@ -15,13 +15,15 @@ import MemberLogService from '../../service/member/MemberLogService';
 
 const routes = Router();
 
-routes.post('/notice', Wrap(async(req, res) => {
+routes.post('/notice', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const user_seq = req.body.seq;
+  const token_info = req.token_info
+  const group_seq = token_info.getGroupSeq()
+  const member_seq = token_info.getId()
   const output = new StdObject();
 
   const lang = Auth.getLanguage(req);
-  const result = await MemberLogService.getNoticePageMemberLog(DBMySQL, user_seq, lang);
+  const result = await MemberLogService.getNoticePageMemberLog(DBMySQL, group_seq, member_seq, lang);
   output.add("notices", result);
   res.json(output);
 }));
