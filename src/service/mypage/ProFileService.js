@@ -37,10 +37,10 @@ const ProFileServiceClass = class {
     }
   }
 
-  updateProFileInfo = async (database, group_seq, profile) => {
+  updateProFileInfo = async (database, group_seq, upload_type, input_data) => {
     try {
       const profile_model = this.getProFileModel(database)
-      const result = await profile_model.updateProFileInfo(group_seq, profile)
+      const result = await profile_model.updateProFileInfo(group_seq, upload_type, input_data)
       return result
     } catch (e) {
       throw e
