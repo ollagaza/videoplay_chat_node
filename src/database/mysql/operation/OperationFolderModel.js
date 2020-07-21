@@ -76,6 +76,22 @@ export default class OperationFolderModel extends MySQLModel {
     return await this.find({ group_seq, parent_seq: folder_seq, status: 'Y' }, null, { name: "folder_name", direction: "asc" })
   }
 
+  getAllChildFolders = async (group_seq, folder_seq, include_current_folder = true) => {
+    const query = this.database
+      .select(this.selectable_fields)
+      .from(this.table_name)
+      .where('group_seq', group_seq.group_seq);
+    if (include_current_folder) {
+      query.andWhere(function () {
+        this.where('seq', folder_seq)
+          .orWhere(this.raw(`JSON_CONTAINS(parent_folder_info, '${folder_seq}', '$')`))
+      })
+    } else {
+      query.andWhere(this.database.raw(`JSON_CONTAINS(parent_folder_info, '${folder_seq}', '$')`));
+    }
+    return query
+  }
+
   updateOperationFolder = async (folder_seq, folder_info) => {
     folder_info.addPrivateKey('seq')
     const update_params = folder_info.toJSON()

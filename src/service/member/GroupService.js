@@ -16,6 +16,7 @@ import GroupMailTemplate from '../../template/mail/group.template'
 import VacsService from '../vacs/VacsService'
 import Auth from '../../middlewares/auth.middleware'
 import GroupCountModel from "../../database/mysql/member/GroupCountsModel";
+import ContentCountsModel from "../../database/mysql/member/ContentCountsModel";
 
 const GroupServiceClass = class {
   constructor () {
@@ -54,6 +55,13 @@ const GroupServiceClass = class {
       return new GroupCountModel(database)
     }
     return new GroupCountModel(DBMySQL)
+  }
+
+  getContentCountsModel = (database) => {
+    if (database) {
+      return new ContentCountsModel(database)
+    }
+    return new ContentCountsModel(DBMySQL)
   }
 
   getBaseInfo = (req, group_seq_from_token = true) => {
@@ -148,6 +156,10 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
+    const group_counts_model = this.getGroupCountsModel(database);
+    await group_counts_model.createCounts(group_info.seq);
+    const content_counts_model = this.getContentCountsModel(database);
+    await content_counts_model.createContentCount('all', group_info.seq);
     await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
 
     return group_info

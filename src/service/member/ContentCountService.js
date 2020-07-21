@@ -4,7 +4,6 @@ import DBMySQL from '../../database/knex-mysql'
 
 import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 
-
 const ContentCountServiceClass = class {
   constructor () {
     this.log_prefix = '[ContentCountService]'
