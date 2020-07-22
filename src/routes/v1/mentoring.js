@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import _ from 'lodash';
 import Wrap from '../../utils/express-async';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
 import Auth from "../../middlewares/auth.middleware";
 import Role from "../../constants/roles";
-import _ from 'lodash';
+import Util from "../../utils/baseutil";
 import MongoDataService from '../../service/common/MongoDataService'
 import HashtagService from '../../service/operation/HashtagService';
 import MentoringService from "../../service/mentoring/MentoringService";
@@ -12,12 +13,11 @@ import MentoringCommentService from "../../service/mentoring/MentoringCommentSer
 import FollowService from "../../service/follow/FollowService";
 import OperationService from '../../service/operation/OperationService'
 import OperationDataService from '../../service/operation/OperationDataService'
-import Util from "../../utils/baseutil";
 import ServiceConfig from "../../service/service-config";
 import GroupService from "../../service/member/GroupService";
-import baseutil from "../../utils/baseutil";
 import OperationClipService from '../../service/operation/OperationClipService'
 import OperationFileService from '../../service/operation/OperationFileService'
+import ContentCountService from '../../service/member/ContentCountService'
 
 
 const routes = Router();
@@ -51,6 +51,10 @@ routes.post('/getmentolist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(r
       }
     })
     output.add('bestmentolist', bestMentoResult);
+
+    const recommend_category = await ContentCountService.getRecommendCategorys(DBMySQL, group_seq);
+    const make_medical_list = await MongoDataService.getObjectData('medical', recommend_category);
+    output.add('recommend_category', make_medical_list);
 
     const recommendMentoResult = await MentoringService.getRecommendMentoringLists(DBMySQL, category_code)
     _.forEach(recommendMentoResult, (value) => {
