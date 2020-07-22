@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import _ from 'lodash';
+import log from '../../libs/logger'
 import Wrap from '../../utils/express-async';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
@@ -53,7 +54,9 @@ routes.post('/getmentolist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(r
     output.add('bestmentolist', bestMentoResult);
 
     const recommend_category = await ContentCountService.getRecommendCategorys(DBMySQL, group_seq);
+    log.debug('[mentoring_router]', 'recommend_category', recommend_category)
     const make_medical_list = await MongoDataService.getObjectData('medical', recommend_category);
+    log.debug('[mentoring_router]', 'make_medical_list', make_medical_list)
     output.add('recommend_category', make_medical_list);
 
     const recommendMentoResult = await MentoringService.getRecommendMentoringLists(DBMySQL, category_code)
