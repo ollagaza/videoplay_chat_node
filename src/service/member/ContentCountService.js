@@ -69,10 +69,7 @@ const ContentCountServiceClass = class {
     const result = await content_count_model.getContentCountsCategorys(group_seq);
     const return_ranking = [];
 
-    log.debug(this.log_prefix, '[getRecommendCategorys]', '1')
-
     if (result.in_group_seq_result) {
-      log.debug(this.log_prefix, '[getRecommendCategorys]', '2')
       _.forEach(result.in_group_seq_result, (item) => {
         log.debug(this.log_prefix, '[getRecommendCategorys]', 'item', item, _.every(result.notin_group_seq_result, {code: item.code.toString()}))
         if (_.every(result.notin_group_seq_result, {code: item.code.toString()})) {
@@ -84,7 +81,6 @@ const ContentCountServiceClass = class {
     }
 
     if (return_ranking.length < 6) {
-      log.debug(this.log_prefix, '[getRecommendCategorys]', '3')
       _.forEach(result.notin_group_seq_result, (item) => {
         log.debug(this.log_prefix, '[getRecommendCategorys]', 'item', item, _.every(return_ranking, { code: item.code.toString() }))
         if (!_.every(return_ranking, { code: item.code.toString() })) {
@@ -92,7 +88,7 @@ const ContentCountServiceClass = class {
         }
 
         if (return_ranking.length === 6) {
-          return;
+          return return_ranking;
         }
       })
     }
