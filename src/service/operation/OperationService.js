@@ -17,6 +17,8 @@ import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
 import { UserDataModel } from '../../database/mongodb/UserData'
 import OperationInfo from '../../wrapper/operation/OperationInfo'
+import OperationClipService from './OperationClipService'
+import MongoDataService from '../common/MongoDataService'
 
 const OperationServiceClass = class {
   constructor () {
@@ -91,7 +93,7 @@ const OperationServiceClass = class {
       if (ServiceConfig.isVacs()) {
         VacsService.increaseCount(1)
       } else {
-        const operation_data_seq = await OperationDataService.createOperationDataByRequest(member_info, group_member_info, operation_seq, request_body)
+        const operation_data_seq = await OperationDataService.createOperationDataByRequest(operation_info, member_info, group_member_info, request_body)
         output.add('operation_data_seq', operation_data_seq);
       }
     }
@@ -115,7 +117,7 @@ const OperationServiceClass = class {
     return output;
   }
 
-  updateOperation = async (database, member_seq, operation_info, request_body) => {
+  updateOperation = async (member_seq, operation_info, request_body) => {
     const operation_seq = operation_info.seq;
     const update_operation_info = new OperationInfo().getByRequestBody(request_body.operation_info);
     if (operation_info.isEmpty()) {
@@ -124,10 +126,11 @@ const OperationServiceClass = class {
 
     const output = new StdObject();
     await DBMySQL.transaction(async(transaction) => {
-      const result = await new OperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info);
-      const metadata_result = await OperationMetadataModel.updateByOperationInfo(operation_info, update_operation_info.operation_type, request_body.meta_data);
+      const result = await this.getOperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info)
+      await OperationDataService.updateOperationDataByRequest(transaction, operation_seq, request_body)
+      const metadata_result = await OperationMetadataModel.updateByOperationInfo(operation_info, update_operation_info.operation_type, request_body.meta_data)
       if (!metadata_result || !metadata_result._id) {
-        throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400);
+        throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400)
       }
       output.add('result', result);
     });
@@ -198,16 +201,15 @@ const OperationServiceClass = class {
     operation_info.setMediaInfo(media_info)
   }
 
-  getOperationInfoNoAuth = async (database, operation_seq) => {
+  getOperationInfoNoAuth = async (database, operation_seq, import_media_info = true) => {
     const operation_model = this.getOperationModel(database)
-    const operation_info = await operation_model.getOperationInfo(operation_seq)
+    const operation_info = await operation_model.getOperationInfo(operation_seq, import_media_info)
     return { operation_info, operation_model }
   }
 
   getOperationInfoNoJoin = async (database, operation_seq) => {
     const operation_model = this.getOperationModel(database)
-    const operation_info = await operation_model.getOperationInfoNoJoin(operation_seq)
-    return operation_info
+    return await operation_model.getOperationInfoNoJoin(operation_seq)
   }
 
   getOperationInfo = async (database, operation_seq, token_info, check_owner= true, import_media_info = false) => {
@@ -557,6 +559,86 @@ const OperationServiceClass = class {
       return directory_info.url_video + operation_info.media_info.video_file_name
     }
     return directory_info.cdn_video + operation_info.media_info.video_file_name
+  }
+
+  getOperationDataView = async (operation_seq, group_seq) => {
+    const options = {
+      index_list: true,
+      clip_list: true,
+      writer_info: true,
+      refer_file_list: true,
+      import_media_info: true,
+    }
+    return this.getOperationDataInfo(operation_seq, group_seq, options)
+  }
+
+  getOperationDataInfo = async (operation_seq, group_seq, options = null) => {
+    const { operation_info } = await this.getOperationInfoNoAuth(DBMySQL, operation_seq, options ? options.import_media_info : false)
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(-1, '등록된 수술이 없습니다.', 400)
+    }
+    let operation_data_info = await OperationDataService.getOperationDataByOperationSeq(DBMySQL, operation_seq)
+    if (!operation_data_info || operation_data_info.isEmpty()) {
+      const operation_data_seq = await OperationDataService.createOperationDataByOperationSeq(operation_seq)
+      if (operation_data_seq) {
+        operation_data_info = await OperationDataService.getOperationDataByOperationSeq(operation_data_seq)
+      }
+    }
+    operation_data_info.setUrl();
+
+    const output = new StdObject()
+    output.add('operation_info', operation_info)
+    output.add('operation_data_info', operation_data_info)
+    output.add('is_writer', operation_info.group_seq === group_seq)
+
+    if (options) {
+      if (options.index_list) {
+        const index_list = await this.getVideoIndexList(operation_seq)
+        output.add('index_list', index_list)
+      }
+
+      if (options.clip_list) {
+        const clip_list = await OperationClipService.findByOperationSeq(operation_seq)
+        output.add('clip_list', clip_list)
+      }
+
+      if (options.writer_info) {
+        const writer_info = await GroupService.getGroupInfoToGroupCounts(DBMySQL, operation_info.group_seq)
+        output.add('writer_info', writer_info)
+      }
+
+      if (options.refer_file_list) {
+        const { refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_REFER)
+        output.add('refer_file_list', refer_file_list)
+      }
+
+      if (options.operation_metadata) {
+        const operation_metadata = await OperationMetadataModel.findByOperationSeq(operation_seq);
+        output.add('operation_metadata', operation_metadata)
+      }
+
+      if (options.medical_info) {
+        const medical_info = await MongoDataService.getMedicalInfo();
+        output.add('medical_info', medical_info)
+      }
+    }
+
+    return output
+  }
+
+  getOperationByFolderSeq = async (database, group_seq, folder_seq) => {
+    const model = this.getOperationModel(database)
+    return await model.getOperationByFolderSeq(group_seq, folder_seq)
+  }
+
+  updateStatusFavorite = async (database, operation_seq, is_delete) => {
+    const model = this.getOperationModel(database)
+    return await model.updateStatusFavorite(operation_seq, is_delete)
+  }
+
+  updateStatusTrash = async (database, seq_list, member_seq, is_delete) => {
+    const model = this.getOperationModel(database)
+    return await model.updateStatusTrash(seq_list, member_seq, is_delete)
   }
 }
 
