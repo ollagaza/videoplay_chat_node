@@ -52,4 +52,24 @@ routes.get('/relation(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output)
 }))
 
+routes.delete('/deletefolder',  Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  try {
+    const folder_info = req.body.folder_info;
+    log.debug('[Router Folder -> index]', '[/deletefolder]', folder_info)
+
+    const folder_chk = await OperationFolderService.isFolderFileCheck(DBMySQL, folder_info.group_seq, folder_info.seq)
+
+    await DBMySQL.transaction(async(transaction) => {
+      if (!folder_chk) {
+        await OperationFolderService.deleteOperationFolder(transaction, folder_info.group_seq, folder_info.seq)
+        res.json(new StdObject(0, '폴더 삭제가 완료 되었습니다.', '200'))
+      } else {
+        res.json(new StdObject(1, '해당 폴더 또는 하위 폴더에 파일이 존재 합니다.<br/>파일 삭제 또는 이동 후 다시 시도 하여 주세요', '200'))
+      }
+    })
+  } catch (e) {
+    throw new StdObject(-1, '폴더 삭제 중 오류가 발생 하였습니다.', '400')
+  }
+}));
+
 export default routes

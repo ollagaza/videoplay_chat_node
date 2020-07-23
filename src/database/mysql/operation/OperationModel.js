@@ -246,4 +246,8 @@ export default class OperationModel extends MySQLModel {
   migrationGroupSeq = async (member_seq, group_seq) => {
     return await this.update({"member_seq": member_seq}, { group_seq });
   }
+
+  getOperationByFolderSeq = async (group_seq, folder_seq) => {
+    return await this.find({ group_seq, folder_seq})
+  }
 }

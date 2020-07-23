@@ -623,6 +623,21 @@ const OperationServiceClass = class {
 
     return output
   }
+
+  getOperationByFolderSeq = async (database, group_seq, folder_seq) => {
+    const model = this.getOperationModel(database)
+    return await model.getOperationByFolderSeq(group_seq, folder_seq)
+  }
+
+  updateStatusFavorite = async (database, operation_seq, is_delete) => {
+    const model = this.getOperationModel(database)
+    return await model.updateStatusFavorite(operation_seq, is_delete)
+  }
+
+  updateStatusTrash = async (database, seq_list, member_seq, is_delete) => {
+    const model = this.getOperationModel(database)
+    return await model.updateStatusTrash(seq_list, member_seq, is_delete)
+  }
 }
 
 const operation_service = new OperationServiceClass()
