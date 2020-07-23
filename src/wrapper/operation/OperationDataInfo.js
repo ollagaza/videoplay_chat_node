@@ -1,5 +1,6 @@
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
+import ServiceConfig from '../../service/service-config'
 
 const default_key_list = [
   'seq', 'operation_seq', 'group_seq', 'group_name', 'hospital', 'title', 'view_count', 'total_time',
@@ -25,6 +26,12 @@ export default class OperationFolderInfo extends JsonWrapper {
       if (data.hashtag && typeof data.hashtag === 'string') {
         this.hashtag_list = Util.parseHashtag(data.hashtag)
       }
+    }
+  }
+
+  setUrl = () => {
+    if (this.thumbnail) {
+      this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail;
     }
   }
 }

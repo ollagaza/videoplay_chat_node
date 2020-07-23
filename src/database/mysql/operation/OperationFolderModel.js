@@ -26,8 +26,9 @@ export default class OperationFolderModel extends MySQLModel {
     return await this.create(create_params, 'seq')
   }
 
-  isValidFolderName = async (folder_name, parent_seq = null, folder_seq = null) => {
+  isValidFolderName = async (group_seq, folder_name, parent_seq = null, folder_seq = null) => {
     const filter = {
+      group_seq,
       folder_name,
       parent_seq
     }
