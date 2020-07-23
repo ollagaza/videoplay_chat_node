@@ -183,6 +183,7 @@ const OperationServiceClass = class {
     filter_params.analysis_complete = request_query.analysis_complete
     filter_params.status = request_query.status
     filter_params.folder_seq = request_query.folder_seq
+    filter_params.menu = request_query.menu
 
     log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params)
 
@@ -639,6 +640,16 @@ const OperationServiceClass = class {
   updateStatusTrash = async (database, seq_list, member_seq, is_delete) => {
     const model = this.getOperationModel(database)
     return await model.updateStatusTrash(seq_list, member_seq, is_delete)
+  }
+
+  moveOperationFolder = async (database, operation_seq_list, folder_info) => {
+    try {
+      const model = this.getOperationModel(database)
+      await model.moveOperationFolder(operation_seq_list, folder_info.seq)
+      return
+    } catch (e) {
+      throw e
+    }
   }
 }
 

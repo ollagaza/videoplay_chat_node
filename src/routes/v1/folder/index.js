@@ -5,6 +5,7 @@ import Wrap from '../../../utils/express-async'
 import GroupService from '../../../service/member/GroupService'
 import DBMySQL from '../../../database/knex-mysql'
 import OperationFolderService from '../../../service/operation/OperationFolderService'
+import OperationService from '../../../service/operation/OperationService'
 import StdObject from '../../../wrapper/std-object'
 import log from '../../../libs/logger'
 import Util from '../../../utils/baseutil'
@@ -69,6 +70,21 @@ routes.delete('/deletefolder',  Auth.isAuthenticated(Role.DEFAULT), Wrap(async (
     })
   } catch (e) {
     throw new StdObject(-1, '폴더 삭제 중 오류가 발생 하였습니다.', '400')
+  }
+}));
+
+routes.put('/moveoperation',  Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  try {
+    const operation_seq_list = req.body.operation_seq_list;
+    const folder_info = req.body.folder_info;
+    log.debug('[Router Folder -> index]', '[/moveoperation]', operation_seq_list, folder_info)
+
+    await DBMySQL.transaction(async(transaction) => {
+      await OperationService.moveOperationFolder(transaction, operation_seq_list, folder_info)
+      res.json(new StdObject(0, '이동이 완료 되었습니다.', '200'))
+    })
+  } catch (e) {
+    throw new StdObject(-1, '이동 중 오류가 발생 하였습니다.', '400')
   }
 }));
 
