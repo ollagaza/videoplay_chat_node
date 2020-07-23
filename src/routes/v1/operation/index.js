@@ -107,8 +107,8 @@ const getLinkInfo = async (result, link_code) => {
     throw new StdObject(100, '등록된 정보가 없습니다.', 400)
   }
 
-  const is_editor_link = link_info.auth !== OperationLinkService.AUTH_WRITE
-  const is_download_link = link_info.enable_download
+  const is_editor_link = link_info.auth === OperationLinkService.AUTH_WRITE
+  const is_download_link = link_info.enable_download === 1
   result.operation_seq = link_info.operation_seq
   result.link_info = link_info
   result.link_code = link_code
@@ -117,6 +117,12 @@ const getLinkInfo = async (result, link_code) => {
   result.is_link = true
   result.is_editor_link = is_editor_link
   result.is_download_link = is_download_link
+
+  const operation_data_info = await OperationDataService.getOperationDataByOperationSeq(DBMySQL, result.operation_seq)
+  if (operation_data_info && !operation_data_info.isEmpty()) {
+    result.operation_data_info = operation_data_info
+    result.operation_data_seq = operation_data_info.seq
+  }
 }
 
 const getMentoringInfo = async (result, operation_data_seq) => {
