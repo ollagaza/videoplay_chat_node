@@ -54,23 +54,35 @@ const MongoDataServiceClass = class {
     return output;
   }
 
-  getSearchData = (data_type = null, search_keyword = null, lang = 'kor') => {
-    let data = null;
-    if (data_type !== null && search_keyword !== null) {
-      switch (data_type) {
-        case this.MEDICAL:
-          data = this.getMedicalInfo(lang)
-          break;
-        case this.INTEREST:
-          data = this.getInterestInfo(lang)
-          break;
-        default:
-          break;
-      }
+  return_Data = (data_type, lang = 'kor') => {
+    switch (data_type) {
+      case this.MEDICAL:
+        return this.getMedicalInfo(lang)
+      case this.INTEREST:
+        return this.getInterestInfo(lang)
+      default:
+        return null;
     }
+  }
+
+  getSearchData = (data_type = null, search_keyword = null, lang = 'kor') => {
+    const data = this.return_Data(data_type, lang)
     return _.filter(data, function(item) {
       return item.text.indexOf(search_keyword) != -1 ? item : null;
     })
+  }
+
+  getObjectData = (data_type = null, object = null, lang = 'kor') => {
+    const data = this.return_Data(data_type, lang)
+    const return_date = []
+
+    _.forEach(object, (item) => {
+      _.filter(data, function(filter_item) {
+        filter_item.code === item.code ? return_date.push(filter_item) : null
+      })
+    })
+
+    return return_date
   }
 }
 

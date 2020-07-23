@@ -77,4 +77,27 @@ export default class ContentCountsModel extends MySQLModel {
     const filters = { category_code, group_seq }
     return await this.update(filters, update_field)
   }
+
+  getContentCountsCategorys = async (group_seq) => {
+    const in_group_seq_category = this.database.select('category_code as code')
+      .sum('mentoring_cnt as ranking')
+      .from(this.table_name)
+      .where('category_code', '!=', 'all')
+      .andWhere('group_seq', group_seq)
+      .groupBy('category_code')
+      .orderBy('ranking', 'desc')
+      .limit(6);
+    const in_group_seq_result = await in_group_seq_category;
+
+    const notin_group_seq_category = this.database.select('category_code as code')
+      .sum('mentoring_cnt as ranking')
+      .from(this.table_name)
+      .where('category_code', '!=', 'all')
+      .groupBy('category_code')
+      .orderBy('ranking', 'desc')
+      .limit(6);
+    const notin_group_seq_result = await notin_group_seq_category;
+
+    return {in_group_seq_result, notin_group_seq_result};
+  }
 }

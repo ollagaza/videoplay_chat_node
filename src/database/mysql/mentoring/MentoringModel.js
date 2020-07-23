@@ -50,8 +50,8 @@ export default class MentoringModel extends MySQLModel {
           this.on('group_info.member_seq', 'member.seq')
             .andOn('group_info.is_mentoring', 1)
         })
-        .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
-        .innerJoin('content_counts', function () {
+        .leftOuterJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
+        .leftOuterJoin('content_counts', function () {
           this.on('content_counts.group_seq', 'group_info.seq')
             .andOnVal('content_counts.category_code', category_code)
             .andOnVal('content_counts.is_best', '1');
@@ -81,7 +81,7 @@ export default class MentoringModel extends MySQLModel {
         .from('group_info')
         .innerJoin('member', 'member.seq', 'group_info.member_seq')
         .leftOuterJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
-        .innerJoin('content_counts', function () {
+        .leftOuterJoin('content_counts', function () {
           this.on('content_counts.group_seq', 'group_info.seq')
             .andOnVal('content_counts.category_code', category_code)
         })
