@@ -10,8 +10,8 @@ export default class OperationDataModel extends MySQLModel {
     this.log_prefix = '[OperationDataModel]'
   }
 
-  createOperationData = async (operation_data) => {
-    operation_data.reg_date = this.database.raw('NOW()')
+  getOperationDataPrams = (operation_data, set_reg_date = false) => {
+    if (set_reg_date) operation_data.reg_date = this.database.raw('NOW()')
     operation_data.modify_date = this.database.raw('NOW()')
     if (operation_data.hashtag_list) {
       operation_data.hashtag_list = JSON.stringify(operation_data.hashtag_list)
@@ -23,7 +23,15 @@ export default class OperationDataModel extends MySQLModel {
     } else {
       operation_data.category_list = JSON.stringify([])
     }
-    return await this.create(operation_data, 'seq')
+    return operation_data
+  }
+
+  createOperationData = async (operation_data) => {
+    return await this.create(this.getOperationDataPrams(operation_data, true), 'seq')
+  }
+
+  updateOperationData = async (operation_seq, operation_data) => {
+    return await this.update({ operation_seq }, this.getOperationDataPrams(operation_data))
   }
 
   getOperationData = async (operation_data_seq) => {

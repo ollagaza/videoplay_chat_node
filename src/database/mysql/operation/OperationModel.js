@@ -21,7 +21,7 @@ export default class OperationModel extends MySQLModel {
   }
 
   getOperationInfoNoJoin = async (operation_seq) => {
-    return await this.findOne({ seq: operation_seq })
+    return new OperationInfo(await this.findOne({ seq: operation_seq }))
   }
 
   getOperation = async (where, import_media_info) => {

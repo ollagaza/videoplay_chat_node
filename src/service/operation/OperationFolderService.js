@@ -126,7 +126,7 @@ const OperationFolderServiceClass = class {
     }
     folder_info.group_seq = group_seq
 
-    const is_valid_name = await model.isValidFolderName(folder_info.folder_name, parent_folder_info ? parent_folder_info.seq : null)
+    const is_valid_name = await model.isValidFolderName(group_seq, folder_info.folder_name, parent_folder_info ? parent_folder_info.seq : null)
     if (!is_valid_name) {
       throw new StdObject(-1, '이미 사용중인 폴더명입니다.', 400)
     }

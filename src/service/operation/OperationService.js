@@ -117,7 +117,7 @@ const OperationServiceClass = class {
     return output;
   }
 
-  updateOperation = async (database, member_seq, operation_info, request_body) => {
+  updateOperation = async (member_seq, operation_info, request_body) => {
     const operation_seq = operation_info.seq;
     const update_operation_info = new OperationInfo().getByRequestBody(request_body.operation_info);
     if (operation_info.isEmpty()) {
@@ -126,10 +126,11 @@ const OperationServiceClass = class {
 
     const output = new StdObject();
     await DBMySQL.transaction(async(transaction) => {
-      const result = await new OperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info);
-      const metadata_result = await OperationMetadataModel.updateByOperationInfo(operation_info, update_operation_info.operation_type, request_body.meta_data);
+      const result = await this.getOperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info)
+      await OperationDataService.updateOperationDataByRequest(transaction, operation_seq, request_body)
+      const metadata_result = await OperationMetadataModel.updateByOperationInfo(operation_info, update_operation_info.operation_type, request_body.meta_data)
       if (!metadata_result || !metadata_result._id) {
-        throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400);
+        throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400)
       }
       output.add('result', result);
     });
@@ -583,6 +584,7 @@ const OperationServiceClass = class {
         operation_data_info = await OperationDataService.getOperationDataByOperationSeq(operation_data_seq)
       }
     }
+    operation_data_info.setUrl();
 
     const output = new StdObject()
     output.add('operation_info', operation_info)

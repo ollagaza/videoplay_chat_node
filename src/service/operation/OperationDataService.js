@@ -85,6 +85,36 @@ const OperationDataServiceClass = class {
     return operation_data_seq
   }
 
+  updateOperationDataByRequest = async (database, operation_seq, request_body) => {
+    const operation_info = await OperationService.getOperationInfoNoJoin(database, operation_seq)
+    if (!operation_info) {
+      return null
+    }
+    const hashtag = request_body.operation_data ? request_body.operation_data.hashtag : null
+    const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
+    operation_data_info.title = operation_info.operation_name
+    if (operation_data_info.doc_html) {
+      operation_data_info.doc_text = striptags(operation_data_info.doc_html)
+    }
+
+    const operation_data_model = this.getOperationDataModel(database)
+    const operation_data_seq = await operation_data_model.updateOperationData(operation_seq, operation_data_info)
+
+    if (operation_data_seq && hashtag) {
+      (
+        async () => {
+          try {
+            await HashtagService.updateOperationHashtag(operation_info.group_seq, hashtag, operation_data_seq)
+          } catch (error) {
+            log.error(this.log_prefix, '[updateOperationDataByRequest]', error)
+          }
+        }
+      )()
+    }
+
+    return operation_data_seq
+  }
+
   setThumbnailImage = async (operation_seq, request, response) => {
     const operation_data_model = this.getOperationDataModel()
     const operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_seq)
