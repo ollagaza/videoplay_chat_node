@@ -1,6 +1,7 @@
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import log from '../../../libs/logger'
+import Constant from '../../../constants/constants'
 
 import OperationMediaModel from './OperationMediaModel';
 import OperationInfo from '../../../wrapper/operation/OperationInfo';
@@ -54,16 +55,35 @@ export default class OperationModel extends MySQLModel {
     query.andWhere('group_seq', group_seq);
     query.whereIn('status', ['Y', 'T']);
     log.debug(this.log_prefix, '[getOperationInfoListPage]', 'filter_params', filter_params)
-    if (filter_params.folder_seq) {
-      query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null));
-    } else {
-      query.whereNull('folder_seq');
-    }
     if (filter_params.analysis_complete) {
       query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
     }
     if (filter_params.status) {
       query.andWhere('status', filter_params.status.toUpperCase());
+    }
+    let check_folder = true;
+    if (filter_params.menu) {
+      const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
+      switch (filter_params.menu) {
+        case 'recent':
+          query.andWhere('operation.reg_date', '>=', recent_timestamp)
+          check_folder = false
+          break;
+        case 'favorite':
+          query.andWhere('is_favorite', 1)
+          check_folder = false
+          break;
+        case 'trash':
+          query.andWhere('status', 'T')
+          check_folder = false
+          break;
+      }
+    }
+
+    if (filter_params.folder_seq) {
+      query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null));
+    } else {
+      query.whereNull('folder_seq');
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
