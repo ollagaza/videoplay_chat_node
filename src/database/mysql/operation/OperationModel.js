@@ -250,4 +250,15 @@ export default class OperationModel extends MySQLModel {
   getOperationByFolderSeq = async (group_seq, folder_seq) => {
     return await this.find({ group_seq, folder_seq})
   }
+
+  moveOperationFolder = async (operation_seq, folder_seq) => {
+    operation_seq.unshift('in');
+    const filters = {
+      is_new: true,
+      query: [
+        { seq: operation_seq },
+      ],
+    }
+    return await this.update(filters, { folder_seq })
+  }
 }

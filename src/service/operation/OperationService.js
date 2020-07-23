@@ -638,6 +638,16 @@ const OperationServiceClass = class {
     const model = this.getOperationModel(database)
     return await model.updateStatusTrash(seq_list, member_seq, is_delete)
   }
+
+  moveOperationFolder = async (database, operation_seq_list, folder_info) => {
+    try {
+      const model = this.getOperationModel(database)
+      await model.moveOperationFolder(operation_seq_list, folder_info.seq)
+      return
+    } catch (e) {
+      throw e
+    }
+  }
 }
 
 const operation_service = new OperationServiceClass()
