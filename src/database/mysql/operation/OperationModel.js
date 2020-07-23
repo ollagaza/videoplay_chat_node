@@ -67,23 +67,34 @@ export default class OperationModel extends MySQLModel {
       switch (filter_params.menu) {
         case 'recent':
           query.andWhere('operation.reg_date', '>=', recent_timestamp)
+          query.andWhere('status', 'Y')
           check_folder = false
           break;
         case 'favorite':
           query.andWhere('is_favorite', 1)
+          query.andWhere('status', 'Y')
           check_folder = false
           break;
         case 'trash':
           query.andWhere('status', 'T')
           check_folder = false
           break;
+        case 'clip':
+          query.andWhere('status', 'Y')
+          check_folder = false
+          break;
+        case 'drive':
+          query.andWhere('status', 'Y')
+          break;
       }
     }
 
-    if (filter_params.folder_seq) {
-      query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null));
-    } else {
-      query.whereNull('folder_seq');
+    if (check_folder) {
+      if (filter_params.folder_seq) {
+        query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null));
+      } else {
+        query.whereNull('folder_seq');
+      }
     }
 
     const order_by = {name:'seq', direction: 'DESC'};
