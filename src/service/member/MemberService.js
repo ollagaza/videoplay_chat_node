@@ -68,7 +68,7 @@ const MemberServiceClass = class {
   }
 
   getMemberInfo = async (database, member_seq) => {
-    const { member_info } = await this.getMemberInfoWidthModel(database, member_seq)
+    const { member_info } = await this.getMemberInfoWithModel(database, member_seq)
     return member_info
   }
 
@@ -109,7 +109,7 @@ const MemberServiceClass = class {
     return output
   }
 
-  getMemberInfoWidthModel = async (database, member_seq) => {
+  getMemberInfoWithModel = async (database, member_seq) => {
     const member_model = this.getMemberModel(database)
     const member_info = await member_model.getMemberInfo(member_seq)
     if (member_info.isEmpty() || !member_info.seq) {
@@ -202,7 +202,7 @@ const MemberServiceClass = class {
       throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
     }
 
-    const { member_info, member_model } = await this.getMemberInfoWidthModel(database, member_seq)
+    const { member_info, member_model } = await this.getMemberInfoWithModel(database, member_seq)
     await this.checkPassword(database, member_info, request_body.old_password, false)
     await member_model.changePassword(member_seq, request_body.password)
     return true
@@ -311,7 +311,7 @@ const MemberServiceClass = class {
 
   changeProfileImage = async (database, member_seq, group_seq, request, response) => {
     try {
-      const {member_info, member_model} = await this.getMemberInfoWidthModel(database, member_seq);
+      const {member_info, member_model} = await this.getMemberInfoWithModel(database, member_seq);
 
       const output = new StdObject(-1, '프로필 업로드 실패');
 

@@ -37,9 +37,9 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperationInfoWithMediaInfo(query_result, import_media_info);
   };
 
-  getOperationInfo = async (operation_seq) => {
+  getOperationInfo = async (operation_seq, import_media_info) => {
     const where = {"operation.seq": operation_seq};
-    return await this.getOperation(where, true);
+    return await this.getOperation(where, import_media_info);
   };
 
   getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc=false)  => {

@@ -82,4 +82,16 @@ export default class OperationDataModel extends MySQLModel {
       throw e;
     }
   }
+
+  updateDoc = async (operation_data_seq, doc_html, doc_text) => {
+    const filter = {
+      seq: operation_data_seq
+    }
+    const update_params = {
+      doc_html,
+      doc_text,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update(filter, update_params)
+  }
 }

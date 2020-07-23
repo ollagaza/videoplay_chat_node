@@ -4,6 +4,7 @@ import log from "../../libs/logger"
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import OperationDataInfo from '../../wrapper/operation/OperationDataInfo'
 import GroupService from '../member/GroupService'
+import MemberService from '../member/MemberService'
 import ContentCountService from '../member/ContentCountService'
 import DBMySQL from '../../database/knex-mysql'
 import OperationService from './OperationService'
@@ -34,12 +35,24 @@ const OperationDataServiceClass = class {
     return await operation_data_model.getOperationDataByOperationSeq(operation_seq)
   }
 
-  createOperationDataByRequest = async (member_info, group_member_info, operation_seq, request_body) => {
-    const { operation_info } = await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq)
+  createOperationDataByOperationSeq = async (operation_seq) => {
+    const operation_info = await OperationService.getOperationInfoNoJoin(DBMySQL, operation_seq)
     if (!operation_info) {
       return null
     }
-    const operation_data = request_body.operation_data
+    const group_seq = operation_info.group_seq
+    const member_seq = operation_info.member_seq
+    const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
+    const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
+    return await this.createOperationDataByRequest(operation_info, member_info, group_member_info, { operation_data: {} })
+  }
+
+  createOperationDataByRequest = async (operation_info, member_info, group_member_info, request_body) => {
+    if (!operation_info) {
+      return null
+    }
+    const operation_seq = operation_info.seq
+    const hashtag = request_body.operation_data ? request_body.operation_data.hashtag : null
     const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
     operation_data_info.operation_seq = operation_seq
     operation_data_info.group_seq = group_member_info.group_seq
@@ -57,11 +70,11 @@ const OperationDataServiceClass = class {
     const operation_data_model = this.getOperationDataModel()
     const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
 
-    if (operation_data_seq && operation_data && operation_data.hashtag) {
+    if (operation_data_seq && hashtag) {
       (
         async () => {
           try {
-            await HashtagService.updateOperationHashtag(group_member_info.group_seq, operation_data.hashtag, operation_data_seq)
+            await HashtagService.updateOperationHashtag(group_member_info.group_seq, hashtag, operation_data_seq)
           } catch (error) {
             log.error(this.log_prefix, '[createOperationDataByRequest]', error)
           }
@@ -146,6 +159,14 @@ const OperationDataServiceClass = class {
     } catch (e) {
       throw e;
     }
+  }
+
+  changeDocument = async (operation_data_seq, request_body) => {
+    const operation_data_model = this.getOperationDataModel()
+    const doc_html = request_body.doc
+    const doc_text = doc_html ? striptags(doc_html) : null
+    log.debug(this.log_prefix, '[changeDocument]', operation_data_seq, doc_html, doc_text)
+    return await operation_data_model.updateDoc(operation_data_seq, doc_html, doc_text)
   }
 }
 

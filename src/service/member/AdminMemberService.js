@@ -47,7 +47,7 @@ const AdminMemberServiceClass = class {
   }
 
   getMemberInfo = async (database, member_seq) => {
-    const { member_info } = await this.getMemberInfoWidthModel(database, member_seq)
+    const { member_info } = await this.getMemberInfoWithModel(database, member_seq)
     return member_info
   }
 
@@ -88,7 +88,7 @@ const AdminMemberServiceClass = class {
     return output
   }
 
-  getMemberInfoWidthModel = async (database, member_seq) => {
+  getMemberInfoWithModel = async (database, member_seq) => {
     const member_model = this.getMemberModel(database)
     const member_info = await member_model.getMemberInfo(member_seq)
     if (member_info.isEmpty() || !member_info.seq) {
