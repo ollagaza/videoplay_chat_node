@@ -36,6 +36,10 @@ export default class OperationDataModel extends MySQLModel {
     return await this.update({ operation_seq }, this.getOperationDataPrams(operation_data))
   }
 
+  updateOperationDataByOperationSeqList = async (operation_seq_list, operation_data) => {
+    return await this.updateIn("operation_seq", operation_seq_list, this.getOperationDataPrams(operation_data));
+  };
+
   getOperationData = async (operation_data_seq) => {
     const result = await this.findOne({ seq: operation_data_seq })
     return new OperationDataInfo(result)
@@ -68,13 +72,16 @@ export default class OperationDataModel extends MySQLModel {
     return await this.update(filter, update_params)
   }
 
-  updateComplete = async (operation_data_seq) => {
+  updateComplete = async (operation_data_seq, total_time = null) => {
     const filter = {
       seq: operation_data_seq
     }
     const update_params = {
       is_complete: 1,
       modify_date: this.database.raw('NOW()')
+    }
+    if (total_time) {
+      update_params.total_time = total_time
     }
     return await this.update(filter, update_params)
   }

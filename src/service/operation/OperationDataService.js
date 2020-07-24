@@ -8,6 +8,7 @@ import MemberService from '../member/MemberService'
 import ContentCountService from '../member/ContentCountService'
 import DBMySQL from '../../database/knex-mysql'
 import OperationService from './OperationService'
+import OperationMediaService from './OperationMediaService'
 import striptags from 'striptags'
 import HashtagService from './HashtagService'
 
@@ -159,7 +160,9 @@ const OperationDataServiceClass = class {
     const operation_data_seq = operation_data.seq
     const group_seq = operation_data.group_seq
 
-    await operation_data_model.updateComplete(operation_data_seq)
+    const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_seq)
+
+    await operation_data_model.updateComplete(operation_data_seq, media_info ? media_info.total_time : null)
     // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
 
     const group_count_field_name = ['video_count']
@@ -202,6 +205,18 @@ const OperationDataServiceClass = class {
   getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
     const operation_data_model = this.getOperationDataModel()
     return await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq, limit)
+  }
+
+  changeStatus = async (operation_seq, status) => {
+    const operation_data_info = { status }
+    const operation_data_model = this.getOperationDataModel()
+    await operation_data_model.updateOperationData(operation_seq, operation_data_info)
+  }
+
+  updateOperationDataByOperationSeqList = async (operation_seq_list, status) => {
+    const operation_data_info = { status }
+    const operation_data_model = this.getOperationDataModel()
+    await operation_data_model.updateOperationDataByOperationSeqList(operation_seq_list, operation_data_info)
   }
 }
 

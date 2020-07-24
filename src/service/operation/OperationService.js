@@ -639,7 +639,11 @@ const OperationServiceClass = class {
 
   updateStatusTrash = async (database, seq_list, member_seq, is_delete) => {
     const model = this.getOperationModel(database)
-    return await model.updateStatusTrash(seq_list, member_seq, is_delete)
+    const status = is_delete ? 'Y' : 'T'
+    await model.updateStatusTrash(seq_list, member_seq, status)
+    await OperationDataService.updateOperationDataByOperationSeqList(seq_list, status)
+
+    return true
   }
 
   moveOperationFolder = async (database, operation_seq_list, folder_info) => {
