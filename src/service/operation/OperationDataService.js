@@ -11,6 +11,7 @@ import OperationService from './OperationService'
 import OperationMediaService from './OperationMediaService'
 import striptags from 'striptags'
 import HashtagService from './HashtagService'
+import ServiceConfig from "../service-config";
 
 const OperationDataServiceClass = class {
   constructor () {
@@ -204,7 +205,11 @@ const OperationDataServiceClass = class {
 
   getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
     const operation_data_model = this.getOperationDataModel()
-    return await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq, limit)
+    const operation_data_list = await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq, limit)
+    for(let cnt = 0; cnt < operation_data_list.length; cnt++) {
+      operation_data_list[cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_data_list[cnt].thumbnail)
+    }
+    return operation_data_list
   }
 
   changeStatus = async (operation_seq, status) => {
