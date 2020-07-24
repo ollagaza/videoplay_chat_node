@@ -199,9 +199,9 @@ const OperationDataServiceClass = class {
     return await operation_data_model.updateDoc(operation_data_seq, doc_html, doc_text)
   }
 
-  getCompleteIsOpenVideoDataLists = async (group_seq) => {
+  getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
     const operation_data_model = this.getOperationDataModel()
-    return await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq)
+    return await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq, limit)
   }
 }
 

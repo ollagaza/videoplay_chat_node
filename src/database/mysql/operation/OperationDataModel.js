@@ -105,20 +105,19 @@ export default class OperationDataModel extends MySQLModel {
     return await this.update(filter, update_params)
   }
 
-  getCompleteIsOpenVideoDataLists = async (group_seq) => {
-    try {
-      const oKnex = this.database.select('*')
-        .from('operation_data')
-        .where(function () {
-          this.where('group_seq', group_seq)
-            .andWhere('operation_data.is_complete', '1')
-            .andWhere('operation_data.status', 'Y')
-            .andWhere('operation_data.is_open_video', '1')
-        })
-        .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
-      return oKnex;
-    } catch (e) {
-      throw e;
+  getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
+    const oKnex = this.database.select('*')
+      .from('operation_data')
+      .where(function () {
+        this.where('group_seq', group_seq)
+          .andWhere('operation_data.is_complete', '1')
+          .andWhere('operation_data.status', 'Y')
+          .andWhere('operation_data.is_open_video', '1')
+      })
+      .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
+    if (limit) {
+      oKnex.limit(limit);
     }
+    return oKnex;
   }
 }
