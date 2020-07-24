@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import ServiceConfig from '../../service/service-config';
 import Util from '../../utils/baseutil';
 import StdObject from '../../wrapper/std-object';
@@ -125,7 +126,7 @@ const OperationFolderServiceClass = class {
     }
     folder_info.group_seq = group_seq
 
-    const is_valid_name = await model.isValidFolderName(folder_info.folder_name, parent_folder_info ? parent_folder_info.seq : null)
+    const is_valid_name = await model.isValidFolderName(group_seq, folder_info.folder_name, parent_folder_info ? parent_folder_info.seq : null)
     if (!is_valid_name) {
       throw new StdObject(-1, '이미 사용중인 폴더명입니다.', 400)
     }
@@ -144,12 +145,6 @@ const OperationFolderServiceClass = class {
     return update_result
   }
 
-  deleteOperationFolder = async (database, folder_seq) => {
-    const model = this.getOperationFolderModel(database)
-    const delete_result = await model.deleteOperationFolder(folder_seq)
-    return delete_result
-  }
-
   moveFolder = async (database, request_body) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo(request_body.folder_info)
@@ -157,6 +152,36 @@ const OperationFolderServiceClass = class {
     const move_child_only = request_body.request_body === true
     const result = await model.moveFolder(folder_info, new_parent_info, move_child_only)
     return result
+  }
+
+  deleteOperationFolder = async (database, group_seq, folder_seq) => {
+    const model = this.getOperationFolderModel(database)
+    const allChildFolders = await model.getAllChildFolders(group_seq, folder_seq, true)
+    for(let cnt = 0; cnt < allChildFolders.length; cnt++) {
+      const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq);
+      if (operation_result.length === 0) {
+        await model.deleteOperationFolder(group_seq, allChildFolders[cnt].seq)
+      }
+    }
+  }
+
+  isFolderFileCheck = async (database, group_seq, folder_seq) => {
+    try {
+      let file_chk = false;
+      const model = this.getOperationFolderModel(database)
+      const allChildFolders = await model.getAllChildFolders(group_seq, folder_seq, true)
+      log.debug(this.log_prefix, '[isFolderFileCheck]', allChildFolders)
+      for(let cnt = 0; cnt < allChildFolders.length; cnt++) {
+        const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq);
+        if (operation_result.length > 0) {
+          file_chk = true;
+        }
+      }
+      return file_chk;
+    } catch (e) {
+      log.debug(this.log_prefix, '[isFolderFileCheck]', e)
+      return false
+    }
   }
 }
 

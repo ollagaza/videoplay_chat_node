@@ -26,8 +26,9 @@ export default class OperationFolderModel extends MySQLModel {
     return await this.create(create_params, 'seq')
   }
 
-  isValidFolderName = async (folder_name, parent_seq = null, folder_seq = null) => {
+  isValidFolderName = async (group_seq, folder_name, parent_seq = null, folder_seq = null) => {
     const filter = {
+      group_seq,
       folder_name,
       parent_seq
     }
@@ -46,8 +47,8 @@ export default class OperationFolderModel extends MySQLModel {
     return false
   }
 
-  deleteOperationFolder = async (folder_seq) => {
-    return await this.delete({ seq: folder_seq })
+  deleteOperationFolder = async (group_seq, folder_seq) => {
+    return await this.delete({ group_seq, seq: folder_seq })
   }
 
   getFolderInfo = async (group_seq, folder_seq) => {
@@ -80,14 +81,14 @@ export default class OperationFolderModel extends MySQLModel {
     const query = this.database
       .select(this.selectable_fields)
       .from(this.table_name)
-      .where('group_seq', group_seq.group_seq);
+      .where('group_seq', group_seq);
     if (include_current_folder) {
       query.andWhere(function () {
-        this.where('seq', folder_seq)
-          .orWhere(this.raw(`JSON_CONTAINS(parent_folder_info, '${folder_seq}', '$')`))
-      })
+        this.where('seq', folder_seq);
+        this.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`);
+      });
     } else {
-      query.andWhere(this.database.raw(`JSON_CONTAINS(parent_folder_info, '${folder_seq}', '$')`));
+      query.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`);
     }
     return query
   }

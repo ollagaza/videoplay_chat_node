@@ -40,15 +40,17 @@ const HashtagServiceClass = class {
       await hashtag_use_model.updateHashtagUseList(group_seq, tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
     })
 
-    await DBMySQL.transaction(async (transaction) => {
-      await GroupService.updateGroupInfoHashTag(transaction, group_seq, hashtag_list)
-    })
+    try {
+      await GroupService.updateGroupInfoHashTag(DBMySQL, group_seq, hashtag_list)
+    } catch (error) {
+      log.error(this.log_prefix, '[updateOperationHashtag] GroupService.updateGroupInfoHashTag', group_seq, hashtag_list, error)
+    }
 
     const hashtag_use_model = this.getHashtagUseModel(DBMySQL)
     try {
       await hashtag_use_model.updateHashtagCount(tag_seq_list)
     } catch (error) {
-      log.error(this.log_prefix, '[updateOperationHashtag]', error)
+      log.error(this.log_prefix, '[updateOperationHashtag] hashtag_use_model.updateHashtagCount', tag_seq_list, error)
     }
   }
   getSearchHashtag = async (database, sSearch) => {

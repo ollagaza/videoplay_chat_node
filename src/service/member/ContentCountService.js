@@ -79,7 +79,7 @@ const ContentCountServiceClass = class {
         }
       })
     }
-    
+
     if (return_ranking.length < 6) {
       _.forEach(result.notin_group_seq_result, (item) => {
         log.debug(this.log_prefix, '[getRecommendCategorys second loop]', 'item', item, _.every(return_ranking, { code: item.code.toString() }))

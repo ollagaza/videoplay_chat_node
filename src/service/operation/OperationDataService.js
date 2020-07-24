@@ -4,11 +4,14 @@ import log from "../../libs/logger"
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import OperationDataInfo from '../../wrapper/operation/OperationDataInfo'
 import GroupService from '../member/GroupService'
+import MemberService from '../member/MemberService'
 import ContentCountService from '../member/ContentCountService'
 import DBMySQL from '../../database/knex-mysql'
 import OperationService from './OperationService'
+import OperationMediaService from './OperationMediaService'
 import striptags from 'striptags'
 import HashtagService from './HashtagService'
+import ServiceConfig from "../service-config";
 
 const OperationDataServiceClass = class {
   constructor () {
@@ -34,12 +37,24 @@ const OperationDataServiceClass = class {
     return await operation_data_model.getOperationDataByOperationSeq(operation_seq)
   }
 
-  createOperationDataByRequest = async (member_info, group_member_info, operation_seq, request_body) => {
-    const { operation_info } = await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq)
+  createOperationDataByOperationSeq = async (operation_seq) => {
+    const operation_info = await OperationService.getOperationInfoNoJoin(DBMySQL, operation_seq)
     if (!operation_info) {
       return null
     }
-    const operation_data = request_body.operation_data
+    const group_seq = operation_info.group_seq
+    const member_seq = operation_info.member_seq
+    const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
+    const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
+    return await this.createOperationDataByRequest(operation_info, member_info, group_member_info, { operation_data: {} })
+  }
+
+  createOperationDataByRequest = async (operation_info, member_info, group_member_info, request_body) => {
+    if (!operation_info) {
+      return null
+    }
+    const operation_seq = operation_info.seq
+    const hashtag = request_body.operation_data ? request_body.operation_data.hashtag : null
     const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
     operation_data_info.operation_seq = operation_seq
     operation_data_info.group_seq = group_member_info.group_seq
@@ -57,13 +72,43 @@ const OperationDataServiceClass = class {
     const operation_data_model = this.getOperationDataModel()
     const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
 
-    if (operation_data_seq && operation_data && operation_data.hashtag) {
+    if (operation_data_seq && hashtag) {
       (
         async () => {
           try {
-            await HashtagService.updateOperationHashtag(group_member_info.group_seq, operation_data.hashtag, operation_data_seq)
+            await HashtagService.updateOperationHashtag(group_member_info.group_seq, hashtag, operation_data_seq)
           } catch (error) {
             log.error(this.log_prefix, '[createOperationDataByRequest]', error)
+          }
+        }
+      )()
+    }
+
+    return operation_data_seq
+  }
+
+  updateOperationDataByRequest = async (database, operation_seq, request_body) => {
+    const operation_info = await OperationService.getOperationInfoNoJoin(database, operation_seq)
+    if (!operation_info) {
+      return null
+    }
+    const hashtag = request_body.operation_data ? request_body.operation_data.hashtag : null
+    const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
+    operation_data_info.title = operation_info.operation_name
+    if (operation_data_info.doc_html) {
+      operation_data_info.doc_text = striptags(operation_data_info.doc_html)
+    }
+
+    const operation_data_model = this.getOperationDataModel(database)
+    const operation_data_seq = await operation_data_model.updateOperationData(operation_seq, operation_data_info)
+
+    if (operation_data_seq && hashtag) {
+      (
+        async () => {
+          try {
+            await HashtagService.updateOperationHashtag(operation_info.group_seq, hashtag, operation_data_seq)
+          } catch (error) {
+            log.error(this.log_prefix, '[updateOperationDataByRequest]', error)
           }
         }
       )()
@@ -116,7 +161,9 @@ const OperationDataServiceClass = class {
     const operation_data_seq = operation_data.seq
     const group_seq = operation_data.group_seq
 
-    await operation_data_model.updateComplete(operation_data_seq)
+    const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_seq)
+
+    await operation_data_model.updateComplete(operation_data_seq, media_info ? media_info.total_time : null)
     // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
 
     const group_count_field_name = ['video_count']
@@ -146,6 +193,35 @@ const OperationDataServiceClass = class {
     } catch (e) {
       throw e;
     }
+  }
+
+  changeDocument = async (operation_data_seq, request_body) => {
+    const operation_data_model = this.getOperationDataModel()
+    const doc_html = request_body.doc
+    const doc_text = doc_html ? striptags(doc_html) : null
+    log.debug(this.log_prefix, '[changeDocument]', operation_data_seq, doc_html, doc_text)
+    return await operation_data_model.updateDoc(operation_data_seq, doc_html, doc_text)
+  }
+
+  getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
+    const operation_data_model = this.getOperationDataModel()
+    const operation_data_list = await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq, limit)
+    for(let cnt = 0; cnt < operation_data_list.length; cnt++) {
+      operation_data_list[cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_data_list[cnt].thumbnail)
+    }
+    return operation_data_list
+  }
+
+  changeStatus = async (operation_seq, status) => {
+    const operation_data_info = { status }
+    const operation_data_model = this.getOperationDataModel()
+    await operation_data_model.updateOperationData(operation_seq, operation_data_info)
+  }
+
+  updateOperationDataByOperationSeqList = async (operation_seq_list, status) => {
+    const operation_data_info = { status }
+    const operation_data_model = this.getOperationDataModel()
+    await operation_data_model.updateOperationDataByOperationSeqList(operation_seq_list, operation_data_info)
   }
 }
 

@@ -202,7 +202,7 @@ routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res)
   const member_seq = token_info.getId();
   const seq_list = req.body.seq_list;
 
-  const result = await new OperationModel(DBMySQL).updateStatusTrash(seq_list, member_seq, false);
+  const result = await OperationService.updateStatusTrash(DBMySQL, seq_list, member_seq, false);
 
   const output = new StdObject();
   output.add('result', result);
@@ -217,7 +217,7 @@ routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, r
   const seq_list = req.body.seq_list;
   log.d(req, seq_list);
 
-  const result = await new OperationModel(DBMySQL).updateStatusTrash(seq_list, member_seq, true);
+  const result = await OperationService.updateStatusTrash(DBMySQL, seq_list, member_seq, true);
 
   const output = new StdObject();
   output.add('result', result);
@@ -226,11 +226,9 @@ routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, r
 }));
 
 routes.put('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const result = await operation_model.updateStatusFavorite(operation_seq, false);
+  const result = await OperationService.updateStatusFavorite(DBMySQL, operation_seq, false);
 
   const output = new StdObject();
   output.add('result', result);
@@ -238,11 +236,9 @@ routes.put('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USE
 }));
 
 routes.delete('/:operation_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
   const operation_seq = req.params.operation_seq;
 
-  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info);
-  const result = await operation_model.updateStatusFavorite(operation_seq, true);
+  const result = await OperationService.updateStatusFavorite(DBMySQL, operation_seq, true);
 
   const output = new StdObject();
   output.add('result', result);

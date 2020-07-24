@@ -158,7 +158,7 @@ operation_clip_schema.statics.unsetPhaseOne = function( clip_id, operation_seq, 
     is_phase: false,
     modify_date: Date.now()
   };
-  return this.update( { _id: clip_id, operation_seq, phase_id }, update );
+  return this.updateOne( { _id: clip_id, operation_seq, phase_id }, update );
 };
 
 operation_clip_schema.statics.migrationGroupSeq = function( member_seq, group_seq ) {

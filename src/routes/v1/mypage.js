@@ -3,15 +3,14 @@ import Wrap from '../../utils/express-async';
 import Auth from '../../middlewares/auth.middleware';
 import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql';
-import SocketManager from '../../service/socket-manager'
 import Role from "../../constants/roles";
 import Util from "../../utils/baseutil";
 import GroupService from '../../service/member/GroupService';
 import ProFileService from '../../service/mypage/ProFileService';
 import ServiceConfig from "../../service/service-config";
-import member_service from "../../service/member/MemberService";
 import FollowService from "../../service/follow/FollowService";
 import MemberLogService from '../../service/member/MemberLogService';
+import OperationDataService from '../../service/operation/OperationDataService'
 
 const routes = Router();
 
@@ -112,6 +111,16 @@ routes.post('/changeGroupCMFlag', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   } catch (e) {
     throw new StdObject(-1, e, 400);
   }
+}));
+
+routes.get('/open/video/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const group_seq = req.params.group_seq;
+  const limit = Util.parseInt(req.query.limit, null);
+  const open_video_list = await OperationDataService.getCompleteIsOpenVideoDataLists(group_seq, limit)
+
+  const output = new StdObject()
+  output.add('open_video_list', open_video_list)
+  res.json(output);
 }));
 
 export default routes;

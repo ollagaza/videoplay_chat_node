@@ -10,8 +10,8 @@ export default class OperationDataModel extends MySQLModel {
     this.log_prefix = '[OperationDataModel]'
   }
 
-  createOperationData = async (operation_data) => {
-    operation_data.reg_date = this.database.raw('NOW()')
+  getOperationDataPrams = (operation_data, set_reg_date = false) => {
+    if (set_reg_date) operation_data.reg_date = this.database.raw('NOW()')
     operation_data.modify_date = this.database.raw('NOW()')
     if (operation_data.hashtag_list) {
       operation_data.hashtag_list = JSON.stringify(operation_data.hashtag_list)
@@ -23,8 +23,22 @@ export default class OperationDataModel extends MySQLModel {
     } else {
       operation_data.category_list = JSON.stringify([])
     }
-    return await this.create(operation_data, 'seq')
+    return operation_data
   }
+
+
+
+  createOperationData = async (operation_data) => {
+    return await this.create(this.getOperationDataPrams(operation_data, true), 'seq')
+  }
+
+  updateOperationData = async (operation_seq, operation_data) => {
+    return await this.update({ operation_seq }, this.getOperationDataPrams(operation_data))
+  }
+
+  updateOperationDataByOperationSeqList = async (operation_seq_list, operation_data) => {
+    return await this.updateIn("operation_seq", operation_seq_list, this.getOperationDataPrams(operation_data));
+  };
 
   getOperationData = async (operation_data_seq) => {
     const result = await this.findOne({ seq: operation_data_seq })
@@ -58,13 +72,16 @@ export default class OperationDataModel extends MySQLModel {
     return await this.update(filter, update_params)
   }
 
-  updateComplete = async (operation_data_seq) => {
+  updateComplete = async (operation_data_seq, total_time = null) => {
     const filter = {
       seq: operation_data_seq
     }
     const update_params = {
       is_complete: 1,
       modify_date: this.database.raw('NOW()')
+    }
+    if (total_time) {
+      update_params.total_time = total_time
     }
     return await this.update(filter, update_params)
   }
@@ -81,5 +98,33 @@ export default class OperationDataModel extends MySQLModel {
     } catch (e) {
       throw e;
     }
+  }
+
+  updateDoc = async (operation_data_seq, doc_html, doc_text) => {
+    const filter = {
+      seq: operation_data_seq
+    }
+    const update_params = {
+      doc_html,
+      doc_text,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update(filter, update_params)
+  }
+
+  getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
+    const oKnex = this.database.select('*')
+      .from('operation_data')
+      .where(function () {
+        this.where('group_seq', group_seq)
+          .andWhere('operation_data.is_complete', '1')
+          .andWhere('operation_data.status', 'Y')
+          .andWhere('operation_data.is_open_video', '1')
+      })
+      .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
+    if (limit) {
+      oKnex.limit(limit);
+    }
+    return oKnex;
   }
 }
