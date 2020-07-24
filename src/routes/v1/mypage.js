@@ -113,10 +113,14 @@ routes.post('/changeGroupCMFlag', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   }
 }));
 
-routes.get('/video/open/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+routes.get('/open/video/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const group_seq = req.params.group_seq;
   const limit = Util.parseInt(req.query.limit, null);
-  await OperationDataService.getCompleteIsOpenVideoDataLists(group_seq, limit)
+  const open_video_list = await OperationDataService.getCompleteIsOpenVideoDataLists(group_seq, limit)
+
+  const output = new StdObject()
+  output.add('open_video_list', open_video_list)
+  res.json(output);
 }));
 
 export default routes;
