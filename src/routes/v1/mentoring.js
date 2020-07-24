@@ -16,10 +16,7 @@ import OperationService from '../../service/operation/OperationService'
 import OperationDataService from '../../service/operation/OperationDataService'
 import ServiceConfig from "../../service/service-config";
 import GroupService from "../../service/member/GroupService";
-import OperationClipService from '../../service/operation/OperationClipService'
-import OperationFileService from '../../service/operation/OperationFileService'
 import ContentCountService from '../../service/member/ContentCountService'
-
 
 const routes = Router();
 
@@ -47,7 +44,10 @@ routes.post('/getmentolist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(r
   try {
     const bestMentoResult = await MentoringService.getBestMentoringLists(DBMySQL, category_code, group_seq)
     _.forEach(bestMentoResult, async (value) => {
-      bestMentoResult.videos = await OperationClipService.findByGroupSeq(value.group_seq)
+      value.videos = await OperationDataService.getCompleteIsOpenVideoDataLists(value.group_seq);
+      for(let cnt = 0; cnt < value.videos.length; cnt++) {
+        value.videos[cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), value.videos[cnt].thumbnail)
+      }
       if (value.profile_image_path !== null) {
         value.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), value.profile_image_path)
       }

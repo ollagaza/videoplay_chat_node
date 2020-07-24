@@ -129,16 +129,16 @@ export default class MentoringModel extends MySQLModel {
       const display_columns = [
         'operation_data.seq', 'operation_data.operation_seq','operation_data.is_mento_complete',
         'operation_data.title', 'operation_data.group_name',
-        'operation_data.reg_date', 'operation_data.group_seq', 'operation_data.mento_group_seq'
+        'operation_data.reg_date', 'operation_data.group_seq', 'operation_data.mento_group_seq',
+        'operation_data.thumbnail'
       ]
       const oKnex = this.database.select(display_columns)
         .from('operation_data')
-        .innerJoin('group_info', 'group_info.seq', 'operation_data.mento_group_seq')
-        .innerJoin('member', 'member.seq', 'group_info.member_seq')
         .where(function () {
           this.where('operation_data.type', 'M')
             .andWhere('operation_data.is_complete', '1')
             .andWhere('operation_data.mento_group_seq', group_seq)
+            .andWhere('operation_data.is_open_video', '1')
             .whereIn('operation_data.is_mento_complete', ['S', 'C'])
         })
         .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])

@@ -198,6 +198,11 @@ const OperationDataServiceClass = class {
     log.debug(this.log_prefix, '[changeDocument]', operation_data_seq, doc_html, doc_text)
     return await operation_data_model.updateDoc(operation_data_seq, doc_html, doc_text)
   }
+
+  getCompleteIsOpenVideoDataLists = async (group_seq) => {
+    const operation_data_model = this.getOperationDataModel()
+    return await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq)
+  }
 }
 
 const operation_data_service = new OperationDataServiceClass()
