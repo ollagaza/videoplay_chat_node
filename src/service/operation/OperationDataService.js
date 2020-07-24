@@ -208,6 +208,7 @@ const OperationDataServiceClass = class {
     const operation_data_list = await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq, limit)
     for(let cnt = 0; cnt < operation_data_list.length; cnt++) {
       operation_data_list[cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_data_list[cnt].thumbnail)
+      log.debug(this.log_prefix, '[getCompleteIsOpenVideoDataLists]', operation_data_list[cnt].thumbnail)
     }
     return operation_data_list
   }
