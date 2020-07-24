@@ -582,7 +582,7 @@ const OperationServiceClass = class {
     if (!operation_data_info || operation_data_info.isEmpty()) {
       const operation_data_seq = await OperationDataService.createOperationDataByOperationSeq(operation_seq)
       if (operation_data_seq) {
-        operation_data_info = await OperationDataService.getOperationDataByOperationSeq(operation_data_seq)
+        operation_data_info = await OperationDataService.getOperationDataByOperationSeq(DBMySQL, operation_data_seq)
       }
     }
     operation_data_info.setUrl();

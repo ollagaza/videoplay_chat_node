@@ -50,11 +50,13 @@ export default class MentoringModel extends MySQLModel {
           this.on('group_info.member_seq', 'member.seq')
             .andOn('group_info.is_mentoring', 1)
         })
-        .leftOuterJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
-        .leftOuterJoin('content_counts', function () {
+        .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
+        .innerJoin('content_counts', function () {
           this.on('content_counts.group_seq', 'group_info.seq')
-            .andOnVal('content_counts.category_code', category_code)
             .andOnVal('content_counts.is_best', '1');
+          if (category_code !== 'all') {
+            this.andOnVal('content_counts.category_code', category_code)
+          }
         })
         .leftOuterJoin('following',
           function () {
@@ -80,8 +82,8 @@ export default class MentoringModel extends MySQLModel {
       const oKnex = this.database.select(display_columns)
         .from('group_info')
         .innerJoin('member', 'member.seq', 'group_info.member_seq')
-        .leftOuterJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
-        .leftOuterJoin('content_counts', function () {
+        .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
+        .innerJoin('content_counts', function () {
           this.on('content_counts.group_seq', 'group_info.seq')
             .andOnVal('content_counts.category_code', category_code)
         })
@@ -127,16 +129,16 @@ export default class MentoringModel extends MySQLModel {
       const display_columns = [
         'operation_data.seq', 'operation_data.operation_seq','operation_data.is_mento_complete',
         'operation_data.title', 'operation_data.group_name',
-        'operation_data.reg_date', 'operation_data.group_seq', 'operation_data.mento_group_seq'
+        'operation_data.reg_date', 'operation_data.group_seq', 'operation_data.mento_group_seq',
+        'operation_data.thumbnail'
       ]
       const oKnex = this.database.select(display_columns)
         .from('operation_data')
-        .innerJoin('group_info', 'group_info.seq', 'operation_data.mento_group_seq')
-        .innerJoin('member', 'member.seq', 'group_info.member_seq')
         .where(function () {
           this.where('operation_data.type', 'M')
             .andWhere('operation_data.is_complete', '1')
             .andWhere('operation_data.mento_group_seq', group_seq)
+            .andWhere('operation_data.is_open_video', '1')
             .whereIn('operation_data.is_mento_complete', ['S', 'C'])
         })
         .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
