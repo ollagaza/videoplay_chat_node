@@ -46,7 +46,8 @@ routes.post('/getmentolist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(r
 
   try {
     const bestMentoResult = await MentoringService.getBestMentoringLists(DBMySQL, category_code, group_seq)
-    _.forEach(bestMentoResult, (value) => {
+    _.forEach(bestMentoResult, async (value) => {
+      bestMentoResult.videos = await OperationClipService.findByGroupSeq(value.group_seq)
       if (value.profile_image_path !== null) {
         value.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), value.profile_image_path)
       }
