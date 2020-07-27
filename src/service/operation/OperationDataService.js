@@ -183,6 +183,7 @@ const OperationDataServiceClass = class {
 
     const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_info.seq)
     operation_data_info.total_time = media_info ? media_info.total_time : 0
+    operation_data_info.thumbnail = media_info ? media_info.thumbnail : null
 
     return operation_data_info
   }
