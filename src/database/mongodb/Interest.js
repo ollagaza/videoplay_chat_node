@@ -13,9 +13,14 @@ const schema_field_infos = getFieldInfos();
 
 const interest_schema = new Schema(schema_field_infos, { strict: false });
 
-interest_schema.statics.InsertDefaultData = function () {
-  const model = new this(Interest_BasicData);
-  return model.save();
+interest_schema.statics.InsertDefaultData = function (interest) {
+  if (!interest || !interest._id) {
+    const model = new this(Interest_BasicData)
+    return model.save()
+  }
+  if (!interest.version || interest.version < Interest_BasicData.version) {
+    return this.updateOne({ _id: interest._id }, Interest_BasicData);
+  }
 };
 
 interest_schema.statics.findAll = function () {

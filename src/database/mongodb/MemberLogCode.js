@@ -15,13 +15,11 @@ const schema_field_infos = getFieldInfos();
 const logcode_schema = new Schema(schema_field_infos, { strict: false });
 
 logcode_schema.statics.InsertDefaultData = function (log_code) {
-  const model = LogCode_BasicData;
-
   if (!log_code || !log_code._id) {
     const model = new this(LogCode_BasicData)
     return model.save()
   }
-  if (!log_code.version || log_code.version < model.version) {
+  if (!log_code.version || log_code.version < LogCode_BasicData.version) {
     return this.updateOne({ _id: log_code._id }, LogCode_BasicData);
   }
 };

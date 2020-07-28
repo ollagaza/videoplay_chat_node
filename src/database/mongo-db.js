@@ -40,15 +40,11 @@ const init = async () => {
 }
 
 const defaultMongoCollections = async () => {
-  const medical = await MedicalModel.findAll();
-  if (medical.length === 0) {
-    await MedicalModel.InsertDefaultData();
-  }
+  const medical = await MedicalModel.findOne();
+  await MedicalModel.InsertDefaultData(medical);
 
-  const interest = await InterestModel.findAll();
-  if (interest.length === 0) {
-    await InterestModel.InsertDefaultData();
-  }
+  const interest = await InterestModel.findOne();
+  await InterestModel.InsertDefaultData(interest);
 
   const log_code = await LogCodeModel.findOne();
   await LogCodeModel.InsertDefaultData(log_code);
