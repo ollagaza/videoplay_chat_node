@@ -86,6 +86,7 @@ routes.post('/updateprofile',
 
       await DBMySQL.transaction(async (transaction) => {
         const result = await ProFileService.updateProFileInfo(transaction, group_seq, upload_type, input_data);
+        await this.createMemberLog(transaction, group_seq, null, null, null, "1004", null, null, 1)
         output.add('result', result);
       });
       res.json(output);

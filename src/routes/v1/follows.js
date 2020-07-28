@@ -59,7 +59,7 @@ routes.post('/registfollow', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
       const group_info_follower_result = await GroupService.UpdateGroupInfoAddCnt(transaction, follower_seq, 'follower');
 
       const log_text = `${group_info.group_name}님 께서 ${follower_info.group_name}님을 팔로우 하셨습니다.`;
-      await MemberLogService.createMemberLog(DBMySQL, group_seq, null, '0000', log_text, null, 1, 0);
+      await MemberLogService.createMemberLog(DBMySQL, group_seq, null, follower_info.group_seq, '0000', log_text, null, 1, 0);
     });
 
     const result = new StdObject();

@@ -26,7 +26,7 @@ routes.post('/', Wrap(async(req, res) => {
     } else {
       ip = req.connection.remoteAddress;
     }
-    await MemberLogService.createMemberLog(DBMySQL, null, member_info.seq, '0000', 'login', ip);
+    await MemberLogService.createMemberLog(DBMySQL, null, member_info.seq, null, '0000', 'login', ip);
     output.add('notify', await MemberLogService.getNoticeListMemberLog(DBMySQL, member_info.seq));
     return res.json(output);
   } catch (e) {

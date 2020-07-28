@@ -50,10 +50,8 @@ const defaultMongoCollections = async () => {
     await InterestModel.InsertDefaultData();
   }
 
-  const log_code = await LogCodeModel.findAll();
-  if (log_code.length === 0) {
-    await LogCodeModel.InsertDefaultData();
-  }
+  const log_code = await LogCodeModel.findOne();
+  await LogCodeModel.InsertDefaultData(log_code);
 }
 
 export default {
