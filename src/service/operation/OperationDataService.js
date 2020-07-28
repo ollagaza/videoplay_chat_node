@@ -62,27 +62,11 @@ const OperationDataServiceClass = class {
     if (group_member_info.group_type === GroupService.GROUP_TYPE_PERSONAL) {
       operation_data_info.hospital = member_info.hospname
     }
-    operation_data_info.title = operation_info.operation_name
-    operation_data_info.status = operation_info.status
-    operation_data_info.is_complete = operation_info.analysis_status === 'Y'
-    if (operation_data_info.doc_html) {
-      operation_data_info.doc_text = striptags(operation_data_info.doc_html)
-    }
-
+    await this.setOperationDataInfo(operation_data_info, operation_info)
     const operation_data_model = this.getOperationDataModel()
     const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
 
-    if (operation_data_seq && hashtag) {
-      (
-        async () => {
-          try {
-            await HashtagService.updateOperationHashtag(group_member_info.group_seq, hashtag, operation_data_seq)
-          } catch (error) {
-            log.error(this.log_prefix, '[createOperationDataByRequest]', error)
-          }
-        }
-      )()
-    }
+    this.updateHashtag(operation_data_seq, group_member_info.group_seq, hashtag)
 
     return operation_data_seq
   }
@@ -94,27 +78,27 @@ const OperationDataServiceClass = class {
     }
     const hashtag = request_body.operation_data ? request_body.operation_data.hashtag : null
     const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
-    operation_data_info.title = operation_info.operation_name
-    if (operation_data_info.doc_html) {
-      operation_data_info.doc_text = striptags(operation_data_info.doc_html)
-    }
-
+    await this.setOperationDataInfo(operation_data_info, operation_info)
     const operation_data_model = this.getOperationDataModel(database)
     const operation_data_seq = await operation_data_model.updateOperationData(operation_seq, operation_data_info)
 
+    this.updateHashtag(operation_data_info.seq, operation_info.group_seq, hashtag)
+
+    return operation_data_seq
+  }
+
+  updateHashtag = (operation_data_seq, group_seq, hashtag) => {
     if (operation_data_seq && hashtag) {
       (
         async () => {
           try {
-            await HashtagService.updateOperationHashtag(operation_info.group_seq, hashtag, operation_data_seq)
+            await HashtagService.updateOperationHashtag(group_seq, hashtag, operation_data_seq)
           } catch (error) {
             log.error(this.log_prefix, '[updateOperationDataByRequest]', error)
           }
         }
       )()
     }
-
-    return operation_data_seq
   }
 
   setThumbnailImage = async (operation_seq, request, response) => {
@@ -158,12 +142,15 @@ const OperationDataServiceClass = class {
     if (!operation_data || operation_data.isEmpty()) {
       return null
     }
-    const operation_data_seq = operation_data.seq
     const group_seq = operation_data.group_seq
 
-    const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_seq)
-
-    await operation_data_model.updateComplete(operation_data_seq, media_info ? media_info.total_time : null)
+    const operation_info = await OperationService.getOperationInfoNoJoin(DBMySQL, operation_seq)
+    if (!operation_info) {
+      return null
+    }
+    const operation_data_info = {}
+    await this.setOperationDataInfo(operation_data_info, operation_info)
+    await operation_data_model.updateOperationData(operation_seq, operation_data_info)
     // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
 
     const group_count_field_name = ['video_count']
@@ -184,6 +171,21 @@ const OperationDataServiceClass = class {
       }
       await ContentCountService.updateAllCount(null, group_seq)
     }
+  }
+
+  setOperationDataInfo = async (operation_data_info, operation_info) => {
+    operation_data_info.title = operation_info.operation_name
+    operation_data_info.status = operation_info.status
+    operation_data_info.is_complete = operation_info.analysis_status === 'Y'
+    if (operation_data_info.doc_html) {
+      operation_data_info.doc_text = striptags(operation_data_info.doc_html)
+    }
+
+    const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_info.seq)
+    operation_data_info.total_time = media_info ? media_info.total_time : 0
+    operation_data_info.thumbnail = media_info ? media_info.thumbnail : null
+
+    return operation_data_info
   }
 
   setRejectMentoring = async (operation_seq) => {

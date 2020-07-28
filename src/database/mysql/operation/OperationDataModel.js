@@ -23,6 +23,9 @@ export default class OperationDataModel extends MySQLModel {
     } else {
       operation_data.category_list = JSON.stringify([])
     }
+    if (operation_data.thumbnail) {
+      operation_data.thumbnail = this.database.raw(`IF(\`thumbnail\` IS NULL, ?, \`thumbnail\`)`, operation_data.thumbnail)
+    }
     return operation_data
   }
 
