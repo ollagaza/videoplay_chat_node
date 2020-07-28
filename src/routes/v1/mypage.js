@@ -69,9 +69,10 @@ routes.post('/updateprofile',
     const output = new StdObject()
 
     try {
+      const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
+
       if (upload_type === 'image') {
-        const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
-        const profile_dir = ServiceConfig.get('media_root') + group_info.media_path + '/profile';
+        const profile_dir = ServiceConfig.get('media_root') + group_info.media_path + 'profile';
         const directory_exits = await Util.createDirectory(profile_dir);
         if (directory_exits && req.files.profile_image !== undefined) {
           await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
@@ -85,9 +86,12 @@ routes.post('/updateprofile',
       }
 
       await DBMySQL.transaction(async (transaction) => {
-        const result = await ProFileService.updateProFileInfo(transaction, group_seq, upload_type, input_data);
-        await this.createMemberLog(transaction, group_seq, null, null, null, "1004", null, null, 1)
-        output.add('result', result);
+        const write_history = await ProFileService.writeProfileHistory(transaction, group_seq, group_info.member_seq, upload_type, JSON.parse(group_info.profile), input_data);
+        if (write_history !== undefined) {
+          const result = await ProFileService.updateProFileInfo(transaction, group_seq, upload_type, input_data);
+          await MemberLogService.createMemberLog(transaction, group_seq, null, null, "1004", null, null, 1)
+          output.add('result', result);
+        }
       });
       res.json(output);
     } catch (e) {
