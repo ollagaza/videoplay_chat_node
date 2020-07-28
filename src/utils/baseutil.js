@@ -562,6 +562,12 @@ const getVideoDuration = async (video_path) => {
   return result;
 };
 
+const getImageScaling = async (origin_path, scaling_path = null, scaling_type = 'width', scaling_size = 1380, overwrite = true) => {
+  const scaling_str = scaling_type === 'width' ? `${scaling_size}:-1` : '-1:${scaling_size}'
+  const command = `ffmpeg ${overwrite ? '-y' : null} -i "${origin_path}" -vf scale=${scaling_type}=${scaling_str} -an "${overwrite ? origin_path : scaling_path}"`;
+  return await execute(command);
+}
+
 const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1) => {
   let filter = '';
   let time_option = '';
@@ -1225,6 +1231,7 @@ export default {
 
   "parseInt": getInt,
   "parseFloat": getFloat,
+  "getImageScaling": getImageScaling,
   isNumber,
   isString,
   isArray,
