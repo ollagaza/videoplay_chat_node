@@ -36,7 +36,7 @@ const init = async () => {
     })
   })
 
-  return await async_func
+  return async_func
 }
 
 const defaultMongoCollections = async () => {

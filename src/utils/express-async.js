@@ -1,7 +1,7 @@
 import StdObject from '../wrapper/std-object'
 import Config from '../config/config'
 import ServiceErrorModel from '../database/mysql/service-error-model'
-import db_mysql from '../database/knex-mysql'
+import DBMySQL from '../database/knex-mysql'
 
 const IS_DEV = Config.isDev()
 
@@ -40,7 +40,7 @@ export default (fn) => {
       }
 
       (async () => {
-        await new ServiceErrorModel(db_mysql).createServiceError('api', null, null, JSON.stringify(error_object.toJSON()), req)
+        await new ServiceErrorModel(DBMySQL).createServiceError('api', null, null, JSON.stringify(error_object.toJSON()), req)
       })()
 
       return next(error_object)

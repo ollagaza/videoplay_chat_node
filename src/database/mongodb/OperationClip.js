@@ -130,7 +130,6 @@ operation_clip_schema.statics.updatePhase = function( phase_id, phase_desc ) {
     desc: phase_desc,
     modify_date: Date.now()
   };
-  log.d(null, phase_id, phase_desc, update);
   return this.findByIdAndUpdate( phase_id, update, {"new": true} );
 };
 
