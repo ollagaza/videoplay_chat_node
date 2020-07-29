@@ -22,7 +22,7 @@ export default class MentoringModel extends MySQLModel {
         .innerJoin('content_counts', function () {
           this.on('content_counts.group_seq', 'group_info.seq')
         })
-        .andWhere('group_info.is_mentoring', 1)
+        .andWhere('group_info.is_channel', 1)
         .distinct()
       return oKnex;
     } catch (e) {
@@ -34,7 +34,7 @@ export default class MentoringModel extends MySQLModel {
     try {
       const display_columns = [
         'group_info.seq as group_seq', 'group_info.group_name', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
-        , 'member.user_name', 'member.hospname',
+        , 'member.user_name', 'member.hospname', 'group_info.is_mentoring',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
         this.database.raw('ifnull(group_counts.follower, 0) as follower'),
         this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
@@ -48,7 +48,7 @@ export default class MentoringModel extends MySQLModel {
         .from('member')
         .innerJoin('group_info', function () {
           this.on('group_info.member_seq', 'member.seq')
-            .andOn('group_info.is_mentoring', 1)
+            .andOn('group_info.is_channel', 1)
         })
         .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
         .innerJoin('content_counts', function () {
@@ -73,7 +73,7 @@ export default class MentoringModel extends MySQLModel {
   getRecommendMentoringLists = async (category_code) => {
     try {
       const display_columns = [
-        'group_info.seq as group_seq', 'group_info.group_name', 'member.hospname', 'group_info.hashtag', 'group_info.profile_image_path',
+        'group_info.seq as group_seq', 'group_info.group_name', 'member.hospname', 'group_info.hashtag', 'group_info.profile_image_path', 'group_info.is_mentoring',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
         this.database.raw('ifnull(group_counts.follower, 0) as follower'),
         this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
@@ -87,7 +87,7 @@ export default class MentoringModel extends MySQLModel {
           this.on('content_counts.group_seq', 'group_info.seq')
             .andOnVal('content_counts.category_code', category_code)
         })
-        .where('group_info.is_mentoring', '1')
+        .where('group_info.is_channel', '1')
         .orderBy([{column: 'group_counts.community', order: 'desc'}, {column: 'content_counts.sort_num', order: 'asc'}])
       return oKnex;
     } catch (e) {
@@ -98,7 +98,7 @@ export default class MentoringModel extends MySQLModel {
     try {
       const display_columns = [
         'group_info.seq as group_seq', 'group_info.group_name', 'group_info.hashtag', 'group_info.profile_image_path',
-        'group_info.profile', 'member.hospname',
+        'group_info.profile', 'member.hospname', 'group_info.is_mentoring',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
         this.database.raw('ifnull(group_counts.follower, 0) as follower'),
         this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
@@ -111,7 +111,7 @@ export default class MentoringModel extends MySQLModel {
           this.onVal('content_counts.category_code', 'all')
             .andOn('content_counts.group_seq', 'group_info.seq')
         })
-        .where('group_info.is_mentoring', '1')
+        .where('group_info.is_channel', '1')
         .andWhere(function () {
           this.orWhere('group_info.group_name', 'like', `%${sSearch}%`)
           this.orWhere('member.user_id', 'like', `%${sSearch}%`)
