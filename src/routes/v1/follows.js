@@ -9,6 +9,7 @@ import ServiceConfig from "../../service/service-config";
 import FollowService from "../../service/follow/FollowService";
 import GroupService from "../../service/member/GroupService";
 import MemberLogService from "../../service/member/MemberLogService";
+import ProFileService from '../../service/mypage/ProFileService'
 
 const routes = Router();
 
@@ -97,6 +98,17 @@ routes.post('/unregistfollow', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   } catch (e) {
     throw new StdObject(-1, e, 400);
   }
+}));
+
+routes.get('/state/:follow_target_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json')
+  const token_info = req.token_info
+  const group_seq = token_info.getGroupSeq()
+  const follow_target_seq = req.params.follow_target_seq
+  const follow_info = await FollowService.getFollowing(DBMySQL, group_seq, follow_target_seq)
+  const output = new StdObject()
+  output.add('follow_info', follow_info ? follow_info[0] : null)
+  res.json(output);
 }));
 
 export default routes;
