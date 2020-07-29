@@ -61,6 +61,9 @@ const ProFileServiceClass = class {
       let result = null
       if (json_flag.type === 'channel') {
         result = await profile_model.updateChannelFlag(group_seq, json_flag.flag)
+        if (json_flag.flag === 0) {
+          result = await profile_model.updateMentoFlag(group_seq, 0)
+        }
       } else {
         result = await profile_model.updateMentoFlag(group_seq, json_flag.flag)
       }
