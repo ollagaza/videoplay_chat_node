@@ -20,9 +20,6 @@ files.keys().forEach((key) => {
     }
     let route_path = key.replace(/(\.)|(js)|(\/index\.js)/g, '')
     log.d(null, 'add api', key, route_path);
-    if (key === './v1/folder/index.js') {
-      log.debug(files(key).default)
-    }
     routes.use(route_path, files(key).default);
   }
 });

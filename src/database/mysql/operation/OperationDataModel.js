@@ -115,6 +115,17 @@ export default class OperationDataModel extends MySQLModel {
     return await this.update(filter, update_params)
   }
 
+  updateOpenVideo = async (operation_data_seq, is_open_video) => {
+    const filter = {
+      seq: operation_data_seq
+    }
+    const update_params = {
+      is_open_video,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update(filter, update_params)
+  }
+
   getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
     const oKnex = this.database.select('*')
       .from('operation_data')

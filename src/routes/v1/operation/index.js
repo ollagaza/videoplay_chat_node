@@ -178,6 +178,15 @@ routes.put('/:api_type/:api_key/doc', Auth.isAuthenticated(Role.LOGIN_USER), Wra
   res.json(output);
 }));
 
+routes.put('/:api_type/:api_key/open_video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  const { operation_data_seq } = await getBaseInfo(req, true, true)
+  const result = await OperationDataService.changeOpenVideo(operation_data_seq, req.body)
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output);
+}));
+
 routes.get('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   const { operation_data_seq } = await getBaseInfo(req, false)
   const comment_list = await MentoringCommentService.getCommentList(DBMySQL, operation_data_seq, req.query)
