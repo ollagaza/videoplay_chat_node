@@ -183,6 +183,7 @@ const OperationDataServiceClass = class {
 
     const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_info.seq)
     operation_data_info.total_time = media_info ? media_info.total_time : 0
+    operation_data_info.thumbnail = media_info ? media_info.thumbnail : null
 
     return operation_data_info
   }
@@ -200,8 +201,13 @@ const OperationDataServiceClass = class {
     const operation_data_model = this.getOperationDataModel()
     const doc_html = request_body.doc
     const doc_text = doc_html ? striptags(doc_html) : null
-    log.debug(this.log_prefix, '[changeDocument]', operation_data_seq, doc_html, doc_text)
     return await operation_data_model.updateDoc(operation_data_seq, doc_html, doc_text)
+  }
+
+  changeOpenVideo = async (operation_data_seq, request_body) => {
+    const operation_data_model = this.getOperationDataModel()
+    const is_open_video = Util.isTrue(request_body.is_open_video)
+    return await operation_data_model.updateOpenVideo(operation_data_seq, is_open_video)
   }
 
   getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {

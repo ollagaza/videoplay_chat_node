@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import log from '../../libs/logger'
 import Wrap from '../../utils/express-async';
 import Auth from '../../middlewares/auth.middleware';
 import StdObject from '../../wrapper/std-object';
@@ -11,6 +12,7 @@ import ServiceConfig from "../../service/service-config";
 import FollowService from "../../service/follow/FollowService";
 import MemberLogService from '../../service/member/MemberLogService';
 import OperationDataService from '../../service/operation/OperationDataService'
+import GetDimension from "get-video-dimensions";
 
 const routes = Router();
 
@@ -69,24 +71,37 @@ routes.post('/updateprofile',
     const output = new StdObject()
 
     try {
+      const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
+
       if (upload_type === 'image') {
-        const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
-        const profile_dir = ServiceConfig.get('media_root') + group_info.media_path + '/profile';
+        const profile_dir = ServiceConfig.get('media_root') + group_info.media_path + 'profile';
         const directory_exits = await Util.createDirectory(profile_dir);
+        const save_file_name = `${req.files.profile_image[0].filename}.jpg`
+        const rename_path = `${profile_dir}/${save_file_name}`
+        const dimensions = await Util.getVideoDimension(req.files.profile_image[0].path)
+
         if (directory_exits && req.files.profile_image !== undefined) {
-          await Util.renameFile(req.files.profile_image[0].path, `${profile_dir}/${req.files.profile_image[0].filename}`)
+          await Util.renameFile(req.files.profile_image[0].path, rename_path)
+
+          if (dimensions.width > 1380) {
+            await Util.getImageScaling(rename_path)
+          }
         }
 
         if (req.files.profile_image !== undefined) {
-          input_data = `${group_info.media_path}/profile/${req.files.profile_image[0].filename}`;
+          input_data = `${group_info.media_path}/profile/${save_file_name}`;
         } else {
           input_data = '';
         }
       }
 
       await DBMySQL.transaction(async (transaction) => {
-        const result = await ProFileService.updateProFileInfo(transaction, group_seq, upload_type, input_data);
-        output.add('result', result);
+        const write_history = await ProFileService.writeProfileHistory(transaction, group_seq, group_info.member_seq, upload_type, JSON.parse(group_info.profile), input_data);
+        if (write_history !== undefined) {
+          const result = await ProFileService.updateProFileInfo(transaction, group_seq, upload_type, input_data);
+          await MemberLogService.createMemberLog(transaction, group_seq, null, null, "1004", null, null, 1)
+          output.add('result', result);
+        }
       });
       res.json(output);
     } catch (e) {

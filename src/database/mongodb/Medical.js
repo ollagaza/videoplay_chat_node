@@ -13,9 +13,14 @@ const schema_field_infos = getFieldInfos();
 
 const medical_schema = new Schema(schema_field_infos, { strict: false });
 
-medical_schema.statics.InsertDefaultData = function () {
-  const model = new this(Medaical_BasicData);
-  return model.save();
+medical_schema.statics.InsertDefaultData = function (medical) {
+  if (!medical || !medical._id) {
+    const model = new this(Medaical_BasicData)
+    return model.save()
+  }
+  if (!medical.version || medical.version < Medaical_BasicData.version) {
+    return this.updateOne({ _id: medical._id }, Medaical_BasicData);
+  }
 };
 
 medical_schema.statics.findAll = function () {

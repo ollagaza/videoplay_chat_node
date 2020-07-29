@@ -5,7 +5,8 @@ const Schema = mongoose.Schema;
 
 const getFieldInfos = () => {
   return {
-    codes: { type: Object, index: true, require: false, unique: true }
+    version: { type: Number, index: false, require: false, unique: false },
+    codes: { type: Object, index: false, require: false, unique: false }
   };
 };
 
@@ -13,9 +14,14 @@ const schema_field_infos = getFieldInfos();
 
 const logcode_schema = new Schema(schema_field_infos, { strict: false });
 
-logcode_schema.statics.InsertDefaultData = function () {
-  const model = new this(LogCode_BasicData);
-  return model.save();
+logcode_schema.statics.InsertDefaultData = function (log_code) {
+  if (!log_code || !log_code._id) {
+    const model = new this(LogCode_BasicData)
+    return model.save()
+  }
+  if (!log_code.version || log_code.version < LogCode_BasicData.version) {
+    return this.updateOne({ _id: log_code._id }, LogCode_BasicData);
+  }
 };
 
 logcode_schema.statics.findAll = function () {

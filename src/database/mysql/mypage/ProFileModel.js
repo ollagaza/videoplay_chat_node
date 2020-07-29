@@ -1,9 +1,4 @@
-import _ from 'lodash';
-import ServiceConfig from '../../../service/service-config';
-import Constants from '../../../constants/constants'
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
-import StdObject from '../../../wrapper/std-object'
 import log from "../../../libs/logger";
 
 export default class ProFileModel extends MySQLModel {

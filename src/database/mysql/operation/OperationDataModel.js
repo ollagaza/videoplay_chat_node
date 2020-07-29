@@ -23,6 +23,9 @@ export default class OperationDataModel extends MySQLModel {
     } else {
       operation_data.category_list = JSON.stringify([])
     }
+    if (operation_data.thumbnail) {
+      operation_data.thumbnail = this.database.raw(`IF(\`thumbnail\` IS NULL, ?, \`thumbnail\`)`, operation_data.thumbnail)
+    }
     return operation_data
   }
 
@@ -107,6 +110,17 @@ export default class OperationDataModel extends MySQLModel {
     const update_params = {
       doc_html,
       doc_text,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update(filter, update_params)
+  }
+
+  updateOpenVideo = async (operation_data_seq, is_open_video) => {
+    const filter = {
+      seq: operation_data_seq
+    }
+    const update_params = {
+      is_open_video,
       modify_date: this.database.raw('NOW()')
     }
     return await this.update(filter, update_params)

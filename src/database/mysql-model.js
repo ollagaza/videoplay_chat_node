@@ -344,12 +344,12 @@ export default class MysqlModel {
     if (this.isArray(update_field)) {
       update_field.forEach((field_name) => {
         if (field_name_map && !field_name_map[field_name]) return
-        update_params[field_name] = this.database.raw(`IF(\`${field_name}\` - 1 >= 0, \`${field_name}\` - 1, 0)`)
+        update_params[field_name] = this.database.raw(`IF(\`${field_name}\` > 0, \`${field_name}\` - 1, 0)`)
         has_params = true
       })
     } else if (this.isString(update_field)) {
       if (!field_name_map || field_name_map[update_field]) {
-        update_params[update_field] = this.database.raw(`IF(\`${update_field}\` - 1 >= 0, \`${update_field}\` - 1, 0)`)
+        update_params[update_field] = this.database.raw(`IF(\`${update_field}\` > 0, \`${update_field}\` - 1, 0)`)
         has_params = true
       }
     } else if (this.isObject(update_field)) {
@@ -357,7 +357,7 @@ export default class MysqlModel {
         if (field_name_map && !field_name_map[field_name]) return
         const minus_count = this.parseInt(update_field[field_name], 0)
         if (minus_count <= 0) return
-        update_params[field_name] = this.database.raw(`case when \`${field_name}\` - ${minus_count} >= 0 then \`${field_name}\` - ${minus_count} else 0 end`)
+        update_params[field_name] = this.database.raw(`case when \`${field_name}\` - ${minus_count} > 0 then \`${field_name}\` - ${minus_count} else 0 end`)
         has_params = true
       })
     }
