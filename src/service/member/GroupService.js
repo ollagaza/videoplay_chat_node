@@ -84,14 +84,17 @@ const GroupServiceClass = class {
     }
     let group_member_info = null
     let is_active_group_member = false
+    let is_group_admin = false
     if ( token_info.getRole() === Role.ADMIN ) {
       is_active_group_member = true
+      is_group_admin = true
     } else if (check_group_auth) {
       if (!group_seq) {
         is_active_group_member = false
       } else {
         group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
         is_active_group_member = group_member_info && group_member_info.group_member_status === this.MEMBER_STATUS_ENABLE
+        is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
       }
     }
     if ( !is_active_group_member && throw_exception) {
@@ -103,7 +106,8 @@ const GroupServiceClass = class {
       group_seq,
       member_info,
       group_member_info,
-      is_active_group_member
+      is_active_group_member,
+      is_group_admin
     }
   }
 
@@ -850,7 +854,6 @@ const GroupServiceClass = class {
     const result_list = []
     const group_info_model = this.getGroupModel(database)
     const user_list = await group_info_model.getAllPersonalGroupUserList()
-    log.debug(this.log_prefix, '[getAllPersonalGroupUserListForBox] - user_list', user_list)
     for (let i = 0; i < user_list.length; i++) {
       const user_info = user_list[i]
       const member_info = {
