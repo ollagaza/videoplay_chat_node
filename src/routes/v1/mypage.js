@@ -61,20 +61,21 @@ routes.post('/getuserchannel', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   res.json(output);
 }));
 
-routes.post('/updateprofile',
+routes.put('/profile',
   Auth.isAuthenticated(Role.LOGIN_USER),
   Util.common_path_upload.fields([{ name: 'profile_image' }]), Wrap(async(req, res) => {
-    const token_info = req.token_info
-    const group_seq = token_info.getGroupSeq()
+    const { group_seq, is_group_admin, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    if (!is_group_admin) {
+      throw new StdObject(100, '권한이 없습니다.', 403)
+    }
     const upload_type = req.body.upload_type;
     let input_data = req.body.input_data;
     const output = new StdObject()
 
     try {
-      const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq);
-
+      const media_path = group_member_info.media_path
       if (upload_type === 'image') {
-        const profile_dir = ServiceConfig.get('media_root') + group_info.media_path + 'profile';
+        const profile_dir = ServiceConfig.get('media_root') + media_path + '/profile';
         const directory_exits = await Util.createDirectory(profile_dir);
         const save_file_name = `${req.files.profile_image[0].filename}.jpg`
         const rename_path = `${profile_dir}/${save_file_name}`
@@ -89,25 +90,54 @@ routes.post('/updateprofile',
         }
 
         if (req.files.profile_image !== undefined) {
-          input_data = `${group_info.media_path}/profile/${save_file_name}`;
+          input_data = `${media_path}/profile/${save_file_name}`;
         } else {
           input_data = '';
         }
       }
 
-      await DBMySQL.transaction(async (transaction) => {
-        const write_history = await ProFileService.writeProfileHistory(transaction, group_seq, group_info.member_seq, upload_type, JSON.parse(group_info.profile), input_data);
-        if (write_history !== undefined) {
-          const result = await ProFileService.updateProFileInfo(transaction, group_seq, upload_type, input_data);
-          await MemberLogService.createMemberLog(transaction, group_seq, null, null, "1004", null, null, 1)
-          output.add('result', result);
-        }
-      });
+      const prev_profile = group_member_info.profile
+      const result = await ProFileService.updateProFileInfo(DBMySQL, group_seq, upload_type, input_data);
+      output.add('result', result);
       res.json(output);
+      addProfileHistory(req, group_member_info, upload_type, input_data, prev_profile);
     } catch (e) {
       throw new StdObject(-1, e, 400);
     }
-  }));
+}));
+
+const addProfileHistory = (req, group_member_info, upload_type, input_data, prev_profile) => {
+  (
+    async () => {
+      try {
+        await ProFileService.writeProfileHistory(DBMySQL, group_member_info.group_seq, group_member_info.member_seq, upload_type, prev_profile ? JSON.parse(prev_profile) : {}, input_data);
+      } catch (e) {
+        log.e(req, '[ProFileService.writeProfileHistory]', e);
+      }
+      try {
+        await MemberLogService.createMemberLog(DBMySQL, group_member_info.group_seq, null, null, "1004", null, null, 1)
+      } catch (e) {
+        log.e(req, '[MemberLogService.createMemberLog]', e);
+      }
+    }
+  )()
+}
+
+routes.delete('/profile/image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const { group_seq, is_group_admin, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  if (!is_group_admin) {
+    throw new StdObject(-1, '권한이 없습니다.', 403)
+  }
+
+  const prev_profile = group_member_info.profile
+
+  const result = await ProFileService.updateProFileInfo(DBMySQL, group_seq, 'image', '')
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output)
+
+  addProfileHistory(req, group_member_info, 'image', '', prev_profile);
+}));
 
 routes.post('/changeGroupCMFlag', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json')

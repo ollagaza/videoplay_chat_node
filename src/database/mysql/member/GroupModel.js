@@ -90,7 +90,6 @@ export default class GroupModel extends MySQLModel {
       .orderBy("member.user_name", "ASC")
 
     const query_result = await query
-    log.debug(this.log_prefix, '[getAllPersonalGroupUserList]', query_result)
     return query_result
   }
 
@@ -103,7 +102,6 @@ export default class GroupModel extends MySQLModel {
       .first()
 
     const query_result = await query
-    log.debug(this.log_prefix, '[getAllPersonalGroupUserList]', query_result)
     return query_result
   }
 
