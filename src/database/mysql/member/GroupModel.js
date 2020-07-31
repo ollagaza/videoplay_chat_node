@@ -2,7 +2,6 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import GroupInfo from '../../../wrapper/member/GroupInfo'
 import log from '../../../libs/logger'
-import DBMySQL from "../../knex-mysql";
 
 export default class GroupModel extends MySQLModel {
   constructor (database) {
@@ -46,8 +45,7 @@ export default class GroupModel extends MySQLModel {
 
   createGroup = async (group_info) => {
     const create_params = this.getParams(group_info)
-    const group_seq = await this.create(create_params, 'seq')
-    group_info.seq = group_seq
+    group_info.seq = await this.create(create_params, 'seq')
     if (!(group_info instanceof GroupInfo)) {
       return new GroupInfo(group_info)
     }

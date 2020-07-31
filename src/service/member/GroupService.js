@@ -157,6 +157,7 @@ const GroupServiceClass = class {
     const content_id = Util.getContentId()
     create_group_info.content_id = content_id
     create_group_info.media_path = `/${root_directory_name}/${content_id}`
+    create_group_info.profile = JSON.stringify({"desc": "", "image": "", "title": ""})
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
