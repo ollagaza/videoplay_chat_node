@@ -141,6 +141,14 @@ export default class GroupModel extends MySQLModel {
     return await this.update({ seq: group_info.seq }, update_params)
   }
 
+  changeGroupName = async (group_seq, group_name) => {
+    const update_params = {
+      group_name,
+      modify_date: this.database.raw('NOW()')
+    }
+    return await this.update({ seq: group_seq }, update_params)
+  }
+
   UpdateFollowingCnt = async (member_seq, update_cnt) => {
     if (update_cnt > 0) {
       const update_params = {

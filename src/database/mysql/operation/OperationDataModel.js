@@ -39,6 +39,10 @@ export default class OperationDataModel extends MySQLModel {
     return await this.update({ operation_seq }, this.getOperationDataPrams(operation_data))
   }
 
+  updateOperationDataByGroupSeq = async (group_seq, operation_data) => {
+    return await this.update({ group_seq }, this.getOperationDataPrams(operation_data))
+  }
+
   updateOperationDataByOperationSeqList = async (operation_seq_list, operation_data) => {
     return await this.updateIn("operation_seq", operation_seq_list, this.getOperationDataPrams(operation_data));
   };

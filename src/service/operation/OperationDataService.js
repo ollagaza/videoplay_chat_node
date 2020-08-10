@@ -267,6 +267,12 @@ const OperationDataServiceClass = class {
     const operation_data_model = this.getOperationDataModel()
     await operation_data_model.updateOperationDataByOperationSeqList(operation_seq_list, operation_data_info)
   }
+
+  changeGroupName = async (database, group_seq, group_name) => {
+    const operation_data_info = { group_name }
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.updateOperationDataByGroupSeq(group_seq, operation_data_info)
+  }
 }
 
 const operation_data_service = new OperationDataServiceClass()

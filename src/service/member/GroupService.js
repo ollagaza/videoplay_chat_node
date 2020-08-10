@@ -8,6 +8,7 @@ import DBMySQL from '../../database/knex-mysql';
 import log from "../../libs/logger";
 import MemberService from './MemberService'
 import OperationService from '../operation/OperationService'
+import OperationDataService from '../operation/OperationDataService'
 import SocketManager from '../socket-manager'
 import GroupModel from '../../database/mysql/member/GroupModel';
 import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
@@ -17,6 +18,7 @@ import VacsService from '../vacs/VacsService'
 import Auth from '../../middlewares/auth.middleware'
 import GroupCountModel from "../../database/mysql/member/GroupCountsModel";
 import ContentCountsModel from "../../database/mysql/member/ContentCountsModel";
+import ProFileService from '../mypage/ProFileService'
 
 const GroupServiceClass = class {
   constructor () {
@@ -176,8 +178,7 @@ const GroupServiceClass = class {
     }
 
     const group_member_model = this.getGroupMemberModel(database)
-    const group_member_info = await group_member_model.createGroupMember(group_info, member_info, grade, max_storage_size)
-    return group_member_info
+    return await group_member_model.createGroupMember(group_info, member_info, grade, max_storage_size)
   }
 
   getMemberGroupList = async (database, member_seq, is_active_only = true) => {
@@ -251,8 +252,7 @@ const GroupServiceClass = class {
 
   getGroupMemberInfoByInviteEmail = async (database, group_seq, email_address) => {
     const group_member_model = this.getGroupMemberModel(database)
-    const group_member_info = await group_member_model.getGroupMemberInfoByInviteEmail(group_seq, email_address)
-    return group_member_info
+    return await group_member_model.getGroupMemberInfoByInviteEmail(group_seq, email_address)
   }
 
   isGroupAdmin = async (database, group_seq, member_seq) => {
@@ -325,15 +325,7 @@ const GroupServiceClass = class {
     group_info_json.active_user_count = active_user_count
 
     for (let i = 0; i < invite_email_list.length; i++) {
-      (
-        async (member_info, group_info, email_address, invite_message, service_domain) => {
-          try {
-            await this.inviteGroupMember(null, member_info, group_info, email_address, invite_message, service_domain)
-          } catch (error) {
-            log.error(this.log_prefix, '[inviteGroupMembers]', error)
-          }
-        }
-      )(member_info, group_info_json, invite_email_list[i], invite_message, service_domain)
+      this.inviteGroupMember(member_info, group_info_json, invite_email_list[i], invite_message, service_domain)
     }
   }
 
@@ -359,43 +351,47 @@ const GroupServiceClass = class {
     return Util.decrypt(invite_code)
   }
 
-  inviteGroupMember = async (database, member_info, group_info, email_address, invite_message, service_domain) => {
-    let group_member_seq;
-    const group_seq = group_info.group_seq
-    let group_member_info = await this.getGroupMemberInfoByInviteEmail(database, group_seq, email_address)
-    if (!group_member_info.isEmpty() && group_member_info.status !== this.MEMBER_STATUS_DISABLE) {
-      return
-    }
-    const invite_code = await this.getAvailableInviteId()
+  inviteGroupMember = (member_info, group_info, email_address, invite_message, service_domain) => {
+    (
+      async () => {
+        let group_member_seq;
+        const group_seq = group_info.group_seq
+        let group_member_info = await this.getGroupMemberInfoByInviteEmail(null, group_seq, email_address)
+        if (!group_member_info.isEmpty() && group_member_info.status !== this.MEMBER_STATUS_DISABLE) {
+          return
+        }
+        const invite_code = await this.getAvailableInviteId()
 
-    const group_member_model = this.getGroupMemberModel(database)
-    if (!group_member_info.isEmpty() && group_member_info.seq) {
-      group_member_seq = group_member_info.seq
-      await group_member_model.resetInviteInfo(group_member_seq, invite_code)
-    } else {
-      group_member_info = await group_member_model.createGroupInvite(group_seq, member_info.seq, invite_code, email_address)
-      group_member_seq = group_member_info.seq
-    }
+        const group_member_model = this.getGroupMemberModel(null)
+        if (!group_member_info.isEmpty() && group_member_info.seq) {
+          group_member_seq = group_member_info.seq
+          await group_member_model.resetInviteInfo(group_member_seq, invite_code)
+        } else {
+          group_member_info = await group_member_model.createGroupInvite(group_seq, member_info.seq, invite_code, email_address)
+          group_member_seq = group_member_info.seq
+        }
 
-    const title = `${group_info.group_name}의 ${member_info.user_name}님이 Surgstory에 초대하였습니다.`
-    const encrypt_invite_code = this.encryptInviteCode(invite_code);
-    const template_data = {
-      service_domain,
-      group_name: group_info.group_name,
-      active_count: group_info.active_user_count,
-      admin_name: member_info.user_name,
-      invite_code,
-      message: Util.nlToBr(invite_message),
-      btn_link_url: `${service_domain}/v2/invite/group/${encrypt_invite_code}`
-    }
-    const body = GroupMailTemplate.inviteGroupMember(template_data, !invite_message)
-    const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body);
-    log.debug(this.log_prefix, '[inviteGroupMember]', group_member_seq, email_address, title, send_mail_result.toJSON())
-    if (send_mail_result.isSuccess() === false) {
-      await group_member_model.updateInviteStatus(group_member_seq, 'E', send_mail_result.message)
-      return
-    }
-    await group_member_model.updateInviteStatus(group_member_seq, 'Y')
+        const title = `${group_info.group_name}의 ${member_info.user_name}님이 Surgstory에 초대하였습니다.`
+        const encrypt_invite_code = this.encryptInviteCode(invite_code);
+        const template_data = {
+          service_domain,
+          group_name: group_info.group_name,
+          active_count: group_info.active_user_count,
+          admin_name: member_info.user_name,
+          invite_code,
+          message: Util.nlToBr(invite_message),
+          btn_link_url: `${service_domain}/v2/invite/group/${encrypt_invite_code}`
+        }
+        const body = GroupMailTemplate.inviteGroupMember(template_data, !invite_message)
+        const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body);
+        log.debug(this.log_prefix, '[inviteGroupMember]', group_member_seq, email_address, title, send_mail_result.toJSON())
+        if (send_mail_result.isSuccess() === false) {
+          await group_member_model.updateInviteStatus(group_member_seq, 'E', send_mail_result.message)
+          return
+        }
+        await group_member_model.updateInviteStatus(group_member_seq, 'Y')
+      }
+    )()
   }
 
   getInviteGroupInfo = async (database, input_invite_code, invite_seq = null, member_seq = null, is_encrypted = false) => {
@@ -500,19 +496,14 @@ const GroupServiceClass = class {
       return
     }
 
-    (
-      async () => {
-        const template_data = {
-          service_domain,
-          group_name: group_member_info.group_name,
-          admin_name: admin_member_info.user_name,
-          btn_link_url: `${service_domain}/`
-        }
-        const body = GroupMailTemplate.groupAdmin(template_data)
-        const send_mail_result = await new SendMail().sendMailHtml([group_member_info.invite_email], title, body);
-        log.debug(this.log_prefix, '[changeGradeAdmin]', send_mail_result)
-      }
-    )()
+    const template_data = {
+      service_domain,
+      group_name: group_member_info.group_name,
+      admin_name: admin_member_info.user_name,
+      btn_link_url: `${service_domain}/`
+    }
+    const body = GroupMailTemplate.groupAdmin(template_data)
+    this.sendEmail(title, body, [group_member_info.invite_email], 'changeGradeAdmin')
   }
 
   changeGradeNormal = async (database, group_member_info, group_member_seq ) => {
@@ -560,19 +551,14 @@ const GroupServiceClass = class {
       return
     }
 
-    (
-      async () => {
-        const template_data = {
-          service_domain,
-          group_name: group_member_info.group_name,
-          admin_name: admin_member_info.user_name,
-          btn_link_url: `${service_domain}/`
-        }
-        const body = GroupMailTemplate.deleteGroupMember(template_data)
-        const send_mail_result = await new SendMail().sendMailHtml([group_member_info.invite_email], title, body);
-        log.debug(this.log_prefix, '[deleteMember]', send_mail_result)
-      }
-    )()
+    const template_data = {
+      service_domain,
+      group_name: group_member_info.group_name,
+      admin_name: admin_member_info.user_name,
+      btn_link_url: `${service_domain}/`
+    }
+    const body = GroupMailTemplate.deleteGroupMember(template_data)
+    this.sendEmail(title, body, [group_member_info.invite_email], 'deleteMember')
   }
 
   unDeleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
@@ -589,19 +575,14 @@ const GroupServiceClass = class {
       return
     }
 
-    (
-      async () => {
-        const template_data = {
-          service_domain,
-          group_name: group_member_info.group_name,
-          admin_name: admin_member_info.user_name,
-          btn_link_url: `${service_domain}/`
-        }
-        const body = GroupMailTemplate.unDeleteGroupMember(template_data)
-        const send_mail_result = await new SendMail().sendMailHtml([group_member_info.invite_email], title, body);
-        log.debug(this.log_prefix, '[unDeleteMember]', send_mail_result)
-      }
-    )()
+    const template_data = {
+      service_domain,
+      group_name: group_member_info.group_name,
+      admin_name: admin_member_info.user_name,
+      btn_link_url: `${service_domain}/`
+    }
+    const body = GroupMailTemplate.unDeleteGroupMember(template_data)
+    this.sendEmail(title, body, [group_member_info.invite_email], 'unDeleteMember')
   }
 
   pauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
@@ -624,19 +605,14 @@ const GroupServiceClass = class {
       return
     }
 
-    (
-      async () => {
-        const template_data = {
-          service_domain,
-          group_name: group_member_info.group_name,
-          admin_name: admin_member_info.user_name,
-          btn_link_url: `${service_domain}/`
-        }
-        const body = GroupMailTemplate.pauseGroupMember(template_data)
-        const send_mail_result = await new SendMail().sendMailHtml([group_member_info.invite_email], title, body);
-        log.debug(this.log_prefix, '[pauseMember]', send_mail_result)
-      }
-    )()
+    const template_data = {
+      service_domain,
+      group_name: group_member_info.group_name,
+      admin_name: admin_member_info.user_name,
+      btn_link_url: `${service_domain}/`
+    }
+    const body = GroupMailTemplate.pauseGroupMember(template_data)
+    this.sendEmail(title, body, [group_member_info.invite_email], 'pauseMember')
   }
 
   unPauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
@@ -652,17 +628,21 @@ const GroupServiceClass = class {
       return
     }
 
+    const template_data = {
+      service_domain,
+      group_name: group_member_info.group_name,
+      admin_name: admin_member_info.user_name,
+      btn_link_url: `${service_domain}/`
+    }
+    const body = GroupMailTemplate.unPauseGroupMember(template_data)
+    this.sendEmail(title, body, [group_member_info.invite_email], 'unDeleteMember')
+  }
+
+  sendEmail = (title, body, mail_to_list, method = '') => {
     (
       async () => {
-        const template_data = {
-          service_domain,
-          group_name: group_member_info.group_name,
-          admin_name: admin_member_info.user_name,
-          btn_link_url: `${service_domain}/`
-        }
-        const body = GroupMailTemplate.unPauseGroupMember(template_data)
-        const send_mail_result = await new SendMail().sendMailHtml([group_member_info.invite_email], title, body);
-        log.debug(this.log_prefix, '[unDeleteMember]', send_mail_result)
+        const send_mail_result = await new SendMail().sendMailHtml(mail_to_list, title, body);
+        log.debug(this.log_prefix, '[sendEmail]', method, send_mail_result)
       }
     )()
   }
@@ -896,8 +876,7 @@ const GroupServiceClass = class {
     try {
       const group_count_model = this.getGroupCountsModel(database);
       const group_count_info = await this.getGroupCountsInfo(database, group_seq)
-      const result = await group_count_model.AddCount(group_count_info.seq, field_name)
-      return result;
+      return await group_count_model.AddCount(group_count_info.seq, field_name)
     } catch (e) {
       throw e;
     }
@@ -907,8 +886,7 @@ const GroupServiceClass = class {
     try {
       const group_count_model = this.getGroupCountsModel(database);
       const group_count_info = await this.getGroupCountsInfo(database, group_seq)
-      const result = await group_count_model.MinusCount(group_count_info.seq, field_name)
-      return result;
+      return await group_count_model.MinusCount(group_count_info.seq, field_name)
     } catch (e) {
       throw e;
     }
@@ -917,8 +895,7 @@ const GroupServiceClass = class {
   UpdateGroupProfileImage = async (database, group_seq, profile_image_path) => {
     try {
       const group_model = this.getGroupModel(database);
-      const result = await group_model.updateProfileImage(group_seq, profile_image_path)
-      return result;
+      return await group_model.updateProfileImage(group_seq, profile_image_path)
     } catch (e) {
       throw e;
     }
@@ -969,14 +946,28 @@ const GroupServiceClass = class {
         })
       }
 
-      const sortby_save_group_hashtag = _.chain(save_group_hashtag)
+      const sort_by_save_group_hashtag = _.chain(save_group_hashtag)
         .orderBy(['count'], ['desc'])
         .take(10)
         .value()
 
-      await group_model.updateGroupInfoHashTag(group_seq, sortby_save_group_hashtag);
+      await group_model.updateGroupInfoHashTag(group_seq, sort_by_save_group_hashtag);
     } catch (e) {
       log.error(this.log_prefix, '[updateGroupInfoHashTag]', e)
+    }
+  }
+
+  changeGroupName = async (group_seq, group_name) => {
+    try {
+      await DBMySQL.transaction(async (transaction) => {
+        const group_model = this.getGroupModel(transaction)
+        await group_model.changeGroupName(group_seq, group_name)
+        await OperationDataService.changeGroupName(transaction, group_seq, group_name)
+      });
+      return true
+    } catch (e) {
+      log.error(this.log_prefix, '[changeGroupName]', e)
+      throw new StdObject(-2, '그룹명을 변경할 수 없습니다.', 400);
     }
   }
 }

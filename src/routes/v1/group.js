@@ -177,4 +177,17 @@ routes.post('/join/:invite_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(
   res.json(output);
 }));
 
+routes.put('/:group_seq(\\d+)/name/:group_name', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+  const { group_seq, is_group_admin } = await checkGroupAuth(DBMySQL, req)
+  if (!is_group_admin) {
+    throw new StdObject(-1, '권한이 없습니다.', 403)
+  }
+  const group_name = req.params.group_name
+  const result = await GroupService.changeGroupName(group_seq, group_name)
+
+  const output = new StdObject();
+  output.add('result', result);
+  res.json(output);
+}));
+
 export default routes;
