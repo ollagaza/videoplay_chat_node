@@ -188,6 +188,31 @@ export default class OperationModel extends MySQLModel {
     return operation_info;
   };
 
+  copyOperation = async (origin_seq, operation_info) => {
+    const origin_operation = await this.findOne({ seq: origin_seq })
+
+    if (origin_operation) {
+      // origin data setting
+      origin_operation.origin_seq = origin_seq
+      origin_operation.origin_media_path = origin_operation.media_path
+      origin_operation.origin_content_id = origin_operation.content_id
+
+      // new data setting
+      origin_operation.content_id = operation_info.content_id
+      origin_operation.media_path = operation_info.media_path
+      origin_operation.status = operation_info.status
+      origin_operation.folder_seq = operation_info.folder_seq
+      delete origin_operation.seq;
+      delete origin_operation.reg_date;
+      delete origin_operation.modify_date;
+    }
+
+    const operation_seq = await this.create(origin_operation, 'seq');
+    origin_operation.seq = operation_seq;
+
+    return origin_operation;
+  };
+
   isDuplicateOperationCode = async (group_seq, member_seq, operation_code) => {
     const where = {"group_seq": group_seq, "member_seq": member_seq, "operation_code": operation_code};
     const total_count = await this.getTotalCount(where);

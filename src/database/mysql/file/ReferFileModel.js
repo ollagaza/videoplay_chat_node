@@ -1,8 +1,4 @@
-import ServiceConfig from '../../../service/service-config';
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
-
-import FileInfo from '../../../wrapper/file/FileInfo'
 
 export default class ReferFileModel extends MySQLModel {
   constructor(database) {
@@ -15,6 +11,10 @@ export default class ReferFileModel extends MySQLModel {
 
   createReferFile = async (file_info) => {
     return await this.create(file_info, 'seq');
+  };
+
+  createReferData = async (refer_data) => {
+    return await this.create(refer_data, 'seq');
   };
 
   referFileSummary = async (storage_seq) => {
