@@ -5,8 +5,9 @@ import ServiceConfig from '../../service/service-config'
 const default_key_list = [
   'seq', 'operation_seq', 'group_seq', 'group_name', 'hospital', 'title', 'view_count', 'total_time',
   'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html',
-  'type', 'status', 'mento_group_seq', 'reg_date', 'modify_date',
-  'is_complete', 'is_open_video', 'is_open_refer_file'
+  'type', 'status', 'is_complete', 'mento_group_seq',
+  'is_mento_complete', 'is_open_refer_file', 'is_open_video',
+  'reg_date', 'modify_date',
 ];
 
 export default class OperationFolderInfo extends JsonWrapper {

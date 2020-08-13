@@ -121,6 +121,24 @@ operation_clip_schema.statics.createPhase = function( operation_info, phase_desc
   return model.save();
 };
 
+operation_clip_schema.statics.copyPhase = function( operation_clip_list, operation_info ) {
+  const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
+  const copy_clip = []
+
+  if (operation_clip_list) {
+    for(let cnt = 0; cnt < operation_clip_list.length; cnt++) {
+      const copy_clip = Util.getPayload(operation_clip_list[cnt], getFieldInfos());
+      copy_clip.operation_seq = operation_info.seq
+      copy_clip.content_id = operation_info.content_id
+      if (copy_clip.thumbnail_url) {
+        copy_clip.thumbnail_url = copy_clip.thumbnail_url.replace(replace_regex, operation_info.content_id)
+      }
+      const model = new this(copy_clip);
+      model.save();
+    }
+  }
+};
+
 operation_clip_schema.statics.deletePhase = function( operation_seq, phase_id ) {
   return this.deleteOne( { _id: phase_id, operation_seq } );
 };

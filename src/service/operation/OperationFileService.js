@@ -48,10 +48,10 @@ const OperationFileServiceClass = class {
     }
   }
 
-  getReferFileList = async (database, operation_info) => {
+  getReferFileList = async (database, operation_info, rtnFileinfo = true) => {
     const refer_file_model = this.getReferFileModel(database)
     const result_list = await refer_file_model.getReferFileList(operation_info.storage_seq)
-    return this.getFileInfoList(result_list)
+    return rtnFileinfo ? this.getFileInfoList(result_list) : result_list
   }
 
   getVideoFileList = async (database, operation_info) => {
@@ -90,6 +90,25 @@ const OperationFileServiceClass = class {
     file_info.is_moved = is_moved
 
     return await refer_file_model.createReferFile(file_info)
+  }
+
+  copyReferFileInfo = async (database, storage_seq, origin_content_id, content_id, refer_list) => {
+    const replace_regex = new RegExp(origin_content_id, 'gi')
+    const refer_file_model = this.getReferFileModel(database)
+
+    for (let cnt = 0; cnt < refer_list.length; cnt++) {
+      const refer_file = refer_list[cnt]
+
+      delete refer_file.seq
+      delete refer_file.url
+      refer_file.storage_seq = storage_seq.new_storage_seq
+
+      if (refer_file.file_path) {
+        refer_file.file_path = refer_file.file_path.replace(replace_regex, content_id)
+      }
+      refer_file.is_moved = true
+      await refer_file_model.createReferData(refer_file)
+    }
   }
 
   createVideoFileInfo = async (database, operation_info, upload_file_info, create_thumbnail = false) => {
