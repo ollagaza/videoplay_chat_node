@@ -21,5 +21,13 @@ export default {
     password: 'dpaxldlwl_!',
     domain: '10.41.149.139',
     port: 27017
+  },
+
+  vacs: {
+    database: 'surgstory',
+    user: 'mteg_vas',
+    password: 'dpaxldlwl_!',
+    domain: '200.200.200.104',
+    port: 27017
   }
 }

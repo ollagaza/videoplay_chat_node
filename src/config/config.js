@@ -1,6 +1,7 @@
-const ENV = process.env.NODE_ENV === 'development' ? 'development' : 'production'
+const ENV = process.env.NODE_ENV ? process.env.NODE_ENV : 'production'
 const IS_RELEASE = ENV === 'production'
-const IS_DEV = ENV === 'development'
+const IS_VACS = ENV === 'vacs'
+const IS_DEV = ENV === 'development' || IS_VACS
 const LOG_PATH = process.env.LOG_PATH ? process.env.LOG_PATH : 'logs'
 const LOG_LEVEL = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : null
 const IS_DEMON = process.env.SERVER_MODE === 'demon'
@@ -10,6 +11,7 @@ const IS_LOCAL = process.env.LOCAL === true || process.env.LOCAL === 'true'
 console.log('ENV:', ENV)
 console.log('IS_RELEASE:', IS_RELEASE)
 console.log('IS_DEV:', IS_DEV)
+console.log('IS_VACS:', IS_VACS)
 console.log('LOG_PATH:', LOG_PATH)
 console.log('IS_DEMON:', IS_DEMON)
 console.log('PRINT_DB_LOG:', PRINT_DB_LOG)
@@ -26,6 +28,10 @@ export default {
 
   isDev: () => {
     return IS_DEV
+  },
+
+  isVacs: () => {
+    return IS_VACS
   },
 
   isDemon: () => {
