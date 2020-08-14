@@ -8,14 +8,16 @@ const IS_DEMON = process.env.SERVER_MODE === 'demon'
 const PRINT_DB_LOG = process.env.PRINT_DB_LOG === true || process.env.PRINT_DB_LOG === 'true'
 const IS_LOCAL = process.env.LOCAL === true || process.env.LOCAL === 'true'
 
-console.log('ENV:', ENV)
-console.log('IS_RELEASE:', IS_RELEASE)
-console.log('IS_DEV:', IS_DEV)
-console.log('IS_VACS:', IS_VACS)
-console.log('LOG_PATH:', LOG_PATH)
-console.log('IS_DEMON:', IS_DEMON)
-console.log('PRINT_DB_LOG:', PRINT_DB_LOG)
-console.log('IS_LOCAL:', IS_LOCAL)
+const config_info = {
+  ENV,
+  IS_RELEASE,
+  IS_DEV,
+  IS_VACS,
+  IS_LOCAL,
+  IS_DEMON,
+  PRINT_DB_LOG,
+  LOG_PATH
+}
 
 export default {
   getEnv: () => {
@@ -52,5 +54,9 @@ export default {
 
   getLogLevel: () => {
     return LOG_LEVEL
+  },
+
+  getConfigInfo: () => {
+    return config_info
   }
 }
