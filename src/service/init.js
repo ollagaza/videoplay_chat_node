@@ -7,6 +7,7 @@ import SocketManager from './socket-manager'
 import VacsScheduler from '../scheduler/VacsScheduler'
 import MongoDataService from './common/MongoDataService'
 import Util from '../utils/baseutil'
+import log from '../libs/logger'
 
 const initDirectories = async () => {
   await Util.createDirectory(ServiceConfig.get('common_root'));
@@ -15,7 +16,9 @@ const initDirectories = async () => {
 
 export default {
   init: async () => {
+    log.debug('[InitService]', 'init start')
     await MongoDB.init()
+    await MongoDB.defaultMongoCollections()
     await ServiceConfig.init()
     await CodeSceneService.init()
     await initDirectories()
@@ -27,5 +30,6 @@ export default {
     } else {
       VacsScheduler.startSchedule()
     }
+    log.debug('[InitService]', 'init complete')
   }
 }

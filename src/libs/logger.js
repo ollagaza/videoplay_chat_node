@@ -71,6 +71,10 @@ export default {
     app_logger.debug(...args)
   },
 
+  'warn': (...args) => {
+    app_logger.warn(...args)
+  },
+
   'info': (...args) => {
     app_logger.info(...args)
   },

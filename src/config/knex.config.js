@@ -47,23 +47,5 @@ export default {
     migrations: {
       tableName: 'knex_migrations'
     }
-  },
-
-  vacs: {
-    client: 'mysql',
-    connection: {
-      host: '200.200.200.104',
-      database: 'surgbook',
-      user: 'root',
-      password: '_media_'
-    },
-    pool: {
-      min: 2,
-      max: 10
-    },
-    migrations: {
-      tableName: 'knex_migrations'
-    }
-  },
-
+  }
 }
