@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import log from '../../libs/logger'
 import ServiceConfig from '../service-config';
 import Util from '../../utils/baseutil';
 import Role from "../../constants/roles";
@@ -7,6 +8,7 @@ import DBMySQL from '../../database/knex-mysql';
 import MemberModel from '../../database/mysql/member/MemberModel';
 import MemberSubModel from '../../database/mysql/member/MemberSubModel';
 import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
+import MemberLogModel from "../../database/mysql/member/MemberLogModel";
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import SendMail from '../../libs/send-mail'
 import Admin_MemberTemplate from '../../template/mail/admin_member_mail.template';
@@ -44,6 +46,13 @@ const AdminMemberServiceClass = class {
       return new AdminMemberModel(database)
     }
     return new AdminMemberModel(DBMySQL)
+  }
+
+  getMemberLogModel = (database = null) => {
+    if (database) {
+      return new MemberLogModel(database)
+    }
+    return new MemberLogModel(DBMySQL())
   }
 
   getMemberInfo = async (database, member_seq) => {
@@ -140,8 +149,29 @@ const AdminMemberServiceClass = class {
     const find_users = await member_model.findMembers(searchObj, order);
 
     if (find_users.error !== -1) {
+      const member_seq = _.concat('in', _.map(find_users.data, 'seq'))
+
+      if (searchObj.query[0].used === 2 && searchObj.query[0].admin_code === null) {
+        searchObj.query = [];
+        searchObj.query = [{ member_seq: member_seq }]
+
+        const memberLogModel = this.getMemberLogModel(database)
+        const find_reject_log = await memberLogModel.getMemberRejectList(searchObj);
+        const res = [];
+        _.keyBy(find_users.data, data => {
+          if (_.find(find_reject_log, { member_seq: data.seq })) {
+            const sub_user = _.find(find_reject_log, { member_seq: data.seq });
+            delete sub_user.seq;
+            res.push(_.merge(data, sub_user));
+          } else {
+            res.push(_.merge(data));
+          }
+        });
+        find_users.data = res
+      }
+
       searchObj.query = [];
-      searchObj.query = [{ member_seq: _.concat('in', _.map(find_users.data, 'seq')) }]
+      searchObj.query = [{ member_seq: member_seq }]
 
       const find_sub_users = await member_sub_model.findMembers(searchObj);
       const res = [];
@@ -151,7 +181,7 @@ const AdminMemberServiceClass = class {
           delete sub_user.seq;
           res.push(_.merge(data, sub_user));
         } else {
-          res.push(_.merge(data));
+          res.push(data);
         }
       });
       find_users.data = new MemberInfo(res)

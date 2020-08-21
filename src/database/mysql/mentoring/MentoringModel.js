@@ -147,4 +147,63 @@ export default class MentoringModel extends MySQLModel {
       throw e;
     }
   }
+
+  getCategoryForBestMentos_withAdmin = async (category_code) => {
+    try {
+      const print_column = [
+        'group_info.seq', 'group_info.group_name', 'member.user_id',
+        this.database.raw('case when group_info.group_type = \'P\' then \'개인\' else \'팀\' end group_type'),
+        'member.treatcode', 'member.hospname',
+        this.database.raw('case when content_counts.is_best = 1 then \'좌측\' else \'우측\' end best_position')
+      ]
+      const oKnex = this.database.select(print_column)
+        .from('content_counts')
+        .innerJoin('group_info', 'group_info.seq', 'content_counts.group_seq')
+        .innerJoin('member', 'member.seq', 'group_info.member_seq')
+        .where(function () {
+          this.whereIn('content_counts.is_best', ['1', '2'])
+            .andWhere('content_counts.category_code', category_code)
+        })
+        .orderBy([{column: 'content_counts.is_best', order: 'asc'}])
+      return oKnex;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  getAllMentoList_withAdmin = async (search_keyword, page_navigation, category_code) => {
+    try {
+      const print_column = [
+        'group_info.seq', 'group_info.group_name', 'member.user_id',
+        this.database.raw('case when group_info.group_type = \'P\' then \'개인\' else \'팀\' end group_type'),
+        'member.treatcode', 'member.hospname'
+      ]
+      const subQuery = this.database.select('content_counts.group_seq')
+        .from('content_counts')
+        .where('content_counts.category_code', category_code)
+        .whereNotIn('content_counts.is_best', [1, 2])
+
+      const oKnex = this.database.select(print_column)
+        .from('group_info')
+        .leftOuterJoin('member', 'member.seq', 'group_info.member_seq')
+        .where('group_info.is_mentoring', 1)
+        .whereNotIn('group_info.seq',
+          this.database.raw(`select content_counts.group_seq from content_counts where content_counts.category_code = '${category_code}' and content_counts.is_best in (1, 2)`)
+        )
+        .orderBy([{column: 'group_info.reg_date', order: 'desc'}])
+      if (search_keyword) {
+        oKnex.andWhere(function () {
+          this.where('group_info.group_name', 'like', `%${search_keyword}%`)
+            .orWhere('member.user_id', 'like', `%${search_keyword}%`)
+        })
+      }
+      return this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging)
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  updateBestMento = async (filters, best_num) => {
+    return await this.update(filters, { is_best: best_num })
+  }
 }
