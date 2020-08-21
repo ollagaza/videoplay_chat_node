@@ -203,6 +203,29 @@ export default class MentoringModel extends MySQLModel {
     }
   }
 
+  rtnBestMento = async (category_code, best_num) => {
+    try {
+      const print_column = [
+        'group_info.seq', 'group_info.group_name', 'member.user_id',
+        this.database.raw('case when group_info.group_type = \'P\' then \'개인\' else \'팀\' end group_type'),
+        'member.treatcode', 'member.hospname',
+        this.database.raw('case when content_counts.is_best = 1 then \'좌측\' else \'우측\' end best_position')
+      ]
+      const oKnex = this.database.select(print_column)
+        .from('content_counts')
+        .innerJoin('group_info', 'group_info.seq', 'content_counts.group_seq')
+        .innerJoin('member', 'member.seq', 'group_info.member_seq')
+        .where(function () {
+          this.andWhere('content_counts.is_best', best_num)
+            .andWhere('content_counts.category_code', category_code)
+        })
+        .orderBy([{column: 'content_counts.is_best', order: 'asc'}])
+      return oKnex;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   updateBestMento = async (filters, best_num) => {
     return await this.update(filters, { is_best: best_num })
   }

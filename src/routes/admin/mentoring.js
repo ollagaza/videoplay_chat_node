@@ -43,6 +43,20 @@ routes.get('/getallmentolist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   }
 }));
 
+routes.get('/chkbestmento', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  req.accepts('application/json');
+  try {
+    const output = new StdObject();
+    const medical_code = JSON.parse(req.query[0]).medical_code
+    const best_num = JSON.parse(req.query[1]).best_num
+    const result = await MentoringAdminService.chkBestMento(DBMySQL, medical_code, best_num)
+    output.add('result', result);
+    res.json(output);
+  } catch (e) {
+    throw new StdObject(-1, e, 400);
+  }
+}));
+
 routes.delete('/deletebestmento', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
   try {
