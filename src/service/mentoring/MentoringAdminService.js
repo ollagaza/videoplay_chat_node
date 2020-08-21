@@ -38,6 +38,16 @@ const MentoringAdminServiceClass = class {
     }
   }
 
+  chkBestMento = async (database, category_code, best_num) => {
+    try {
+      const database_model = this.getMentoring_Model(database)
+      const result = database_model.rtnBestMento(category_code, best_num)
+      return result
+    } catch (e) {
+      throw e;
+    }
+  }
+
   updateBestMento = async (database, filters, best_num) => {
     try {
       const database_model = this.getMentoring_Model(database)

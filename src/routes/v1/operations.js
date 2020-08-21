@@ -11,7 +11,6 @@ import OperationDataService from '../../service/operation/OperationDataService';
 import OperationClipService from '../../service/operation/OperationClipService';
 import OperationMediaService from '../../service/operation/OperationMediaService';
 import OperationFileService from '../../service/operation/OperationFileService';
-import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata';
 
