@@ -48,22 +48,21 @@ export default class MentoringModel extends MySQLModel {
         .from('member')
         .innerJoin('group_info', function () {
           this.on('group_info.member_seq', 'member.seq')
-            .andOn('group_info.is_channel', 1)
+            .andOn('group_info.is_mentoring', 1)
         })
         .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
         .innerJoin('content_counts', function () {
           this.on('content_counts.group_seq', 'group_info.seq')
-            .andOnVal('content_counts.is_best', '1');
-          if (category_code !== 'all') {
-            this.andOnVal('content_counts.category_code', category_code)
-          }
+          this.andOnVal('content_counts.category_code', category_code)
         })
         .leftOuterJoin('following',
           function () {
             this.on('following.group_seq', '=', group_seq).andOn('following.following_seq', '=', 'group_info.seq')
           }
         )
-        .groupBy(groupby_columns);
+        .groupBy(groupby_columns)
+        .orderBy([{column: 'content_counts.is_best', order: 'asc'}, {column: 'content_counts.mentoring_cnt', order: 'desc'}])
+        .limit(2)
       return oKnex;
     } catch (e) {
       throw e;
