@@ -120,7 +120,7 @@ const StudioServiceClass = class {
     }
 
     const image_file_name = Util.getRandomId();
-    await Util.uploadByRequest(request, response, 'image', upload_full_path, image_file_name);
+    await Util.uploadByRequest(request, response, 'image', upload_full_path, image_file_name, true);
     const upload_file_info = request.file;
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
