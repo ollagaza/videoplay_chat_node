@@ -1,18 +1,13 @@
 import { Router } from 'express';
-import ServiceConfig from '../../../service/service-config';
 import Wrap from '../../../utils/express-async';
 import Util from '../../../utils/baseutil';
 import Auth from '../../../middlewares/auth.middleware';
 import Role from "../../../constants/roles";
-import Constants from '../../../constants/constants';
 import StdObject from '../../../wrapper/std-object';
 import DBMySQL from '../../../database/knex-mysql';
-import log from "../../../libs/logger";
 import GroupService from '../../../service/member/GroupService'
 import StudioService from '../../../service/project/StudioService'
-import MemberModel from '../../../database/mysql/member/MemberModel';
-import {VideoProjectField, VideoProjectModel} from '../../../database/mongodb/VideoProject';
-import SequenceModel from '../../../models/sequence/SequenceModel';
+import {VideoProjectModel} from '../../../database/mongodb/VideoProject';
 
 const routes = Router();
 
