@@ -31,7 +31,7 @@ const app_logger = log4js.getLogger('default')
 const getRequestUri = (request) => {
   return `[ ${request.method} ${request.originalUrl} ]\n`
 }
-// app_logger.debug(process.env);
+app_logger.info(Config.getConfigInfo());
 
 export default {
   express: log4js.connectLogger(log4js.getLogger('access'), { 'level': 'INFO' }),
@@ -69,6 +69,10 @@ export default {
 
   'debug': (...args) => {
     app_logger.debug(...args)
+  },
+
+  'warn': (...args) => {
+    app_logger.warn(...args)
   },
 
   'info': (...args) => {

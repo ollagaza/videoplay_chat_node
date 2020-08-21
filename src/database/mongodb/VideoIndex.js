@@ -79,6 +79,30 @@ video_index_info_schema.statics.createVideoIndexInfoByOperation = function( oper
   return video_index_info_model.createVideoIndexInfo(payload, index_list, tags);
 };
 
+video_index_info_schema.statics.copyVideoIndexInfoByOperation = function( videoinfo, operation_info ) {
+  const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
+  const fields = VideoIndexInfoField();
+  fields.member_seq.require = true;
+  fields.operation_seq.require = true;
+
+  const data = {
+    operation_seq: operation_info.seq,
+    member_seq: operation_info.member_seq
+  };
+
+  const payload = Util.getPayload(data, fields);
+
+  if (videoinfo.index_list.length !== 0) {
+    for (let cnt = 0; cnt < videoinfo.index_list.length; cnt++) {
+      if (videoinfo.index_list[cnt].thumbnail_url) {
+        videoinfo.index_list[cnt].thumbnail_url = videoinfo.index_list[cnt].thumbnail_url.replace(replace_regex, operation_info.content_id)
+      }
+    }
+  }
+
+  return video_index_info_model.createVideoIndexInfo(payload, videoinfo.index_list, videoinfo.tags);
+};
+
 video_index_info_schema.statics.updateIndexListByOperation = function( operation_seq, index_list, member_seq = null ) {
   const index_model_list = getIndexModelList(index_list);
   const update = {

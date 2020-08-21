@@ -71,6 +71,42 @@ const OperationDataServiceClass = class {
     return operation_data_seq
   }
 
+  copyOperationDataByRequest = async (operation_info, type = 'N') => {
+    if (!operation_info) {
+      return null
+    }
+    const operation_data_model = this.getOperationDataModel()
+    const origin_operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_info.origin_seq)
+    const operation_data_info = new OperationDataInfo(origin_operation_data).setIgnoreEmpty(true).toJSON()
+
+    delete operation_data_info.seq
+    delete operation_data_info.view_count
+    delete operation_data_info.reg_date
+    delete operation_data_info.modify_date
+    // json_wraper가 왜 안빠지는지 모르겠음....
+    delete operation_data_info.json_keys
+    delete operation_data_info.private_key_map
+    delete operation_data_info.is_empty
+    delete operation_data_info.auto_trim
+    delete operation_data_info.ignore_empty
+    delete operation_data_info.export_xml
+    delete operation_data_info.thorw_exception
+    operation_data_info.operation_seq = operation_info.seq
+    operation_data_info.type = type
+
+    const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
+    if (operation_data_info.thumbnail) {
+      operation_data_info.thumbnail = operation_data_info.thumbnail.replace(replace_regex, operation_info.content_id)
+    }
+
+    await this.setOperationDataInfo(operation_data_info, operation_info)
+    const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
+
+    this.updateHashtag(operation_data_seq, operation_data_info.group_seq, operation_data_info.hashtag)
+
+    return operation_data_seq
+  }
+
   updateOperationDataByRequest = async (database, operation_seq, request_body) => {
     const operation_info = await OperationService.getOperationInfoNoJoin(database, operation_seq)
     if (!operation_info) {
@@ -230,6 +266,12 @@ const OperationDataServiceClass = class {
     const operation_data_info = { status }
     const operation_data_model = this.getOperationDataModel()
     await operation_data_model.updateOperationDataByOperationSeqList(operation_seq_list, operation_data_info)
+  }
+
+  changeGroupName = async (database, group_seq, group_name) => {
+    const operation_data_info = { group_name }
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.updateOperationDataByGroupSeq(group_seq, operation_data_info)
   }
 }
 

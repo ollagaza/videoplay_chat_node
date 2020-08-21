@@ -29,6 +29,19 @@ export default class OperationStorageModel extends MySQLModel {
     return await this.create(create_params, 'seq');
   };
 
+  copyOperationStorageInfo = async (operation_info) => {
+    const origin_operation_storage_info = await this.findOne({ operation_seq: operation_info.origin_seq })
+    const old_storage_seq = origin_operation_storage_info.seq
+
+    delete origin_operation_storage_info.seq
+    delete origin_operation_storage_info.reg_date
+    delete origin_operation_storage_info.modify_date
+    origin_operation_storage_info.operation_seq = operation_info.seq
+    const new_storage_seq = await this.create(origin_operation_storage_info, 'seq');
+
+    return {new_storage_seq, old_storage_seq}
+  };
+
   getOperationStorageInfoNotExistsCreate = async (operation_info) => {
     let operation_storage_info = await this.getOperationStorageInfo(operation_info);
     if (!operation_storage_info || operation_storage_info.isEmpty()) {

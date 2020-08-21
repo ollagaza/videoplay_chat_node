@@ -11,10 +11,12 @@ import OperationMediaService from './OperationMediaService'
 import OperationDataService from './OperationDataService'
 import CloudFileService from '../cloud/CloudFileService'
 import VacsService from '../vacs/VacsService'
+import NaverObjectStorageService from '../../service/storage/naver-object-storage-service'
 import OperationModel from '../../database/mysql/operation/OperationModel';
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
+import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import { UserDataModel } from '../../database/mongodb/UserData'
 import OperationInfo from '../../wrapper/operation/OperationInfo'
 import OperationClipService from './OperationClipService'
@@ -104,16 +106,84 @@ const OperationServiceClass = class {
   copyOperation = async (database, member_info, group_member_info, request_body, status = null) => {
     const output = new StdObject();
     let is_success = false;
-    const target_operation_seq = request_body.target_operation_seq
-    const target_operation_info = (await this.getOperationInfoNoAuth(database, target_operation_seq)).operation_info
-    const create_result = await this.createOperation(database, member_info, group_member_info, request_body, status)
-    const operation_seq = create_result.get('operation_seq')
-    const operation_media_seq = create_result.get('operation_media_seq')
-    const operation_storage_seq = create_result.get('operation_storage_seq')
-    const operation_info = create_result.get('operation_info')
-    const content_id = operation_info.content_id
 
-    await OperationMediaService.copyOperationMediaInfo(database, operation_seq, content_id, target_operation_seq)
+    const operation_Seqs = request_body.copy_seq_list
+    const folder_info = request_body.folder_info ? request_body.folder_info : null;
+
+    for (let seqCnt = 0; seqCnt < operation_Seqs.length; seqCnt++) {
+      let operation_info = {};
+      const origin_operation_seq = operation_Seqs[seqCnt];
+      const content_id = Util.getContentId();
+      const group_media_path = group_member_info.media_path;
+
+      // new data insert and seq delete
+      operation_info.media_path = `${group_media_path}/operation/${content_id}/`;
+      operation_info.content_id = content_id;
+      operation_info.folder_seq = folder_info.seq;
+
+      if (status) {
+        operation_info.status = status;
+      }
+
+      const operation_model = new OperationModel(database);
+      operation_info = await operation_model.copyOperation(origin_operation_seq, operation_info);
+      if (!operation_info || !operation_info.seq) {
+        throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
+      }
+      const operation_seq = operation_info.seq
+      output.add('operation_info', operation_info);
+
+      let operation_storage_seq = null
+
+      await database.transaction(async (transaction) => {
+        const operation_media_seq = await OperationMediaService.copyOperationMediaInfo(database, operation_info);
+        operation_storage_seq = await this.getOperationStorageModel(transaction).copyOperationStorageInfo(operation_info);
+
+        output.add('operation_seq', operation_seq);
+        output.add('operation_media_seq', operation_media_seq);
+        output.add('operation_storage_seq', operation_storage_seq);
+
+        is_success = true;
+      });
+
+      if (is_success) {
+        await this.createOperationDirectory(operation_info);
+
+        try {
+          const refer_file_list = await OperationFileService.getReferFileList(database, { storage_seq: operation_storage_seq.old_storage_seq }, false)
+          if (refer_file_list) {
+            await OperationFileService.copyReferFileInfo(database, operation_storage_seq, operation_info.origin_content_id, content_id, refer_file_list)
+          }
+          const videoindexinfo = await VideoIndexInfoModel.findOneByOperation(operation_info.origin_seq)
+          await VideoIndexInfoModel.copyVideoIndexInfoByOperation(videoindexinfo, operation_info);
+          const video_metadata = await OperationMetadataModel.findByOperationSeq(operation_info.origin_seq)
+          await OperationMetadataModel.copyOperationMetadata(video_metadata, operation_info);
+          if (operation_info.operation_type) {
+            await UserDataModel.updateByMemberSeq(member_info.seq, { operation_type: operation_info.operation_type });
+          }
+          const operation_clip_list = await OperationClipModel.findByOperationSeq(operation_info.origin_seq)
+          if (operation_clip_list) {
+            await OperationClipModel.copyPhase(operation_clip_list, operation_info);
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[createOperation]', 'create metadata error', error);
+        }
+        if (ServiceConfig.isVacs()) {
+          VacsService.increaseCount(1)
+        } else {
+          const operation_data_seq = await OperationDataService.copyOperationDataByRequest(operation_info)
+          output.add('operation_data_seq', operation_data_seq);
+        }
+
+        if (ServiceConfig.isVacs() === false) {
+          try {
+            await NaverObjectStorageService.copyAllFiles(operation_info.origin_media_path, operation_info.media_path, ServiceConfig.get('naver_object_storage_bucket_name'));
+          } catch (error) {
+            log.error(this.log_prefix, '[OperationService]', 'copyOperation', 'NaverObjectStorageService.moveFile', error)
+          }
+        }
+      }
+    }
 
     return output;
   }

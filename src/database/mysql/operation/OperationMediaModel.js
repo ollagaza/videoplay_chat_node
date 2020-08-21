@@ -29,6 +29,10 @@ export default class OperationMediaModel extends MySQLModel {
     return await this.create(create_params, 'seq')
   }
 
+  copyOperationMediaInfo = async (operation_info) => {
+    return await this.create(operation_info, 'seq')
+  }
+
   updateTransComplete = async (operation_seq, update_params) => {
     return await this.update({ operation_seq }, update_params)
   }

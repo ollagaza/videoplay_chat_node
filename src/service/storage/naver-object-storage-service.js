@@ -107,6 +107,22 @@ const NaverObjectStorageClass = class {
     return await storage_client.putObject(object_params).promise()
   }
 
+  copyFolders = async (local_file_path, remote_path, bucket_name = null, client = null, acl = null) => {
+    if (!(await Util.fileExists(local_file_path))) {
+      throw new StdObject(102, `file not exists - ${local_file_path}`, 400)
+    }
+    const storage_client = this.getStorageClient(client)
+    const target_bucket_name = this.getBucketName(bucket_name)
+    log.debug(this.log_prefix, '[uploadFile]', `local_file_path: ${local_file_path}`, `remote_file_path: ${bucket_name}/${remote_file_path}`)
+    const object_params = {
+      Bucket: target_bucket_name,
+      Key: remote_file_path,
+      ACL: acl ? acl : this.ACL_PUBLIC_READ,
+      Body: fs.createReadStream(local_file_path)
+    }
+    return await storage_client.putObject(object_params).promise()
+  }
+
   getMetadata = async (remote_path, remote_file_name = null, bucket_name = null, client = null) => {
     remote_path = Util.removePathSlash(remote_path)
     remote_file_name = Util.removePathSlash(remote_file_name)
@@ -150,6 +166,10 @@ const NaverObjectStorageClass = class {
     const storage_client = await this.getStorageClient(client)
     await this.uploadFile(local_file_path, remote_path, remote_file_name, remote_bucket_name, storage_client)
     await Util.deleteFile(local_file_path)
+  }
+  copyAllFiles = async (local_file_path, remote_path, remote_bucket_name = null, client = null) => {
+    const storage_client = await this.getStorageClient(client)
+    await this.copyFolders(local_file_path, remote_path, remote_bucket_name, storage_client)
   }
 
   deleteFolder = async (remote_path, bucket_name = null, client = null) => {

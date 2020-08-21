@@ -144,7 +144,7 @@ const getMentoringInfo = async (result, operation_data_seq) => {
 
 routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const base_info = await getBaseInfo(req, false)
+  const base_info = await getBaseInfo(req, true)
   const output = await OperationService.getOperationDataView(base_info.operation_seq, base_info.group_seq)
   output.add('is_link', base_info.is_link)
   output.add('is_editor_link', base_info.is_editor_link)

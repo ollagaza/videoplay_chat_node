@@ -110,4 +110,9 @@ export default class MemberLogModel extends MySQLModel {
 
     return { total_count: count_result.total_count, resultlist: resultContent.undefined ? resultContent.undefined : [] };
   };
+
+  getMemberRejectList = async (searchObj) => {
+    searchObj.query.push({ log_code: '9999' })
+    return await this.find(searchObj);
+  };
 }
