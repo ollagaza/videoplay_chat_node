@@ -49,7 +49,7 @@ const ProFileServiceClass = class {
     try {
       const profile_model = this.getProFileModel(database)
       const result = await profile_model.updateProFileInfo(group_seq, upload_type, input_data)
-      return result
+      return result && result.affectedRows
     } catch (e) {
       throw e
     }
