@@ -190,4 +190,13 @@ routes.put('/:group_seq(\\d+)/name/:group_name', Auth.isAuthenticated(Role.DEFAU
   res.json(output);
 }));
 
+routes.put('/:group_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
+  const { group_member_info, is_group_admin } = await checkGroupAuth(DBMySQL, req)
+  if (!is_group_admin) {
+    throw new StdObject(-1, '권한이 없습니다.', 403)
+  }
+  const output = await GroupService.changeGroupProfileImage(DBMySQL, group_member_info, req, res)
+  res.json(output);
+}));
+
 export default routes;
