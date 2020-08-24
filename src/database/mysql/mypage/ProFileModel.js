@@ -15,7 +15,7 @@ export default class ProFileModel extends MySQLModel {
   };
 
   updateProFileInfo = async (group_seq, upload_type, input_data) => {
-    return this.database.raw(`update group_info set profile = json_replace(profile, '$.${upload_type}', ?)`, input_data);
+    return this.database.raw(`update group_info set profile = json_replace(profile, '$.${upload_type}', ?) where seq = ?`, [input_data, group_seq]);
   }
 
   updateChannelFlag = async (group_seq, param) => {
