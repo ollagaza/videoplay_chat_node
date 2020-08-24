@@ -181,23 +181,6 @@ routes.post('/reset_password', Wrap(async(req, res) => {
   res.json(output);
 }));
 
-routes.put('/:member_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
-  const token_info = req.token_info;
-  const member_seq = token_info.getId()
-  const group_seq = Util.parseInt(req.params.member_seq);
-  if (token_info.getGroupSeq() !== group_seq){
-    if(token_info.getRole() === Role.MEMBER){
-      throw new StdObject(-1, "잘못된 요청입니다.", 403);
-    }
-  }
-  try {
-    const output = await MemberService.changeProfileImage(DBMySQL, member_seq, group_seq, req, res)
-    res.json(output);
-  } catch (e) {
-    throw new StdObject(-1, e, 400);
-  }
-}));
-
 routes.post('/verify/user_id', Wrap(async(req, res) => {
   req.accepts('application/json');
   const user_id = req.body.user_id;

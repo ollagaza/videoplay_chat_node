@@ -12,7 +12,6 @@ import ServiceConfig from "../../service/service-config";
 import FollowService from "../../service/follow/FollowService";
 import MemberLogService from '../../service/member/MemberLogService';
 import OperationDataService from '../../service/operation/OperationDataService'
-import GetDimension from "get-video-dimensions";
 
 const routes = Router();
 

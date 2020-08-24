@@ -16,7 +16,6 @@ import { UserDataModel } from '../../database/mongodb/UserData';
 import MemberInfo from "../../wrapper/member/MemberInfo";
 import MemberTemplate from '../../template/mail/member.template';
 import SendMail from '../../libs/send-mail'
-import group_service from "./GroupService";
 
 const MemberServiceClass = class {
   constructor () {
@@ -307,60 +306,6 @@ const MemberServiceClass = class {
     const output = new StdObject();
     output.add('is_change', true);
     return output
-  }
-
-  changeProfileImage = async (database, member_seq, group_seq, request, response) => {
-    try {
-      const {member_info, member_model} = await this.getMemberInfoWithModel(database, member_seq);
-
-      const output = new StdObject(-1, '프로필 업로드 실패');
-
-      const media_root = ServiceConfig.get('media_root');
-      const upload_path = member_info.user_media_path + `/profile`;
-      const upload_full_path = media_root + upload_path;
-      if (!(await Util.fileExists(upload_full_path))) {
-        await Util.createDirectory(upload_full_path);
-      }
-      try {
-        const new_file_name = Util.getRandomId();
-        await Util.uploadByRequest(request, response, 'profile', upload_full_path, new_file_name);
-      } catch (e) {
-        throw new StdObject(-1, e, 400);
-      }
-      const upload_file_info = request.file;
-      if (Util.isEmpty(upload_file_info)) {
-        throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
-      }
-
-      log.debug(upload_file_info);
-      const origin_image_path = upload_file_info.path;
-      const resize_image_path = `${upload_path}/${Util.getRandomId()}.${Util.getFileExt(upload_file_info.filename)}`;
-      const resize_image_full_path = media_root + resize_image_path;
-      const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
-
-      await Util.deleteFile(origin_image_path);
-
-      if (resize_result.success) {
-        const update_profile_result = await group_service.UpdateGroupProfileImage(database, group_seq, resize_image_path);
-        if (update_profile_result) {
-          if (!Util.isEmpty(member_info.profile_image_path)) {
-            await Util.deleteFile(media_root + member_info.profile_image_path);
-          }
-          output.error = 0;
-          output.message = '';
-          output.add('profile_image_url', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resize_image_path));
-        } else {
-          await Util.deleteFile(resize_image_full_path);
-          output.error = -2;
-        }
-      } else {
-        output.error = -3;
-      }
-
-      return output
-    } catch (e) {
-      throw new StdObject(-1, e, 400);
-    }
   }
 
   isDuplicateId = async (database, user_id) => {
