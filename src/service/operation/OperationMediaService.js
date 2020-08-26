@@ -84,6 +84,10 @@ const OperationMediaServiceClass = class {
     const smil_info = await this.getSmilInfo(directory_info, smil_file_name)
     const proxy_info = this.getProxyVideoInfo(smil_info);
     const proxy_file_name = Util.isEmpty(proxy_info.name) ? video_file_name : proxy_info.name
+    let duration = media_info.duration
+    if (ServiceConfig.get('use_media_info_millisecond') === 'Y') {
+      duration /= 1000
+    }
 
     const update_params = {
       "video_file_name": video_file_name,
@@ -92,7 +96,7 @@ const OperationMediaServiceClass = class {
       "width": media_info.width,
       "height": media_info.height,
       "total_frame": media_info.frame_count,
-      "total_time": media_info.duration,
+      "total_time": duration,
       "smil_file_name": smil_file_name,
       "proxy_max_height": proxy_info.resolution,
       "is_trans_complete": 1
