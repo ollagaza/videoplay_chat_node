@@ -61,7 +61,7 @@ export default class MentoringModel extends MySQLModel {
           }
         )
         .groupBy(groupby_columns)
-        .orderBy([{column: 'content_counts.is_best', order: 'asc'}, {column: 'content_counts.mentoring_cnt', order: 'desc'}])
+        .orderBy([{column: 'content_counts.is_best', order: 'desc'}, {column: 'content_counts.mentoring_cnt', order: 'desc'}])
         .limit(2)
       return oKnex;
     } catch (e) {
@@ -153,7 +153,7 @@ export default class MentoringModel extends MySQLModel {
         'group_info.seq', 'group_info.group_name', 'member.user_id',
         this.database.raw('case when group_info.group_type = \'P\' then \'개인\' else \'팀\' end group_type'),
         'member.treatcode', 'member.hospname',
-        this.database.raw('case when content_counts.is_best = 1 then \'좌측\' else \'우측\' end best_position')
+        this.database.raw('case when content_counts.is_best = 1 then \'우측\' else \'좌측\' end best_position')
       ]
       const oKnex = this.database.select(print_column)
         .from('content_counts')
