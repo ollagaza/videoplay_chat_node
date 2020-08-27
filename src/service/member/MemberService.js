@@ -38,7 +38,7 @@ const MemberServiceClass = class {
 
   checkMyToken = (token_info, member_seq) => {
     if (token_info.getId() !== member_seq){
-      if(token_info.getRole() !== Role.ADMIN){
+      if(!token_info.isAdmin()){
         return false
       }
     }
@@ -192,17 +192,22 @@ const MemberServiceClass = class {
     }
   }
 
-  changePassword = async (database, member_seq, request_body) => {
-    if (Util.trim(request_body.old_password) === '') {
-      throw new StdObject(-1, "잘못된 요청입니다.", 400);
-    }
-
-    if (request_body.password !== request_body.password_confirm) {
-      throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
-    }
-
+  changePassword = async (database, member_seq, request_body, is_admin = false) => {
     const { member_info, member_model } = await this.getMemberInfoWithModel(database, member_seq)
-    await this.checkPassword(database, member_info, request_body.old_password, false)
+    if (!member_info || member_info.isEmpty()) {
+      throw new StdObject(100, "등록된 회원이 아닙니다.", 400);
+    }
+    if (!is_admin) {
+      if (Util.trim(request_body.old_password) === '') {
+        throw new StdObject(-1, "잘못된 요청입니다.", 400);
+      }
+
+      if (request_body.password !== request_body.password_confirm) {
+        throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
+      }
+
+      await this.checkPassword(database, member_info, request_body.old_password, false)
+    }
     await member_model.changePassword(member_seq, request_body.password)
     return true
   }
