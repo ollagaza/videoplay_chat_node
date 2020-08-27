@@ -90,7 +90,7 @@ routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.BOX), Wrap(asy
   await checkMachine(req)
   const operation_seq = req.params.operation_seq;
   await OperationService.requestAnalysis(DBMySQL, null, operation_seq, false)
-  await new OperationModel(DBMySQL).updateStatusTrash([ operation_seq ], null, true);
+  await OperationService.updateStatus(DBMySQL, [ operation_seq ], 'Y');
 
   const output = new StdObject()
   output.add('url', ServiceConfig.get('service_url') + `/v2/curation/${operation_seq}`);
