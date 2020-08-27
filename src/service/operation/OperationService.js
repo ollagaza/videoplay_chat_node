@@ -719,11 +719,18 @@ const OperationServiceClass = class {
     return true
   }
 
+  updateStatus = async (database, seq_list, status) => {
+    const model = this.getOperationModel(database)
+    await model.updateStatus(seq_list, status)
+    await OperationDataService.updateOperationDataByOperationSeqList(seq_list, status)
+
+    return true
+  }
+
   moveOperationFolder = async (database, operation_seq_list, folder_info) => {
     try {
       const model = this.getOperationModel(database)
       await model.moveOperationFolder(operation_seq_list, folder_info.seq)
-      return
     } catch (e) {
       throw e
     }

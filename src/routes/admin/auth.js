@@ -14,7 +14,7 @@ routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
   try {
     const member_info = await AuthService.login(DBMySQL, req)
-    const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
+    const output = await Auth.getTokenResult(res, member_info, Role.ADMIN);
     return res.json(output);
   } catch (e) {
     const output = e;

@@ -148,7 +148,7 @@ routes.put('/change_password/:member_seq(\\d+)', Auth.isAuthenticated(Role.DEFAU
   }
 
   const output = new StdObject();
-  const is_change = await MemberService.changePassword(DBMySQL, member_seq, req.body)
+  const is_change = await MemberService.changePassword(DBMySQL, member_seq, req.body, token_info.isAdmin())
   output.add('is_change', is_change);
   res.json(output);
 }));

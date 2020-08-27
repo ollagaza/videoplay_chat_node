@@ -15,7 +15,7 @@ routes.post('/', Wrap(async(req, res) => {
   req.accepts('application/json');
   try {
     const member_info = await AuthService.login(DBMySQL, req)
-    const output = await Auth.getTokenResult(res, member_info, Role.MEMBER);
+    const output = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN);
     let ip = '';
     if (req.headers['x-forwarded-for']) {
       if (req.headers['x-forwarded-for'].indexOf(',') !== -1) {
