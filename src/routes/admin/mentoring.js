@@ -64,15 +64,12 @@ routes.delete('/deletebestmento', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const medical_code = req.body.medical_code
     const seq = _.concat(['in'], req.body.group_seq);
 
-    const filters = {
-      is_new: true,
-      query: [
-        { category_code: medical_code },
-        { group_seq: seq },
-      ],
-    }
+    const filters = [
+      { category_code: medical_code },
+      { group_seq: seq },
+    ]
 
-    const result = await MentoringAdminService.updateBestMento(DBMySQL, filters, 99)
+    const result = await MentoringAdminService.updateBestMento(DBMySQL, filters, 0)
     res.json(output);
   } catch (e) {
     throw new StdObject(-1, e, 400);
@@ -87,13 +84,10 @@ routes.put('/updatebestmento', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
     const seq = _.concat(['in'], req.body.group_seq);
     const best_num = req.body.best_num
 
-    const filters = {
-      is_new: true,
-      query: [
-        { category_code: medical_code },
-        { group_seq: seq },
-      ],
-    }
+    const filters = [
+      { category_code: medical_code },
+      { group_seq: seq },
+    ];
 
     const result = await MentoringAdminService.updateBestMento(DBMySQL, filters, best_num)
     res.json(output);

@@ -226,6 +226,8 @@ export default class MentoringModel extends MySQLModel {
   }
 
   updateBestMento = async (filters, best_num) => {
-    return await this.update(filters, { is_best: best_num })
+    const oKnex = this.database;
+
+    return await oKnex.raw(`insert info ${this.table_name} (category_code, group_seq, is_best) values(${filters[0].category_code}, ${filters[0].group_seq}, ${best_num}) on duplicate key update is_best = ${best_num}`)
   }
 }
