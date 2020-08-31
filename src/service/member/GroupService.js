@@ -90,6 +90,7 @@ const GroupServiceClass = class {
     if ( token_info.getRole() === Role.ADMIN ) {
       is_active_group_member = true
       is_group_admin = true
+      group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
     } else if (check_group_auth) {
       if (!group_seq) {
         is_active_group_member = false
