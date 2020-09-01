@@ -51,7 +51,14 @@ const MentoringAdminServiceClass = class {
   updateBestMento = async (database, filters, best_num) => {
     try {
       const database_model = this.getMentoring_Model(database)
-      const result = database_model.updateBestMento(filters, best_num)
+      let result = null
+      if (filters.group_seq.length > 1) {
+        for (let cnt = 0; cnt < filters.group_seq.length; cnt++) {
+          result = database_model.updateBestMento(filters.category_code, filters.group_seq[cnt], best_num)
+        }
+      } else {
+        result = database_model.updateBestMento(filters.category_code, filters.group_seq, best_num)
+      }
       return result
     } catch (e) {
       throw e;

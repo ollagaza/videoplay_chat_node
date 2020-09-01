@@ -208,7 +208,7 @@ export default class MentoringModel extends MySQLModel {
         'group_info.seq', 'group_info.group_name', 'member.user_id',
         this.database.raw('case when group_info.group_type = \'P\' then \'개인\' else \'팀\' end group_type'),
         'member.treatcode', 'member.hospname',
-        this.database.raw('case when content_counts.is_best = 1 then \'좌측\' else \'우측\' end best_position')
+        this.database.raw('case when content_counts.is_best = 1 then \'우측\' else \'좌측\' end best_position')
       ]
       const oKnex = this.database.select(print_column)
         .from('content_counts')
@@ -225,9 +225,9 @@ export default class MentoringModel extends MySQLModel {
     }
   }
 
-  updateBestMento = async (filters, best_num) => {
+  updateBestMento = async (category_code, group_seq, best_num) => {
     const oKnex = this.database;
 
-    return await oKnex.raw(`insert info ${this.table_name} (category_code, group_seq, is_best) values(${filters[0].category_code}, ${filters[0].group_seq}, ${best_num}) on duplicate key update is_best = ${best_num}`)
+    return await oKnex.raw(`insert into ${this.table_name} (category_code, group_seq, is_best) values('${category_code}', ${group_seq}, ${best_num}) on duplicate key update is_best = ${best_num}`)
   }
 }
