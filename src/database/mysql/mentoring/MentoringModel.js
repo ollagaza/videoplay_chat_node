@@ -37,6 +37,7 @@ export default class MentoringModel extends MySQLModel {
         , 'member.user_name', 'member.hospname', 'group_info.is_mentoring',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
         this.database.raw('ifnull(group_counts.follower, 0) as follower'),
+        this.database.raw('ifnull(group_counts.following, 0) as following'),
         this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
         'group_counts.follower'
         , this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')

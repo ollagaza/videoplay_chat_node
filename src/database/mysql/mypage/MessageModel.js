@@ -18,8 +18,9 @@ export default class MessageModel extends MySQLModel {
   getReceiveList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
+      'group_info.group_name',
       'member.user_id',
-      'member.user_nickname',
+      'member.hospname',
       ];
     const oKnex = this.database.select(select_fields);
     oKnex.from(this.table_name);
