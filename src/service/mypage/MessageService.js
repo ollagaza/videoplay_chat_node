@@ -52,7 +52,7 @@ const MessageServiceClass = class {
         const searchParam = {
           $or: [
             { user_id: ['like', params.searchText] },
-            { user_nickname: ['like', params.searchText] },
+            { group_name: ['like', params.searchText] },
             { desc: ['like', params.searchText] },
           ],
         };
@@ -90,7 +90,7 @@ const MessageServiceClass = class {
         const searchParam = {
           $or: [
             { user_id: ['like', params.searchText] },
-            { user_nickname: ['like', params.searchText] },
+            { group_name: ['like', params.searchText] },
             { desc: ['like', params.searchText] },
           ],
         };

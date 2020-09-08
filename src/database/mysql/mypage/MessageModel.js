@@ -88,7 +88,7 @@ export default class MessageModel extends MySQLModel {
     }
 
     if (flag === 'receive') {
-      const updateData = { is_receive_del: 1 }
+      const updateData = { is_view: 1, is_receive_del: 1 }
       return this.update(param, updateData)
     } else {
       const updateData = { is_send_del: 1 }
