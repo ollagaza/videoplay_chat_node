@@ -59,6 +59,8 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     await getLinkInfo(result, api_key)
   } else if (api_type === 'drive') {
     await getDriveInfo(result, api_key)
+  } else if (api_type === 'open_video') {
+    await getOpenVideoInfo(result, api_key)
   } else {
     throw new StdObject(-2, '잘못된 접근입니다.', 400)
   }
@@ -131,6 +133,9 @@ const getMentoringInfo = async (result, operation_data_seq) => {
   if (!operation_data_info || operation_data_info.isEmpty()) {
     throw new StdObject(100, '등록된 정보가 없습니다.', 400)
   }
+  if (operation_data_info.type !== 'M') {
+    throw new StdObject(-3, '잘못된 접근입니다.', 403)
+  }
 
   const is_writer = operation_data_info.group_seq === group_seq
   const is_auth = operation_data_info.mento_group_seq === group_seq || operation_data_info.group_seq === group_seq
@@ -140,6 +145,25 @@ const getMentoringInfo = async (result, operation_data_seq) => {
   result.operation_data_seq = operation_data_seq
   result.is_writer = is_writer
   result.is_auth = is_auth
+}
+
+const getOpenVideoInfo = async (result, operation_data_seq) => {
+  const group_seq = result.group_seq
+  const operation_data_info = await OperationDataService.getOperationData(DBMySQL, operation_data_seq)
+  if (!operation_data_info || operation_data_info.isEmpty()) {
+    throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+  }
+  if (!operation_data_info.is_open_video) {
+    throw new StdObject(-3, '잘못된 접근입니다.', 403)
+  }
+
+  const is_writer = operation_data_info.group_seq === group_seq
+
+  result.operation_seq = operation_data_info.operation_seq
+  result.operation_data_info = operation_data_info
+  result.operation_data_seq = operation_data_seq
+  result.is_writer = is_writer
+  result.is_auth = true
 }
 
 routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
