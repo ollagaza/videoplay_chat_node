@@ -43,4 +43,15 @@ routes.get('/interest(/:lang)?', Wrap(async(req, res) => {
   res.json(output);
 }));
 
+routes.get('/system', Wrap(async(req, res) => {
+  const is_vacs = ServiceConfig.isVacs();
+  const site_info_type = MongoDataService.getSystemDataTypes().SITE_INFO
+  const site_info = await MongoDataService.getSystemData(site_info_type)
+  const output = new StdObject();
+  output.add('is_vacs', is_vacs);
+  output.add('socket_url', ServiceConfig.get('socket_front_server_ip'));
+  output.add(site_info_type, site_info);
+  res.json(output);
+}));
+
 export default routes;

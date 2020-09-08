@@ -18,8 +18,9 @@ export default class MessageModel extends MySQLModel {
   getReceiveList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
+      'group_info.group_name',
       'member.user_id',
-      'member.user_nickname',
+      'member.hospname',
       ];
     const oKnex = this.database.select(select_fields);
     oKnex.from(this.table_name);
@@ -44,8 +45,9 @@ export default class MessageModel extends MySQLModel {
   getSendList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
+      'group_info.group_name',
       'member.user_id',
-      'member.user_nickname',
+      'member.hospname',
     ];
     const oKnex = this.database.select(select_fields);
     oKnex.from(this.table_name);
@@ -62,7 +64,7 @@ export default class MessageModel extends MySQLModel {
 
     const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging);
     if (!results.data || results.data.length === 0) {
-      throw new StdObject(-1, '받은 쪽지가 없습니다.', 400);
+      throw new StdObject(-1, '보낸 쪽지가 없습니다.', 400);
     }
     return results;
   }
@@ -78,7 +80,13 @@ export default class MessageModel extends MySQLModel {
   }
 
   deleteMessage = async (seq, flag) => {
-    const param = { seq: seq }
+    const param = {
+      is_new: true,
+      query: [
+        { seq: ['in'].concat(seq) },
+      ],
+    }
+
     if (flag === 'receive') {
       const updateData = { is_receive_del: 1 }
       return this.update(param, updateData)

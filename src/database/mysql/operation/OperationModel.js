@@ -194,7 +194,7 @@ export default class OperationModel extends MySQLModel {
     return operation_info;
   };
 
-  copyOperation = async (origin_seq, operation_info) => {
+  copyOperation = async (origin_seq, operation_info, copy_type = null, mento_operation = null) => {
     const origin_operation = await this.findOne({ seq: origin_seq })
 
     if (origin_operation) {
@@ -211,6 +211,18 @@ export default class OperationModel extends MySQLModel {
       delete origin_operation.seq;
       delete origin_operation.reg_date;
       delete origin_operation.modify_date;
+    }
+
+    if (copy_type === 'M' && mento_operation !== null) {
+      origin_operation.operation_code = mento_operation.operation_code
+      origin_operation.operation_date = mento_operation.operation_date
+      origin_operation.operation_name = mento_operation.operation_name
+      origin_operation.operation_type = mento_operation.operation_type
+      origin_operation.folder_seq = mento_operation.folder_seq
+      origin_operation.hour = mento_operation.hour
+      origin_operation.minute = mento_operation.minute
+      origin_operation.patient_age = mento_operation.patient_age
+      origin_operation.patient_sex = mento_operation.patient_sex
     }
 
     const operation_seq = await this.create(origin_operation, 'seq');

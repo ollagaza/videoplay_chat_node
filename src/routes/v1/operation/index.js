@@ -180,8 +180,8 @@ routes.put('/:api_type/:api_key/doc', Auth.isAuthenticated(Role.LOGIN_USER), Wra
 
 routes.put('/:api_type/:api_key/open_video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async(req, res) => {
   req.accepts('application/json');
-  const { operation_data_seq } = await getBaseInfo(req, true, true)
-  const result = await OperationDataService.changeOpenVideo(operation_data_seq, req.body)
+  const { operation_data_seq, group_seq } = await getBaseInfo(req, true, true)
+  const result = await OperationDataService.changeOpenVideo(DBMySQL, group_seq, operation_data_seq, req.body)
   const output = new StdObject()
   output.add('result', result)
   res.json(output);

@@ -7,6 +7,7 @@ import Constants from '../constants/constants'
 import { MedicalModel } from './mongodb/Medical';
 import { InterestModel } from './mongodb/Interest';
 import { LogCodeModel } from './mongodb/MemberLogCode';
+import { initSystemData } from './mongodb/SystemData';
 
 const LOG_PREFIX = '[MongoDB]\n'
 
@@ -52,6 +53,8 @@ const defaultMongoCollections = async () => {
 
   const log_code = await LogCodeModel.findOne();
   await LogCodeModel.InsertDefaultData(log_code);
+
+  await initSystemData();
 }
 
 export default {

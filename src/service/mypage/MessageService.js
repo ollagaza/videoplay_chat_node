@@ -137,7 +137,7 @@ const MessageServiceClass = class {
       await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info);
       send_socket_message_info.message_info.title = '쪽지가 발송 되었습니다.';
       await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info);
-      await MemberLogService.createMemberLog(DBMySQL, message_info.send_seq, null, null, null,'1003', '', null, 0, 1);
+      await MemberLogService.createMemberLog(DBMySQL, message_info.send_seq, null, null, null,'1003', '', 0, 0, 1);
 
       return result;
     } catch (e) {

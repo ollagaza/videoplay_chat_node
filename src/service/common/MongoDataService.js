@@ -2,6 +2,7 @@ import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
 import { MedicalModel } from '../../database/mongodb/Medical'
 import { InterestModel } from '../../database/mongodb/Interest'
+import { SystemDataModel, SYSTEM_DATA_TYPES } from '../../database/mongodb/SystemData'
 import log from '../../libs/logger'
 
 const MongoDataServiceClass = class {
@@ -12,6 +13,7 @@ const MongoDataServiceClass = class {
 
     this.medial_info = null
     this.interest_info = null
+    this.system_data_map = {}
   }
 
   init = async () => {
@@ -26,6 +28,15 @@ const MongoDataServiceClass = class {
       this.interest_info = interest_result[0].toJSON ? interest_result[0].toJSON() : interest_result[0]._doc
     } else {
       this.interest_info = {}
+    }
+
+    const system_data_list = await SystemDataModel.findAll()
+    log.debug(this.log_prefix, 'system_data_list', system_data_list)
+    if (system_data_list) {
+      for (let i = 0; i < system_data_list.length; i++) {
+        const system_data = system_data_list[i]
+        this.system_data_map[system_data.data_type] = system_data;
+      }
     }
   }
 
@@ -84,6 +95,12 @@ const MongoDataServiceClass = class {
 
     return return_date
   }
+
+  getSystemData = (data_type) => {
+    return this.system_data_map[data_type];
+  }
+
+  getSystemDataTypes = () => SYSTEM_DATA_TYPES
 }
 
 const mongo_data_service = new MongoDataServiceClass()

@@ -104,29 +104,32 @@ const OperationServiceClass = class {
   }
 
   copyOperation = async (database, member_info, group_member_info, request_body, status = null) => {
-    const output = new StdObject();
-    let is_success = false;
+    const output = new StdObject()
+    let is_success = false
 
     const operation_Seqs = request_body.copy_seq_list
-    const folder_info = request_body.folder_info ? request_body.folder_info : null;
+    const copy_type = request_body.operation_copy_type ? request_body.operation_copy_type : null
+    const mento_operation = request_body.operation_info ? request_body.operation_info : null
+    const mento_operation_data = request_body.operation_data ? request_body.operation_data : null
+    const folder_info = request_body.folder_info ? request_body.folder_info : null
 
     for (let seqCnt = 0; seqCnt < operation_Seqs.length; seqCnt++) {
-      let operation_info = {};
-      const origin_operation_seq = operation_Seqs[seqCnt];
-      const content_id = Util.getContentId();
-      const group_media_path = group_member_info.media_path;
+      let operation_info = {}
+      const origin_operation_seq = operation_Seqs[seqCnt]
+      const content_id = Util.getContentId()
+      const group_media_path = group_member_info.media_path
 
       // new data insert and seq delete
-      operation_info.media_path = `${group_media_path}/operation/${content_id}/`;
-      operation_info.content_id = content_id;
-      operation_info.folder_seq = folder_info.seq;
+      operation_info.media_path = `${group_media_path}/operation/${content_id}/`
+      operation_info.content_id = content_id
+      operation_info.folder_seq = folder_info !== null ? folder_info.seq : null
 
       if (status) {
-        operation_info.status = status;
+        operation_info.status = status
       }
 
       const operation_model = new OperationModel(database);
-      operation_info = await operation_model.copyOperation(origin_operation_seq, operation_info);
+      operation_info = await operation_model.copyOperation(origin_operation_seq, operation_info, copy_type, mento_operation);
       if (!operation_info || !operation_info.seq) {
         throw new StdObject(-1, '수술정보 입력에 실패하였습니다.', 500)
       }
@@ -171,11 +174,11 @@ const OperationServiceClass = class {
         if (ServiceConfig.isVacs()) {
           VacsService.increaseCount(1)
         } else {
-          const operation_data_seq = await OperationDataService.copyOperationDataByRequest(operation_info)
+          const operation_data_seq = await OperationDataService.copyOperationDataByRequest(operation_info, copy_type, mento_operation_data)
           output.add('operation_data_seq', operation_data_seq);
         }
 
-        if (ServiceConfig.isVacs() === false) {
+        if (ServiceConfig.isVacs() === false && copy_type !== 'M') {
           try {
             await NaverObjectStorageService.copyAllFiles(operation_info.origin_media_path, operation_info.media_path, ServiceConfig.get('naver_object_storage_bucket_name'));
           } catch (error) {

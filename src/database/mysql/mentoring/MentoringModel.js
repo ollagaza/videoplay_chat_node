@@ -36,8 +36,11 @@ export default class MentoringModel extends MySQLModel {
         'group_info.seq as group_seq', 'group_info.group_name', 'group_info.member_seq', 'group_info.hashtag', 'group_info.profile_image_path'
         , 'member.user_name', 'member.hospname', 'group_info.is_mentoring',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
-        this.database.raw('ifnull(group_counts.follower, 0) as follower'),
         this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
+        this.database.raw('ifnull(group_counts.follower, 0) as follower'),
+        this.database.raw('ifnull(group_counts.following, 0) as following'),
+        this.database.raw('ifnull(group_counts.video_count, 0) as video_count'),
+        this.database.raw('ifnull(group_counts.open_count, 0) as open_count'),
         'group_counts.follower'
         , this.database.raw('case when count(following.seq) > 0 then 1 else 0 end following_chk')
       ]
@@ -74,8 +77,11 @@ export default class MentoringModel extends MySQLModel {
       const display_columns = [
         'group_info.seq as group_seq', 'group_info.group_name', 'member.hospname', 'group_info.hashtag', 'group_info.profile_image_path', 'group_info.is_mentoring',
         this.database.raw('ifnull(group_counts.community, 0) as community'),
-        this.database.raw('ifnull(group_counts.follower, 0) as follower'),
         this.database.raw('ifnull(group_counts.mentoring, 0) as mentoring'),
+        this.database.raw('ifnull(group_counts.follower, 0) as follower'),
+        this.database.raw('ifnull(group_counts.following, 0) as following'),
+        this.database.raw('ifnull(group_counts.video_count, 0) as video_count'),
+        this.database.raw('ifnull(group_counts.open_count, 0) as open_count'),
         'content_counts.sort_num'
       ]
       const oKnex = this.database.select(display_columns)
@@ -137,7 +143,6 @@ export default class MentoringModel extends MySQLModel {
           this.where('operation_data.type', 'M')
             .andWhere('operation_data.is_complete', '1')
             .andWhere('operation_data.mento_group_seq', group_seq)
-            .andWhere('operation_data.is_open_video', '1')
             .whereIn('operation_data.is_mento_complete', ['S', 'C'])
         })
         .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
