@@ -6,12 +6,18 @@ export default class ProFileModel extends MySQLModel {
     super(database)
 
     this.table_name = 'group_info'
-    this.selectable_fields = ['seq', 'profile_image_path', 'member_seq', 'profile', 'is_channel', 'is_mentoring']
+    this.selectable_fields = [`${this.table_name}.seq`, `${this.table_name}.profile_image_path`, `${this.table_name}.member_seq`
+      , `${this.table_name}.profile`, `${this.table_name}.is_channel`, `${this.table_name}.is_mentoring`]
     this.log_prefix = '[ProFileModel]'
   }
 
   getProFileInfo = async group_seq => {
-    return this.findOne({ seq: group_seq }, this.selectable_fields);
+    const oKnex = this.database.select(this.selectable_fields.concat('member.hospname'))
+      .from(this.table_name)
+      .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
+      .where(`${this.table_name}.seq`, group_seq)
+      .limit(1)
+    return oKnex.first()
   };
 
   updateProFileInfo = async (group_seq, upload_type, input_data) => {

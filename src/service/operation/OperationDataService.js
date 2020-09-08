@@ -71,7 +71,7 @@ const OperationDataServiceClass = class {
     return operation_data_seq
   }
 
-  copyOperationDataByRequest = async (operation_info, type = 'N') => {
+  copyOperationDataByRequest = async (operation_info, type = 'N', mento_operation_data = null) => {
     if (!operation_info) {
       return null
     }
@@ -94,6 +94,15 @@ const OperationDataServiceClass = class {
     operation_data_info.operation_seq = operation_info.seq
     operation_data_info.type = type
 
+    if (type === 'M' && mento_operation_data !== null) {
+      operation_data_info.category_list = mento_operation_data.category_list
+      operation_data_info.doc_html = mento_operation_data.doc_html
+      operation_data_info.hashtag_list = Util.parseHashtag(mento_operation_data.hashtag)
+      operation_data_info.is_open_refer_file = mento_operation_data.is_open_refer_file
+      operation_data_info.mento_group_seq = mento_operation_data.mento_group_seq
+      operation_data_info.is_open_video = 1
+    }
+
     const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
     if (operation_data_info.thumbnail) {
       operation_data_info.thumbnail = operation_data_info.thumbnail.replace(replace_regex, operation_info.content_id)
@@ -102,7 +111,7 @@ const OperationDataServiceClass = class {
     await this.setOperationDataInfo(operation_data_info, operation_info)
     const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
 
-    this.updateHashtag(operation_data_seq, operation_data_info.group_seq, operation_data_info.hashtag)
+    this.updateHashtag(operation_data_seq, operation_data_info.group_seq, mento_operation_data.hashtag)
 
     return operation_data_seq
   }
@@ -198,6 +207,9 @@ const OperationDataServiceClass = class {
       group_count_field_name.push('community')
       content_count_field_name.push(ContentCountService.COMMUNITY_COUNT)
     }
+    if (operation_data.is_open_video) {
+      group_count_field_name.push('open_count')
+    }
     await GroupService.UpdateGroupInfoAddCnt(null, group_seq, group_count_field_name)
 
     if (operation_data.category_list) {
@@ -240,9 +252,16 @@ const OperationDataServiceClass = class {
     return await operation_data_model.updateDoc(operation_data_seq, doc_html, doc_text)
   }
 
-  changeOpenVideo = async (operation_data_seq, request_body) => {
+  changeOpenVideo = async (database, group_seq, operation_data_seq, request_body) => {
     const operation_data_model = this.getOperationDataModel()
     const is_open_video = Util.isTrue(request_body.is_open_video)
+    const group_count_field_name = []
+    group_count_field_name.push('open_count')
+    if (is_open_video) {
+      await GroupService.UpdateGroupInfoAddCnt(null, group_seq, group_count_field_name)
+    } else {
+      await GroupService.UpdateGroupInfoMinusCnt(null, group_seq, group_count_field_name)
+    }
     return await operation_data_model.updateOpenVideo(operation_data_seq, is_open_video)
   }
 

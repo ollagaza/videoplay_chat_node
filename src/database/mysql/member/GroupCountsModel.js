@@ -18,7 +18,8 @@ export default class GroupCountModel extends MySQLModel {
       mentoring: true,
       follower: true,
       following: true,
-      video_count: true
+      video_count: true,
+      open_count: true,
     }
   }
 

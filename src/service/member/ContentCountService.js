@@ -17,6 +17,7 @@ const ContentCountServiceClass = class {
     this.VIDEO_COUNT = 'video_cnt'
     this.COMMUNITY_COUNT = 'community_cnt'
     this.MENTORING_COUNT = 'mentoring_cnt'
+    this.OPEN_COUNT = 'count_cnt'
     this.SORT_NUMBER = 'sort_num'
   }
 
