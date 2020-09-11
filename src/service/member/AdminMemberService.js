@@ -261,10 +261,9 @@ const AdminMemberServiceClass = class {
           send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 가입승인이 거절 되었습니다.', Admin_MemberTemplate.reject_member(value));
           break;
         default:
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리테스트 메일', Admin_MemberTemplate.test_mail(value));
           break;
       }
-      if (send_mail_result.isSuccess() === false) {
+      if (send_mail_result && send_mail_result.isSuccess() === false) {
         return send_mail_result;
       }
     });
