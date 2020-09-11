@@ -35,7 +35,7 @@ const OperationFolderServiceClass = class {
       }
     })
 
-    log.debug(this.log_prefix, folder_map)
+    // log.debug(this.log_prefix, folder_map)
     this.makeFolderTree(folder_map);
 
     return {
