@@ -1,11 +1,11 @@
-import ServiceConfig from '../../service/service-config';
-import Util from '../../utils/baseutil';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
+import ServiceConfig from '../../service/service-config'
+import Util from '../../utils/baseutil'
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import OperationService from '../operation/OperationService'
 import OperationDataService from '../operation/OperationDataService'
-import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
+import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel'
 import SmilInfo from '../../wrapper/xml/SmilInfo'
 import Constants from '../../constants/constants'
 
@@ -23,7 +23,7 @@ const OperationMediaServiceClass = class {
 
   createOperationMediaInfo = async (database, operation_info) => {
     const operation_media_model = this.getOperationMediaModel(database)
-    return await operation_media_model.createOperationMediaInfo(operation_info);
+    return await operation_media_model.createOperationMediaInfo(operation_info)
   }
 
   getOperationMediaInfo = async (database, operation_info) => {
@@ -54,20 +54,23 @@ const OperationMediaServiceClass = class {
       media_info.operation_seq = operation_info.seq
 
       const operation_media_model = this.getOperationMediaModel(database)
-      return await operation_media_model.copyOperationMediaInfo(media_info);
+      return await operation_media_model.copyOperationMediaInfo(media_info)
     }
   }
 
   getSmilInfo = async (directory_info, smil_file_name) => {
     if (!smil_file_name) {
-      smil_file_name = ServiceConfig.get('default_smil_file_name');
+      smil_file_name = ServiceConfig.get('default_smil_file_name')
     }
-    return await new SmilInfo().loadFromXml(directory_info.origin, smil_file_name);
+    return await new SmilInfo().loadFromXml(directory_info.origin, smil_file_name)
   }
 
   getProxyVideoInfo = (smil_info) => {
-    return smil_info.isEmpty() ? { name: null, resolution: ServiceConfig.get('proxy_max_resolution') } : smil_info.findProxyVideoInfo();
-  };
+    return smil_info.isEmpty() ? {
+      name: null,
+      resolution: ServiceConfig.get('proxy_max_resolution')
+    } : smil_info.findProxyVideoInfo()
+  }
 
   updateTranscodingComplete = async (database, operation_info, video_file_name, smil_file_name) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
@@ -82,7 +85,7 @@ const OperationMediaServiceClass = class {
     }
     const media_info = media_result.media_info
     const smil_info = await this.getSmilInfo(directory_info, smil_file_name)
-    const proxy_info = this.getProxyVideoInfo(smil_info);
+    const proxy_info = this.getProxyVideoInfo(smil_info)
     const proxy_file_name = Util.isEmpty(proxy_info.name) ? video_file_name : proxy_info.name
     let duration = media_info.duration
     if (ServiceConfig.get('use_media_info_millisecond') === 'Y') {
@@ -90,17 +93,17 @@ const OperationMediaServiceClass = class {
     }
 
     const update_params = {
-      "video_file_name": video_file_name,
-      "proxy_file_name": proxy_file_name,
-      "fps": media_info.fps,
-      "width": media_info.width,
-      "height": media_info.height,
-      "total_frame": media_info.frame_count,
-      "total_time": duration,
-      "smil_file_name": smil_file_name,
-      "proxy_max_height": proxy_info.resolution,
-      "is_trans_complete": 1
-    };
+      'video_file_name': video_file_name,
+      'proxy_file_name': proxy_file_name,
+      'fps': media_info.fps,
+      'width': media_info.width,
+      'height': media_info.height,
+      'total_frame': media_info.frame_count,
+      'total_time': duration,
+      'smil_file_name': smil_file_name,
+      'proxy_max_height': proxy_info.resolution,
+      'is_trans_complete': 1
+    }
 
     const thumbnail_result = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
     if (thumbnail_result) {

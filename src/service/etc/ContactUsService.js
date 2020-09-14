@@ -1,8 +1,7 @@
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import ContactUsModel from '../../database/mysql/etc/ContactUsModel'
-import Util from '../../utils/baseutil'
 import SendMail from '../../libs/send-mail'
 import ServiceConfig from '../service-config'
 
@@ -49,7 +48,7 @@ const ContactUsServiceClass = class {
         body += `문의사항: ${contact_us_info.question}\n`
         body += `문의내용: ${contact_us_info.message}\n`
         try {
-          await new SendMail().sendMailText(ServiceConfig.supporterEmailList(), 'Surgstory.com 문의메일', body);
+          await new SendMail().sendMailText(ServiceConfig.supporterEmailList(), 'Surgstory.com 문의메일', body)
         } catch (e) {
           log.error(this.log_prefix, 'send email', supporter_email_list, e)
         }

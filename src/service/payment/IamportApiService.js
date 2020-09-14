@@ -1,24 +1,23 @@
-import log from '../../libs/logger';
-import request from 'request-promise';
-import util from '../../utils/baseutil';
-import Service_Config from '../service-config';
-import StdObject from "../../wrapper/std-object";
+import request from 'request-promise'
+import util from '../../utils/baseutil'
+import Service_Config from '../service-config'
+import StdObject from '../../wrapper/std-object'
 
 const IamportApiServiceClass = class {
-  constructor() {
+  constructor () {
     this.log_prefix = '[PaymentServiceClass]'
   }
 
-  setMakeOrderNum() {
-    const nowDate = new Date();
-    const year = nowDate.getFullYear();
-    const month = (nowDate.getMonth() + 1) < 10 ? `0${(nowDate.getMonth() + 1)}` : (nowDate.getMonth() + 1);
-    const day = nowDate.getDate() < 10 ? `0${nowDate.getDate()}` : nowDate.getDate();
+  setMakeOrderNum () {
+    const nowDate = new Date()
+    const year = nowDate.getFullYear()
+    const month = (nowDate.getMonth() + 1) < 10 ? `0${(nowDate.getMonth() + 1)}` : (nowDate.getMonth() + 1)
+    const day = nowDate.getDate() < 10 ? `0${nowDate.getDate()}` : nowDate.getDate()
 
-    return `ORDER_${year}${month}${day}_${util.getRandomNumber()}`;
+    return `ORDER_${year}${month}${day}_${util.getRandomNumber()}`
   }
 
-  makePayData(subScribeResult, pg_data) {
+  makePayData (subScribeResult, pg_data) {
     return {
       pg: subScribeResult.response.pg_id,
       pay_method: subScribeResult.response.pay_method,
@@ -60,7 +59,7 @@ const IamportApiServiceClass = class {
       code: 0,
       message: '',
       token: '',
-    };
+    }
     const Options = {
       headers: {
         'Content-Type': 'application/json',
@@ -72,26 +71,26 @@ const IamportApiServiceClass = class {
         imp_secret: Service_Config.get('import_api_secret'),
       },
       json: true
-    };
+    }
     try {
       await request(Options)
         .then(({ code, message, response }) => {
           if (code === 0) {
-            access_token.token = response.access_token;
+            access_token.token = response.access_token
           } else {
-            access_token.code = code;
-            access_token.message = message;
-            access_token.token = '';
+            access_token.code = code
+            access_token.message = message
+            access_token.token = ''
           }
-        });
-      return access_token;
+        })
+      return access_token
     } catch (e) {
       throw new StdObject(-1, e, 400)
     }
-  };
+  }
 
   subScribePayment = async (pg_data) => {
-    const access_token = await this.getIamportToken();
+    const access_token = await this.getIamportToken()
 
     const Options = {
       headers: {
@@ -107,29 +106,29 @@ const IamportApiServiceClass = class {
         name: pg_data.name,
       },
       json: true
-    };
+    }
     try {
-      const result = {};
+      const result = {}
       await request(Options)
         .then(({ code, message, response }) => {
-        if (code === 0) {
-          result.code = code;
-          result.message = message;
-          result.response = response;
-        } else {
-          result.code = code;
-          result.message = message;
-          result.response = null;
-        }
-      });
-      return result;
+          if (code === 0) {
+            result.code = code
+            result.message = message
+            result.response = response
+          } else {
+            result.code = code
+            result.message = message
+            result.response = null
+          }
+        })
+      return result
     } catch (e) {
       throw new StdObject(-1, e, 400)
     }
-  };
+  }
 
   subScribeDelete = async (customer_uid) => {
-    const access_token = await this.getIamportToken();
+    const access_token = await this.getIamportToken()
 
     const Options = {
       headers: {
@@ -139,36 +138,36 @@ const IamportApiServiceClass = class {
       url: `https://api.iamport.kr/subscribe/customers/${customer_uid}`,
       method: 'DELETE',
       json: true
-    };
-    const result = {};
+    }
+    const result = {}
     try {
       await request(Options)
-        .then(({code, message, response}) => {
-          result.code = code;
-          result.message = message;
-          result.response = response;
-        });
-      return result;
+        .then(({ code, message, response }) => {
+          result.code = code
+          result.message = message
+          result.response = response
+        })
+      return result
     } catch (e) {
       throw new StdObject(-1, e, 400)
     }
-  };
+  }
 
   paymentCancel = async (last_data, reason_text, cancel_type) => {
     try {
-      const access_token = await this.getIamportToken();
-      const diffDay = util.dayDiffenrence(last_data.paid_at);
-      let amount = 0;
+      const access_token = await this.getIamportToken()
+      const diffDay = util.dayDiffenrence(last_data.paid_at)
+      let amount = 0
 
       if (diffDay > 7) {
         if (cancel_type === 'C') {
-          amount = (last_data.amount / (31 - diffDay));
-        } else  {
-          amount = ((last_data.amount / (31 - diffDay)) / 30) * 0.7;
+          amount = (last_data.amount / (31 - diffDay))
+        } else {
+          amount = ((last_data.amount / (31 - diffDay)) / 30) * 0.7
         }
-        amount = Math.ceil(Math.ceil(amount / 10) * 10);
+        amount = Math.ceil(Math.ceil(amount / 10) * 10)
       } else {
-        amount = last_data.amount;
+        amount = last_data.amount
       }
       const Options = {
         headers: {
@@ -189,24 +188,24 @@ const IamportApiServiceClass = class {
           refund_account: '',
         },
         json: true
-      };
+      }
 
-      const result = {};
+      const result = {}
       await request(Options)
-        .then(({code, message, response}) => {
-          result.code = code;
-          result.message = message;
-          result.response = response;
-        });
-      return result;
+        .then(({ code, message, response }) => {
+          result.code = code
+          result.message = message
+          result.response = response
+        })
+      return result
     } catch (e) {
       throw new StdObject(-1, e, 400)
     }
-  };
+  }
 
   adminPaymentCancel = async (data, amount) => {
     try {
-      const access_token = await this.getIamportToken();
+      const access_token = await this.getIamportToken()
 
       const Options = {
         headers: {
@@ -227,24 +226,24 @@ const IamportApiServiceClass = class {
           refund_account: '',
         },
         json: true
-      };
+      }
 
-      const result = {};
+      const result = {}
       await request(Options)
-        .then(({code, message, response}) => {
-          result.code = code;
-          result.message = message;
-          result.response = response;
-        });
-      return result;
+        .then(({ code, message, response }) => {
+          result.code = code
+          result.message = message
+          result.response = response
+        })
+      return result
     } catch (e) {
       throw new StdObject(-1, e, 400)
     }
-  };
+  }
 
   getSubscripbeInfo = async (customer_uid) => {
     try {
-      const access_token = await this.getIamportToken();
+      const access_token = await this.getIamportToken()
 
       const Options = {
         headers: {
@@ -259,20 +258,20 @@ const IamportApiServiceClass = class {
           ],
         },
         json: true
-      };
+      }
 
-      const result = {};
+      const result = {}
       await request(Options)
-        .then(({code, message, response}) => {
-          result.code = code;
-          result.message = message;
-          result.response = response;
-        });
-      return result;
+        .then(({ code, message, response }) => {
+          result.code = code
+          result.message = message
+          result.response = response
+        })
+      return result
     } catch (e) {
       throw new StdObject(-1, e, 400)
     }
-  };
+  }
 }
 
 const IamportApi_service = new IamportApiServiceClass()

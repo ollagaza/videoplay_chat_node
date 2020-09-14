@@ -1,4 +1,4 @@
-import Constants from '../../constants/constants';
+import Constants from '../../constants/constants'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
 
@@ -48,7 +48,7 @@ import ServiceConfig from '../../service/service-config'
  */
 
 export default class CloudFileInfo {
-  constructor() {
+  constructor () {
     this.content_id = Util.getContentId()
     this.is_folder = true
     this.origin_type = Constants.LOCAL
@@ -65,10 +65,10 @@ export default class CloudFileInfo {
 
   setResponseOption = (response_url, method = 'POST', hostname = null, port = null) => {
     this.response_options = {
-      "hostname": hostname ? hostname : ServiceConfig.get('api_server_domain'),
-      "port": port ? port : ServiceConfig.get('api_server_port'),
-      "path": response_url,
-      "method": method
+      'hostname': hostname ? hostname : ServiceConfig.get('api_server_domain'),
+      'port': port ? port : ServiceConfig.get('api_server_port'),
+      'path': response_url,
+      'method': method
     }
   }
 
@@ -89,18 +89,18 @@ export default class CloudFileInfo {
 
   toJSON = () => {
     return {
-      "content_id": this.content_id,
-      "is_folder": this.is_folder,
-      "origin_type": this.origin_type,
-      "origin_bucket": this.origin_bucket,
-      "origin_path": this.origin_path,
-      "remote_type": this.remote_type,
-      "remote_bucket": this.remote_bucket,
-      "remote_path": this.remote_path,
-      "file_list": this.file_list,
-      "response_options": this.response_options,
-      "response_data": this.response_data,
-      "expire_days": this.expire_days
+      'content_id': this.content_id,
+      'is_folder': this.is_folder,
+      'origin_type': this.origin_type,
+      'origin_bucket': this.origin_bucket,
+      'origin_path': this.origin_path,
+      'remote_type': this.remote_type,
+      'remote_bucket': this.remote_bucket,
+      'remote_path': this.remote_path,
+      'file_list': this.file_list,
+      'response_options': this.response_options,
+      'response_data': this.response_data,
+      'expire_days': this.expire_days
     }
   }
 }

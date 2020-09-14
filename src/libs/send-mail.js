@@ -1,9 +1,7 @@
 import _ from 'lodash'
-import log from './logger'
 import Util from '../utils/baseutil'
 import ServiceConfig from '../service/service-config'
 import StdObject from '../wrapper/std-object'
-
 
 export default class SendMail {
   constructor () {
@@ -24,10 +22,10 @@ export default class SendMail {
       throw new StdObject(-1, '수신자 목록이 없습니다.')
     }
     // 참조: https://apidocs.ncloud.com/ko/ai-application-service/cloud_outbound_mailer/createmailrequest/
-    const space = " "  // 공백
-    const new_line = "\n"  // 줄바꿈
-    const method = "POST"  // HTTP 메서드
-    const url = "/api/v1/mails"  // 도메인을 제외한 "/" 아래 전체 url (쿼리스트링 포함)
+    const space = ' '  // 공백
+    const new_line = '\n'  // 줄바꿈
+    const method = 'POST'  // HTTP 메서드
+    const url = '/api/v1/mails'  // 도메인을 제외한 "/" 아래 전체 url (쿼리스트링 포함)
     const timestamp = `${Util.getCurrentTimestamp(true)}`  // 현재 타임스탬프 (epoch, millisecond)
     const access_key = `${ServiceConfig.get('naver_access_key')}`  // access key id (from portal or Sub Account)
     const secret_key = `${ServiceConfig.get('naver_secret_key')}`  // secret key (from portal or Sub Account)

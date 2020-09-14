@@ -1,17 +1,17 @@
-import mongoose from 'mongoose';
-import Interest_BasicData from '../../data/Mongo_Interest_Data';
+import mongoose from 'mongoose'
+import Interest_BasicData from '../../data/Mongo_Interest_Data'
 
-const Schema = mongoose.Schema;
+const Schema = mongoose.Schema
 
 const getFieldInfos = () => {
   return {
     codes: { type: Object, index: true, require: false, unique: true }
-  };
-};
+  }
+}
 
-const schema_field_infos = getFieldInfos();
+const schema_field_infos = getFieldInfos()
 
-const interest_schema = new Schema(schema_field_infos, { strict: false });
+const interest_schema = new Schema(schema_field_infos, { strict: false })
 
 interest_schema.statics.InsertDefaultData = function (interest) {
   if (!interest || !interest._id) {
@@ -19,15 +19,15 @@ interest_schema.statics.InsertDefaultData = function (interest) {
     return model.save()
   }
   if (!interest.version || interest.version < Interest_BasicData.version) {
-    return this.updateOne({ _id: interest._id }, Interest_BasicData);
+    return this.updateOne({ _id: interest._id }, Interest_BasicData)
   }
-};
+}
 
 interest_schema.statics.findAll = function () {
-  return this.find({});
-};
+  return this.find({})
+}
 
-const interest_model = mongoose.model( 'interrests', interest_schema );
+const interest_model = mongoose.model('interrests', interest_schema)
 
-export const InterestModel = interest_model;
-export const InterestField = getFieldInfos;
+export const InterestModel = interest_model
+export const InterestField = getFieldInfos

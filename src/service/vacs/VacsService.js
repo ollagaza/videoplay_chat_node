@@ -1,13 +1,13 @@
-import Util from '../../utils/baseutil';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
+import Util from '../../utils/baseutil'
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import ServiceConfig from '../service-config'
 import SocketManager from '../socket-manager'
 import VacsStorageModel from '../../database/mysql/vacs/VacsStorageModel'
 
 const VacsServiceClass = class {
-  constructor() {
+  constructor () {
     this.log_prefix = '[VacsService]'
   }
 
@@ -41,7 +41,7 @@ const VacsServiceClass = class {
           const user = ServiceConfig.get('vacs_storage_ssh_user')
           const password = ServiceConfig.get('vacs_storage_ssh_password')
 
-          const ssh_result = await Util.sshExec(cmd, host, port, user, password);
+          const ssh_result = await Util.sshExec(cmd, host, port, user, password)
           if (ssh_result.success && ssh_result.result) {
             const storage_info = JSON.parse(ssh_result.result)
             const update_result = await this.updateStorageStatus(null, storage_info.used, storage_info.total)
@@ -55,7 +55,7 @@ const VacsServiceClass = class {
                   total_size: update_result.total_size
                 }
               }
-              log.debug(this.log_prefix, '[updateStorageInfo]', 'SocketManager.sendToFrontAll',socket_data)
+              log.debug(this.log_prefix, '[updateStorageInfo]', 'SocketManager.sendToFrontAll', socket_data)
               await SocketManager.sendToFrontAll(socket_data)
             }
           } else {
@@ -141,7 +141,7 @@ const VacsServiceClass = class {
       }
     )()
   }
-};
+}
 
-const vacs_service = new VacsServiceClass();
-export default vacs_service;
+const vacs_service = new VacsServiceClass()
+export default vacs_service

@@ -1,13 +1,13 @@
-import { Router } from 'express';
-import ServiceConfig from '../../service/service-config';
-import Wrap from '../../utils/express-async';
-import StdObject from '../../wrapper/std-object';
+import { Router } from 'express'
+import ServiceConfig from '../../service/service-config'
+import Wrap from '../../utils/express-async'
+import StdObject from '../../wrapper/std-object'
 
-const routes = Router();
+const routes = Router()
 
-routes.get('/reload', Wrap(async(req, res) => {
-  await ServiceConfig.reload();
-  res.json(new StdObject());
-}));
+routes.get('/reload', Wrap(async (req, res) => {
+  await ServiceConfig.reload()
+  res.json(new StdObject())
+}))
 
-export default routes;
+export default routes

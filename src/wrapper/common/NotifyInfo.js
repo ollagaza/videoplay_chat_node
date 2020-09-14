@@ -1,7 +1,5 @@
-import baseutil from "../../utils/baseutil";
-
 export default class NotifyInfo {
-  constructor() {
+  constructor () {
     this.seq = null
     this.notify_type = ''
     this.profile_image = null

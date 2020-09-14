@@ -1,6 +1,6 @@
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
-import log from "../../libs/logger"
+import log from '../../libs/logger'
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import OperationDataInfo from '../../wrapper/operation/OperationDataInfo'
 import GroupService from '../member/GroupService'
@@ -11,7 +11,7 @@ import OperationService from './OperationService'
 import OperationMediaService from './OperationMediaService'
 import striptags from 'striptags'
 import HashtagService from './HashtagService'
-import ServiceConfig from "../service-config";
+import ServiceConfig from '../service-config'
 
 const OperationDataServiceClass = class {
   constructor () {
@@ -155,7 +155,7 @@ const OperationDataServiceClass = class {
     const { operation_info } = await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq)
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const media_directory = directory_info.image
-    if ( !( await Util.fileExists(media_directory) ) ) {
+    if (!(await Util.fileExists(media_directory))) {
       await Util.createDirectory(media_directory)
     }
     const thumbnail_file_name = 'thumbnail'
@@ -163,7 +163,7 @@ const OperationDataServiceClass = class {
 
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
-      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500);
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
     }
 
     const thumbnail_path = directory_info.media_image + thumbnail_file_name
@@ -239,9 +239,9 @@ const OperationDataServiceClass = class {
   setRejectMentoring = async (operation_seq) => {
     try {
       const operation_data_model = this.getOperationDataModel()
-      return await operation_data_model.setRejectMentoring(operation_seq);
+      return await operation_data_model.setRejectMentoring(operation_seq)
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -268,7 +268,7 @@ const OperationDataServiceClass = class {
   getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
     const operation_data_model = this.getOperationDataModel()
     const operation_data_list = await operation_data_model.getCompleteIsOpenVideoDataLists(group_seq, limit)
-    for(let cnt = 0; cnt < operation_data_list.length; cnt++) {
+    for (let cnt = 0; cnt < operation_data_list.length; cnt++) {
       operation_data_list[cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_data_list[cnt].thumbnail)
       log.debug(this.log_prefix, '[getCompleteIsOpenVideoDataLists]', operation_data_list[cnt].thumbnail)
     }

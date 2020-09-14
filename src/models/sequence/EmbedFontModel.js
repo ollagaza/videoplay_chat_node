@@ -2,146 +2,146 @@ import Constants from '../../constants/constants'
 import Util from '../../utils/baseutil'
 
 export default class EmbedFontModel {
-  constructor() {
-    this._isUse = false;
-    this._name = 'Nanum Barun Gothic';
-    this._size = 36;
-    this._color = '#000000';
-    this._alpha = 1;
-    this._align = Constants.CENTER;
-    this._bold = false;
-    this._line_height = false;
+  constructor () {
+    this._isUse = false
+    this._name = 'Nanum Barun Gothic'
+    this._size = 36
+    this._color = '#000000'
+    this._alpha = 1
+    this._align = Constants.CENTER
+    this._bold = false
+    this._line_height = false
   }
 
   init = (json) => {
     if (json) {
-      this._name = json.name || 'Nanum Barun Gothic';
-      this._size = json.size || 36;
-      this._color = json.color || '#000000';
-      this._alpha = parseFloat(json.alpha || 1);
-      this._align = json.align || Constants.CENTER;
-      this._bold = Util.isTrue(json.bold);
+      this._name = json.name || 'Nanum Barun Gothic'
+      this._size = json.size || 36
+      this._color = json.color || '#000000'
+      this._alpha = parseFloat(json.alpha || 1)
+      this._align = json.align || Constants.CENTER
+      this._bold = Util.isTrue(json.bold)
       if (!Util.isFalse(json.line_height) && Util.isNumber(json.line_height)) {
-        this._line_height = parseFloat(json.line_height);
+        this._line_height = parseFloat(json.line_height)
       }
-      this._isUse = true;
+      this._isUse = true
     }
 
-    return this;
-  };
+    return this
+  }
 
   getStyle = () => {
-    let style = '';
+    let style = ''
     if (this._isUse) {
-      const rgb = Util.hexToRGB(this._color);
+      const rgb = Util.hexToRGB(this._color)
       if (this._alpha !== 1) {
-        style += ` color: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha});`;
+        style += ` color: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha});`
       } else {
-        style += ` color: ${this._color};`;
+        style += ` color: ${this._color};`
       }
       // style += ' font-family: \'Noto Sans KR\';';
-      style += ` font-size: ${this._size}px;`;
-      style += ` font-weight: ${this._bold ? 700 : 400};`;
-      style += ` text-align: ${this._align};`;
+      style += ` font-size: ${this._size}px;`
+      style += ` font-weight: ${this._bold ? 700 : 400};`
+      style += ` text-align: ${this._align};`
       if (Util.isNumber(this._line_height)) {
-        style += ` line-height: ${this._line_height}px;`;
+        style += ` line-height: ${this._line_height}px;`
       }
     }
-    return style;
-  };
-
-  get isUse() {
-    return this._isUse;
+    return style
   }
 
-  set isUse(value) {
-    this._isUse = value;
+  get isUse () {
+    return this._isUse
   }
 
-  get name() {
-    return this._name;
+  set isUse (value) {
+    this._isUse = value
   }
 
-  set name(value) {
-    this._name = value;
+  get name () {
+    return this._name
   }
 
-  get size() {
-    return this._size;
+  set name (value) {
+    this._name = value
   }
 
-  set size(value) {
-    this._size = value;
+  get size () {
+    return this._size
   }
 
-  get color() {
-    return this._color;
+  set size (value) {
+    this._size = value
   }
 
-  set color(value) {
-    this._color = value;
+  get color () {
+    return this._color
   }
 
-  get alpha() {
-    return this._alpha;
+  set color (value) {
+    this._color = value
   }
 
-  set alpha(value) {
-    this._alpha = value;
+  get alpha () {
+    return this._alpha
   }
 
-  get align() {
-    return this._align;
+  set alpha (value) {
+    this._alpha = value
   }
 
-  set align(value) {
-    this._align = value;
+  get align () {
+    return this._align
   }
 
-  get bold() {
-    return this._bold;
+  set align (value) {
+    this._align = value
   }
 
-  set bold(value) {
-    this._bold = value;
+  get bold () {
+    return this._bold
   }
 
-  get line_height() {
-    return this._line_height;
+  set bold (value) {
+    this._bold = value
   }
 
-  set line_height(value) {
-    this._line_height = value;
+  get line_height () {
+    return this._line_height
   }
 
-  getRGBA() {
-    const rgb = Util.hexToRGB(this._color);
-    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha})`;
+  set line_height (value) {
+    this._line_height = value
+  }
+
+  getRGBA () {
+    const rgb = Util.hexToRGB(this._color)
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${this._alpha})`
   }
 
   toJSON = () => {
-    const json = {};
-    json.name = this._name;
-    json.size = this._size;
-    json.color = this._color;
-    json.alpha = this._alpha;
-    json.align = this._align;
-    json.bold = this._bold;
-    json.line_height = this._line_height;
+    const json = {}
+    json.name = this._name
+    json.size = this._size
+    json.color = this._color
+    json.alpha = this._alpha
+    json.align = this._align
+    json.bold = this._bold
+    json.line_height = this._line_height
 
-    return json;
-  };
+    return json
+  }
 
   getXmlJson = (scale) => {
     return {
-      "$": {
-        "Name": this._bold ? 'Nanum Barun Gothic Bold' : 'Nanum Barun Gothic',
-        "Size": Math.round(this._size * scale),
-        "Color": Util.colorCodeToHex(this._color),
-        "Alpha": this._alpha,
-        "Align": this._align,
-        "LineSpacing": Math.round((this._line_height - this._size) * scale)
+      '$': {
+        'Name': this._bold ? 'Nanum Barun Gothic Bold' : 'Nanum Barun Gothic',
+        'Size': Math.round(this._size * scale),
+        'Color': Util.colorCodeToHex(this._color),
+        'Alpha': this._alpha,
+        'Align': this._align,
+        'LineSpacing': Math.round((this._line_height - this._size) * scale)
       }
     }
-  };
+  }
 }

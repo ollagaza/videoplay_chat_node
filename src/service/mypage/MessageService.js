@@ -1,10 +1,8 @@
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import MessageModel from "../../database/mysql/mypage/MessageModel";
-import _ from "lodash";
-import socketManager from "../socket-manager";
-import MemberLogService from "../member/MemberLogService";
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import MessageModel from '../../database/mysql/mypage/MessageModel'
+import socketManager from '../socket-manager'
+import MemberLogService from '../member/MemberLogService'
 import NotifyService from '../etc/NotifyService'
 
 const MessageServiceClass = class {
@@ -14,25 +12,25 @@ const MessageServiceClass = class {
 
   getMessageModel = (database = null) => {
     if (database) {
-      return new MessageModel(database);
+      return new MessageModel(database)
     } else {
       return new MessageModel(DBMySQL)
     }
   }
 
-  getReceiveCount  = async (database, group_seq) => {
+  getReceiveCount = async (database, group_seq) => {
     try {
-      const msgModel = this.getMessageModel(database);
-      return await msgModel.getReceiveCount(group_seq);
+      const msgModel = this.getMessageModel(database)
+      return await msgModel.getReceiveCount(group_seq)
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   getReceiveLists = async (database, group_seq, params, page_navigation) => {
     try {
-      const output = new StdObject();
-      const msgModel = this.getMessageModel(database);
+      const output = new StdObject()
+      const msgModel = this.getMessageModel(database)
 
       const searchObj = {
         query: {
@@ -46,7 +44,7 @@ const MessageServiceClass = class {
           name: 'regist_date',
           direction: 'desc',
         }
-      };
+      }
 
       if (params.searchText !== null) {
         const searchParam = {
@@ -55,22 +53,22 @@ const MessageServiceClass = class {
             { group_name: ['like', params.searchText] },
             { desc: ['like', params.searchText] },
           ],
-        };
-        searchObj.query.query.push(searchParam);
+        }
+        searchObj.query.query.push(searchParam)
       }
 
-      output.add('receiveList', await msgModel.getReceiveList(searchObj, page_navigation));
+      output.add('receiveList', await msgModel.getReceiveList(searchObj, page_navigation))
 
-      return output;
+      return output
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   getSendLists = async (database, group_seq, params, page_navigation) => {
     try {
-      const output = new StdObject();
-      const msgModel = this.getMessageModel(database);
+      const output = new StdObject()
+      const msgModel = this.getMessageModel(database)
 
       const searchObj = {
         query: {
@@ -84,7 +82,7 @@ const MessageServiceClass = class {
           name: 'regist_date',
           direction: 'desc',
         }
-      };
+      }
 
       if (params.searchText !== null) {
         const searchParam = {
@@ -93,33 +91,33 @@ const MessageServiceClass = class {
             { group_name: ['like', params.searchText] },
             { desc: ['like', params.searchText] },
           ],
-        };
-        searchObj.query.query.push(searchParam);
+        }
+        searchObj.query.query.push(searchParam)
       }
 
-      output.add('sendList', await msgModel.getSendList(searchObj, page_navigation));
+      output.add('sendList', await msgModel.getSendList(searchObj, page_navigation))
 
-      return output;
+      return output
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   setViewMessage = async (database, seq) => {
     try {
-      const msgModel = this.getMessageModel(database);
-      const result = await msgModel.setViewMessage(seq);
+      const msgModel = this.getMessageModel(database)
+      const result = await msgModel.setViewMessage(seq)
 
-      return result;
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   sendMessage = async (database, message_info) => {
     try {
-      const msgModel = this.getMessageModel(database);
-      const result = await msgModel.sendMessage(message_info);
+      const msgModel = this.getMessageModel(database)
+      const result = await msgModel.sendMessage(message_info)
       const notifyinfo = await NotifyService.rtnSendMessage(database, message_info, null)
       const send_socket_message_info = {
         message_info: {
@@ -133,26 +131,26 @@ const MessageServiceClass = class {
           type: null,
           action_type: null
         }
-      };
-      await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info);
-      send_socket_message_info.message_info.title = '쪽지가 발송 되었습니다.';
-      await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info);
-      await MemberLogService.createMemberLog(DBMySQL, message_info.send_seq, null, null, null,'1003', '', 0, 0, 1);
+      }
+      await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info)
+      send_socket_message_info.message_info.title = '쪽지가 발송 되었습니다.'
+      await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info)
+      await MemberLogService.createMemberLog(DBMySQL, message_info.send_seq, null, null, null, '1003', '', 0, 0, 1)
 
-      return result;
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   deleteMessage = async (database, seq, flag) => {
     try {
-      const msgModel = this.getMessageModel(database);
-      const result = await msgModel.deleteMessage(seq, flag);
+      const msgModel = this.getMessageModel(database)
+      const result = await msgModel.deleteMessage(seq, flag)
 
-      return result;
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 }

@@ -1,17 +1,16 @@
-import {Router} from 'express';
+import { Router } from 'express'
 import Wrap from '../../utils/express-async'
 import Auth from '../../middlewares/auth.middleware'
-import Role from "../../constants/roles"
 import StdObject from '../../wrapper/std-object'
 
-const routes = Router();
+const routes = Router()
 
-routes.post('/', Wrap(async(req, res) => {
+routes.post('/', Wrap(async (req, res) => {
   req.accepts('application/json')
 
   const machine_id = req.headers['machine-id']
   if (!machine_id) {
-    const output = new StdObject(-1, "잘못된 요청입니다.", 400)
+    const output = new StdObject(-1, '잘못된 요청입니다.', 400)
     return res.json(output)
   }
 
@@ -27,7 +26,7 @@ routes.post('/', Wrap(async(req, res) => {
   machine_info.machine_id = machine_id
 
   const output = await Auth.getMachineTokenResult(machine_info)
-  return res.json(output);
-}));
+  return res.json(output)
+}))
 
-export default routes;
+export default routes

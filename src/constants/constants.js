@@ -36,8 +36,8 @@ if (config.isRelease()) {
   TOKEN_SECRET = 'dpaxldlwl.surgstory.com'
 }
 
-const GB = 1024 * 1024 * 1024;
-const MAX_ARCHIVE_FILE_SIZE = GB;
+const GB = 1024 * 1024 * 1024
+const MAX_ARCHIVE_FILE_SIZE = GB
 
 const ARCHIVE = 'archive'
 const OBJECT = 'object'

@@ -1,8 +1,8 @@
 import MySQLModel from '../../mysql-model'
 
 export default class Payment_Member_Result_Model extends MySQLModel {
-  constructor(database) {
-    super(database);
+  constructor (database) {
+    super(database)
 
     this.table_name = 'payment_member_result'
     this.selectable_fields = ['*']
@@ -13,31 +13,31 @@ export default class Payment_Member_Result_Model extends MySQLModel {
     const filter = {
       member_seq: member_seq,
       used: 'Y',
-    };
-    return await this.find(filter);
+    }
+    return await this.find(filter)
   }
 
   getPMRFilterList = async (filters, order) => {
-    return await this.find(filters, null, order);
+    return await this.find(filters, null, order)
   }
 
   getPMResultData = async (member_seq = null, merchant_uid = null) => {
-    const filter = { };
+    const filter = {}
     if (member_seq != null) {
-      filter.member_seq = member_seq;
+      filter.member_seq = member_seq
     }
     if (merchant_uid != null) {
-      filter.merchant_uid = merchant_uid;
+      filter.merchant_uid = merchant_uid
     }
-    filter.used = 'Y';
-    return await this.findOne(filter);
+    filter.used = 'Y'
+    return await this.findOne(filter)
   }
 
   CreatePMResultData = async (payData) => {
-    return await this.create(payData, 'seq');
+    return await this.create(payData, 'seq')
   }
 
   DeletePMResultData = async (member_seq, merchant_uid) => {
-    return await this.update({ member_seq: member_seq, payment_merchant_uid: merchant_uid }, { used: 'N' });
+    return await this.update({ member_seq: member_seq, payment_merchant_uid: merchant_uid }, { used: 'N' })
   }
 }

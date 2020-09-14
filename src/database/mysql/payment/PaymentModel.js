@@ -1,8 +1,8 @@
 import MySQLModel from '../../mysql-model'
 
 export default class PaymentModel extends MySQLModel {
-  constructor(database) {
-    super(database);
+  constructor (database) {
+    super(database)
 
     this.table_name = 'payment_list'
     this.selectable_fields = ['*']
@@ -16,20 +16,20 @@ export default class PaymentModel extends MySQLModel {
         { is_visible: 1 },
         { lang: lang }
       ],
-    };
-    if (group_type) {
-      searchObj.query.push({ group: ['in', 'free', group_type] });
     }
-    const result = await this.find(searchObj);
+    if (group_type) {
+      searchObj.query.push({ group: ['in', 'free', group_type] })
+    }
+    const result = await this.find(searchObj)
 
-    return result;
-  };
+    return result
+  }
 
   getPaymentFreeList = async (lang = 'kor') => {
-    const oKnex = this.database.select('*');
-    oKnex.from(this.table_name);
-    oKnex.where(this.database.raw('JSON_EXTRACT(moneys, \'$[0].pay\') = \'free\''));
+    const oKnex = this.database.select('*')
+    oKnex.from(this.table_name)
+    oKnex.where(this.database.raw('JSON_EXTRACT(moneys, \'$[0].pay\') = \'free\''))
 
-    return oKnex;
-  };
+    return oKnex
+  }
 }

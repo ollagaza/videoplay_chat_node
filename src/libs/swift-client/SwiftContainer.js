@@ -23,10 +23,10 @@ class SwiftContainer extends SwiftEntity {
         })
         .on('response', response => {
           if (response.statusCode === 201) {
-            log.debug('SwiftContainer.create', response.headers, response.statusMessage);
-            resolve(response.headers);
+            log.debug('SwiftContainer.create', response.headers, response.statusMessage)
+            resolve(response.headers)
           } else {
-            log.error('SwiftContainer.create', response);
+            log.error('SwiftContainer.create', response)
             reject(new Error(`HTTP ${response.statusCode}`))
           }
         })
@@ -36,7 +36,7 @@ class SwiftContainer extends SwiftEntity {
     }))
   }
 
-  createSLO(name, body, meta, extra) {
+  createSLO (name, body, meta, extra) {
     return this.authenticator.authenticate().then(auth => new Promise((resolve, reject) => {
       const request_params = {
         method: 'PUT',
@@ -51,10 +51,10 @@ class SwiftContainer extends SwiftEntity {
         })
         .on('response', response => {
           if (response.statusCode === 201) {
-            log.debug('SwiftContainer.createSLO', response.headers, response.statusMessage);
-            resolve(response.headers);
+            log.debug('SwiftContainer.createSLO', response.headers, response.statusMessage)
+            resolve(response.headers)
           } else {
-            log.error('SwiftContainer.createSLO', response.headers, response.body);
+            log.error('SwiftContainer.createSLO', response.headers, response.body)
             reject(new Error(`HTTP ${response.statusCode}`))
           }
         })
@@ -100,7 +100,7 @@ class SwiftContainer extends SwiftEntity {
           reject(err)
         })
         .on('response', response => {
-          log.debug('SwiftContainer.get', response.headers, response.statusMessage);
+          log.debug('SwiftContainer.get', response.headers, response.statusMessage)
         })
         .on('end', () => {
           resolve()

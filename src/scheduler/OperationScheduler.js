@@ -1,98 +1,84 @@
-import path from 'path';
-import scheduler from 'node-schedule';
-import ServiceConfig from '../service/service-config';
-import Auth from '../middlewares/auth.middleware';
-import Role from "../constants/roles";
-import Constants from '../constants/constants';
-import Util from '../utils/baseutil';
-import StdObject from '../wrapper/std-object';
-import DBMySQL from '../database/knex-mysql';
-import OperationService from '../service/operation/OperationService';
-import BatchOperationQueueModel from '../database/mysql/batch/BatchOperationQueueModel';
-import OperationModel from '../database/mysql/operation/OperationModel';
-import OperationMediaModel from '../database/mysql/operation/OperationMediaModel';
-import OperationStorageModel from '../database/mysql/operation/OperationStorageModel';
-import VideoFileModel from '../database/mysql/file/VideoFileModel';
-import { VideoIndexInfoModel } from '../database/mongodb/VideoIndex';
-import FileInfo from "../wrapper/file/FileInfo";
+import scheduler from 'node-schedule'
+import DBMySQL from '../database/knex-mysql'
+import BatchOperationQueueModel from '../database/mysql/batch/BatchOperationQueueModel'
 
-import log from "../libs/logger";
+import log from '../libs/logger'
 
 class OperationScheduler {
-  constructor() {
-    this.current_job = null;
-    this.is_process = false;
-    this.log_prefix = 'OperationScheduler';
+  constructor () {
+    this.current_job = null
+    this.is_process = false
+    this.log_prefix = 'OperationScheduler'
   }
 
   startSchedule = () => {
     try {
       if (this.current_job) {
-        log.d(null, this.log_prefix, 'startSchedule cancel. current_job is not null');
+        log.d(null, this.log_prefix, 'startSchedule cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('30 10,40 * * * *', this.onNewJob);
-        log.d(null, this.log_prefix, 'startSchedule');
+        this.current_job = scheduler.scheduleJob('30 10,40 * * * *', this.onNewJob)
+        log.d(null, this.log_prefix, 'startSchedule')
       }
     } catch (error) {
-      log.e(null, this.log_prefix, 'startSchedule', error);
+      log.e(null, this.log_prefix, 'startSchedule', error)
     }
-  };
+  }
 
   stopSchedule = () => {
     if (this.current_job) {
       try {
-        this.current_job.cancel();
-        log.d(null, this.log_prefix, 'stopSchedule');
+        this.current_job.cancel()
+        log.d(null, this.log_prefix, 'stopSchedule')
       } catch (error) {
-        log.e(null, this.log_prefix, 'stopSchedule', error);
+        log.e(null, this.log_prefix, 'stopSchedule', error)
       }
     }
-    this.current_job = null;
-  };
+    this.current_job = null
+  }
 
   onNewJob = () => {
-    log.d(null, this.log_prefix, 'onNewJob start', this.is_process);
+    log.d(null, this.log_prefix, 'onNewJob start', this.is_process)
     if (this.is_process) {
-      return;
+      return
     }
     this.is_process = true;
     (
       async () => {
-        await this.nextJob();
+        await this.nextJob()
       }
     )()
-  };
+  }
 
   nextJob = async () => {
-    this.stopSchedule();
-    log.d(null, this.log_prefix, 'executeNextJob start');
-    try{
-      let sync_info = null;
-      await DBMySQL.transaction(async(transaction) => {
-        const sync_model = new BatchOperationQueueModel(transaction);
-        sync_info = await sync_model.pop();
-      });
+    this.stopSchedule()
+    log.d(null, this.log_prefix, 'executeNextJob start')
+    try {
+      let sync_info = null
+      await DBMySQL.transaction(async (transaction) => {
+        const sync_model = new BatchOperationQueueModel(transaction)
+        sync_info = await sync_model.pop()
+      })
 
-      log.d(null, this.log_prefix, 'executeNextJob', 'pop', sync_info);
+      log.d(null, this.log_prefix, 'executeNextJob', 'pop', sync_info)
       if (sync_info) {
         (
           async () => {
-            log.d(null, this.log_prefix, 'executeNextJob', 'execute jop', sync_info);
-            await this.executeJob(sync_info);
+            log.d(null, this.log_prefix, 'executeNextJob', 'execute jop', sync_info)
+            await this.executeJob(sync_info)
           }
-        )();
+        )()
       } else {
-        log.d(null, this.log_prefix, 'executeNextJob', 'has no jop');
-        this.is_process = false;
-        this.startSchedule();
+        log.d(null, this.log_prefix, 'executeNextJob', 'has no jop')
+        this.is_process = false
+        this.startSchedule()
       }
     } catch (error) {
-      log.e(null, this.log_prefix, 'executeNextJob', error);
-      this.is_process = false;
-      this.startSchedule();
+      log.e(null, this.log_prefix, 'executeNextJob', error)
+      this.is_process = false
+      this.startSchedule()
     }
-    log.d(null, this.log_prefix, 'executeNextJob end');
-  };
+    log.d(null, this.log_prefix, 'executeNextJob end')
+  }
 
   executeJob = async (sync_info) => {
     // log.d(null, this.log_prefix, 'executeJob start', sync_info);
@@ -142,7 +128,7 @@ class OperationScheduler {
     //
     // log.d(null, this.log_prefix, 'executeJob end', sync_info);
     // this.onExecuteJobComplete();
-  };
+  }
 
   // createOperation = async (transaction, sync_info) => {
   //   log.d(null, this.log_prefix, 'createOperation start', sync_info);
@@ -280,6 +266,6 @@ class OperationScheduler {
   // };
 }
 
-const operationScheduler = new OperationScheduler();
+const operationScheduler = new OperationScheduler()
 
-export default operationScheduler;
+export default operationScheduler

@@ -1,6 +1,6 @@
-import formatter from "string-template";
+import formatter from 'string-template'
 import _ from 'lodash'
-import ServiceConfig from '../../service/service-config';
+import ServiceConfig from '../../service/service-config'
 
 const create_user_form = `
 <div style="width: 100%;background: #fff;padding-top: 50px;">
@@ -23,7 +23,7 @@ const create_user_form = `
         </div>
      </div>
 </div>
-`;
+`
 
 const find_user_info_form = `
 <div style="width: 100%; background: #fff;padding-top: 50px;">
@@ -54,17 +54,17 @@ const find_user_info_form = `
     </div>
   </div>
 </div>
-`;
+`
 
 const getServiceInfo = () => {
-  return ServiceConfig.getServiceInfo();
-};
+  return ServiceConfig.getServiceInfo()
+}
 
 export default {
-  "createUser": (template_data={}) => {
-    return formatter(create_user_form, _.merge(template_data, getServiceInfo()));
+  'createUser': (template_data = {}) => {
+    return formatter(create_user_form, _.merge(template_data, getServiceInfo()))
   },
-  "findUserInfo": (template_data={}) => {
-    return formatter(find_user_info_form, _.merge(template_data, getServiceInfo()));
+  'findUserInfo': (template_data = {}) => {
+    return formatter(find_user_info_form, _.merge(template_data, getServiceInfo()))
   },
-};
+}

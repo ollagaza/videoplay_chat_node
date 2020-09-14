@@ -1,7 +1,7 @@
-import Util from '../../utils/baseutil';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
+import Util from '../../utils/baseutil'
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import OperationLinkModel from '../../database/mysql/operation/OperationLinkModel'
 import OperationService from './OperationService'
 import GroupService from '../member/GroupService'
@@ -152,7 +152,7 @@ const OperationLinkServiceClass = class {
       btn_link_url: `${service_domain}/v2/link/operation/${link_info.link_code}`
     }
     const body = OperationMailTemplate.linkEmail(template_data)
-    const send_mail_result = await new SendMail().sendMailHtml([link_info.share_email], title, body);
+    const send_mail_result = await new SendMail().sendMailHtml([link_info.share_email], title, body)
     if (send_mail_result.isSuccess() === false) {
       log.error(this.log_prefix, '[sendEmail]', link_info, send_mail_result)
     }
@@ -171,7 +171,7 @@ const OperationLinkServiceClass = class {
   }
 
   createOperationLink = async (operation_seq, link_type, auth = null, share_email = null, password = null, expire_date = null, enable_download = false) => {
-    let operation_link_info = null;
+    let operation_link_info = null
     if (link_type === this.LINK_TYPE_EMAIL && !share_email) {
       throw new StdObject(-1, '잘못된 요청입니다.', 400)
     }
@@ -192,9 +192,8 @@ const OperationLinkServiceClass = class {
       }
       link_seq = operation_link_info.seq
       await this.setLinkOptionBySeq(link_seq, update_params)
-    }
-    else {
-      await DBMySQL.transaction(async(transaction) => {
+    } else {
+      await DBMySQL.transaction(async (transaction) => {
         const operation_link_model = this.getOperationLinkModel(transaction)
         link_seq = await operation_link_model.createOperationLink(operation_seq, link_type, auth, share_email, password, expire_date, enable_download)
 
@@ -205,7 +204,7 @@ const OperationLinkServiceClass = class {
         }
         const link_code = Util.encrypt(link_code_params)
         await operation_link_model.setOperationLinkBySeq(link_seq, random_key, link_code)
-      });
+      })
     }
 
     return await this.getOperationLinkBySeq(DBMySQL, link_seq)
@@ -230,7 +229,7 @@ const OperationLinkServiceClass = class {
   hasLink = async (database, operation_seq) => {
     const link_count = await this.getLinkCount(database, operation_seq)
     const has_link = link_count > 0
-    await this.updateOperationLinkState(DBMySQL, operation_seq, has_link);
+    await this.updateOperationLinkState(DBMySQL, operation_seq, has_link)
     return has_link
   }
 

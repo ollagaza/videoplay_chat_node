@@ -10,9 +10,9 @@ import Util from '../utils/baseutil'
 import log from '../libs/logger'
 
 const initDirectories = async () => {
-  await Util.createDirectory(ServiceConfig.get('common_root'));
-  await Util.createDirectory(ServiceConfig.get('temp_directory_root'));
-};
+  await Util.createDirectory(ServiceConfig.get('common_root'))
+  await Util.createDirectory(ServiceConfig.get('temp_directory_root'))
+}
 
 export default {
   init: async () => {

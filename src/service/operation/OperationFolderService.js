@@ -1,9 +1,6 @@
-import _ from 'lodash'
-import ServiceConfig from '../../service/service-config';
-import Util from '../../utils/baseutil';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import OperationService from '../operation/OperationService'
 import OperationFolderModel from '../../database/mysql/operation/OperationFolderModel'
 import OperationFolderInfo from '../../wrapper/operation/OperationFolderInfo'
@@ -36,7 +33,7 @@ const OperationFolderServiceClass = class {
     })
 
     // log.debug(this.log_prefix, folder_map)
-    this.makeFolderTree(folder_map);
+    this.makeFolderTree(folder_map)
 
     return {
       folder_map,
@@ -157,8 +154,8 @@ const OperationFolderServiceClass = class {
   deleteOperationFolder = async (database, group_seq, folder_seq) => {
     const model = this.getOperationFolderModel(database)
     const allChildFolders = await model.getAllChildFolders(group_seq, folder_seq, true)
-    for(let cnt = 0; cnt < allChildFolders.length; cnt++) {
-      const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq);
+    for (let cnt = 0; cnt < allChildFolders.length; cnt++) {
+      const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq)
       if (operation_result.length === 0) {
         await model.deleteOperationFolder(group_seq, allChildFolders[cnt].seq)
       }
@@ -167,17 +164,17 @@ const OperationFolderServiceClass = class {
 
   isFolderFileCheck = async (database, group_seq, folder_seq) => {
     try {
-      let file_chk = false;
+      let file_chk = false
       const model = this.getOperationFolderModel(database)
       const allChildFolders = await model.getAllChildFolders(group_seq, folder_seq, true)
       log.debug(this.log_prefix, '[isFolderFileCheck]', allChildFolders)
-      for(let cnt = 0; cnt < allChildFolders.length; cnt++) {
-        const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq);
+      for (let cnt = 0; cnt < allChildFolders.length; cnt++) {
+        const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq)
         if (operation_result.length > 0) {
-          file_chk = true;
+          file_chk = true
         }
       }
-      return file_chk;
+      return file_chk
     } catch (e) {
       log.debug(this.log_prefix, '[isFolderFileCheck]', e)
       return false

@@ -1,5 +1,5 @@
 import JsonWrapper from '../json-wrapper'
-import ClipSeqInfo from "./ClipSeqInfo";
+import ClipSeqInfo from './ClipSeqInfo'
 
 /**
  * @swagger
@@ -53,45 +53,45 @@ import ClipSeqInfo from "./ClipSeqInfo";
  *
  */
 export default class ClipInfo extends JsonWrapper {
-  constructor(data = null, private_keys = []) {
-    super(data, private_keys);
+  constructor (data = null, private_keys = []) {
+    super(data, private_keys)
 
-    this.setKeys(['clip_num', 'source', 'unique_id', 'original_url', 'thumbnail_url', 'seq_count']);
-    this.seq_list = [];
+    this.setKeys(['clip_num', 'source', 'unique_id', 'original_url', 'thumbnail_url', 'seq_count'])
+    this.seq_list = []
   }
 
   getFromXML = (xml_info) => {
     if (!xml_info) {
-      return this;
+      return this
     }
-    this.clip_num = xml_info._;
-    this.source = this.getXmlText(xml_info.Source);
-    this.unique_id = this.getXmlText(xml_info.ID);
-    this.original_url = this.getXmlText(xml_info.Original);
-    this.thumbnail_url = this.getXmlText(xml_info.Thumbnail);
-    this.seq_count = xml_info.Seq ? xml_info.Seq.length : 0;
+    this.clip_num = xml_info._
+    this.source = this.getXmlText(xml_info.Source)
+    this.unique_id = this.getXmlText(xml_info.ID)
+    this.original_url = this.getXmlText(xml_info.Original)
+    this.thumbnail_url = this.getXmlText(xml_info.Thumbnail)
+    this.seq_count = xml_info.Seq ? xml_info.Seq.length : 0
 
     for (let i = 0; i < this.seq_count; i++) {
       this.seq_list.push(new ClipSeqInfo().getFromXML(xml_info.Seq[i], this))
     }
 
-    this.is_empty = false;
+    this.is_empty = false
 
-    return this;
-  };
+    return this
+  }
 
   addSeqInfo = (seq_info) => {
-    this.seq_list.push(seq_info);
-  };
+    this.seq_list.push(seq_info)
+  }
 
   getXmlJson = () => {
     return {
-      "_": this.clip_num,
-      "Source": this.source,
-      "ID": this.unique_id,
-      "Original": this.original_url,
-      "Thumbnail": this.thumbnail_url,
-      "Seq": this.seq_list
-    };
-  };
+      '_': this.clip_num,
+      'Source': this.source,
+      'ID': this.unique_id,
+      'Original': this.original_url,
+      'Thumbnail': this.thumbnail_url,
+      'Seq': this.seq_list
+    }
+  }
 }

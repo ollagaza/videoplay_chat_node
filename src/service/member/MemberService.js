@@ -1,20 +1,19 @@
-import _ from 'lodash';
-import ServiceConfig from '../../service/service-config';
-import Util from '../../utils/baseutil';
-import Role from "../../constants/roles";
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
+import _ from 'lodash'
+import ServiceConfig from '../../service/service-config'
+import Util from '../../utils/baseutil'
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import GroupService from './GroupService'
 import MemberLogService from './MemberLogService'
 import PaymentService from '../payment/PaymentService'
-import MemberModel from '../../database/mysql/member/MemberModel';
-import MemberSubModel from '../../database/mysql/member/MemberSubModel';
-import AdminMemberModel from '../../database/mysql/member/AdminMemberModel';
-import FindPasswordModel from '../../database/mysql/member/FindPasswordModel';
-import { UserDataModel } from '../../database/mongodb/UserData';
-import MemberInfo from "../../wrapper/member/MemberInfo";
-import MemberTemplate from '../../template/mail/member.template';
+import MemberModel from '../../database/mysql/member/MemberModel'
+import MemberSubModel from '../../database/mysql/member/MemberSubModel'
+import AdminMemberModel from '../../database/mysql/member/AdminMemberModel'
+import FindPasswordModel from '../../database/mysql/member/FindPasswordModel'
+import { UserDataModel } from '../../database/mongodb/UserData'
+import MemberInfo from '../../wrapper/member/MemberInfo'
+import MemberTemplate from '../../template/mail/member.template'
 import SendMail from '../../libs/send-mail'
 
 const MemberServiceClass = class {
@@ -25,7 +24,7 @@ const MemberServiceClass = class {
       'major', 'major_text', 'major_sub', 'major_sub_text', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
       'graduation_year', 'interrest_code', 'interrest_text', 'member_seq'
-      ];
+    ]
 
     this.member_sub_private_fields = ['seq', 'regist_date', 'modify_date', 'user_id', 'password',
       'user_nickname', 'user_name', 'gender', 'email_address',
@@ -33,12 +32,12 @@ const MemberServiceClass = class {
       'user_media_path', 'profile_image_path', 'certkey', 'used',
       'hospcode', 'hospname', 'treatcode', 'treatname',
       'etc1', 'etc2', 'etc3', 'etc4', 'etc5'
-    ];
+    ]
   }
 
   checkMyToken = (token_info, member_seq) => {
-    if (token_info.getId() !== member_seq){
-      if(!token_info.isAdmin()){
+    if (token_info.getId() !== member_seq) {
+      if (!token_info.isAdmin()) {
         return false
       }
     }
@@ -115,8 +114,8 @@ const MemberServiceClass = class {
       throw new StdObject(-1, '회원정보가 존재하지 않습니다.', 400)
     }
     if (!member_info.isEmpty() && !Util.isEmpty(member_info.profile_image_path)) {
-      member_info.addKey('profile_image_url');
-      member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
+      member_info.addKey('profile_image_url')
+      member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path)
     }
 
     return {
@@ -127,10 +126,10 @@ const MemberServiceClass = class {
 
   chkCert = async (database, cert) => {
     const member_model = this.getMemberModel(database)
-    const result = await member_model.getCertCount(cert);
-    const output = new StdObject();
-    output.add('result', result);
-    return output;
+    const result = await member_model.getCertCount(cert)
+    const output = new StdObject()
+    output.add('result', result)
+    return output
   }
 
   getMemberInfoById = async (database, user_id) => {
@@ -185,25 +184,25 @@ const MemberServiceClass = class {
   checkPassword = async (database, member_info, password, db_update = true) => {
     const member_model = this.getMemberModel(database)
     if (member_info.password !== member_model.encryptPassword(password)) {
-      throw new StdObject(-1, "회원정보가 일치하지 않습니다.", 400);
+      throw new StdObject(-1, '회원정보가 일치하지 않습니다.', 400)
     }
     if (db_update) {
-      await member_model.updateLastLogin(member_info.seq);
+      await member_model.updateLastLogin(member_info.seq)
     }
   }
 
   changePassword = async (database, member_seq, request_body, is_admin = false) => {
     const { member_info, member_model } = await this.getMemberInfoWithModel(database, member_seq)
     if (!member_info || member_info.isEmpty()) {
-      throw new StdObject(100, "등록된 회원이 아닙니다.", 400);
+      throw new StdObject(100, '등록된 회원이 아닙니다.', 400)
     }
     if (!is_admin) {
       if (Util.trim(request_body.old_password) === '') {
-        throw new StdObject(-1, "잘못된 요청입니다.", 400);
+        throw new StdObject(-1, '잘못된 요청입니다.', 400)
       }
 
       if (request_body.password !== request_body.password_confirm) {
-        throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
+        throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400)
       }
 
       await this.checkPassword(database, member_info, request_body.old_password, false)
@@ -213,136 +212,136 @@ const MemberServiceClass = class {
   }
 
   findMemberId = async (database, request_body) => {
-    const member_info = new MemberInfo(request_body);
-    member_info.setKeys(['user_name', 'email_address']);
-    member_info.checkUserName();
-    member_info.checkEmailAddress();
+    const member_info = new MemberInfo(request_body)
+    member_info.setKeys(['user_name', 'email_address'])
+    member_info.checkUserName()
+    member_info.checkEmailAddress()
 
-    const output = new StdObject();
+    const output = new StdObject()
 
     const member_model = this.getMemberModel(database)
-    const find_member_info = await member_model.findMemberId(member_info);
+    const find_member_info = await member_model.findMemberId(member_info)
     if (find_member_info && find_member_info.seq) {
-      output.add('user_id', find_member_info.user_id);
-      output.add('user_name', find_member_info.user_name);
-      output.add('email_address', find_member_info.email_address);
-      output.add('is_find', true);
+      output.add('user_id', find_member_info.user_id)
+      output.add('user_name', find_member_info.user_name)
+      output.add('email_address', find_member_info.email_address)
+      output.add('is_find', true)
     } else {
-      output.add('is_find', false);
+      output.add('is_find', false)
     }
 
     return output
   }
 
   sendAuthCode = async (database, request_body) => {
-    const member_info = new MemberInfo(request_body);
-    member_info.setKeys(['user_name', 'email_address', 'user_id']);
-    member_info.checkUserId();
-    member_info.checkUserName();
-    member_info.checkEmailAddress();
+    const member_info = new MemberInfo(request_body)
+    member_info.setKeys(['user_name', 'email_address', 'user_id'])
+    member_info.checkUserId()
+    member_info.checkUserName()
+    member_info.checkEmailAddress()
 
-    const output = new StdObject();
+    const output = new StdObject()
 
     const member_model = this.getMemberModel(database)
-    const find_member_info = await member_model.findMemberId(member_info);
+    const find_member_info = await member_model.findMemberId(member_info)
 
     if (find_member_info && find_member_info.seq) {
-      const remain_time = 600;
+      const remain_time = 600
       const expire_time = Math.floor(Date.now() / 1000) + remain_time
 
-      const auth_info = await new FindPasswordModel(database).createAuthInfo(find_member_info.seq, find_member_info.email_address, expire_time);
-      output.add('seq', auth_info.seq);
-      output.add('check_code', auth_info.check_code);
-      output.add('remain_time', remain_time);
+      const auth_info = await new FindPasswordModel(database).createAuthInfo(find_member_info.seq, find_member_info.email_address, expire_time)
+      output.add('seq', auth_info.seq)
+      output.add('check_code', auth_info.check_code)
+      output.add('remain_time', remain_time)
 
       const template_data = {
-        "user_name": find_member_info.user_name,
-        "user_id": find_member_info.user_id,
-        "email_address": find_member_info.email_address,
-        "send_code": auth_info.send_code,
-        "url_prefix": request_body.url_prefix,
-        "request_domain": request_body.request_domain
-      };
-
-      const send_mail_result = await new SendMail().sendMailHtml([find_member_info.email_address], 'Surgstory 비밀번호 인증코드 입니다.', MemberTemplate.findUserInfo(template_data));
-      if (send_mail_result.isSuccess() === false) {
-        throw send_mail_result;
+        'user_name': find_member_info.user_name,
+        'user_id': find_member_info.user_id,
+        'email_address': find_member_info.email_address,
+        'send_code': auth_info.send_code,
+        'url_prefix': request_body.url_prefix,
+        'request_domain': request_body.request_domain
       }
 
-      output.add('is_send', true);
+      const send_mail_result = await new SendMail().sendMailHtml([find_member_info.email_address], 'Surgstory 비밀번호 인증코드 입니다.', MemberTemplate.findUserInfo(template_data))
+      if (send_mail_result.isSuccess() === false) {
+        throw send_mail_result
+      }
+
+      output.add('is_send', true)
     } else {
-      output.add('is_send', false);
+      output.add('is_send', false)
     }
 
     return output
   }
 
   checkAuthCode = async (database, request_body) => {
-    const find_password_model = new FindPasswordModel(database);
-    const auth_info = await find_password_model.findAuthInfo(request_body.seq);
+    const find_password_model = new FindPasswordModel(database)
+    const auth_info = await find_password_model.findAuthInfo(request_body.seq)
     if (!auth_info) {
-      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400);
+      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400)
     }
     if (auth_info.send_code === request_body.send_code && auth_info.check_code === request_body.check_code) {
-      await find_password_model.setVerify(request_body.seq);
+      await find_password_model.setVerify(request_body.seq)
     } else {
-      throw new StdObject(-1, '인증코드가 일치하지 않습니다.', 400);
+      throw new StdObject(-1, '인증코드가 일치하지 않습니다.', 400)
     }
-    const output = new StdObject();
-    output.add('is_verify', true);
+    const output = new StdObject()
+    output.add('is_verify', true)
     return output
   }
 
   resetPassword = async (database, request_body) => {
     if (request_body.password !== request_body.password_confirm) {
-      throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400);
+      throw new StdObject(-1, '입력한 비밀번호가 일치하지 않습니다.', 400)
     }
-    const find_password_model = new FindPasswordModel(database);
-    const auth_info = await find_password_model.findAuthInfo(request_body.seq);
+    const find_password_model = new FindPasswordModel(database)
+    const auth_info = await find_password_model.findAuthInfo(request_body.seq)
     if (!auth_info) {
-      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400);
+      throw new StdObject(-1, '인증정보를 찾을 수 없습니다.', 400)
     }
     if (auth_info.is_verify === 1) {
-      const member_model = this.getMemberModel(database);
-      await member_model.changePassword(auth_info.member_seq, request_body.password);
+      const member_model = this.getMemberModel(database)
+      await member_model.changePassword(auth_info.member_seq, request_body.password)
     } else {
-      throw new StdObject(-2, '인증정보가 존재하지 않습니다.', 400);
+      throw new StdObject(-2, '인증정보가 존재하지 않습니다.', 400)
     }
-    const output = new StdObject();
-    output.add('is_change', true);
+    const output = new StdObject()
+    output.add('is_change', true)
     return output
   }
 
   isDuplicateId = async (database, user_id) => {
     const member_model = this.getMemberModel(database)
-    return await member_model.isDuplicateId(user_id);
+    return await member_model.isDuplicateId(user_id)
   }
 
   isDuplicateNickname = async (database, user_id) => {
     const member_model = this.getMemberModel(database)
-    return await member_model.isDuplicateNickname(user_id);
+    return await member_model.isDuplicateNickname(user_id)
   }
 
   isDuplicateEmail = async (database, email_address) => {
     const member_model = this.getMemberModel(database)
-    return await member_model.isDuplicateEmail(email_address);
+    return await member_model.isDuplicateEmail(email_address)
   }
 
   isDuplicatelicense_no = async (database, license_no) => {
     const member_model = this.getMemberSubModel(database)
-    return await member_model.isDuplicateLicense_no(license_no);
+    return await member_model.isDuplicateLicense_no(license_no)
   }
 
   getMemberMetadata = async (member_seq) => {
-    let user_data = await UserDataModel.findByMemberSeq(member_seq, '-_id -member_seq -created_date -modify_date');
+    let user_data = await UserDataModel.findByMemberSeq(member_seq, '-_id -member_seq -created_date -modify_date')
     if (!user_data) {
-      user_data = await UserDataModel.createUserData(member_seq, {});
+      user_data = await UserDataModel.createUserData(member_seq, {})
     }
     return user_data
   }
 
   updateMemberMetadata = async (member_seq, changes) => {
-    return await UserDataModel.updateByMemberSeq(member_seq, changes);
+    return await UserDataModel.updateByMemberSeq(member_seq, changes)
   }
 
   leaveMember = async (database, member_seq, leave_text) => {
@@ -356,31 +355,31 @@ const MemberServiceClass = class {
       is_new: true,
       query: [],
       page_navigation: page_navigation,
-    };
+    }
     _.forEach(params, (value, key) => {
-      searchObj.query[key] = value;
-    });
+      searchObj.query[key] = value
+    })
 
-    log.debug(this.log_prefix, searchObj.query);
+    log.debug(this.log_prefix, searchObj.query)
 
     const member_model = this.getMemberModel(database)
     const member_sub_model = this.getMemberSubModel(database)
-    const find_users = await member_model.findMembers(searchObj);
+    const find_users = await member_model.findMembers(searchObj)
 
-    searchObj.query = [];
+    searchObj.query = []
     searchObj.query = [{ member_seq: _.concat('in', _.map(find_users.data, 'seq')) }]
 
-    const find_sub_users = await member_sub_model.findMembers(searchObj);
-    const res = [];
+    const find_sub_users = await member_sub_model.findMembers(searchObj)
+    const res = []
     _.keyBy(find_users.data, data => {
       if (_.find(find_sub_users, { member_seq: data.seq })) {
-        res.push(_.merge(data, _.find(find_sub_users, { member_seq: data.seq })));
+        res.push(_.merge(data, _.find(find_sub_users, { member_seq: data.seq })))
       } else {
-        res.push(_.merge(data));
+        res.push(_.merge(data))
       }
-    });
+    })
     find_users.data = new MemberInfo(res)
-    return find_users;
+    return find_users
   }
 
   getMemberList = async (database, search_option = null) => {
@@ -389,32 +388,32 @@ const MemberServiceClass = class {
     return member_list
   }
 
-  createMember = async (database, params) => {
-    const member_info = new MemberInfo(params.user_info, ['password_confirm']);
-    const member_sub_info = new MemberInfo(params.user_sub_info);
-    member_info.checkDefaultParams();
-    member_info.checkUserId();
-    member_info.checkPassword();
-    member_info.checkUserName();
-    member_info.checkUserNickname();
+  createMember = async (database, params, is_auto_confirm = false) => {
+    const member_info = new MemberInfo(params.user_info, ['password_confirm'])
+    const member_sub_info = new MemberInfo(params.user_sub_info)
+    member_info.checkDefaultParams()
+    member_info.checkUserId()
+    member_info.checkPassword()
+    member_info.checkUserName()
+    member_info.checkUserNickname()
     // member_info.checkEmailAddress();
 
-    let is_confirm = false
+    let is_confirm = is_auto_confirm
     if (ServiceConfig.isVacs()) {
       is_confirm = true
     }
 
     const member_model = this.getMemberModel(database)
     const create_member_info = await member_model.createMember(member_info, is_confirm)
-    if (!create_member_info.seq){
-      throw new StdObject(-1, '회원정보 생성 실패', 500);
+    if (!create_member_info.seq) {
+      throw new StdObject(-1, '회원정보 생성 실패', 500)
     }
 
     await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
 
     await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq)
     await MemberLogService.memberJoinLog(database, create_member_info.seq)
-    await GroupService.createPersonalGroup(database, create_member_info);
+    await GroupService.createPersonalGroup(database, create_member_info)
 
     if (ServiceConfig.isVacs() === false && ServiceConfig.supporterEmailList()) {
       (
@@ -428,7 +427,7 @@ const MemberServiceClass = class {
           body += `연락처: ${create_member_info.cellphone}\n`
           body += `가입일자: ${Util.currentFormattedDate()}\n`
           try {
-            await new SendMail().sendMailText(ServiceConfig.supporterEmailList(), 'Surgstory.com 회원가입.', body);
+            await new SendMail().sendMailText(ServiceConfig.supporterEmailList(), 'Surgstory.com 회원가입.', body)
           } catch (e) {
             log.error(this.log_prefix, '', e)
           }
@@ -436,16 +435,16 @@ const MemberServiceClass = class {
       )()
     }
 
-    return member_info;
+    return member_info
   }
 
   noCheckCreateMember = async (database, params) => {
-    const member_info = new MemberInfo(params.user_info, ['password_confirm']);
-    const member_sub_info = new MemberInfo(params.user_sub_info);
+    const member_info = new MemberInfo(params.user_info, ['password_confirm'])
+    const member_sub_info = new MemberInfo(params.user_sub_info)
     const member_model = this.getMemberModel(database)
     const create_member_info = await member_model.createMember(member_info, true)
-    if (!create_member_info.seq){
-      throw new StdObject(-1, '회원정보 생성 실패', 500);
+    if (!create_member_info.seq) {
+      throw new StdObject(-1, '회원정보 생성 실패', 500)
     }
 
     const update_member_sub_result = await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
@@ -454,7 +453,7 @@ const MemberServiceClass = class {
     await MemberLogService.memberJoinLog(database, create_member_info.seq)
     await GroupService.createPersonalGroup(database, create_member_info)
 
-    return member_info;
+    return member_info
   }
 }
 

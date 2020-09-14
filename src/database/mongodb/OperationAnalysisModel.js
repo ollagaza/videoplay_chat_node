@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
-import Util from '../../utils/baseutil';
+import mongoose from 'mongoose'
+import Util from '../../utils/baseutil'
 
-const Schema = mongoose.Schema;
+const Schema = mongoose.Schema
 
 const getFieldInfos = () => {
   return {
@@ -18,63 +18,63 @@ const getFieldInfos = () => {
     analysis_data: { type: Object, default: {}, require: false, message: '분석 결과가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
-  };
-};
+  }
+}
 
-const schema_field_infos = getFieldInfos();
-schema_field_infos.operation_seq.require = true;
-schema_field_infos.member_seq.require = true;
-schema_field_infos.content_id.require = true;
+const schema_field_infos = getFieldInfos()
+schema_field_infos.operation_seq.require = true
+schema_field_infos.member_seq.require = true
+schema_field_infos.content_id.require = true
 
-const operation_analysis_schema = new Schema(schema_field_infos, { strict: false });
+const operation_analysis_schema = new Schema(schema_field_infos, { strict: false })
 
-operation_analysis_schema.indexes();
-operation_analysis_schema.index( { member_seq: 1, tag_list: 1 } );
-operation_analysis_schema.index( { tag_list: 1 } );
+operation_analysis_schema.indexes()
+operation_analysis_schema.index({ member_seq: 1, tag_list: 1 })
+operation_analysis_schema.index({ tag_list: 1 })
 
-operation_analysis_schema.statics.createOperationAnalysis = function( analysis_info ) {
-  const payload = Util.getPayload(analysis_info, getFieldInfos());
-  const model = new this(payload);
-  return model.save();
-};
+operation_analysis_schema.statics.createOperationAnalysis = function (analysis_info) {
+  const payload = Util.getPayload(analysis_info, getFieldInfos())
+  const model = new this(payload)
+  return model.save()
+}
 
-operation_analysis_schema.statics.updateOperationAnalysis = function( analysis_id, payload ) {
-  return this.findByIdAndUpdate( analysis_id, payload, {"new": true} );
-};
+operation_analysis_schema.statics.updateOperationAnalysis = function (analysis_id, payload) {
+  return this.findByIdAndUpdate(analysis_id, payload, { 'new': true })
+}
 
-operation_analysis_schema.statics.updateOperationAnalysisByOperationSeq = function( operation_seq, payload ) {
-  return this.findOneAndUpdate( { operation_seq: operation_seq }, payload, {"new": true} );
-};
+operation_analysis_schema.statics.updateOperationAnalysisByOperationSeq = function (operation_seq, payload) {
+  return this.findOneAndUpdate({ operation_seq: operation_seq }, payload, { 'new': true })
+}
 
-operation_analysis_schema.statics.findOneById = function( id, projection = null ) {
-  return this.findById( id, projection );
-};
+operation_analysis_schema.statics.findOneById = function (id, projection = null) {
+  return this.findById(id, projection)
+}
 
-operation_analysis_schema.statics.findByOperationSeq = function( operation_seq, projection = null ) {
-  return this.findOne( { operation_seq: operation_seq }, projection );
-};
+operation_analysis_schema.statics.findByOperationSeq = function (operation_seq, projection = null) {
+  return this.findOne({ operation_seq: operation_seq }, projection)
+}
 
-operation_analysis_schema.statics.findOneByContentId = function( content_id, projection = null ) {
-  return this.findOne( { content_id: content_id }, projection );
-};
+operation_analysis_schema.statics.findOneByContentId = function (content_id, projection = null) {
+  return this.findOne({ content_id: content_id }, projection)
+}
 
-operation_analysis_schema.statics.findByMemberSeq = function( member_seq, projection = null ) {
-  return this.find( { member_seq: member_seq }, projection );
-};
+operation_analysis_schema.statics.findByMemberSeq = function (member_seq, projection = null) {
+  return this.find({ member_seq: member_seq }, projection)
+}
 
-operation_analysis_schema.statics.deleteById = function( id ) {
-  return this.findByIdAndDelete( id );
-};
+operation_analysis_schema.statics.deleteById = function (id) {
+  return this.findByIdAndDelete(id)
+}
 
-operation_analysis_schema.statics.deleteByOperationSeq = function( operation_seq ) {
-  return this.deleteMany( { operation_seq: operation_seq } );
-};
+operation_analysis_schema.statics.deleteByOperationSeq = function (operation_seq) {
+  return this.deleteMany({ operation_seq: operation_seq })
+}
 
-operation_analysis_schema.statics.deleteAll = function( filter ) {
-  return this.findOneAndDelete( filter );
-};
+operation_analysis_schema.statics.deleteAll = function (filter) {
+  return this.findOneAndDelete(filter)
+}
 
-const operation_analysis_model = mongoose.model( 'OperationAnalysis', operation_analysis_schema );
+const operation_analysis_model = mongoose.model('OperationAnalysis', operation_analysis_schema)
 
-export const OperationAnalysisModel = operation_analysis_model;
-export const OperationAnalysisField = getFieldInfos;
+export const OperationAnalysisModel = operation_analysis_model
+export const OperationAnalysisField = getFieldInfos

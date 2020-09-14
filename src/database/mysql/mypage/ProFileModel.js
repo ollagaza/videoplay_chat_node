@@ -1,8 +1,7 @@
 import MySQLModel from '../../mysql-model'
-import log from "../../../libs/logger";
 
 export default class ProFileModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'group_info'
@@ -18,17 +17,17 @@ export default class ProFileModel extends MySQLModel {
       .where(`${this.table_name}.seq`, group_seq)
       .limit(1)
     return oKnex.first()
-  };
+  }
 
   updateProFileInfo = async (group_seq, upload_type, input_data) => {
-    return this.database.raw(`update group_info set profile = json_replace(profile, '$.${upload_type}', ?) where seq = ?`, [input_data, group_seq]);
+    return this.database.raw(`update group_info set profile = json_replace(profile, '$.${upload_type}', ?) where seq = ?`, [input_data, group_seq])
   }
 
   updateChannelFlag = async (group_seq, param) => {
-    return this.update({ seq: group_seq }, { is_channel: param });
+    return this.update({ seq: group_seq }, { is_channel: param })
   }
 
   updateMentoFlag = async (group_seq, param) => {
-    return this.update({ seq: group_seq }, { is_mentoring: param });
+    return this.update({ seq: group_seq }, { is_mentoring: param })
   }
 }

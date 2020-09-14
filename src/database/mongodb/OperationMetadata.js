@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
-import Util from "../../utils/baseutil";
+import mongoose from 'mongoose'
+import Util from '../../utils/baseutil'
 
-const Schema = mongoose.Schema;
+const Schema = mongoose.Schema
 
 const getFieldInfos = () => {
   return {
@@ -18,77 +18,81 @@ const getFieldInfos = () => {
     final_diagnosis: { type: [String], default: [], require: false, message: '최종 진단이 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
-  };
-};
+  }
+}
 
-const schema_field_infos = getFieldInfos();
-schema_field_infos.operation_seq.require = true;
-schema_field_infos.member_seq.require = true;
-schema_field_infos.content_id.require = true;
+const schema_field_infos = getFieldInfos()
+schema_field_infos.operation_seq.require = true
+schema_field_infos.member_seq.require = true
+schema_field_infos.content_id.require = true
 
-const operation_metadata_schema = new Schema(schema_field_infos, { strict: false });
+const operation_metadata_schema = new Schema(schema_field_infos, { strict: false })
 
-operation_metadata_schema.indexes();
-operation_metadata_schema.index( { member_seq: 1, group_list: 1 } );
-operation_metadata_schema.index( { member_seq: 1, tag_list: 1 } );
-operation_metadata_schema.index( { member_seq: 1, operation_type: 1 } );
-operation_metadata_schema.index( { member_seq: 1, operation_diagnosis: 1 } );
-operation_metadata_schema.index( { member_seq: 1, final_diagnosis: 1 } );
+operation_metadata_schema.indexes()
+operation_metadata_schema.index({ member_seq: 1, group_list: 1 })
+operation_metadata_schema.index({ member_seq: 1, tag_list: 1 })
+operation_metadata_schema.index({ member_seq: 1, operation_type: 1 })
+operation_metadata_schema.index({ member_seq: 1, operation_diagnosis: 1 })
+operation_metadata_schema.index({ member_seq: 1, final_diagnosis: 1 })
 
-operation_metadata_schema.statics.createOperationMetadata = function( operation_info, payload ) {
-  payload.operation_seq = operation_info.seq;
-  payload.member_seq = operation_info.member_seq;
-  payload.content_id = operation_info.content_id;
-  payload.operation_type = operation_info.operation_type;
-  const model = new this(payload);
-  return model.save();
-};
+operation_metadata_schema.statics.createOperationMetadata = function (operation_info, payload) {
+  payload.operation_seq = operation_info.seq
+  payload.member_seq = operation_info.member_seq
+  payload.content_id = operation_info.content_id
+  payload.operation_type = operation_info.operation_type
+  const model = new this(payload)
+  return model.save()
+}
 
-operation_metadata_schema.statics.copyOperationMetadata = function( video_metadata, operation_info ) {
-  const copy_video_metadata = Util.getPayload(video_metadata, getFieldInfos());
+operation_metadata_schema.statics.copyOperationMetadata = function (video_metadata, operation_info) {
+  const copy_video_metadata = Util.getPayload(video_metadata, getFieldInfos())
   copy_video_metadata.operation_seq = operation_info.seq
   copy_video_metadata.content_id = operation_info.content_id
   copy_video_metadata.origin_seq = operation_info.origin_seq
   copy_video_metadata.origin_content_id = operation_info.origin_content_id
 
-  const model = new this(copy_video_metadata);
-  return model.save();
-};
+  const model = new this(copy_video_metadata)
+  return model.save()
+}
 
-operation_metadata_schema.statics.updateByOperationInfo = function( operation_info, operation_type, update ) {
-  update.operation_seq = operation_info.seq;
-  update.member_seq = operation_info.member_seq;
-  update.content_id = operation_info.content_id;
-  update.operation_type = operation_type;
-  update.modify_date = Date.now();
-  return this.findOneAndUpdate( { operation_seq: operation_info.seq }, update, { upsert: true, new: true, setDefaultsOnInsert: true } );
-};
+operation_metadata_schema.statics.updateByOperationInfo = function (operation_info, operation_type, update) {
+  update.operation_seq = operation_info.seq
+  update.member_seq = operation_info.member_seq
+  update.content_id = operation_info.content_id
+  update.operation_type = operation_type
+  update.modify_date = Date.now()
+  return this.findOneAndUpdate({ operation_seq: operation_info.seq }, update, {
+    upsert: true,
+    new: true,
+    setDefaultsOnInsert: true
+  })
+}
 
-operation_metadata_schema.statics.findOneById = function( id, projection = null ) {
-  return this.findById( id, projection );
-};
+operation_metadata_schema.statics.findOneById = function (id, projection = null) {
+  return this.findById(id, projection)
+}
 
-operation_metadata_schema.statics.findByOperationSeq = function( operation_seq, projection = null ) {
-  return this.findOne( { operation_seq: operation_seq }, projection );
-};
+operation_metadata_schema.statics.findByOperationSeq = function (operation_seq, projection = null) {
+  return this.findOne({ operation_seq: operation_seq }, projection)
+}
 
-operation_metadata_schema.statics.findOneByContentId = function( content_id, projection = null ) {
-  return this.findOne( { content_id: content_id }, projection );
-};
+operation_metadata_schema.statics.findOneByContentId = function (content_id, projection = null) {
+  return this.findOne({ content_id: content_id }, projection)
+}
 
-operation_metadata_schema.statics.findByMemberSeq = function( member_seq, projection = null ) {
-  return this.find( { member_seq: member_seq }, projection );
-};
+operation_metadata_schema.statics.findByMemberSeq = function (member_seq, projection = null) {
+  return this.find({ member_seq: member_seq }, projection)
+}
 
-operation_metadata_schema.statics.deleteById = function( id ) {
-  return this.findByIdAndDelete( id );
-};
+operation_metadata_schema.statics.deleteById = function (id) {
+  return this.findByIdAndDelete(id)
+}
 
-operation_metadata_schema.statics.deleteByOperationSeq = function( operation_seq ) {
-  return this.findOneAndDelete( { operation_seq: operation_seq } );
-};
+operation_metadata_schema.statics.deleteByOperationSeq = function (operation_seq) {
+  return this.findOneAndDelete({ operation_seq: operation_seq })
+}
 
-const operation_metadata_model = mongoose.model( 'OperationMetadata', operation_metadata_schema );
+const operation_metadata_model = mongoose.model('OperationMetadata', operation_metadata_schema)
 
-export const OperationMetadataModel = operation_metadata_model;
-export const OperationMetadataField = getFieldInfos;
+export const OperationMetadataModel = operation_metadata_model
+export const OperationMetadataField = getFieldInfos

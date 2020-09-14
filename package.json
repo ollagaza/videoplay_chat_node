@@ -60,9 +60,7 @@
     "node-ffprobe": "^1.2.2",
     "node-schedule": "^1.3.2",
     "nodejs-aes256": "^1.0.1",
-    "nodemailer": "^4.7.0",
     "npm": "^6.14.5",
-    "phpjs": "^1.3.2",
     "promise": "^8.1.0",
     "pug": "^2.0.0-beta11",
     "query-string": "^6.11.1",
@@ -135,6 +133,11 @@
     "extends": [
       "eslint:recommended"
     ],
-    "rules": {}
+    "rules": {
+      "indent": [
+        "error",
+        2
+      ]
+    }
   }
 }

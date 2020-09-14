@@ -1,7 +1,6 @@
-import formatter from "string-template";
+import formatter from 'string-template'
 import _ from 'lodash'
-import log from "../../libs/logger";
-import ServiceConfig from '../../service/service-config';
+import ServiceConfig from '../../service/service-config'
 
 const mail_top = `
 <table class="mteg_main_form" style="margin: 0; background-color: #f5f5f5; width: 100%; border-spacing: 0; padding: 0;">
@@ -23,7 +22,7 @@ const mail_top = `
 									{user_name} 님 SurgStory 고객지원팀 입니다.
 									</td>
 								</tr>
-`;
+`
 
 const mail_bottom = `
 								<tr>
@@ -49,7 +48,7 @@ const mail_visit_button = `
 										<a href="{service_domain}" style="text-decoration: none; width: 170px; height: 50px; font-size: 18px; background: #009cdf; border-radius: 4px; color: #fff; display: table-cell; vertical-align: middle;">서지스토리 방문</a>
 									</td>
 								</tr>
-`;
+`
 
 const mail_recall_button = `
 								<tr>
@@ -57,7 +56,7 @@ const mail_recall_button = `
 										<a href="{service_domain}" style="text-decoration: none; width: 170px; height: 50px; font-size: 18px; background: #ffa00f; border-radius: 4px; color: #fff; display: table-cell; vertical-align: middle;">재승인 요청</a>
 									</td>
 								</tr>
-`;
+`
 
 const joinconfrim_member_form = `
 								<tr>
@@ -70,7 +69,7 @@ const joinconfrim_member_form = `
 										감사합니다.
 									</td>
 								</tr>
-`;
+`
 
 const reject_member_form = `
 								<tr>
@@ -90,7 +89,7 @@ const reject_member_form = `
 										감사합니다.
 									</td>
 								</tr>
-`;
+`
 
 const forced_leave_member_form = `
 								<tr>
@@ -110,7 +109,7 @@ const forced_leave_member_form = `
 										감사합니다.
 									</td>
 								</tr>
-`;
+`
 
 const leave_member_form = `
 								<tr>
@@ -123,7 +122,7 @@ const leave_member_form = `
 										그 동안 저희 서지스토리를 이용해 주셔서 감사합니다.
 									</td>
 								</tr>
-`;
+`
 
 const dormant_member_form = `
 								<tr>
@@ -136,7 +135,7 @@ const dormant_member_form = `
 										감사합니다.
 									</td>
 								</tr>
-`;
+`
 
 const stop_member_form = `
 								<tr>
@@ -156,7 +155,7 @@ const stop_member_form = `
 										감사합니다.
 									</td>
 								</tr>
-`;
+`
 
 const stopclear_member_form = `
 								<tr>
@@ -176,39 +175,39 @@ const stopclear_member_form = `
 										감사합니다.
 									</td>
 								</tr>
-`;
+`
 
 const getServiceInfo = () => {
-  return ServiceConfig.getServiceInfo();
-};
+  return ServiceConfig.getServiceInfo()
+}
 
 export default {
-  "reject_member": (template_data={}) => {
-		const template_html = mail_top + reject_member_form + mail_recall_button + mail_bottom;
-    return formatter(template_html, _.merge(template_data, getServiceInfo()));
+  'reject_member': (template_data = {}) => {
+    const template_html = mail_top + reject_member_form + mail_recall_button + mail_bottom
+    return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
-	"joinconfrim_member": (template_data={}) => {
-		const template_html = mail_top + joinconfrim_member_form + mail_visit_button + mail_bottom;
-    return formatter(template_html, _.merge(template_data, getServiceInfo()));
+  'joinconfrim_member': (template_data = {}) => {
+    const template_html = mail_top + joinconfrim_member_form + mail_visit_button + mail_bottom
+    return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
-	"forced_leave_member": (template_data={}) => {
-		const template_html = mail_top + forced_leave_member_form + mail_bottom;
-    return formatter(template_html, _.merge(template_data, getServiceInfo()));
+  'forced_leave_member': (template_data = {}) => {
+    const template_html = mail_top + forced_leave_member_form + mail_bottom
+    return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
-	"leave_member": (template_data={}) => {
-		const template_html = mail_top + leave_member_form + mail_bottom;
-    return formatter(template_html, _.merge(template_data, getServiceInfo()));
+  'leave_member': (template_data = {}) => {
+    const template_html = mail_top + leave_member_form + mail_bottom
+    return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
-	"dormant_member": (template_data={}) => {
-		const template_html = mail_top + dormant_member_form + mail_visit_button + mail_bottom;
-    return formatter(template_html, _.merge(template_data, getServiceInfo()));
+  'dormant_member': (template_data = {}) => {
+    const template_html = mail_top + dormant_member_form + mail_visit_button + mail_bottom
+    return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
-	"stop_member": (template_data={}) => {
-		const template_html = mail_top + stop_member_form + mail_bottom;
-    return formatter(template_html, _.merge(template_data, getServiceInfo()));
+  'stop_member': (template_data = {}) => {
+    const template_html = mail_top + stop_member_form + mail_bottom
+    return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
-	"stopclear_member": (template_data={}) => {
-		const template_html = mail_top + stopclear_member_form + mail_visit_button + mail_bottom;
-    return formatter(template_html, _.merge(template_data, getServiceInfo()));
+  'stopclear_member': (template_data = {}) => {
+    const template_html = mail_top + stopclear_member_form + mail_visit_button + mail_bottom
+    return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
-};
+}

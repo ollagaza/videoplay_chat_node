@@ -1,14 +1,9 @@
-import _ from 'lodash';
-import ServiceConfig from '../service-config';
-import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
-import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import FollowerModel from "../../database/mysql/Follow/FollowerModel";
-import FollowingModel from "../../database/mysql/Follow/FollowingModel";
+import _ from 'lodash'
+import ServiceConfig from '../service-config'
+import Util from '../../utils/baseutil'
+import DBMySQL from '../../database/knex-mysql'
+import FollowerModel from '../../database/mysql/Follow/FollowerModel'
+import FollowingModel from '../../database/mysql/Follow/FollowingModel'
 
 const FollowServiceClass = class {
   constructor () {
@@ -31,56 +26,56 @@ const FollowServiceClass = class {
 
   getFollowerLists = async (database, group_seq) => {
     try {
-      const followerModel = this.getFollowerModel(database);
-      const result = await followerModel.getFollowerLists(group_seq);
-      await this.setProfileImage(result);
-      return result;
+      const followerModel = this.getFollowerModel(database)
+      const result = await followerModel.getFollowerLists(group_seq)
+      await this.setProfileImage(result)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   getFollowingLists = async (database, group_seq) => {
     try {
-      const followingModel = this.getFollowingModel(database);
-      const result = await followingModel.getFollowingLists(group_seq);
-      await this.setProfileImage(result);
-      return result;
+      const followingModel = this.getFollowingModel(database)
+      const result = await followingModel.getFollowingLists(group_seq)
+      await this.setProfileImage(result)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   getInquiryFollowerLists = async (database, login_group_seq, inquiry_group_seq) => {
     try {
-      const followerModel = this.getFollowerModel(database);
-      const result = await followerModel.getInquiryFollowerLists(login_group_seq, inquiry_group_seq);
-      await this.setProfileImage(result);
-      return result;
+      const followerModel = this.getFollowerModel(database)
+      const result = await followerModel.getInquiryFollowerLists(login_group_seq, inquiry_group_seq)
+      await this.setProfileImage(result)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   getInquiryFollowingLists = async (database, login_group_seq, inquiry_group_seq) => {
     try {
-      const followingModel = this.getFollowingModel(database);
-      const result = await followingModel.getInquiryFollowingLists(login_group_seq, inquiry_group_seq);
-      await this.setProfileImage(result);
-      return result;
+      const followingModel = this.getFollowingModel(database)
+      const result = await followingModel.getInquiryFollowingLists(login_group_seq, inquiry_group_seq)
+      await this.setProfileImage(result)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
-  getFollowing =  async (database, group_seq, following_seq) => {
+  getFollowing = async (database, group_seq, following_seq) => {
     try {
-      const followingModel = this.getFollowingModel(database);
-      const result = await followingModel.getFollowing(group_seq, following_seq);
-      await this.setProfileImage(result);
-      return result;
+      const followingModel = this.getFollowingModel(database)
+      const result = await followingModel.getFollowing(group_seq, following_seq)
+      await this.setProfileImage(result)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -88,51 +83,51 @@ const FollowServiceClass = class {
     if (result.length != 0) {
       _.forEach(result, (member_info) => {
         if (!Util.isEmpty(member_info.profile_image_path)) {
-          member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path);
+          member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path)
         } else {
           member_info.profile_image_url = '/img/renewal/mypage/profile.png'
         }
-      });
+      })
     }
   }
 
   RegistFollower = async (database, follow_info) => {
     try {
-      const followerModel = this.getFollowerModel(database);
-      const result = await followerModel.RegistFollower(follow_info);
-      return result;
+      const followerModel = this.getFollowerModel(database)
+      const result = await followerModel.RegistFollower(follow_info)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   RegistFollowing = async (database, follow_info) => {
     try {
-      const followingModel = this.getFollowingModel(database);
-      const result = await followingModel.RegistFollowing(follow_info);
-      return result;
+      const followingModel = this.getFollowingModel(database)
+      const result = await followingModel.RegistFollowing(follow_info)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   UnRegistFollower = async (database, follow_info) => {
     try {
-      const followerModel = this.getFollowerModel(database);
-      const result = await followerModel.UnRegistFollower(follow_info);
-      return result;
+      const followerModel = this.getFollowerModel(database)
+      const result = await followerModel.UnRegistFollower(follow_info)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   UnRegistFollowing = async (database, follow_info) => {
     try {
-      const followingModel = this.getFollowingModel(database);
-      const result = await followingModel.UnRegistFollowing(follow_info);
-      return result;
+      const followingModel = this.getFollowingModel(database)
+      const result = await followingModel.UnRegistFollowing(follow_info)
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 }

@@ -1,13 +1,9 @@
-import _ from 'lodash';
-import ServiceConfig from '../../../service/service-config';
-import Constants from '../../../constants/constants'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
-import StdObject from '../../../wrapper/std-object'
-import log from "../../../libs/logger";
+import log from '../../../libs/logger'
 
 export default class ContentCountsModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'content_counts'
@@ -86,8 +82,8 @@ export default class ContentCountsModel extends MySQLModel {
       .andWhere('group_seq', group_seq)
       .groupBy('category_code')
       .orderBy('ranking', 'desc')
-      .limit(6);
-    const in_group_seq_result = await in_group_seq_category;
+      .limit(6)
+    const in_group_seq_result = await in_group_seq_category
 
     const notin_group_seq_category = this.database.select('category_code as code')
       .sum('mentoring_cnt as ranking')
@@ -95,9 +91,9 @@ export default class ContentCountsModel extends MySQLModel {
       .where('category_code', '!=', 'all')
       .groupBy('category_code')
       .orderBy('ranking', 'desc')
-      .limit(6);
-    const notin_group_seq_result = await notin_group_seq_category;
+      .limit(6)
+    const notin_group_seq_result = await notin_group_seq_category
 
-    return {in_group_seq_result, notin_group_seq_result};
+    return { in_group_seq_result, notin_group_seq_result }
   }
 }

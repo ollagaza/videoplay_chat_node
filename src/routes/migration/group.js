@@ -1,17 +1,15 @@
-import { Router } from 'express';
-import Wrap from '../../utils/express-async';
-import Auth from '../../middlewares/auth.middleware';
-import Role from "../../constants/roles";
+import { Router } from 'express'
+import Wrap from '../../utils/express-async'
 import log from '../../libs/logger'
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
 import MemberService from '../../service/member/MemberService'
 import GroupService from '../../service/member/GroupService'
 import OperationService from '../../service/operation/OperationService'
 import OperationClipService from '../../service/operation/OperationClipService'
 import StudioService from '../../service/project/StudioService'
 
-const routes = Router();
+const routes = Router()
 
 const create_new_group = async (req, transaction, member_info) => {
   const member_seq = member_info.seq
@@ -28,14 +26,14 @@ const create_new_group = async (req, transaction, member_info) => {
   return group_info
 }
 
-routes.post('/', Wrap(async(req, res) => {
-  req.accepts('application/json');
+routes.post('/', Wrap(async (req, res) => {
+  req.accepts('application/json')
   const new_group_info_list = []
   const recent_group_info_list = []
   await OperationService.migrationStorageSize(DBMySQL)
   const member_list = await MemberService.getMemberList(DBMySQL)
   for (let i = 0; i < member_list.length; i++) {
-    await DBMySQL.transaction(async(transaction) => {
+    await DBMySQL.transaction(async (transaction) => {
       const member_info = member_list[i]
       const member_seq = member_info.seq
       const user_id = member_info.user_id
@@ -82,6 +80,6 @@ routes.post('/', Wrap(async(req, res) => {
   output.add('new_group_info_list', new_group_info_list)
   output.add('recent_group_info_list', recent_group_info_list)
   res.json(output)
-}));
+}))
 
-export default routes;
+export default routes

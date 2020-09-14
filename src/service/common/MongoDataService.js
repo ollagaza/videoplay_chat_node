@@ -2,7 +2,7 @@ import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
 import { MedicalModel } from '../../database/mongodb/Medical'
 import { InterestModel } from '../../database/mongodb/Interest'
-import { SystemDataModel, SYSTEM_DATA_TYPES } from '../../database/mongodb/SystemData'
+import { SYSTEM_DATA_TYPES, SystemDataModel } from '../../database/mongodb/SystemData'
 import log from '../../libs/logger'
 
 const MongoDataServiceClass = class {
@@ -35,7 +35,7 @@ const MongoDataServiceClass = class {
     if (system_data_list) {
       for (let i = 0; i < system_data_list.length; i++) {
         const system_data = system_data_list[i]
-        this.system_data_map[system_data.data_type] = system_data;
+        this.system_data_map[system_data.data_type] = system_data
       }
     }
   }
@@ -48,21 +48,21 @@ const MongoDataServiceClass = class {
     return _.sortBy(this.interest_info[lang], 'text')
   }
 
-  getData = (data_type = null, lang= 'kor') => {
-    let output = new StdObject();
+  getData = (data_type = null, lang = 'kor') => {
+    let output = new StdObject()
     switch (data_type) {
       case this.MEDICAL:
         output.add(this.MEDICAL, this.getMedicalInfo(lang))
-        break;
+        break
       case this.INTEREST:
         output.add(this.INTEREST, this.getInterestInfo(lang))
-        break;
+        break
       default:
         output.add(this.MEDICAL, this.getMedicalInfo(lang))
         output.add(this.INTEREST, this.getInterestInfo(lang))
-        break;
+        break
     }
-    return output;
+    return output
   }
 
   return_Data = (data_type, lang = 'kor') => {
@@ -72,14 +72,14 @@ const MongoDataServiceClass = class {
       case this.INTEREST:
         return this.getInterestInfo(lang)
       default:
-        return null;
+        return null
     }
   }
 
   getSearchData = (data_type = null, search_keyword = null, lang = 'kor') => {
     const data = this.return_Data(data_type, lang)
-    return _.filter(data, function(item) {
-      return item.text.indexOf(search_keyword) != -1 ? item : null;
+    return _.filter(data, function (item) {
+      return item.text.indexOf(search_keyword) != -1 ? item : null
     })
   }
 
@@ -88,7 +88,7 @@ const MongoDataServiceClass = class {
     const return_date = []
 
     _.forEach(object, (item) => {
-      _.filter(data, function(filter_item) {
+      _.filter(data, function (filter_item) {
         filter_item.code === item.code ? return_date.push(filter_item) : null
       })
     })
@@ -97,7 +97,7 @@ const MongoDataServiceClass = class {
   }
 
   getSystemData = (data_type) => {
-    return this.system_data_map[data_type];
+    return this.system_data_map[data_type]
   }
 
   getSystemDataTypes = () => SYSTEM_DATA_TYPES

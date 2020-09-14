@@ -4,10 +4,10 @@ import mongodb_config from '../config/mongodb.config'
 import Config from '../config/config'
 import log from '../libs/logger'
 import Constants from '../constants/constants'
-import { MedicalModel } from './mongodb/Medical';
-import { InterestModel } from './mongodb/Interest';
-import { LogCodeModel } from './mongodb/MemberLogCode';
-import { initSystemData } from './mongodb/SystemData';
+import { MedicalModel } from './mongodb/Medical'
+import { InterestModel } from './mongodb/Interest'
+import { LogCodeModel } from './mongodb/MemberLogCode'
+import { initSystemData } from './mongodb/SystemData'
 
 const LOG_PREFIX = '[MongoDB]\n'
 
@@ -33,28 +33,28 @@ const init = () => {
       useUnifiedTopology: true,
       useCreateIndex: true
     })
-    .then(() => {
-      log.debug(LOG_PREFIX, 'Successfully connected to mongodb')
-      resolve(true)
-    })
-    .catch((error) => {
-      log.error(LOG_PREFIX, 'mongodb connection error', error)
-      resolve(false)
-    })
+      .then(() => {
+        log.debug(LOG_PREFIX, 'Successfully connected to mongodb')
+        resolve(true)
+      })
+      .catch((error) => {
+        log.error(LOG_PREFIX, 'mongodb connection error', error)
+        resolve(false)
+      })
   })
 }
 
 const defaultMongoCollections = async () => {
-  const medical = await MedicalModel.findOne();
-  await MedicalModel.InsertDefaultData(medical);
+  const medical = await MedicalModel.findOne()
+  await MedicalModel.InsertDefaultData(medical)
 
-  const interest = await InterestModel.findOne();
-  await InterestModel.InsertDefaultData(interest);
+  const interest = await InterestModel.findOne()
+  await InterestModel.InsertDefaultData(interest)
 
-  const log_code = await LogCodeModel.findOne();
-  await LogCodeModel.InsertDefaultData(log_code);
+  const log_code = await LogCodeModel.findOne()
+  await LogCodeModel.InsertDefaultData(log_code)
 
-  await initSystemData();
+  await initSystemData()
 }
 
 export default {

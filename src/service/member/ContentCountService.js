@@ -1,6 +1,5 @@
 import _ from 'lodash'
-import Util from '../../utils/baseutil'
-import log from "../../libs/logger"
+import log from '../../libs/logger'
 import DBMySQL from '../../database/knex-mysql'
 
 import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
@@ -67,16 +66,16 @@ const ContentCountServiceClass = class {
 
   getRecommendCategorys = async (database, group_seq) => {
     const content_count_model = this.getContentCountsModel(database)
-    const result = await content_count_model.getContentCountsCategorys(group_seq);
-    const return_ranking = [];
+    const result = await content_count_model.getContentCountsCategorys(group_seq)
+    const return_ranking = []
 
     if (result.in_group_seq_result) {
       _.forEach(result.in_group_seq_result, (item) => {
-        log.debug(this.log_prefix, '[getRecommendCategorys first loop]', 'item', item, _.every(result.notin_group_seq_result, {code: item.code.toString()}))
-        if (_.every(result.notin_group_seq_result, {code: item.code.toString()})) {
-          return_ranking.push(item);
+        log.debug(this.log_prefix, '[getRecommendCategorys first loop]', 'item', item, _.every(result.notin_group_seq_result, { code: item.code.toString() }))
+        if (_.every(result.notin_group_seq_result, { code: item.code.toString() })) {
+          return_ranking.push(item)
         } else {
-          return_ranking.push(item);
+          return_ranking.push(item)
         }
       })
     }
@@ -85,17 +84,17 @@ const ContentCountServiceClass = class {
       _.forEach(result.notin_group_seq_result, (item) => {
         log.debug(this.log_prefix, '[getRecommendCategorys second loop]', 'item', item, _.every(return_ranking, { code: item.code.toString() }))
         if (!_.every(return_ranking, { code: item.code.toString() })) {
-          return_ranking.push(item);
+          return_ranking.push(item)
         }
 
         if (return_ranking.length === 6) {
-          return return_ranking;
+          return return_ranking
         }
       })
     }
 
-    log.debug(this.log_prefix, '[return_ranking]', return_ranking);
-    return return_ranking.length === 0 ? result.notin_group_seq_result : return_ranking;
+    log.debug(this.log_prefix, '[return_ranking]', return_ranking)
+    return return_ranking.length === 0 ? result.notin_group_seq_result : return_ranking
   }
 }
 

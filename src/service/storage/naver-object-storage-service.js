@@ -1,6 +1,6 @@
-import Promise from 'promise';
+import Promise from 'promise'
 import AWS from 'aws-sdk'
-import fs from "fs"
+import fs from 'fs'
 import path from 'path'
 import log from '../../libs/logger'
 import ServiceConfig from '../service-config'
@@ -17,8 +17,8 @@ const NaverObjectStorageClass = class {
 
   init = async () => {
     await this.setBucketInformation()
-    await this.configUpdate();
-    await this.onInitComplete();
+    await this.configUpdate()
+    await this.onInitComplete()
   }
 
   setBucketInformation = async () => {
@@ -30,28 +30,27 @@ const NaverObjectStorageClass = class {
   configUpdate = async () => {
     this.ACCESS_KEY = ServiceConfig.get('naver_access_key')
     this.SECRET_KEY = ServiceConfig.get('naver_secret_key')
-    log.debug(this.log_prefix, '[configUpdate]', this.ACCESS_KEY, this.SECRET_KEY);
+    log.debug(this.log_prefix, '[configUpdate]', this.ACCESS_KEY, this.SECRET_KEY)
     await AWS.config.update({
       accessKeyId: this.ACCESS_KEY,
       secretAccessKey: this.SECRET_KEY
-    });
+    })
   }
 
   onInitComplete = async () => {
-    log.debug(this.log_prefix, '[onInitComplete]', this.ENDPOINT, this.REGION, this.ACCESS_KEY, this.SECRET_KEY, this.DEFAULT_BUCKET_NAME);
+    log.debug(this.log_prefix, '[onInitComplete]', this.ENDPOINT, this.REGION, this.ACCESS_KEY, this.SECRET_KEY, this.DEFAULT_BUCKET_NAME)
   }
 
   getStorageClient = (client = null) => {
     if (client) return client
-    log.debug(this.log_prefix, '[getStorageClient]', this.ENDPOINT, this.REGION);
-    let storage_client = null;
-    try{
+    log.debug(this.log_prefix, '[getStorageClient]', this.ENDPOINT, this.REGION)
+    let storage_client = null
+    try {
       storage_client = new AWS.S3({
         endpoint: this.ENDPOINT,
         region: this.REGION
       })
-    }
-    catch (error) {
+    } catch (error) {
       log.error(this.log_prefix, '[getStorageClient]', `can't create s3 client`, error)
       throw error
     }
@@ -59,7 +58,7 @@ const NaverObjectStorageClass = class {
   }
 
   getBucketName = (bucket_name = null) => {
-    return bucket_name ? bucket_name : this.DEFAULT_BUCKET_NAME;
+    return bucket_name ? bucket_name : this.DEFAULT_BUCKET_NAME
   }
 
   uploadFolder = async (local_file_path, remote_path, remote_bucket_name = null) => {
@@ -133,7 +132,7 @@ const NaverObjectStorageClass = class {
     return await storage_client.getObject({
       Bucket: target_bucket_name,
       Key: target_path,
-      Range: "bytes=0-9"
+      Range: 'bytes=0-9'
     }).promise()
   }
 
@@ -175,22 +174,22 @@ const NaverObjectStorageClass = class {
   deleteFolder = async (remote_path, bucket_name = null, client = null) => {
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
-    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client);
+    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client)
     log.debug(this.log_prefix, '[deleteFolder]', '[start]', `remote_path: ${remote_path}, bucket_name: ${target_bucket_name}`, folder_object)
     let folder_file_list = []
     if (folder_object.directory_list.length > 0) {
       for (let i = 0; i < folder_object.directory_list.length; i++) {
-        const delete_folder_result = await this.deleteFolder(folder_object.directory_list[i], target_bucket_name, storage_client);
+        const delete_folder_result = await this.deleteFolder(folder_object.directory_list[i], target_bucket_name, storage_client)
         folder_file_list = _.union(folder_file_list, delete_folder_result)
       }
     }
     if (folder_object.file_list.length > 0) {
       for (let i = 0; i < folder_object.file_list.length; i++) {
-        await this.deleteFile(folder_object.file_list[i], null, target_bucket_name, storage_client);
+        await this.deleteFile(folder_object.file_list[i], null, target_bucket_name, storage_client)
       }
     }
     try {
-      await this.deleteFile(remote_path, null, target_bucket_name, storage_client);
+      await this.deleteFile(remote_path, null, target_bucket_name, storage_client)
     } catch (error) {
       log.debug(this.log_prefix, '[deleteFolder]', '[delete root dir]', `remote_path: ${remote_path}, target_bucket_name: ${target_bucket_name}`, error)
     }
@@ -205,7 +204,7 @@ const NaverObjectStorageClass = class {
     remote_file_name = Util.removePathSlash(remote_file_name)
     const storage_client = this.getStorageClient(client)
     const target_path = remote_file_name ? `${remote_path}/${remote_file_name}` : `${remote_path}`
-    log.debug(this.log_prefix, '[deleteFile]', `remote_path: ${remote_path}, remote_file_name: ${remote_file_name}, target_path: ${target_path}`);
+    log.debug(this.log_prefix, '[deleteFile]', `remote_path: ${remote_path}, remote_file_name: ${remote_file_name}, target_path: ${target_path}`)
     return await storage_client.deleteObject({
       Bucket: this.getBucketName(bucket_name),
       Key: target_path
@@ -217,7 +216,7 @@ const NaverObjectStorageClass = class {
     await Util.deleteFile(download_file_path)
     const directory = Util.getDirectoryName(download_file_path)
     const create_result = await Util.createDirectory(directory)
-    if ( !create_result ) {
+    if (!create_result) {
       throw new StdObject(102, `can't create directory. download_directory: ${download_directory}, download_file_name: ${download_file_name}, download_file_path: ${download_file_path}, directory: ${directory}`, 400)
     }
   }
@@ -226,7 +225,7 @@ const NaverObjectStorageClass = class {
     remote_path = Util.removePathSlash(remote_path)
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
-    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client);
+    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client)
     let folder_file_list = []
     if (folder_object.file_list.length > 0) {
       for (let i = 0; i < folder_object.file_list.length; i++) {
@@ -263,14 +262,14 @@ const NaverObjectStorageClass = class {
     }
     log.debug(this.log_prefix, '[downloadFile]', remote_path, remote_file_name, download_directory, download_file_name, bucket_name, params)
     const download_file_path = download_directory + '/' + download_file_name
-    const file_stream = fs.createWriteStream(download_file_path, {flags:'a'})
+    const file_stream = fs.createWriteStream(download_file_path, { flags: 'a' })
     const download_promise = new Promise((resolve, reject) => {
       storage_client.getObject(params).createReadStream()
         .on('end', () => {
-          return resolve(true);
+          return resolve(true)
         })
         .on('error', (error) => {
-          return reject(error);
+          return reject(error)
         }).pipe(file_stream)
     })
     const download_result = await download_promise
@@ -281,7 +280,7 @@ const NaverObjectStorageClass = class {
   copyFolderToArchive = async (object_path, archive_path, download_directory, object_bucket_name = null, archive_bucket_name = null, client = null) => {
     const storage_client = await this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(object_bucket_name)
-    const folder_object = await this.getFolderObjectList(object_path, target_bucket_name, storage_client);
+    const folder_object = await this.getFolderObjectList(object_path, target_bucket_name, storage_client)
     log.debug(this.log_prefix, '[copyFolderToArchive]', '[start]', `object_path: ${object_path}, object_bucket_name: ${target_bucket_name}, archive_path: ${archive_path}, archive_bucket_name: ${archive_bucket_name}`, folder_object)
     let folder_file_list = []
     if (folder_object.file_list.length > 0) {
@@ -324,9 +323,9 @@ const NaverObjectStorageClass = class {
       Bucket: target_bucket_name,
       Prefix: `${Util.removePathLastSlash(remote_path)}/`,
       Delimiter: '/'
-    };
-    const directory_list = [];
-    const file_list = [];
+    }
+    const directory_list = []
+    const file_list = []
 
     try {
       const folder_object_list = await storage_client.listObjects(params).promise()

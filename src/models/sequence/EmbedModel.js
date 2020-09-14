@@ -1,269 +1,279 @@
 import Constants from '../../constants/constants'
 import Util from '../../utils/baseutil'
-import text2png from "../../libs/text-to-image"
+import text2png from '../../libs/text-to-image'
 import log from '../../libs/logger'
-import EmbedBackgroundColorModel from './EmbedBackgroundColorModel';
-import EmbedFontModel from './EmbedFontModel';
-import EmbedPositionModel from './EmbedPositionModel';
-import EmbedSizeModel from './EmbedSizeModel';
+import EmbedBackgroundColorModel from './EmbedBackgroundColorModel'
+import EmbedFontModel from './EmbedFontModel'
+import EmbedPositionModel from './EmbedPositionModel'
+import EmbedSizeModel from './EmbedSizeModel'
 
 export default class EmbedModel {
-  constructor(type) {
-    this._id = Util.getRandomId();
-    this._name = '';
-    this._isUse = false;
-    this._type = type;
-    this._src = '';
-    this._videoStartTime = 0;
-    this._videoEndTime = 0;
-    this._multiLine = false;
-    this._padding = 0;
-    this._resize = Constants.NONE;
-    this._thumbnail = null;
-    this._placeholder = '';
+  constructor (type) {
+    this._id = Util.getRandomId()
+    this._name = ''
+    this._isUse = false
+    this._type = type
+    this._src = ''
+    this._videoStartTime = 0
+    this._videoEndTime = 0
+    this._multiLine = false
+    this._padding = 0
+    this._resize = Constants.NONE
+    this._thumbnail = null
+    this._placeholder = ''
 
-    this._backGroundColor = new EmbedBackgroundColorModel();
-    this._font = new EmbedFontModel();
-    this._size = new EmbedSizeModel();
-    this._position = new EmbedPositionModel();
+    this._backGroundColor = new EmbedBackgroundColorModel()
+    this._font = new EmbedFontModel()
+    this._size = new EmbedSizeModel()
+    this._position = new EmbedPositionModel()
 
-    this._stream_info = null;
-    this._operation_seq = 0;
-    this._video_name = null;
+    this._stream_info = null
+    this._operation_seq = 0
+    this._video_name = null
     this.log_prefix = '[SequenceModel]'
   }
 
-  get id() {
-    return this._id;
+  get id () {
+    return this._id
   }
 
   init = (json) => {
     if (json) {
-      this._id = json.id;
-      this._name = json.name;
-      this._type = json.type;
-      this._src = json.src || '';
-      this._videoStartTime = parseFloat(json.videoStartTime || 0);
-      this._videoEndTime = parseFloat(json.videoEndTime || 0);
-      this._multiLine = Util.isTrue(json.multiLine || false);
-      this._padding = parseFloat(json.padding || 0);
-      this._resize = json.resize || Constants.NONE;
-      this._thumbnail = json.thumbnail || null;
-      this._placeholder = json.placeholder || '';
+      this._id = json.id
+      this._name = json.name
+      this._type = json.type
+      this._src = json.src || ''
+      this._videoStartTime = parseFloat(json.videoStartTime || 0)
+      this._videoEndTime = parseFloat(json.videoEndTime || 0)
+      this._multiLine = Util.isTrue(json.multiLine || false)
+      this._padding = parseFloat(json.padding || 0)
+      this._resize = json.resize || Constants.NONE
+      this._thumbnail = json.thumbnail || null
+      this._placeholder = json.placeholder || ''
 
-      this._backGroundColor.init(json.backGroundColor);
-      this._font.init(json.font);
-      this._size.init(json.size);
-      this._position.init(json.position);
+      this._backGroundColor.init(json.backGroundColor)
+      this._font.init(json.font)
+      this._size.init(json.size)
+      this._position.init(json.position)
 
-      this._stream_info = json.stream_info;
-      this._operation_seq = json.operation_seq || 0;
-      this._video_name = json.video_name;
+      this._stream_info = json.stream_info
+      this._operation_seq = json.operation_seq || 0
+      this._video_name = json.video_name
 
-      this._isUse = true;
+      this._isUse = true
     }
 
-    return this;
-  };
+    return this
+  }
 
   getStyle = () => {
-    let style = '';
+    let style = ''
     if (this._isUse) {
       if (this._type === Constants.TEXT) {
-        style = this.getTextStyle();
+        style = this.getTextStyle()
       } else if (this._type === Constants.IMAGE) {
-        style = this.getImageStyle();
+        style = this.getImageStyle()
       } else if (this._type === Constants.VIDEO) {
-        style = this.getVideoStyle();
+        style = this.getVideoStyle()
       }
 
-      style += this._backGroundColor.getStyle();
-      style += this._size.getStyle();
-      style += this._position.getStyle();
-      style += ' overflow: hidden;';
+      style += this._backGroundColor.getStyle()
+      style += this._size.getStyle()
+      style += this._position.getStyle()
+      style += ' overflow: hidden;'
     }
-    return style;
-  };
+    return style
+  }
 
   getTextStyle = () => {
-    let style = '';
+    let style = ''
     if (this._multiLine === false) {
-      style += ' white-space: nowrap;';
+      style += ' white-space: nowrap;'
     }
     if (this._padding > 0) {
-      style += ` padding: ${this._padding}px;`;
+      style += ` padding: ${this._padding}px;`
     }
     if (this._font.isUse) {
-      style += this._font.getStyle();
+      style += this._font.getStyle()
     }
 
-    return style;
-  };
+    return style
+  }
 
   getImageStyle = () => {
-    let style = '';
+    let style = ''
     if (this._padding > 0) {
-      style += ` padding: ${this._padding}px;`;
+      style += ` padding: ${this._padding}px;`
     }
     if (this._resize !== Constants.NONE) {
-      style += ` object-fit: ${this._resize};`;
+      style += ` object-fit: ${this._resize};`
     }
 
-    return style;
-  };
+    return style
+  }
 
   getVideoStyle = () => {
-    let style = '';
+    let style = ''
     if (this._resize !== Constants.NONE) {
-      style += ` object-fit: ${this._resize};`;
+      style += ` object-fit: ${this._resize};`
     }
 
-    return style;
-  };
-
-  get isUse() {
-    return this._isUse;
+    return style
   }
 
-  set isUse(value) {
-    this._isUse = value;
+  get isUse () {
+    return this._isUse
   }
 
-  get name() {
-    return this._name;
+  set isUse (value) {
+    this._isUse = value
   }
 
-  set name(value) {
-    this._name = value;
+  get name () {
+    return this._name
   }
 
-  get type() {
-    return this._type;
+  set name (value) {
+    this._name = value
   }
 
-  get src() {
-    return this._src;
-  }
-  set src(value) {
-    this._src = Util.trim(value);
+  get type () {
+    return this._type
   }
 
-  get videoStartTime() {
-    return this._videoStartTime;
-  }
-  set videoStartTime(value) {
-    this._videoStartTime = value;
+  get src () {
+    return this._src
   }
 
-  get videoEndTime() {
-    return this._videoEndTime;
-  }
-  set videoEndTime(value) {
-    this._videoEndTime = value;
+  set src (value) {
+    this._src = Util.trim(value)
   }
 
-  get multiLine() {
-    return this._multiLine;
-  }
-  set multiLine(value) {
-    this._multiLine = value;
+  get videoStartTime () {
+    return this._videoStartTime
   }
 
-  get padding() {
-    return this._padding;
-  }
-  set padding(value) {
-    this._padding = value;
+  set videoStartTime (value) {
+    this._videoStartTime = value
   }
 
-  get resize() {
-    return this._resize;
-  }
-  set resize(value) {
-    this._resize = value;
+  get videoEndTime () {
+    return this._videoEndTime
   }
 
-  get backGroundColor() {
-    return this._backGroundColor;
-  }
-  get font() {
-    return this._font;
-  }
-  get size() {
-    return this._size;
-  }
-  get position() {
-    return this._position;
+  set videoEndTime (value) {
+    this._videoEndTime = value
   }
 
-  get thumbnail() {
-    return this._thumbnail;
-  }
-  set thumbnail(value) {
-    this._thumbnail = value;
+  get multiLine () {
+    return this._multiLine
   }
 
-  get stream_info() {
-    return this._stream_info;
+  set multiLine (value) {
+    this._multiLine = value
   }
 
-  set stream_info(value) {
-    this._stream_info = value;
+  get padding () {
+    return this._padding
   }
 
-  get operation_seq() {
-    return this._operation_seq;
+  set padding (value) {
+    this._padding = value
   }
 
-  set operation_seq(value) {
-    this._operation_seq = value;
+  get resize () {
+    return this._resize
   }
 
-  get placeholder() {
-    return this._placeholder;
+  set resize (value) {
+    this._resize = value
   }
 
-  set placeholder(value) {
-    this._placeholder = value;
+  get backGroundColor () {
+    return this._backGroundColor
   }
 
-  get video_name() {
-    return this._video_name;
+  get font () {
+    return this._font
   }
 
-  set video_name(value) {
-    this._video_name = value;
+  get size () {
+    return this._size
+  }
+
+  get position () {
+    return this._position
+  }
+
+  get thumbnail () {
+    return this._thumbnail
+  }
+
+  set thumbnail (value) {
+    this._thumbnail = value
+  }
+
+  get stream_info () {
+    return this._stream_info
+  }
+
+  set stream_info (value) {
+    this._stream_info = value
+  }
+
+  get operation_seq () {
+    return this._operation_seq
+  }
+
+  set operation_seq (value) {
+    this._operation_seq = value
+  }
+
+  get placeholder () {
+    return this._placeholder
+  }
+
+  set placeholder (value) {
+    this._placeholder = value
+  }
+
+  get video_name () {
+    return this._video_name
+  }
+
+  set video_name (value) {
+    this._video_name = value
   }
 
   toJSON = () => {
-    const json = {};
-    json.type = this._type;
-    json.name = this._name;
-    json.src = this._src;
-    json.videoStartTime = this._videoStartTime;
-    json.videoEndTime = this._videoEndTime;
-    json.multiLine = this._multiLine;
-    json.padding = this._padding;
-    json.resize = this._resize;
-    json.thumbnail = this._thumbnail;
-    json.stream_info = this._stream_info;
-    json.operation_seq = this._operation_seq;
+    const json = {}
+    json.type = this._type
+    json.name = this._name
+    json.src = this._src
+    json.videoStartTime = this._videoStartTime
+    json.videoEndTime = this._videoEndTime
+    json.multiLine = this._multiLine
+    json.padding = this._padding
+    json.resize = this._resize
+    json.thumbnail = this._thumbnail
+    json.stream_info = this._stream_info
+    json.operation_seq = this._operation_seq
 
-    if (this._backGroundColor.isUse) json.backGroundColor = this._backGroundColor.toJSON();
-    if (this._font.isUse) json.font = this._font.toJSON();
-    if (this._size.isUse) json.size = this._size.toJSON();
-    if (this._position.isUse) json.position = this._position.toJSON();
+    if (this._backGroundColor.isUse) json.backGroundColor = this._backGroundColor.toJSON()
+    if (this._font.isUse) json.font = this._font.toJSON()
+    if (this._size.isUse) json.size = this._size.toJSON()
+    if (this._position.isUse) json.position = this._position.toJSON()
 
-    return json;
-  };
+    return json
+  }
 
   getXmlJson = async (scale, options) => {
     const json = {
-      "Type": this._type,
-    };
+      'Type': this._type,
+    }
 
     if (Util.isEmpty(this._src)) {
-      return null;
+      return null
     }
 
     if (this._type === Constants.TEXT) {
@@ -279,28 +289,28 @@ export default class EmbedModel {
       } else {
         json.Src = options.editor_server_download_directory + Util.getFileName(this.video_name)
       }
-      json.VideoStartTime = this._videoStartTime;
-      json.VideoEndTime = this._videoEndTime;
+      json.VideoStartTime = this._videoStartTime
+      json.VideoEndTime = this._videoEndTime
     } else {
-      return null;
+      return null
     }
-    json.Src = Util.urlToPath(json.Src, true);
+    json.Src = Util.urlToPath(json.Src, true)
 
-    json.MultiLine = this._multiLine;
-    json.Padding = Math.round(this._padding * scale);
-    json.Resize = this._resize;
+    json.MultiLine = this._multiLine
+    json.Padding = Math.round(this._padding * scale)
+    json.Resize = this._resize
 
-    if (this._font.isUse) json.Font = this._font.getXmlJson(scale);
-    if (this._backGroundColor.isUse) json.BackGround = this._backGroundColor.getXmlJson();
-    if (this._size.isUse) json.Size = this._size.getXmlJson(scale);
-    if (this._position.isUse) json.Position = this._position.getXmlJson(scale);
+    if (this._font.isUse) json.Font = this._font.getXmlJson(scale)
+    if (this._backGroundColor.isUse) json.BackGround = this._backGroundColor.getXmlJson()
+    if (this._size.isUse) json.Size = this._size.getXmlJson(scale)
+    if (this._position.isUse) json.Position = this._position.getXmlJson(scale)
 
-    return json;
-  };
+    return json
+  }
 
   createTextImage = async (file_path, editor_server_directory, temp_suffix) => {
-    const font_file_name = this._font.bold ? 'NotoSansCJKkr-Medium' : 'NotoSansCJKkr-Regular';
-    const font_name = this._font.bold ? 'Noto Sans CJK KR Medium' : 'Noto Sans CJK KR Regular';
+    const font_file_name = this._font.bold ? 'NotoSansCJKkr-Medium' : 'NotoSansCJKkr-Regular'
+    const font_name = this._font.bold ? 'Noto Sans CJK KR Medium' : 'Noto Sans CJK KR Regular'
     const options = {
       fontSize: this._font.size,
       fontName: font_name,
@@ -316,25 +326,25 @@ export default class EmbedModel {
       localFontPath: process.cwd() + '/' + 'font' + '/' + font_file_name + '.otf',
       startX: this._position.getStartX(),
       startY: this._position.getStartY()
-    };
+    }
 
-    const image_file_path = file_path + temp_suffix + this._id + '.png';
-    const editor_image_file_path = editor_server_directory + temp_suffix + this._id + '.png';
-    const image_info = await text2png(this._src, options);
-    const write_result = await Util.writeFile(image_file_path, image_info.data);
-    log.debug(this.log_prefix, '[createTextImage]', image_file_path, this._id, write_result, editor_image_file_path);
+    const image_file_path = file_path + temp_suffix + this._id + '.png'
+    const editor_image_file_path = editor_server_directory + temp_suffix + this._id + '.png'
+    const image_info = await text2png(this._src, options)
+    const write_result = await Util.writeFile(image_file_path, image_info.data)
+    log.debug(this.log_prefix, '[createTextImage]', image_file_path, this._id, write_result, editor_image_file_path)
 
-    this._type = Constants.IMAGE;
-    this._src = editor_image_file_path;
-    this._multiLine = false;
-    this._padding = 0;
-    this._size.width = image_info.width;
-    this._size.height = image_info.height;
-    this._size.resize = Constants.NONE;
+    this._type = Constants.IMAGE
+    this._src = editor_image_file_path
+    this._multiLine = false
+    this._padding = 0
+    this._size.width = image_info.width
+    this._size.height = image_info.height
+    this._size.resize = Constants.NONE
 
-    this._font.isUse = false;
-    this._backGroundColor.isUse = false;
-    this._size.isUse = true;
-    this._position.isUse = true;
-  };
+    this._font.isUse = false
+    this._backGroundColor.isUse = false
+    this._size.isUse = true
+    this._position.isUse = true
+  }
 }

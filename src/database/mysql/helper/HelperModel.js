@@ -1,13 +1,7 @@
-import _ from 'lodash';
-import ServiceConfig from '../../../service/service-config';
-import Constants from '../../../constants/constants'
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
-import StdObject from '../../../wrapper/std-object'
-import log from "../../../libs/logger";
 
 export default class HelperModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'service_tutorial'
@@ -16,30 +10,30 @@ export default class HelperModel extends MySQLModel {
   }
 
   getHelperList = async () => {
-    return this.find();
-  };
+    return this.find()
+  }
 
   getHelperInfo = async code => {
-    return this.findOne({ code });
-  };
+    return this.findOne({ code })
+  }
 
   getHelperInfo2 = async code => {
-    return this.find(code);
-  };
+    return this.find(code)
+  }
 
   getSearchResult = async keyword => {
     const oKnex = this.database.select('*')
-      .from(this.table_name);
-    oKnex.andWhereRaw('MATCH (search_text) AGAINST (? IN BOOLEAN MODE)', keyword);
+      .from(this.table_name)
+    oKnex.andWhereRaw('MATCH (search_text) AGAINST (? IN BOOLEAN MODE)', keyword)
 
-    return oKnex;
+    return oKnex
   }
 
   createHelper = async saveData => {
-    return this.create(saveData, 'seq');
-  };
+    return this.create(saveData, 'seq')
+  }
 
   updateHelper = async (param, saveData) => {
-    return this.update(param, saveData);
-  };
+    return this.update(param, saveData)
+  }
 }

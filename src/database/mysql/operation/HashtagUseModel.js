@@ -2,7 +2,7 @@ import MySQLModel from '../../mysql-model'
 import log from '../../../libs/logger'
 
 export default class HashtagUseModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'hashtag_use'
@@ -108,17 +108,16 @@ export default class HashtagUseModel extends MySQLModel {
     return query_result[0].affectedRows > 0
   }
 
-
   getGroupHashtagCount = async (group_seq, limit = 10, type = null) => {
     const target_type = this.getTargetType(type)
     const query = this.database
       .select('hashtag.hashtag as tag_name', 'hashtag.seq as tag_seq', this.database.raw('count(*) as use_cnt'))
       .from('hashtag_use')
-      .innerJoin('hashtag', { "hashtag.seq": "hashtag_use.hashtag_seq" })
+      .innerJoin('hashtag', { 'hashtag.seq': 'hashtag_use.hashtag_seq' })
       .where('hashtag_use.group_seq', group_seq)
       .andWhere('hashtag_use.target_type', target_type)
       .groupBy('hashtag.seq')
-      .orderBy("cnt", "DESC")
+      .orderBy('cnt', 'DESC')
     if (limit) {
       query.limit(limit)
     }

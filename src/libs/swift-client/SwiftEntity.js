@@ -49,7 +49,7 @@ class SwiftEntity {
         headers: this.headers(null, null, auth.token)
       }
       if (is_slo === true) {
-        request_params.uri = request_params.uri + '?multipart-manifest=delete';
+        request_params.uri = request_params.uri + '?multipart-manifest=delete'
       }
       return RequestPromise(request_params)
     })

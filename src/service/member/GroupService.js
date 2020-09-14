@@ -1,24 +1,23 @@
 import _ from 'lodash'
-import ServiceConfig from '../../service/service-config';
-import Util from '../../utils/baseutil';
-import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
+import ServiceConfig from '../../service/service-config'
+import Util from '../../utils/baseutil'
+import Role from '../../constants/roles'
+import Constants from '../../constants/constants'
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import MemberService from './MemberService'
 import OperationService from '../operation/OperationService'
 import OperationDataService from '../operation/OperationDataService'
 import SocketManager from '../socket-manager'
-import GroupModel from '../../database/mysql/member/GroupModel';
-import GroupMemberModel from '../../database/mysql/member/GroupMemberModel';
+import GroupModel from '../../database/mysql/member/GroupModel'
+import GroupMemberModel from '../../database/mysql/member/GroupMemberModel'
 import SendMail from '../../libs/send-mail'
 import GroupMailTemplate from '../../template/mail/group.template'
 import VacsService from '../vacs/VacsService'
 import Auth from '../../middlewares/auth.middleware'
-import GroupCountModel from "../../database/mysql/member/GroupCountsModel";
-import ContentCountsModel from "../../database/mysql/member/ContentCountsModel";
-import ProFileService from '../mypage/ProFileService'
+import GroupCountModel from '../../database/mysql/member/GroupCountsModel'
+import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 
 const GroupServiceClass = class {
   constructor () {
@@ -67,7 +66,7 @@ const GroupServiceClass = class {
   }
 
   getBaseInfo = (req, group_seq_from_token = true) => {
-    const token_info = req.token_info;
+    const token_info = req.token_info
     const member_seq = token_info.getId()
     const group_seq = group_seq_from_token ? token_info.getGroupSeq() : req.params.group_seq
 
@@ -87,7 +86,7 @@ const GroupServiceClass = class {
     let group_member_info = null
     let is_active_group_member = false
     let is_group_admin = false
-    if ( token_info.getRole() === Role.ADMIN ) {
+    if (token_info.getRole() === Role.ADMIN) {
       is_active_group_member = true
       is_group_admin = true
       group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
@@ -100,7 +99,7 @@ const GroupServiceClass = class {
         is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
       }
     }
-    if ( !is_active_group_member && throw_exception) {
+    if (!is_active_group_member && throw_exception) {
       throw new StdObject(-1, '권한이 없습니다', 403)
     }
     return {
@@ -160,14 +159,14 @@ const GroupServiceClass = class {
     const content_id = Util.getContentId()
     create_group_info.content_id = content_id
     create_group_info.media_path = `/${root_directory_name}/${content_id}`
-    create_group_info.profile = JSON.stringify({"desc": "", "image": "", "title": ""})
+    create_group_info.profile = JSON.stringify({ 'desc': '', 'image': '', 'title': '' })
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
-    const group_counts_model = this.getGroupCountsModel(database);
-    await group_counts_model.createCounts(group_info.seq);
-    const content_counts_model = this.getContentCountsModel(database);
-    await content_counts_model.createContentCount('all', group_info.seq);
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.createCounts(group_info.seq)
+    const content_counts_model = this.getContentCountsModel(database)
+    await content_counts_model.createContentCount('all', group_info.seq)
     await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
 
     return group_info
@@ -187,7 +186,7 @@ const GroupServiceClass = class {
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
     const group_member_model = this.getGroupMemberModel(database)
     const group_member_list = await group_member_model.getMemberGroupList(member_seq, status)
-    for(let i = 0; i < group_member_list.length; i++) {
+    for (let i = 0; i < group_member_list.length; i++) {
       const group_member_info = group_member_list[i]
       if (group_member_info.profile_image_path) {
         group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
@@ -332,7 +331,7 @@ const GroupServiceClass = class {
 
   getAvailableInviteId = async (database) => {
     const group_member_model = this.getGroupMemberModel(database)
-    let invite_code;
+    let invite_code
     let count = 0
     while (count < 5) {
       invite_code = Util.getRandomString(8).toUpperCase()
@@ -355,7 +354,7 @@ const GroupServiceClass = class {
   inviteGroupMember = (member_info, group_info, email_address, invite_message, service_domain) => {
     (
       async () => {
-        let group_member_seq;
+        let group_member_seq
         const group_seq = group_info.group_seq
         let group_member_info = await this.getGroupMemberInfoByInviteEmail(null, group_seq, email_address)
         if (!group_member_info.isEmpty() && group_member_info.status !== this.MEMBER_STATUS_DISABLE) {
@@ -373,7 +372,7 @@ const GroupServiceClass = class {
         }
 
         const title = `${group_info.group_name}의 ${member_info.user_name}님이 Surgstory에 초대하였습니다.`
-        const encrypt_invite_code = this.encryptInviteCode(invite_code);
+        const encrypt_invite_code = this.encryptInviteCode(invite_code)
         const template_data = {
           service_domain,
           group_name: group_info.group_name,
@@ -384,7 +383,7 @@ const GroupServiceClass = class {
           btn_link_url: `${service_domain}/v2/invite/group/${encrypt_invite_code}`
         }
         const body = GroupMailTemplate.inviteGroupMember(template_data, !invite_message)
-        const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body);
+        const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body)
         log.debug(this.log_prefix, '[inviteGroupMember]', group_member_seq, email_address, title, send_mail_result.toJSON())
         if (send_mail_result.isSuccess() === false) {
           await group_member_model.updateInviteStatus(group_member_seq, 'E', send_mail_result.message)
@@ -396,7 +395,7 @@ const GroupServiceClass = class {
   }
 
   getInviteGroupInfo = async (database, input_invite_code, invite_seq = null, member_seq = null, is_encrypted = false) => {
-    const invite_code = `${is_encrypted ? this.decryptInviteCode(input_invite_code) : input_invite_code}`.toUpperCase();
+    const invite_code = `${is_encrypted ? this.decryptInviteCode(input_invite_code) : input_invite_code}`.toUpperCase()
     const group_member_model = this.getGroupMemberModel(database)
     const group_invite_info = await group_member_model.getGroupInviteInfo(invite_code, invite_seq)
     if (group_invite_info.isEmpty()) {
@@ -411,10 +410,10 @@ const GroupServiceClass = class {
     const group_seq = group_invite_info.group_seq
     const group_name = group_invite_info.group_name
     if (group_invite_info.join_member_seq) {
-      const output = new StdObject();
+      const output = new StdObject()
       if (member_seq) {
         if (group_invite_info.join_member_seq === member_seq) {
-          throw this.getInviteMemberStatusError(group_seq, group_name, group_invite_info.group_member_status);
+          throw this.getInviteMemberStatusError(group_seq, group_name, group_invite_info.group_member_status)
         } else {
           output.error = 11
           output.message = '만료된 초대코드입니다.'
@@ -437,15 +436,15 @@ const GroupServiceClass = class {
       const group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
       log.debug(this.log_prefix, '[getInviteGroupInfo]', member_seq, group_member_info.toJSON())
       if (!group_member_info.isEmpty()) {
-        throw this.getInviteMemberStatusError(group_seq, group_name, group_member_info.group_member_status);
+        throw this.getInviteMemberStatusError(group_seq, group_name, group_member_info.group_member_status)
       }
     }
 
-    return group_invite_info;
+    return group_invite_info
   }
 
   getInviteMemberStatusError = (group_seq, group_name, member_status) => {
-    const output = new StdObject();
+    const output = new StdObject()
     if (member_status === this.MEMBER_STATUS_ENABLE) {
       output.error = 1
       output.message = '이미 가입된 팀입니다.'
@@ -507,7 +506,7 @@ const GroupServiceClass = class {
     this.sendEmail(title, body, [group_member_info.invite_email], 'changeGradeAdmin')
   }
 
-  changeGradeNormal = async (database, group_member_info, group_member_seq ) => {
+  changeGradeNormal = async (database, group_member_info, group_member_seq) => {
     const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
     if (!is_group_admin) {
       throw new StdObject(-1, '권한이 없습니다.', 403)
@@ -524,7 +523,7 @@ const GroupServiceClass = class {
     await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableGroupAdmin', null)
   }
 
-  deleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, is_delete_operation= true) => {
+  deleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, is_delete_operation = true) => {
     const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
     if (!is_group_admin) {
       throw new StdObject(-1, '권한이 없습니다.', 403)
@@ -592,7 +591,7 @@ const GroupServiceClass = class {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
     const group_member_model = this.getGroupMemberModel(database)
-    await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE);
+    await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
 
     const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단 되었습니다.`
     const message_info = {
@@ -617,7 +616,7 @@ const GroupServiceClass = class {
   }
 
   unPauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
-    await this.restoreMemberState(database, group_member_info, group_member_seq);
+    await this.restoreMemberState(database, group_member_info, group_member_seq)
     const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단이 해제 되었습니다.`
     const message_info = {
       title: title,
@@ -642,7 +641,7 @@ const GroupServiceClass = class {
   sendEmail = (title, body, mail_to_list, method = '') => {
     (
       async () => {
-        const send_mail_result = await new SendMail().sendMailHtml(mail_to_list, title, body);
+        const send_mail_result = await new SendMail().sendMailHtml(mail_to_list, title, body)
         log.debug(this.log_prefix, '[sendEmail]', method, send_mail_result)
       }
     )()
@@ -716,8 +715,8 @@ const GroupServiceClass = class {
 
     const member_info = await MemberService.getMemberInfo(database, member_seq)
     let group_info = null
-    await database.transaction(async(transaction) => {
-      const group_model = this.getGroupModel(transaction);
+    await database.transaction(async (transaction) => {
+      const group_model = this.getGroupModel(transaction)
       group_info = await group_model.getGroupInfoByMemberSeqAndGroupType(member_seq, group_type)
       if (group_info && !group_info.isEmpty()) {
         await group_model.changePlan(group_info, payment_info)
@@ -738,7 +737,7 @@ const GroupServiceClass = class {
     }
     await this.onGroupStateChange(group_info.seq, sub_type, null, null, message_info, false)
 
-    return group_info;
+    return group_info
   }
 
   getExpireTimeStamp = (expire_month_code) => {
@@ -791,7 +790,7 @@ const GroupServiceClass = class {
     await this.sendToFrontMulti(user_id_list, data, message_info)
   }
 
-  onGeneralGroupNotice =  async (group_seq, type, action_type = null, sub_type = null, message_info = null, extra_data = null) => {
+  onGeneralGroupNotice = async (group_seq, type, action_type = null, sub_type = null, message_info = null, extra_data = null) => {
     const user_id_list = await this.getActiveGroupMemberSeqList(DBMySQL, group_seq)
     if (!user_id_list || !user_id_list.length) return
     const data = {
@@ -839,105 +838,126 @@ const GroupServiceClass = class {
     for (let i = 0; i < user_list.length; i++) {
       const user_info = user_list[i]
       const member_info = {
-        "seq": user_info.member_seq,
-        "group_seq": user_info.group_seq
+        'seq': user_info.member_seq,
+        'group_seq': user_info.group_seq
       }
       const treat_code = user_info.treatcode ? JSON.parse(user_info.treatcode) : null
-      const token_result = await Auth.getTokenResult(null, member_info, Role.API, true);
+      const token_result = await Auth.getTokenResult(null, member_info, Role.API, true)
       result_list.push({
-        "user_name": user_info.user_name,
-        "user_id": user_info.user_id,
-        "user_token": token_result.get('token'),
-        "course_name": treat_code && treat_code.length > 0 ? treat_code[0].text : ''
-      });
+        'user_name': user_info.user_name,
+        'user_id': user_info.user_id,
+        'user_token': token_result.get('token'),
+        'course_name': treat_code && treat_code.length > 0 ? treat_code[0].text : ''
+      })
     }
     return result_list
   }
 
+  getPersonalGroupUserForBox = async (database, user_id) => {
+    const group_info_model = this.getGroupModel(database)
+    const user_info = await group_info_model.getPersonalGroupUserForBox(user_id)
+    let result = null
+    if (user_info) {
+      const member_info = {
+        'seq': user_info.member_seq,
+        'group_seq': user_info.group_seq
+      }
+      const treat_code = user_info.treatcode ? JSON.parse(user_info.treatcode) : null
+      const token_result = await Auth.getTokenResult(null, member_info, Role.API, true)
+      result = {
+        'user_name': user_info.user_name,
+        'user_id': user_info.user_id,
+        'user_token': token_result.get('token'),
+        'course_name': treat_code && treat_code.length > 0 ? treat_code[0].text : ''
+      }
+    }
+    return result
+  }
+
   getGroupSeqByMemberInfo = async (database, group_seq) => {
-    const group_info_model = this.getGroupModel(database);
+    const group_info_model = this.getGroupModel(database)
     return await group_info_model.getGroupSeqByMemberInfo(group_seq)
   }
 
   getGroupCountsInfo = async (database, group_seq) => {
     try {
-      const group_count_model = this.getGroupCountsModel(database);
+      const group_count_model = this.getGroupCountsModel(database)
       let group_count_info = await group_count_model.getCounts(group_seq)
       if (!group_count_info || !group_count_info.seq) {
         await group_count_model.createCounts(group_seq)
-        group_count_info = await group_count_model.getCounts(group_seq);
+        group_count_info = await group_count_model.getCounts(group_seq)
       }
-      return group_count_info;
+      return group_count_info
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   UpdateGroupInfoAddCnt = async (database, group_seq, field_name) => {
     try {
-      const group_count_model = this.getGroupCountsModel(database);
+      const group_count_model = this.getGroupCountsModel(database)
       const group_count_info = await this.getGroupCountsInfo(database, group_seq)
       return await group_count_model.AddCount(group_count_info.seq, field_name)
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   UpdateGroupInfoMinusCnt = async (database, group_seq, field_name) => {
     try {
-      const group_count_model = this.getGroupCountsModel(database);
+      const group_count_model = this.getGroupCountsModel(database)
       const group_count_info = await this.getGroupCountsInfo(database, group_seq)
       return await group_count_model.MinusCount(group_count_info.seq, field_name)
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   changeGroupProfileImage = async (database, group_member_info, request, response) => {
-    const output = new StdObject(-1, '프로필 업로드 실패');
+    const output = new StdObject(-1, '프로필 업로드 실패')
 
-    const media_root = ServiceConfig.get('media_root');
-    const upload_path = group_member_info.media_path + `/profile`;
-    const upload_full_path = media_root + upload_path;
+    const media_root = ServiceConfig.get('media_root')
+    const upload_path = group_member_info.media_path + `/profile`
+    const upload_full_path = media_root + upload_path
     if (!(await Util.fileExists(upload_full_path))) {
-      await Util.createDirectory(upload_full_path);
+      await Util.createDirectory(upload_full_path)
     }
     try {
-      const new_file_name = Util.getRandomId();
-      await Util.uploadByRequest(request, response, 'profile', upload_full_path, new_file_name);
+      const new_file_name = Util.getRandomId()
+      await Util.uploadByRequest(request, response, 'profile', upload_full_path, new_file_name)
     } catch (e) {
       throw e
     }
-    const upload_file_info = request.file;
+    const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
       throw output
     }
 
-    log.debug(upload_file_info);
-    const origin_image_path = upload_file_info.path;
-    const resize_image_path = `${upload_path}/${Util.getRandomId()}.${Util.getFileExt(upload_file_info.filename)}`;
-    const resize_image_full_path = media_root + resize_image_path;
-    const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400);
+    log.debug(upload_file_info)
+    const origin_image_path = upload_file_info.path
+    const resize_image_path = `${upload_path}/${Util.getRandomId()}.${Util.getFileExt(upload_file_info.filename)}`
+    const resize_image_full_path = media_root + resize_image_path
+    const resize_result = await Util.getThumbnail(origin_image_path, resize_image_full_path, 0, 300, 400)
 
-    await Util.deleteFile(origin_image_path);
+    await Util.deleteFile(origin_image_path)
 
     if (resize_result.success) {
-      const group_model = this.getGroupModel(database);
+      const group_model = this.getGroupModel(database)
       const update_profile_result = await group_model.updateProfileImage(group_member_info.group_seq, resize_image_path)
       if (update_profile_result) {
         if (!Util.isEmpty(group_member_info.profile_image_path)) {
-          await Util.deleteFile(media_root + group_member_info.profile_image_path);
+          await Util.deleteFile(media_root + group_member_info.profile_image_path)
         }
-        output.error = 0;
-        output.message = '';
-        output.add('profile_image_url', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resize_image_path));
-        return output;
+        output.error = 0
+        output.message = ''
+        output.add('profile_image_url', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resize_image_path))
+        return output
       } else {
-        await Util.deleteFile(resize_image_full_path);
-        output.error = -4;
+        await Util.deleteFile(resize_image_full_path)
+        output.error = -4
       }
     } else {
-      output.error = -5;
+      output.error = -5
     }
 
     throw output
@@ -945,14 +965,14 @@ const GroupServiceClass = class {
 
   getGroupInfoToGroupCounts = async (database, group_seq) => {
     try {
-      const group_model = this.getGroupModel(database);
-      const result = await group_model.getGroupInfoToGroupCounts(group_seq);
+      const group_model = this.getGroupModel(database)
+      const result = await group_model.getGroupInfoToGroupCounts(group_seq)
       if (result && result.profile_image_path) {
         result.profile_image_url = ServiceConfig.get('static_storage_prefix') + result.profile_image_path
       }
-      return result;
+      return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -960,20 +980,20 @@ const GroupServiceClass = class {
     try {
       const group_model = this.getGroupModel(database)
       const group_hashtag = await group_model.getGroupInfoHashtag(group_seq)
-      let save_group_hashtag = [];
+      let save_group_hashtag = []
       if (group_hashtag.hashtag === null) {
         _.forEach(hashtag_list, (item) => {
           const json_item = {
             text: item,
             count: 1,
           }
-          save_group_hashtag.push(json_item);
+          save_group_hashtag.push(json_item)
         })
       } else {
         save_group_hashtag = JSON.parse(group_hashtag.hashtag)
         _.forEach(hashtag_list, (item) => {
-          const hashtag_check = _.filter(save_group_hashtag, function(hashtag) {
-            return hashtag.text === item;
+          const hashtag_check = _.filter(save_group_hashtag, function (hashtag) {
+            return hashtag.text === item
           })
           if (hashtag_check.length > 0) {
             const group_hashtag_item = _.find(save_group_hashtag, { text: item })
@@ -983,7 +1003,7 @@ const GroupServiceClass = class {
               text: item,
               count: 1,
             }
-            save_group_hashtag.push(json_item);
+            save_group_hashtag.push(json_item)
           }
         })
       }
@@ -993,7 +1013,7 @@ const GroupServiceClass = class {
         .take(10)
         .value()
 
-      await group_model.updateGroupInfoHashTag(group_seq, sort_by_save_group_hashtag);
+      await group_model.updateGroupInfoHashTag(group_seq, sort_by_save_group_hashtag)
     } catch (e) {
       log.error(this.log_prefix, '[updateGroupInfoHashTag]', e)
     }
@@ -1005,11 +1025,11 @@ const GroupServiceClass = class {
         const group_model = this.getGroupModel(transaction)
         await group_model.changeGroupName(group_seq, group_name)
         await OperationDataService.changeGroupName(transaction, group_seq, group_name)
-      });
+      })
       return true
     } catch (e) {
       log.error(this.log_prefix, '[changeGroupName]', e)
-      throw new StdObject(-2, '그룹명을 변경할 수 없습니다.', 400);
+      throw new StdObject(-2, '그룹명을 변경할 수 없습니다.', 400)
     }
   }
 }

@@ -3,13 +3,13 @@ import JsonWrapper from '../json-wrapper'
 const default_key_list = [
   'seq', 'group_seq', 'folder_name', 'parent_seq', 'parent_folder_list', 'status', 'depth',
   'access_type', 'access_users', 'reg_date', 'modify_date', 'children'
-];
+]
 
 export default class OperationFolderInfo extends JsonWrapper {
-  constructor(data = null, private_keys = []) {
-    super(data, private_keys);
+  constructor (data = null, private_keys = []) {
+    super(data, private_keys)
 
-    this.setKeys(default_key_list);
+    this.setKeys(default_key_list)
 
     if (data.parent_folder_list && typeof data.parent_folder_list === 'string') {
       this.parent_folder_list = JSON.parse(data.parent_folder_list)

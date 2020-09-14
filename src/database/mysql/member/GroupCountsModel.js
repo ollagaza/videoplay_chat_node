@@ -1,13 +1,7 @@
-import _ from 'lodash';
-import ServiceConfig from '../../../service/service-config';
-import Constants from '../../../constants/constants'
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
-import StdObject from '../../../wrapper/std-object'
-import log from "../../../libs/logger";
 
 export default class GroupCountModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'group_counts'
@@ -24,11 +18,11 @@ export default class GroupCountModel extends MySQLModel {
   }
 
   getCounts = async group_seq => {
-    return this.findOne({ group_seq });
+    return this.findOne({ group_seq })
   }
 
   createCounts = async group_seq => {
-    return this.create({ group_seq }, 'seq');
+    return this.create({ group_seq }, 'seq')
   }
 
   AddCount = async (seq, update_field) => {

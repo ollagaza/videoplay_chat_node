@@ -8,13 +8,13 @@ const default_key_list = [
   'type', 'status', 'is_complete', 'mento_group_seq',
   'is_mento_complete', 'is_open_refer_file', 'is_open_video',
   'reg_date', 'modify_date',
-];
+]
 
 export default class OperationFolderInfo extends JsonWrapper {
-  constructor(data = null, private_keys = []) {
-    super(data, private_keys);
+  constructor (data = null, private_keys = []) {
+    super(data, private_keys)
 
-    this.setKeys(default_key_list);
+    this.setKeys(default_key_list)
 
     if (data) {
       if (data.hashtag_list && typeof data.hashtag_list === 'string') {
@@ -34,7 +34,7 @@ export default class OperationFolderInfo extends JsonWrapper {
 
   setUrl = () => {
     if (this.thumbnail) {
-      this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail;
+      this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
     }
   }
 }
