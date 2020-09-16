@@ -182,7 +182,7 @@ const renameFile = async (target_path, dest_path) => {
 }
 
 const copyFile = async (target_path, dest_path) => {
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if (!(await fileExists(target_path))) {
       log.debug(log_prefix, 'Util.renameFile', `file not exists. target_path=${target_path}`)
       resolve(false)
@@ -205,8 +205,34 @@ const copyFile = async (target_path, dest_path) => {
       }
     }
   })
+}
 
-  return await async_func
+const copyDirectory = async (path, dest_path, ignore_error = true) => {
+  const file_list = await getDirectoryFileList(path)
+  let has_error = false
+  const result_list = []
+  for (let i = 0; i < file_list.length; i++) {
+    const file = file_list[i]
+    const file_name = path + '/' + file.name
+    const dest_file_name = dest_path + '/' + file.name
+    if (file.isDirectory()) {
+      await createDirectory(dest_file_name)
+      const copy_directory_result = await copyDirectory(file_name, dest_file_name)
+      result_list.push({ type: 'directory', origin: file_name, dest: dest_file_name, result: copy_directory_result})
+      if (copy_directory_result.has_error) has_error = true
+      if (has_error && !ignore_error) break;
+    } else {
+      const copy_result = await copyFile(file_name, dest_file_name)
+      result_list.push({ type: 'file', origin: file_name, dest: dest_file_name, result: copy_result})
+      if (!copy_result) has_error = true
+      if (has_error && !ignore_error) break;
+    }
+  }
+  log.debug(log_prefix, 'copyDirectory', path, dest_path, has_error, result_list)
+  return {
+    has_error,
+    result_list
+  }
 }
 
 const getFileStat = async (file_path) => {
@@ -1026,6 +1052,7 @@ export default {
   'deleteFile': deleteFile,
   'renameFile': renameFile,
   'copyFile': copyFile,
+  'copyDirectory': copyDirectory,
   'getFileStat': getFileStat,
   'createDirectory': createDirectory,
   'deleteDirectory': deleteDirectory,

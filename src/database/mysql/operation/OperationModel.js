@@ -21,8 +21,12 @@ export default class OperationModel extends MySQLModel {
     this.log_prefix = '[OperationModel]'
   }
 
-  getOperationInfoNoJoin = async (operation_seq) => {
-    return new OperationInfo(await this.findOne({ seq: operation_seq }))
+  getOperationInfoNoJoin = async (operation_seq, wrap_result = true) => {
+    if (wrap_result) {
+      return new OperationInfo(await this.findOne({ seq: operation_seq }))
+    } else {
+      return this.findOne({ seq: operation_seq })
+    }
   }
 
   getOperation = async (where, import_media_info) => {
@@ -155,8 +159,8 @@ export default class OperationModel extends MySQLModel {
     return operation_info
   }
 
-  deleteOperation = async (operation_info) => {
-    await this.delete({ 'seq': operation_info.seq })
+  deleteOperation = async (operation_seq) => {
+    await this.delete({ 'seq': operation_seq })
   }
 
   updateStatusTrash = async (operation_seq_list, member_seq, status) => {
@@ -202,48 +206,11 @@ export default class OperationModel extends MySQLModel {
     })
   }
 
-  createOperationWithGroup = async (operation_info) => {
+  createOperation = async (operation_info) => {
     const operation_seq = await this.create(operation_info, 'seq')
     operation_info.seq = operation_seq
 
     return operation_info
-  }
-
-  copyOperation = async (origin_seq, operation_info, copy_type = null, mento_operation = null) => {
-    const origin_operation = await this.findOne({ seq: origin_seq })
-
-    if (origin_operation) {
-      // origin data setting
-      origin_operation.origin_seq = origin_seq
-      origin_operation.origin_media_path = origin_operation.media_path
-      origin_operation.origin_content_id = origin_operation.content_id
-
-      // new data setting
-      origin_operation.content_id = operation_info.content_id
-      origin_operation.media_path = operation_info.media_path
-      origin_operation.status = operation_info.status
-      origin_operation.folder_seq = operation_info.folder_seq
-      delete origin_operation.seq
-      delete origin_operation.reg_date
-      delete origin_operation.modify_date
-    }
-
-    if (copy_type === 'M' && mento_operation !== null) {
-      origin_operation.operation_code = mento_operation.operation_code
-      origin_operation.operation_date = mento_operation.operation_date
-      origin_operation.operation_name = mento_operation.operation_name
-      origin_operation.operation_type = mento_operation.operation_type
-      origin_operation.folder_seq = mento_operation.folder_seq
-      origin_operation.hour = mento_operation.hour
-      origin_operation.minute = mento_operation.minute
-      origin_operation.patient_age = mento_operation.patient_age
-      origin_operation.patient_sex = mento_operation.patient_sex
-    }
-
-    const operation_seq = await this.create(origin_operation, 'seq')
-    origin_operation.seq = operation_seq
-
-    return origin_operation
   }
 
   isDuplicateOperationCode = async (group_seq, member_seq, operation_code) => {

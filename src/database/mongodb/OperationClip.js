@@ -121,7 +121,7 @@ operation_clip_schema.statics.createPhase = function (operation_info, phase_desc
   return model.save()
 }
 
-operation_clip_schema.statics.copyPhase = function (operation_clip_list, operation_info) {
+operation_clip_schema.statics.copyClipList = function (operation_clip_list, operation_info) {
   const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
 
   if (operation_clip_list) {
