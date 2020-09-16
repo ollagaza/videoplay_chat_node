@@ -84,7 +84,7 @@ const OperationDataServiceClass = class {
     delete operation_data_info.reg_date
     delete operation_data_info.modify_date
     operation_data_info.operation_seq = operation_info.seq
-    operation_data_info.type = type
+    operation_data_info.type = (type === null ? 'N' : type)
 
     if (type === 'M' && mento_operation_data !== null) {
       operation_data_info.category_list = mento_operation_data.category_list
@@ -103,7 +103,7 @@ const OperationDataServiceClass = class {
     await this.setOperationDataInfo(operation_data_info, operation_info)
     const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
 
-    this.updateHashtag(operation_data_seq, operation_data_info.group_seq, mento_operation_data.hashtag)
+    this.updateHashtag(operation_data_seq, operation_data_info.group_seq, mento_operation_data !== null ? mento_operation_data.hashtag : operation_data_info.hashtag_list)
 
     return operation_data_seq
   }
