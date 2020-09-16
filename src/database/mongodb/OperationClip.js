@@ -123,7 +123,6 @@ operation_clip_schema.statics.createPhase = function (operation_info, phase_desc
 
 operation_clip_schema.statics.copyPhase = function (operation_clip_list, operation_info) {
   const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
-  const copy_clip = []
 
   if (operation_clip_list) {
     for (let cnt = 0; cnt < operation_clip_list.length; cnt++) {

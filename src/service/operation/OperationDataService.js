@@ -77,20 +77,12 @@ const OperationDataServiceClass = class {
     }
     const operation_data_model = this.getOperationDataModel()
     const origin_operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_info.origin_seq)
-    const operation_data_info = new OperationDataInfo(origin_operation_data).setIgnoreEmpty(true).toJSON()
+    const operation_data_info = origin_operation_data.toJSON()
 
     delete operation_data_info.seq
     delete operation_data_info.view_count
     delete operation_data_info.reg_date
     delete operation_data_info.modify_date
-    // json_wraper가 왜 안빠지는지 모르겠음....
-    delete operation_data_info.json_keys
-    delete operation_data_info.private_key_map
-    delete operation_data_info.is_empty
-    delete operation_data_info.auto_trim
-    delete operation_data_info.ignore_empty
-    delete operation_data_info.export_xml
-    delete operation_data_info.thorw_exception
     operation_data_info.operation_seq = operation_info.seq
     operation_data_info.type = type
 
