@@ -1,6 +1,6 @@
 import Util from '../../utils/baseutil'
 import DBMySQL from '../../database/knex-mysql'
-import log from "../../libs/logger";
+import log from '../../libs/logger'
 
 import GroupService from '../member/GroupService'
 import HashtagModel from '../../database/mysql/operation/HashtagModel'
@@ -34,7 +34,7 @@ const HashtagServiceClass = class {
     const hashtag_model = this.getHashtagModel(DBMySQL)
     const tag_seq_list = await hashtag_model.createHashtagList(hashtag_list)
 
-    await DBMySQL.transaction(async(transaction) => {
+    await DBMySQL.transaction(async (transaction) => {
       const hashtag_use_model = this.getHashtagUseModel(transaction)
       await hashtag_use_model.deleteUnUseTagList(tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
       await hashtag_use_model.updateHashtagUseList(group_seq, tag_seq_list, operation_data_seq, hashtag_use_model.TYPE_OPERATION_DATA)
@@ -55,12 +55,12 @@ const HashtagServiceClass = class {
   }
   getSearchHashtag = async (database, sSearch) => {
     try {
-      const hashtag_model = this.getHashtagModel(database);
-      const hashtag_search_result = await hashtag_model.getSearchHashtag(sSearch);
+      const hashtag_model = this.getHashtagModel(database)
+      const hashtag_search_result = await hashtag_model.getSearchHashtag(sSearch)
 
-      return hashtag_search_result;
+      return hashtag_search_result
     } catch (error) {
-      log.error(this.log_prefix, '[getSearchHashtag]', error);
+      log.error(this.log_prefix, '[getSearchHashtag]', error)
     }
   }
 }

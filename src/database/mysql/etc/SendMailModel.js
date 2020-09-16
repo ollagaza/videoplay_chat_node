@@ -1,12 +1,7 @@
-import _ from 'lodash';
-import ServiceConfig from '../../../service/service-config';
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
-import StdObject from '../../../wrapper/std-object'
-import log from "../../../libs/logger";
 
 export default class SendMailModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'sendmail'
@@ -15,6 +10,6 @@ export default class SendMailModel extends MySQLModel {
   }
 
   createSendMail = async (sendmail_data) => {
-    return await this.create(sendmail_data, 'seq');
+    return await this.create(sendmail_data, 'seq')
   }
 }

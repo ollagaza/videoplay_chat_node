@@ -182,23 +182,22 @@ const getServiceDomain = (req) => {
 }
 
 const getMachineTokenResult = async (machine_info) => {
-  machine_info.role = Role.BOX;
+  machine_info.role = Role.BOX
   const token_result = await generateTokenByMemberInfo(machine_info, true)
 
-  const output = new StdObject();
+  const output = new StdObject()
   if (token_result != null && token_result.token != null) {
-    output.add("token", `Bearer ${token_result.token}`)
+    output.add('token', `Bearer ${token_result.token}`)
     output.add('expire', token_result.expire)
     output.add('group_seq', machine_info.group_seq)
-  }
-  else {
-    output.setError(-1);
-    output.setMessage("인증토큰 생성 실패");
-    output.httpStatusCode = 500;
+  } else {
+    output.setError(-1)
+    output.setMessage('인증토큰 생성 실패')
+    output.httpStatusCode = 500
   }
 
-  return output;
-};
+  return output
+}
 
 export default {
   'setResponseHeader': setResponseHeader,

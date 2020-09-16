@@ -1,4 +1,4 @@
-import formatter from "string-template";
+import formatter from 'string-template'
 
 const invite_group_form = `
 <html>
@@ -64,7 +64,7 @@ const invite_group_form = `
 </table>
 </body>
 </html>
-`;
+`
 
 const invite_group_form_no_comment = `
 <html>
@@ -125,7 +125,7 @@ const invite_group_form_no_comment = `
 </table>
 </body>
 </html>
-`;
+`
 
 const group_grade_admin_form = `
 <html>
@@ -175,7 +175,7 @@ const group_grade_admin_form = `
 </table>
 </body>
 </html>
-`;
+`
 
 const group_pause_form = `
 <html>
@@ -396,25 +396,25 @@ const group_un_delete_form = `
 `
 
 export default {
-  "inviteGroupMember": (template_data={}, no_comment = false) => {
+  'inviteGroupMember': (template_data = {}, no_comment = false) => {
     if (no_comment) {
-      return formatter(invite_group_form_no_comment, template_data);
+      return formatter(invite_group_form_no_comment, template_data)
     }
-    return formatter(invite_group_form, template_data);
+    return formatter(invite_group_form, template_data)
   },
-  "groupAdmin": (template_data={}) => {
-    return formatter(group_grade_admin_form, template_data);
+  'groupAdmin': (template_data = {}) => {
+    return formatter(group_grade_admin_form, template_data)
   },
-  "pauseGroupMember": (template_data={}) => {
-    return formatter(group_pause_form, template_data);
+  'pauseGroupMember': (template_data = {}) => {
+    return formatter(group_pause_form, template_data)
   },
-  "unPauseGroupMember": (template_data={}) => {
-    return formatter(group_un_pause_form, template_data);
+  'unPauseGroupMember': (template_data = {}) => {
+    return formatter(group_un_pause_form, template_data)
   },
-  "deleteGroupMember": (template_data={}) => {
-    return formatter(group_delete_form, template_data);
+  'deleteGroupMember': (template_data = {}) => {
+    return formatter(group_delete_form, template_data)
   },
-  "unDeleteGroupMember": (template_data={}) => {
-    return formatter(group_un_delete_form, template_data);
+  'unDeleteGroupMember': (template_data = {}) => {
+    return formatter(group_un_delete_form, template_data)
   }
-};
+}

@@ -1,9 +1,7 @@
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import Util from '../../utils/baseutil'
-import ServiceConfig from '../service-config'
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
-import MigrationModel from "../../database/mysql/Migrations/MigrationModel";
+import MigrationModel from '../../database/mysql/Migrations/MigrationModel'
 
 const MigrationServiceClass = class {
   constructor () {
@@ -22,11 +20,11 @@ const MigrationServiceClass = class {
 
     log.debug(this.log_prefix, '[Start setGroupCounts Migration]')
 
-    const migration_model = this.getMigrationModel(DBMySQL);
-    const group_counts = await migration_model.createGroupCounts();
+    const migration_model = this.getMigrationModel(DBMySQL)
+    const group_counts = await migration_model.createGroupCounts()
     output.add('Group_Counts', group_counts[0].message)
 
-    const content_counts = await migration_model.createContentCounts();
+    const content_counts = await migration_model.createContentCounts()
     output.add('Content_Counts', content_counts[0].message)
 
     log.debug(this.log_prefix, '[End setGroupCounts Migration]')

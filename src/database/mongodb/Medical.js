@@ -1,17 +1,17 @@
-import mongoose from 'mongoose';
-import Medaical_BasicData from '../../data/Mongo_Medicals_Data';
+import mongoose from 'mongoose'
+import Medaical_BasicData from '../../data/Mongo_Medicals_Data'
 
-const Schema = mongoose.Schema;
+const Schema = mongoose.Schema
 
 const getFieldInfos = () => {
   return {
     codes: { type: Object, index: true, require: false, unique: true }
-  };
-};
+  }
+}
 
-const schema_field_infos = getFieldInfos();
+const schema_field_infos = getFieldInfos()
 
-const medical_schema = new Schema(schema_field_infos, { strict: false });
+const medical_schema = new Schema(schema_field_infos, { strict: false })
 
 medical_schema.statics.InsertDefaultData = function (medical) {
   if (!medical || !medical._id) {
@@ -19,15 +19,15 @@ medical_schema.statics.InsertDefaultData = function (medical) {
     return model.save()
   }
   if (!medical.version || medical.version < Medaical_BasicData.version) {
-    return this.updateOne({ _id: medical._id }, Medaical_BasicData);
+    return this.updateOne({ _id: medical._id }, Medaical_BasicData)
   }
-};
+}
 
 medical_schema.statics.findAll = function () {
-  return this.find({});
-};
+  return this.find({})
+}
 
-const medical_model = mongoose.model( 'medical', medical_schema );
+const medical_model = mongoose.model('medical', medical_schema)
 
-export const MedicalModel = medical_model;
-export const MedicalField = getFieldInfos;
+export const MedicalModel = medical_model
+export const MedicalField = getFieldInfos

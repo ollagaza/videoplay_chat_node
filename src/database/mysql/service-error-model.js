@@ -17,7 +17,15 @@ export default class ServiceErrorModel extends MySQLModel {
     const request_url = request ? request.originalUrl : null
     const request_method = request ? request.method : null
     const request_body = request ? JSON.stringify(request.body) : null
-    const error_info = new ServiceErrorInfo({ error_type, operation_seq, content_id, message, request_url, request_method, request_body })
+    const error_info = new ServiceErrorInfo({
+      error_type,
+      operation_seq,
+      content_id,
+      message,
+      request_url,
+      request_method,
+      request_body
+    })
     const create_info = error_info.toJSON()
     await this.create(create_info, 'seq')
 

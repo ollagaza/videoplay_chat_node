@@ -1,8 +1,7 @@
 import MySQLModel from '../../mysql-model'
-import log from '../../../libs/logger'
 
 export default class HashtagModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'hashtag'
@@ -42,7 +41,7 @@ export default class HashtagModel extends MySQLModel {
         .where('hashtag.hashtag', 'like', `%${sSearch}%`)
       return query
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 }

@@ -1,11 +1,8 @@
 import DBMySQL from '../../database/knex-mysql'
-import ServiceConfig from '../../service/service-config';
-import Role from '../../constants/roles'
 import Util from '../../utils/baseutil'
-import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 
-import { OperationClipModel } from '../../database/mongodb/OperationClip';
+import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 
 const OperationClipServiceClass = class {
@@ -16,7 +13,7 @@ const OperationClipServiceClass = class {
   updateClipCount = async (operation_info, clip_count) => {
     try {
       clip_count = Util.parseInt(clip_count, 0)
-      await new OperationStorageModel(DBMySQL).updateClipCount(operation_info.storage_seq, clip_count);
+      await new OperationStorageModel(DBMySQL).updateClipCount(operation_info.storage_seq, clip_count)
     } catch (error) {
       log.error(this.log_prefix, '[updateClipCount]', error)
     }
@@ -25,7 +22,7 @@ const OperationClipServiceClass = class {
   createClip = async (operation_info, request_body) => {
     const clip_info = request_body.clip_info
     const clip_count = request_body.clip_count
-    const create_result = await OperationClipModel.createOperationClip(operation_info, clip_info);
+    const create_result = await OperationClipModel.createOperationClip(operation_info, clip_info)
 
     await this.updateClipCount(operation_info, clip_count)
 
@@ -33,17 +30,17 @@ const OperationClipServiceClass = class {
   }
 
   updateClip = async (clip_id, clip_info, tag_list = null) => {
-    return await OperationClipModel.updateOperationClip(clip_id, clip_info, tag_list);
+    return await OperationClipModel.updateOperationClip(clip_id, clip_info, tag_list)
   }
 
   deleteById = async (clip_id, operation_info, request_body) => {
-    const delete_result = await OperationClipModel.deleteById(clip_id);
+    const delete_result = await OperationClipModel.deleteById(clip_id)
 
     const clip_count = request_body.clip_count
     await this.updateClipCount(operation_info, clip_count)
 
     if (request_body.remove_phase === true) {
-      await this.deletePhase(operation_info.seq, request_body.phase_id);
+      await this.deletePhase(operation_info.seq, request_body.phase_id)
     }
 
     return delete_result
@@ -63,8 +60,8 @@ const OperationClipServiceClass = class {
 
   createPhase = async (operation_info, request_body) => {
     const phase_info = await OperationClipModel.createPhase(operation_info, request_body.phase_desc)
-    const phase_id = phase_info._id;
-    await this.setPhase(phase_id, request_body);
+    const phase_id = phase_info._id
+    await this.setPhase(phase_id, request_body)
     return {
       phase_info,
       phase_id
@@ -96,7 +93,7 @@ const OperationClipServiceClass = class {
     const result = await OperationClipModel.unsetPhaseOne(clip_id, operation_seq, phase_id)
 
     if (request_body.remove_phase === true) {
-      await this.deletePhase(operation_seq, phase_id);
+      await this.deletePhase(operation_seq, phase_id)
     }
     return result
   }

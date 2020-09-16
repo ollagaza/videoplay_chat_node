@@ -1,9 +1,8 @@
 import MySQLModel from '../../mysql-model'
-import log from "../../../libs/logger";
-import StdObject from "../../../wrapper/std-object";
+import StdObject from '../../../wrapper/std-object'
 
 export default class MessageModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'message'
@@ -11,7 +10,7 @@ export default class MessageModel extends MySQLModel {
     this.log_prefix = '[MessageModel]'
   }
 
-  getReceiveCount = async(group_seq) => {
+  getReceiveCount = async (group_seq) => {
     return await this.getTotalCount({ receive_seq: group_seq, is_view: 0 })
   }
 
@@ -21,25 +20,25 @@ export default class MessageModel extends MySQLModel {
       'group_info.group_name',
       'member.user_id',
       'member.hospname',
-      ];
-    const oKnex = this.database.select(select_fields);
-    oKnex.from(this.table_name);
-    oKnex.innerJoin('group_info', `${this.table_name}.send_seq`, 'group_info.seq');
-    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq');
+    ]
+    const oKnex = this.database.select(select_fields)
+    oKnex.from(this.table_name)
+    oKnex.innerJoin('group_info', `${this.table_name}.send_seq`, 'group_info.seq')
+    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq')
     if (filters.query !== undefined) {
-      await this.queryWhere(oKnex, filters.query);
+      await this.queryWhere(oKnex, filters.query)
     }
     if (filters.order !== undefined) {
-      oKnex.orderBy(`${this.table_name}.${filters.order.name}`, filters.order.direction);
+      oKnex.orderBy(`${this.table_name}.${filters.order.name}`, filters.order.direction)
     } else {
-      oKnex.orderBy(`${this.table_name}.regist_date`,'desc');
+      oKnex.orderBy(`${this.table_name}.regist_date`, 'desc')
     }
 
-    const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging);
+    const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging)
     if (!results.data || results.data.length === 0) {
-      throw new StdObject(-1, '받은 쪽지가 없습니다.', 400);
+      throw new StdObject(-1, '받은 쪽지가 없습니다.', 400)
     }
-    return results;
+    return results
   }
 
   getSendList = async (filters, page_navigation) => {
@@ -48,25 +47,25 @@ export default class MessageModel extends MySQLModel {
       'group_info.group_name',
       'member.user_id',
       'member.hospname',
-    ];
-    const oKnex = this.database.select(select_fields);
-    oKnex.from(this.table_name);
-    oKnex.innerJoin('group_info', `${this.table_name}.receive_seq`, 'group_info.seq');
-    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq');
+    ]
+    const oKnex = this.database.select(select_fields)
+    oKnex.from(this.table_name)
+    oKnex.innerJoin('group_info', `${this.table_name}.receive_seq`, 'group_info.seq')
+    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq')
     if (filters.query !== undefined) {
-      await this.queryWhere(oKnex, filters.query);
+      await this.queryWhere(oKnex, filters.query)
     }
     if (filters.order !== undefined) {
-      oKnex.orderBy(`${this.table_name}.${filters.order.name}`, filters.order.direction);
+      oKnex.orderBy(`${this.table_name}.${filters.order.name}`, filters.order.direction)
     } else {
-      oKnex.orderBy(`${this.table_name}.regist_date`,'desc');
+      oKnex.orderBy(`${this.table_name}.regist_date`, 'desc')
     }
 
-    const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging);
+    const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging)
     if (!results.data || results.data.length === 0) {
-      throw new StdObject(-1, '보낸 쪽지가 없습니다.', 400);
+      throw new StdObject(-1, '보낸 쪽지가 없습니다.', 400)
     }
-    return results;
+    return results
   }
 
   setViewMessage = async (seq) => {

@@ -1,17 +1,12 @@
-import _ from 'lodash'
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import MentoringModel from "../../database/mysql/mentoring/MentoringModel";
-import ContentCountsModel from "../../database/mysql/member/ContentCountsModel";
-import baseutil from "../../utils/baseutil";
-import MongoDataService from "../common/MongoDataService";
+import DBMySQL from '../../database/knex-mysql'
+import MentoringModel from '../../database/mysql/mentoring/MentoringModel'
 
 const MentoringAdminServiceClass = class {
-  constructor() {
+  constructor () {
     this.log_prefix = '[MentoringServiceClass]'
   }
 
-  getMentoring_Model  = (database = null) => {
+  getMentoring_Model = (database = null) => {
     if (database) {
       return new MentoringModel(database)
     }
@@ -20,21 +15,21 @@ const MentoringAdminServiceClass = class {
 
   getCategoryForBestMentos = async (database, category_code) => {
     try {
-      const database_model = this.getMentoring_Model(database);
-      const result = database_model.getCategoryForBestMentos_withAdmin(category_code);
+      const database_model = this.getMentoring_Model(database)
+      const result = database_model.getCategoryForBestMentos_withAdmin(category_code)
       return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   getAllMentoList = async (database, search_keyword, page_navigation, category_code) => {
     try {
-      const database_model = this.getMentoring_Model(database);
-      const result = database_model.getAllMentoList_withAdmin(search_keyword, page_navigation, category_code);
+      const database_model = this.getMentoring_Model(database)
+      const result = database_model.getAllMentoList_withAdmin(search_keyword, page_navigation, category_code)
       return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -44,7 +39,7 @@ const MentoringAdminServiceClass = class {
       const result = database_model.rtnBestMento(category_code, best_num)
       return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -61,7 +56,7 @@ const MentoringAdminServiceClass = class {
       }
       return result
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 }

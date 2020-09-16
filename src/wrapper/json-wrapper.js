@@ -64,12 +64,12 @@ export default class JsonWrapper {
   }
 
   addPrivateKey = (key) => {
-    this.private_key_map[key] = true;
+    this.private_key_map[key] = true
     return this
   }
 
   removePrivateKey = (key) => {
-    this.private_key_map[key] = false;
+    this.private_key_map[key] = false
     return this
   }
 

@@ -11,10 +11,10 @@ const SocketManagerClass = class extends EventEmitter {
     this.log_prefix = '[SocketManager]'
   }
 
-  init = async() => {
-    this.uId = Util.getContentId();
-    this.ip = ServiceConfig.get('socket_relay_server_ip');
-    this.port = ServiceConfig.get('socket_relay_server_port');
+  init = async () => {
+    this.uId = Util.getContentId()
+    this.ip = ServiceConfig.get('socket_relay_server_ip')
+    this.port = ServiceConfig.get('socket_relay_server_port')
     log.debug(this.log_prefix, `[init]`, `connect to ${this.ip}:${this.port}/backend`)
     this.socket = io(`${this.ip}:${this.port}/backend`, {
       path: '/',
@@ -30,31 +30,31 @@ const SocketManagerClass = class extends EventEmitter {
     })
 
     this.socket.on('connect', () => {
-      log.debug(this.log_prefix, '[connect]', 'Connect socket.id : ', this.socket.id);
+      log.debug(this.log_prefix, '[connect]', 'Connect socket.id : ', this.socket.id)
     })
 
     this.socket.on('disconnet', () => {
-      log.debug(this.log_prefix, '[disconnet]', 'Disconnect socket.id : ', this.socket.id);
+      log.debug(this.log_prefix, '[disconnet]', 'Disconnect socket.id : ', this.socket.id)
     })
 
     this.socket.on('reconnect', (attemptNumber) => {
-      log.debug(this.log_prefix, '[reconnect]', 'reconnect attemptNum:', attemptNumber, ' Socket ID:', this.socket.id);
+      log.debug(this.log_prefix, '[reconnect]', 'reconnect attemptNum:', attemptNumber, ' Socket ID:', this.socket.id)
     })
 
     this.socket.on('reconnecting', (attemptNumber) => {
-      log.debug(this.log_prefix, '[reconnecting]', 'reconnecting attemptNum:', attemptNumber, ' Socket ID:', this.socket.id);
+      log.debug(this.log_prefix, '[reconnecting]', 'reconnecting attemptNum:', attemptNumber, ' Socket ID:', this.socket.id)
     })
 
     this.socket.on('reconnect_error', (error) => {
-      log.debug(this.log_prefix, '[reconnect_error]', 'Reconnect Error:', error);
+      log.debug(this.log_prefix, '[reconnect_error]', 'Reconnect Error:', error)
     })
 
     this.socket.on('error', (error) => {
-      log.debug(this.log_prefix, '[error]', 'Error:', error);
+      log.debug(this.log_prefix, '[error]', 'Error:', error)
     })
 
     this.socket.on('connect_error', (error) => {
-      log.debug(this.log_prefix, '[connect_error]', 'Connect Error:', error);
+      log.debug(this.log_prefix, '[connect_error]', 'Connect Error:', error)
     })
 
     this.socket.on('status', this.onStatus)
@@ -74,7 +74,7 @@ const SocketManagerClass = class extends EventEmitter {
 
   onStatus = async () => {
     // log.debug(this.log_prefix, '[onStatus]', this.socket.id );
-    this.socket.emit('status', this.uId);
+    this.socket.emit('status', this.uId)
   }
 
   onReloadServiceConfig = async () => {
@@ -87,15 +87,15 @@ const SocketManagerClass = class extends EventEmitter {
   }
 
   sendToFrontOne = async (member_seq, data = null) => {
-    this.socket.emit('sendFrontMsg', member_seq, data);
+    this.socket.emit('sendFrontMsg', member_seq, data)
   }
 
   sendToFrontMulti = async (user_id_list, data = null) => {
-    this.socket.emit('sendFrontMsgMulti', user_id_list, data);
+    this.socket.emit('sendFrontMsgMulti', user_id_list, data)
   }
 
   sendToFrontAll = async (data) => {
-    this.socket.emit('sendFrontGloMsg', data);
+    this.socket.emit('sendFrontGloMsg', data)
   }
 }
 

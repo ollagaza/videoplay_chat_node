@@ -2,7 +2,7 @@ import MySQLModel from '../../mysql-model'
 import OperationDataInfo from '../../../wrapper/operation/OperationDataInfo'
 
 export default class OperationDataModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'operation_data'
@@ -29,8 +29,6 @@ export default class OperationDataModel extends MySQLModel {
     return operation_data
   }
 
-
-
   createOperationData = async (operation_data) => {
     return await this.create(this.getOperationDataPrams(operation_data, true), 'seq')
   }
@@ -44,8 +42,8 @@ export default class OperationDataModel extends MySQLModel {
   }
 
   updateOperationDataByOperationSeqList = async (operation_seq_list, operation_data) => {
-    return await this.updateIn("operation_seq", operation_seq_list, this.getOperationDataPrams(operation_data));
-  };
+    return await this.updateIn('operation_seq', operation_seq_list, this.getOperationDataPrams(operation_data))
+  }
 
   getOperationData = async (operation_data_seq) => {
     const result = await this.findOne({ seq: operation_data_seq })
@@ -103,7 +101,7 @@ export default class OperationDataModel extends MySQLModel {
       }
       return await this.update(filter, update_params)
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -139,10 +137,10 @@ export default class OperationDataModel extends MySQLModel {
           .andWhere('operation_data.status', 'Y')
           .andWhere('operation_data.is_open_video', '1')
       })
-      .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
+      .orderBy([{ column: 'operation_data.reg_date', order: 'desc' }])
     if (limit) {
-      oKnex.limit(limit);
+      oKnex.limit(limit)
     }
-    return oKnex;
+    return oKnex
   }
 }

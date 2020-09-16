@@ -1,13 +1,10 @@
-import _ from 'lodash';
-import path from 'path';
-import fs from 'fs';
-import Constants from '../../constants/constants';
+import _ from 'lodash'
+import fs from 'fs'
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
 
-
-const seq_exp = new RegExp(/\\/, 'g');
+const seq_exp = new RegExp(/\\/, 'g')
 
 /**
  * @swagger
@@ -38,97 +35,97 @@ const seq_exp = new RegExp(/\\/, 'g');
  */
 
 export default class IndexInfo extends JsonWrapper {
-  constructor(data = null, private_keys = []) {
-    super(data, private_keys);
-    this.setKeys(['unique_id', 'creator', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'start_frame', 'end_frame', 'tags']);
+  constructor (data = null, private_keys = []) {
+    super(data, private_keys)
+    this.setKeys(['unique_id', 'creator', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'start_frame', 'end_frame', 'tags'])
   }
 
   getFromXML = (index_xml_info) => {
     if (!index_xml_info) {
-      return this;
+      return this
     }
 
     if (_.isArray(index_xml_info)) {
-      index_xml_info = index_xml_info[0];
+      index_xml_info = index_xml_info[0]
     }
 
-    this.original_url = Util.getXmlText(index_xml_info.Original);
-    this.thumbnail_url = Util.getXmlText(index_xml_info.Thumbnail);
-    this.creator = index_xml_info.$.Creator;
-    this.unique_id = index_xml_info.$.ID;
-    this.start_time = Util.parseFloat(index_xml_info.$.Time);
-    this.start_frame = Util.parseFloat(index_xml_info.$.Frame);
-    this.end_time = 0;
-    this.end_frame = 0;
-    this.is_range = false;
+    this.original_url = Util.getXmlText(index_xml_info.Original)
+    this.thumbnail_url = Util.getXmlText(index_xml_info.Thumbnail)
+    this.creator = index_xml_info.$.Creator
+    this.unique_id = index_xml_info.$.ID
+    this.start_time = Util.parseFloat(index_xml_info.$.Time)
+    this.start_frame = Util.parseFloat(index_xml_info.$.Frame)
+    this.end_time = 0
+    this.end_frame = 0
+    this.is_range = false
 
-    this.is_empty = false;
+    this.is_empty = false
 
-    return this;
-  };
+    return this
+  }
 
-  getFromHawkeyeXML = async (hawkeye_xml_info, check_file_exists=true) => {
+  getFromHawkeyeXML = async (hawkeye_xml_info, check_file_exists = true) => {
     // log.d(null, hawkeye_xml_info);
     if (!hawkeye_xml_info) {
-      return this;
+      return this
     }
 
     if (_.isArray(hawkeye_xml_info)) {
-      hawkeye_xml_info = hawkeye_xml_info[0];
+      hawkeye_xml_info = hawkeye_xml_info[0]
     }
 
-    const service_info = ServiceConfig.getServiceInfo();
-    const hawkeye_root_regex = new RegExp(`^.*${service_info.hwakeye_index_directory_root}`, 'i');
-    const index_directory = service_info.hawkeye_data_directory;
+    const service_info = ServiceConfig.getServiceInfo()
+    const hawkeye_root_regex = new RegExp(`^.*${service_info.hwakeye_index_directory_root}`, 'i')
+    const index_directory = service_info.hawkeye_data_directory
 
-    let origin_file = Util.getXmlText(hawkeye_xml_info.orithumb).replace(hawkeye_root_regex, '');
-    let thumb_file = Util.getXmlText(hawkeye_xml_info.thumb).replace(hawkeye_root_regex, '');
-    origin_file = origin_file.replace(seq_exp, '/');
-    thumb_file = thumb_file.replace(seq_exp, '/');
-    const image_file_name = Util.getFileName(origin_file);
+    let origin_file = Util.getXmlText(hawkeye_xml_info.orithumb).replace(hawkeye_root_regex, '')
+    let thumb_file = Util.getXmlText(hawkeye_xml_info.thumb).replace(hawkeye_root_regex, '')
+    origin_file = origin_file.replace(seq_exp, '/')
+    thumb_file = thumb_file.replace(seq_exp, '/')
+    const image_file_name = Util.getFileName(origin_file)
 
     if (check_file_exists) {
-      if ( !( await Util.fileExists(index_directory + origin_file, fs.constants.R_OK) ) || !( await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK) ) ) {
-        return this;
+      if (!(await Util.fileExists(index_directory + origin_file, fs.constants.R_OK)) || !(await Util.fileExists(index_directory + thumb_file, fs.constants.R_OK))) {
+        return this
       }
     }
 
-    const frame = Util.getXmlText(hawkeye_xml_info.frame).split('-');
-    const time = Util.getXmlText(hawkeye_xml_info.time).split('-');
+    const frame = Util.getXmlText(hawkeye_xml_info.frame).split('-')
+    const time = Util.getXmlText(hawkeye_xml_info.time).split('-')
 
-    this.is_range = frame.length > 1;
-    this.start_frame = Util.parseFloat(frame[0], 0);
-    this.end_frame = Util.parseFloat(frame[1], 0);
-    this.start_time = Util.parseFloat(time[0], 0);
-    this.end_time = Util.parseFloat(time[1], 0);
+    this.is_range = frame.length > 1
+    this.start_frame = Util.parseFloat(frame[0], 0)
+    this.end_frame = Util.parseFloat(frame[1], 0)
+    this.start_time = Util.parseFloat(time[0], 0)
+    this.end_time = Util.parseFloat(time[1], 0)
 
-    this.original_url = service_info.static_index_prefix + origin_file;
-    this.thumbnail_url = service_info.static_index_prefix + thumb_file;
-    this.creator = "system";
-    this.unique_id = "system/" + image_file_name;
-    const code = Util.getXmlText(hawkeye_xml_info.type);
-    this.code = code;
-    this.errorid = Util.getXmlText(hawkeye_xml_info.errorid);
-    this.state = Util.getXmlText(hawkeye_xml_info.state);
-    this.tags = [code];
-    this.tag_map = {};
-    this.tag_map[code] = true;
+    this.original_url = service_info.static_index_prefix + origin_file
+    this.thumbnail_url = service_info.static_index_prefix + thumb_file
+    this.creator = 'system'
+    this.unique_id = 'system/' + image_file_name
+    const code = Util.getXmlText(hawkeye_xml_info.type)
+    this.code = code
+    this.errorid = Util.getXmlText(hawkeye_xml_info.errorid)
+    this.state = Util.getXmlText(hawkeye_xml_info.state)
+    this.tags = [code]
+    this.tag_map = {}
+    this.tag_map[code] = true
 
-    this.is_empty = false;
+    this.is_empty = false
 
-    return this;
-  };
+    return this
+  }
 
   getXmlJson = () => {
     return {
-      "$": {
-        "ID": this.unique_id,
-        "Creator": this.creator,
-        "Frame": this.start_frame,
-        "Time": this.start_time
+      '$': {
+        'ID': this.unique_id,
+        'Creator': this.creator,
+        'Frame': this.start_frame,
+        'Time': this.start_time
       },
-      "Original": this.original_url,
-      "Thumbnail": this.thumbnail_url
-    };
+      'Original': this.original_url,
+      'Thumbnail': this.thumbnail_url
+    }
   }
 }

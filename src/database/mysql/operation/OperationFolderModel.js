@@ -1,10 +1,9 @@
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
-import log from "../../../libs/logger"
+import log from '../../../libs/logger'
 
 export default class OperationFolderModel extends MySQLModel {
-  constructor(...args) {
-    super(...args);
+  constructor (...args) {
+    super(...args)
 
     this.table_name = 'operation_folder'
     this.log_prefix = '[OperationFolderModel]'
@@ -60,35 +59,44 @@ export default class OperationFolderModel extends MySQLModel {
       .from(this.table_name)
       .where('group_seq', group_seq)
       .whereIn('seq', parent_folder_list)
-      .orderBy("depth", "asc")
+      .orderBy('depth', 'asc')
     const result = await query
     return result
   }
 
   getGroupFolders = async (group_seq) => {
-    return await this.find({ group_seq: group_seq, status: 'Y' }, null, [{ column: "depth", order: "asc" }, { column: 'folder_name', order: 'asc' }])
+    return await this.find({ group_seq: group_seq, status: 'Y' }, null, [{
+      column: 'depth',
+      order: 'asc'
+    }, { column: 'folder_name', order: 'asc' }])
   }
 
   getGroupFolderLastUpdate = async (group_seq) => {
-    return await this.findOne({ group_seq: group_seq, status: 'Y' }, ['modify_date'], { name: "modify_date", direction: "desc" })
+    return await this.findOne({ group_seq: group_seq, status: 'Y' }, ['modify_date'], {
+      name: 'modify_date',
+      direction: 'desc'
+    })
   }
 
   getChildFolders = async (group_seq, folder_seq) => {
-    return await this.find({ group_seq, parent_seq: folder_seq, status: 'Y' }, null, { name: "folder_name", direction: "asc" })
+    return await this.find({ group_seq, parent_seq: folder_seq, status: 'Y' }, null, {
+      name: 'folder_name',
+      direction: 'asc'
+    })
   }
 
   getAllChildFolders = async (group_seq, folder_seq, include_current_folder = true) => {
     const query = this.database
       .select(this.selectable_fields)
       .from(this.table_name)
-      .where('group_seq', group_seq);
+      .where('group_seq', group_seq)
     if (include_current_folder) {
       query.andWhere(function () {
-        this.where('seq', folder_seq);
-        this.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`);
-      });
+        this.where('seq', folder_seq)
+        this.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`)
+      })
     } else {
-      query.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`);
+      query.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`)
     }
     return query
   }
@@ -105,19 +113,19 @@ export default class OperationFolderModel extends MySQLModel {
 
   moveFolder = async (folder_info, new_parent_info = null, move_child_only = false) => {
     let is_replace = false
-    let replace_query_str = ""
+    let replace_query_str = ''
     if (folder_info.parent_folder_info && folder_info.parent_folder_info.length > 0) {
-      replace_query_str = "JSON_REMOVE(parent_folder_info"
+      replace_query_str = 'JSON_REMOVE(parent_folder_info'
       for (let i = 0; i < folder_info.parent_folder_info.length; i++) {
-        replace_query_str += ", '$[0]'"
+        replace_query_str += ', \'$[0]\''
       }
       if (move_child_only) {
-        replace_query_str += ", '$[0]'"
+        replace_query_str += ', \'$[0]\''
       }
-      replace_query_str += ")"
+      replace_query_str += ')'
       is_replace = true
     } else {
-      replace_query_str = "parent_folder_info"
+      replace_query_str = 'parent_folder_info'
     }
     if (new_parent_info && new_parent_info.parent_folder_info && new_parent_info.parent_folder_info.length > 0) {
       replace_query_str = `JSON_MERGE(${JSON.stringify(new_parent_info.parent_folder_info)}, ${replace_query_str})`

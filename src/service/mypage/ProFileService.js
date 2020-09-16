@@ -1,14 +1,8 @@
-import _ from 'lodash'
 import ServiceConfig from '../service-config'
 import Util from '../../utils/baseutil'
-import Auth from '../../middlewares/auth.middleware'
-import Role from "../../constants/roles"
-import Constants from '../../constants/constants'
-import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
-import log from "../../libs/logger"
-import ProFileModel from "../../database/mysql/mypage/ProFileModel"
-import ProfileHistoryModel from "../../database/mysql/mypage/ProfileHistoryModel";
+import ProFileModel from '../../database/mysql/mypage/ProFileModel'
+import ProfileHistoryModel from '../../database/mysql/mypage/ProfileHistoryModel'
 
 const ProFileServiceClass = class {
   constructor () {
@@ -33,7 +27,7 @@ const ProFileServiceClass = class {
     try {
       const profile_model = this.getProFileModel(database)
       const profileinfo = await profile_model.getProFileInfo(group_seq)
-      const json_profileinfo = JSON.parse(profileinfo.profile);
+      const json_profileinfo = JSON.parse(profileinfo.profile)
       profileinfo.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), profileinfo.profile_image_path)
       if (json_profileinfo !== null && json_profileinfo.image !== undefined) {
         json_profileinfo.image = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), json_profileinfo.image)
@@ -91,7 +85,7 @@ const ProFileServiceClass = class {
         , new_image_path: new_json.image
         , new_desc: new_json.desc
       }
-      const result = await model.createProfileHistory(params);
+      const result = await model.createProfileHistory(params)
       return result
     } catch (e) {
       throw e

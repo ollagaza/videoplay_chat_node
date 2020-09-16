@@ -1,8 +1,6 @@
-import _ from 'lodash'
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import MentoringCommentModel from "../../database/mysql/mentoring/MentoringCommentModel";
-import Util from "../../utils/baseutil";
+import DBMySQL from '../../database/knex-mysql'
+import MentoringCommentModel from '../../database/mysql/mentoring/MentoringCommentModel'
+import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../../service/service-config'
 
@@ -74,7 +72,7 @@ const MentoringCommentServiceClass = class {
 
   getCommentInfo = (comment_info) => {
     if (comment_info.profile_image_path) {
-      comment_info.profile_image_path = ServiceConfig.get('static_storage_prefix') + comment_info.profile_image_path;
+      comment_info.profile_image_path = ServiceConfig.get('static_storage_prefix') + comment_info.profile_image_path
     }
     return comment_info
   }

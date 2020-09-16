@@ -1,8 +1,7 @@
-import MySQLModel from "../../mysql-model";
-import log from "../../../libs/logger";
+import MySQLModel from '../../mysql-model'
 
 export default class MentoringModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'content_counts'
@@ -24,11 +23,11 @@ export default class MentoringModel extends MySQLModel {
         })
         .andWhere('group_info.is_channel', 1)
         .distinct()
-      return oKnex;
+      return oKnex
     } catch (e) {
-      throw e;
+      throw e
     }
-  };
+  }
 
   getBestMentoringLists = async (category_code, group_seq) => {
     try {
@@ -64,13 +63,16 @@ export default class MentoringModel extends MySQLModel {
           }
         )
         .groupBy(groupby_columns)
-        .orderBy([{column: 'content_counts.is_best', order: 'desc'}, {column: 'content_counts.mentoring_cnt', order: 'desc'}])
+        .orderBy([{ column: 'content_counts.is_best', order: 'desc' }, {
+          column: 'content_counts.mentoring_cnt',
+          order: 'desc'
+        }])
         .limit(2)
-      return oKnex;
+      return oKnex
     } catch (e) {
-      throw e;
+      throw e
     }
-  };
+  }
 
   getRecommendMentoringLists = async (category_code) => {
     try {
@@ -93,12 +95,15 @@ export default class MentoringModel extends MySQLModel {
             .andOnVal('content_counts.category_code', category_code)
         })
         .where('group_info.is_channel', '1')
-        .orderBy([{column: 'group_counts.community', order: 'desc'}, {column: 'content_counts.sort_num', order: 'asc'}])
-      return oKnex;
+        .orderBy([{ column: 'group_counts.community', order: 'desc' }, {
+          column: 'content_counts.sort_num',
+          order: 'asc'
+        }])
+      return oKnex
     } catch (e) {
-      throw e;
+      throw e
     }
-  };
+  }
   getSearchMentoringLists = async (sSearch) => {
     try {
       const display_columns = [
@@ -123,16 +128,16 @@ export default class MentoringModel extends MySQLModel {
           this.orWhere('member.user_nickname', 'like', `%${sSearch}%`)
           // this.orWhere(this.database.raw(`JSON_EXTRACT('group_info.hashtag', '$[0].tag') = '${sSearch}'`))
         })
-        .orderBy([{column: 'group_counts.community', order: 'desc'}])
-      return oKnex;
+        .orderBy([{ column: 'group_counts.community', order: 'desc' }])
+      return oKnex
     } catch (e) {
-      throw e;
+      throw e
     }
   }
   getOperationMentoReceiveList = async (group_seq) => {
     try {
       const display_columns = [
-        'operation_data.seq', 'operation_data.operation_seq','operation_data.is_mento_complete',
+        'operation_data.seq', 'operation_data.operation_seq', 'operation_data.is_mento_complete',
         'operation_data.title', 'operation_data.group_name',
         'operation_data.reg_date', 'operation_data.group_seq', 'operation_data.mento_group_seq',
         'operation_data.thumbnail'
@@ -145,10 +150,10 @@ export default class MentoringModel extends MySQLModel {
             .andWhere('operation_data.mento_group_seq', group_seq)
             .whereIn('operation_data.is_mento_complete', ['S', 'C'])
         })
-        .orderBy([{column: 'operation_data.reg_date', order: 'desc'}])
-      return oKnex;
+        .orderBy([{ column: 'operation_data.reg_date', order: 'desc' }])
+      return oKnex
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -168,10 +173,10 @@ export default class MentoringModel extends MySQLModel {
           this.whereIn('content_counts.is_best', ['1', '2'])
             .andWhere('content_counts.category_code', category_code)
         })
-        .orderBy([{column: 'content_counts.is_best', order: 'asc'}])
-      return oKnex;
+        .orderBy([{ column: 'content_counts.is_best', order: 'asc' }])
+      return oKnex
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -194,7 +199,7 @@ export default class MentoringModel extends MySQLModel {
         .whereNotIn('group_info.seq',
           this.database.raw(`select content_counts.group_seq from content_counts where content_counts.category_code = '${category_code}' and content_counts.is_best in (1, 2)`)
         )
-        .orderBy([{column: 'group_info.reg_date', order: 'desc'}])
+        .orderBy([{ column: 'group_info.reg_date', order: 'desc' }])
       if (search_keyword) {
         oKnex.andWhere(function () {
           this.where('group_info.group_name', 'like', `%${search_keyword}%`)
@@ -203,7 +208,7 @@ export default class MentoringModel extends MySQLModel {
       }
       return this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging)
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
@@ -223,15 +228,15 @@ export default class MentoringModel extends MySQLModel {
           this.andWhere('content_counts.is_best', best_num)
             .andWhere('content_counts.category_code', category_code)
         })
-        .orderBy([{column: 'content_counts.is_best', order: 'asc'}])
-      return oKnex;
+        .orderBy([{ column: 'content_counts.is_best', order: 'asc' }])
+      return oKnex
     } catch (e) {
-      throw e;
+      throw e
     }
   }
 
   updateBestMento = async (category_code, group_seq, best_num) => {
-    const oKnex = this.database;
+    const oKnex = this.database
 
     return await oKnex.raw(`insert into ${this.table_name} (category_code, group_seq, is_best) values('${category_code}', ${group_seq}, ${best_num}) on duplicate key update is_best = ${best_num}`)
   }

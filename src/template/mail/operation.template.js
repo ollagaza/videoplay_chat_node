@@ -1,4 +1,4 @@
-import formatter from "string-template";
+import formatter from 'string-template'
 
 const operation_link_email_form = `
 <html>
@@ -53,10 +53,10 @@ const operation_link_email_form = `
 </table>
 </body>
 </html>
-`;
+`
 
 export default {
-  "linkEmail": (template_data={}) => {
-    return formatter(operation_link_email_form, template_data);
+  'linkEmail': (template_data = {}) => {
+    return formatter(operation_link_email_form, template_data)
   },
-};
+}

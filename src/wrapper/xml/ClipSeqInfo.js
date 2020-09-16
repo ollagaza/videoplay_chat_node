@@ -50,50 +50,50 @@ import Util from '../../utils/baseutil'
  */
 
 
-const dest_rename_regex = /^[\w]+\\([\w]+)\.([\w]+)$/i;
+const dest_rename_regex = /^[\w]+\\([\w]+)\.([\w]+)$/i
 
 export default class ClipSeqInfo extends JsonWrapper {
-  constructor(data = null, private_keys = []) {
-    super(data, private_keys);
+  constructor (data = null, private_keys = []) {
+    super(data, private_keys)
 
-    this.setKeys(['seq_id', 'clip_num', 'seq_num', 'unique_id', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'dest', 'desc']);
+    this.setKeys(['seq_id', 'clip_num', 'seq_num', 'unique_id', 'original_url', 'thumbnail_url', 'start_time', 'end_time', 'dest', 'desc'])
   }
 
   getFromXML = (xml_info, clip_info) => {
     if (!xml_info) {
-      return this;
+      return this
     }
 
-    this.seq_id = this.getXmlText(xml_info.SeqId);
-    this.clip_num = clip_info.clip_num;
-    this.seq_num = xml_info._;
-    this.unique_id = clip_info.unique_id;
-    this.original_url = clip_info.original_url;
-    this.thumbnail_url = clip_info.thumbnail_url;
-    this.start_time = Util.timeStrToSecond(this.getXmlText(xml_info.StartTime));
-    this.end_time = Util.timeStrToSecond(this.getXmlText(xml_info.EndTime));
-    this.dest = clip_info.url_prefix + this.getXmlText(xml_info.Dest).replace("\\", "/");
-    this.desc = this.getXmlText(xml_info.Desc);
+    this.seq_id = this.getXmlText(xml_info.SeqId)
+    this.clip_num = clip_info.clip_num
+    this.seq_num = xml_info._
+    this.unique_id = clip_info.unique_id
+    this.original_url = clip_info.original_url
+    this.thumbnail_url = clip_info.thumbnail_url
+    this.start_time = Util.timeStrToSecond(this.getXmlText(xml_info.StartTime))
+    this.end_time = Util.timeStrToSecond(this.getXmlText(xml_info.EndTime))
+    this.dest = clip_info.url_prefix + this.getXmlText(xml_info.Dest).replace('\\', '/')
+    this.desc = this.getXmlText(xml_info.Desc)
 
-    this.is_empty = false;
+    this.is_empty = false
 
-    return this;
-  };
+    return this
+  }
 
   setDest = (source, fps) => {
-    const start_frame = Math.round(this.start_time * fps);
-    const end_frame = Math.round(this.end_time * fps);
+    const start_frame = Math.round(this.start_time * fps)
+    const end_frame = Math.round(this.end_time * fps)
     this.dest = source.replace(dest_rename_regex, 'Clip\\$1_' + start_frame + '_' + end_frame + '.$2')
-  };
+  }
 
   getXmlJson = () => {
     return {
-      "_": this.seq_num,
-      "StartTime": [Util.secondToTimeStr(this.start_time)],
-      "EndTime": [Util.secondToTimeStr(this.end_time)],
-      "Dest": [this.dest],
-      "Desc": [this.desc],
-      "SeqId": [this.seq_id]
+      '_': this.seq_num,
+      'StartTime': [Util.secondToTimeStr(this.start_time)],
+      'EndTime': [Util.secondToTimeStr(this.end_time)],
+      'Dest': [this.dest],
+      'Desc': [this.desc],
+      'SeqId': [this.seq_id]
     }
   }
 }

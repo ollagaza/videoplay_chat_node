@@ -1,9 +1,7 @@
-import path from 'path'
 import ServiceConfig from '../../service/service-config'
 import Util from '../../utils/baseutil'
-import StdObject from '../../wrapper/std-object';
 import DBMySQL from '../../database/knex-mysql'
-import log from "../../libs/logger"
+import log from '../../libs/logger'
 import OperationService from '../../service/operation/OperationService'
 import CloudFileService from '../../service/cloud/CloudFileService'
 import NaverObjectStorageService from '../../service/storage/naver-object-storage-service'
@@ -34,7 +32,7 @@ const OperationFileServiceClass = class {
   }
 
   getFileList = async (database, operation_info, file_type = this.TYPE_REFER) => {
-    let refer_file_list = null;
+    let refer_file_list = null
     let video_file_list = null
     if (file_type === this.TYPE_ALL || file_type === this.TYPE_REFER) {
       refer_file_list = await this.getReferFileList(database, operation_info)
@@ -61,21 +59,21 @@ const OperationFileServiceClass = class {
   }
 
   getFileInfoList = (result_list) => {
-    const file_list = [];
+    const file_list = []
     if (result_list) {
       for (let i = 0; i < result_list.length; i++) {
-        file_list.push(new FileInfo(result_list[i]).setUrl());
+        file_list.push(new FileInfo(result_list[i]).setUrl())
       }
     }
-    return file_list;
+    return file_list
   }
 
   createReferFileInfo = async (database, operation_info, upload_file_info) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const refer_file_model = this.getReferFileModel(database)
 
-    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, directory_info.media_refer)).toJSON();
-    file_info.storage_seq = operation_info.storage_seq;
+    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, directory_info.media_refer)).toJSON()
+    file_info.storage_seq = operation_info.storage_seq
 
     const file_name = upload_file_info.new_file_name
     let is_moved = false
@@ -120,7 +118,7 @@ const OperationFileServiceClass = class {
       thumbnail_path = thumbnail_info.path
     }
 
-    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, directory_info.media_origin)).toJSON();
+    const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, directory_info.media_origin)).toJSON()
     file_info.storage_seq = operation_info.storage_seq
     file_info.thumbnail = thumbnail_path
 
@@ -129,7 +127,7 @@ const OperationFileServiceClass = class {
   }
 
   deleteFileList = async (database, operation_info, file_seq_list, file_type = this.TYPE_REFER) => {
-    let refer_delete_result = false;
+    let refer_delete_result = false
     let video_delete_result = false
     if (file_type === this.TYPE_ALL || file_type === this.TYPE_REFER) {
       refer_delete_result = await this.deleteReferFileList(database, operation_info, file_seq_list)
@@ -146,7 +144,7 @@ const OperationFileServiceClass = class {
 
   deleteReferFileList = async (database, operation_info, file_seq_list) => {
     const refer_file_model = this.getReferFileModel(database)
-    const delete_file_list = await refer_file_model.deleteSelectedFiles(file_seq_list);
+    const delete_file_list = await refer_file_model.deleteSelectedFiles(file_seq_list)
     if (!delete_file_list) {
       return false
     }
@@ -155,7 +153,7 @@ const OperationFileServiceClass = class {
 
     (async (file_base_path, delete_file_list) => {
       await this.deleteFiles(operation_info, delete_file_list)
-    })(file_base_path, delete_file_list);
+    })(file_base_path, delete_file_list)
 
     return true
   }
@@ -172,20 +170,20 @@ const OperationFileServiceClass = class {
 
     (async (file_base_path, delete_file_list) => {
       await this.deleteFiles(operation_info, delete_file_list)
-    })(file_base_path, delete_file_list);
+    })(file_base_path, delete_file_list)
 
     return true
   }
 
   deleteFiles = async (file_base_path, file_info_list) => {
     if (!file_info_list) return
-    const media_root = ServiceConfig.get('media_root');
+    const media_root = ServiceConfig.get('media_root')
     const cloud_file_list = []
     for (let i = 0; i < file_info_list.length; i++) {
-      const file_info = file_info_list[i];
-      const file_name = Util.getFileName(file_info.file_path);
-      const target_path = media_root + file_info.file_path;
-      await Util.deleteFile(target_path);
+      const file_info = file_info_list[i]
+      const file_name = Util.getFileName(file_info.file_path)
+      const target_path = media_root + file_info.file_path
+      await Util.deleteFile(target_path)
       cloud_file_list.push(file_name)
     }
     if (ServiceConfig.isVacs() === false) {

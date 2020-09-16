@@ -1,14 +1,13 @@
-import Constants from '../../constants/constants';
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
 
 export default class FileInfo extends JsonWrapper {
-  constructor(data = null, private_keys = []) {
-    super(data, private_keys);
+  constructor (data = null, private_keys = []) {
+    super(data, private_keys)
     this.setKeys([
       'seq', 'storage_seq', 'file_name', 'file_size', 'file_type', 'url', 'thumbnail_url'
-    ]);
+    ])
   }
 
   setUrl = () => {
@@ -22,11 +21,11 @@ export default class FileInfo extends JsonWrapper {
       }
     }
     if (this.thumbnail) {
-      this.thumbnail_url = static_url + this.thumbnail;
+      this.thumbnail_url = static_url + this.thumbnail
     }
 
-    return this;
-  };
+    return this
+  }
 
   getByUploadFileInfo = async (upload_file_info, media_path) => {
     this.setIgnoreEmpty(true)
@@ -43,29 +42,29 @@ export default class FileInfo extends JsonWrapper {
       this.is_moved = 1
     }
 
-    this.is_empty = false;
+    this.is_empty = false
 
     return this
-  };
+  }
 
   getByFilePath = async (absolute_file_path, media_path, file_name) => {
-    this.setIgnoreEmpty(true);
+    this.setIgnoreEmpty(true)
 
     this.setKeys([
       'file_name', 'file_size', 'file_type', 'file_path'
-    ]);
+    ])
 
-    const file_size = await Util.getFileSize(absolute_file_path);
+    const file_size = await Util.getFileSize(absolute_file_path)
 
-    this.full_path = absolute_file_path;
-    this.file_name = file_name;
-    this.file_size = file_size;
-    this.file_path = media_path + '/' + this.file_name;
+    this.full_path = absolute_file_path
+    this.file_name = file_name
+    this.file_size = file_size
+    this.file_path = media_path + '/' + this.file_name
 
-    this.file_type = await Util.getFileType(absolute_file_path, file_name);
+    this.file_type = await Util.getFileType(absolute_file_path, file_name)
 
-    this.is_empty = false;
+    this.is_empty = false
 
-    return this;
-  };
+    return this
+  }
 }

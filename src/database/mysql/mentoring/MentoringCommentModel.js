@@ -1,5 +1,4 @@
-import MySQLModel from "../../mysql-model";
-import log from "../../../libs/logger";
+import MySQLModel from '../../mysql-model'
 import striptags from 'striptags'
 
 export default class MentoringCommentModel extends MySQLModel {

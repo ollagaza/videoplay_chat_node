@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
-import Util from '../../utils/baseutil';
+import mongoose from 'mongoose'
+import Util from '../../utils/baseutil'
 
-const Schema = mongoose.Schema;
+const Schema = mongoose.Schema
 
 const getIndexFieldInfos = () => {
   return {
@@ -15,11 +15,11 @@ const getIndexFieldInfos = () => {
     tags: { type: [String], require: false, default: [] },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
-  };
-};
-const index_schema_field_infos = getIndexFieldInfos();
-const index_info_schema = new Schema(index_schema_field_infos, { _id : false });
-const index_info_model = mongoose.model( 'IndexInfo', index_info_schema );
+  }
+}
+const index_schema_field_infos = getIndexFieldInfos()
+const index_info_schema = new Schema(index_schema_field_infos, { _id: false })
+const index_info_model = mongoose.model('IndexInfo', index_info_schema)
 
 const getFieldInfos = () => {
   return {
@@ -30,67 +30,67 @@ const getFieldInfos = () => {
     tags: { type: [String], require: false, default: [], message: '태그 목록이 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
-  };
-};
+  }
+}
 
-const schema_field_infos = getFieldInfos();
-schema_field_infos.member_seq.require = true;
-schema_field_infos.operation_seq.require = true;
+const schema_field_infos = getFieldInfos()
+schema_field_infos.member_seq.require = true
+schema_field_infos.operation_seq.require = true
 
-const video_index_info_schema = new Schema(schema_field_infos);
+const video_index_info_schema = new Schema(schema_field_infos)
 
-video_index_info_schema.indexes();
-video_index_info_schema.index( { operation_seq: 1, member_seq: 1 } );
-video_index_info_schema.index( { member_seq: 1, tags: 1 } );
+video_index_info_schema.indexes()
+video_index_info_schema.index({ operation_seq: 1, member_seq: 1 })
+video_index_info_schema.index({ member_seq: 1, tags: 1 })
 
 const getIndexModelList = (index_list) => {
-  const index_model_list = [];
+  const index_model_list = []
   if (!index_list) {
-    return index_model_list;
+    return index_model_list
   }
-  const index_info_fields = getIndexFieldInfos();
+  const index_info_fields = getIndexFieldInfos()
   for (let i = 0; i < index_list.length; i++) {
-    const index_info_payload = Util.getPayload(index_list[i].toJSON(), index_info_fields);
-    index_model_list.push(new index_info_model(index_info_payload));
+    const index_info_payload = Util.getPayload(index_list[i].toJSON(), index_info_fields)
+    index_model_list.push(new index_info_model(index_info_payload))
   }
-  return index_model_list;
-};
+  return index_model_list
+}
 
-video_index_info_schema.statics.createVideoIndexInfo = function( payload, index_list = null, tags = [String] ) {
-  const index_model_list = getIndexModelList(index_list);
-  payload.index_list = index_model_list;
-  payload.index_count = index_model_list.length;
-  payload.tags = tags;
-  const model = new this(payload);
-  return model.save();
-};
+video_index_info_schema.statics.createVideoIndexInfo = function (payload, index_list = null, tags = [String]) {
+  const index_model_list = getIndexModelList(index_list)
+  payload.index_list = index_model_list
+  payload.index_count = index_model_list.length
+  payload.tags = tags
+  const model = new this(payload)
+  return model.save()
+}
 
-video_index_info_schema.statics.createVideoIndexInfoByOperation = function( operation_info, index_list = null, tags = [String] ) {
-  const fields = VideoIndexInfoField();
-  fields.member_seq.require = true;
-  fields.operation_seq.require = true;
+video_index_info_schema.statics.createVideoIndexInfoByOperation = function (operation_info, index_list = null, tags = [String]) {
+  const fields = VideoIndexInfoField()
+  fields.member_seq.require = true
+  fields.operation_seq.require = true
 
   const data = {
     operation_seq: operation_info.seq,
     member_seq: operation_info.member_seq
-  };
+  }
 
-  const payload = Util.getPayload(data, fields);
-  return video_index_info_model.createVideoIndexInfo(payload, index_list, tags);
-};
+  const payload = Util.getPayload(data, fields)
+  return video_index_info_model.createVideoIndexInfo(payload, index_list, tags)
+}
 
-video_index_info_schema.statics.copyVideoIndexInfoByOperation = function( videoinfo, operation_info ) {
+video_index_info_schema.statics.copyVideoIndexInfoByOperation = function (videoinfo, operation_info) {
   const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
-  const fields = VideoIndexInfoField();
-  fields.member_seq.require = true;
-  fields.operation_seq.require = true;
+  const fields = VideoIndexInfoField()
+  fields.member_seq.require = true
+  fields.operation_seq.require = true
 
   const data = {
     operation_seq: operation_info.seq,
     member_seq: operation_info.member_seq
-  };
+  }
 
-  const payload = Util.getPayload(data, fields);
+  const payload = Util.getPayload(data, fields)
 
   if (videoinfo.index_list.length !== 0) {
     for (let cnt = 0; cnt < videoinfo.index_list.length; cnt++) {
@@ -100,40 +100,40 @@ video_index_info_schema.statics.copyVideoIndexInfoByOperation = function( videoi
     }
   }
 
-  return video_index_info_model.createVideoIndexInfo(payload, videoinfo.index_list, videoinfo.tags);
-};
+  return video_index_info_model.createVideoIndexInfo(payload, videoinfo.index_list, videoinfo.tags)
+}
 
-video_index_info_schema.statics.updateIndexListByOperation = function( operation_seq, index_list, member_seq = null ) {
-  const index_model_list = getIndexModelList(index_list);
+video_index_info_schema.statics.updateIndexListByOperation = function (operation_seq, index_list, member_seq = null) {
+  const index_model_list = getIndexModelList(index_list)
   const update = {
     index_list: index_model_list,
     index_count: index_model_list.length,
     modify_date: Date.now()
-  };
-  const filter = { operation_seq: operation_seq };
-  if (member_seq !== null) {
-    filter.member_seq = member_seq;
   }
-  return this.updateOne( filter, update, { upsert: true } );
-};
-
-video_index_info_schema.statics.findOneByOperation = function( operation_seq, member_seq = null, projection = null ) {
-  const filter = { operation_seq: operation_seq };
+  const filter = { operation_seq: operation_seq }
   if (member_seq !== null) {
-    filter.member_seq = member_seq;
+    filter.member_seq = member_seq
   }
-  return this.findOne( filter, projection );
-};
+  return this.updateOne(filter, update, { upsert: true })
+}
 
-video_index_info_schema.statics.deleteByOperation = function( operation_seq, member_seq = null ) {
-  const filter = { operation_seq: operation_seq };
+video_index_info_schema.statics.findOneByOperation = function (operation_seq, member_seq = null, projection = null) {
+  const filter = { operation_seq: operation_seq }
   if (member_seq !== null) {
-    filter.member_seq = member_seq;
+    filter.member_seq = member_seq
   }
-  return this.findOneAndDelete( filter );
-};
+  return this.findOne(filter, projection)
+}
 
-const video_index_info_model = mongoose.model( 'VideoIndexInfo', video_index_info_schema );
+video_index_info_schema.statics.deleteByOperation = function (operation_seq, member_seq = null) {
+  const filter = { operation_seq: operation_seq }
+  if (member_seq !== null) {
+    filter.member_seq = member_seq
+  }
+  return this.findOneAndDelete(filter)
+}
 
-export const VideoIndexInfoModel = video_index_info_model;
-export const VideoIndexInfoField = getFieldInfos;
+const video_index_info_model = mongoose.model('VideoIndexInfo', video_index_info_schema)
+
+export const VideoIndexInfoModel = video_index_info_model
+export const VideoIndexInfoField = getFieldInfos

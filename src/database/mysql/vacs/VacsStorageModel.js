@@ -1,7 +1,7 @@
 import MySQLModel from '../../mysql-model'
 
 export default class VacsStorageModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'vacs_storage'
@@ -27,12 +27,12 @@ export default class VacsStorageModel extends MySQLModel {
   }
 
   getCurrentStorageStatus = async () => {
-    return await this.findOne(null, ['*'], { name: "state_date", direction: "desc" })
+    return await this.findOne(null, ['*'], { name: 'state_date', direction: 'desc' })
   }
 
   increaseCount = async (date, upload_count = 0, delete_count = 0) => {
     const params = {
-      "modify_date": this.database.raw('NOW()')
+      'modify_date': this.database.raw('NOW()')
     }
     if (upload_count) {
       params.upload_count = this.database.raw(`\`upload_count\` + ${upload_count}`)

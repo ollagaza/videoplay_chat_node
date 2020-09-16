@@ -21,7 +21,7 @@ const table_message = `CREATE TABLE IF NOT EXISTS \`surgbook\`.\`message\` (
     ON DELETE CASCADE
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-;`;
+;`
 
 const table_follower = `CREATE TABLE IF NOT EXISTS \`surgbook\`.\`follower\` (
   \`seq\` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -41,7 +41,7 @@ const table_follower = `CREATE TABLE IF NOT EXISTS \`surgbook\`.\`follower\` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-;`;
+;`
 
 const table_following = `CREATE TABLE IF NOT EXISTS \`surgbook\`.\`following\` (
   \`seq\` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -61,7 +61,7 @@ const table_following = `CREATE TABLE IF NOT EXISTS \`surgbook\`.\`following\` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-;`;
+;`
 
 const alter_table_group_info = `ALTER TABLE \`surgbook\`.\`group_info\`
 ADD COLUMN \`is_set_group_name\` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 AFTER \`modify_date\`,
@@ -70,4 +70,4 @@ ADD COLUMN \`follower_count\` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER \`profil
 ADD COLUMN \`following_count\` INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER \`follower_count\`,
 ADD COLUMN \`is_channel\` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 AFTER \`following_count\`,
 ADD COLUMN \`is_mentoring\` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 AFTER \`is_channel\`
-;`;
+;`

@@ -1,29 +1,3 @@
-import { Router } from 'express';
-import _ from 'lodash';
-import querystring from 'querystring';
-import ServiceConfig from '../../service/service-config';
-import Wrap from '../../utils/express-async';
-import Util from '../../utils/baseutil';
-import Auth from '../../middlewares/auth.middleware';
-import Role from "../../constants/roles";
-import Constants from '../../constants/constants';
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import SendMail from '../../libs/send-mail';
-import OperationService from '../../service/operation/OperationService';
-import OperationModel from '../../database/mysql/operation/OperationModel';
-import OperationMediaModel from '../../database/mysql/operation/OperationMediaModel';
-import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel';
-import VideoFileModel from '../../database/mysql/file/VideoFileModel';
-import ReferFileModel from '../../database/mysql/file/ReferFileModel';
-import BatchOperationQueueModel from '../../database/mysql/batch/BatchOperationQueueModel';
-import OperationInfo from "../../wrapper/operation/OperationInfo";
-import FileInfo from "../../wrapper/file/FileInfo";
-import SmilInfo from "../../wrapper/xml/SmilInfo";
-import IndexInfo from "../../wrapper/xml/IndexInfo";
-import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex';
-
 // const routes = Router();
 //
 // const getHawkeyeXmlInfo = async (content_id, api_url, req, log_prefix) => {

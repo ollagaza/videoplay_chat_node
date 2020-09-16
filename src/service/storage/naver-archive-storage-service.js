@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import _ from 'lodash'
 import SwiftClient from '../../libs/swift-client'
-import Constants from '../../constants/constants';
+import Constants from '../../constants/constants'
 import ServiceConfig from '../../service/service-config'
 import Util from '../../utils/baseutil'
 import log from '../../libs/logger'
@@ -36,8 +36,8 @@ const NaverArchiveStorageClass = class {
   preloadBucketList = async (client = null) => {
     const storage_client = await this.getStorageClient(client)
     try {
-      const bucket_list = await storage_client.list();
-      for(let bucket of bucket_list) {
+      const bucket_list = await storage_client.list()
+      for (let bucket of bucket_list) {
         log.debug(this.log_prefix, '[preloadBucketList]', `
           > Count = ${bucket.count}
           > Last Modified = ${bucket.last_modified}
@@ -67,8 +67,7 @@ const NaverArchiveStorageClass = class {
     let storage_client
     try {
       storage_client = await new SwiftClient(auth)
-    }
-    catch (error) {
+    } catch (error) {
       log.error(this.log_prefix, '[getStorageClient]', `can't create swift client ->`, error, this.CREDENTIALS)
       throw error
     }
@@ -77,16 +76,15 @@ const NaverArchiveStorageClass = class {
   }
 
   createBucket = async (bucket_name = null, client = null) => {
-    const target_bucket_name = this.getBucketName(bucket_name);
+    const target_bucket_name = this.getBucketName(bucket_name)
     if (this.bucket_map[target_bucket_name] === true) {
       return true
     }
     const storage_client = await this.getStorageClient(client)
-    let create_bucket_result;
+    let create_bucket_result
     try {
       create_bucket_result = await storage_client.create(target_bucket_name)
-    }
-    catch (error) {
+    } catch (error) {
       log.error(this.log_prefix, '[getBucket]', `can't create bucket -> target_bucket_name`, error)
       throw error
     }
@@ -97,10 +95,9 @@ const NaverArchiveStorageClass = class {
 
   getBucket = async (bucket_name = null, client = null) => {
     let storage_client = null
-    try{
+    try {
       storage_client = await this.getStorageClient(client)
-    }
-    catch (error) {
+    } catch (error) {
       log.error(this.log_prefix, '[getBucket]', `can't create swift client ->`, error, this.CREDENTIALS)
       throw error
     }
@@ -109,7 +106,7 @@ const NaverArchiveStorageClass = class {
     if (this.bucket_map[target_bucket_name] !== true) {
       await this.createBucket(target_bucket_name, storage_client)
     }
-    let bucket;
+    let bucket
     try {
       bucket = await storage_client.container(target_bucket_name)
     } catch (error) {
@@ -117,7 +114,7 @@ const NaverArchiveStorageClass = class {
       throw error
     }
     log.debug(this.log_prefix, '[getBucket]', `get bucket complete [${target_bucket_name} - ${bucket_name}]`)
-    return bucket;
+    return bucket
   }
 
   getContentTypeHeader = async (local_file_path) => {
@@ -183,8 +180,8 @@ const NaverArchiveStorageClass = class {
     log.debug(this.log_prefix, '[uploadSplitFile]', `remote_path: ${remote_path}, remote_file_name: ${remote_file_name}, local_file_path: ${local_file_path}, remote_manifest_path: ${remote_manifest_path}, remote_file_path: ${remote_file_path}`, split_file_info_list)
     if (split_file_info_list && split_file_info_list.length) {
       for (let i = 0; i < split_file_info_list.length; i++) {
-        const split_file_path = split_file_info_list[i];
-        const split_file_name = path.basename(split_file_path);
+        const split_file_path = split_file_info_list[i]
+        const split_file_name = path.basename(split_file_path)
         await this.uploadFileOne(remote_file_path, split_file_name, split_file_path, target_bucket_name, storage_client)
         slo_remote_path_list.push({
           path: `/${target_bucket_name}/${remote_file_path}/${split_file_name}`
@@ -208,9 +205,8 @@ const NaverArchiveStorageClass = class {
     log.debug(this.log_prefix, 'getMetadata', `${remote_path}, ${remote_file_name}, ${target_path}`)
     try {
       return await storage_client.meta(target_path)
-    }
-    catch (error) {
-      const response = error.response || {};
+    } catch (error) {
+      const response = error.response || {}
       log.error(this.log_prefix, '[getMetadata]', response.statusCode, response.statusMessage, response.headers ? response.headers : 'no header')
     }
     return {}
@@ -252,7 +248,7 @@ const NaverArchiveStorageClass = class {
     await Util.deleteFile(download_file_path)
     const directory = Util.getDirectoryName(download_file_path)
     const create_result = await Util.createDirectory(directory)
-    if ( !create_result ) {
+    if (!create_result) {
       throw new StdObject(102, `can't create directory. download_directory: ${download_directory}, download_file_name: ${download_file_name}, download_file_path: ${download_file_path}, directory: ${directory}`, 400)
     }
   }
@@ -260,7 +256,7 @@ const NaverArchiveStorageClass = class {
   downloadFolder = async (remote_path, download_directory, bucket_name = null, client = null) => {
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
-    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client);
+    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client)
     log.debug(this.log_prefix, '[downloadFolder]', `remote_path: ${remote_path}, bucket_name: ${target_bucket_name}, download_directory: ${download_directory}`, folder_object)
     let folder_file_list = []
     if (folder_object.file_list.length > 0) {
@@ -290,7 +286,7 @@ const NaverArchiveStorageClass = class {
     download_file_name = Util.removePathSlash(download_file_name)
     const bucket = await this.getBucket(bucket_name, client)
     await this.beforeDownload(download_directory, download_file_name)
-    const file_stream = fs.createWriteStream(download_directory + '/' + download_file_name, {flags:'a'})
+    const file_stream = fs.createWriteStream(download_directory + '/' + download_file_name, { flags: 'a' })
     const remote_file_path = remote_file_name !== null ? `${remote_path}/${remote_file_name}` : remote_path
     return await bucket.get(encodeURIComponent(remote_file_path), file_stream)
   }
@@ -298,7 +294,7 @@ const NaverArchiveStorageClass = class {
   copyFolderToObject = async (archive_path, object_path, download_directory, archive_bucket_name = null, object_bucket_name = null, client = null) => {
     const storage_client = await this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(archive_bucket_name)
-    const folder_object = await this.getFolderObjectList(archive_path, target_bucket_name, storage_client);
+    const folder_object = await this.getFolderObjectList(archive_path, target_bucket_name, storage_client)
     log.debug(this.log_prefix, '[copyFolderToObject]', '[start]', `archive_path: ${archive_path}, archive_bucket_name: ${target_bucket_name}, object_path: ${object_path}, object_bucket_name: ${object_bucket_name}`, folder_object)
     let folder_file_list = []
     if (folder_object.file_list.length > 0) {
@@ -352,22 +348,22 @@ const NaverArchiveStorageClass = class {
   deleteFolder = async (remote_path, bucket_name = null, client = null) => {
     const storage_client = await this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
-    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client);
+    const folder_object = await this.getFolderObjectList(remote_path, target_bucket_name, storage_client)
     log.debug(this.log_prefix, '[deleteFolder]', '[start]', `remote_path: ${remote_path}, bucket_name: ${target_bucket_name}`, folder_object)
     if (folder_object.file_list.length > 0) {
       for (let i = 0; i < folder_object.file_list.length; i++) {
-        await this.deleteFile(folder_object.file_list[i], null, target_bucket_name, storage_client);
+        await this.deleteFile(folder_object.file_list[i], null, target_bucket_name, storage_client)
       }
     }
     let folder_file_list = []
     if (folder_object.directory_list.length > 0) {
       for (let i = 0; i < folder_object.directory_list.length; i++) {
-        const delete_folder_result = await this.deleteFolder(folder_object.directory_list[i], target_bucket_name, storage_client);
+        const delete_folder_result = await this.deleteFolder(folder_object.directory_list[i], target_bucket_name, storage_client)
         folder_file_list = _.union(folder_file_list, delete_folder_result)
       }
     }
     try {
-      await this.deleteFile(remote_path, null, target_bucket_name, storage_client);
+      await this.deleteFile(remote_path, null, target_bucket_name, storage_client)
     } catch (error) {
       log.debug(this.log_prefix, '[deleteFolder]', '[delete root dir]', `remote_path: ${remote_path}, target_bucket_name: ${target_bucket_name}`, error)
     }
@@ -383,7 +379,7 @@ const NaverArchiveStorageClass = class {
     if (remote_path) {
       query = {}
       query.prefix = `${Util.removePathLastSlash(remote_path)}/`
-      query.delimiter  = `/`
+      query.delimiter = `/`
     }
     const extra_header = {}
     const directory_list = []

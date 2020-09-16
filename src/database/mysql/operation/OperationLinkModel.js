@@ -3,7 +3,7 @@ import JsonWrapper from '../../../wrapper/json-wrapper'
 import log from '../../../libs/logger'
 
 export default class OperationLinkModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'operation_link'
@@ -37,7 +37,7 @@ export default class OperationLinkModel extends MySQLModel {
     if (share_email) {
       filter.share_email = share_email
     }
-    const find_result = await this.findOne( filter )
+    const find_result = await this.findOne(filter)
     return new JsonWrapper(find_result, this.default_private_key)
   }
 
@@ -46,7 +46,7 @@ export default class OperationLinkModel extends MySQLModel {
       operation_seq: operation_seq,
       link_type: 'E'
     }
-    const query_result = await this.find( filter )
+    const query_result = await this.find(filter)
     return this.getLinkList(query_result)
   }
 
@@ -73,29 +73,29 @@ export default class OperationLinkModel extends MySQLModel {
   }
 
   getLinkInfoBySeq = async (link_seq) => {
-    const find_result = await this.findOne( { seq: link_seq } )
+    const find_result = await this.findOne({ seq: link_seq })
     return new JsonWrapper(find_result, this.default_private_key)
   }
 
   deleteBySeq = async (link_seq) => {
-    return await this.delete( { seq: link_seq } )
+    return await this.delete({ seq: link_seq })
   }
 
   setLinkOptionBySeq = async (link_seq, auth, password = null, expire_date = null, enable_download = false, change_password = true) => {
     const update_params = {
       auth,
       expire_date: expire_date ? expire_date : null,
-      enable_download: enable_download === true ? 1: 0,
+      enable_download: enable_download === true ? 1 : 0,
       modify_date: this.database.raw('NOW()')
     }
     if (change_password) {
       update_params.password = password
     }
-    return await this.update( { seq: link_seq }, update_params )
+    return await this.update({ seq: link_seq }, update_params)
   }
 
   getLinkCount = async (operation_seq) => {
-    const where = { operation_seq };
+    const where = { operation_seq }
     try {
       const total_count = await this.getTotalCount(where)
       return total_count
@@ -103,5 +103,5 @@ export default class OperationLinkModel extends MySQLModel {
       log.error(this.log_prefix, '[getLinkCount]', error)
       return 0
     }
-  };
+  }
 }

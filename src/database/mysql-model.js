@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import Promise from 'promise';
-import PageHandler from '../libs/page-handler';
+import Promise from 'promise'
+import PageHandler from '../libs/page-handler'
 import log from '../libs/logger'
 
 const LOG_PREFIX = '[ModelObject]'
@@ -164,11 +164,11 @@ export default class MysqlModel {
       .update(params)
       .from(this.table_name)
 
-      if (filters) {
-        queryWhere(oKnex, filters)
-      }
+    if (filters) {
+      queryWhere(oKnex, filters)
+    }
 
-      return oKnex;
+    return oKnex
   }
 
   updateIn = async (key, in_array, params, filters = null) => {
@@ -194,47 +194,51 @@ export default class MysqlModel {
   }
 
   findPaginated = async (filters = null, columns = null, order = null, group = null, pages = null) => {
-    const oKnex = this.queryBuilder(filters, columns, order, group);
-    return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count, pages.no_paging);
-  };
+    const oKnex = this.queryBuilder(filters, columns, order, group)
+    return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count, pages.no_paging)
+  }
 
-  async queryPaginated(oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
+  async queryPaginated (oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
     // 강제 형변환
-    list_count = parseInt(list_count);
-    cur_page = parseInt(cur_page);
-    page_count = parseInt(page_count);
+    list_count = parseInt(list_count)
+    cur_page = parseInt(cur_page)
+    page_count = parseInt(page_count)
 
-    const use_paging = (no_paging && no_paging.toLowerCase() !== 'y');
+    const use_paging = (no_paging && no_paging.toLowerCase() !== 'y')
 
-    const oCountKnex = this.database.from(oKnex.clone().as('list'));
-    const oDataListKnex = oKnex.clone();
+    const oCountKnex = this.database.from(oKnex.clone().as('list'))
+    const oDataListKnex = oKnex.clone()
     if (use_paging) {
       oDataListKnex
         .limit(list_count)
-        .offset(list_count * (cur_page - 1));
+        .offset(list_count * (cur_page - 1))
     }
 
     // 갯수와 데이터를 동시에 얻기
     const [{ total_count }, data] = await Promise.all([
       oCountKnex.count('* as total_count').first(),
       oDataListKnex
-    ]);
-
+    ])
 
     if (!use_paging) {
-      cur_page = 1;
+      cur_page = 1
     }
 
     // 번호 매기기
-    let virtual_no = total_count - (cur_page - 1) * list_count;
-    for(let i = 0; i < data.length; i++) {
-      data[i]['_no'] = virtual_no;
-      virtual_no--;
+    let virtual_no = total_count - (cur_page - 1) * list_count
+    for (let i = 0; i < data.length; i++) {
+      data[i]['_no'] = virtual_no
+      virtual_no--
     }
 
-    const total_page = Math.ceil(total_count / list_count) || 1;
+    const total_page = Math.ceil(total_count / list_count) || 1
 
-    return { total_count, data, total_page, page_navigation: new PageHandler(total_count, total_page, cur_page, page_count, list_count) }
+    return {
+      total_count,
+      data,
+      total_page,
+      page_navigation: new PageHandler(total_count, total_page, cur_page, page_count, list_count)
+    }
   }
 
   async find (filters = null, columns = null, order = null, group = null) {
@@ -262,50 +266,50 @@ export default class MysqlModel {
   }
 
   queryWhere = (oKnex, filter) => {
-    queryWhere(oKnex, filter);
+    queryWhere(oKnex, filter)
   }
 
   isNumber = (str) => {
     try {
-      return !isNaN(parseFloat(str)) && isFinite(str);
+      return !isNaN(parseFloat(str)) && isFinite(str)
     } catch (e) {
-      return false;
+      return false
     }
   }
 
   isArray = (value) => {
     if (!value) {
-      return false;
+      return false
     }
-    return _.isArray(value);
+    return _.isArray(value)
   }
 
   isObject = (value) => {
     if (!value) {
-      return false;
+      return false
     }
-    return _.isObject(value);
+    return _.isObject(value)
   }
 
   isString = (value) => {
     if (value === '') {
-      return true;
+      return true
     }
     if (!value) {
-      return false;
+      return false
     }
-    return _.isString(value);
+    return _.isString(value)
   }
 
-  getInt = (str, on_error_result=0) => {
+  getInt = (str, on_error_result = 0) => {
     if (this.isNumber(str)) {
       try {
-        return parseInt(str, 10);
+        return parseInt(str, 10)
       } catch (e) {
-        return on_error_result;
+        return on_error_result
       }
     } else {
-      return on_error_result;
+      return on_error_result
     }
   }
 

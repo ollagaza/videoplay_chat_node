@@ -53,7 +53,7 @@ export default class GroupModel extends MySQLModel {
     return group_info
   }
 
-  getGroupInfo = async  (group_seq, private_keys = null) => {
+  getGroupInfo = async (group_seq, private_keys = null) => {
     const filter = {
       seq: group_seq
     }
@@ -61,7 +61,7 @@ export default class GroupModel extends MySQLModel {
     return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
   }
 
-  getMemberSeqbyPersonalGroupInfo = async  (member_seq, private_keys = null) => {
+  getMemberSeqbyPersonalGroupInfo = async (member_seq, private_keys = null) => {
     const filter = {
       member_seq: member_seq,
       group_type: 'P',
@@ -70,7 +70,7 @@ export default class GroupModel extends MySQLModel {
     return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
   }
 
-  getMemberGroupInfoAll = async  (member_seq, private_keys = null) => {
+  getMemberGroupInfoAll = async (member_seq, private_keys = null) => {
     const filter = {
       member_seq: member_seq
     }
@@ -82,28 +82,41 @@ export default class GroupModel extends MySQLModel {
     const query = this.database
       .select(this.group_user_list)
       .from('group_info')
-      .innerJoin("member", { "member.seq": "group_info.member_seq" })
-      .where("group_info.group_type", "P")
-      .whereIn("group_info.status", ['Y', 'F'])
-      .orderBy("member.user_name", "ASC")
+      .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
+      .where('group_info.group_type', 'P')
+      .whereIn('group_info.status', ['Y', 'F'])
+      .orderBy('member.user_name', 'ASC')
 
     const query_result = await query
     return query_result
   }
 
-  getGroupSeqByMemberInfo = async  (group_seq) => {
+  getPersonalGroupUserForBox = async (user_id) => {
+    const query = this.database
+      .select(this.group_user_list)
+      .from('group_info')
+      .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
+      .where('group_info.group_type', 'P')
+      .whereIn('group_info.status', ['Y', 'F'])
+      .where('member.user_id', user_id)
+      .first()
+
+    return query
+  }
+
+  getGroupSeqByMemberInfo = async (group_seq) => {
     const query = this.database
       .select('member.*')
       .from('group_info')
-      .innerJoin("member", { "member.seq": "group_info.member_seq" })
-      .where("group_info.seq", group_seq)
+      .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
+      .where('group_info.seq', group_seq)
       .first()
 
     const query_result = await query
     return query_result
   }
 
-  getGroupInfoByMemberSeqAndGroupType = async  (member_seq, group_type) => {
+  getGroupInfoByMemberSeqAndGroupType = async (member_seq, group_type) => {
     const filter = {
       member_seq,
       group_type
@@ -112,13 +125,13 @@ export default class GroupModel extends MySQLModel {
     return new GroupInfo(query_result, this.group_private_fields)
   }
 
-  getGroupInfoWithProduct = async  (group_seq, private_keys = null) => {
+  getGroupInfoWithProduct = async (group_seq, private_keys = null) => {
     const filter = {
       'group_info.seq': group_seq
     }
     const query = this.database.select(this.group_with_product_select)
     query.from(this.table_name)
-    query.leftOuterJoin('payment_list', { "payment_list.code": "group_info.pay_code" })
+    query.leftOuterJoin('payment_list', { 'payment_list.code': 'group_info.pay_code' })
     query.where(filter)
     query.first()
     const query_result = await query
@@ -179,16 +192,16 @@ export default class GroupModel extends MySQLModel {
   }
 
   updateProfileImage = async (group_seq, profile_image_path) => {
-    return await this.update( { seq: group_seq }, { profile_image_path: profile_image_path } );
-  };
+    return await this.update({ seq: group_seq }, { profile_image_path: profile_image_path })
+  }
 
   getGroupInfoToGroupCounts = async (group_seq) => {
     const query = this.database.select('*')
       .from(this.table_name)
       .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
       .where('group_info.seq', group_seq)
-      .first();
-    return query;
+      .first()
+    return query
   }
 
   getGroupInfoHashtag = async (group_seq) => {

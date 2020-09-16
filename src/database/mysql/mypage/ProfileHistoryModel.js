@@ -1,8 +1,7 @@
 import MySQLModel from '../../mysql-model'
-import log from "../../../libs/logger";
 
 export default class ProfileHistoryModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'profile_history'
@@ -11,8 +10,8 @@ export default class ProfileHistoryModel extends MySQLModel {
   }
 
   getProFileHistoryLists = async group_seq => {
-    return this.find({ seq: group_seq }, this.selectable_fields);
-  };
+    return this.find({ seq: group_seq }, this.selectable_fields)
+  }
 
   createProfileHistory = async (params) => {
     return this.create(params, 'seq')

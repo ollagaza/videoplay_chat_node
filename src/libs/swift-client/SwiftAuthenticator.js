@@ -45,27 +45,27 @@ class SwiftAuthenticator extends EventEmitter {
     this._authenticate = function () {
       let returnPromise
       switch (authStatus) {
-      case AUTH_STATUS.UNAUTHENTICATED:
-        returnPromise = new Promise((resolve, reject) => {
-          const authListener = () => {
-            this.removeListener(AUTH_EVENT, authListener)
-            if (authStatus === AUTH_STATUS.AUTHENTICATED) resolve({ url: url, token: token })
-            if (authStatus === AUTH_STATUS.FAILED) reject(authError)
-          }
+        case AUTH_STATUS.UNAUTHENTICATED:
+          returnPromise = new Promise((resolve, reject) => {
+            const authListener = () => {
+              this.removeListener(AUTH_EVENT, authListener)
+              if (authStatus === AUTH_STATUS.AUTHENTICATED) resolve({ url: url, token: token })
+              if (authStatus === AUTH_STATUS.FAILED) reject(authError)
+            }
 
-          this.on(AUTH_EVENT, authListener)
-        })
-        break
-      case AUTH_STATUS.AUTHENTICATED:
-        returnPromise = new Promise(resolve => {
-          resolve({ url: url, token: token })
-        })
-        break
-      case AUTH_STATUS.FAILED:
-        returnPromise = new Promise((resolve, reject) => {
-          reject(authError)
-        })
-        break
+            this.on(AUTH_EVENT, authListener)
+          })
+          break
+        case AUTH_STATUS.AUTHENTICATED:
+          returnPromise = new Promise(resolve => {
+            resolve({ url: url, token: token })
+          })
+          break
+        case AUTH_STATUS.FAILED:
+          returnPromise = new Promise((resolve, reject) => {
+            reject(authError)
+          })
+          break
       }
 
       return returnPromise

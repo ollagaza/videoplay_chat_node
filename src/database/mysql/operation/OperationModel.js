@@ -3,17 +3,17 @@ import Util from '../../../utils/baseutil'
 import log from '../../../libs/logger'
 import Constant from '../../../constants/constants'
 
-import OperationMediaModel from './OperationMediaModel';
-import OperationInfo from '../../../wrapper/operation/OperationInfo';
+import OperationMediaModel from './OperationMediaModel'
+import OperationInfo from '../../../wrapper/operation/OperationInfo'
 
 const join_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
-];
+]
 
 export default class OperationModel extends MySQLModel {
-  constructor(database) {
+  constructor (database) {
     super(database)
 
     this.table_name = 'operation'
@@ -26,99 +26,99 @@ export default class OperationModel extends MySQLModel {
   }
 
   getOperation = async (where, import_media_info) => {
-    const query = this.database.select(join_select);
-    query.from('operation');
-    query.innerJoin("member", "member.seq", "operation.member_seq");
-    query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
-    query.where(where);
-    query.first();
+    const query = this.database.select(join_select)
+    query.from('operation')
+    query.innerJoin('member', 'member.seq', 'operation.member_seq')
+    query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
+    query.where(where)
+    query.first()
 
-    const query_result = await query;
+    const query_result = await query
 
-    return await this.getOperationInfoWithMediaInfo(query_result, import_media_info);
-  };
+    return await this.getOperationInfoWithMediaInfo(query_result, import_media_info)
+  }
 
   getOperationInfo = async (operation_seq, import_media_info) => {
-    const where = {"operation.seq": operation_seq};
-    return await this.getOperation(where, import_media_info);
-  };
+    const where = { 'operation.seq': operation_seq }
+    return await this.getOperation(where, import_media_info)
+  }
 
-  getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc=false)  => {
-    const page = page_params.page | 1;
-    const list_count = page_params.list_count | 20;
-    const page_count = page_params.page_count | 10;
+  getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false) => {
+    const page = page_params.page | 1
+    const list_count = page_params.list_count | 20
+    const page_count = page_params.page_count | 10
 
-    const query = this.database.select(join_select);
-    query.from('operation');
-    query.innerJoin("member", "member.seq", "operation.member_seq");
-    query.leftOuterJoin("operation_storage", "operation_storage.operation_seq", "operation.seq");
-    query.andWhere('group_seq', group_seq);
-    query.whereIn('status', ['Y', 'T']);
+    const query = this.database.select(join_select)
+    query.from('operation')
+    query.innerJoin('member', 'member.seq', 'operation.member_seq')
+    query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
+    query.andWhere('group_seq', group_seq)
+    query.whereIn('status', ['Y', 'T'])
     log.debug(this.log_prefix, '[getOperationInfoListPage]', 'filter_params', filter_params)
     // if (filter_params.analysis_complete) {
     //   query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
     // }
     if (filter_params.status) {
-      query.andWhere('status', filter_params.status.toUpperCase());
+      query.andWhere('status', filter_params.status.toUpperCase())
     }
-    let check_folder = true;
+    let check_folder = true
     const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
     switch (filter_params.menu) {
       case 'recent':
         query.andWhere('operation.reg_date', '>=', recent_timestamp)
         query.andWhere('status', 'Y')
         check_folder = false
-        break;
+        break
       case 'favorite':
         query.andWhere('is_favorite', 1)
         query.andWhere('status', 'Y')
         check_folder = false
-        break;
+        break
       case 'trash':
         query.andWhere('status', 'T')
         check_folder = false
-        break;
+        break
       case 'clip':
         query.andWhere('status', 'Y')
         check_folder = false
-        break;
+        break
       case 'drive':
         query.andWhere('status', 'Y')
-        break;
+        break
       default:
         query.andWhere('status', 'Y')
         check_folder = false
-        break;
+        break
     }
 
     if (check_folder) {
       if (filter_params.folder_seq) {
-        query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null));
+        query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null))
       } else {
-        query.whereNull('folder_seq');
+        query.whereNull('folder_seq')
       }
     }
 
-    const order_by = {name:'seq', direction: 'DESC'};
+    const order_by = { name: 'seq', direction: 'DESC' }
     if (asc) {
-      order_by.direction = 'ASC';
+      order_by.direction = 'ASC'
     }
-    query.orderBy(order_by.name, order_by.direction);
+    query.orderBy(order_by.name, order_by.direction)
 
-    const paging_result = await this.queryPaginated(query, list_count, page, page_count, page_params.no_paging);
+    const paging_result = await this.queryPaginated(query, list_count, page, page_count, page_params.no_paging)
 
-    const result = [];
+    const result = []
 
     if (paging_result && paging_result.data) {
       for (const key in paging_result.data) {
-        let query_result = paging_result.data[key];
-        result.push(this.getOperationInfoByResult(query_result));
+        let query_result = paging_result.data[key]
+        result.push(this.getOperationInfoByResult(query_result))
       }
     }
 
-    paging_result.data = result;
-    return paging_result;
-  };
+    paging_result.data = result
+    return paging_result
+  }
 
   getOperationInfoListByMember = async (member_seq) => {
     const filters = {
@@ -126,73 +126,88 @@ export default class OperationModel extends MySQLModel {
       status: 'Y',
       is_analysis_complete: 1
     }
-    return await this.find(filters, null, { name: "seq", direction: "asc" })
+    return await this.find(filters, null, { name: 'seq', direction: 'asc' })
   }
 
   updateOperationInfo = async (operation_seq, operation_info) => {
-    operation_info.setIgnoreEmpty(true);
-    const update_params = operation_info.toJSON();
-    update_params.modify_date = this.database.raw('NOW()');
-    return await this.update({"seq": operation_seq}, update_params);
-  };
+    operation_info.setIgnoreEmpty(true)
+    const update_params = operation_info.toJSON()
+    update_params.modify_date = this.database.raw('NOW()')
+    return await this.update({ 'seq': operation_seq }, update_params)
+  }
 
   getOperationInfoByResult = (query_result) => {
     return new OperationInfo(query_result)
-  };
+  }
 
-  getOperationInfoWithMediaInfo = async (query_result, import_media_info=false) => {
+  getOperationInfoWithMediaInfo = async (query_result, import_media_info = false) => {
     if (query_result == null) {
-      return new OperationInfo(null);
+      return new OperationInfo(null)
     }
 
-    const operation_info = this.getOperationInfoByResult(query_result);
+    const operation_info = this.getOperationInfoByResult(query_result)
 
     if (import_media_info === true) {
-      const media_info = await new OperationMediaModel(this.database).getOperationMediaInfo(operation_info);
-      operation_info.setMediaInfo(media_info);
+      const media_info = await new OperationMediaModel(this.database).getOperationMediaInfo(operation_info)
+      operation_info.setMediaInfo(media_info)
     }
 
-    return operation_info;
-  };
+    return operation_info
+  }
 
   deleteOperation = async (operation_info) => {
-    await this.delete({ "seq": operation_info.seq });
-  };
+    await this.delete({ 'seq': operation_info.seq })
+  }
 
   updateStatusTrash = async (operation_seq_list, member_seq, status) => {
     let filters = null
     if (member_seq) {
       filters = { member_seq }
     }
-    return await this.updateIn("seq", operation_seq_list, {status, "modify_date": this.database.raw('NOW()')}, filters);
-  };
+    return await this.updateIn('seq', operation_seq_list, {
+      status,
+      'modify_date': this.database.raw('NOW()')
+    }, filters)
+  }
 
   updateStatus = async (operation_seq_list, status) => {
-    return await this.updateIn("seq", operation_seq_list, {status, "modify_date": this.database.raw('NOW()')});
-  };
+    return await this.updateIn('seq', operation_seq_list, { status, 'modify_date': this.database.raw('NOW()') })
+  }
 
   updateStatusFavorite = async (operation_seq, is_delete) => {
-    return await this.update({"seq": operation_seq}, {is_favorite: is_delete ? 0 : 1, "modify_date": this.database.raw('NOW()')});
-  };
+    return await this.update({ 'seq': operation_seq }, {
+      is_favorite: is_delete ? 0 : 1,
+      'modify_date': this.database.raw('NOW()')
+    })
+  }
 
   updateAnalysisStatus = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {analysis_status: status ? status.toUpperCase() : 'N', "modify_date": this.database.raw('NOW()')});
-  };
+    return await this.update({ 'seq': operation_seq }, {
+      analysis_status: status ? status.toUpperCase() : 'N',
+      'modify_date': this.database.raw('NOW()')
+    })
+  }
 
   updateAnalysisComplete = async (operation_seq, status) => {
-    return await this.update({"seq": operation_seq}, {is_analysis_complete: status ? 1 : 0, "modify_date": this.database.raw('NOW()')});
-  };
+    return await this.update({ 'seq': operation_seq }, {
+      is_analysis_complete: status ? 1 : 0,
+      'modify_date': this.database.raw('NOW()')
+    })
+  }
 
   updateAnalysisProgress = async (operation_seq, progress) => {
-    return await this.update({"seq": operation_seq}, {progress: progress, "modify_date": this.database.raw('NOW()')});
-  };
+    return await this.update({ 'seq': operation_seq }, {
+      progress: progress,
+      'modify_date': this.database.raw('NOW()')
+    })
+  }
 
   createOperationWithGroup = async (operation_info) => {
-    const operation_seq = await this.create(operation_info, 'seq');
-    operation_info.seq = operation_seq;
+    const operation_seq = await this.create(operation_info, 'seq')
+    operation_info.seq = operation_seq
 
-    return operation_info;
-  };
+    return operation_info
+  }
 
   copyOperation = async (origin_seq, operation_info, copy_type = null, mento_operation = null) => {
     const origin_operation = await this.findOne({ seq: origin_seq })
@@ -208,9 +223,9 @@ export default class OperationModel extends MySQLModel {
       origin_operation.media_path = operation_info.media_path
       origin_operation.status = operation_info.status
       origin_operation.folder_seq = operation_info.folder_seq
-      delete origin_operation.seq;
-      delete origin_operation.reg_date;
-      delete origin_operation.modify_date;
+      delete origin_operation.seq
+      delete origin_operation.reg_date
+      delete origin_operation.modify_date
     }
 
     if (copy_type === 'M' && mento_operation !== null) {
@@ -225,28 +240,28 @@ export default class OperationModel extends MySQLModel {
       origin_operation.patient_sex = mento_operation.patient_sex
     }
 
-    const operation_seq = await this.create(origin_operation, 'seq');
-    origin_operation.seq = operation_seq;
+    const operation_seq = await this.create(origin_operation, 'seq')
+    origin_operation.seq = operation_seq
 
-    return origin_operation;
-  };
+    return origin_operation
+  }
 
   isDuplicateOperationCode = async (group_seq, member_seq, operation_code) => {
-    const where = {"group_seq": group_seq, "member_seq": member_seq, "operation_code": operation_code};
-    const total_count = await this.getTotalCount(where);
+    const where = { 'group_seq': group_seq, 'member_seq': member_seq, 'operation_code': operation_code }
+    const total_count = await this.getTotalCount(where)
 
-    return total_count > 0;
-  };
+    return total_count > 0
+  }
 
   getOperationInfoByContentId = async (content_id) => {
-    const where = {"content_id": content_id};
-    return await this.getOperation(where, false);
-  };
+    const where = { 'content_id': content_id }
+    return await this.getOperation(where, false)
+  }
 
   remove = async (operation_info, member_seq) => {
-    const where = {"member_seq": member_seq, "seq": operation_info.seq};
-    return await this.delete(where);
-  };
+    const where = { 'member_seq': member_seq, 'seq': operation_info.seq }
+    return await this.delete(where)
+  }
 
   getGroupMemberOperationList = async (group_seq, member_seq) => {
     const filter = {
@@ -257,7 +272,7 @@ export default class OperationModel extends MySQLModel {
     const query_result = await this.find(filter)
     if (query_result) {
       for (let i = 0; i < query_result.length; i++) {
-        operation_list.push(this.getOperationInfoByResult(query_result[i]));
+        operation_list.push(this.getOperationInfoByResult(query_result[i]))
       }
     }
     return operation_list
@@ -270,9 +285,9 @@ export default class OperationModel extends MySQLModel {
     }
     const params = {
       status,
-      "modify_date": this.database.raw('NOW()')
+      'modify_date': this.database.raw('NOW()')
     }
-    return await this.update(filter, params);
+    return await this.update(filter, params)
   }
 
   getGroupTotalStorageUsedSize = async (group_seq) => {
@@ -293,9 +308,9 @@ export default class OperationModel extends MySQLModel {
   }
 
   getGroupUsedStorageSize = async (filter) => {
-    const query = this.database.select([ this.database.raw('SUM(operation_storage.total_file_size) AS total_size') ])
+    const query = this.database.select([this.database.raw('SUM(operation_storage.total_file_size) AS total_size')])
     query.from('operation')
-    query.innerJoin("operation_storage", "operation_storage.operation_seq", "operation.seq")
+    query.innerJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
     query.where(filter)
     query.whereIn('status', ['Y', 'T'])
     query.first()
@@ -314,19 +329,22 @@ export default class OperationModel extends MySQLModel {
   }
 
   updateLinkState = async (operation_seq, has_link) => {
-    return await this.update({"seq": operation_seq}, { has_link: has_link ? 1 : 0, "modify_date": this.database.raw('NOW()') });
+    return await this.update({ 'seq': operation_seq }, {
+      has_link: has_link ? 1 : 0,
+      'modify_date': this.database.raw('NOW()')
+    })
   }
 
   migrationGroupSeq = async (member_seq, group_seq) => {
-    return await this.update({"member_seq": member_seq}, { group_seq });
+    return await this.update({ 'member_seq': member_seq }, { group_seq })
   }
 
   getOperationByFolderSeq = async (group_seq, folder_seq) => {
-    return await this.find({ group_seq, folder_seq})
+    return await this.find({ group_seq, folder_seq })
   }
 
   moveOperationFolder = async (operation_seq, folder_seq) => {
-    operation_seq.unshift('in');
+    operation_seq.unshift('in')
     const filters = {
       is_new: true,
       query: [

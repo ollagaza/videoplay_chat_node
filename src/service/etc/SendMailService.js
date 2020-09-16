@@ -1,10 +1,8 @@
-import StdObject from '../../wrapper/std-object';
-import DBMySQL from '../../database/knex-mysql';
-import log from "../../libs/logger";
-import Util from '../../utils/baseutil'
+import StdObject from '../../wrapper/std-object'
+import DBMySQL from '../../database/knex-mysql'
+import log from '../../libs/logger'
 import SendMail from '../../libs/send-mail'
-import ServiceConfig from '../service-config'
-import SendMailModel from "../../database/mysql/etc/SendMailModel";
+import SendMailModel from '../../database/mysql/etc/SendMailModel'
 
 const SendMailServiceClass = class {
   constructor () {
@@ -27,13 +25,13 @@ const SendMailServiceClass = class {
 
     (
       async () => {
-        const email_list = sendmail_data.email_list;
+        const email_list = sendmail_data.email_list
         if (!email_list || email_list.length <= 0) {
           return
         }
-        let body = sendmail_data.email_desc;
+        let body = sendmail_data.email_desc
         try {
-          await new SendMail().sendMailText(JSON.parse(email_list), sendmail_data.email_title, body);
+          await new SendMail().sendMailText(JSON.parse(email_list), sendmail_data.email_title, body)
         } catch (e) {
           log.error(this.log_prefix, 'send email', email_list, e)
         }
