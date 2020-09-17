@@ -359,19 +359,19 @@ const OperationServiceClass = class {
     (
       async () => {
         try {
-          let delete_cloud = false
+          let delete_link_file = false
           let delete_origin = false
           const operation_model = this.getOperationModel()
           if (operation_info.origin_seq) {
             const has_origin = await operation_model.hasOrigin(operation_info.origin_seq)
             delete_origin = !has_origin
-            delete_cloud = true
+            delete_link_file = true
           } else {
             const has_copy = await operation_model.hasCopy(operation_info.seq)
-            delete_cloud = !has_copy
+            delete_link_file = !has_copy
           }
 
-          await this.deleteOperationFiles(operation_info, delete_cloud, delete_origin)
+          await this.deleteOperationFiles(operation_info, delete_link_file, delete_origin)
           if (ServiceConfig.isVacs()) {
             VacsService.updateStorageInfo()
             VacsService.increaseCount(0, 1)
@@ -383,18 +383,28 @@ const OperationServiceClass = class {
     )()
   }
 
-  deleteOperationFiles = async (operation_info, delete_cloud = true, delete_origin = false) => {
+  deleteOperationFiles = async (operation_info, delete_link_file = true, delete_origin = false) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
-    await Util.deleteDirectory(directory_info.root)
     if (delete_origin) {
       await Util.deleteDirectory(directory_info.root_origin)
     }
     if (ServiceConfig.isVacs() === false) {
-      if (delete_cloud) {
+      await Util.deleteDirectory(directory_info.root)
+      if (delete_link_file) {
         await CloudFileService.requestDeleteObjectFile(directory_info.media_path, true)
       }
       if (delete_origin) {
         await CloudFileService.requestDeleteObjectFile(directory_info.media_path_origin, true)
+      }
+    } else {
+      if (delete_link_file) {
+        await Util.deleteDirectory(directory_info.root)
+      } else {
+        await Util.deleteDirectory(directory_info.image)
+        await Util.deleteDirectory(directory_info.refer)
+        await Util.deleteDirectory(directory_info.temp)
+        await Util.deleteDirectory(directory_info.other)
+        await Util.deleteDirectory(directory_info.origin)
       }
     }
   }
