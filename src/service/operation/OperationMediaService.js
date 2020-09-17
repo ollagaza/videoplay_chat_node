@@ -41,7 +41,7 @@ const OperationMediaServiceClass = class {
     if (target_media_info && !target_media_info.isEmpty()) {
       target_media_info.setKeys([
         'video_file_name', 'proxy_file_name', 'fps', 'width', 'height', 'proxy_max_height',
-        'total_time', 'total_frame', 'smil_file_name', ' is_trans_complete', 'stream_url', 'thumbnail'
+        'total_time', 'total_frame', 'smil_file_name', 'is_trans_complete', 'stream_url', 'thumbnail'
       ])
       target_media_info.setIgnoreEmpty(true)
       const media_info = target_media_info.toJSON()

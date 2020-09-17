@@ -1,10 +1,10 @@
+import _ from 'lodash'
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import OperationDataInfo from '../../wrapper/operation/OperationDataInfo'
 import GroupService from '../member/GroupService'
-import MemberService from '../member/MemberService'
 import ContentCountService from '../member/ContentCountService'
 import DBMySQL from '../../database/knex-mysql'
 import OperationService from './OperationService'
@@ -43,13 +43,11 @@ const OperationDataServiceClass = class {
       return null
     }
     const group_seq = operation_info.group_seq
-    const member_seq = operation_info.member_seq
-    const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
-    const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
-    return await this.createOperationDataByRequest(operation_info, member_info, group_member_info, { operation_data: {} })
+    const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq)
+    return await this.createOperationDataByRequest(operation_info, { operation_data: {} }, group_info.seq, group_info.group_name, group_info.group_type, null)
   }
 
-  createOperationDataByRequest = async (operation_info, member_info, group_member_info, request_body) => {
+  createOperationDataByRequest = async (operation_info, request_body, group_seq, group_name, group_type, hospital_name = null) => {
     if (!operation_info) {
       return null
     }
@@ -57,21 +55,22 @@ const OperationDataServiceClass = class {
     const hashtag = request_body.operation_data ? request_body.operation_data.hashtag : null
     const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
     operation_data_info.operation_seq = operation_seq
-    operation_data_info.group_seq = group_member_info.group_seq
-    operation_data_info.group_name = group_member_info.group_name
-    if (group_member_info.group_type === GroupService.GROUP_TYPE_PERSONAL) {
-      operation_data_info.hospital = member_info.hospname
+    operation_data_info.group_seq = group_seq
+    operation_data_info.group_name = group_name
+    if (group_type === GroupService.GROUP_TYPE_PERSONAL) {
+      operation_data_info.hospital = hospital_name
     }
+    log.debug(this.log_prefix, '[createOperationDataByRequest]', operation_data_info, group_seq, group_name, group_type)
     await this.setOperationDataInfo(operation_data_info, operation_info)
     const operation_data_model = this.getOperationDataModel()
     const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
 
-    this.updateHashtag(operation_data_seq, group_member_info.group_seq, hashtag)
+    this.updateHashtag(operation_data_seq, group_seq, hashtag)
 
     return operation_data_seq
   }
 
-  copyOperationDataByRequest = async (operation_info, type = 'N', mento_operation_data = null) => {
+  copyOperationDataByRequest = async (operation_info, type = 'N', modify_operation_data = null, mento_group_seq = null) => {
     if (!operation_info) {
       return null
     }
@@ -83,16 +82,18 @@ const OperationDataServiceClass = class {
     delete operation_data_info.view_count
     delete operation_data_info.reg_date
     delete operation_data_info.modify_date
-    operation_data_info.operation_seq = operation_info.seq
-    operation_data_info.type = (type === null ? 'N' : type)
 
-    if (type === 'M' && mento_operation_data !== null) {
-      operation_data_info.category_list = mento_operation_data.category_list
-      operation_data_info.doc_html = mento_operation_data.doc_html
-      operation_data_info.hashtag_list = Util.parseHashtag(mento_operation_data.hashtag)
-      operation_data_info.is_open_refer_file = mento_operation_data.is_open_refer_file
-      operation_data_info.mento_group_seq = mento_operation_data.mento_group_seq
-      operation_data_info.is_open_video = 1
+    operation_data_info.operation_seq = operation_info.seq
+    operation_data_info.type = type ? type : 'N'
+    operation_data_info.mento_group_seq = mento_group_seq
+
+    if (!Util.isEmpty(modify_operation_data)) {
+      // operation_data_info.category_list = modify_operation_data.category_list
+      operation_data_info.doc_html = modify_operation_data.doc_html
+      // operation_data_info.hashtag_list = Util.parseHashtag(modify_operation_data.hashtag)
+      // operation_data_info.is_open_refer_file = modify_operation_data.is_open_refer_file
+      // operation_data_info.mento_group_seq = modify_operation_data.mento_group_seq
+      operation_data_info.is_open_video = modify_operation_data.is_open_video ? 1 : 0
     }
 
     const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
@@ -101,9 +102,15 @@ const OperationDataServiceClass = class {
     }
 
     await this.setOperationDataInfo(operation_data_info, operation_info)
-    const operation_data_seq = await operation_data_model.createOperationData(operation_data_info)
+    const operation_data_seq = await operation_data_model.createOperationData(_.clone(operation_data_info))
+    let hashtag = null
 
-    this.updateHashtag(operation_data_seq, operation_data_info.group_seq, mento_operation_data !== null ? mento_operation_data.hashtag : operation_data_info.hashtag_list)
+    if (operation_data_info.hashtag_list && operation_data_info.hashtag_list.length > 0) {
+      hashtag = Util.mergeHashtag(operation_data_info.hashtag_list)
+    }
+
+    this.updateHashtag(operation_data_seq, operation_data_info.group_seq, hashtag)
+    await this.updateCount(operation_data_info.group_seq, operation_data_info)
 
     return operation_data_seq
   }
@@ -190,6 +197,10 @@ const OperationDataServiceClass = class {
     await operation_data_model.updateOperationData(operation_seq, operation_data_info)
     // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
 
+    await this.updateCount(group_seq, operation_data)
+  }
+
+  updateCount = async (group_seq, operation_data) => {
     const group_count_field_name = ['video_count']
     const content_count_field_name = [ContentCountService.VIDEO_COUNT]
     if (operation_data.type === 'M') {
@@ -223,7 +234,9 @@ const OperationDataServiceClass = class {
 
     const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_info.seq)
     operation_data_info.total_time = media_info ? media_info.total_time : 0
-    operation_data_info.thumbnail = media_info ? media_info.thumbnail : null
+    if (!operation_data_info.thumbnail) {
+      operation_data_info.thumbnail = media_info ? media_info.thumbnail : null
+    }
 
     return operation_data_info
   }

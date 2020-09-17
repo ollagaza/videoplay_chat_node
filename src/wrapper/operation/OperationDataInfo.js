@@ -1,6 +1,7 @@
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
+import log from '../../libs/logger'
 
 const default_key_list = [
   'seq', 'operation_seq', 'group_seq', 'group_name', 'hospital', 'title', 'view_count', 'total_time',
@@ -10,7 +11,7 @@ const default_key_list = [
   'reg_date', 'modify_date',
 ]
 
-export default class OperationFolderInfo extends JsonWrapper {
+export default class OperationDataInfo extends JsonWrapper {
   constructor (data = null, private_keys = []) {
     super(data, private_keys)
 
@@ -19,6 +20,7 @@ export default class OperationFolderInfo extends JsonWrapper {
     if (data) {
       if (data.hashtag_list && typeof data.hashtag_list === 'string') {
         this.hashtag_list = JSON.parse(data.hashtag_list)
+        log.debug('[OperationDataInfo]', data.hashtag_list, this.hashtag_list)
       }
       if (data.category_list && typeof data.category_list === 'string') {
         this.category_list = JSON.parse(data.category_list)

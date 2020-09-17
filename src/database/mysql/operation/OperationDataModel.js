@@ -1,5 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import OperationDataInfo from '../../../wrapper/operation/OperationDataInfo'
+import logger from '../../../libs/logger'
 
 export default class OperationDataModel extends MySQLModel {
   constructor (database) {
@@ -15,13 +16,9 @@ export default class OperationDataModel extends MySQLModel {
     operation_data.modify_date = this.database.raw('NOW()')
     if (operation_data.hashtag_list) {
       operation_data.hashtag_list = JSON.stringify(operation_data.hashtag_list)
-    } else {
-      operation_data.hashtag_list = JSON.stringify([])
     }
     if (operation_data.category_list) {
       operation_data.category_list = JSON.stringify(operation_data.category_list)
-    } else {
-      operation_data.category_list = JSON.stringify([])
     }
     if (operation_data.thumbnail) {
       operation_data.thumbnail = this.database.raw(`IF(\`thumbnail\` IS NULL, ?, \`thumbnail\`)`, operation_data.thumbnail)
@@ -30,7 +27,14 @@ export default class OperationDataModel extends MySQLModel {
   }
 
   createOperationData = async (operation_data) => {
-    return await this.create(this.getOperationDataPrams(operation_data, true), 'seq')
+    const create_params = this.getOperationDataPrams(operation_data, true)
+    if (!create_params.hashtag_list) {
+      create_params.hashtag_list = JSON.stringify([])
+    }
+    if (!create_params.category_list) {
+      create_params.category_list = JSON.stringify([])
+    }
+    return await this.create(create_params, 'seq')
   }
 
   updateOperationData = async (operation_seq, operation_data) => {

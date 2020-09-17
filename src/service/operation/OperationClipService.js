@@ -19,12 +19,14 @@ const OperationClipServiceClass = class {
     }
   }
 
-  createClip = async (operation_info, request_body) => {
+  createClip = async (operation_info, request_body, update_clip_count = true) => {
     const clip_info = request_body.clip_info
     const clip_count = request_body.clip_count
     const create_result = await OperationClipModel.createOperationClip(operation_info, clip_info)
 
-    await this.updateClipCount(operation_info, clip_count)
+    if (update_clip_count) {
+      await this.updateClipCount(operation_info, clip_count)
+    }
 
     return create_result
   }
@@ -80,6 +82,9 @@ const OperationClipServiceClass = class {
 
   setPhase = async (phase_id, request_body) => {
     const clip_id_list = request_body.clip_id_list
+    if (clip_id_list) {
+      return true
+    }
     return await OperationClipModel.setPhase(phase_id, clip_id_list)
   }
 
@@ -104,6 +109,35 @@ const OperationClipServiceClass = class {
 
   migrationGroupSeqByOperation = async (operation_seq, group_seq) => {
     await OperationClipModel.migrationGroupSeqByOperation(operation_seq, group_seq)
+  }
+
+  copyClipByOperation = async (origin_operation_seq, operation_info) => {
+    try {
+      const operation_clip_list = await this.findByOperationSeq(origin_operation_seq)
+      if (!operation_clip_list) return
+
+      const phase_map = {}
+      const clip_list = []
+      for (let i = 0; i < operation_clip_list.length; i++) {
+        const clip_info = operation_clip_list[i]
+        if (clip_info.is_phase) {
+          const phase_info = await this.createPhase(operation_info, { phase_desc: clip_info.desc })
+          phase_map[clip_info._id] = phase_info.phase_id
+        } else {
+          clip_list.push(clip_info)
+        }
+      }
+      for (let i = 0; i < clip_list.length; i++) {
+        const clip_info = clip_list[i]
+        const phase_id = clip_info.phase_id
+        clip_info.phase_id = phase_id ? phase_map[phase_id] : null
+        await this.createClip(operation_info, { clip_info }, false )
+      }
+      return true
+    } catch (e) {
+      log.error(this.log_prefix, '[copyClipByOperation]', origin_operation_seq, operation_info, e)
+    }
+    return false
   }
 }
 

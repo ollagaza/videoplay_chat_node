@@ -17,8 +17,6 @@ import OperationLinkService from '../../../service/operation/OperationLinkServic
 
 const routes = Router()
 
-const LOG_PREFIX = '[/api/v1/operation]'
-
 const getBaseInfo = async (request, check_auth = false, check_writer = false, import_operation_info = false) => {
   const api_type = request.params.api_type
   const api_key = request.params.api_key
@@ -99,8 +97,6 @@ const getDriveInfo = async (result, operation_seq) => {
     result.operation_data_info = operation_data_info
     result.operation_data_seq = operation_data_info.seq
   }
-
-  log.debug(LOG_PREFIX, 'getDriveInfo', operation_info.toJSON(), is_writer, is_auth)
 }
 
 const getLinkInfo = async (result, link_code) => {

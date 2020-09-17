@@ -42,9 +42,27 @@ routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) =>
   res.json(output)
 }))
 
-routes.post('/copy', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const output = await OperationService.copyOperation(DBMySQL, member_info, group_member_info, req.body, null)
+routes.post('/copy/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  OperationService.copyOperation(group_member_info, req.body)
+  res.json(new StdObject())
+}))
+
+routes.post('/copy/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_seq = req.params.operation_seq
+  const copy_result = await OperationService.copyOperationOne(operation_seq, group_member_info, req.body)
+  let output
+  if (copy_result.success) {
+    output = new StdObject()
+    output.add('operation_seq', copy_result.operation_seq)
+    output.add('origin_operation_seq', copy_result.origin_operation_seq)
+    output.add('operation_data_seq', copy_result.operation_data_seq)
+    output.add('origin_operation_name', copy_result.origin_operation_name)
+    output.add('origin_operation_code', copy_result.origin_operation_code)
+  } else {
+    output = new StdObject(-1, '수술 복사에 실패하였습니다.')
+  }
   res.json(output)
 }))
 

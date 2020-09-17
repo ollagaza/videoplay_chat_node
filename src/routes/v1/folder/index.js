@@ -84,6 +84,7 @@ routes.put('/moveoperation', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req
       res.json(new StdObject(0, '이동이 완료 되었습니다.', '200'))
     })
   } catch (e) {
+    log.e(req, e)
     throw new StdObject(-1, '이동 중 오류가 발생 하였습니다.', '400')
   }
 }))

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import Util from '../../utils/baseutil'
+import logger from '../../libs/logger'
 
 const Schema = mongoose.Schema
 
@@ -41,17 +42,6 @@ operation_metadata_schema.statics.createOperationMetadata = function (operation_
   payload.content_id = operation_info.content_id
   payload.operation_type = operation_info.operation_type
   const model = new this(payload)
-  return model.save()
-}
-
-operation_metadata_schema.statics.copyOperationMetadata = function (video_metadata, operation_info) {
-  const copy_video_metadata = Util.getPayload(video_metadata, getFieldInfos())
-  copy_video_metadata.operation_seq = operation_info.seq
-  copy_video_metadata.content_id = operation_info.content_id
-  copy_video_metadata.origin_seq = operation_info.origin_seq
-  copy_video_metadata.origin_content_id = operation_info.origin_content_id
-
-  const model = new this(copy_video_metadata)
   return model.save()
 }
 
