@@ -70,12 +70,12 @@ const OperationDataServiceClass = class {
     return operation_data_seq
   }
 
-  copyOperationDataByRequest = async (operation_info, type = 'N', modify_operation_data = null, mento_group_seq = null) => {
+  copyOperationDataByRequest = async (operation_info, origin_operation_seq, type = 'N', modify_operation_data = null, mento_group_seq = null) => {
     if (!operation_info) {
       return null
     }
     const operation_data_model = this.getOperationDataModel()
-    const origin_operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_info.origin_seq)
+    const origin_operation_data = await operation_data_model.getOperationDataByOperationSeq(origin_operation_seq)
     const operation_data_info = origin_operation_data.toJSON()
 
     delete operation_data_info.seq
