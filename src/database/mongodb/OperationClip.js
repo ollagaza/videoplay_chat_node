@@ -178,22 +178,6 @@ operation_clip_schema.statics.unsetPhaseOne = function (clip_id, operation_seq, 
   return this.updateOne({ _id: clip_id, operation_seq, phase_id }, update)
 }
 
-operation_clip_schema.statics.migrationGroupSeq = function (member_seq, group_seq) {
-  const update = {
-    group_seq
-  }
-  log.debug(log_prefix, '[migrationGroupSeq]', `member_seq: ${member_seq}, group_seq: ${group_seq}`)
-  return this.updateMany({ member_seq: member_seq }, update, { 'multi': true })
-}
-
-operation_clip_schema.statics.migrationGroupSeqByOperation = function (operation_seq, group_seq) {
-  const update = {
-    group_seq
-  }
-  log.debug(log_prefix, '[migrationGroupSeqByOperation]', `operation_seq: ${operation_seq}, group_seq: ${group_seq}`)
-  return this.updateMany({ operation_seq: operation_seq }, update, { 'multi': true })
-}
-
 const operation_clip_model = mongoose.model('OperationClip', operation_clip_schema)
 
 export const OperationClipModel = operation_clip_model

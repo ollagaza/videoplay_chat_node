@@ -34,7 +34,7 @@ const EditorServiceClass = class {
     }
   }
 
-  uploadEditorImage = async (contentid, media_path, request, response) => {
+  uploadEditorImage = async (media_path, request, response) => {
     try {
       const editor_root = ServiceConfig.get('media_root') + media_path + '/editor'
       if (!(await Util.fileExists(editor_root))) {
@@ -49,7 +49,7 @@ const EditorServiceClass = class {
 
       return upload_file_info
     } catch (e) {
-      throw new StdObject(-1, e, 400)
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 400, e)
     }
   }
 }

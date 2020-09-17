@@ -36,8 +36,8 @@ const OperationMediaServiceClass = class {
     return await operation_media_model.getOperationMediaInfoByOperationSeq(operation_seq)
   }
 
-  copyOperationMediaInfo = async (database, operation_info) => {
-    const target_media_info = await this.getOperationMediaInfoByOperationSeq(database, operation_info.origin_seq)
+  copyOperationMediaInfo = async (database, operation_info, origin_operation_seq, origin_content_id) => {
+    const target_media_info = await this.getOperationMediaInfoByOperationSeq(database, origin_operation_seq)
     if (target_media_info && !target_media_info.isEmpty()) {
       target_media_info.setKeys([
         'video_file_name', 'proxy_file_name', 'fps', 'width', 'height', 'proxy_max_height',
@@ -46,7 +46,7 @@ const OperationMediaServiceClass = class {
       target_media_info.setIgnoreEmpty(true)
       const media_info = target_media_info.toJSON()
 
-      const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
+      const replace_regex = new RegExp(origin_content_id, 'gi')
       if (media_info.thumbnail) {
         media_info.thumbnail = media_info.thumbnail.replace(replace_regex, operation_info.content_id)
       }

@@ -28,8 +28,8 @@ export default class OperationStorageModel extends MySQLModel {
     return await this.create(create_params, 'seq')
   }
 
-  copyOperationStorageInfo = async (operation_info) => {
-    const origin_operation_storage_info = await this.findOne({ operation_seq: operation_info.origin_seq })
+  copyOperationStorageInfo = async (operation_info, origin_operation_seq) => {
+    const origin_operation_storage_info = await this.findOne({ operation_seq: origin_operation_seq })
     const origin_storage_seq = origin_operation_storage_info.seq
 
     delete origin_operation_storage_info.seq
@@ -100,31 +100,5 @@ export default class OperationStorageModel extends MySQLModel {
     params['index' + index_type + '_file_count'] = count
     params.modify_date = this.database.raw('NOW()')
     return await this.update({ 'seq': storage_seq }, params)
-  }
-
-  migrationStorageSize = async () => {
-    const update_params = {
-      'index1_file_size': this.database.raw('index1_file_size * 1024'),
-      'index2_file_size': this.database.raw('index2_file_size * 1024'),
-      'trans_video_size': this.database.raw('trans_video_size * 1024'),
-      'refer_file_size': this.database.raw('refer_file_size * 1024'),
-      'is_migration': 1
-    }
-    return await this.update({ 'is_migration': 0 }, update_params)
-  }
-
-  migrationTotalFileSize = async () => {
-    const update_params = {
-      'total_file_size': this.database.raw('origin_video_size + refer_file_size'),
-      'total_file_count': this.database.raw('origin_video_count + refer_file_count')
-    }
-    return await this.update({}, update_params)
-  }
-
-  migrationOriginVideoSize = async (operation_seq, origin_video_size) => {
-    const update_params = {
-      'origin_video_size': origin_video_size
-    }
-    return await this.update({ operation_seq }, update_params)
   }
 }

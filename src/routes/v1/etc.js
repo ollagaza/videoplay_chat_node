@@ -29,9 +29,8 @@ routes.put('/editorimage/:contentid', Auth.isAuthenticated(Role.LOGIN_USER), Wra
     const token_info = req.token_info
     const group_seq = token_info.getGroupSeq()
     const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq)
-    const contentid = req.params.contentid
     const output = new StdObject()
-    const result = await EditorService.uploadEditorImage(contentid, group_info.media_path, req, res)
+    const result = await EditorService.uploadEditorImage(group_info.media_path, req, res)
     output.add('result', result)
     output.add('path', Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), `${group_info.media_path}/editor/${result.filename}`))
     res.json(output)

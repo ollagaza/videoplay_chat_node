@@ -21,6 +21,7 @@ import { UserDataModel } from '../../database/mongodb/UserData'
 import OperationInfo from '../../wrapper/operation/OperationInfo'
 import OperationClipService from './OperationClipService'
 import MongoDataService from '../common/MongoDataService'
+import { OperationAnalysisModel } from '../../database/mongodb/OperationAnalysisModel'
 
 const OperationServiceClass = class {
   constructor () {
@@ -200,8 +201,8 @@ const OperationServiceClass = class {
       }
       operation_seq = operation_info.seq
       operation_info.operation_seq = operation_info.seq
-      const operation_media_seq = await OperationMediaService.copyOperationMediaInfo(DBMySQL, operation_info)
-      const operation_storage_info = await this.getOperationStorageModel(DBMySQL).copyOperationStorageInfo(operation_info)
+      const operation_media_seq = await OperationMediaService.copyOperationMediaInfo(DBMySQL, operation_info, origin_operation_seq, origin_content_id)
+      const operation_storage_info = await this.getOperationStorageModel(DBMySQL).copyOperationStorageInfo(operation_info, origin_operation_seq)
       const storage_seq = operation_storage_info.seq
       const origin_storage_seq = operation_storage_info.origin_storage_seq
 
@@ -243,13 +244,13 @@ const OperationServiceClass = class {
         }
         result.copy_operation_metadata = true
 
-        const copy_clip_result = await OperationClipService.copyClipByOperation(origin_operation_seq, operation_info)
+        const copy_clip_result = await OperationClipService.copyClipByOperation(origin_operation_seq, operation_info, origin_content_id)
         if (!copy_clip_result) {
           throw new StdObject(-2, '클립 복사에 실패하였습니다.')
         }
         result.copy_clip_list = true
 
-        result.operation_data_seq = await OperationDataService.copyOperationDataByRequest(operation_info, copy_type, modify_operation_data, mento_group_seq)
+        result.operation_data_seq = await OperationDataService.copyOperationDataByRequest(operation_info, origin_operation_seq, copy_type, modify_operation_data, mento_group_seq)
         result.copy_operation_data = true
 
         const origin_directory_info = this.getOperationDirectoryInfo(origin_operation_info)
@@ -257,13 +258,13 @@ const OperationServiceClass = class {
         let copy_result
         copy_result = await Util.copyDirectory(origin_directory_info.image, directory_info.image, false)
         if (copy_result.has_error) {
-          throw new StdObject(-3, '이미지 복사에 실패하였습니다.', copy_result)
+          throw new StdObject(-3, '이미지 복사에 실패하였습니다.', 500, copy_result)
         }
         result.copy_image_directory = true
 
         await Util.copyDirectory(origin_directory_info.refer, directory_info.refer)
         if (copy_result.has_error) {
-          throw new StdObject(-4, '첨부파일 복사에 실패하였습니다.', copy_result)
+          throw new StdObject(-4, '첨부파일 복사에 실패하였습니다.', 500, copy_result)
         }
         result.copy_refer_directory = true
 
@@ -285,18 +286,7 @@ const OperationServiceClass = class {
       log.error(this.log_prefix, '[copyOperationOne]', origin_operation_seq, e, result)
       if (operation_seq) {
         await operation_model.deleteOperation(operation_seq)
-        try {
-          await VideoIndexInfoModel.deleteByOperation(operation_seq)
-        } catch (e1) {
-        }
-        try {
-          await OperationMetadataModel.deleteByOperationSeq(operation_seq)
-        } catch (e1) {
-        }
-        try {
-          await OperationClipModel.deleteByOperationSeq(operation_seq)
-        } catch (e1) {
-        }
+        await this.deleteMongoDBData(operation_seq)
       }
       if (directory) {
         await Util.deleteDirectory(directory)
@@ -304,6 +294,21 @@ const OperationServiceClass = class {
     }
 
     return result
+  }
+
+  deleteMongoDBData = async (operation_seq) => {
+    try {
+      await VideoIndexInfoModel.deleteByOperation(operation_seq)
+    } catch (e1) {}
+    try {
+      await OperationMetadataModel.deleteByOperationSeq(operation_seq)
+    } catch (e1) {}
+    try {
+      await OperationClipModel.deleteByOperationSeq(operation_seq)
+    } catch (e1) {}
+    try {
+      OperationAnalysisModel.deleteByOperationSeq(operation_seq)
+    } catch (e1) {}
   }
 
   updateOperation = async (member_seq, operation_info, request_body) => {
@@ -332,7 +337,7 @@ const OperationServiceClass = class {
   }
 
   deleteOperation = async (database, token_info, operation_seq) => {
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info)
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, true, false)
     return await this.deleteOperationByInfo(operation_info)
   }
 
@@ -343,6 +348,8 @@ const OperationServiceClass = class {
       await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
     });
 
+    const operation_seq = operation_info.seq
+    await this.deleteMongoDBData(operation_seq)
     this.onOperationDeleteComplete(operation_info)
 
     return true
@@ -352,7 +359,19 @@ const OperationServiceClass = class {
     (
       async () => {
         try {
-          await this.deleteOperationFiles(operation_info)
+          let delete_cloud = false
+          let delete_origin = false
+          const operation_model = this.getOperationModel()
+          if (operation_info.origin_seq) {
+            const has_origin = await operation_model.hasOrigin(operation_info.origin_seq)
+            delete_origin = !has_origin
+            delete_cloud = true
+          } else {
+            const has_copy = await operation_model.hasCopy(operation_info.seq)
+            delete_cloud = !has_copy
+          }
+
+          await this.deleteOperationFiles(operation_info, delete_cloud, delete_origin)
           if (ServiceConfig.isVacs()) {
             VacsService.updateStorageInfo()
             VacsService.increaseCount(0, 1)
@@ -364,12 +383,18 @@ const OperationServiceClass = class {
     )()
   }
 
-  deleteOperationFiles = async (operation_info, delete_cloud = true) => {
+  deleteOperationFiles = async (operation_info, delete_cloud = true, delete_origin = false) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     await Util.deleteDirectory(directory_info.root)
+    if (delete_origin) {
+      await Util.deleteDirectory(directory_info.root_origin)
+    }
     if (ServiceConfig.isVacs() === false) {
       if (delete_cloud) {
         await CloudFileService.requestDeleteObjectFile(directory_info.media_path, true)
+      }
+      if (delete_origin) {
+        await CloudFileService.requestDeleteObjectFile(directory_info.media_path_origin, true)
       }
     }
   }
@@ -419,7 +444,7 @@ const OperationServiceClass = class {
   }
 
   getOperationInfo = async (database, operation_seq, token_info, check_owner = true, import_media_info = false) => {
-    const { operation_info } = await this.getOperationInfoNoAuth(database, operation_seq)
+    const { operation_info } = await this.getOperationInfoNoAuth(database, operation_seq, false)
 
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(-1, '수술 정보가 존재하지 않습니다.', 400)
@@ -471,6 +496,7 @@ const OperationServiceClass = class {
     log.debug(this.log_prefix, '[getOperationDirectoryInfo]', media_path, origin_media_path)
     return {
       'root': media_directory,
+      'root_origin': origin_media_directory,
       'origin': media_directory + 'origin/',
       'video': media_directory + 'video/',
       'video_origin': origin_media_directory + 'video/',
@@ -525,30 +551,6 @@ const OperationServiceClass = class {
     await Util.createDirectory(directory_info.refer)
     await Util.createDirectory(directory_info.image)
     await Util.createDirectory(directory_info.temp)
-  }
-
-  deleteGroupMemberOperations = async (group_seq, member_seq) => {
-    log.debug(this.log_prefix, '[deleteGroupMemberOperations]', group_seq, member_seq)
-    const operation_model = this.getOperationModel()
-    await operation_model.setGroupMemberOperationState(group_seq, member_seq, 'D')
-    const operation_list = await operation_model.getGroupMemberOperationList(group_seq, member_seq);
-
-    (
-      async (operation_list) => {
-        await this.deleteOperationByList(operation_list)
-      }
-    )(operation_list)
-  }
-
-  deleteOperationByList = async (operation_list) => {
-    for (let i = 0; i < operation_list.length; i++) {
-      const operation_info = operation_list[i]
-      try {
-        await this.deleteOperationByInfo(operation_info)
-      } catch (error) {
-        log.debug(this.log_prefix, '[deleteOperationByList]', error)
-      }
-    }
   }
 
   getGroupTotalStorageUsedSize = async (database, group_seq) => {
@@ -699,39 +701,6 @@ const OperationServiceClass = class {
   updateLinkState = async (database, operation_seq, has_link) => {
     const operation_model = this.getOperationModel(database)
     await operation_model.updateLinkState(operation_seq, has_link)
-  }
-
-  migrationGroupSeq = async (database, member_seq, group_seq) => {
-    const operation_model = this.getOperationModel(database)
-    await operation_model.migrationGroupSeq(member_seq, group_seq)
-  }
-
-  migrationStorageSize = async (database) => {
-    const operation_storage_model = this.getOperationStorageModel(database)
-    await operation_storage_model.migrationStorageSize()
-  }
-
-  migrationTotalFileSize = async (database) => {
-    const operation_storage_model = this.getOperationStorageModel(database)
-    await operation_storage_model.migrationTotalFileSize()
-  }
-
-  migrationOriginVideoSize = async (database, member_seq) => {
-    const operation_model = this.getOperationModel(database)
-    const operation_storage_model = this.getOperationStorageModel(database)
-    const operation_list = await operation_model.getOperationListByMemberSeq(member_seq)
-    for (let i = 0; i < operation_list.length; i++) {
-      if (operation_list[i].status !== 'D') {
-        const operation_info = await operation_model.getOperationInfoWithMediaInfo(operation_list[i], true)
-        operation_info.setIgnoreEmpty(true)
-        // const origin_video_directory = operation_info.media_path
-        // if (operation_info.trans_video_path) {
-        //   const file_size = await Util.getFileSize(operation_info.trans_video_path)
-        //   log.debug(this.log_prefix, '[migrationOriginVideoSize]', file_size, operation_info.toJSON())
-        //   await operation_storage_model.migrationOriginVideoSize(operation_info.seq, file_size)
-        // }
-      }
-    }
   }
 
   updateAnalysisStatus = async (database, operation_info, status) => {
