@@ -42,7 +42,13 @@ routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) =>
   res.json(output)
 }))
 
-routes.post('/copy', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/copy/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  OperationService.copyOperation(member_info, group_member_info, req.body)
+  res.json(new StdObject())
+}))
+
+routes.post('/copy/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   OperationService.copyOperation(member_info, group_member_info, req.body)
   res.json(new StdObject())
