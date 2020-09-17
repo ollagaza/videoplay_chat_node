@@ -852,7 +852,7 @@ const OperationServiceClass = class {
   moveOperationFolder = async (database, operation_seq_list, folder_info) => {
     try {
       const model = this.getOperationModel(database)
-      await model.moveOperationFolder(operation_seq_list, folder_info.seq)
+      await model.moveOperationFolder(operation_seq_list, folder_info ? folder_info.seq : null)
     } catch (e) {
       throw e
     }
