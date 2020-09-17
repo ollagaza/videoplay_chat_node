@@ -88,11 +88,11 @@ const OperationDataServiceClass = class {
     operation_data_info.mento_group_seq = mento_group_seq
 
     if (!Util.isEmpty(modify_operation_data)) {
-      operation_data_info.category_list = modify_operation_data.category_list
+      // operation_data_info.category_list = modify_operation_data.category_list
       operation_data_info.doc_html = modify_operation_data.doc_html
-      operation_data_info.hashtag_list = Util.parseHashtag(modify_operation_data.hashtag)
-      operation_data_info.is_open_refer_file = modify_operation_data.is_open_refer_file
-      operation_data_info.mento_group_seq = modify_operation_data.mento_group_seq
+      // operation_data_info.hashtag_list = Util.parseHashtag(modify_operation_data.hashtag)
+      // operation_data_info.is_open_refer_file = modify_operation_data.is_open_refer_file
+      // operation_data_info.mento_group_seq = modify_operation_data.mento_group_seq
       operation_data_info.is_open_video = modify_operation_data.is_open_video ? 1 : 0
     }
 
