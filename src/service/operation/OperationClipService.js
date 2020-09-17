@@ -82,7 +82,7 @@ const OperationClipServiceClass = class {
 
   setPhase = async (phase_id, request_body) => {
     const clip_id_list = request_body.clip_id_list
-    if (clip_id_list) {
+    if (!clip_id_list) {
       return true
     }
     return await OperationClipModel.setPhase(phase_id, clip_id_list)
