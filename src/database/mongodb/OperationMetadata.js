@@ -41,7 +41,6 @@ operation_metadata_schema.statics.createOperationMetadata = function (operation_
   payload.member_seq = operation_info.member_seq
   payload.content_id = operation_info.content_id
   payload.operation_type = operation_info.operation_type
-  logger.debug('[createOperationMetadata]', payload)
   const model = new this(payload)
   return model.save()
 }

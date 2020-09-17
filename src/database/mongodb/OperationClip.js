@@ -126,12 +126,13 @@ operation_clip_schema.statics.copyClipList = function (operation_clip_list, oper
 
   if (operation_clip_list) {
     for (let cnt = 0; cnt < operation_clip_list.length; cnt++) {
+      operation_clip_list[cnt].operation_seq = operation_info.seq
+      operation_clip_list[cnt].content_id = operation_info.content_id
       const copy_clip = Util.getPayload(operation_clip_list[cnt], getFieldInfos())
-      copy_clip.operation_seq = operation_info.seq
-      copy_clip.content_id = operation_info.content_id
       if (copy_clip.thumbnail_url) {
         copy_clip.thumbnail_url = copy_clip.thumbnail_url.replace(replace_regex, operation_info.content_id)
       }
+      log.debug(log_prefix, '[copyClipList]', copy_clip)
       const model = new this(copy_clip)
       model.save()
     }

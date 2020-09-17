@@ -70,7 +70,7 @@ const OperationDataServiceClass = class {
     return operation_data_seq
   }
 
-  copyOperationDataByRequest = async (operation_info, type = 'N', modify_operation_data = null) => {
+  copyOperationDataByRequest = async (operation_info, type = 'N', modify_operation_data = null, mento_group_seq = null) => {
     if (!operation_info) {
       return null
     }
@@ -84,7 +84,8 @@ const OperationDataServiceClass = class {
     delete operation_data_info.modify_date
 
     operation_data_info.operation_seq = operation_info.seq
-    if (type) operation_data_info.type = type
+    operation_data_info.type = type ? type : 'N'
+    operation_data_info.mento_group_seq = mento_group_seq
 
     if (!Util.isEmpty(modify_operation_data)) {
       operation_data_info.category_list = modify_operation_data.category_list
@@ -109,6 +110,7 @@ const OperationDataServiceClass = class {
     }
 
     this.updateHashtag(operation_data_seq, operation_data_info.group_seq, hashtag)
+    await this.updateCount(operation_data_info.group_seq, operation_data_info)
 
     return operation_data_seq
   }
@@ -195,6 +197,10 @@ const OperationDataServiceClass = class {
     await operation_data_model.updateOperationData(operation_seq, operation_data_info)
     // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
 
+    await this.updateCount(group_seq, operation_data)
+  }
+
+  updateCount = async (group_seq, operation_data) => {
     const group_count_field_name = ['video_count']
     const content_count_field_name = [ContentCountService.VIDEO_COUNT]
     if (operation_data.type === 'M') {
