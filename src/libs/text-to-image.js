@@ -120,6 +120,8 @@ const makeText = (origin_text, options) => {
 
   ctx.font = font_size + 'px ' + options.fontName
 
+  log.debug(log_prefix, '[makeText]', origin_text, max_width, options)
+
   // Start calculation
   const text_list = origin_text.split(/\r\n|\r|\n/)
   for (let k = 0; k < text_list.length; k++) {
