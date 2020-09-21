@@ -82,7 +82,7 @@ const OperationClipServiceClass = class {
 
   setPhase = async (phase_id, request_body) => {
     const clip_id_list = request_body.clip_id_list
-    if (clip_id_list) {
+    if (!clip_id_list) {
       return true
     }
     return await OperationClipModel.setPhase(phase_id, clip_id_list)
@@ -111,7 +111,7 @@ const OperationClipServiceClass = class {
     await OperationClipModel.migrationGroupSeqByOperation(operation_seq, group_seq)
   }
 
-  copyClipByOperation = async (origin_operation_seq, operation_info) => {
+  copyClipByOperation = async (origin_operation_seq, operation_info, origin_content_id) => {
     try {
       const operation_clip_list = await this.findByOperationSeq(origin_operation_seq)
       if (!operation_clip_list) return
@@ -127,10 +127,16 @@ const OperationClipServiceClass = class {
           clip_list.push(clip_info)
         }
       }
+
+      const replace_regex = new RegExp(origin_content_id, 'gi')
+      const content_id = operation_info.content_id
       for (let i = 0; i < clip_list.length; i++) {
         const clip_info = clip_list[i]
         const phase_id = clip_info.phase_id
         clip_info.phase_id = phase_id ? phase_map[phase_id] : null
+        if (clip_info.thumbnail_url) {
+          clip_info.thumbnail_url = clip_info.thumbnail_url.replace(replace_regex, content_id)
+        }
         await this.createClip(operation_info, { clip_info }, false )
       }
       return true

@@ -143,13 +143,6 @@ video_project_schema.statics.deleteById = function (group_seq, id) {
   return this.findOneAndDelete({ group_seq: group_seq, _id: id })
 }
 
-video_project_schema.statics.migrationGroupSeq = function (member_seq, group_seq) {
-  const update = {
-    group_seq
-  }
-  return this.updateMany({ member_seq: member_seq }, update, { 'multi': true })
-}
-
 const video_project_model = mongoose.model('VideoProject', video_project_schema)
 export const VideoProjectModel = video_project_model
 export const VideoProjectField = getFieldInfos

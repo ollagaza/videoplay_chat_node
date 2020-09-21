@@ -302,10 +302,6 @@ export default class OperationModel extends MySQLModel {
     })
   }
 
-  migrationGroupSeq = async (member_seq, group_seq) => {
-    return await this.update({ 'member_seq': member_seq }, { group_seq })
-  }
-
   getOperationByFolderSeq = async (group_seq, folder_seq) => {
     return await this.find({ group_seq, folder_seq })
   }
@@ -319,5 +315,20 @@ export default class OperationModel extends MySQLModel {
       ],
     }
     return await this.update(filters, { folder_seq })
+  }
+
+  hasCopy = async (operation_seq) => {
+    const result = await this.findOne({ origin_seq: operation_seq }, [ 'COUNT(*) AS total_count'])
+    return result && result.total_count > 0
+  }
+
+  hasOrigin = async (origin_operation_seq) => {
+    const query = this.database.select([ this.database.raw('COUNT(*) AS total_count') ])
+    query.from(this.table_name)
+    query.where('origin_seq', origin_operation_seq)
+    query.orWhere('seq', origin_operation_seq)
+    query.first()
+    const result = await query
+    return result && result.total_count > 0
   }
 }
