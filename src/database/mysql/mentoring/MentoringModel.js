@@ -140,10 +140,12 @@ export default class MentoringModel extends MySQLModel {
         'operation_data.seq', 'operation_data.operation_seq', 'operation_data.is_mento_complete',
         'operation_data.title', 'operation_data.group_name',
         'operation_data.reg_date', 'operation_data.group_seq', 'operation_data.mento_group_seq',
-        'operation_data.thumbnail'
+        'operation_data.thumbnail',
+        'operation.analysis_status', 'operation.is_analysis_complete', 'operation.progress'
       ]
       const oKnex = this.database.select(display_columns)
-        .from('operation_data')
+        .from('operation')
+        .innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
         .where(function () {
           this.where('operation_data.type', 'M')
             .andWhere('operation_data.is_complete', '1')
