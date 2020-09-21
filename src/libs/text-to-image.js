@@ -130,7 +130,9 @@ const makeText = (origin_text, options) => {
       if (options.multiLine) {
         for (i = text.length; ctx.measureText(text.substr(0, i)).width > max_width; i--)
           result = text.substr(0, i)
-        if (result) {
+        if (!result) {
+          log.debug(log_prefix, '[makeText]', i, ctx.measureText(text.substr(0, i)).width, max_width)
+        } else {
           text = text.substr(result.length, text.length)
         }
       } else {
