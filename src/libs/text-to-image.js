@@ -120,7 +120,7 @@ const makeText = (origin_text, options) => {
 
   ctx.font = font_size + 'px ' + options.fontName
 
-  log.debug(log_prefix, '[makeText]', origin_text, max_width, options)
+  // log.debug(log_prefix, '[makeText]', origin_text, max_width, options)
 
   // Start calculation
   const text_list = origin_text.split(/\r\n|\r|\n/)
@@ -133,7 +133,7 @@ const makeText = (origin_text, options) => {
         for (i = text.length; ctx.measureText(text.substr(0, i)).width > max_width; i--)
           result = text.substr(0, i)
         if (!result) {
-          log.debug(log_prefix, '[makeText]', i, text, text.substr(0, i), ctx.measureText(text.substr(0, i)).width, max_width)
+          // log.debug(log_prefix, '[makeText]', i, text, text.substr(0, i), ctx.measureText(text.substr(0, i)).width, max_width)
           result = text
           text = ''
         } else {
