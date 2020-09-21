@@ -133,7 +133,9 @@ const makeText = (origin_text, options) => {
         for (i = text.length; ctx.measureText(text.substr(0, i)).width > max_width; i--)
           result = text.substr(0, i)
         if (!result) {
-          log.debug(log_prefix, '[makeText]', i, ctx.measureText(text.substr(0, i)).width, max_width)
+          log.debug(log_prefix, '[makeText]', i, text, text.substr(0, i), ctx.measureText(text.substr(0, i)).width, max_width)
+          result = text
+          text = ''
         } else {
           text = text.substr(result.length, text.length)
         }
