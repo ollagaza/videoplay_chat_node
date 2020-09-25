@@ -74,7 +74,10 @@
     "striptags": "^3.1.1",
     "to": "^0.2.9",
     "update": "^0.7.4",
-    "url-parse": "^1.4.7"
+    "url-parse": "^1.4.7",
+    "adm-zip": "^0.4.16",
+    "jschardet": "^2.2.1",
+    "iconv-lite": "^0.6.2"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",
@@ -136,7 +139,9 @@
       "indent": [
         "error",
         2,
-        {"SwitchCase": 1}
+        {
+          "SwitchCase": 1
+        }
       ],
       "no-empty": 0
     }

@@ -22,6 +22,8 @@ import OperationInfo from '../../wrapper/operation/OperationInfo'
 import OperationClipService from './OperationClipService'
 import MongoDataService from '../common/MongoDataService'
 import { OperationAnalysisModel } from '../../database/mongodb/OperationAnalysisModel'
+import Zip from 'adm-zip'
+import iconv from 'iconv-lite'
 
 const OperationServiceClass = class {
   constructor () {
@@ -583,6 +585,59 @@ const OperationServiceClass = class {
     return upload_result.upload_seq
   }
 
+  uploadOperationFileByZip = (operation_info, temp_directory, zip_file_path, encoding, file_type) => {
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    const operation_seq = operation_info.seq
+    const storage_seq = operation_info.storage_seq
+
+    let zip = null
+    try {
+      zip = new Zip(zip_file_path)
+    } catch (e) {
+      log.error(this.log_prefix, '[uploadOperationFileByZip] - unable open zip file', operation_seq, e);
+      (
+        async () => {
+          await Util.deleteDirectory(temp_directory)
+        }
+      )()
+      return
+    }
+
+    (
+      async (zip_entries) => {
+        for (let i = 0; i < zip_entries.length; i++) {
+          const zip_entry = zip_entries[i]
+          if (zip_entry.isDirectory) continue
+          const entry_header = zip_entry.header
+          const size = entry_header.size
+          const entry_name = iconv.decode(zip_entry.rawEntryName, encoding);
+          const file_name = entry_name.split("/").pop()
+          log.debug(this.log_prefix, '[uploadOperationFileByZip]', operation_seq, entry_name, file_name, size);
+
+          const upload_file_name = Util.getRandomId()
+          const upload_file_path = directory_info.refer + upload_file_name
+          const upload_result = await Util.writeFile(upload_file_path, zip_entry.getData(), false)
+          if (!upload_result) {
+            log.error(this.log_prefix, '[uploadOperationFileByZip] unable write file', operation_seq, entry_name, upload_file_path)
+            return;
+          }
+          const upload_file_info = {
+            originalname: file_name,
+            new_file_name: upload_file_name,
+            path: upload_file_path,
+            size
+          }
+          try {
+            await this.createOperationFileInfo(file_type, operation_info, upload_file_info, storage_seq)
+          } catch (e) {
+            log.error(this.log_prefix, '[uploadOperationFileByZip]', operation_seq, e)
+          }
+        }
+
+        await Util.deleteDirectory(temp_directory)
+      }
+    )(zip.getEntries())
+  }
   uploadOperationFileAndUpdate = async (database, request, response, operation_info, file_type, field_name = null) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     const storage_seq = operation_info.storage_seq
@@ -598,8 +653,10 @@ const OperationServiceClass = class {
     }
 
     const file_field_name = field_name ? field_name : 'target'
+    let directory = directory_info.url_origin
     if (file_type === OperationFileService.TYPE_REFER) {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
+      directory = directory_info.url_refer
     } else {
       await Util.uploadByRequest(request, response, file_field_name, media_directory)
     }
@@ -609,6 +666,18 @@ const OperationServiceClass = class {
     }
     upload_file_info.new_file_name = request.new_file_name
 
+    let upload_seq = await this.createOperationFileInfo(file_type, operation_info, upload_file_info, storage_seq)
+
+    const file_path = upload_file_info.path
+    const file_url = ServiceConfig.get('service_url') + directory + upload_file_info.new_file_name
+    return {
+      upload_seq,
+      file_path,
+      file_url
+    }
+  }
+
+  createOperationFileInfo = async (file_type, operation_info, upload_file_info, storage_seq) => {
     let upload_seq = null
     await DBMySQL.transaction(async (transaction) => {
       if (file_type !== OperationFileService.TYPE_REFER) {
@@ -624,14 +693,7 @@ const OperationServiceClass = class {
       await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
       await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
     })
-
-    const file_path = upload_file_info.path
-    const file_url = ServiceConfig.get('service_url') + directory_info.url_origin + upload_file_info.new_file_name
-    return {
-      upload_seq,
-      file_path,
-      file_url
-    }
+    return upload_seq
   }
 
   createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0) => {

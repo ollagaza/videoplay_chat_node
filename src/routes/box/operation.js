@@ -1,3 +1,6 @@
+import Zip from 'adm-zip'
+import jschardet from 'jschardet'
+import iconv from 'iconv-lite'
 import { Router } from 'express'
 import Wrap from '../../utils/express-async'
 import Auth from '../../middlewares/auth.middleware'
@@ -17,7 +20,7 @@ const routes = Router()
 const checkMachine = async (request) => {
   const token_info = request.token_info
   const machine_id = request.headers['machine-id']
-  log.d(request, token_info)
+  log.d(request, machine_id, token_info.toJSON())
   if (token_info.getMachineId() !== machine_id) {
     throw new StdObject(-1, '잘못된 요청입니다.', 403)
   }
@@ -65,8 +68,6 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
     meta_data: {}
   }
 
-  // (database, group_member_info, member_seq, operation_data, operation_metadata)
-
   const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, operation_body, 'D')
   const output = new StdObject()
   output.add('operation_id', create_operation_result.get('operation_seq'))
@@ -80,6 +81,7 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
   const operation_seq = req.params.operation_seq
   const file_type = 'video'
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
+
   log.d(req, 'operation_info', operation_info)
   const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file')
 
@@ -111,6 +113,49 @@ routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(Role.BOX), Wrap(a
   const create_result = await OperationClipService.createClip(operation_info, req.body)
   const output = new StdObject()
   output.add('result', create_result)
+  res.json(output)
+}))
+
+routes.post('/:operation_seq(\\d+)/file/one', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
+  await checkMachine(req)
+
+  const operation_seq = req.params.operation_seq
+  const file_type = 'refer'
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
+  log.d(req, 'operation_info', operation_info)
+
+  const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file')
+
+  const output = new StdObject()
+  output.add('upload_seq', upload_result.upload_seq)
+  output.add('url', upload_result.file_url)
+  output.add('file_path', upload_result.file_path)
+  res.json(output)
+}))
+
+routes.post('/:operation_seq(\\d+)/file/zip(/:encoding)?', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
+  await checkMachine(req)
+
+  const operation_seq = req.params.operation_seq
+  let encoding = req.params.encoding
+  if (!encoding) encoding = 'utf-8'
+  log.d(req, operation_seq, encoding) // outputs zip entries information
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
+
+  const temp_directory = ServiceConfig.get('temp_directory_root') + '/' + Util.getRandomId()
+  await Util.createDirectory(temp_directory)
+  await Util.uploadByRequest(req, res, 'file', temp_directory, Util.getRandomId())
+
+  const upload_file_info = req.file
+  if (Util.isEmpty(upload_file_info)) {
+    throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
+  }
+  const zip_file_path = upload_file_info.path
+  const file_type = 'refer'
+
+  OperationService.uploadOperationFileByZip(operation_info, temp_directory, zip_file_path, encoding, file_type)
+
+  const output = new StdObject()
   res.json(output)
 }))
 

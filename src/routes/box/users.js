@@ -13,17 +13,19 @@ const routes = Router()
 routes.get('/', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   const token_info = req.token_info
   const machine_id = req.headers['machine-id']
-  log.d(req, token_info)
+  log.d(req, token_info.toJSON(), machine_id, token_info.getMachineId(), token_info.getMachineId() !== machine_id)
   if (token_info.getMachineId() !== machine_id) {
+    log.d(req, '00')
     return res.json(new StdObject(-1, '잘못된 요청입니다.', 403))
   }
+  log.d(req, 'aa')
   let user_list = null
   if (token_info.getGroupSeq() === 0) {
     user_list = await GroupService.getAllPersonalGroupUserListForBox(DBMySQL)
   }
   const output = new StdObject()
   output.add('user_list', user_list)
-
+  log.d(req, 'nn')
   return res.json(output)
 }))
 
