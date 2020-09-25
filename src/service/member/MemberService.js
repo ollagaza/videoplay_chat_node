@@ -196,7 +196,7 @@ const MemberServiceClass = class {
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(100, '등록된 회원이 아닙니다.', 400)
     }
-    if (!is_admin) {
+    if (!request_body.is_admin_modify && !is_admin) {
       if (Util.trim(request_body.old_password) === '') {
         throw new StdObject(-1, '잘못된 요청입니다.', 400)
       }

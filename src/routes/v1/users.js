@@ -105,12 +105,11 @@ routes.post('/noCheckCreate', baseutil.common_path_upload.fields([{ name: 'profi
 routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info
   const member_seq = Util.parseInt(req.params.member_seq)
+  const params = JSON.parse(req.body.params)
 
-  if (!MemberService.checkMyToken(token_info, member_seq)) {
+  if (!params.is_admin_modify && !MemberService.checkMyToken(token_info, member_seq)) {
     throw new StdObject(-1, '잘못된 요청입니다.', 403)
   }
-  log.debug(req.body.params)
-  const params = JSON.parse(req.body.params)
 
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'profile_image') {
