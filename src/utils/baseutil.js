@@ -108,7 +108,7 @@ const fileExists = async (file_path, permission = null) => {
 }
 
 const readFile = async (file_path) => {
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if (!(await fileExists(file_path))) {
       log.debug(log_prefix, 'Util.readFile', `file not exists. path=${file_path}`)
       resolve(null)
@@ -128,12 +128,10 @@ const readFile = async (file_path) => {
       })
     }
   })
-
-  return await async_func
 }
 
-const writeFile = async (file_path, context) => {
-  const async_func = new Promise(async resolve => {
+const writeFile = async (file_path, context, is_text = true) => {
+  return new Promise(async resolve => {
     // 쓰기를 위한 스트림 생성
     const write_stream = fs.createWriteStream(file_path)
 
@@ -146,15 +144,17 @@ const writeFile = async (file_path, context) => {
       resolve(false)
     })
 
-    write_stream.write(context, 'utf8')
+    if (is_text) {
+      write_stream.write(context, 'utf8')
+    } else {
+      write_stream.write(context)
+    }
     write_stream.end()
   })
-
-  return await async_func
 }
 
 const renameFile = async (target_path, dest_path) => {
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if (!(await fileExists(target_path))) {
       log.debug(log_prefix, 'Util.renameFile', `file not exists. target_path=${target_path}`)
       resolve(false)
@@ -177,8 +177,6 @@ const renameFile = async (target_path, dest_path) => {
       }
     }
   })
-
-  return await async_func
 }
 
 const copyFile = async (target_path, dest_path) => {
@@ -766,7 +764,8 @@ const getFileType = async (file_path, file_name) => {
   }
 
   let mime_type = mime.lookup(file_path)
-  if (isEmpty(mime_type)) {
+  log.debug(log_prefix, '[getFileType]', mime_type)
+  if (!mime_type || isEmpty(mime_type)) {
     mime_type = 'etc'
   } else {
     mime_type = mime_type.toLowerCase()
