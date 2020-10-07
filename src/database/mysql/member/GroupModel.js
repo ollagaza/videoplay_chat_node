@@ -78,14 +78,17 @@ export default class GroupModel extends MySQLModel {
     return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
   }
 
-  getAllPersonalGroupUserList = async () => {
+  getAllPersonalGroupUserList = async (is_box = false) => {
     const query = this.database
       .select(this.group_user_list)
       .from('group_info')
       .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
       .where('group_info.group_type', 'P')
       .whereIn('group_info.status', ['Y', 'F'])
-      .orderBy('member.user_name', 'ASC')
+    if (is_box) {
+      query.where('group_info.disable_box', 0)
+    }
+    query.orderBy('member.user_name', 'ASC')
 
     const query_result = await query
     return query_result
