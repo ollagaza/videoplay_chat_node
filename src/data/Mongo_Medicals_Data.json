@@ -252,7 +252,7 @@
         {
           "code": "11",
           "pCode": "17",
-          "text": "소아청소년 비뇨기과"
+          "text": "소아청소년 비뇨의학과"
         },
         {
           "code": "11",
@@ -302,7 +302,7 @@
     {
       "code": "15",
       "pCode": "00",
-      "text": "비뇨기과",
+      "text": "비뇨의학과",
       "icon": "/img/renewal/memuicon/urology.png"
     },
     {
@@ -642,7 +642,7 @@
         {
           "code": "11",
           "pCode": "17",
-          "text": "소아청소년 비뇨기과"
+          "text": "소아청소년 비뇨의학과"
         },
         {
           "code": "11",
@@ -692,7 +692,7 @@
     {
       "code": "15",
       "pCode": "00",
-      "text": "비뇨기과",
+      "text": "비뇨의학과",
       "icon": "/img/renewal/memuicon/urology.png"
     },
     {
