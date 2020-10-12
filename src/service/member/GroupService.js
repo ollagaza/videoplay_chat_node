@@ -503,7 +503,8 @@ const GroupServiceClass = class {
       btn_link_url: `${service_domain}/`
     }
     const body = GroupMailTemplate.groupAdmin(template_data)
-    this.sendEmail(title, body, [group_member_info.invite_email], 'changeGradeAdmin')
+    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
+    this.sendEmail(title, body, [target_member_info.invite_email], 'changeGradeAdmin')
   }
 
   changeGradeNormal = async (database, group_member_info, group_member_seq) => {
@@ -558,7 +559,7 @@ const GroupServiceClass = class {
       btn_link_url: `${service_domain}/`
     }
     const body = GroupMailTemplate.deleteGroupMember(template_data)
-    this.sendEmail(title, body, [group_member_info.invite_email], 'deleteMember')
+    this.sendEmail(title, body, [target_member_info.invite_email], 'deleteMember')
   }
 
   unDeleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
@@ -582,7 +583,8 @@ const GroupServiceClass = class {
       btn_link_url: `${service_domain}/`
     }
     const body = GroupMailTemplate.unDeleteGroupMember(template_data)
-    this.sendEmail(title, body, [group_member_info.invite_email], 'unDeleteMember')
+    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
+    this.sendEmail(title, body, [target_member_info.invite_email], 'unDeleteMember')
   }
 
   pauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
@@ -612,7 +614,8 @@ const GroupServiceClass = class {
       btn_link_url: `${service_domain}/`
     }
     const body = GroupMailTemplate.pauseGroupMember(template_data)
-    this.sendEmail(title, body, [group_member_info.invite_email], 'pauseMember')
+    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
+    this.sendEmail(title, body, [target_member_info.invite_email], 'pauseMember')
   }
 
   unPauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
@@ -635,7 +638,8 @@ const GroupServiceClass = class {
       btn_link_url: `${service_domain}/`
     }
     const body = GroupMailTemplate.unPauseGroupMember(template_data)
-    this.sendEmail(title, body, [group_member_info.invite_email], 'unDeleteMember')
+    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
+    this.sendEmail(title, body, [target_member_info.invite_email], 'unDeleteMember')
   }
 
   sendEmail = (title, body, mail_to_list, method = '') => {
