@@ -31,6 +31,7 @@ import HashtagModel from '../../database/mysql/operation/HashtagModel'
 import HashtagUseModel from '../../database/mysql/operation/HashtagUseModel'
 import socketManager from '../../service/socket-manager'
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
+import FTP from '../../libs/ftp'
 
 const routes = Router()
 
@@ -573,6 +574,22 @@ if (IS_DEV) {
       merge_str
     }
     res.json(result)
+  }))
+
+  routes.get('/ftp', Wrap(async (req, res) => {
+    const ftp_info = {
+      host: '192.168.0.2',
+      port: 2101,
+      user: 'ai',
+      password: 'dpdldkdl!',
+      debug: true,
+      encoding: 'utf-8'
+    }
+    const ftp = new FTP(ftp_info)
+    await ftp.connect()
+    await ftp.uploadFile('d:/temp/Conf.xml', 'Conf.xml', '/ai/bb/cc/dd/한글')
+    await ftp.close()
+    res.send('aa')
   }))
 
 }

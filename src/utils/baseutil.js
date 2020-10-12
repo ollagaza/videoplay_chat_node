@@ -24,6 +24,7 @@ import ServiceConfig from '../service/service-config'
 import log from '../libs/logger'
 import StdObject from '../wrapper/std-object'
 import Constants from '../constants/constants'
+import numeral from 'numeral';
 
 const XML_PARSER = new xml2js.Parser({ trim: true })
 const XML_BUILDER = new xml2js.Builder({ trim: true, cdata: true })
@@ -970,6 +971,38 @@ const duplicateObject = async (originObject) => {
   return returnObject
 }
 
+const fileSizeText = (size, zero = '-') => {
+  size = getFloat(size, 0);
+  if (getFloat(size, 0) === 0) {
+    return zero;
+  }
+  const kb = 1024
+  const mb = 1024 * kb
+  const gb = 1024 * mb
+  const tb = 1024 * gb
+
+  let file_size = size
+  let suffix = ''
+  if (size >= tb) {
+    file_size = size / tb
+    suffix = ' TB'
+  } else if (size >= gb) {
+    file_size = size / gb
+    suffix = ' GB'
+  } else if (size >= mb) {
+    file_size = size / mb
+    suffix = ' MB'
+  } else if (size >= kb) {
+    file_size = size / kb
+    suffix = ' KB'
+  }
+
+  if (file_size >= 100) {
+    return `${numeral(Math.round(file_size)).format('0,0')} ${suffix}`
+  }
+  return `${numeral(Math.floor(file_size * 10) / 10).format('0,0.[0]')} ${suffix}`
+}
+
 export default {
   removePathSlash,
   removePathLastSlash,
@@ -1184,6 +1217,7 @@ export default {
   'byteToMB': (byte) => {
     return Math.ceil(byte / 1024 / 1024)
   },
+  fileSizeText,
 
   'forward': async (url, method, token = null, data = null) => {
     let request_params = {

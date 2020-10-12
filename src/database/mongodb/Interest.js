@@ -5,7 +5,8 @@ const Schema = mongoose.Schema
 
 const getFieldInfos = () => {
   return {
-    codes: { type: Object, index: true, require: false, unique: true }
+    codes: { type: Object, index: false, require: false, unique: false },
+    version: { type: Number, index: false, require: false, unique: false }
   }
 }
 
