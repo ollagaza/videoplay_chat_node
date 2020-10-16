@@ -280,6 +280,16 @@ const OperationDataServiceClass = class {
     return operation_data_list
   }
 
+  getFolloweingMemberCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
+    const operation_data_model = this.getOperationDataModel()
+    const operation_data_list = await operation_data_model.getFolloweingMemberCompleteIsOpenVideoDataLists(group_seq, limit)
+    for (let cnt = 0; cnt < operation_data_list.length; cnt++) {
+      operation_data_list[cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_data_list[cnt].thumbnail)
+      log.debug(this.log_prefix, '[getCompleteIsOpenVideoDataLists]', operation_data_list[cnt].thumbnail)
+    }
+    return operation_data_list
+  }
+
   changeStatus = async (operation_seq, status) => {
     const operation_data_info = { status }
     const operation_data_model = this.getOperationDataModel()

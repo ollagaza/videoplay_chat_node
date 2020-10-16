@@ -120,13 +120,15 @@ routes.get('/following_video_list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
   try {
     const followingList = await FollowService.getFollowingLists(DBMySQL, group_seq)
-    _.forEach(followingList, async (value) => {
-      value.videos = await OperationDataService.getCompleteIsOpenVideoDataLists(value.group_seq)
-      if (value.profile_image_path !== null) {
-        value.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), value.profile_image_path)
-      }
-    })
-    output.add('followingVideoList', followingList)
+    const group_seqs = [];
+    for (let follow_cnt = 0; follow_cnt < followingList.length; follow_cnt++) {
+      group_seqs.push(followingList[follow_cnt].group_seq);
+    }
+
+    const following_open_video_list = await OperationDataService.getFolloweingMemberCompleteIsOpenVideoDataLists(group_seqs)
+
+    output.add('followingList', followingList);
+    output.add('followingVideoList', following_open_video_list)
 
     res.json(output)
   } catch (e) {
