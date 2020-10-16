@@ -280,14 +280,27 @@ const OperationDataServiceClass = class {
     return operation_data_list
   }
 
-  getFolloweingMemberCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
+  getFolloweingMemberCompleteIsOpenVideoDataLists = async (group_seq, search_keyword = null, limit = null) => {
     const operation_data_model = this.getOperationDataModel()
-    const operation_data_list = await operation_data_model.getFolloweingMemberCompleteIsOpenVideoDataLists(group_seq, limit)
+    const operation_data_list = await operation_data_model.getFolloweingMemberCompleteIsOpenVideoDataLists(group_seq, search_keyword, limit)
     for (let cnt = 0; cnt < operation_data_list.length; cnt++) {
       operation_data_list[cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_data_list[cnt].thumbnail)
       log.debug(this.log_prefix, '[getCompleteIsOpenVideoDataLists]', operation_data_list[cnt].thumbnail)
     }
+    await this.setProfileImage(operation_data_list);
     return operation_data_list
+  }
+
+  setProfileImage = async (result) => {
+    if (result.length != 0) {
+      _.forEach(result, (member_info) => {
+        if (!Util.isEmpty(member_info.profile_image_path)) {
+          member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), member_info.profile_image_path)
+        } else {
+          member_info.profile_image_url = '/img/renewal/mypage/profile.png'
+        }
+      })
+    }
   }
 
   changeStatus = async (operation_seq, status) => {

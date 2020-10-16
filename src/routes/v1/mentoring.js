@@ -117,17 +117,14 @@ routes.get('/following_video_list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
   const token_info = req.token_info
   const group_seq = token_info.getGroupSeq()
   const output = new StdObject()
+  let search_keyword = null
 
   try {
-    const followingList = await FollowService.getFollowingLists(DBMySQL, group_seq)
-    const group_seqs = [];
-    for (let follow_cnt = 0; follow_cnt < followingList.length; follow_cnt++) {
-      group_seqs.push(followingList[follow_cnt].group_seq);
+    if (req.query.search_keyword) {
+      search_keyword = req.query.search_keyword;
     }
+    const following_open_video_list = await OperationDataService.getFolloweingMemberCompleteIsOpenVideoDataLists(group_seq, search_keyword)
 
-    const following_open_video_list = await OperationDataService.getFolloweingMemberCompleteIsOpenVideoDataLists(group_seqs)
-
-    output.add('followingList', followingList);
     output.add('followingVideoList', following_open_video_list)
 
     res.json(output)
