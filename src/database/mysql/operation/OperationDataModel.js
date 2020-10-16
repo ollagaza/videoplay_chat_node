@@ -161,7 +161,7 @@ export default class OperationDataModel extends MySQLModel {
       .where('following.group_seq', group_seq)
       .orderBy([{ column: 'operation_data.reg_date', order: 'desc' }])
     if (search_keyword !== null) {
-      oKnex.andWhereRaw('MATCH (operation_data.title, operation_data.group_name, operation_data.doc_text, operation_data.hospital) AGAINST (? IN BOOLEAN MODE)', `${search_keyword}*`)
+      oKnex.andWhereRaw('MATCH (operation_data.title, operation_data.group_name, operation_data.hospital) AGAINST (? IN BOOLEAN MODE)', `${search_keyword}*`)
     }
     if (limit) {
       oKnex.limit(limit)
