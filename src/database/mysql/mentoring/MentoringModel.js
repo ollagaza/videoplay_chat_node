@@ -242,4 +242,8 @@ export default class MentoringModel extends MySQLModel {
 
     return await oKnex.raw(`insert into ${this.table_name} (category_code, group_seq, is_best) values('${category_code}', ${group_seq}, ${best_num}) on duplicate key update is_best = ${best_num}`)
   }
+  getFollowingVideoList = async (group_seq) => {
+    const oKnex = this.database
+    return await oKnex;
+  }
 }

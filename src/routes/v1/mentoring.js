@@ -113,4 +113,25 @@ routes.post('/reject_operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   }
 }))
 
+routes.get('/following_video_list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const group_seq = token_info.getGroupSeq()
+  const output = new StdObject()
+
+  try {
+    const followingList = await FollowService.getFollowingLists(DBMySQL, group_seq)
+    _.forEach(followingList, async (value) => {
+      value.videos = await OperationDataService.getCompleteIsOpenVideoDataLists(value.group_seq)
+      if (value.profile_image_path !== null) {
+        value.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), value.profile_image_path)
+      }
+    })
+    output.add('followingVideoList', followingList)
+
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
 export default routes
