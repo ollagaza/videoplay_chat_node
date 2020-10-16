@@ -148,16 +148,21 @@ export default class OperationDataModel extends MySQLModel {
     return oKnex
   }
 
-  getFolloweingMemberCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
+  getFolloweingMemberCompleteIsOpenVideoDataLists = async (group_seq, search_keyword = null, limit = null) => {
     const oKnex = this.database.select('*')
-      .from('operation_data')
-      .where(function () {
-        this.whereIn('group_seq', group_seq)
-          .andWhere('operation_data.is_complete', '1')
-          .andWhere('operation_data.status', 'Y')
-          .andWhere('operation_data.is_open_video', '1')
+      .from('following')
+      .innerJoin('group_info', 'group_info.seq', 'following.following_seq')
+      .innerJoin('operation_data', function () {
+        this.on('operation_data.group_seq', 'group_info.seq')
+          .andOnVal('operation_data.is_complete', '1')
+          .andOnVal('operation_data.status', 'Y')
+          .andOnVal('operation_data.is_open_video', '1')
       })
+      .where('following.group_seq', group_seq)
       .orderBy([{ column: 'operation_data.reg_date', order: 'desc' }])
+    if (search_keyword !== null) {
+      oKnex.andWhereRaw('MATCH (operation_data.title, operation_data.group_name, operation_data.doc_text, operation_data.hospital) AGAINST (? IN BOOLEAN MODE)', `${search_keyword}*`)
+    }
     if (limit) {
       oKnex.limit(limit)
     }
