@@ -35,9 +35,7 @@ export default class MessageModel extends MySQLModel {
     }
 
     const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging)
-    if (!results.data || results.data.length === 0) {
-      throw new StdObject(-1, '받은 쪽지가 없습니다.', 400)
-    }
+
     return results
   }
 
@@ -62,9 +60,7 @@ export default class MessageModel extends MySQLModel {
     }
 
     const results = await this.queryPaginated(oKnex, page_navigation.list_count, page_navigation.cur_page, page_navigation.page_count, page_navigation.no_paging)
-    if (!results.data || results.data.length === 0) {
-      throw new StdObject(-1, '보낸 쪽지가 없습니다.', 400)
-    }
+
     return results
   }
 

@@ -23,6 +23,7 @@ export default class FollowingModel extends MySQLModel {
     oKnex.innerJoin('member', 'member.seq', 'group_info.member_seq')
     oKnex.leftOuterJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
     oKnex.where({ 'following.group_seq': group_seq })
+    oKnex.orderBy('group_info.group_name', 'asc')
 
     return oKnex
   }

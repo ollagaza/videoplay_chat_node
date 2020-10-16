@@ -69,6 +69,15 @@ const MentoringServiceClass = class {
       throw e
     }
   }
+  getFollowingVideoList = async (database, group_seq) => {
+    try {
+      const database_model = this.getMentoring_Model(database)
+      const result = database_model.getFollowingVideoList(group_seq)
+      return result
+    } catch (e) {
+      throw e
+    }
+  }
 }
 
 const mentoring_service = new MentoringServiceClass()
