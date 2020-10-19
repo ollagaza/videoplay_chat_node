@@ -31,7 +31,7 @@ routes.post('/', Wrap(async (req, res) => {
     return res.json(output)
   } catch (e) {
     log.e(req, e)
-    throw new StdObject(-1, '로그인에 실패하였습니다. 잠시후에 다시 시도해 주세요.', 400)
+    throw new StdObject(-1, '아이디 혹은 비밀번호가 일치하지 않습니다.<br/>입력한 내용을 다시 확인해 주세요.', 400)
   }
 }))
 
