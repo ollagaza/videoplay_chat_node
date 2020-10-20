@@ -13,6 +13,7 @@ import MemberInfoSub from '../../wrapper/member/MemberInfoSub'
 import log from '../../libs/logger'
 import _ from 'lodash'
 import GroupService from '../../service/member/GroupService'
+import OperationDataService from '../../service/operation/OperationDataService'
 
 const routes = Router()
 
@@ -106,6 +107,7 @@ routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'pr
   const token_info = req.token_info
   const member_seq = Util.parseInt(req.params.member_seq)
   const params = JSON.parse(req.body.params)
+  const group_seq = token_info.getGroupSeq()
 
   if (!params.is_admin_modify && !MemberService.checkMyToken(token_info, member_seq)) {
     throw new StdObject(-1, '잘못된 요청입니다.', 403)
@@ -127,10 +129,14 @@ routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'pr
 
   await DBMySQL.transaction(async (transaction) => {
     const result = await MemberService.modifyMemberWithSub(transaction, member_seq, member_info, member_sub_info)
+
     if (!result) {
       throw new StdObject(-1, '회원정보 수정 실패', 400)
     }
   })
+
+  const group_info = await GroupService.getMemberSeqbyPersonalGroupInfo(DBMySQL, member_seq)
+  const update_operation_hospital = await OperationDataService.changeGroupHospital(DBMySQL, group_info.seq, member_info.hospname)
 
   res.json(new StdObject())
 }))
