@@ -320,6 +320,12 @@ const OperationDataServiceClass = class {
     const operation_data_model = this.getOperationDataModel(database)
     await operation_data_model.updateOperationDataByGroupSeq(group_seq, operation_data_info)
   }
+
+  changeGroupHospital = async (database, group_seq, hospital) => {
+    const operation_data_info = { hospital }
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.updateOperationDataByGroupSeq(group_seq, operation_data_info)
+  }
 }
 
 const operation_data_service = new OperationDataServiceClass()
