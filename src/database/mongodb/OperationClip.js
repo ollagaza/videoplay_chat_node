@@ -11,6 +11,8 @@ const getFieldInfos = () => {
     group_seq: { type: Number, index: true, require: false, message: '그룹 아이디가 없습니다.' },
     member_seq: { type: Number, index: true, require: false, message: '사용자 아이디가 없습니다.' },
     content_id: { type: String, index: true, require: false, message: '콘텐츠 아이디가 없습니다.' },
+    user_name: { type: String, index: false, require: false, message: '사용자 이름이 없습니다.' },
+    user_nickname: { type: String, index: false, require: false, message: '사용자 닉네임이 없습니다.' },
     start_time: { type: Number, default: 0, index: false, require: false, message: '시작 시간이 없습니다.' },
     end_time: { type: Number, default: 0, index: false, require: false, message: '종료 시간이 없습니다.' },
     desc: { type: String, default: '', index: false, require: false, message: '설명 문구가 없습니다.' },
@@ -41,11 +43,13 @@ operation_clip_schema.index({ group_seq: 1, is_phase: 1 })
 operation_clip_schema.index({ member_seq: 1, is_phase: 1 })
 operation_clip_schema.index({ operation_seq: 1, phase_id: 1 })
 
-operation_clip_schema.statics.createOperationClip = function (operation_info, clip_info) {
+operation_clip_schema.statics.createOperationClip = function (operation_info, member_info, clip_info) {
   clip_info.operation_seq = operation_info.seq
   clip_info.group_seq = operation_info.group_seq
-  clip_info.member_seq = operation_info.member_seq
   clip_info.content_id = operation_info.content_id
+  clip_info.member_seq = member_info.seq
+  clip_info.user_name = member_info.user_name
+  clip_info.user_nickname = member_info.user_nickname
   const payload = Util.getPayload(clip_info, getFieldInfos())
   const model = new this(payload)
   return model.save()

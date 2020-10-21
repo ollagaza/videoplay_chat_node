@@ -25,7 +25,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     throw new StdObject(-1, '잘못된 접근입니다.', 400)
   }
 
-  const { group_seq, group_member_info, member_info, member_seq } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
+  const { group_seq, group_member_info, member_info, member_seq, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
   const comment_seq = request.params.comment_seq
   const clip_id = request.params.clip_id
   const phase_id = request.params.phase_id
@@ -49,6 +49,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     phase_id,
     operation_seq: null,
     operation_info: null,
+    is_group_admin
   }
 
   if (api_type === 'mentoring') {
@@ -279,9 +280,9 @@ routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthentic
 
 routes.post('/:api_type/:api_key/clip', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { operation_info } = await getBaseInfo(req, true, true, true)
+  const { operation_info, member_info } = await getBaseInfo(req, true, true, true)
 
-  const create_result = await OperationClipService.createClip(operation_info, req.body)
+  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body)
   const output = new StdObject()
   output.add('result', create_result)
   res.json(output)

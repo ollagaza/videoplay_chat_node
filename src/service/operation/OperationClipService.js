@@ -19,10 +19,10 @@ const OperationClipServiceClass = class {
     }
   }
 
-  createClip = async (operation_info, request_body, update_clip_count = true) => {
+  createClip = async (operation_info, member_info, request_body, update_clip_count = true) => {
     const clip_info = request_body.clip_info
     const clip_count = request_body.clip_count
-    const create_result = await OperationClipModel.createOperationClip(operation_info, clip_info)
+    const create_result = await OperationClipModel.createOperationClip(operation_info, member_info, clip_info)
 
     if (update_clip_count) {
       await this.updateClipCount(operation_info, clip_count)
