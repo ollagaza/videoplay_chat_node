@@ -49,7 +49,7 @@ const OperationClipServiceClass = class {
   }
 
   findByOperationSeq = async (operation_seq) => {
-    return await OperationClipModel.findByOperationSeq(operation_seq, '-member_seq -content_id -operation_seq')
+    return await OperationClipModel.findByOperationSeq(operation_seq, '-content_id -operation_seq -__v')
   }
 
   findByMemberSeq = async (member_seq) => {
