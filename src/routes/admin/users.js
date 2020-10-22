@@ -144,4 +144,9 @@ routes.post('/getMongoData', Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.get('/member_home', Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = await AdminMemberService.getHome_Datas(DBMySQL)
+  res.json(output)
+}))
 export default routes
