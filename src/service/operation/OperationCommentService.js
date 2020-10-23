@@ -73,15 +73,25 @@ const OperationCommentServiceClass = class {
     return await comment_model.deleteComment(operation_data_seq, comment_seq)
   }
 
-  changeClipInfo = async (database, operation_data_seq, comment_seq, request_body) => {
-    if (!comment_seq || !operation_data_seq || !request_body || !request_body.clip_id) {
+  changeClipInfo = async (database, operation_data_seq, request_body) => {
+    if (!operation_data_seq || !request_body || !request_body.clip_id) {
       throw new StdObject(-1, '잘못된 요청입니다', 400)
     }
     const clip_id = request_body.clip_id
     const clip_info = JSON.stringify(request_body.clip_info)
 
     const comment_model = this.getOperationCommentModel(database)
-    return await comment_model.changeComment(operation_data_seq, comment_seq, comment)
+    return await comment_model.changeClipInfo(operation_data_seq, clip_id, clip_info)
+  }
+
+  deleteClipInfo = async (database, operation_data_seq, request_body) => {
+    if (!operation_data_seq || !request_body || !request_body.clip_id) {
+      throw new StdObject(-1, '잘못된 요청입니다', 400)
+    }
+    const clip_id = request_body.clip_id
+
+    const comment_model = this.getOperationCommentModel(database)
+    return await comment_model.setDeleteClip(operation_data_seq, clip_id)
   }
 
   getCommentList = async (database, operation_data_seq, request_params) => {
