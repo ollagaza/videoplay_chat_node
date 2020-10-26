@@ -84,7 +84,7 @@ routes.delete('/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_US
 routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const result = await StudioService.updateStatus(req, group_seq, 'T')
+  const result = await StudioService.updateStatus(req.body, group_seq, 'T')
 
   const output = new StdObject()
   output.add('result', result)
@@ -95,7 +95,7 @@ routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res
 routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const result = await StudioService.updateStatus(req, group_seq, 'Y')
+  const result = await StudioService.updateStatus(req.body, group_seq, 'Y')
 
   const output = new StdObject()
   output.add('result', result)

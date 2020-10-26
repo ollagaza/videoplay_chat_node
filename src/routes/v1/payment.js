@@ -70,13 +70,14 @@ routes.put('/paymentFinalUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     const output = new StdObject()
     const token_info = req.token_info
     const member_seq = token_info.getId()
+    const group_seq = token_info.getGroupSeq()
     const pg_data = req.body.pg_data
     const pay_data = req.body.pay_data
     const moneys = req.body.moneys
     const numPatten = /(^[0-9]+)/g
     const textPatten = /([^0-9])([A-Z])/g
     const payment_update = await PaymentService.updatePayment(DBMySQL, pg_data)
-    const PMR_Insert_Seq = await PaymentService.InsertPMResult(DBMySQL, member_seq, pg_data, pay_data, moneys)
+    const PMR_Insert_Seq = await PaymentService.InsertPMResult(DBMySQL, member_seq, group_seq, pg_data, pay_data, moneys)
 
     if (pg_data.success) {
       log.d(req, '[pg_data.success] - pay_data', pay_data)
