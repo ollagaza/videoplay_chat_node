@@ -277,6 +277,17 @@ const AdminMemberServiceClass = class {
     const result = await admin_member_model.findMembers(filter)
     return result
   }
+
+  getHome_Datas = async(database) => {
+    const rtn_oupput = new StdObject();
+    const admin_member_model = this.getAdminMemberModel(database)
+
+    rtn_oupput.add('anlytics_chart_data', await admin_member_model.getAnlyticData())
+    rtn_oupput.add('member_counts', (await admin_member_model.getMember_Counts())[0])
+    rtn_oupput.add('appr_list', await admin_member_model.getApprLists())
+
+    return rtn_oupput;
+  }
 }
 
 const adminmember_service = new AdminMemberServiceClass()

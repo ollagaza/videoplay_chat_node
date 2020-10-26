@@ -74,8 +74,8 @@ const StudioServiceClass = class {
     return await VideoProjectModel.updateFavorite(project_seq, is_favorite)
   }
 
-  updateStatus = async (request, group_seq, status) => {
-    const project_seq_list = request.id_list
+  updateStatus = async (request_body, group_seq, status) => {
+    const project_seq_list = request_body.id_list
     return await VideoProjectModel.updateStatus(group_seq, project_seq_list, status)
   }
 

@@ -42,4 +42,29 @@ export default class MemberModel extends MySQLModel {
   updateAdminUserData = async (setData, search_option = null) => {
     return await this.update(search_option, setData)
   }
+
+  getAnlyticData = async () => {
+    const oKnex = this.database.select('*')
+    return null
+  }
+
+  getMember_Counts = async () => {
+    const oKnex = this.database.select([
+      this.database.raw('count(*) `all_count`'),
+      this.database.raw('count(case when used in (0, 7) then 1 end) `appr_count`'),
+      this.database.raw('count(case when used = 1 then 1 end) `used_count`'),
+      this.database.raw('count(case when used = 6 then 1 end) `reject_count`'),
+    ])
+      .from('member')
+    return oKnex
+  }
+
+  getApprLists = async () => {
+    const oKnex = this.database.select('*')
+      .from('member')
+      .innerJoin('member_sub', 'member_sub.member_seq', 'member.seq')
+      .whereIn('member.used', ['0', '7'])
+      .limit(5)
+    return oKnex
+  }
 }
