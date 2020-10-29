@@ -72,9 +72,10 @@ const PaymentServiceClass = class {
     return output
   }
 
-  createDefaultPaymentResult = async (database, payData, member_seq) => {
+  createDefaultPaymentResult = async (database, payData, member_seq, group_info) => {
     const payment_result_model = this.getPaymentResultModel(database)
-    await payment_result_model.createPaymentResultByMemberSeq(payData, member_seq)
+    const pgData = await payment_result_model.createPaymentResultByMemberSeq(payData, member_seq)
+    await this.InsertPMResult(database, member_seq, group_info.seq, payData, JSON.parse(payData.custom_data), JSON.parse(payData.custom_data))
   }
 
   insertPayment = async (database, pg_data) => {
@@ -161,31 +162,33 @@ const PaymentServiceClass = class {
     return await PMResult_Model.getPMResultData(member_seq)
   }
 
-  InsertPMResult = async (database, member_seq, pgData, pay_data, moneys) => {
+  InsertPMResult = async (database, member_seq, group_seq, pgData, pay_data, moneys) => {
     try {
-      const filters = {
-        is_new: true,
-        query: [
-          { member_seq: member_seq },
-          { used: 'Y' },
-        ],
-      }
-      const order = { name: 'seq', direction: 'desc' }
-      const PMResult_List = await this.getPMRFiltertList(database, filters, order)
-
-      const insertData = {
+      const insertDataObject = {
+        group_seq: group_seq,
         member_seq: member_seq,
         payment_merchant_uid: pgData.merchant_uid,
-        payment_start_date: PMResult_List.length != 0 ? BaseUtil.getDateMonthAdd(PMResult_List[0].payment_expire_date.toJSON(), 0) : database.raw(`date_format(${pgData.paid_at}, '%Y-%m-%d')`),
-        payment_expire_date: PMResult_List.length != 0 ? moneys.pay === 'month' ? BaseUtil.getDateMonthAdd(PMResult_List[0].payment_expire_date.toJSON(), 1) : BaseUtil.getDateYearAdd(PMResult_List[0].payment_expire_date.toJSON(), 1) : database.raw(`date_format(date_add(${pgData.paid_at}, interval 1 ${moneys.pay}), '%Y-%m-%d')`),
+        payment_start_date: database.raw(`date_format(${pgData.paid_at}, '%Y-%m-%d')`),
+        payment_expire_date: moneys.code === 'free' ? database.raw(`date_format('9999-12-31', '%Y-%m-%d')`) : database.raw(`date_format(date_add(${pgData.paid_at}, interval 1 ${moneys.pay}), '%Y-%m-%d')`),
         payment_code: pay_data.code,
         pay_code: moneys.paycode,
         payment_type: moneys.paytype,
-        payment_count: PMResult_List.length != 0 ? Number(PMResult_List[0].payment_count) + 1 : 1,
+        payment_count: 1,
       }
+      const insertDataArray = [
+        group_seq,
+        member_seq,
+        pgData.merchant_uid,
+        database.raw(`date_format(${pgData.paid_at}, '%Y-%m-%d')`),
+        moneys.code === 'free' ? database.raw(`date_format('9999-12-31', '%Y-%m-%d')`) : database.raw(`date_format(date_add(${pgData.paid_at}, interval 1 ${moneys.pay}), '%Y-%m-%d')`),
+        pay_data.code,
+        moneys.paycode,
+        moneys.paytype,
+        1,
+      ]
       await database.transaction(async (transaction) => {
         const PMResult_Model = this.getPayment_Member_Result_Model(transaction)
-        const insertResult = await PMResult_Model.CreatePMResultData(insertData)
+        const insertResult = await PMResult_Model.CreatePMResultData(insertDataObject, insertDataArray)
         return insertResult
       })
     } catch (e) {

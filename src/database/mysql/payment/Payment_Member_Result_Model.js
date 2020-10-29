@@ -33,8 +33,27 @@ export default class Payment_Member_Result_Model extends MySQLModel {
     return await this.findOne(filter)
   }
 
-  CreatePMResultData = async (payData) => {
-    return await this.create(payData, 'seq')
+  CreatePMResultData = async (payData, payDataArray) => {
+    const sql = `
+      INSERT INTO ${this.table_name} (group_seq, member_seq, payment_merchant_uid, payment_start_date, payment_expire_date, payment_code, pay_code, payment_type, payment_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        payment_merchant_uid = '${payData.payment_merchant_uid}',
+        payment_start_date = ${payData.payment_start_date},
+        payment_expire_date = ${payData.payment_expire_date},
+        payment_code = '${payData.payment_code}',
+        pay_code = '${payData.pay_code}',
+        payment_type = '${payData.payment_type}',
+        payment_count = payment_count + ${payData.payment_count},
+        modify_date = current_timestamp()
+    `
+    const query_result = await this.database.raw(sql, payDataArray)
+
+    if (!query_result || !query_result.length || !query_result[0]) {
+      return false
+    }
+    return query_result[0].insertId
+    // return await this.create(payData, 'seq')
   }
 
   DeletePMResultData = async (member_seq, merchant_uid) => {

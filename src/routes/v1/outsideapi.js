@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { Router } from 'express'
 import ServiceConfig from '../../service/service-config'
 import Wrap from '../../utils/express-async'
@@ -65,8 +66,17 @@ routes.post('/searchUniv', Wrap(async (req, res) => {
     }
 
     const resultList = await Util.httpRequest(api_options, false)
+
+    const univ_list = JSON.parse(resultList).dataSearch.content;
+
+    for (let univ_cnt = 0; univ_cnt < univ_list.length; univ_cnt++) {
+      if (univ_list[univ_cnt].campusName === 'null') {
+        univ_list[univ_cnt].campusName = ''
+      }
+    }
+
     output.add('searchText', searchText)
-    output.add('resultList', JSON.parse(resultList).dataSearch)
+    output.add('resultList', univ_list)
     res.json(output)
   } catch (e) {
     throw new StdObject(-1, e, 400)

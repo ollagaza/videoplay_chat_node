@@ -391,6 +391,9 @@ const MemberServiceClass = class {
   createMember = async (database, params, is_auto_confirm = false) => {
     const member_info = new MemberInfo(params.user_info, ['password_confirm'])
     const member_sub_info = new MemberInfo(params.user_sub_info)
+    let create_member_info = null
+    let group_info = null
+
     member_info.checkDefaultParams()
     member_info.checkUserId()
     member_info.checkPassword()
@@ -403,17 +406,20 @@ const MemberServiceClass = class {
       is_confirm = true
     }
 
-    const member_model = this.getMemberModel(database)
-    const create_member_info = await member_model.createMember(member_info, is_confirm)
-    if (!create_member_info.seq) {
-      throw new StdObject(-1, '회원정보 생성 실패', 500)
-    }
+    await DBMySQL.transaction(async (transaction) => {
 
-    await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
+      const member_model = this.getMemberModel(database)
+      create_member_info = await member_model.createMember(member_info, is_confirm)
+      if (!create_member_info.seq) {
+        throw new StdObject(-1, '회원정보 생성 실패', 500)
+      }
 
-    await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq)
-    await MemberLogService.memberJoinLog(database, create_member_info.seq)
-    await GroupService.createPersonalGroup(database, create_member_info)
+      await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
+
+      await MemberLogService.memberJoinLog(database, create_member_info.seq)
+      group_info = await GroupService.createPersonalGroup(database, create_member_info)
+      await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq, group_info)
+    })
 
     if (ServiceConfig.isVacs() === false && ServiceConfig.supporterEmailList()) {
       (
