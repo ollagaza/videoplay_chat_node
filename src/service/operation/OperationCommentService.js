@@ -4,6 +4,7 @@ import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../../service/service-config'
 import striptags from 'striptags'
+import log from '../../libs/logger'
 
 const OperationCommentServiceClass = class {
   constructor () {
@@ -52,7 +53,12 @@ const OperationCommentServiceClass = class {
       clip_info
     }
 
-    return await comment_model.createComment(operation_data_seq, create_params)
+    const comment_seq = await comment_model.createComment(operation_data_seq, create_params)
+    if (is_reply && parent_seq) {
+      await comment_model.updateReplyCount(operation_data_seq, parent_seq)
+    }
+
+    return comment_seq
   }
 
   changeComment = async (database, operation_data_seq, comment_seq, request_body) => {
@@ -103,8 +109,10 @@ const OperationCommentServiceClass = class {
     const limit = request_params ? Util.parseInt(request_params.limit, 20) : 20
     const column = request_params ? request_params.column : 'operation_comment.reg_date'
     const order = request_params ? request_params.order : 'desc'
+    const by_index = request_params ? Util.isTrue(request_params.by_index) : false
+    log.debug(this.log_prefix, '[getCommentList]', request_params.by_index, request_params.by_index === true)
     const comment_model = this.getOperationCommentModel(database)
-    const result_list = await comment_model.getCommentList(operation_data_seq, parent_seq, start, limit, column, order)
+    const result_list = await comment_model.getCommentList(operation_data_seq, parent_seq, start, limit, column, order, by_index)
     const comment_list = []
     if (result_list) {
       for (let i = 0; i < result_list.length; i++) {
@@ -139,16 +147,17 @@ const OperationCommentServiceClass = class {
       comment_info.clip_info = JSON.parse(comment_info.clip_info)
     }
     comment_info.is_clip_deleted = comment_info.is_clip_deleted === 1
+    comment_info.is_reply = comment_info.is_reply === 1
 
     return comment_info
   }
 
-  getCommentCount = async (database, operation_data_seq) => {
+  getCommentCount = async (database, operation_data_seq, parent_seq = null) => {
     if (!operation_data_seq) {
       throw new StdObject(-1, '잘못된 요청입니다', 400)
     }
     const comment_model = this.getOperationCommentModel(database)
-    const comment_count = await comment_model.getCommentCount(operation_data_seq)
+    const comment_count = await comment_model.getCommentCount(operation_data_seq, parent_seq)
     return comment_count ? Util.parseInt(comment_count.total_count, 0) : 0
   }
 }

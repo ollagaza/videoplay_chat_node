@@ -216,7 +216,7 @@ routes.get('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER),
   output.add('comment_list', comment_list)
 
   if (req.query && req.query.with_count === 'y') {
-    const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq)
+    const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq, req.query.parent_seq)
     output.add('comment_count', comment_count)
   }
 
@@ -235,7 +235,7 @@ routes.post('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER)
 
 routes.get('/:api_type/:api_key/comment/count', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_data_seq } = await getBaseInfo(req, false)
-  const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq)
+  const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq, req.query.parent_seq)
 
   const output = new StdObject()
   output.add('comment_count', comment_count)
@@ -250,7 +250,7 @@ routes.get('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticate
   output.add('comment_info', comment_info)
 
   if (req.query && req.query.with_count === 'y') {
-    const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq)
+    const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq, req.query.parent_seq)
     output.add('comment_count', comment_count)
   }
 
@@ -270,7 +270,7 @@ routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticate
 routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { operation_data_seq, comment_seq } = await getBaseInfo(req, true)
-  const result = await OperationCommentService.deleteComment(DBMySQL, operation_data_seq, comment_seq, req.body)
+  const result = await OperationCommentService.deleteComment(DBMySQL, operation_data_seq, comment_seq)
 
   const output = new StdObject()
   output.add('result', result)

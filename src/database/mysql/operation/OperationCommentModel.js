@@ -20,7 +20,7 @@ export default class OperationCommentModel extends MySQLModel {
   }
 
   createComment = async (operation_data_seq, create_params) => {
-    return await this.create(create_params, 'seq')
+    return this.create(create_params, 'seq')
   }
 
   changeComment = async (operation_data_seq, comment_seq, comment) => {
@@ -32,8 +32,8 @@ export default class OperationCommentModel extends MySQLModel {
     return await this.update({ seq: comment_seq, operation_data_seq }, update_params)
   }
 
-  deleteComment = async (comment_seq) => {
-    return await this.delete({ seq: comment_seq })
+  deleteComment = async (operation_data_seq, comment_seq) => {
+    return await this.delete({ seq: comment_seq, operation_data_seq })
   }
 
   changeClipInfo = async (operation_data_seq, clip_id, clip_info) => {
@@ -70,12 +70,15 @@ export default class OperationCommentModel extends MySQLModel {
     return await this.update({ seq: comment_seq, operation_data_seq }, update_params)
   }
 
-  getCommentList = async (operation_data_seq, parent_seq = null, start = 0, limit = 20, column = 'operation_comment.reg_date', order = 'desc') => {
+  getCommentList = async (operation_data_seq, parent_seq = null, start = 0, limit = 20, column = 'operation_comment.reg_date', order = 'desc', by_index = false) => {
     const query = this.database.select(this.list_select_fileds)
       .from(this.table_name)
       .leftOuterJoin('group_info', 'group_info.seq', 'operation_comment.group_seq')
       .leftOuterJoin('member', 'member.seq', 'operation_comment.member_seq')
       .where('operation_comment.operation_data_seq', operation_data_seq)
+    if (by_index) {
+      query.andWhere('operation_comment.seq', '>', start)
+    }
     if (parent_seq) {
       query.andWhere('operation_comment.parent_seq', parent_seq)
       query.andWhere('operation_comment.is_reply', 1)
@@ -85,7 +88,9 @@ export default class OperationCommentModel extends MySQLModel {
 
     query.orderBy(column, order)
       .limit(limit)
-      .offset(start)
+    if (!by_index) {
+      query.offset(start)
+    }
 
     return query
   }
@@ -101,11 +106,27 @@ export default class OperationCommentModel extends MySQLModel {
     return query
   }
 
-  getCommentCount = async (operation_data_seq) => {
+  getCommentCount = async (operation_data_seq, parent_seq = null) => {
     const query = this.database.select([this.database.raw('COUNT(*) AS total_count')])
       .from(this.table_name)
       .where('operation_comment.operation_data_seq', operation_data_seq)
-      .first()
+    if (parent_seq) {
+      query.andWhere('operation_comment.parent_seq', parent_seq)
+    } else {
+      query.whereNull('operation_comment.parent_seq')
+    }
+    query.first()
     return query
+  }
+
+  updateReplyCount = async (operation_data_seq, comment_seq) => {
+    const sql = `
+      update operation_comment,
+        (select parent_seq, count(*) as cnt from operation_comment where operation_data_seq = ? and parent_seq = ? group by parent_seq) as reply_count
+      set operation_comment.reply_count = reply_count.cnt
+      where operation_comment.seq = ? and operation_comment.seq = reply_count.parent_seq
+    `
+    const query_result = await this.database.raw(sql, [operation_data_seq, comment_seq, comment_seq])
+    return !(!query_result || !query_result.length || !query_result[0]);
   }
 }
