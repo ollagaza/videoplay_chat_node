@@ -204,7 +204,7 @@ const PaymentServiceClass = class {
     })
   }
 
-  setPaymentFreeStorageAssign = async (database, member_seq, setDate) => {
+  setPaymentFreeStorageAssign = async (database, member_seq, group_seq, setDate) => {
     try {
       const payment_result_Model = this.getPaymentResultModel(database)
       const PMResult_Model = this.getPayment_Member_Result_Model(database)
@@ -215,6 +215,7 @@ const PaymentServiceClass = class {
       }
 
       const setPMRParam = {
+        group_seq,
         member_seq,
         payment_merchant_uid: buyerList[0].merchant_uid,
         payment_start_date: setDate.start_date,
