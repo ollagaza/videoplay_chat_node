@@ -36,20 +36,20 @@ export default class OperationCommentModel extends MySQLModel {
     return await this.delete({ seq: comment_seq, operation_data_seq })
   }
 
-  changeClipInfo = async (operation_data_seq, clip_id, clip_info) => {
+  changeClipInfo = async (clip_id, clip_info) => {
     const update_params = {
-      clip_info,
+      clip_info: JSON.stringify(clip_info),
       modify_date: this.database.raw('NOW()')
     }
-    return await this.update({ operation_data_seq, clip_id }, update_params)
+    return await this.update({ clip_id }, update_params)
   }
 
-  setDeleteClip = async (operation_data_seq, clip_id) => {
+  setDeleteClip = async (clip_id) => {
     const update_params = {
       is_clip_deleted: 1,
       modify_date: this.database.raw('NOW()')
     }
-    return await this.update({ operation_data_seq, clip_id }, update_params)
+    return await this.update({ clip_id }, update_params)
   }
 
   addClipInfo = async (operation_data_seq, comment_seq, clip_id, clip_info) => {
@@ -77,7 +77,11 @@ export default class OperationCommentModel extends MySQLModel {
       .leftOuterJoin('member', 'member.seq', 'operation_comment.member_seq')
       .where('operation_comment.operation_data_seq', operation_data_seq)
     if (by_index) {
-      query.andWhere('operation_comment.seq', '>', start)
+      if (order === 'asc') {
+        query.andWhere('operation_comment.seq', '>', start)
+      } else if (start > 0) {
+        query.andWhere('operation_comment.seq', '<', start)
+      }
     }
     if (parent_seq) {
       query.andWhere('operation_comment.parent_seq', parent_seq)

@@ -71,33 +71,29 @@ const OperationCommentServiceClass = class {
     return await comment_model.changeComment(operation_data_seq, comment_seq, comment)
   }
 
-  deleteComment = async (database, operation_data_seq, comment_seq) => {
+  deleteComment = async (database, operation_data_seq, comment_seq, request_body) => {
     if (!operation_data_seq || !comment_seq) {
       throw new StdObject(-1, '잘못된 요청입니다', 400)
     }
     const comment_model = this.getOperationCommentModel(database)
-    return await comment_model.deleteComment(operation_data_seq, comment_seq)
+    const parent_seq = request_body ? request_body.parent_seq : null
+    const is_reply = request_body ? request_body.is_reply === true : false
+    const delete_result = await comment_model.deleteComment(operation_data_seq, comment_seq)
+
+    if (is_reply && parent_seq) {
+      await comment_model.updateReplyCount(operation_data_seq, parent_seq)
+    }
+    return delete_result
   }
 
-  changeClipInfo = async (database, operation_data_seq, request_body) => {
-    if (!operation_data_seq || !request_body || !request_body.clip_id) {
-      throw new StdObject(-1, '잘못된 요청입니다', 400)
-    }
-    const clip_id = request_body.clip_id
-    const clip_info = JSON.stringify(request_body.clip_info)
-
-    const comment_model = this.getOperationCommentModel(database)
-    return await comment_model.changeClipInfo(operation_data_seq, clip_id, clip_info)
+  changeClipInfo = async (clip_id, clip_info) => {
+    const comment_model = this.getOperationCommentModel()
+    return await comment_model.changeClipInfo(clip_id, clip_info)
   }
 
-  deleteClipInfo = async (database, operation_data_seq, request_body) => {
-    if (!operation_data_seq || !request_body || !request_body.clip_id) {
-      throw new StdObject(-1, '잘못된 요청입니다', 400)
-    }
-    const clip_id = request_body.clip_id
-
-    const comment_model = this.getOperationCommentModel(database)
-    return await comment_model.setDeleteClip(operation_data_seq, clip_id)
+  deleteClipInfo = async (clip_id) => {
+    const comment_model = this.getOperationCommentModel()
+    return await comment_model.setDeleteClip(clip_id)
   }
 
   getCommentList = async (database, operation_data_seq, request_params) => {
@@ -108,9 +104,8 @@ const OperationCommentServiceClass = class {
     const start = request_params ? Util.parseInt(request_params.start, 0) : 0
     const limit = request_params ? Util.parseInt(request_params.limit, 20) : 20
     const column = request_params ? request_params.column : 'operation_comment.reg_date'
-    const order = request_params ? request_params.order : 'desc'
+    const order = (request_params && request_params.order ? request_params.order : 'desc').toLowerCase()
     const by_index = request_params ? Util.isTrue(request_params.by_index) : false
-    log.debug(this.log_prefix, '[getCommentList]', request_params.by_index, request_params.by_index === true)
     const comment_model = this.getOperationCommentModel(database)
     const result_list = await comment_model.getCommentList(operation_data_seq, parent_seq, start, limit, column, order, by_index)
     const comment_list = []

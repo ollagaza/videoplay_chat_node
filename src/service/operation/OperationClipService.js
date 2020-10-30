@@ -4,6 +4,7 @@ import log from '../../libs/logger'
 
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
+import OperationCommentService from './OperationCommentService'
 
 const OperationClipServiceClass = class {
   constructor () {
@@ -32,7 +33,17 @@ const OperationClipServiceClass = class {
   }
 
   updateClip = async (clip_id, clip_info, tag_list = null) => {
-    return await OperationClipModel.updateOperationClip(clip_id, clip_info, tag_list)
+    let update_result = await OperationClipModel.updateOperationClip(clip_id, clip_info, tag_list)
+    if (update_result) {
+      update_result = update_result.toJSON()
+      delete update_result.content_id
+      delete update_result.operation_seq
+      delete update_result.__v
+      delete update_result.tag_list
+      await OperationCommentService.changeClipInfo(clip_id, update_result)
+    }
+
+    return update_result
   }
 
   deleteById = async (clip_id, operation_info, request_body) => {
@@ -45,11 +56,13 @@ const OperationClipServiceClass = class {
       await this.deletePhase(operation_info.seq, request_body.phase_id)
     }
 
+    await OperationCommentService.deleteClipInfo(clip_id)
+
     return delete_result
   }
 
   findByOperationSeq = async (operation_seq) => {
-    return await OperationClipModel.findByOperationSeq(operation_seq, '-content_id -operation_seq -__v')
+    return await OperationClipModel.findByOperationSeq(operation_seq, '-content_id -operation_seq -tag_list -__v')
   }
 
   findByMemberSeq = async (member_seq) => {
