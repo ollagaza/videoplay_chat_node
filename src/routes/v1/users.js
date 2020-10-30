@@ -73,11 +73,8 @@ routes.post('/', baseutil.common_path_upload.fields([{ name: 'profile_image' }, 
     }
   })
 
-  // 커밋과 롤백은 자동임
-  await DBMySQL.transaction(async (transaction) => {
-    const result = await MemberService.createMember(transaction, params)
-    output.add('info', result)
-  })
+  const result = await MemberService.createMember(DBMySQL, params)
+  output.add('info', result)
 
   res.json(output)
 }))
