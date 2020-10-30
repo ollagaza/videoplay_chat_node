@@ -157,8 +157,11 @@ routes.put('/freestorageassign', Wrap(async (req, res) => {
         member_seq: value,
         group_type: 'P',
       }
+      const group_model = this.getGroupModel(DBMySQL)
+      const group_info = await group_model.getGroupInfoByMemberSeqAndGroupType(filter.member_seq, filter.group_type)
+
       await DBMySQL.transaction(async (transaction) => {
-        const setPaymentResult = await PaymentService.setPaymentFreeStorageAssign(transaction, value, setDate)
+        const setPaymentResult = await PaymentService.setPaymentFreeStorageAssign(transaction, value, group_info.seq, setDate)
         const groupUpdate = await group_service.updatePaymentToGroup(transaction, filter, setDate.payment_code, storage_size, null, setDate.start_date, setDate.expire_date)
       })
     })

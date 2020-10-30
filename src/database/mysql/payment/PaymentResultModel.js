@@ -24,7 +24,7 @@ export default class PaymentResultModel extends MySQLModel {
     select list.*, result.*, pmr.*
     from payment_result result
     inner join payment_list list on list.code = result.payment_code and list.group = '${group}'
-    inner join payment_member_result pmr on pmr.payment_merchant_uid = result.merchant_uid and pmr.used = 'Y'
+    inner join payment_member_result pmr on pmr.payment_merchant_uid = result.merchant_uid
     where result.success = 1
       and result.buyer_seq = ${member_seq}
       and result.cancelled_at is null
@@ -231,7 +231,7 @@ export default class PaymentResultModel extends MySQLModel {
     const oKnex = this.database.raw(`
     select result.*, pmr.*
     from payment_result result
-    inner join payment_member_result pmr on pmr.payment_merchant_uid = result.merchant_uid and pmr.used = 'Y'
+    inner join payment_member_result pmr on pmr.payment_merchant_uid = result.merchant_uid
     where result.success = 1
       and result.buyer_seq = ${member_seq}
       and result.payment_code != 'free'

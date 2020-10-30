@@ -12,7 +12,6 @@ export default class Payment_Member_Result_Model extends MySQLModel {
   getPMResultList = async (member_seq) => {
     const filter = {
       member_seq: member_seq,
-      used: 'Y',
     }
     return await this.find(filter)
   }
@@ -57,6 +56,20 @@ export default class Payment_Member_Result_Model extends MySQLModel {
   }
 
   DeletePMResultData = async (member_seq, merchant_uid) => {
-    return await this.update({ member_seq: member_seq, payment_merchant_uid: merchant_uid }, { used: 'N' })
+    const sql = `update payment_member_result pmr,
+  (select merchant_uid, '9999-12-31' payment_expire_date, 'free' payment_code, 'free' pay_code, 'once' payment_type
+  from payment_result
+  where buyer_seq = ?
+  and payment_code = 'free') pay
+set pmr.payment_merchant_uid = pay.merchant_uid,
+  pmr.payment_expire_date = pay.payment_expire_date,
+  pmr.payment_code = pay.payment_code,
+  pmr.pay_code = pay.pay_code,
+  pmr.payment_type = pay.payment_type,
+  pmr.payment_count = 1,
+  pmr.modify_date = current_timestamp()
+where member_seq = ? and payment_merchant_uid = ?`
+    const filter = [member_seq, member_seq, merchant_uid]
+    return await this.database.raw(sql, filter)
   }
 }
