@@ -20,7 +20,8 @@ const getFieldInfos = () => {
     phase_id: { type: String, default: null, index: false, require: false, message: '썸네일 정보가 없습니다.' },
     is_phase: { type: Boolean, default: false, index: false, require: false, message: '썸네일 정보가 없습니다.' },
     tag_list: { type: [String], default: [], require: false, message: '태그 목록이 없습니다.' },
-    shape_info_list: { type: [Object], default: null, require: false, message: '태그 목록이 없습니다.' },
+    is_shape: { type: Boolean, default: false, index: false, require: false, message: '마킹 정보가 없습니다.' },
+    shape_info_list: { type: [Object], default: null, require: false, message: '마킹 정보가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   }
@@ -38,10 +39,8 @@ schema_field_infos.desc.require = true
 const operation_clip_schema = new Schema(schema_field_infos, { strict: false })
 
 operation_clip_schema.indexes()
-operation_clip_schema.index({ member_seq: 1, tag_list: 1 })
 operation_clip_schema.index({ group_seq: 1, is_phase: 1 })
-operation_clip_schema.index({ member_seq: 1, is_phase: 1 })
-operation_clip_schema.index({ operation_seq: 1, phase_id: 1 })
+operation_clip_schema.index({ operation_seq: 1 })
 
 operation_clip_schema.statics.createOperationClip = function (operation_info, member_info, clip_info) {
   clip_info.operation_seq = operation_info.seq
@@ -50,6 +49,12 @@ operation_clip_schema.statics.createOperationClip = function (operation_info, me
   clip_info.member_seq = member_info.seq
   clip_info.user_name = member_info.user_name
   clip_info.user_nickname = member_info.user_nickname
+  clip_info.is_shape = clip_info.is_shape === true
+  if (clip_info.is_shape) {
+    clip_info.shape_info_list = clip_info.shape_info_list ? clip_info.shape_info_list : null
+  } else {
+    clip_info.shape_info_list = null
+  }
   const payload = Util.getPayload(clip_info, getFieldInfos())
   const model = new this(payload)
   return model.save()
