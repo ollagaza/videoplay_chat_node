@@ -85,6 +85,12 @@ operation_clip_schema.statics.updateOperationClip = function (clip_id, clip_info
   if (tag_list) {
     update.tag_list = tag_list
   }
+  if (clip_info.is_shape) {
+    update.shape_info_list = clip_info.shape_info_list ? clip_info.shape_info_list : null
+  } else {
+    update.shape_info_list = null
+  }
+  log.debug(log_prefix, '[operation_clip_schema.statics.updateOperationClip]', update)
   return this.findByIdAndUpdate(clip_id, update, { 'new': true })
 }
 
