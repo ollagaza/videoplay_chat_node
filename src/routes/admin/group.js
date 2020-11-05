@@ -9,7 +9,7 @@ import GroupService from '../../service/member/GroupService'
 
 const routes = Router()
 
-routes.put('/createEnterprise', Wrap(async (req, res) => {
+routes.get('/createEnterprise', Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const member_seq = req.body.member_seq;
