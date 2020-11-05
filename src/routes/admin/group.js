@@ -13,8 +13,11 @@ const routes = Router()
 routes.put('/createEnterprise', Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
-  const member_seq = req.body.member_seq;
-  const payment_info = req.body.payment_info;
+  // const member_seq = req.body.member_seq;
+  // const payment_info = req.body.payment_info;
+
+  const member_seq = 15
+  const payment_info = { pay_code: 'f_12TB', storage_size: 13194139533312, status: 'Y', start_date: '2020-11-05 00:00:00', expire_date: '2021-11-05 00:00:00' }
 
   log.debug('admin/group/createEnterprise', member_seq, payment_info)
 
