@@ -278,6 +278,26 @@ routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthentic
   res.json(output)
 }))
 
+routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)/like', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { comment_seq, member_info } = await getBaseInfo(req, true)
+  const like_result = await OperationCommentService.setCommentLike(DBMySQL, comment_seq, true, member_info)
+
+  const output = new StdObject()
+  output.adds(like_result)
+  res.json(output)
+}))
+
+routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)/like', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { comment_seq, member_info } = await getBaseInfo(req, true)
+  const like_result = await OperationCommentService.setCommentLike(DBMySQL, comment_seq, false, member_info)
+
+  const output = new StdObject()
+  output.adds(like_result)
+  res.json(output)
+}))
+
 routes.post('/:api_type/:api_key/clip', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { operation_info, member_info } = await getBaseInfo(req, true, true, true)

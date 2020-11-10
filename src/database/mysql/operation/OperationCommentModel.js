@@ -13,7 +13,7 @@ export default class OperationCommentModel extends MySQLModel {
       'operation_comment.is_reply', 'operation_comment.writer_info', 'operation_comment.reply_user_info', 'operation_comment.member_seq',
       'operation_comment.user_name', 'operation_comment.user_nickname', 'operation_comment.comment_html',
       'operation_comment.reply_count', 'operation_comment.clip_id', 'operation_comment.clip_info', 'operation_comment.is_clip_deleted',
-      'operation_comment.reg_date', 'operation_comment.modify_date',
+      'operation_comment.like_user_map', 'operation_comment.like_count', 'operation_comment.reg_date', 'operation_comment.modify_date',
       'group_info.group_name', 'group_info.profile_image_path as group_profile_image',
       'member.profile_image_path as member_profile_image', 'member.user_name as member_name', 'member.user_name as member_nickname'
     ]
@@ -132,5 +132,27 @@ export default class OperationCommentModel extends MySQLModel {
     `
     const query_result = await this.database.raw(sql, [operation_data_seq, comment_seq, comment_seq])
     return !(!query_result || !query_result.length || !query_result[0]);
+  }
+
+  setCommentLike = async (comment_seq, member_seq, like_info) => {
+    let like_count = 1
+    if (!like_info.is_like) like_count = -1
+    const sql = `
+      update operation_comment
+      set
+        like_count = operation_comment.like_count + ?,
+        like_user_map = JSON_SET(like_user_map, '$."?"', JSON_OBJECT('is_like', ?, 'user_name', ?, 'user_nickname', ?))
+      where seq = ?
+    `
+    const query_result = await this.database.raw(sql, [like_count, member_seq, like_info.is_like, like_info.user_name, like_info.user_nickname, comment_seq])
+    return !(!query_result || !query_result.length || !query_result[0]);
+  }
+
+  getCommentLikeCount = async (comment_seq) => {
+    const query = this.database.select('like_count')
+      .from(this.table_name)
+      .where({ seq: comment_seq })
+      .first()
+    return query
   }
 }

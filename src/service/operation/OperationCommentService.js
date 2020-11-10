@@ -50,7 +50,8 @@ const OperationCommentServiceClass = class {
       comment_html: comment,
       comment_text: striptags(comment),
       clip_id,
-      clip_info
+      clip_info,
+      like_user_map: JSON.stringify({})
     }
 
     const comment_seq = await comment_model.createComment(operation_data_seq, create_params)
@@ -141,6 +142,9 @@ const OperationCommentServiceClass = class {
     if (comment_info.clip_info) {
       comment_info.clip_info = JSON.parse(comment_info.clip_info)
     }
+    if (comment_info.like_user_map) {
+      comment_info.like_user_map = JSON.parse(comment_info.like_user_map)
+    }
     comment_info.is_clip_deleted = comment_info.is_clip_deleted === 1
     comment_info.is_reply = comment_info.is_reply === 1
 
@@ -154,6 +158,21 @@ const OperationCommentServiceClass = class {
     const comment_model = this.getOperationCommentModel(database)
     const comment_count = await comment_model.getCommentCount(operation_data_seq, parent_seq)
     return comment_count ? Util.parseInt(comment_count.total_count, 0) : 0
+  }
+
+  setCommentLike = async (database, comment_seq, is_like, member_info) => {
+    const comment_model = this.getOperationCommentModel(database)
+    const like_info = {
+      is_like,
+      user_name: member_info.user_name,
+      user_nickname: member_info.user_nickname,
+    }
+    await comment_model.setCommentLike(comment_seq, member_info.seq, like_info)
+    const count_result = await comment_model.getCommentLikeCount(comment_seq);
+    return {
+      like_count: count_result.like_count,
+      like_info
+    }
   }
 }
 
