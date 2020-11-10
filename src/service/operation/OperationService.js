@@ -792,10 +792,20 @@ const OperationServiceClass = class {
 
   getVideoDownloadURL = (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
+    const has_origin = operation_info.origin_seq
+    let video_path = directory_info.cdn_video
     if (ServiceConfig.isVacs()) {
-      return directory_info.url_video + operation_info.media_info.video_file_name
+      if (has_origin) {
+        video_path = directory_info.url_video_origin
+      } else {
+        video_path = directory_info.url_video
+      }
+      return video_path + operation_info.media_info.video_file_name
     }
-    return directory_info.cdn_video + operation_info.media_info.video_file_name
+    if (has_origin) {
+      video_path = directory_info.cdn_video_origin
+    }
+    return video_path + operation_info.media_info.video_file_name
   }
 
   getOperationDataView = async (operation_seq, group_seq) => {
