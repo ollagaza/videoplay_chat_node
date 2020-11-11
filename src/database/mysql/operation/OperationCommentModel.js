@@ -1,5 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import striptags from 'striptags'
+import log from '../../../libs/logger'
 
 export default class OperationCommentModel extends MySQLModel {
   constructor (database) {
@@ -130,7 +131,7 @@ export default class OperationCommentModel extends MySQLModel {
       set operation_comment.reply_count = reply_count.cnt
       where operation_comment.seq = ? and operation_comment.seq = reply_count.parent_seq
     `
-    const query_result = await this.database.raw(sql, [operation_data_seq, comment_seq, comment_seq])
+    const query_result = (await this.database.raw(sql, [operation_data_seq, comment_seq, comment_seq]))[0]
     return !(!query_result || !query_result.length || !query_result[0]);
   }
 
@@ -144,15 +145,50 @@ export default class OperationCommentModel extends MySQLModel {
         like_user_map = JSON_SET(like_user_map, '$."?"', JSON_OBJECT('is_like', ?, 'user_name', ?, 'user_nickname', ?))
       where seq = ?
     `
-    const query_result = await this.database.raw(sql, [like_count, member_seq, like_info.is_like, like_info.user_name, like_info.user_nickname, comment_seq])
+    const params = [like_count, member_seq, like_info.is_like, like_info.user_name, like_info.user_nickname, comment_seq]
+    const query_result = (await this.database.raw(sql, params))[0]
     return !(!query_result || !query_result.length || !query_result[0]);
   }
 
   getCommentLikeCount = async (comment_seq) => {
-    const query = this.database.select('like_count')
+    return this.database.select('like_count')
       .from(this.table_name)
       .where({ seq: comment_seq })
       .first()
-    return query
+  }
+
+  getClipCommentCount = async (operation_data_seq, clip_id) => {
+    const sql = `
+      SELECT COUNT(*) AS cnt
+      FROM (
+          SELECT C.seq
+          FROM (
+            SELECT seq
+            FROM operation_comment
+            WHERE
+              operation_data_seq = :operation_data_seq
+              AND clip_id = :clip_id
+          ) AS CLIP
+          INNER JOIN operation_comment AS C
+            ON C.seq = CLIP.seq
+        UNION
+          SELECT C.seq
+          FROM (
+            SELECT seq
+            FROM operation_comment
+            WHERE
+              operation_data_seq = :operation_data_seq
+              AND clip_id = :clip_id
+          ) AS CLIP
+          INNER JOIN operation_comment AS C
+            ON C.parent_seq = CLIP.seq
+      ) AS C
+    `
+    const query_result = (await this.database.raw(sql, {operation_data_seq, clip_id}))[0]
+    log.debug(this.log_prefix, '[getClipCommentCount]', JSON.parse(JSON.stringify(query_result)))
+    if (!query_result || !query_result[0] || !query_result[0].cnt) {
+      return 0
+    }
+    return query_result[0].cnt
   }
 }

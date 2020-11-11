@@ -22,6 +22,7 @@ const getFieldInfos = () => {
     tag_list: { type: [String], default: [], require: false, message: '태그 목록이 없습니다.' },
     is_shape: { type: Boolean, default: false, index: false, require: false, message: '마킹 정보가 없습니다.' },
     shape_info_list: { type: [Object], default: null, require: false, message: '마킹 정보가 없습니다.' },
+    comment_count: { type: Number, default: 0, require: false, message: '댓글 개수가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   }
@@ -192,6 +193,14 @@ operation_clip_schema.statics.unsetPhaseOne = function (clip_id, operation_seq, 
     modify_date: Date.now()
   }
   return this.updateOne({ _id: clip_id, operation_seq, phase_id }, update)
+}
+
+operation_clip_schema.statics.updateCommentCount = function (clip_id, comment_count) {
+  const update = {
+    comment_count
+  }
+  log.debug(log_prefix, '[updateCommentCount]', clip_id, comment_count)
+  return this.updateOne({ _id: clip_id }, update)
 }
 
 const operation_clip_model = mongoose.model('OperationClip', operation_clip_schema)

@@ -5,6 +5,7 @@ import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../../service/service-config'
 import striptags from 'striptags'
 import log from '../../libs/logger'
+import { OperationClipModel } from '../../database/mongodb/OperationClip'
 
 const OperationCommentServiceClass = class {
   constructor () {
@@ -59,7 +60,14 @@ const OperationCommentServiceClass = class {
       await comment_model.updateReplyCount(operation_data_seq, parent_seq)
     }
 
-    return comment_seq
+    const comment_clip_id = request_body.comment_clip_id ? request_body.comment_clip_id : null
+    const clip_comment_count = await this.updateClipCommentCount(database, operation_data_seq, comment_clip_id)
+
+    return {
+      comment_seq,
+      comment_clip_id,
+      clip_comment_count
+    }
   }
 
   changeComment = async (database, operation_data_seq, comment_seq, request_body) => {
@@ -84,7 +92,15 @@ const OperationCommentServiceClass = class {
     if (is_reply && parent_seq) {
       await comment_model.updateReplyCount(operation_data_seq, parent_seq)
     }
-    return delete_result
+
+    const comment_clip_id = request_body.comment_clip_id ? request_body.comment_clip_id : null
+    const clip_comment_count = await this.updateClipCommentCount(database, operation_data_seq, comment_clip_id)
+
+    return {
+      delete_result,
+      comment_clip_id,
+      clip_comment_count
+    }
   }
 
   changeClipInfo = async (clip_id, clip_info) => {
@@ -173,6 +189,15 @@ const OperationCommentServiceClass = class {
       like_count: count_result.like_count,
       like_info
     }
+  }
+
+  updateClipCommentCount = async (database, operation_data_seq, clip_id) => {
+    if (!clip_id) return 0
+    log.debug(this.log_prefix, '[updateClipCommentCount]', operation_data_seq, clip_id)
+    const comment_model = this.getOperationCommentModel(database)
+    const comment_count = await comment_model.getClipCommentCount(operation_data_seq, clip_id)
+    await OperationClipModel.updateCommentCount(clip_id, comment_count)
+    return comment_count
   }
 }
 

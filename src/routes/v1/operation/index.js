@@ -226,10 +226,10 @@ routes.get('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER),
 routes.post('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { member_info, group_member_info, operation_data_seq } = await getBaseInfo(req, true)
-  const comment_seq = await OperationCommentService.createComment(DBMySQL, member_info, group_member_info, operation_data_seq, req.body)
+  const create_result = await OperationCommentService.createComment(DBMySQL, member_info, group_member_info, operation_data_seq, req.body)
 
   const output = new StdObject()
-  output.add('comment_seq', comment_seq)
+  output.adds(create_result)
   res.json(output)
 }))
 
@@ -270,10 +270,10 @@ routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticate
 routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { operation_data_seq, comment_seq } = await getBaseInfo(req, true)
-  const result = await OperationCommentService.deleteComment(DBMySQL, operation_data_seq, comment_seq, req.body)
+  const delete_result = await OperationCommentService.deleteComment(DBMySQL, operation_data_seq, comment_seq, req.body)
 
   const output = new StdObject()
-  output.add('result', result)
+  output.adds(delete_result)
 
   res.json(output)
 }))
