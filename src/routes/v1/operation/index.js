@@ -7,7 +7,7 @@ import DBMySQL from '../../../database/knex-mysql'
 import OperationDataService from '../../../service/operation/OperationDataService'
 import StdObject from '../../../wrapper/std-object'
 import OperationService from '../../../service/operation/OperationService'
-import MentoringCommentService from '../../../service/mentoring/MentoringCommentService'
+import OperationCommentService from '../../../service/operation/OperationCommentService'
 import OperationClipService from '../../../service/operation/OperationClipService'
 import log from '../../../libs/logger'
 import OperationFileService from '../../../service/operation/OperationFileService'
@@ -25,7 +25,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     throw new StdObject(-1, '잘못된 접근입니다.', 400)
   }
 
-  const { group_seq, group_member_info, member_info, member_seq } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
+  const { group_seq, group_member_info, member_info, member_seq, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
   const comment_seq = request.params.comment_seq
   const clip_id = request.params.clip_id
   const phase_id = request.params.phase_id
@@ -49,6 +49,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     phase_id,
     operation_seq: null,
     operation_info: null,
+    is_group_admin
   }
 
   if (api_type === 'mentoring') {
@@ -209,13 +210,13 @@ routes.put('/:api_type/:api_key/open_video', Auth.isAuthenticated(Role.LOGIN_USE
 
 routes.get('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_data_seq } = await getBaseInfo(req, false)
-  const comment_list = await MentoringCommentService.getCommentList(DBMySQL, operation_data_seq, req.query)
+  const comment_list = await OperationCommentService.getCommentList(DBMySQL, operation_data_seq, req.query)
 
   const output = new StdObject()
   output.add('comment_list', comment_list)
 
   if (req.query && req.query.with_count === 'y') {
-    const comment_count = await MentoringCommentService.getCommentCount(DBMySQL, operation_data_seq)
+    const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq, req.query.parent_seq)
     output.add('comment_count', comment_count)
   }
 
@@ -224,17 +225,17 @@ routes.get('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER),
 
 routes.post('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq, operation_data_seq } = await getBaseInfo(req, true)
-  const comment_seq = await MentoringCommentService.createComment(DBMySQL, operation_data_seq, group_seq, req.body)
+  const { member_info, group_member_info, operation_data_seq } = await getBaseInfo(req, true)
+  const create_result = await OperationCommentService.createComment(DBMySQL, member_info, group_member_info, operation_data_seq, req.body)
 
   const output = new StdObject()
-  output.add('comment_seq', comment_seq)
+  output.adds(create_result)
   res.json(output)
 }))
 
 routes.get('/:api_type/:api_key/comment/count', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_data_seq } = await getBaseInfo(req, false)
-  const comment_count = await MentoringCommentService.getCommentCount(DBMySQL, operation_data_seq)
+  const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq, req.query.parent_seq)
 
   const output = new StdObject()
   output.add('comment_count', comment_count)
@@ -243,13 +244,13 @@ routes.get('/:api_type/:api_key/comment/count', Auth.isAuthenticated(Role.LOGIN_
 
 routes.get('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_data_seq, comment_seq } = await getBaseInfo(req, false)
-  const comment_info = await MentoringCommentService.getComment(DBMySQL, operation_data_seq, comment_seq)
+  const comment_info = await OperationCommentService.getComment(DBMySQL, operation_data_seq, comment_seq)
 
   const output = new StdObject()
   output.add('comment_info', comment_info)
 
   if (req.query && req.query.with_count === 'y') {
-    const comment_count = await MentoringCommentService.getCommentCount(DBMySQL, operation_data_seq)
+    const comment_count = await OperationCommentService.getCommentCount(DBMySQL, operation_data_seq, req.query.parent_seq)
     output.add('comment_count', comment_count)
   }
 
@@ -259,7 +260,7 @@ routes.get('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticate
 routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { operation_data_seq, comment_seq } = await getBaseInfo(req, true)
-  const comment_info = await MentoringCommentService.changeComment(DBMySQL, operation_data_seq, comment_seq, req.body)
+  const comment_info = await OperationCommentService.changeComment(DBMySQL, operation_data_seq, comment_seq, req.body)
 
   const output = new StdObject()
   output.add('comment_info', comment_info)
@@ -269,19 +270,39 @@ routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticate
 routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { operation_data_seq, comment_seq } = await getBaseInfo(req, true)
-  const result = await MentoringCommentService.deleteComment(DBMySQL, operation_data_seq, comment_seq, req.body)
+  const delete_result = await OperationCommentService.deleteComment(DBMySQL, operation_data_seq, comment_seq, req.body)
 
   const output = new StdObject()
-  output.add('result', result)
+  output.adds(delete_result)
 
+  res.json(output)
+}))
+
+routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)/like', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { comment_seq, member_info } = await getBaseInfo(req, true)
+  const like_result = await OperationCommentService.setCommentLike(DBMySQL, comment_seq, true, member_info)
+
+  const output = new StdObject()
+  output.adds(like_result)
+  res.json(output)
+}))
+
+routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)/like', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { comment_seq, member_info } = await getBaseInfo(req, true)
+  const like_result = await OperationCommentService.setCommentLike(DBMySQL, comment_seq, false, member_info)
+
+  const output = new StdObject()
+  output.adds(like_result)
   res.json(output)
 }))
 
 routes.post('/:api_type/:api_key/clip', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { operation_info } = await getBaseInfo(req, true, true, true)
+  const { operation_info, member_info } = await getBaseInfo(req, true, true, true)
 
-  const create_result = await OperationClipService.createClip(operation_info, req.body)
+  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body)
   const output = new StdObject()
   output.add('result', create_result)
   res.json(output)
