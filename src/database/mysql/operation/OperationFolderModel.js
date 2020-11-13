@@ -65,10 +65,12 @@ export default class OperationFolderModel extends MySQLModel {
   }
 
   getGroupFolders = async (group_seq) => {
-    return await this.find({ group_seq: group_seq, status: 'Y' }, null, [{
-      column: 'depth',
-      order: 'asc'
-    }, { column: 'folder_name', order: 'asc' }])
+    const query = this.database.select(this.selectable_fields)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+    query.orderBy([{ column: 'depth', order: 'asc' }, { column: 'folder_name', order: 'asc' }])
+    const result = await query
+    return result
   }
 
   getGroupFolderLastUpdate = async (group_seq) => {
@@ -111,67 +113,60 @@ export default class OperationFolderModel extends MySQLModel {
     return await this.update({ seq: folder_seq }, update_params)
   }
 
-  moveFolder = async (folder_info, new_parent_info = null, move_child_only = false) => {
-    let is_replace = false
-    let replace_query_str = ''
-    if (folder_info.parent_folder_info && folder_info.parent_folder_info.length > 0) {
-      replace_query_str = 'JSON_REMOVE(parent_folder_info'
-      for (let i = 0; i < folder_info.parent_folder_info.length; i++) {
-        replace_query_str += ', \'$[0]\''
-      }
-      if (move_child_only) {
-        replace_query_str += ', \'$[0]\''
-      }
-      replace_query_str += ')'
-      is_replace = true
-    } else {
-      replace_query_str = 'parent_folder_info'
+  moveFolder = async (folder_info, target_folder_info) => {
+    if (target_folder_info && target_folder_info.parent_seq && target_folder_info.total_folder_size > 0) {
+      const parent_folder_size_down = this.database
+        .update('total_folder_size', this.database.raw(`total_folder_size - ${target_folder_info.total_folder_size}`))
+        .from(this.table_name)
+        .where('seq', target_folder_info.parent_seq)
+      await parent_folder_size_down
     }
-    if (new_parent_info && new_parent_info.parent_folder_info && new_parent_info.parent_folder_info.length > 0) {
-      replace_query_str = `JSON_MERGE(${JSON.stringify(new_parent_info.parent_folder_info)}, ${replace_query_str})`
-      is_replace = true
+    if (target_folder_info.total_folder_size > 0) {
+      const new_parent_folder_size_up = this.database
+        .update('total_folder_size', this.database.raw(`total_folder_size + ${target_folder_info.total_folder_size}`))
+        .from(this.table_name)
+        .where('seq', folder_info.seq)
+      await new_parent_folder_size_up
     }
 
-    if (!is_replace) {
-      return
-    }
-
-    const parent_depth = new_parent_info ? new_parent_info.depth : 0
-    let change_depth = folder_info.depth - parent_depth
-    if (!move_child_only) {
-      change_depth--
-    }
-
-    const update_params = {
-      parent_folder_info: this.database.raw(replace_query_str),
-      depth: this.database.raw(`depth - (${change_depth})`)
-    }
-    if (move_child_only) {
-      update_params.parent_seq = new_parent_info.seq
-    }
-
-    const update_query = this.database
-      .update(update_params)
+    const target_folder_parent_seq_update = this.database
+      .update('parent_seq', folder_info.seq)
       .from(this.table_name)
-      .where('group_seq', folder_info.group_seq)
-    if (move_child_only) {
-      update_query.andWhere('depth', '>', folder_info.depth)
-        .andWhere(this.raw(`JSON_CONTAINS(parent_folder_info, '${folder_info.seq}', '$')`))
-    } else {
-      update_query.andWhere('depth', '>=', folder_info.depth)
-        .andWhere(function () {
-          this.where('seq', folder_info.seq)
-            .orWhere(this.raw(`JSON_CONTAINS(parent_folder_info, '${folder_info.seq}', '$')`))
-        })
-    }
+      .where('seq', target_folder_info.seq)
+    await target_folder_parent_seq_update
 
-    const update_result = await update_query
-    log.debug(this.log_prefix, '[changeParentFolderList] - update_result', update_result)
+    const target_folder_parent_list_update = this.database
+      .update('parent_folder_list', this.database.raw(`JSON_REPLACE(parent_folder_list, '$[0]', '${folder_info.seq}')`))
+      .from(this.table_name)
+      .where(this.database.raw(`JSON_CONTAINS(parent_folder_list, '${target_folder_info.seq}')`) , '1')
+      .orWhere('seq', target_folder_info.seq)
+    await target_folder_parent_list_update
+    return true
+  }
+  updateStatusFavorite = async (folder_seq, is_delete) => {
+    return await this.update({ 'seq': folder_seq }, {
+      is_favorite: is_delete ? 0 : 1,
+      'modify_date': this.database.raw('NOW()')
+    })
+  }
+  updateFolderStorageSize = async (filters, file_size) => {
+    return await this.update(filters, {
+      total_folder_size: this.database.raw(`if(cast(total_folder_size as SIGNED) + ${file_size} > 0, total_folder_size + ${file_size}, 0)`),
+      'modify_date': this.database.raw('NOW()')
+    })
+  }
 
-    if (move_child_only) {
-      const delete_result = await this.deleteOperationFolder(folder_info.seq)
-      log.debug(this.log_prefix, '[changeParentFolderList] - delete_result', delete_result)
+  getAllFolderList = async () => {
+    return this.find(null, null, { name: 'depth', direction: 'desc' })
+  }
+  updateStatusTrash = async (operation_seq_list, group_seq, status) => {
+    let filters = null
+    if (group_seq) {
+      filters = { group_seq }
     }
-    return update_result
+    return await this.updateIn('seq', operation_seq_list, {
+      status,
+      'modify_date': this.database.raw('NOW()')
+    }, filters)
   }
 }

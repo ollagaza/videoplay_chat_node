@@ -14,7 +14,7 @@ const routes = Router()
 
 routes.get('/', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const group_folder_info = await OperationFolderService.getGroupFolderInfo(DBMySQL, group_seq)
+  const group_folder_info = await OperationFolderService.getGroupFolderInfo(DBMySQL, group_seq, req)
   const output = new StdObject()
   output.adds(group_folder_info)
   res.json(output)
@@ -75,18 +75,81 @@ routes.delete('/deletefolder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (r
 
 routes.put('/moveoperation', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   try {
-    const operation_seq_list = req.body.operation_seq_list
-    const folder_info = req.body.folder_info
-    log.debug('[Router Folder -> index]', '[/moveoperation]', operation_seq_list, folder_info)
+    const request_data = req.body.request_data
+
+    log.debug('[Router Folder -> index]', '[/moveoperation]', request_data)
 
     await DBMySQL.transaction(async (transaction) => {
-      await OperationService.moveOperationFolder(transaction, operation_seq_list, folder_info)
+      if (request_data.operation_folder_list.length > 0) {
+        for (let cnt = 0; cnt < request_data.operation_folder_list.length; cnt++) {
+          const params = {
+            target_folder_info: request_data.operation_folder_list[cnt],
+            folder_info: request_data.folder_info,
+          }
+          await OperationFolderService.moveFolder(transaction, params)
+        }
+      }
+      if (request_data.operation_info_list.length > 0) {
+        const operation_seq_list = []
+        for (let cnt = 0; cnt < request_data.operation_info_list.length; cnt++) {
+          operation_seq_list.push(request_data.operation_info_list[cnt].seq)
+        }
+        await OperationService.moveOperationFolder(transaction, operation_seq_list, request_data.folder_info)
+      }
       res.json(new StdObject(0, '이동이 완료 되었습니다.', '200'))
     })
   } catch (e) {
     log.e(req, e)
     throw new StdObject(-1, '이동 중 오류가 발생 하였습니다.', '400')
   }
+}))
+
+routes.put('/:folder_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const folder_seq = req.params.folder_seq
+
+  const result = await OperationFolderService.updateStatusFavorite(DBMySQL, folder_seq, false)
+
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output)
+}))
+
+routes.delete('/:folder_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const folder_seq = req.params.folder_seq
+
+  const result = await OperationFolderService.updateStatusFavorite(DBMySQL, folder_seq, true)
+
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output)
+}))
+
+routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const token_info = req.token_info
+  const group_seq = token_info.getGroupSeq()
+  const seq_list = req.body.seq_list
+
+  const result = await OperationFolderService.updateStatusTrash(DBMySQL, seq_list, group_seq, false)
+
+  const output = new StdObject()
+  output.add('result', result)
+  output.add('status', 'T')
+  res.json(output)
+}))
+
+routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const token_info = req.token_info
+  const group_seq = token_info.getGroupSeq()
+  const seq_list = req.body.seq_list
+
+  const result = await OperationFolderService.updateStatusTrash(DBMySQL, seq_list, group_seq, true)
+
+  const output = new StdObject()
+  output.add('result', result)
+  output.add('status', 'Y')
+  res.json(output)
 }))
 
 export default routes

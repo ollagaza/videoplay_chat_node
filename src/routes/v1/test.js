@@ -32,10 +32,16 @@ import HashtagUseModel from '../../database/mysql/operation/HashtagUseModel'
 import socketManager from '../../service/socket-manager'
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
 import FTP from '../../libs/ftp'
+import OperationFolderService from '../../service/operation/OperationFolderService'
 
 const routes = Router()
 
 const IS_DEV = Config.isDev()
+
+routes.get('/folder_size_sync', Wrap(async (req, res) => {
+  const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
+  res.json(output)
+}))
 
 routes.get('/socket_test', Wrap(async (req, res) => {
   const member_seq = req.body.member_seq
