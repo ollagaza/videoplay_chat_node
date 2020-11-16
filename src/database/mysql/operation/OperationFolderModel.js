@@ -136,10 +136,11 @@ export default class OperationFolderModel extends MySQLModel {
     await target_folder_parent_seq_update
 
     const target_folder_parent_list_update = this.database
-      .update('parent_folder_list', this.database.raw(`JSON_REPLACE(parent_folder_list, '$[0]', '${folder_info.seq}')`))
-      .from(this.table_name)
-      .where(this.database.raw(`JSON_CONTAINS(parent_folder_list, '${target_folder_info.seq}')`) , '1')
-      .orWhere('seq', target_folder_info.seq)
+      .update('target.parent_folder_list', this.database.raw(`JSON_MERGE(parent.parent_folder_list, '[${folder_info.seq}]')`))
+      .from({ 'target': this.table_name })
+      .leftOuterJoin({ 'parent': this.table_name }, 'parent.seq', folder_info.seq)
+      .where(this.database.raw(`JSON_CONTAINS(target.parent_folder_list, '${target_folder_info.seq}')`) , '1')
+      .orWhere('target.seq', target_folder_info.seq)
     await target_folder_parent_list_update
     return true
   }
