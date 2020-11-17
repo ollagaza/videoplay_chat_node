@@ -7,6 +7,7 @@ import Wrap from '../../utils/express-async'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import GroupService from '../../service/member/GroupService'
+import baseutil from "../../utils/baseutil";
 
 const routes = Router()
 
@@ -196,6 +197,19 @@ routes.put('/:group_seq(\\d+)/files/profile_image', Auth.isAuthenticated(Role.LO
     throw new StdObject(-1, '권한이 없습니다.', 403)
   }
   const output = await GroupService.changeGroupProfileImage(DBMySQL, group_member_info, req, res)
+  res.json(output)
+}))
+
+routes.put('/create_group', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const options = {
+    storage_size: 13194139533312,
+    pay_code: 'f_12TB',
+    start_date: (baseutil.getToDate()).concat(' 00:00:00'),
+    expire_date: (baseutil.getDateYearAdd(baseutil.getToDate(), 1)).concat(' 23:59:59'),
+  }
+  const output = new StdObject()
+  output.add('result', await GroupService.createEnterpriseGroup(DBMySQL, member_info, options))
   res.json(output)
 }))
 

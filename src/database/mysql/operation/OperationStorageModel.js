@@ -56,15 +56,17 @@ export default class OperationStorageModel extends MySQLModel {
   updateUploadFileSize = async (storage_seq, file_type, update_summary = true) => {
     let file_size_info = null
     let update_params = {}
+    let total_size = 0
+
     if (file_type === OperationFileService.TYPE_ALL || file_type === OperationFileService.TYPE_VIDEO) {
       file_size_info = await new VideoFileModel(this.database).videoFileSummary(storage_seq)
-      let total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0
+      total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0
       update_params.origin_video_size = total_size
       update_params.origin_video_count = (file_size_info.total_count ? parseInt(file_size_info.total_count) : 0)
     }
     if (file_type === OperationFileService.TYPE_ALL || file_type === OperationFileService.TYPE_REFER) {
       file_size_info = await new ReferFileModel(this.database).referFileSummary(storage_seq)
-      let total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0
+      total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0
       update_params.refer_file_size = total_size
       update_params.refer_file_count = (file_size_info.total_count ? parseInt(file_size_info.total_count) : 0)
     }
@@ -73,6 +75,8 @@ export default class OperationStorageModel extends MySQLModel {
     if (update_summary) {
       await this.updateStorageSummary(storage_seq)
     }
+
+    return total_size
   }
 
   updateStorageInfo = async (storage_seq, update_storage_info) => {

@@ -149,4 +149,5 @@ routes.get('/member_home', Wrap(async (req, res) => {
   const output = await AdminMemberService.getHome_Datas(DBMySQL)
   res.json(output)
 }))
+
 export default routes

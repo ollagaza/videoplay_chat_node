@@ -13,6 +13,7 @@ import OperationMediaService from '../../service/operation/OperationMediaService
 import OperationFileService from '../../service/operation/OperationFileService'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
+import OperationFolderService from "../../service/operation/OperationFolderService";
 
 const routes = Router()
 
@@ -85,6 +86,43 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wr
   output.add('result', delete_result)
   output.add('operation_seq', operation_seq)
   res.json(output)
+}))
+
+routes.delete('/delete_operations', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { token_info, group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const output = new StdObject()
+  const data = req.body.operations
+  let folder_operation_list = null
+  let operation_list = [];
+
+  if (data.operation_folder_list) {
+    folder_operation_list = await OperationFolderService.deleteChildFolderAndRtnOperationList(DBMySQL, group_seq, data.operation_folder_list)
+
+    if (operation_list.length > 0) {
+      operation_list = operation_list.concat(folder_operation_list.operation_data)
+    } else {
+      operation_list = folder_operation_list.operation_data
+    }
+  }
+  if (data.operation_info_list) {
+    if (operation_list.length > 0) {
+      operation_list = operation_list.concat(data.operation_info_list)
+    } else {
+      operation_list = data.operation_info_list
+    }
+  }
+
+  if (operation_list.length > 0) {
+    for (let cnt = 0; cnt < operation_list.length; cnt++) {
+      await OperationService.updateOperationWithStatusStorage(operation_list[cnt])
+    }
+  }
+
+  res.json(output)
+  if (folder_operation_list) {
+    OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, folder_operation_list.allChildFolderList)
+  }
+  OperationService.deleteOperationByStatus(group_seq);
 }))
 
 routes.get('/:operation_seq(\\d+)/indexes', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
@@ -337,7 +375,8 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Rol
   await DBMySQL.transaction(async (transaction) => {
     const storage_seq = operation_info.storage_seq
     await OperationFileService.deleteFileList(transaction, operation_info, file_seq_list, file_type)
-    await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
+    const storage_size = await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
+    await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, 0, storage_size);
   })
 
   res.json(output)
