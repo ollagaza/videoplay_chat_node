@@ -1,5 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import log from '../../../libs/logger'
+import baseutil from "../../../utils/baseutil";
 
 export default class OperationFolderModel extends MySQLModel {
   constructor (...args) {
@@ -135,13 +136,43 @@ export default class OperationFolderModel extends MySQLModel {
       .where('seq', target_folder_info.seq)
     await target_folder_parent_seq_update
 
-    const target_folder_parent_list_update = this.database
-      .update('target.parent_folder_list', this.database.raw(`JSON_MERGE(parent.parent_folder_list, '[${folder_info.seq}]')`))
-      .from({ 'target': this.table_name })
-      .leftOuterJoin({ 'parent': this.table_name }, 'parent.seq', folder_info.seq)
-      .where(this.database.raw(`JSON_CONTAINS(target.parent_folder_list, '${target_folder_info.seq}')`) , '1')
-      .orWhere('target.seq', target_folder_info.seq)
-    await target_folder_parent_list_update
+    const before_update_target_depth = this.database.select('depth')
+      .from(this.table_name)
+      .where('seq', target_folder_info.seq)
+      .first()
+    const before_update_target_depth_result = await before_update_target_depth
+
+    if (folder_info.seq) {
+      const target_folder_parent_list_update = this.database
+        .update({ 'target.parent_folder_list': this.database.raw(`JSON_MERGE(parent.parent_folder_list, '[${folder_info.seq}]')`),
+          'target.depth': this.database.raw(`JSON_LENGTH(JSON_MERGE(parent.parent_folder_list, '[${folder_info.seq}]'))`)
+        })
+        .from({'target': this.table_name})
+        .leftOuterJoin({'parent': this.table_name}, 'parent.seq', folder_info.seq)
+        .where('target.seq', target_folder_info.seq)
+      await target_folder_parent_list_update
+    } else {
+      const target_folder_parent_list_update = this.database
+        .update('target.parent_folder_list', '[]')
+        .from({'target': this.table_name})
+        .where('target.seq', target_folder_info.seq)
+      await target_folder_parent_list_update
+    }
+
+    const include_target_folder_replace = []
+    for (let cnt = 0; cnt < baseutil.parseInt(before_update_target_depth_result.depth); cnt++) {
+      include_target_folder_replace.push(`$[0]`)
+    }
+
+    const include_target_folder_update = this.database
+      .update({ 'target.parent_folder_list': this.database.raw(`JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}'))`),
+        'target.depth': this.database.raw(`JSON_LENGTH(JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}')))`)
+      })
+      .from({'target': this.table_name})
+      .leftOuterJoin({'parent': this.table_name}, 'parent.seq', target_folder_info.seq)
+      .where(this.database.raw(`JSON_CONTAINS(target.parent_folder_list, '${target_folder_info.seq}') = 1`))
+    await include_target_folder_update
+
     return true
   }
   updateStatusFavorite = async (folder_seq, is_delete) => {
