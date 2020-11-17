@@ -32,4 +32,12 @@ export default class PaymentModel extends MySQLModel {
 
     return oKnex
   }
+
+  getPaymentGroupFreeList = async (lang = 'kor') => {
+    const oKnex = this.database.select('*')
+    oKnex.from(this.table_name)
+    oKnex.where(this.database.raw('JSON_EXTRACT(moneys, \'$[0].pay\') = \'free\''))
+    oKnex.andWhere('group', 'hospital');
+    return oKnex
+  }
 }
