@@ -76,7 +76,7 @@ export default class OperationModel extends MySQLModel {
       case 'favorite':
         query.andWhere('is_favorite', 1)
         query.andWhere('status', 'Y')
-        check_folder = false
+        check_folder = true
         break
       case 'trash':
         query.andWhere('status', 'T')
@@ -157,6 +157,10 @@ export default class OperationModel extends MySQLModel {
     }
 
     return operation_info
+  }
+
+  updateOperationStatus = async (operation_seq) => {
+    return await this.update({ 'seq': operation_seq }, { 'status': 'D' })
   }
 
   deleteOperation = async (operation_seq) => {
@@ -330,5 +334,19 @@ export default class OperationModel extends MySQLModel {
     query.first()
     const result = await query
     return result && result.total_count > 0
+  }
+  getAllChildFolderInOperationDatas = async (group_seq, folder_seq) => {
+    folder_seq.unshift('in')
+    const params = {
+      is_new: true,
+      query: [
+        { group_seq },
+        { folder_seq }
+      ]
+    }
+    return this.find(params)
+  }
+  getTargetListByStatusD = async (group_seq) => {
+    return this.find({ group_seq, 'status': 'D' })
   }
 }

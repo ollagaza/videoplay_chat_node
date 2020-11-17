@@ -11,6 +11,8 @@ const getFieldInfos = () => {
     group_seq: { type: Number, index: true, require: false, message: '그룹 아이디가 없습니다.' },
     member_seq: { type: Number, index: true, require: false, message: '사용자 아이디가 없습니다.' },
     content_id: { type: String, index: true, require: false, message: '콘텐츠 아이디가 없습니다.' },
+    user_name: { type: String, index: false, require: false, message: '사용자 이름이 없습니다.' },
+    user_nickname: { type: String, index: false, require: false, message: '사용자 닉네임이 없습니다.' },
     start_time: { type: Number, default: 0, index: false, require: false, message: '시작 시간이 없습니다.' },
     end_time: { type: Number, default: 0, index: false, require: false, message: '종료 시간이 없습니다.' },
     desc: { type: String, default: '', index: false, require: false, message: '설명 문구가 없습니다.' },
@@ -18,7 +20,9 @@ const getFieldInfos = () => {
     phase_id: { type: String, default: null, index: false, require: false, message: '썸네일 정보가 없습니다.' },
     is_phase: { type: Boolean, default: false, index: false, require: false, message: '썸네일 정보가 없습니다.' },
     tag_list: { type: [String], default: [], require: false, message: '태그 목록이 없습니다.' },
-    shape_info_list: { type: [Object], default: null, require: false, message: '태그 목록이 없습니다.' },
+    is_shape: { type: Boolean, default: false, index: false, require: false, message: '마킹 정보가 없습니다.' },
+    shape_info_list: { type: [Object], default: null, require: false, message: '마킹 정보가 없습니다.' },
+    comment_count: { type: Number, default: 0, require: false, message: '댓글 개수가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   }
@@ -36,16 +40,22 @@ schema_field_infos.desc.require = true
 const operation_clip_schema = new Schema(schema_field_infos, { strict: false })
 
 operation_clip_schema.indexes()
-operation_clip_schema.index({ member_seq: 1, tag_list: 1 })
 operation_clip_schema.index({ group_seq: 1, is_phase: 1 })
-operation_clip_schema.index({ member_seq: 1, is_phase: 1 })
-operation_clip_schema.index({ operation_seq: 1, phase_id: 1 })
+operation_clip_schema.index({ operation_seq: 1 })
 
-operation_clip_schema.statics.createOperationClip = function (operation_info, clip_info) {
+operation_clip_schema.statics.createOperationClip = function (operation_info, member_info, clip_info) {
   clip_info.operation_seq = operation_info.seq
   clip_info.group_seq = operation_info.group_seq
-  clip_info.member_seq = operation_info.member_seq
   clip_info.content_id = operation_info.content_id
+  clip_info.member_seq = member_info.seq
+  clip_info.user_name = member_info.user_name
+  clip_info.user_nickname = member_info.user_nickname
+  clip_info.is_shape = clip_info.is_shape === true
+  if (clip_info.is_shape) {
+    clip_info.shape_info_list = clip_info.shape_info_list ? clip_info.shape_info_list : null
+  } else {
+    clip_info.shape_info_list = null
+  }
   const payload = Util.getPayload(clip_info, getFieldInfos())
   const model = new this(payload)
   return model.save()
@@ -76,6 +86,12 @@ operation_clip_schema.statics.updateOperationClip = function (clip_id, clip_info
   if (tag_list) {
     update.tag_list = tag_list
   }
+  if (clip_info.is_shape) {
+    update.shape_info_list = clip_info.shape_info_list ? clip_info.shape_info_list : null
+  } else {
+    update.shape_info_list = null
+  }
+  log.debug(log_prefix, '[operation_clip_schema.statics.updateOperationClip]', update)
   return this.findByIdAndUpdate(clip_id, update, { 'new': true })
 }
 
@@ -177,6 +193,14 @@ operation_clip_schema.statics.unsetPhaseOne = function (clip_id, operation_seq, 
     modify_date: Date.now()
   }
   return this.updateOne({ _id: clip_id, operation_seq, phase_id }, update)
+}
+
+operation_clip_schema.statics.updateCommentCount = function (clip_id, comment_count) {
+  const update = {
+    comment_count
+  }
+  log.debug(log_prefix, '[updateCommentCount]', clip_id, comment_count)
+  return this.updateOne({ _id: clip_id }, update)
 }
 
 const operation_clip_model = mongoose.model('OperationClip', operation_clip_schema)

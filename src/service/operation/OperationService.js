@@ -14,6 +14,7 @@ import CloudFileService from '../cloud/CloudFileService'
 import VacsService from '../vacs/VacsService'
 import OperationModel from '../../database/mysql/operation/OperationModel'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
+import OperationFolderService from './OperationFolderService'
 import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
@@ -207,6 +208,7 @@ const OperationServiceClass = class {
       const operation_storage_info = await this.getOperationStorageModel(DBMySQL).copyOperationStorageInfo(operation_info, origin_operation_seq)
       const storage_seq = operation_storage_info.seq
       const origin_storage_seq = operation_storage_info.origin_storage_seq
+      await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_storage_info.total_file_size);
 
       result.operation_seq = operation_seq
       result.operation_media_seq = operation_media_seq
@@ -343,18 +345,39 @@ const OperationServiceClass = class {
     return await this.deleteOperationByInfo(operation_info)
   }
 
-  deleteOperationByInfo = async (operation_info) => {
+  updateOperationWithStatusStorage = async (operation_info) => {
     await DBMySQL.transaction(async (transaction) => {
       const operation_model = this.getOperationModel(transaction)
-      await operation_model.deleteOperation(operation_info.seq)
+      await operation_model.updateOperationStatus(operation_info.seq)
+      await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, operation_info.total_file_size, 0);
       await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
     });
 
-    const operation_seq = operation_info.seq
-    await this.deleteMongoDBData(operation_seq)
-    this.onOperationDeleteComplete(operation_info)
+    await this.deleteMongoDBData(operation_info.seq)
 
     return true
+  }
+
+  deleteOperationByInfo = async (operation_info) => {
+    await this.updateOperationWithStatusStorage(operation_info)
+    this.onOperationDeleteComplete(operation_info)
+    return true
+  }
+
+  deleteOperationByStatus = async (group_seq) => {
+    const operation_model = this.getOperationModel(DBMySQL)
+    const remove_opreation_list = await operation_model.getTargetListByStatusD(group_seq);
+
+    for (let cnt = 0; cnt < remove_opreation_list.length; cnt++) {
+      await this.onOperationDeleteComplete(remove_opreation_list[cnt])
+      await operation_model.deleteOperation(remove_opreation_list[cnt].seq)
+    }
+    return true
+  }
+
+  getTargetListByStatusD = async () => {
+    const operation_model = this.getOperationModel(DBMySQL)
+    return await operation_model.getTargetListByStatusD()
   }
 
   onOperationDeleteComplete = (operation_info) => {
@@ -690,8 +713,9 @@ const OperationServiceClass = class {
         throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
       }
 
-      await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
+      const storage_size = await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
       await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
+      await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, operation_info.total_file_size, storage_size);
     })
     return upload_seq
   }
@@ -889,6 +913,18 @@ const OperationServiceClass = class {
     await model.updateStatusTrash(seq_list, member_seq, status)
     await OperationDataService.updateOperationDataByOperationSeqList(seq_list, status)
 
+    for (let cnt = 0; cnt < seq_list.length; cnt++) {
+      const where = { 'operation.seq': seq_list[cnt] }
+      const operation_info = await model.getOperation(where);
+      if (operation_info.folder_seq !== null) {
+        if (is_delete) {
+          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_info.total_file_size);
+        } else {
+          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, operation_info.total_file_size, 0);
+        }
+      }
+    }
+
     return true
   }
 
@@ -903,10 +939,34 @@ const OperationServiceClass = class {
   moveOperationFolder = async (database, operation_seq_list, folder_info) => {
     try {
       const model = this.getOperationModel(database)
+
+      for (let cnt = 0; cnt < operation_seq_list.length; cnt++) {
+        const where = { 'operation.seq': operation_seq_list[cnt] }
+        const operation_info = await model.getOperation(where);
+        if (operation_info.folder_seq !== null) {
+          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, operation_info.total_file_size, 0);
+        }
+        if (folder_info) {
+          operation_info.folder_seq = folder_info.seq;
+          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_info.total_file_size);
+        }
+      }
+
       await model.moveOperationFolder(operation_seq_list, folder_info ? folder_info.seq : null)
     } catch (e) {
       throw e
     }
+  }
+
+  getAllChildFolderInOperationDatas = async (database, group_seq, folder_seq) => {
+    const model = this.getOperationModel(database)
+    const operation_infos = await model.getAllChildFolderInOperationDatas(group_seq, folder_seq)
+
+    for (let cnt = 0; cnt < operation_infos.length; cnt++) {
+      operation_infos[cnt] = new OperationInfo(operation_infos[cnt], null);
+    }
+
+    return operation_infos
   }
 }
 

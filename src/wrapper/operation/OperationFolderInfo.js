@@ -2,7 +2,7 @@ import JsonWrapper from '../json-wrapper'
 
 const default_key_list = [
   'seq', 'group_seq', 'folder_name', 'parent_seq', 'parent_folder_list', 'status', 'depth',
-  'access_type', 'access_users', 'reg_date', 'modify_date', 'children'
+  'access_type', 'access_users', 'reg_date', 'modify_date', 'children', 'is_favorite', 'total_folder_size'
 ]
 
 export default class OperationFolderInfo extends JsonWrapper {

@@ -1014,6 +1014,7 @@ export default {
   'timeStrToSecond': timeStrToSecond,
   'secondToTimeStr': secondToTimeStr,
   'dateFormatter': dateFormatter,
+  'getToDate': () => moment(new Date()).format('YYYY-MM-DD'),
   'getDateDayAdd': (data, addDay = 0) => moment(new Date(data)).add(addDay, 'days').format('YYYY-MM-DD'),
   'getDateMonthAdd': (data, addMonth = 0) => moment(new Date(data)).add(addMonth, 'month').format('YYYY-MM-DD'),
   'getDateYearAdd': (data, addYear = 0) => moment(new Date(data)).add(addYear, 'year').format('YYYY-MM-DD'),
