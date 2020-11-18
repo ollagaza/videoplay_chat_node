@@ -9,6 +9,7 @@ import AdminPaymentService from '../../service/payment/AdminPaymentService'
 import IamportApiService from '../../service/payment/IamportApiService'
 import PaymentService from '../../service/payment/PaymentService'
 import group_service from '../../service/member/GroupService'
+import member_service from '../../service/member/MemberService'
 
 const routes = Router()
 
@@ -139,6 +140,16 @@ routes.get('/paymentfreelist', Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.get('/paymentGroupfreelist', Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+
+  const payment_info = await PaymentService.getPaymentGroupFreeList(DBMySQL, 'Kor')
+
+  output.add('paymentinfo', payment_info)
+  res.json(output)
+}))
+
 routes.put('/freestorageassign', Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
@@ -164,6 +175,49 @@ routes.put('/freestorageassign', Wrap(async (req, res) => {
         const setPaymentResult = await PaymentService.setPaymentFreeStorageAssign(transaction, value, group_info.seq, setDate)
         const groupUpdate = await group_service.updatePaymentToGroup(transaction, filter, setDate.payment_code, storage_size, null, setDate.start_date, setDate.expire_date)
       })
+    })
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+
+  res.json(output)
+}))
+
+routes.put('/freestorageassigngroup', Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const searchObj = req.body.searchObj
+  const setDate = req.body.setDate;
+  try {
+    let storage_size = 0
+    if (setDate.payment_code === 'free') {
+      storage_size = 1024 * 1024 * 1024 * 30
+    } else {
+      storage_size = 1024 * 1024 * 1024 * 1024 * Number(setDate.payment_code.replace(/[^0-9]/g, ''))
+    }
+    const option = {
+      pay_code: setDate.payment_code,
+      start_date: setDate.start_date,
+      expire_date: setDate.expire_date,
+      storage_size: storage_size,
+      group_name: setDate.group_name
+    }
+    _.forEach(searchObj[0].seq, async (value) => {
+      const filter = {
+        member_seq: value
+      }
+      const member_info = await member_service.getMemberInfo(DBMySQL, filter.member_seq);
+      await DBMySQL.transaction(async (transaction) => {
+        const groupCreate = await group_service.createEnterpriseGroup(transaction, member_info, option);
+      });
+      //
+      // const group_model = this.getGroupModel(DBMySQL)
+      // const group_info = await group_model.getGroupInfoByMemberSeqAndGroupType(filter.member_seq, filter.group_type)
+      //
+      // await DBMySQL.transaction(async (transaction) => {
+      //   const setPaymentResult = await PaymentService.setPaymentFreeStorageAssign(transaction, value, group_info.seq, setDate)
+      //   const groupUpdate = await group_service.updatePaymentToGroup(transaction, filter, setDate.payment_code, storage_size, null, setDate.start_date, setDate.expire_date)
+      // })
     })
   } catch (e) {
     throw new StdObject(-1, e, 400)

@@ -144,7 +144,7 @@ const GroupServiceClass = class {
       member_seq: member_info.seq,
       group_type: this.GROUP_TYPE_ENTERPRISE,
       status,
-      group_name: member_info.user_name,
+      group_name: options.group_name?options.group_name:member_info.user_name,
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size: 0,
       pay_code,
