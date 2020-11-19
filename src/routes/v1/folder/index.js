@@ -29,8 +29,8 @@ routes.get('/last_update', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, 
 }))
 
 routes.post('/', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const folder_info = await OperationFolderService.createOperationFolder(DBMySQL, req.body, group_seq)
+  const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const folder_info = await OperationFolderService.createOperationFolder(DBMySQL, req.body, group_seq, member_seq)
   const output = new StdObject()
   output.add('folder_info', folder_info)
   res.json(output)
