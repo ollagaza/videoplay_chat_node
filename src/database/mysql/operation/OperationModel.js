@@ -5,6 +5,7 @@ import Constant from '../../../constants/constants'
 
 import OperationMediaModel from './OperationMediaModel'
 import OperationInfo from '../../../wrapper/operation/OperationInfo'
+import OperationInfoAndData from "../../../wrapper/operation/OperationInfoAndData";
 
 const join_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
@@ -53,57 +54,59 @@ export default class OperationModel extends MySQLModel {
     const page_count = page_params.page_count | 10
 
     const query = this.database.select(join_select)
+    query.column(['operation_data.total_time', 'operation_data.thumbnail'])
     query.from('operation')
+    query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
     query.innerJoin('member', 'member.seq', 'operation.member_seq')
     query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
-    query.andWhere('group_seq', group_seq)
-    query.whereIn('status', ['Y', 'T'])
+    query.andWhere('operation.group_seq', group_seq)
+    query.whereIn('operation.status', ['Y', 'T'])
     log.debug(this.log_prefix, '[getOperationInfoListPage]', 'filter_params', filter_params)
     // if (filter_params.analysis_complete) {
     //   query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
     // }
     if (filter_params.status) {
-      query.andWhere('status', filter_params.status.toUpperCase())
+      query.andWhere('operation.status', filter_params.status.toUpperCase())
     }
     let check_folder = true
     const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
     switch (filter_params.menu) {
       case 'recent':
         query.andWhere('operation.reg_date', '>=', recent_timestamp)
-        query.andWhere('status', 'Y')
+        query.andWhere('operation.status', 'Y')
         check_folder = false
         break
       case 'favorite':
-        query.andWhere('is_favorite', 1)
-        query.andWhere('status', 'Y')
+        query.andWhere('operation.is_favorite', 1)
+        query.andWhere('operation.status', 'Y')
         check_folder = true
         break
       case 'trash':
-        query.andWhere('status', 'T')
+        query.andWhere('operation.status', 'T')
         check_folder = false
         break
       case 'clip':
-        query.andWhere('status', 'Y')
+        query.andWhere('operation.status', 'Y')
         check_folder = false
         break
       case 'drive':
-        query.andWhere('status', 'Y')
+        query.andWhere('operation.status', 'Y')
         break
       default:
-        query.andWhere('status', 'Y')
+        query.andWhere('operation.status', 'Y')
         check_folder = false
         break
     }
 
     if (check_folder) {
       if (filter_params.folder_seq) {
-        query.andWhere('folder_seq', Util.parseInt(filter_params.folder_seq, null))
+        query.andWhere('operation.folder_seq', Util.parseInt(filter_params.folder_seq, null))
       } else {
-        query.whereNull('folder_seq')
+        query.whereNull('operation.folder_seq')
       }
     }
 
-    const order_by = { name: 'seq', direction: 'DESC' }
+    const order_by = { name: 'operation.seq', direction: 'DESC' }
     if (asc) {
       order_by.direction = 'ASC'
     }
@@ -141,7 +144,8 @@ export default class OperationModel extends MySQLModel {
   }
 
   getOperationInfoByResult = (query_result) => {
-    return new OperationInfo(query_result)
+    return new OperationInfoAndData(query_result)
+    // return new OperationInfo(query_result)
   }
 
   getOperationInfoWithMediaInfo = async (query_result, import_media_info = false) => {
