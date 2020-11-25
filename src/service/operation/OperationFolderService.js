@@ -124,7 +124,7 @@ const OperationFolderServiceClass = class {
     return allChildFolders;
   }
 
-  createOperationFolder = async (database, request_body, group_seq) => {
+  createOperationFolder = async (database, request_body, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo(request_body.folder_info)
     const parent_folder_info = request_body.parent_folder_info
@@ -138,6 +138,7 @@ const OperationFolderServiceClass = class {
       folder_info.parent_folder_list = []
     }
     folder_info.group_seq = group_seq
+    folder_info.member_seq = member_seq
 
     const is_valid_name = await model.isValidFolderName(group_seq, folder_info.folder_name, parent_folder_info ? parent_folder_info.seq : null)
     if (!is_valid_name) {

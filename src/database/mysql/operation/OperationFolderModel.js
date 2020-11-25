@@ -9,6 +9,7 @@ export default class OperationFolderModel extends MySQLModel {
     this.table_name = 'operation_folder'
     this.log_prefix = '[OperationFolderModel]'
     this.selectable_fields = ['*']
+    this.selectable_fields_with_member = ['operation_folder.*', 'member.user_name']
   }
 
   createOperationFolder = async (folder_info) => {
@@ -56,20 +57,22 @@ export default class OperationFolderModel extends MySQLModel {
   }
 
   getParentFolders = async (group_seq, parent_folder_list) => {
-    const query = this.database.select(this.selectable_fields)
+    const query = this.database.select(this.selectable_fields_with_member)
       .from(this.table_name)
-      .where('group_seq', group_seq)
-      .whereIn('seq', parent_folder_list)
-      .orderBy('depth', 'asc')
+      .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
+      .where(`${this.table_name}.group_seq`, group_seq)
+      .whereIn(`${this.table_name}.seq`, parent_folder_list)
+      .orderBy(`${this.table_name}.depth`, 'asc')
     const result = await query
     return result
   }
 
   getGroupFolders = async (group_seq) => {
-    const query = this.database.select(this.selectable_fields)
+    const query = this.database.select(this.selectable_fields_with_member)
       .from(this.table_name)
-      .where('group_seq', group_seq)
-    query.orderBy([{ column: 'depth', order: 'asc' }, { column: 'folder_name', order: 'asc' }])
+      .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
+      .where(`${this.table_name}.group_seq`, group_seq)
+    query.orderBy([{ column: `${this.table_name}.depth`, order: 'asc' }, { column: `${this.table_name}.folder_name`, order: 'asc' }])
     const result = await query
     return result
   }
@@ -90,16 +93,17 @@ export default class OperationFolderModel extends MySQLModel {
 
   getAllChildFolders = async (group_seq, folder_seq, include_current_folder = true) => {
     const query = this.database
-      .select(this.selectable_fields)
+      .select(this.selectable_fields_with_member)
       .from(this.table_name)
-      .where('group_seq', group_seq)
+      .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
+      .where(`${this.table_name}.group_seq`, group_seq)
     if (include_current_folder) {
       query.andWhere(function () {
         this.where('seq', folder_seq)
-        this.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`)
+        this.orWhereRaw(`JSON_CONTAINS(${this.table_name}.parent_folder_list, '${folder_seq}', '$')`)
       })
     } else {
-      query.orWhereRaw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}', '$')`)
+      query.orWhereRaw(`JSON_CONTAINS(${this.table_name}.parent_folder_list, '${folder_seq}', '$')`)
     }
     return query
   }
