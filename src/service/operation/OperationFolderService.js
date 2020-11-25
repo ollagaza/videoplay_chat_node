@@ -40,9 +40,7 @@ const OperationFolderServiceClass = class {
     })
 
     // log.debug(this.log_prefix, folder_map)
-    if (request_query.menu !== 'favorite') {
-      this.makeFolderTree(folder_map)
-    }
+    this.makeFolderTree(folder_map)
 
     return {
       folder_map,
@@ -150,6 +148,15 @@ const OperationFolderServiceClass = class {
     log.debug(this.log_prefix, '[createOperationFolder]', folder_seq, folder_info)
 
     return folder_info
+  }
+
+  renameOperationFolder = async (database, folder_seq, folder_name) => {
+    const model = this.getOperationFolderModel(database)
+    const folder_info = new OperationFolderInfo({
+      seq: folder_seq,
+      folder_name,
+    })
+    return model.updateOperationFolder(folder_seq, folder_info);
   }
 
   updateOperationFolder = async (database, folder_seq, request_body) => {

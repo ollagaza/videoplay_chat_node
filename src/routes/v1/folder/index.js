@@ -36,6 +36,16 @@ routes.post('/', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.post('/rename(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const folder_seq = Util.parseInt(req.params.folder_seq, null)
+  const folder_name = req.body.folder_name;
+  const folder_info = await OperationFolderService.renameOperationFolder(DBMySQL, folder_seq, folder_name)
+  const output = new StdObject()
+  output.add('folder_info', folder_info)
+  res.json(output)
+}))
+
 routes.get('/relation(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const folder_seq = Util.parseInt(req.params.folder_seq, null)
