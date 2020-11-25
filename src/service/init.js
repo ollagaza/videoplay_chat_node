@@ -1,6 +1,5 @@
 import MongoDB from '../database/mongo-db'
 import ServiceConfig from '../service/service-config'
-import CodeSceneService from './code/CodeSceneService'
 import NaverArchiveStorageService from './storage/naver-archive-storage-service'
 import NaverObjectStorageService from './storage/naver-object-storage-service'
 import SocketManager from './socket-manager'
@@ -20,7 +19,6 @@ export default {
     await MongoDB.init()
     await MongoDB.defaultMongoCollections()
     await ServiceConfig.init()
-    await CodeSceneService.init()
     await initDirectories()
     await SocketManager.init()
     await MongoDataService.init()
