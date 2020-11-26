@@ -1,5 +1,5 @@
 {
-  "version": 0.3,
+  "version": 0.4,
   "kor": [
     {
       "code": "00",
@@ -394,13 +394,13 @@
     {
       "code": "00",
       "pCode": "00",
-      "text": "일반과",
+      "text": "General medicine",
       "icon": "/img/renewal/memuicon/general.png"
     },
     {
       "code": "01",
       "pCode": "00",
-      "text": "내과 통합",
+      "text": "Internal medicine",
       "icon": "/img/renewal/memuicon/internal.png",
       "sub": [
         {
@@ -453,19 +453,19 @@
     {
       "code": "02",
       "pCode": "00",
-      "text": "신경과",
+      "text": "Neurology",
       "icon": "/img/renewal/memuicon/neuron.png"
     },
     {
       "code": "03",
       "pCode": "00",
-      "text": "정신건강의학과",
+      "text": "Psychiatry",
       "icon": "/img/renewal/memuicon/mental.png"
     },
     {
       "code": "04",
       "pCode": "00",
-      "text": "외과 통합",
+      "text": "General surgery",
       "icon": "/img/renewal/memuicon/operation.png",
       "sub": [
         {
@@ -508,19 +508,19 @@
     {
       "code": "05",
       "pCode": "00",
-      "text": "정형외과",
+      "text": "Orthopedics",
       "icon": "/img/renewal/memuicon/orthopedics.png"
     },
     {
       "code": "06",
       "pCode": "00",
-      "text": "신경외과",
+      "text": "Neurosurgery",
       "icon": "/img/renewal/memuicon/neurological.png"
     },
     {
       "code": "07",
       "pCode": "00",
-      "text": "흉부외과",
+      "text": "Cardiothoracic surgery",
       "icon": "/img/renewal/memuicon/thoracic.png",
       "sub": [
         {
@@ -538,25 +538,25 @@
     {
       "code": "08",
       "pCode": "00",
-      "text": "성형외과",
+      "text": "Plastic Surgery",
       "icon": "/img/renewal/memuicon/plastic.png"
     },
     {
       "code": "09",
       "pCode": "00",
-      "text": "마취통증의학과",
+      "text": "Anesthesiology",
       "icon": "/img/renewal/memuicon/anesthesiology.png"
     },
     {
       "code": "10",
       "pCode": "00",
-      "text": "산부인과",
+      "text": "Obstetrics ＆ Gynecology",
       "icon": "/img/renewal/memuicon/ob-gyn.png"
     },
     {
       "code": "11",
       "pCode": "00",
-      "text": "소아청소년과",
+      "text": "Pediatrics",
       "icon": "/img/renewal/memuicon/pediatric.png",
       "sub": [
         {
@@ -674,109 +674,109 @@
     {
       "code": "12",
       "pCode": "00",
-      "text": "안과",
+      "text": "Ophthalmology",
       "icon": "/img/renewal/memuicon/ophthalmology.png"
     },
     {
       "code": "13",
       "pCode": "00",
-      "text": "이비인후과",
+      "text": "Otorhinolaryngology",
       "icon": "/img/renewal/memuicon/otolaryngology.png"
     },
     {
       "code": "14",
       "pCode": "00",
-      "text": "피부과",
+      "text": "Dermatology",
       "icon": "/img/renewal/memuicon/dermatology.png"
     },
     {
       "code": "15",
       "pCode": "00",
-      "text": "비뇨의학과",
+      "text": "Urology",
       "icon": "/img/renewal/memuicon/urology.png"
     },
     {
       "code": "16",
       "pCode": "00",
-      "text": "영상의학과",
+      "text": "Radiology",
       "icon": "/img/renewal/memuicon/radiology.png"
     },
     {
       "code": "17",
       "pCode": "00",
-      "text": "방사선종양학과",
+      "text": "Radiation Oncology",
       "icon": "/img/renewal/memuicon/radiation.png"
     },
     {
       "code": "18",
       "pCode": "00",
-      "text": "병리과",
+      "text": "Pathology",
       "icon": "/img/renewal/memuicon/pathology.png"
     },
     {
       "code": "19",
       "pCode": "00",
-      "text": "진단검사의학과",
+      "text": "Laboratory medicine",
       "icon": "/img/renewal/memuicon/diagnostic.png"
     },
     {
       "code": "20",
       "pCode": "00",
-      "text": "결핵과",
+      "text": "Tuberculosis",
       "icon": "/img/renewal/memuicon/tuberculosis.png"
     },
     {
       "code": "21",
       "pCode": "00",
-      "text": "재활의학과",
+      "text": "Rehabilitation medicine",
       "icon": "/img/renewal/memuicon/rehabilitation.png"
     },
     {
       "code": "22",
       "pCode": "00",
-      "text": "핵의학과",
+      "text": "Nuclear Medicine",
       "icon": "/img/renewal/memuicon/nuclear.png"
     },
     {
       "code": "23",
       "pCode": "00",
-      "text": "가정의학과",
+      "text": "Family medicine",
       "icon": "/img/renewal/memuicon/family.png"
     },
     {
       "code": "24",
       "pCode": "00",
-      "text": "응급의학과",
+      "text": "Emergency Medicine",
       "icon": "/img/renewal/memuicon/emergency.png"
     },
     {
       "code": "25",
       "pCode": "00",
-      "text": "직업환경의학과",
+      "text": "Occupational and Environmental medicine",
       "icon": "/img/renewal/memuicon/occupational.png"
     },
     {
       "code": "26",
       "pCode": "00",
-      "text": "예방의학과",
+      "text": "Preventive Medicine",
       "icon": "/img/renewal/memuicon/preventive.png"
     },
     {
       "code": "27",
       "pCode": "00",
-      "text": "건강의학과",
+      "text": "Health medicine",
       "icon": "/img/renewal/memuicon/health.png"
     },
     {
       "code": "28",
       "pCode": "00",
-      "text": "의공학과",
+      "text": "Biomedical Engineering",
       "icon": "/img/renewal/memuicon/engineering.png"
     },
     {
       "code": "29",
       "pCode": "00",
-      "text": "임상약리학과",
+      "text": "Clinical Pharmacology & Therapeutic",
       "icon": "/img/renewal/memuicon/pharmacology.png"
     }
   ]
