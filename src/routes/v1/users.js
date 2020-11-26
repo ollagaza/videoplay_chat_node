@@ -122,7 +122,7 @@ routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'pr
   const member_sub_info = new MemberInfoSub(params.user_sub_info)
 
   member_info.checkUserNickname()
-  member_info.checkEmailAddress()
+  // member_info.checkEmailAddress()
 
   await DBMySQL.transaction(async (transaction) => {
     const result = await MemberService.modifyMemberWithSub(transaction, member_seq, member_info, member_sub_info)
