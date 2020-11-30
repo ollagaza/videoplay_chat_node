@@ -10,6 +10,7 @@ export default class NoticeFileModel extends MySQLModel {
   }
 
   createNoticeFile = async (notice_file_info) => {
+    notice_file_info.setIgnoreEmpty(true)
     const create_params = notice_file_info.toJSON()
     return this.create(create_params, 'seq')
   }
