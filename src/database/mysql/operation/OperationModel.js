@@ -79,7 +79,7 @@ export default class OperationModel extends MySQLModel {
       case 'favorite':
         query.andWhere('operation.is_favorite', 1)
         query.andWhere('operation.status', 'Y')
-        check_folder = true
+        check_folder = false
         break
       case 'trash':
         query.andWhere('operation.status', 'T')
