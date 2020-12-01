@@ -13,6 +13,7 @@ import Constants from '../../constants/constants'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import IndexInfo from '../../wrapper/xml/IndexInfo'
 import CloudFileService from '../cloud/CloudFileService'
+import OperationFolderService from "../operation/OperationFolderService";
 
 const SyncServiceClass = class {
   constructor () {
@@ -144,6 +145,7 @@ const SyncServiceClass = class {
       operation_storage_model = new OperationStorageModel(DBMySQL)
       await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info)
       await operation_storage_model.updateStorageSummary(storage_seq)
+      await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, operation_info.total_file_size, origin_video_size);
 
       analysis_status = ServiceConfig.isVacs() ? 'Y' : 'M'
       await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status)
