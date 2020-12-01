@@ -8,7 +8,7 @@ export default class NoticeInfo extends JsonWrapper {
     this.setKeys([
       'seq', 'subject', 'contents', 'view_count', 'is_pin',
       'is_limit', 'start_date', 'end_date', 'code',
-      'reg_date', 'end_date', 'user_name', 'user_nickname'
+      'reg_date', 'modify_date', 'user_id', 'user_name', 'user_nickname'
     ])
 
     if (data) {

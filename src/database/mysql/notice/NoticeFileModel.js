@@ -10,13 +10,15 @@ export default class NoticeFileModel extends MySQLModel {
   }
 
   createNoticeFile = async (notice_file_info) => {
-    notice_file_info.setIgnoreEmpty(true)
-    const create_params = notice_file_info.toJSON()
-    return this.create(create_params, 'seq')
+    return this.create(notice_file_info, 'seq')
   }
 
-  deleteNoticeFile = async (file_seq) => {
-    return this.delete({ seq: file_seq })
+  getNoticeFile = async (notice_seq, notice_file_seq) => {
+    return this.findOne({ seq: notice_file_seq, notice_seq })
+  }
+
+  deleteNoticeFile = async (notice_seq, notice_file_seq) => {
+    return this.delete({ seq: notice_file_seq, notice_seq })
   }
 
   getFileCount = async (notice_seq) => {
@@ -25,5 +27,9 @@ export default class NoticeFileModel extends MySQLModel {
       return result.total_count
     }
     return 0
+  }
+
+  getFileList = async (notice_seq) => {
+    return this.find({ notice_seq })
   }
 }
