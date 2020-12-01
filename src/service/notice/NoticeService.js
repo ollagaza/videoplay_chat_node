@@ -49,14 +49,7 @@ const NoticeServiceClass = class {
       order,
       order_id
     }
-    const notice_list = []
-    const query_result = await notice_model.getNoticeList(search_options, is_admin_page)
-    if (query_result && query_result.length) {
-      for (let i = 0; i < query_result.length; i++) {
-        notice_list.push(new JsonWrapper(query_result[i]))
-      }
-    }
-    return notice_list
+    return notice_model.getNoticeList(search_options, is_admin_page)
   }
 
   getNoticeInfoByRequest = (request_body) => {
@@ -90,8 +83,12 @@ const NoticeServiceClass = class {
     return notice_info
   }
 
-  createNotice = async (request_body) => {
+  createNotice = async (member_seq, request_body) => {
     const notice_info = this.getNoticeInfoByRequest(request_body)
+    notice_info.member_seq = member_seq
+    if (!notice_info.code) {
+      notice_info.code = Util.getRandomString(10);
+    }
     const notice_model = this.getNoticeModel()
     return notice_model.createNotice(notice_info)
   }
@@ -202,7 +199,7 @@ const NoticeServiceClass = class {
     if (!file_info) return true;
 
     const result = notice_file_model.deleteNoticeFile(notice_seq, notice_file_seq)
-    return 
+    return
   }
 }
 

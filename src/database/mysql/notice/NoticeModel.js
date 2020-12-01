@@ -16,6 +16,7 @@ export default class NoticeModel extends MySQLModel {
   }
 
   createNotice = async (notice_info) => {
+    notice_info.modify_date = this.database.raw('NOW()')
     return this.create(notice_info, 'seq')
   }
 

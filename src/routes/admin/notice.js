@@ -11,13 +11,15 @@ const routes = Router()
 routes.get('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   const notice_list = await NoticeService.getNoticeList(req, true)
   const output = new StdObject()
-  output.add('notice_list', notice_list)
+  output.adds(notice_list)
   res.json(output)
 }))
 
 routes.post('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const notice_seq = await NoticeService.createNotice(req.body)
+  const token_info = req.token_info
+  const member_seq = token_info.getId()
+  const notice_seq = await NoticeService.createNotice(member_seq, req.body)
   const output = new StdObject()
   output.add('notice_seq', notice_seq)
   res.json(output)
@@ -28,7 +30,7 @@ routes.put('/:notice_seq(\\d+)', Auth.isAuthenticated(Role.ADMIN), Wrap(async (r
   const notice_seq = req.params.notice_seq
   const result = await NoticeService.modifyNotice(notice_seq, req.body)
   const output = new StdObject()
-  output.add('result', update_result)
+  output.add('result', result)
   res.json(output)
 }))
 
