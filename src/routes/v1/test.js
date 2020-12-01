@@ -18,11 +18,7 @@ import DBMySQL from '../../database/knex-mysql'
 import SequenceModel from '../../models/sequence/SequenceModel'
 import OperationModel from '../../database/mysql/operation/OperationModel'
 import { VideoProjectModel } from '../../database/mongodb/VideoProject'
-import OperationService from '../../service/operation/OperationService'
 import OperationClipService from '../../service/operation/OperationClipService'
-import OperationExpansionDataService from '../../service/operation/OperationExpansionDataService'
-import OperationAnalysisService from '../../service/operation/OperationAnalysisService'
-import { VideoIndexInfoModel } from '../../database/mongodb/VideoIndex'
 import MemberService from '../../service/member/MemberService'
 import group_template from '../../template/mail/group.template'
 import SendMail from '../../libs/send-mail'
@@ -410,41 +406,6 @@ if (IS_DEV) {
       }
     })
   }
-
-  routes.post('/wiki', Wrap(async (req, res, next) => {
-    const media_id_list = req.body.media_id_list
-    const query_result = {}
-    for (let i = 0; i < media_id_list.length; i++) {
-      try {
-        const operation_info = await OperationService.getOperationInfo(DBMySQL, media_id_list[i].operation_seq, null, false, false)
-        const media_info = await getHawkeyeMediaInfo(req, '[test]', media_id_list[i].media_id)
-        const index_info = await getHawkeyeIndexInfo(req, '[test]', media_id_list[i].media_id, media_info)
-        const delete_expansion_result = await OperationExpansionDataService.deleteOperationExpansionDataByOperationSeq(DBMySQL, operation_info.seq)
-        const delete_analysis_result = await OperationAnalysisService.deleteOperationAnalysisOperationSeq(operation_info.seq)
-        const delete_video_index_result = await VideoIndexInfoModel.deleteByOperation(operation_info.seq)
-        const analysis_result = await OperationAnalysisService.createOperationAnalysis(operation_info, index_info.summary, index_info.analysis_data)
-        const expansion_result = await OperationExpansionDataService.createOperationExpansionData(DBMySQL, operation_info, index_info.summary)
-        const video_index_result = await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info.index_info_list, index_info.summary.tag_list)
-        query_result[media_id_list[i].media_id] = {
-          delete_expansion_result: !Util.isEmpty(delete_expansion_result),
-          delete_analysis_result: !Util.isEmpty(delete_analysis_result),
-          delete_video_index_result: !Util.isEmpty(delete_video_index_result),
-          analysis_result: !Util.isEmpty(analysis_result),
-          expansion_result: !Util.isEmpty(expansion_result),
-          video_index_result: !Util.isEmpty(video_index_result)
-        }
-      } catch (error) {
-        log.error(req, '[test]', error.stack)
-        res.send(error.message)
-        return
-      }
-    }
-
-    const result = new StdObject()
-    // result.add('index_info_list', index_info_list);
-    result.adds(query_result)
-    res.json(result)
-  }))
 
   const getClipListByMemberSeq = async (member_seq) => {
     const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)

@@ -16,7 +16,7 @@ export default class MemberInfo extends JsonWrapper {
 
   checkDefaultParams = () => {
     this.checkEmpty()
-    this.checkCellphone()
+    // this.checkCellphone()
   }
 
   checkUserId = () => {
@@ -43,21 +43,21 @@ export default class MemberInfo extends JsonWrapper {
     }
   }
 
-  checkCellphone = () => {
-    this.checkEmpty()
+  // checkCellphone = () => {
+  //   this.checkEmpty()
+  //
+  //   if (Util.isEmpty(this.cellphone)) {
+  //     return this.returnBoolean(-1, '휴대전화 번호를 정확하게 입력하세요.', 400)
+  //   }
+  // }
 
-    if (Util.isEmpty(this.cellphone)) {
-      return this.returnBoolean(-1, '휴대전화 번호를 정확하게 입력하세요.', 400)
-    }
-  }
-
-  checkEmailAddress = () => {
-    this.checkEmpty()
-
-    if (Util.isEmpty(this.email_address)) {
-      return this.returnBoolean(-1, '이메일 주소를 정확하게 입력하세요.', 400)
-    }
-  }
+  // checkEmailAddress = () => {
+  //   this.checkEmpty()
+  //
+  //   if (Util.isEmpty(this.email_address)) {
+  //     return this.returnBoolean(-1, '이메일 주소를 정확하게 입력하세요.', 400)
+  //   }
+  // }
 
   checkPassword = (check_empty = true) => {
     if (check_empty) {
