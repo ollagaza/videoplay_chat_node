@@ -8,8 +8,8 @@ import StdObject from '../../wrapper/std-object'
 
 const routes = Router()
 
-routes.get('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
-  const notice_list = await NoticeService.getNoticeList(req, true)
+routes.get('/', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const notice_list = await NoticeService.getNoticeList(req)
   const output = new StdObject()
   output.adds(notice_list)
   res.json(output)
@@ -34,12 +34,37 @@ routes.put('/:notice_seq(\\d+)', Auth.isAuthenticated(Role.ADMIN), Wrap(async (r
   res.json(output)
 }))
 
-routes.delete('/:notice_seq(\\d+)', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+routes.delete('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const notice_seq = req.params.notice_seq
-  const result = await NoticeService.deleteNotice(notice_seq, req.body)
+  const result = await NoticeService.deleteNoticeBySeqList(req.body)
   const output = new StdObject()
   output.add('result', result)
+  res.json(output)
+}))
+
+routes.delete('/:notice_seq(\\d+)', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+  const notice_seq = req.params.notice_seq
+  const result = await NoticeService.deleteNotice(notice_seq)
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output)
+}))
+
+routes.get('/:notice_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const notice_seq = req.params.notice_seq
+  const result = await NoticeService.getNotice(notice_seq, token_info && token_info.isAdmin())
+  const output = new StdObject()
+  output.adds(result)
+  res.json(output)
+}))
+
+routes.get('/code/:code', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const code = req.params.code
+  const result = await NoticeService.getNoticeByCode(code, token_info && token_info.isAdmin())
+  const output = new StdObject()
+  output.adds(result)
   res.json(output)
 }))
 

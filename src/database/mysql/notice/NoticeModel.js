@@ -9,6 +9,11 @@ export default class NoticeModel extends MySQLModel {
     this.selectable_fields = ['*']
     this.log_prefix = '[NoticeModel]'
     this.list_fields = [
+      'notice.seq', 'notice.subject', 'notice.view_count', 'notice.is_pin',
+      'notice.code', 'notice.reg_date', 'notice.modify_date',
+      'member.user_id', 'member.user_name', 'member.user_nickname'
+    ]
+    this.view_fields = [
       'notice.seq', 'notice.subject', 'notice.contents', 'notice.view_count', 'notice.is_pin',
       'notice.is_limit', 'notice.start_date', 'notice.end_date', 'notice.code', 'notice.reg_date', 'notice.modify_date',
       'member.user_id', 'member.user_name', 'member.user_nickname'
@@ -21,20 +26,23 @@ export default class NoticeModel extends MySQLModel {
   }
 
   getNotice = async (notice_seq) => {
-    const query = this.database.select(this.list_fields)
+    const query = this.database.select(this.view_fields)
     query.from(this.table_name)
     query.leftOuterJoin('member', { 'notice.member_seq': 'member.seq' })
     query.where('notice.seq', notice_seq)
+    query.first()
+
     return query
   }
 
   getNoticeByCode = async (code) => {
-    const query = this.database.select(this.list_fields)
+    const query = this.database.select(this.view_fields)
     query.from(this.table_name)
     query.leftOuterJoin('member', { 'notice.member_seq': 'member.seq' })
     query.where('notice.code', code)
     query.orderBy([{ column: 'notice.seq', order: 'desc' }])
     query.first()
+
     return query
   }
 
@@ -75,7 +83,7 @@ export default class NoticeModel extends MySQLModel {
       query.orderBy([{ column: `notice.${order_id}`, order }])
     }
 
-    return this.queryPaginated (query, limit, page)
+    return this.queryPaginated(query, limit, page)
   }
 
   updateNotice = async (notice_seq, notice_info) => {
@@ -85,6 +93,12 @@ export default class NoticeModel extends MySQLModel {
 
   deleteNotice = async (notice_seq) => {
     return this.delete({ seq: notice_seq })
+  }
+
+  deleteNoticeBySeqList = async (seq_list) => {
+    return this.database.from(this.table_name)
+      .whereIn('seq', seq_list)
+      .del()
   }
 
   updateAttachFileCount = async (notice_seq, attach_file_count) => {

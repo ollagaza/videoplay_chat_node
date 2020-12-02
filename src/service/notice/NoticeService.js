@@ -31,7 +31,7 @@ const NoticeServiceClass = class {
     return new NoticeFileModel(DBMySQL)
   }
 
-  getNoticeList = async (request, is_admin_page = false) => {
+  getNoticeList = async (request) => {
     const notice_model = this.getNoticeModel()
     const request_query = request.query ? request.query : {}
     const page = Util.parseInt(request_query.page, 1)
@@ -40,6 +40,7 @@ const NoticeServiceClass = class {
     const search_type = request_query.search_type ? request_query.search_type : 'all'
     const order = request_query.order ? request_query.order : 'desc'
     const order_id = request_query.order_id ? request_query.order_id : null
+    const is_admin_page = request_query.is_admin_page ? request_query.is_admin_page : false
 
     const search_options = {
       page,
@@ -104,6 +105,25 @@ const NoticeServiceClass = class {
     const delete_result = await notice_model.deleteNotice(notice_seq)
     this.deleteDirectory(notice_seq)
     return delete_result
+  }
+
+  deleteNoticeBySeqList = async (request_body) => {
+    if (!request_body || !request_body.seq_list) {
+      throw new StdObject(101, '잘못된 요청입니다.', 400)
+    }
+
+    const seq_list = request_body.seq_list
+    if (seq_list.length > 0) {
+      const notice_model = this.getNoticeModel()
+      const delete_result = await notice_model.deleteNoticeBySeqList(seq_list)
+
+      for (let i = 0; i < seq_list.length; i++) {
+        this.deleteDirectory(seq_list[i])
+      }
+
+      return delete_result
+    }
+    return true
   }
 
   deleteDirectory = (notice_seq) => {
@@ -199,7 +219,12 @@ const NoticeServiceClass = class {
     if (!file_info) return true;
 
     const result = notice_file_model.deleteNoticeFile(notice_seq, notice_file_seq)
-    return
+    try {
+      await Util.deleteFile(`${this.UPLOAD_ROOT}${file_info.file_path}`)
+    } catch (error) {
+      logger.error(this.log_prefix, '[deleteFile]', error)
+    }
+    return result
   }
 }
 
