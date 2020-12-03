@@ -9,6 +9,7 @@ import DBMySQL from '../../database/knex-mysql'
 import GroupService from '../../service/member/GroupService'
 import baseutil from "../../utils/baseutil";
 import MemberService from "../../service/member/MemberService";
+import _ from "lodash";
 
 const routes = Router()
 
@@ -208,6 +209,35 @@ routes.put('/create_group', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
     pay_code: 'f_12TB',
     start_date: (baseutil.getToDate()).concat(' 00:00:00'),
     expire_date: (baseutil.getDateYearAdd(baseutil.getToDate(), 1)).concat(' 23:59:59'),
+  }
+  const output = new StdObject()
+  output.add('result', await GroupService.createEnterpriseGroup(DBMySQL, member_info, options))
+  res.json(output)
+}))
+
+routes.post('/create_group_new', baseutil.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const params = JSON.parse(req.body.params)
+  console.log(params);
+  console.log(req.files);
+  _.forEach(req.files, (value) => {
+    if (value[0].fieldname === 'group_profile_img') {
+      params.profile_image_path = '/common/' + value[0].filename
+    }
+  })
+  const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const options = {
+    storage_size: 13194139533312,
+    pay_code: 'f_12TB',
+    start_date: (baseutil.getToDate()).concat(' 00:00:00'),
+    expire_date: (baseutil.getDateYearAdd(baseutil.getToDate(), 1)).concat(' 23:59:59'),
+    group_name: params.group_name,
+    group_open: params.group_open,
+    group_join_way: params.group_join_way,
+    member_open: params.member_open,
+    member_name_used: params.member_name_used,
+    search_keyword: params.search_keyword,
+    group_explain: params.group_explain,
+    profile_image_path: params.profile_image_path,
   }
   const output = new StdObject()
   output.add('result', await GroupService.createEnterpriseGroup(DBMySQL, member_info, options))

@@ -149,7 +149,14 @@ const GroupServiceClass = class {
       used_storage_size: 0,
       pay_code,
       start_date,
-      expire_date
+      expire_date,
+      group_open: options.group_open?options.group_open:0,
+      group_join_way: options.group_join_way?options.group_join_way:0,
+      member_open: options.member_open?options.member_open:0,
+      member_name_used: options.member_name_used?options.member_name_used:0,
+      search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
+      group_explain: options.group_explain?options.group_explain:null,
+      profile_image_path: options.profile_image_path?options.profile_image_path:null,
     }
     return await this.createGroupInfo(database, create_group_info, member_info, 'enterprise')
   }
