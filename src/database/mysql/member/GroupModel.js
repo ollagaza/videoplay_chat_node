@@ -214,4 +214,11 @@ export default class GroupModel extends MySQLModel {
   updateGroupInfoHashTag = async (group_seq, hashtag_json) => {
     return await this.update({ seq: group_seq }, { hashtag: JSON.stringify(hashtag_json) })
   }
+
+  isDuplicateGroupName = async (group_name) => {
+    const where = { 'group_name': group_name }
+    const total_count = await this.getTotalCount(where)
+
+    return total_count > 0
+  }
 }

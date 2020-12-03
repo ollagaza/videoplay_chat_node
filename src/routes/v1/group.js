@@ -8,6 +8,7 @@ import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import GroupService from '../../service/member/GroupService'
 import baseutil from "../../utils/baseutil";
+import MemberService from "../../service/member/MemberService";
 
 const routes = Router()
 
@@ -210,6 +211,17 @@ routes.put('/create_group', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
   }
   const output = new StdObject()
   output.add('result', await GroupService.createEnterpriseGroup(DBMySQL, member_info, options))
+  res.json(output)
+}))
+
+routes.post('/verify/group_name', Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const group_name = req.body.group_name
+  const is_duplicate = await GroupService.isDuplicateGroupName(DBMySQL, group_name)
+
+  const output = new StdObject()
+  output.add('is_verify', !is_duplicate)
+
   res.json(output)
 }))
 

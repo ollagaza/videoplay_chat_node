@@ -1036,6 +1036,11 @@ const GroupServiceClass = class {
       throw new StdObject(-2, '그룹명을 변경할 수 없습니다.', 400)
     }
   }
+
+  isDuplicateGroupName = async (database, group_name) => {
+    const group_model = this.getGroupModel(database)
+    return await group_model.isDuplicateGroupName(group_name)
+  }
 }
 
 const group_service = new GroupServiceClass()
