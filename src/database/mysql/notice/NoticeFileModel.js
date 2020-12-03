@@ -22,7 +22,7 @@ export default class NoticeFileModel extends MySQLModel {
   }
 
   getFileCount = async (notice_seq) => {
-    const result = this.findOne({ notice_seq }, [this.database.raw('COUNT(*) AS total_count')])
+    const result = await this.findOne({ notice_seq }, [this.database.raw('COUNT(*) AS total_count')])
     if (result && result.total_count) {
       return result.total_count
     }

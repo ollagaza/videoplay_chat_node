@@ -2,7 +2,6 @@ import { Router } from 'express'
 import Wrap from '../../utils/express-async'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
-import DBMySQL from '../../database/knex-mysql'
 import NoticeService from '../../service/notice/NoticeService'
 import StdObject from '../../wrapper/std-object'
 

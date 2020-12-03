@@ -14,9 +14,9 @@ export default class NoticeModel extends MySQLModel {
       'member.user_id', 'member.user_name', 'member.user_nickname'
     ]
     this.view_fields = [
-      'notice.seq', 'notice.subject', 'notice.contents', 'notice.view_count', 'notice.is_pin',
-      'notice.is_limit', 'notice.start_date', 'notice.end_date', 'notice.code', 'notice.reg_date', 'notice.modify_date',
-      'member.user_id', 'member.user_name', 'member.user_nickname'
+      'notice.seq', 'notice.subject', 'notice.contents', 'notice.view_count', 'notice.is_open', 'notice.is_pin',
+      'notice.is_limit', 'notice.start_date', 'notice.end_date', 'notice.code', 'notice.contents_only',
+      'notice.reg_date', 'notice.modify_date', 'member.user_id', 'member.user_name', 'member.user_nickname'
     ]
   }
 
@@ -59,6 +59,7 @@ export default class NoticeModel extends MySQLModel {
     query.from(this.table_name)
     query.leftOuterJoin('member', { 'notice.member_seq': 'member.seq' })
     if (!is_admin_page) {
+      query.where('is_open', 1)
       query.where((builder) => {
         builder.where('notice.is_limit', 0)
         builder.orWhere((orBuilder) => {
