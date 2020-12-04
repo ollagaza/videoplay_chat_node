@@ -41,7 +41,7 @@ routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async 
 
   const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
 
-  const output = await Auth.getTokenResult(res, member_info, Role.MEMBER)
+  const output = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
   return res.json(output)
 }))
 

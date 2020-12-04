@@ -20,7 +20,6 @@ export default class OperationDataInfo extends JsonWrapper {
     if (data) {
       if (data.hashtag_list && typeof data.hashtag_list === 'string') {
         this.hashtag_list = JSON.parse(data.hashtag_list)
-        log.debug('[OperationDataInfo]', data.hashtag_list, this.hashtag_list)
       }
       if (data.category_list && typeof data.category_list === 'string') {
         this.category_list = JSON.parse(data.category_list)
