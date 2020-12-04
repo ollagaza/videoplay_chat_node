@@ -217,8 +217,6 @@ routes.put('/create_group', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
 
 routes.post('/create_group_new', baseutil.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const params = JSON.parse(req.body.params)
-  console.log(params);
-  console.log(req.files);
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'group_profile_img') {
       params.profile_image_path = '/common/' + value[0].filename
