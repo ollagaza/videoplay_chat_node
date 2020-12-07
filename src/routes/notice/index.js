@@ -8,7 +8,8 @@ import StdObject from '../../wrapper/std-object'
 const routes = Router()
 
 routes.get('/', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
-  const notice_list = await NoticeService.getNoticeList(req)
+  const token_info = req.token_info
+  const notice_list = await NoticeService.getNoticeList(req, token_info && token_info.isAdmin())
   const output = new StdObject()
   output.adds(notice_list)
   res.json(output)
@@ -81,6 +82,18 @@ routes.delete('/:notice_seq(\\d+)/file/:notice_file_seq(\\d+)', Auth.isAuthentic
   const result = await NoticeService.deleteFile(notice_seq, notice_file_seq)
   const output = new StdObject()
   output.add('result', result)
+  res.json(output)
+}))
+
+routes.put('/:notice_seq(\\d+)/count', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const notice_seq = req.params.notice_seq
+  const token_info = req.token_info
+  const is_admin = token_info && token_info.isAdmin()
+  if (!is_admin) {
+    await NoticeService.updateViewCount(notice_seq)
+  }
+  const output = new StdObject()
+  output.add('result', true)
   res.json(output)
 }))
 

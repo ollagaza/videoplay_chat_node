@@ -28,7 +28,7 @@ const NoticeServiceClass = class {
     return new NoticeFileModel(DBMySQL)
   }
 
-  getNoticeList = async (request) => {
+  getNoticeList = async (request, is_admin) => {
     const notice_model = this.getNoticeModel()
     const request_query = request.query ? request.query : {}
     const page = Util.parseInt(request_query.page, 1)
@@ -37,7 +37,6 @@ const NoticeServiceClass = class {
     const search_type = request_query.search_type ? request_query.search_type : 'all'
     const order = request_query.order ? request_query.order : null
     const order_id = request_query.order_id ? request_query.order_id : null
-    const is_admin_page = request_query.is_admin_page ? request_query.is_admin_page : false
 
     const search_options = {
       page,
@@ -47,7 +46,7 @@ const NoticeServiceClass = class {
       order,
       order_id
     }
-    return notice_model.getNoticeList(search_options, is_admin_page)
+    return notice_model.getNoticeList(search_options, is_admin)
   }
 
   getNoticeInfoByRequest = (request_body) => {
@@ -106,12 +105,12 @@ const NoticeServiceClass = class {
     const seq_list = request_body.seq_list
     if (seq_list.length > 0) {
       const notice_model = this.getNoticeModel()
-      const delete_result = await notice_model.deleteNoticeBySeqList(seq_list)
-
-      for (let i = 0; i < seq_list.length; i++) {
-        this.deleteDirectory(seq_list[i])
-      }
-
+      // const delete_result = await notice_model.deleteNoticeBySeqList(seq_list)
+      //
+      // for (let i = 0; i < seq_list.length; i++) {
+      //   this.deleteDirectory(seq_list[i])
+      // }
+      const delete_result = await notice_model.setNoticeDeleteBySeqList(seq_list)
       return delete_result
     }
     return true
@@ -276,6 +275,19 @@ const NoticeServiceClass = class {
       }
     }
     return file_path
+  }
+
+  updateViewCount = (notice_seq) => {
+    (
+      async (notice_seq) => {
+        try {
+          const notice_model = this.getNoticeModel()
+          await notice_model.updateViewCount(notice_seq)
+        } catch (error) {
+          logger.error(this.log_prefix, '[updateViewCount]', error)
+        }
+      }
+    )(notice_seq)
   }
 }
 
