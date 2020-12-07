@@ -9,8 +9,8 @@ export default class NoticeModel extends MySQLModel {
     this.selectable_fields = ['*']
     this.log_prefix = '[NoticeModel]'
     this.list_fields = [
-      'notice.seq', 'notice.subject', 'notice.view_count', 'notice.is_pin',
-      'notice.code', 'notice.reg_date', 'notice.modify_date',
+      'notice.seq', 'notice.subject', 'notice.view_count', 'notice.is_pin', 'notice.is_open', 'notice.is_delete', `notice.attach_file_count`,
+      'notice.code', 'notice.reg_date', 'notice.modify_date', 'notice.is_limit', 'notice.start_date', 'notice.end_date',
       'member.user_id', 'member.user_name', 'member.user_nickname'
     ]
     this.view_fields = [
@@ -46,7 +46,7 @@ export default class NoticeModel extends MySQLModel {
     return query
   }
 
-  getNoticeList = async (options, is_admin_page = false) => {
+  getNoticeList = async (options, is_admin = false) => {
     const page = options.page
     const limit = options.limit
     const search = options.search
@@ -58,8 +58,9 @@ export default class NoticeModel extends MySQLModel {
     const query = this.database.select(this.list_fields)
     query.from(this.table_name)
     query.leftOuterJoin('member', { 'notice.member_seq': 'member.seq' })
-    if (!is_admin_page) {
+    if (!is_admin) {
       query.where('is_open', 1)
+      query.where('is_delete', 0)
       query.where((builder) => {
         builder.where('notice.is_limit', 0)
         builder.orWhere((orBuilder) => {
@@ -81,7 +82,7 @@ export default class NoticeModel extends MySQLModel {
     if (!order_id) {
       query.orderBy([{ column: 'notice.is_pin', order: 'desc' }, { column: 'notice.seq', order: 'desc' }])
     } else {
-      query.orderBy([{ column: `notice.${order_id}`, order }])
+      query.orderBy([{ column: 'notice.is_pin', order: 'desc' }, { column: `notice.${order_id}`, order }])
     }
 
     return this.queryPaginated(query, limit, page)
@@ -100,6 +101,13 @@ export default class NoticeModel extends MySQLModel {
     return this.database.from(this.table_name)
       .whereIn('seq', seq_list)
       .del()
+  }
+
+  setNoticeDeleteBySeqList = async (seq_list) => {
+    return this.database
+      .update({ is_delete: 1 })
+      .from(this.table_name)
+      .whereIn('seq', seq_list)
   }
 
   updateAttachFileCount = async (notice_seq, attach_file_count) => {
