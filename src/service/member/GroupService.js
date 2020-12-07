@@ -179,6 +179,42 @@ const GroupServiceClass = class {
     return group_info
   }
 
+  updateEnterpriseGroup = async (database, member_info, options, seq = {}) => {
+    const modify_group_info = {
+      group_type: this.GROUP_TYPE_ENTERPRISE,
+      group_name: options.group_name?options.group_name:member_info.user_name,
+      group_open: options.group_open?options.group_open:0,
+      group_join_way: options.group_join_way?options.group_join_way:0,
+      member_open: options.member_open?options.member_open:0,
+      member_name_used: options.member_name_used?options.member_name_used:0,
+      search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
+      group_explain: options.group_explain?options.group_explain:null,
+      profile_image_path: options.profile_image_path?options.profile_image_path:null,
+    }
+    return await this.updateGroupInfo(database, modify_group_info, seq)
+  }
+
+  updateGroupInfo = async (database, modify_group_info, seq) => {
+    const resObj = {
+      completed: true,
+      group_seq: seq,
+      group_info: {}
+    }
+    try {
+      await DBMySQL.transaction(async (transaction) => {
+        const group_model = this.getGroupModel(database)
+        await group_model.updateGroup(modify_group_info, seq)
+        resObj.group_info = await group_model.getGroupInfo(seq, null);
+        resObj.group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
+      })
+      return resObj;
+    } catch (e) {
+      log.error(this.log_prefix, '[updateGroupInfo]', e)
+      throw new StdObject(-2, '그룹 정보를 변경할 수 없습니다.', 400)
+      return false;
+    }
+  }
+
   addGroupMember = async (database, group_info, member_info, grade, max_storage_size = 0) => {
     if (grade !== this.MEMBER_GRADE_OWNER && group_info.group_type === this.GROUP_TYPE_PERSONAL) {
       throw new StdObject(-1, '권한이 없습니다.', 400)

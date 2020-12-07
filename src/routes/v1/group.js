@@ -242,6 +242,29 @@ routes.post('/create_group_new', baseutil.common_path_upload.fields([{ name: 'gr
   res.json(output)
 }))
 
+routes.post('/update_group', baseutil.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const params = JSON.parse(req.body.params)
+  _.forEach(req.files, (value) => {
+    if (value[0].fieldname === 'group_profile_img') {
+      params.profile_image_path = '/common/' + value[0].filename
+    }
+  })
+  const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const options = {
+    group_name: params.group_name,
+    group_open: params.group_open,
+    group_join_way: params.group_join_way,
+    member_open: params.member_open,
+    member_name_used: params.member_name_used,
+    search_keyword: params.search_keyword,
+    group_explain: params.group_explain,
+    profile_image_path: params.profile_image_path,
+  }
+  const output = new StdObject()
+  output.add('result', await GroupService.updateEnterpriseGroup(DBMySQL, member_info, options, params.seq))
+  res.json(output)
+}))
+
 routes.post('/verify/group_name', Wrap(async (req, res) => {
   req.accepts('application/json')
   const group_name = req.body.group_name
