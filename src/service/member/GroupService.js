@@ -205,7 +205,7 @@ const GroupServiceClass = class {
         const group_model = this.getGroupModel(database)
         await group_model.updateGroup(modify_group_info, seq)
         resObj.group_info = await group_model.getGroupInfo(seq, null);
-        resObj.group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
+        resObj.group_info.profile_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
       })
       return resObj;
     } catch (e) {

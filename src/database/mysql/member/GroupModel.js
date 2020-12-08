@@ -66,7 +66,9 @@ export default class GroupModel extends MySQLModel {
       seq: group_seq
     }
     const query_result = await this.findOne(filter)
-    return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
+    const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
+    rs_data.json_keys.push('profile_image_url')
+    return rs_data;
   }
 
   getMemberSeqbyPersonalGroupInfo = async (member_seq, private_keys = null) => {

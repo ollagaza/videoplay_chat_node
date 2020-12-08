@@ -261,7 +261,8 @@ routes.post('/update_group', baseutil.common_path_upload.fields([{ name: 'group_
     profile_image_path: params.profile_image_path,
   }
   const output = new StdObject()
-  output.add('result', await GroupService.updateEnterpriseGroup(DBMySQL, member_info, options, params.seq))
+  const rs_gorup_info = await GroupService.updateEnterpriseGroup(DBMySQL, member_info, options, params.seq);
+  output.add('result', rs_gorup_info);
   res.json(output)
 }))
 
