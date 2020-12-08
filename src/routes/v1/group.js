@@ -277,4 +277,30 @@ routes.post('/verify/group_name', Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.get('/getjoinmanage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const output = new StdObject()
+
+  const join_setting = await GroupService.getGroupInfo(DBMySQL, group_seq)
+  output.add('result', join_setting)
+
+  res.json(output)
+}))
+
+routes.post('/updateJoinManage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const params = {
+    group_message: req.body.join_message,
+    group_question: JSON.stringify(req.body.question_list)
+  }
+  const output = new StdObject()
+
+  const result = await GroupService.updateJoinManage(DBMySQL, group_seq, params)
+  output.add('result', result)
+
+  res.json(output)
+}))
+
 export default routes

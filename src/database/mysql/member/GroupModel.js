@@ -231,4 +231,7 @@ export default class GroupModel extends MySQLModel {
 
     return total_count > 0
   }
+  updateJoinManage = async (filter, params) => {
+    return await this.update(filter, params)
+  }
 }

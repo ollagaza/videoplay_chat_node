@@ -1084,6 +1084,14 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database)
     return await group_model.isDuplicateGroupName(group_name)
   }
+
+  updateJoinManage = async (database, group_seq, params) => {
+    const filter = {
+      seq: group_seq
+    }
+    const group_model = this.getGroupModel(database)
+    return await group_model.updateJoinManage(filter, params);
+  }
 }
 
 const group_service = new GroupServiceClass()
