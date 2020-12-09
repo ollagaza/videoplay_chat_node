@@ -7,8 +7,6 @@ import Wrap from '../../utils/express-async'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import GroupService from '../../service/member/GroupService'
-import baseutil from "../../utils/baseutil";
-import MemberService from "../../service/member/MemberService";
 import _ from "lodash";
 
 const routes = Router()
@@ -207,29 +205,27 @@ routes.put('/create_group', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
   const options = {
     storage_size: 13194139533312,
     pay_code: 'f_12TB',
-    start_date: (baseutil.getToDate()).concat(' 00:00:00'),
-    expire_date: (baseutil.getDateYearAdd(baseutil.getToDate(), 1)).concat(' 23:59:59'),
+    start_date: (Util.getToDate()).concat(' 00:00:00'),
+    expire_date: (Util.getDateYearAdd(Util.getToDate(), 1)).concat(' 23:59:59'),
   }
   const output = new StdObject()
   output.add('result', await GroupService.createEnterpriseGroup(DBMySQL, member_info, options))
   res.json(output)
 }))
 
-routes.post('/create_group_new', baseutil.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const params = JSON.parse(req.body.params)
-  console.log(params);
-  console.log(req.files);
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'group_profile_img') {
       params.profile_image_path = '/common/' + value[0].filename
     }
   })
-  const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, true)
   const options = {
     storage_size: 13194139533312,
     pay_code: 'f_12TB',
-    start_date: (baseutil.getToDate()).concat(' 00:00:00'),
-    expire_date: (baseutil.getDateYearAdd(baseutil.getToDate(), 1)).concat(' 23:59:59'),
+    start_date: (Util.getToDate()).concat(' 00:00:00'),
+    expire_date: (Util.getDateYearAdd(Util.getToDate(), 1)).concat(' 23:59:59'),
     group_name: params.group_name,
     group_open: params.group_open,
     group_join_way: params.group_join_way,
@@ -252,6 +248,44 @@ routes.post('/verify/group_name', Wrap(async (req, res) => {
   const output = new StdObject()
   output.add('is_verify', !is_duplicate)
 
+  res.json(output)
+}))
+
+routes.get('/open', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { member_seq } = await checkGroupAuth(DBMySQL, req, false, true)
+  const result = await GroupService.getOpenGroupList(member_seq, req.query)
+
+  const output = new StdObject()
+  output.add('open_group_list', result)
+  res.json(output)
+}))
+
+routes.post('/open/:group_seq(\\d+)/join', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq, member_info } = await checkGroupAuth(DBMySQL, req, false, true)
+  const result = await GroupService.requestJoinGroup(group_seq, member_info)
+
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output)
+}))
+
+routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/join/confirm', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_member_info } = await checkGroupAuth(DBMySQL, req)
+  const group_member_seq = getGroupMemberSeq(req)
+  const result = await GroupService.confirmJoinGroup(group_member_info, group_member_seq)
+
+  const output = new StdObject()
+  output.add('result', result)
+  res.json(output)
+}))
+
+routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/join', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq, group_member_info } = await checkGroupAuth(DBMySQL, req)
+  const group_member_seq = getGroupMemberSeq(req)
+  const result = await GroupService.deleteJoinGroup(group_member_info, group_seq, group_member_seq)
+
+  const output = new StdObject()
+  output.add('result', result)
   res.json(output)
 }))
 

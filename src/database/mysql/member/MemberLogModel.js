@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import MySQLModel from '../../mysql-model'
 import { LogCodeModel } from '../../mongodb/MemberLogCode'
 import NotifyInfo from '../../../wrapper/common/NotifyInfo'
@@ -47,7 +48,7 @@ export default class MemberLogModel extends MySQLModel {
     const resultContent = {}
     const logCodes = await LogCodeModel.findAll()
     const langLogCodes = logCodes[0].codes[lang]
-    const result = await this.find(filters, fieldSet, { name: 'regist_date', direction: 'asc' }, null)
+    const result = await this.find(filters, fieldSet, { name: 'regist_date', direction: 'desc' }, null)
 
     Object.keys(result).forEach((key) => {
       if (langLogCodes[result[key].log_code] !== undefined) {
@@ -58,10 +59,10 @@ export default class MemberLogModel extends MySQLModel {
         }
       }
 
-      if (resultContent[result[key].keydate] !== undefined) {
-        resultContent[result[key].keydate][resultContent[result[key].keydate].length++] = result[key]
+      if (resultContent[`log_${result[key].keydate}`] !== undefined) {
+        resultContent[`log_${result[key].keydate}`][resultContent[`log_${result[key].keydate}`].length++] = result[key]
       } else {
-        resultContent[result[key].keydate] = [result[key]]
+        resultContent[`log_${result[key].keydate}`] = [result[key]]
       }
     })
     return resultContent
