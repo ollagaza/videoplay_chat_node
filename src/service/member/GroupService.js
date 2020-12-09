@@ -18,6 +18,7 @@ import VacsService from '../vacs/VacsService'
 import Auth from '../../middlewares/auth.middleware'
 import GroupCountModel from '../../database/mysql/member/GroupCountsModel'
 import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
+import JsonWrapper from '../../wrapper/json-wrapper'
 
 const GroupServiceClass = class {
   constructor () {
@@ -31,6 +32,7 @@ const GroupServiceClass = class {
     this.MEMBER_STATUS_ENABLE = 'Y'
     this.MEMBER_STATUS_DISABLE = 'D'
     this.MEMBER_STATUS_PAUSE = 'P'
+    this.MEMBER_STATUS_JOIN = 'J'
     this.MEMBER_STATUS_DELETE = 'D'
     this.MEMBER_GRADE_OWNER = 'O'
     this.MEMBER_GRADE_ADMIN = 'A'
@@ -99,7 +101,7 @@ const GroupServiceClass = class {
         is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
       }
     }
-    if (!is_active_group_member && throw_exception) {
+    if (check_group_auth && !is_active_group_member && throw_exception) {
       throw new StdObject(-1, '권한이 없습니다', 403)
     }
     return {
@@ -157,6 +159,9 @@ const GroupServiceClass = class {
       search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
       group_explain: options.group_explain?options.group_explain:null,
       profile_image_path: options.profile_image_path?options.profile_image_path:null,
+    }
+    if (ServiceConfig.isVacs()) {
+      create_group_info.is_channel = 1
     }
     return await this.createGroupInfo(database, create_group_info, member_info, 'enterprise')
   }
@@ -700,7 +705,7 @@ const GroupServiceClass = class {
       throw new StdObject(-1, '권한이 없습니다.', 403)
     }
     const group_member_model = this.getGroupMemberModel(database)
-    await group_member_model.deleteInviteInfo(group_member_info.group_seq, group_member_seq)
+    await group_member_model.deleteGroupMemberInfo(group_member_info.group_seq, group_member_seq)
   }
 
   restoreMemberState = async (database, group_member_info, group_member_seq) => {
@@ -714,7 +719,6 @@ const GroupServiceClass = class {
 
   updateGroupUsedStorage = async (database, group_seq) => {
     const operation_storage_used = await OperationService.getGroupTotalStorageUsedSize(database, group_seq)
-    log.debug(this.log_prefix, '[updateGroupUsedStorage]', group_seq, operation_storage_used)
     const total_storage_used = operation_storage_used
     const group_model = this.getGroupModel(database)
     await group_model.updateStorageUsedSize(group_seq, total_storage_used)
@@ -980,7 +984,6 @@ const GroupServiceClass = class {
       throw output
     }
 
-    log.debug(upload_file_info)
     const origin_image_path = upload_file_info.path
     const resize_image_path = `${upload_path}/${Util.getRandomId()}.${Util.getFileExt(upload_file_info.filename)}`
     const resize_image_full_path = media_root + resize_image_path
@@ -1083,6 +1086,55 @@ const GroupServiceClass = class {
   isDuplicateGroupName = async (database, group_name) => {
     const group_model = this.getGroupModel(database)
     return await group_model.isDuplicateGroupName(group_name)
+  }
+
+  getOpenGroupList = async (member_seq, request_query) => {
+    let search = null
+    if (request_query) {
+      search = request_query.search ? request_query.search : null
+    }
+    const group_model = this.getGroupModel()
+    const query_list = await group_model.getOpenGroupList(member_seq, search)
+    const result_list = []
+    if (query_list) {
+      for (let i = 0; i < query_list.length; i++) {
+        const result_json = new JsonWrapper(query_list[i]).toJSON()
+        if (result_json.profile) {
+          result_json.profile = JSON.parse(result_json.profile)
+        }
+        if (result_json.profile_image_path) {
+          result_json.profile_image_path = ServiceConfig.get('static_storage_prefix') + result_json.profile_image_path
+        }
+
+        result_list.push(result_json)
+      }
+    }
+    return result_list
+  }
+
+  requestJoinGroup = async (group_seq, member_info) => {
+    const group_model = this.getGroupModel()
+    const group_info = await group_model.getGroupInfo(group_seq)
+    const group_member_model = this.getGroupMemberModel()
+    return await group_member_model.createGroupMember(group_info, member_info, this.MEMBER_GRADE_NORMAL, null, this.MEMBER_STATUS_JOIN)
+  }
+
+  confirmJoinGroup = async (group_member_info, group_member_seq) => {
+    const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
+    if (!is_group_admin) {
+      throw new StdObject(-1, '권한이 없습니다.', 403)
+    }
+    const group_member_model = this.getGroupMemberModel()
+    return await group_member_model.joinConfirm(group_member_seq)
+  }
+
+  deleteJoinGroup = async (group_member_info, group_seq, group_member_seq) => {
+    const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
+    if (!is_group_admin) {
+      throw new StdObject(-1, '권한이 없습니다.', 403)
+    }
+    const group_member_model = this.getGroupMemberModel()
+    return await group_member_model.deleteGroupMemberInfo(group_seq, group_member_seq)
   }
 
   updateJoinManage = async (database, group_seq, params) => {

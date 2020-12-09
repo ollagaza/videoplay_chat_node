@@ -676,10 +676,10 @@ const OperationServiceClass = class {
     }
 
     const file_field_name = field_name ? field_name : 'target'
-    let directory = directory_info.url_origin
+    let url_prefix = directory_info.url_origin
     if (file_type === OperationFileService.TYPE_REFER) {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
-      directory = directory_info.url_refer
+      url_prefix = directory_info.url_refer
     } else {
       await Util.uploadByRequest(request, response, file_field_name, media_directory)
     }
@@ -692,7 +692,7 @@ const OperationServiceClass = class {
     let upload_seq = await this.createOperationFileInfo(file_type, operation_info, upload_file_info, storage_seq)
 
     const file_path = upload_file_info.path
-    const file_url = ServiceConfig.get('service_url') + directory + upload_file_info.new_file_name
+    const file_url = url_prefix + upload_file_info.new_file_name
     return {
       upload_seq,
       file_path,

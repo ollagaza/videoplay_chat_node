@@ -234,4 +234,33 @@ export default class GroupModel extends MySQLModel {
   updateJoinManage = async (filter, params) => {
     return await this.update(filter, params)
   }
+
+  getOpenGroupList = async (member_seq, search) => {
+    const open_group_list_select = [
+      'group_info.seq AS group_seq', 'group_info.group_name', 'group_info.profile', 'group_info.profile_image_path', 'group_info.reg_date'
+      , 'member.user_name', 'member.user_nickname', 'group_counts.video_count', 'group_member.status', 'group_member.grade'
+    ]
+    const query = this.database
+      .select(open_group_list_select)
+      .from('group_info')
+      .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
+      .innerJoin('group_counts', { 'group_counts.group_seq': 'group_info.seq' })
+      .leftOuterJoin('group_member', { 'group_member.member_seq': member_seq, 'group_member.group_seq': 'group_info.seq' })
+      .where('group_info.group_type', 'G')
+      .whereIn('group_info.status', ['Y', 'F'])
+      .where('group_info.is_channel', 1)
+      // .where((builder) => {
+      //   builder.whereNull('group_member.grade')
+      //     .orWhereNot('group_member.grade', 'O')
+      // })
+    if (search) {
+      query.where((builder) => {
+        builder.where('group_info.group_name', 'like', `%${search}%`)
+          .orWhere('member.user_name', 'like', `%${search}%`)
+          // .orWhere('member_info.user_name', 'like', `%${search}%`)
+      })
+    }
+    query.orderBy('group_info.group_name', 'asc')
+    return query
+  }
 }

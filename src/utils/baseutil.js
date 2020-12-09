@@ -387,6 +387,9 @@ const loadXmlString = async (context) => {
   return result
 }
 
+const isBoolean = (str) => {
+  return str === true || str === false;
+}
 const isNumber = (str) => {
   try {
     return !isNaN(parseFloat(str)) && isFinite(str)
@@ -1290,6 +1293,7 @@ export default {
   'parseInt': getInt,
   'parseFloat': getFloat,
   'getImageScaling': getImageScaling,
+  isBoolean,
   isNumber,
   isString,
   isArray,

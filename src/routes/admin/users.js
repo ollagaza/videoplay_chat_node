@@ -17,7 +17,7 @@ import MongoDataService from '../../service/common/MongoDataService'
 
 const routes = Router()
 
-routes.get('/me', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/me', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   const lang = Auth.getLanguage(req)
   const token_info = req.token_info
   const member_seq = token_info.getId()
