@@ -8,6 +8,7 @@ import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import GroupService from '../../service/member/GroupService'
 import _ from "lodash";
+import baseutil from "../../utils/baseutil";
 
 const routes = Router()
 
