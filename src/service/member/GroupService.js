@@ -19,6 +19,8 @@ import Auth from '../../middlewares/auth.middleware'
 import GroupCountModel from '../../database/mysql/member/GroupCountsModel'
 import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 import JsonWrapper from '../../wrapper/json-wrapper'
+import GroupGradeModel from "../../database/mysql/member/GroupGradeModel";
+import data from "../../routes/v1/data";
 
 const GroupServiceClass = class {
   constructor () {
@@ -65,6 +67,13 @@ const GroupServiceClass = class {
       return new ContentCountsModel(database)
     }
     return new ContentCountsModel(DBMySQL)
+  }
+
+  getGroupGradeModel = (database) => {
+    if (database) {
+      return new GroupGradeModel(database)
+    }
+    return new GroupGradeModel(DBMySQL)
   }
 
   getBaseInfo = (req, group_seq_from_token = true) => {
@@ -175,6 +184,7 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
+    await this.createDefaultGroupGrade(database, group_info.seq)
     const group_counts_model = this.getGroupCountsModel(database)
     await group_counts_model.createCounts(group_info.seq)
     const content_counts_model = this.getContentCountsModel(database)
@@ -1143,6 +1153,50 @@ const GroupServiceClass = class {
     }
     const group_model = this.getGroupModel(database)
     return await group_model.updateJoinManage(filter, params);
+  }
+
+  SyncGroupGrade = async (database) => {
+    const group_model = this.getGroupModel(database)
+    const group_infos = await group_model.getGroupInfoAllByGroup()
+
+    for (let cnt = 0; cnt < Object.keys(group_infos).length; cnt++) {
+      await this.createDefaultGroupGrade(database, group_infos[cnt].seq)
+    }
+  }
+
+  createDefaultGroupGrade = async (database, group_seq) => {
+    const grade_model = this.getGroupGradeModel(database)
+    const grade_list = [
+      { group_seq, grade: 1, grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: 2, grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: 3, grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: 4, grade_text: '평생회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: 5, grade_text: '명예회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: 6, grade_text: '매니저', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+    ];
+
+    for (let cnt = 0; cnt < grade_list.length; cnt++) {
+      await grade_model.insertGroupGrade(grade_list[cnt])
+    }
+  }
+
+  getGradeList = async (database, group_seq) => {
+    const grade_model = this.getGroupGradeModel(database)
+    return await grade_model.getGroupGradeListWithGroupSeq(group_seq)
+  }
+
+  updateGradeList = async (database, group_seq, grade_list) => {
+    const grade_model = this.getGroupGradeModel(database)
+    const filter = {
+      group_seq,
+    }
+    for (let cnt = 0; cnt < grade_list.length; cnt++) {
+      filter.grade = grade_list[cnt].grade
+      delete grade_list[cnt].seq
+      delete grade_list[cnt].reg_date
+      grade_list[cnt].modify_date = database.raw('NOW()')
+      await grade_model.updateGroupGrade(filter, grade_list[cnt])
+    }
   }
 }
 

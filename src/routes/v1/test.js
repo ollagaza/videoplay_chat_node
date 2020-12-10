@@ -29,10 +29,16 @@ import socketManager from '../../service/socket-manager'
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
 import FTP from '../../libs/ftp'
 import OperationFolderService from '../../service/operation/OperationFolderService'
+import group_service from "../../service/member/GroupService";
 
 const routes = Router()
 
 const IS_DEV = Config.isDev()
+
+routes.get('/group_grade_sync', Wrap(async (req, res) => {
+  const output = await group_service.SyncGroupGrade(DBMySQL)
+  res.json(output)
+}))
 
 routes.get('/folder_size_sync', Wrap(async (req, res) => {
   const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)

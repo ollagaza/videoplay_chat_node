@@ -325,7 +325,7 @@ routes.get('/getjoinmanage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   res.json(output)
 }))
 
-routes.post('/updateJoinManage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/updatejoinmanage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const params = {
@@ -335,6 +335,39 @@ routes.post('/updateJoinManage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   const output = new StdObject()
 
   const result = await GroupService.updateJoinManage(DBMySQL, group_seq, params)
+  output.add('result', result)
+
+  res.json(output)
+}))
+
+routes.get('/getgradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const output = new StdObject()
+
+  let grade_list = await GroupService.getGradeList(DBMySQL, group_seq)
+  if (!grade_list) {
+    grade_list = [
+      { seq: '', grade: 1, grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { seq: '', grade: 2, grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { seq: '', grade: 3, grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { seq: '', grade: 4, grade_text: '평생회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { seq: '', grade: 5, grade_text: '명예회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { seq: '', grade: 6, grade_text: '매니저', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+    ];
+  }
+  output.add('result', grade_list)
+
+  res.json(output)
+}))
+
+routes.post('/updategradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const grade_list = req.body.grade_list
+  const output = new StdObject()
+
+  const result = await GroupService.updateGradeList(DBMySQL, group_seq, grade_list)
   output.add('result', result)
 
   res.json(output)

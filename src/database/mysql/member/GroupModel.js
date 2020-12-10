@@ -61,6 +61,13 @@ export default class GroupModel extends MySQLModel {
     return await this.update(filter, update_params)
   }
 
+  getGroupInfoAllByGroup = async () => {
+    const filter = {
+      group_type: 'G',
+    }
+    return await this.find(filter)
+  }
+
   getGroupInfo = async (group_seq, private_keys = null) => {
     const filter = {
       seq: group_seq
