@@ -12,4 +12,20 @@ export default class SendMailModel extends MySQLModel {
   createSendMail = async (sendmail_data) => {
     return await this.create(sendmail_data, 'seq')
   }
+
+  fileUpdateSendMail = async (seq, params) => {
+    return await this.update({ seq }, params)
+  }
+
+  getSendMailList = async (group_seq) => {
+    return await this.find({ group_seq })
+  }
+
+  getSendMailFindOne = async (group_seq, seq) => {
+    return await this.findOne({ seq, group_seq })
+  }
+
+  getReservationEmailList = async () => {
+    return await this.find({ })
+  }
 }

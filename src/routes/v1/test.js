@@ -30,10 +30,17 @@ import NotifyInfo from '../../wrapper/common/NotifyInfo'
 import FTP from '../../libs/ftp'
 import OperationFolderService from '../../service/operation/OperationFolderService'
 import group_service from "../../service/member/GroupService";
+import sendmail from '../../libs/send-mail'
+import SendMailService from "../../service/etc/SendMailService";
 
 const routes = Router()
 
 const IS_DEV = Config.isDev()
+
+routes.get('/cloud_mail_file_test', Wrap(async (req, res) => {
+  const result = await SendMailService.sendMail(DBMySQL, 24, 30)
+  res.json(result)
+}))
 
 routes.get('/group_grade_sync', Wrap(async (req, res) => {
   const output = await group_service.SyncGroupGrade(DBMySQL)

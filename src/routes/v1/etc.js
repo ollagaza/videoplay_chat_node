@@ -8,20 +8,48 @@ import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
 import GroupService from '../../service/member/GroupService'
 import ContactUsService from '../../service/etc/ContactUsService'
-import SendMail_Service from '../../service/etc/SendMailService'
 import EditorService from '../../service/etc/EditorService'
+import baseutil from "../../utils/baseutil";
+import SendMailService from "../../service/etc/SendMailService";
 
 const routes = Router()
 
-routes.post('/sendmail', Wrap(async (req, res) => {
+routes.get('/sendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const is_send_success = await SendMail_Service.createSendMail(req.body)
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const mail_seq = req.params.mail_seq
+    const result = await SendMailService.sendMail(DBMySQL, group_seq, mail_seq)
+    const output = new StdObject()
+    output.add(result)
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
+routes.post('/upload_mail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  try {
+    const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const mail_params = req.body;
+    mail_params.group_seq = group_seq;
+    mail_params.member_seq = member_seq;
+    mail_params.content_id = baseutil.getContentId();
+    const mail_seq = await SendMailService.createSendMail(DBMySQL, mail_params)
     const result = new StdObject()
-    result.add('result', is_send_success)
+    result.add('result', mail_seq)
     res.json(result)
   } catch (e) {
     throw new StdObject(-1, e, 400)
   }
+}))
+
+routes.post('/:group_seq(\\d+)/:mail_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_seq = req.params.group_seq
+  const mail_seq = req.params.mail_seq
+  const email_file_list = await SendMailService.uploadFile(group_seq, mail_seq, req, res)
+  const output = new StdObject()
+  output.add('email_file_list', email_file_list)
+  res.json(output)
 }))
 
 routes.put('/editorimage/:contentid', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
