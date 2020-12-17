@@ -14,14 +14,52 @@ import SendMailService from "../../service/etc/SendMailService";
 
 const routes = Router()
 
+routes.get('/sendmaillist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  try {
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const result = await SendMailService.getSendMailPagingList(DBMySQL, group_seq, req)
+    const output = new StdObject()
+    output.adds(result)
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
+routes.get('/getsendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  try {
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const mail_seq = req.params.mail_seq
+    const result = await SendMailService.getSendMailOne(DBMySQL, mail_seq)
+    const output = new StdObject()
+    output.add('result', result)
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
+routes.delete('/sendmail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  try {
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const mail_seq = req.body
+    const output = new StdObject();
+    for (let cnt = 0; cnt < Object.keys(mail_seq).length; cnt++) {
+      const result = await SendMailService.deleteMail(DBMySQL, mail_seq[cnt])
+      output.add('result', result);
+    }
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
 routes.get('/sendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
     const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const mail_seq = req.params.mail_seq
-    const result = await SendMailService.sendMail(DBMySQL, group_seq, mail_seq)
-    const output = new StdObject()
-    output.add(result)
-    res.json(output)
+    const result = await SendMailService.sendMail(DBMySQL, mail_seq)
+    res.json(result)
   } catch (e) {
     throw new StdObject(-1, e, 400)
   }

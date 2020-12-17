@@ -13,6 +13,14 @@ export default class SendMailModel extends MySQLModel {
     return await this.create(sendmail_data, 'seq')
   }
 
+  updateSendFlag = async (seq) => {
+    return await this.update({ seq }, { send_flag: 'Y' })
+  }
+
+  deleteMail = async (seq) => {
+    return await this.delete({ seq })
+  }
+
   fileUpdateSendMail = async (seq, params) => {
     return await this.update({ seq }, params)
   }
@@ -21,11 +29,20 @@ export default class SendMailModel extends MySQLModel {
     return await this.find({ group_seq })
   }
 
-  getSendMailFindOne = async (group_seq, seq) => {
-    return await this.findOne({ seq, group_seq })
+  getSendMailPagingList = async (group_seq, paging = {}, order = null) => {
+    return await this.findPaginated({ group_seq }, null, order, null, paging)
+  }
+
+  getSendMailFindOne = async (seq) => {
+    return await this.findOne({ seq })
   }
 
   getReservationEmailList = async () => {
-    return await this.find({ })
+    const oKnex = this.database.select('*')
+    oKnex.from(this.table_name)
+    oKnex.whereNotNull('reservation_datetime')
+    oKnex.andWhere(this.database.raw('reservation_datetime <= current_timestamp()'))
+    oKnex.andWhere('send_flag', 'N')
+    return oKnex
   }
 }

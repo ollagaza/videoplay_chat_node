@@ -24,9 +24,43 @@ const SendMailServiceClass = class {
     return await sendmail_model.getSendMailList(group_seq)
   }
 
-  getSendMailOne = async (database, group_seq, mail_seq) => {
+  getSendMailPagingList = async (database, group_seq, req) => {
+    const request_body = req.query ? req.query : {}
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const request_order = request_body.order ? JSON.parse(request_body.order) : null
+
+    const paging = {}
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 20
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = 'N'
+
+    const sendmail_model = this.getSendMailModel()
+    return await sendmail_model.getSendMailPagingList(group_seq, paging, request_order)
+  }
+
+  deleteMail = async (database, mail_seq) => {
     const sendmail_model = this.getSendMailModel(database)
-    return await sendmail_model.getSendMailFindOne(group_seq, mail_seq)
+    const mail_info = await this.getSendMailOne(database, mail_seq)
+    const file_list = JSON.parse(mail_info.email_file_list)
+    if (!file_list) return await sendmail_model.deleteMail(mail_seq);
+
+    for (let cnt = 0; cnt < Object.keys(file_list).length; cnt++) {
+      const file_path = `${ServiceConfig.get('media_root')}${file_list[0].file_path}${file_list[0].file_name}`
+      try {
+        await Util.deleteFile(file_path)
+      } catch (error) {
+        logger.error(this.log_prefix, '[deleteFile]', error)
+      }
+    }
+    await Util.deleteDirectory(`${ServiceConfig.get('media_root')}${file_list[0].file_path}`);
+
+    return await sendmail_model.deleteMail(mail_seq)
+  }
+
+  getSendMailOne = async (database, mail_seq) => {
+    const sendmail_model = this.getSendMailModel(database)
+    return await sendmail_model.getSendMailFindOne(mail_seq)
   }
 
   getReservationEmailList = async (database) => {
@@ -46,13 +80,25 @@ const SendMailServiceClass = class {
     return await sendmail_model.fileUpdateSendMail(mail_seq, params)
   }
 
-  sendReservationEmail = async (database) => {
-
+  sendMail = async (database, mail_seq) => {
+    const mail_info = await this.getSendMailOne(database, mail_seq)
+    const result = await new SendMail().sendMailInfo(mail_info);
+    if (!result.error) {
+      const sendmail_model = this.getSendMailModel(database)
+      await sendmail_model.updateSendFlag(mail_seq)
+    }
+    return result
   }
 
-  sendMail = async (database, group_seq, mail_seq) => {
-    const mail_info = await this.getSendMailOne(database, group_seq, mail_seq)
-    return await new SendMail().sendMailInfo(mail_info);
+  sendReservationEmail = async (database) => {
+    const sendmail_model = this.getSendMailModel(database)
+    const mail_list = await this.getReservationEmailList(database)
+    for (let cnt = 0; cnt < Object.keys(mail_list).length; cnt++) {
+      const result = await new SendMail().sendMailInfo(mail_list[cnt]);
+      if (!result.error) {
+        await sendmail_model.updateSendFlag(mail_list[cnt].seq)
+      }
+    }
   }
 
   uploadFile = async (group_seq, mail_seq, request, response) => {

@@ -4,6 +4,7 @@ import NaverArchiveStorageService from './storage/naver-archive-storage-service'
 import NaverObjectStorageService from './storage/naver-object-storage-service'
 import SocketManager from './socket-manager'
 import VacsScheduler from '../scheduler/VacsScheduler'
+import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler";
 import MongoDataService from './common/MongoDataService'
 import Util from '../utils/baseutil'
 import log from '../libs/logger'
@@ -25,6 +26,7 @@ export default {
     if (ServiceConfig.isVacs() === false) {
       await NaverArchiveStorageService.init()
       await NaverObjectStorageService.init()
+      ReservationEmailScheduler.startSchedule()
     } else {
       VacsScheduler.startSchedule()
     }
