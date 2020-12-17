@@ -12,9 +12,10 @@ export default class GroupMemberModel extends MySQLModel {
     this.log_prefix = '[GroupMemberModel]'
     this.group_member_select = [
       'group_member.seq AS group_member_seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
-      'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq',
+      'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq', 'group_member.ban_reason',
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
-      'member.user_name', 'member.user_nickname', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used'
+      'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
+      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used'
     ]
     this.member_group_select = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
@@ -133,7 +134,7 @@ export default class GroupMemberModel extends MySQLModel {
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
-  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null) => {
+  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null) => {
     const filter = {
       group_seq
     }
@@ -151,9 +152,28 @@ export default class GroupMemberModel extends MySQLModel {
         filter['group_member.status'] = 'J'
       }
     }
-    const query = this.database.select(this.group_member_select)
+    const isSelect = this.group_member_select;
+    if(videos_count) {
+      isSelect.push('vcnt');
+    }
+    if (get_pause_name) {
+      isSelect.push('submit_member_name');
+    }
+    if (get_delete_name) {
+      isSelect.push('submit_member_name');
+    }
+    const query = this.database.select(isSelect)
     query.from('group_member')
     query.leftOuterJoin('member', { 'member.seq': 'group_member.member_seq' })
+    if (videos_count) {
+      query.joinRaw('LEFT JOIN (SELECT member_seq, group_seq AS gseq, COUNT(*) AS vcnt FROM operation GROUP BY member_seq, group_seq) AS vinfo ON (`group_member`.`group_seq` = `vinfo`.`gseq` AND `group_member`.`member_seq` = `vinfo`.`member_seq`)');
+    }
+    if (get_pause_name) {
+      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`pause_member_seq` = `submit_member`.`submit_member_seq`)')
+    }
+    if (get_delete_name) {
+      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`ban_member_seq` = `submit_member`.`submit_member_seq`)')
+    }
     query.where(filter)
     if (search_text) {
       query.andWhere(function () {
