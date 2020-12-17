@@ -37,6 +37,13 @@ export default class SendMailModel extends MySQLModel {
     return await this.findOne({ seq })
   }
 
+  getSendMailThreeMonths  = async () => {
+    const oKnex = this.database.select('*')
+    oKnex.from(this.table_name)
+    oKnex.where(this.database.raw('date_format(regist_date, \'%Y%m%d\') <= date_format(date_sub(current_timestamp(), interval 3 month), \'%Y%m%d\')'))
+    return oKnex
+  }
+
   getReservationEmailList = async () => {
     const oKnex = this.database.select('*')
     oKnex.from(this.table_name)

@@ -39,11 +39,23 @@ const SendMailServiceClass = class {
     return await sendmail_model.getSendMailPagingList(group_seq, paging, request_order)
   }
 
+  ThreeMonthsEmailDelete = async () => {
+    const sendmail_model = this.getSendMailModel(DBMySQL)
+    const mail_info_list = await sendmail_model.getSendMailThreeMonths()
+    for (let cnt = 0; cnt < Object.keys(mail_info_list).length; cnt++) {
+      await this.deleteMail(DBMySQL, mail_info_list[cnt])
+    }
+  }
+
   deleteMail = async (database, mail_seq) => {
-    const sendmail_model = this.getSendMailModel(database)
     const mail_info = await this.getSendMailOne(database, mail_seq)
+    return await this.deleteMailAndFile(database, mail_info);
+  }
+
+  deleteMailAndFile = async (database, mail_info) => {
+    const sendmail_model = this.getSendMailModel(database)
     const file_list = JSON.parse(mail_info.email_file_list)
-    if (!file_list) return await sendmail_model.deleteMail(mail_seq);
+    if (!file_list) return await sendmail_model.deleteMail(mail_info.seq);
 
     for (let cnt = 0; cnt < Object.keys(file_list).length; cnt++) {
       const file_path = `${ServiceConfig.get('media_root')}${file_list[0].file_path}${file_list[0].file_name}`
@@ -55,7 +67,7 @@ const SendMailServiceClass = class {
     }
     await Util.deleteDirectory(`${ServiceConfig.get('media_root')}${file_list[0].file_path}`);
 
-    return await sendmail_model.deleteMail(mail_seq)
+    return await sendmail_model.deleteMail(mail_info.seq)
   }
 
   getSendMailOne = async (database, mail_seq) => {
