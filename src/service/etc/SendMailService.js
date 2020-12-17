@@ -103,7 +103,7 @@ const SendMailServiceClass = class {
 
   uploadFile = async (group_seq, mail_seq, request, response) => {
     logger.debug(this.log_prefix, `{ UPLOAD_ROOT: ${this.UPLOAD_ROOT}, FILE_URL_PREFIX: ${ServiceConfig.get('static_storage_prefix')} }`)
-    const mail_info = await this.getSendMailOne(DBMySQL, group_seq, mail_seq)
+    const mail_info = await this.getSendMailOne(DBMySQL, mail_seq)
     const upload_path = `/email/${mail_info.content_id}/`
     const upload_directory = `${ServiceConfig.get('media_root')}/${upload_path}`
     logger.debug(this.log_prefix, '[uploadFile]', `{ mail_seq: ${mail_seq} }`, upload_directory)
