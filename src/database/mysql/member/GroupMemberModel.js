@@ -507,4 +507,23 @@ export default class GroupMemberModel extends MySQLModel {
     }
     return await this.update(filter, update_params)
   }
+
+  updatePauseList = async (group_seq, pause_list, status) => {
+    const filter = {
+      group_seq: group_seq
+    }
+    const update_params = {
+      status: status,
+      pause_reason: pause_list.pause_reason,
+      pause_sdate: pause_list.pause_sdate,
+      pause_member_seq: pause_list.ban_member,
+      pause_edate: pause_list.pause_edate ? pause_list.pause_edate : null,
+      pause_count: this.database.raw('pause_count + 1'),
+    }
+    for (let cnt = 0; cnt < pause_list.pause_list.length; cnt++) {
+      filter.seq = pause_list.pause_list[cnt];
+      await this.update(filter, update_params);
+    }
+    return true;
+  }
 }

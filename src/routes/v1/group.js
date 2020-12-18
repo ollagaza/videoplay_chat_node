@@ -373,4 +373,28 @@ routes.post('/updategradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   res.json(output)
 }))
 
+routes.post('/pausegroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const pause_list = req.body.pause_list;
+  const output = new StdObject()
+
+  const result = await GroupService.updatePauseList(DBMySQL, group_seq, pause_list)
+  output.add('result', result)
+
+  res.json(output)
+}))
+
+routes.post('/nonpausegroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const pause_list = req.body.pause_list;
+  const output = new StdObject()
+
+  const result = await GroupService.nonupdatePauseList(DBMySQL, group_seq, pause_list)
+  output.add('result', result)
+
+  res.json(output)
+}))
+
 export default routes

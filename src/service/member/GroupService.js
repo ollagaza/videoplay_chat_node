@@ -1201,6 +1201,16 @@ const GroupServiceClass = class {
       await grade_model.updateGroupGrade(filter, grade_list[cnt])
     }
   }
+
+  updatePauseList = async (database, group_seq, pause_list) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updatePauseList(group_seq, pause_list, 'P')
+  }
+
+  nonupdatePauseList = async (database, group_seq, pause_list) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updatePauseList(group_seq, pause_list, 'Y')
+  }
 }
 
 const group_service = new GroupServiceClass()
