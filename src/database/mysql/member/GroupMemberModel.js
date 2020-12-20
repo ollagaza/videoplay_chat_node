@@ -11,7 +11,7 @@ export default class GroupMemberModel extends MySQLModel {
     this.selectable_fields = ['*']
     this.log_prefix = '[GroupMemberModel]'
     this.group_member_select = [
-      'group_member.seq AS group_member_seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
+      'group_member.seq AS group_member_seq', 'group_member.member_seq AS member_seq', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.grade',
       'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq', 'group_member.ban_reason',
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
