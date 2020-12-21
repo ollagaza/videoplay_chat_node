@@ -526,4 +526,20 @@ export default class GroupMemberModel extends MySQLModel {
     }
     return true;
   }
+
+  groupJoinList = async (group_seq, join_list, status) => {
+    const filter = {
+      group_seq: group_seq
+    }
+    const update_params = {
+      status: status,
+      join_date: this.database.raw('NOW()'),
+      modify_date: this.database.raw('NOW()')
+    }
+    for (let cnt = 0; cnt < join_list.length; cnt++) {
+      filter.seq = join_list[cnt];
+      await this.update(filter, update_params);
+    }
+    return true;
+  }
 }

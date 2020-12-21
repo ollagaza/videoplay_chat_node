@@ -1211,6 +1211,12 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database);
     return await group_member_model.updatePauseList(group_seq, pause_list, 'Y')
   }
+
+  groupJoinList = async (database, group_seq, join_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    const status = join_info.join_type === 'join' ? 'Y' : 'N';
+    return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
+  }
 }
 
 const group_service = new GroupServiceClass()

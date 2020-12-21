@@ -397,4 +397,15 @@ routes.post('/nonpausegroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
   res.json(output)
 }))
 
+routes.post('/joingrouplist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const join_info = req.body.join_info;
+  const output = new StdObject()
+
+  const result = await GroupService.groupJoinList(DBMySQL, group_seq, join_info)
+  output.add('result', result)
+
+  res.json(output)
+}))
 export default routes
