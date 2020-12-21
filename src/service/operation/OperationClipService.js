@@ -128,7 +128,7 @@ const OperationClipServiceClass = class {
   copyClipByOperation = async (origin_operation_seq, operation_info) => {
     try {
       const operation_clip_list = await this.findByOperationSeq(origin_operation_seq)
-      if (!operation_clip_list || !operation_clip_list.length) return
+      if (!operation_clip_list || !operation_clip_list.length) return true
 
       const phase_map = {}
       const clip_list = []
