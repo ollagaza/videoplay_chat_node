@@ -90,7 +90,7 @@ const OperationFileServiceClass = class {
     return await refer_file_model.createReferFile(file_info)
   }
 
-  copyReferFileInfo = async (database, storage_seq, origin_content_id, content_id, refer_list) => {
+  copyReferFileInfo = async (database, storage_seq, refer_list, operation_info) => {
     const refer_file_model = this.getReferFileModel(database)
 
     for (let cnt = 0; cnt < refer_list.length; cnt++) {
@@ -101,7 +101,7 @@ const OperationFileServiceClass = class {
       refer_file.storage_seq = storage_seq
 
       if (refer_file.file_path) {
-        refer_file.file_path = refer_file.file_path.replace(origin_content_id, content_id)
+        refer_file.file_path = refer_file.file_path.replace(operation_info.origin_media_path, operation_info.media_path)
       }
       await refer_file_model.createReferData(refer_file)
     }

@@ -20,6 +20,14 @@ routes.get('/', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.get('/:group_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const group_seq = req.params.group_seq
+  const group_folder_info = await OperationFolderService.getGroupFolderInfo(DBMySQL, group_seq, req)
+  const output = new StdObject()
+  output.adds(group_folder_info)
+  res.json(output)
+}))
+
 routes.get('/last_update', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const last_update = await OperationFolderService.getGroupFolderLastUpdate(DBMySQL, group_seq)
@@ -63,7 +71,7 @@ routes.get('/relation(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output)
 }))
 
-routes.delete('/deletefolder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.delete('/folder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   try {
     const folder_info = req.body.folder_info
     log.debug('[Router Folder -> index]', '[/deletefolder]', folder_info)
@@ -83,7 +91,7 @@ routes.delete('/deletefolder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (r
   }
 }))
 
-routes.put('/moveoperation', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.put('/move', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   try {
     const request_data = req.body.request_data
 

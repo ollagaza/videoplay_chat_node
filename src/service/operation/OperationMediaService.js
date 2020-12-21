@@ -36,7 +36,7 @@ const OperationMediaServiceClass = class {
     return await operation_media_model.getOperationMediaInfoByOperationSeq(operation_seq)
   }
 
-  copyOperationMediaInfo = async (database, operation_info, origin_operation_seq, origin_content_id) => {
+  copyOperationMediaInfo = async (database, operation_info, origin_operation_seq) => {
     const target_media_info = await this.getOperationMediaInfoByOperationSeq(database, origin_operation_seq)
     if (target_media_info && !target_media_info.isEmpty()) {
       target_media_info.setKeys([
@@ -46,9 +46,8 @@ const OperationMediaServiceClass = class {
       target_media_info.setIgnoreEmpty(true)
       const media_info = target_media_info.toJSON()
 
-      const replace_regex = new RegExp(origin_content_id, 'gi')
       if (media_info.thumbnail) {
-        media_info.thumbnail = media_info.thumbnail.replace(replace_regex, operation_info.content_id)
+        media_info.thumbnail = media_info.thumbnail.replace(operation_info.origin_media_path, operation_info.media_path)
       }
       delete media_info.seq
       media_info.operation_seq = operation_info.seq
