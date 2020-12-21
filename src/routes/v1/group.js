@@ -433,4 +433,15 @@ routes.post('/nonbangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   res.json(output)
 }))
 
+routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_info', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req, false)
+  const group_member_seq = getGroupMemberSeq(req)
+  const result = await GroupService.getGroupMemberDetail(DBMySQL, group_seq, group_member_seq);
+
+  const output = new StdObject()
+  output.add('result', result);
+  res.json(output)
+}))
+
 export default routes

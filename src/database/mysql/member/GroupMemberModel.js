@@ -561,4 +561,12 @@ export default class GroupMemberModel extends MySQLModel {
     }
     return true;
   }
+
+  getGRoupMemberDetail = async (group_seq, group_member_seq) => {
+    const query = this.getGroupMemberQuery(null, group_seq, group_member_seq, null);
+    query.first()
+    const query_result = await query
+    // return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields);
+    return query_result;
+  }
 }
