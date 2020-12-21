@@ -17,14 +17,14 @@ export default class MessageModel extends MySQLModel {
   getReceiveList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
-      'group_info.group_name',
+      this.database.raw('case when message.group_seq is null then member.user_name else group_info.group_name end group_name'),
       'member.user_id',
       'member.hospname',
     ]
     const oKnex = this.database.select(select_fields)
     oKnex.from(this.table_name)
-    oKnex.innerJoin('group_info', `${this.table_name}.send_seq`, 'group_info.seq')
-    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq')
+    oKnex.leftOuterJoin('group_info', `${this.table_name}.send_seq`, 'group_info.seq')
+    oKnex.leftOuterJoin('member', `${this.table_name}.send_seq`, 'member.seq')
     if (filters.query !== undefined) {
       await this.queryWhere(oKnex, filters.query)
     }
@@ -42,17 +42,17 @@ export default class MessageModel extends MySQLModel {
   getSendList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
-      'group_info.group_name',
+      'member.user_name',
       'member.user_id',
       'member.hospname',
     ]
     const oKnex = this.database.select(select_fields)
     oKnex.from(this.table_name)
-    oKnex.innerJoin('group_info', `${this.table_name}.receive_seq`, 'group_info.seq')
-    oKnex.innerJoin('member', 'group_info.member_seq', 'member.seq')
+    oKnex.innerJoin('member', `${this.table_name}.receive_seq`, 'member.seq')
     if (filters.query !== undefined) {
       await this.queryWhere(oKnex, filters.query)
     }
+    oKnex.whereNull('group_seq')
     if (filters.order !== undefined) {
       oKnex.orderBy(`${this.table_name}.${filters.order.name}`, filters.order.direction)
     } else {

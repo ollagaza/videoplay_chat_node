@@ -12,14 +12,13 @@ const routes = Router()
 routes.post('/getreceivelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
-    const token_info = req.token_info
-    const group_seq = token_info.getGroupSeq()
+    const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const searchParam = req.body.searchObj
     const searchOrder = req.body.searchOrder
     const page_navigation = req.body.page_navigation
 
-    const output = await MessageService.getReceiveLists(DBMySQL, group_seq, searchParam, page_navigation)
-    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, group_seq))
+    const output = await MessageService.getReceiveLists(DBMySQL, member_seq, searchParam, page_navigation)
+    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, member_seq))
     output.add('searchObj', searchParam)
 
     res.json(output)
@@ -31,14 +30,13 @@ routes.post('/getreceivelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
 routes.post('/getsendlist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
-    const token_info = req.token_info
-    const group_seq = token_info.getGroupSeq()
+    const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const searchParam = req.body.searchObj
     const searchOrder = req.body.searchOrder
     const page_navigation = req.body.page_navigation
 
-    const output = await MessageService.getSendLists(DBMySQL, group_seq, searchParam, page_navigation)
-    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, group_seq))
+    const output = await MessageService.getSendLists(DBMySQL, member_seq, searchParam, page_navigation)
+    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, member_seq))
     output.add('searchObj', searchParam)
 
     res.json(output)

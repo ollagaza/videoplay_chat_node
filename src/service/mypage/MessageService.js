@@ -28,16 +28,16 @@ const MessageServiceClass = class {
     }
   }
 
-  getReceiveCount = async (database, group_seq) => {
+  getReceiveCount = async (database, member_seq) => {
     try {
       const msgModel = this.getMessageModel(database)
-      return await msgModel.getReceiveCount(group_seq)
+      return await msgModel.getReceiveCount(member_seq)
     } catch (e) {
       throw e
     }
   }
 
-  getReceiveLists = async (database, group_seq, params, page_navigation) => {
+  getReceiveLists = async (database, member_seq, params, page_navigation) => {
     try {
       const output = new StdObject()
       const msgModel = this.getMessageModel(database)
@@ -46,7 +46,7 @@ const MessageServiceClass = class {
         query: {
           is_new: true,
           query: [
-            { receive_seq: group_seq },
+            { receive_seq: member_seq },
             { is_receive_del: 0 },
           ],
         },
@@ -75,7 +75,7 @@ const MessageServiceClass = class {
     }
   }
 
-  getSendLists = async (database, group_seq, params, page_navigation) => {
+  getSendLists = async (database, member_seq, params, page_navigation) => {
     try {
       const output = new StdObject()
       const msgModel = this.getMessageModel(database)
@@ -84,7 +84,7 @@ const MessageServiceClass = class {
         query: {
           is_new: true,
           query: [
-            { send_seq: group_seq },
+            { send_seq: member_seq },
             { is_send_del: 0 },
           ],
         },
@@ -207,7 +207,7 @@ const MessageServiceClass = class {
           desc: message_info.desc,
           group_message_seq: group_message_seq,
         }
-        await MessageService.sendMessage(database, param)
+        await MessageService.sendMessage(database, message_info.send_seq, param)
       }
 
       return group_message_seq
