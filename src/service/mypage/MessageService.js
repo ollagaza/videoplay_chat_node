@@ -182,9 +182,7 @@ const MessageServiceClass = class {
     paging.no_paging = 'N'
 
     const groupmsgModel = this.getGroupMessageModel(database)
-    const result = await groupmsgModel.getGroupMessageList(group_seq, paging, request_order)
-
-    return result
+    return await groupmsgModel.getGroupMessageList(group_seq, paging, request_order)
   }
 
   sendGroupMessage = async (database, message_info) => {
@@ -192,7 +190,9 @@ const MessageServiceClass = class {
       const groupmsgModel = this.getGroupMessageModel(database)
       const params = {
         send_seq: message_info.send_seq,
+        send_name: message_info.send_name,
         receive_seq: JSON.stringify(message_info.receive_seq),
+        receive_names: JSON.stringify(message_info.receive_names),
         desc: message_info.desc,
         total_cnt: message_info.receive_seq.length,
         reservation_datetime: message_info.reservation_datetime

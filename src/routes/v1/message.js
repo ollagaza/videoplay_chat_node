@@ -104,7 +104,7 @@ routes.get('/getgroupmessagelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(a
     const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const output = new StdObject()
 
-    output.add('result', await MessageService.getGroupMessageList(DBMySQL, group_seq, req))
+    output.adds(await MessageService.getGroupMessageList(DBMySQL, group_seq, req))
 
     res.json(output)
   } catch (e) {
@@ -144,16 +144,16 @@ routes.post('/sendgroupmsg', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   }
 }))
 
-routes.delete('/delgroupmessage/:message_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/delgroupmessage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
+    const message_seq = req.body
     const output = new StdObject()
-    const seq = req.params.message_seq
 
-    await DBMySQL.transaction(async (transaction) => {
-      const result = await MessageService.deleteGroupMessage(transaction, seq)
+    for (let cnt = 0; cnt < Object.keys(message_seq).length; cnt++) {
+      const result = await MessageService.deleteGroupMessage(DBMySQL, message_seq[cnt])
       output.add('result', result)
-    })
+    }
 
     res.json(output)
   } catch (e) {

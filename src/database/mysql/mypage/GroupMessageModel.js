@@ -10,12 +10,12 @@ export default class GroupMessageModel extends MySQLModel {
     this.log_prefix = '[GroupMessageModel]'
   }
 
-  getGroupMessageOne = async (group_seq, message_seq) => {
-    return await this.findOne({ message_seq, group_seq })
+  getGroupMessageOne = async (send_seq, seq) => {
+    return await this.findOne({ send_seq, seq })
   }
 
-  getGroupMessageList = async (group_seq, paging = {}, order = null) => {
-    return await this.findPaginated({ group_seq }, null, order, null, paging)
+  getGroupMessageList = async (send_seq, paging = {}, order = null) => {
+    return await this.findPaginated({ send_seq, is_del: 0 }, null, order, null, paging)
   }
 
   sendMessage = async (message_info) => {

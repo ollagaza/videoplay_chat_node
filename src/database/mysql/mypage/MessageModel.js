@@ -42,7 +42,7 @@ export default class MessageModel extends MySQLModel {
   getSendList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
-      'member.user_name',
+      'member.user_name as group_name',
       'member.user_id',
       'member.hospname',
     ]

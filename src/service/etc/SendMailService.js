@@ -93,13 +93,18 @@ const SendMailServiceClass = class {
   }
 
   sendMail = async (database, mail_seq) => {
-    const mail_info = await this.getSendMailOne(database, mail_seq)
-    const result = await new SendMail().sendMailInfo(mail_info);
-    if (!result.error) {
-      const sendmail_model = this.getSendMailModel(database)
-      await sendmail_model.updateSendFlag(mail_seq)
+    try {
+      const mail_info = await this.getSendMailOne(database, mail_seq)
+      const result = await new SendMail().sendMailInfo(mail_info);
+      if (!result.error) {
+        const sendmail_model = this.getSendMailModel(database)
+        await sendmail_model.updateSendFlag(mail_seq)
+      }
+      return result
+    } catch (e) {
+      await this.SendMailError(database, mail_seq, JSON.parse(e.message))
+      throw e
     }
-    return result
   }
 
   sendReservationEmail = async (database) => {
@@ -155,6 +160,11 @@ const SendMailServiceClass = class {
     const result = await this.fileUpdateSendMail(DBMySQL, mail_seq, param)
 
     return email_file_list
+  }
+
+  SendMailError = async (database, seq, e) => {
+    const sendmail_model = this.getSendMailModel(database)
+    await sendmail_model.updateError(seq, JSON.stringify(e.error))
   }
 }
 

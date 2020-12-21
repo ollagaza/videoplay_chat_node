@@ -17,6 +17,10 @@ export default class SendMailModel extends MySQLModel {
     return await this.update({ seq }, { send_flag: 'Y' })
   }
 
+  updateError = async (seq, error) => {
+    return await this.update({ seq }, { send_error: error })
+  }
+
   deleteMail = async (seq) => {
     return await this.delete({ seq })
   }
