@@ -408,4 +408,29 @@ routes.post('/joingrouplist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async 
 
   res.json(output)
 }))
+
+routes.post('/bangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const ban_info = req.body.ban_info;
+  const output = new StdObject()
+
+  const result = await GroupService.updateBanList(DBMySQL, group_seq, ban_info)
+  output.add('result', result)
+
+  res.json(output)
+}))
+
+routes.post('/nonbangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const ban_info = req.body.ban_info;
+  const output = new StdObject()
+
+  const result = await GroupService.nonupdateBanList(DBMySQL, group_seq, ban_info)
+  output.add('result', result)
+
+  res.json(output)
+}))
+
 export default routes

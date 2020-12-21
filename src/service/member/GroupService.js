@@ -1217,6 +1217,16 @@ const GroupServiceClass = class {
     const status = join_info.join_type === 'join' ? 'Y' : 'N';
     return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
   }
+
+  updateBanList = async (database, group_seq, ban_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updateBanList(group_seq, ban_info, 'D')
+  }
+
+  nonupdateBanList = async (database, group_seq, ban_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updateBanList(group_seq, ban_info, 'Y')
+  }
 }
 
 const group_service = new GroupServiceClass()
