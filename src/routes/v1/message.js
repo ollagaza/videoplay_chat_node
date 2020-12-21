@@ -5,20 +5,20 @@ import DBMySQL from '../../database/knex-mysql'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import MessageService from '../../service/mypage/MessageService'
+import GroupService from "../../service/member/GroupService";
 
 const routes = Router()
 
 routes.post('/getreceivelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
-    const token_info = req.token_info
-    const group_seq = token_info.getGroupSeq()
+    const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const searchParam = req.body.searchObj
     const searchOrder = req.body.searchOrder
     const page_navigation = req.body.page_navigation
 
-    const output = await MessageService.getReceiveLists(DBMySQL, group_seq, searchParam, page_navigation)
-    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, group_seq))
+    const output = await MessageService.getReceiveLists(DBMySQL, member_seq, searchParam, page_navigation)
+    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, member_seq))
     output.add('searchObj', searchParam)
 
     res.json(output)
@@ -30,14 +30,13 @@ routes.post('/getreceivelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
 routes.post('/getsendlist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
-    const token_info = req.token_info
-    const group_seq = token_info.getGroupSeq()
+    const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const searchParam = req.body.searchObj
     const searchOrder = req.body.searchOrder
     const page_navigation = req.body.page_navigation
 
-    const output = await MessageService.getSendLists(DBMySQL, group_seq, searchParam, page_navigation)
-    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, group_seq))
+    const output = await MessageService.getSendLists(DBMySQL, member_seq, searchParam, page_navigation)
+    output.add('receiveCount', await MessageService.getReceiveCount(DBMySQL, member_seq))
     output.add('searchObj', searchParam)
 
     res.json(output)
@@ -66,11 +65,12 @@ routes.post('/setview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, 
 routes.post('/sendMessage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const output = new StdObject()
     const message_info = req.body.message_info
 
     await DBMySQL.transaction(async (transaction) => {
-      const result = await MessageService.sendMessage(transaction, message_info)
+      const result = await MessageService.sendMessage(transaction, group_seq, message_info)
       output.add('result', result)
     })
 

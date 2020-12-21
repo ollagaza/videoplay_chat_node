@@ -4,6 +4,7 @@ import MessageModel from '../../database/mysql/mypage/MessageModel'
 import socketManager from '../socket-manager'
 import MemberLogService from '../member/MemberLogService'
 import NotifyService from '../etc/NotifyService'
+import data from "../../routes/v1/data";
 
 const MessageServiceClass = class {
   constructor () {
@@ -18,16 +19,16 @@ const MessageServiceClass = class {
     }
   }
 
-  getReceiveCount = async (database, group_seq) => {
+  getReceiveCount = async (database, member_seq) => {
     try {
       const msgModel = this.getMessageModel(database)
-      return await msgModel.getReceiveCount(group_seq)
+      return await msgModel.getReceiveCount(member_seq)
     } catch (e) {
       throw e
     }
   }
 
-  getReceiveLists = async (database, group_seq, params, page_navigation) => {
+  getReceiveLists = async (database, member_seq, params, page_navigation) => {
     try {
       const output = new StdObject()
       const msgModel = this.getMessageModel(database)
@@ -36,7 +37,7 @@ const MessageServiceClass = class {
         query: {
           is_new: true,
           query: [
-            { receive_seq: group_seq },
+            { receive_seq: member_seq },
             { is_receive_del: 0 },
           ],
         },
@@ -65,7 +66,7 @@ const MessageServiceClass = class {
     }
   }
 
-  getSendLists = async (database, group_seq, params, page_navigation) => {
+  getSendLists = async (database, member_seq, params, page_navigation) => {
     try {
       const output = new StdObject()
       const msgModel = this.getMessageModel(database)
@@ -74,7 +75,7 @@ const MessageServiceClass = class {
         query: {
           is_new: true,
           query: [
-            { send_seq: group_seq },
+            { send_seq: member_seq },
             { is_send_del: 0 },
           ],
         },
@@ -114,7 +115,7 @@ const MessageServiceClass = class {
     }
   }
 
-  sendMessage = async (database, message_info) => {
+  sendMessage = async (database, group_seq, message_info) => {
     try {
       const msgModel = this.getMessageModel(database)
       const result = await msgModel.sendMessage(message_info)
@@ -135,7 +136,7 @@ const MessageServiceClass = class {
       await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info)
       send_socket_message_info.message_info.title = '쪽지가 발송 되었습니다.'
       await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info)
-      await MemberLogService.createMemberLog(DBMySQL, message_info.send_seq, null, null, null, '1003', '', 0, 0, 1)
+      await MemberLogService.createMemberLog(DBMySQL, group_seq, null, null, null, '1003', '', 0, 0, 1)
 
       return result
     } catch (e) {
