@@ -55,7 +55,7 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
     }
   }
 
-  const member_info = await MemberService.getMemberInfo(member_seq)
+  const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
   const output = new StdObject()
   output.add('member_info', member_info)
   res.json(output)

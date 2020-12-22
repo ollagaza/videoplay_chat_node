@@ -155,6 +155,9 @@ export default class GroupMemberModel extends MySQLModel {
     const isSelect = this.group_member_select;
     if(videos_count) {
       isSelect.push('vcnt');
+      isSelect.push('group_member.vid_cnt');
+      isSelect.push('group_member.anno_cnt');
+      isSelect.push('group_member.comment_cnt');
     }
     if (get_pause_name) {
       isSelect.push('submit_member_name');
@@ -560,13 +563,5 @@ export default class GroupMemberModel extends MySQLModel {
       await this.update(filter, update_params);
     }
     return true;
-  }
-
-  getGRoupMemberDetail = async (group_seq, group_member_seq) => {
-    const query = this.getGroupMemberQuery(null, group_seq, group_member_seq, null);
-    query.first()
-    const query_result = await query
-    // return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields);
-    return query_result;
   }
 }

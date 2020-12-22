@@ -1227,11 +1227,6 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database);
     return await group_member_model.updateBanList(group_seq, ban_info, 'Y')
   }
-
-  getGroupMemberDetail = async (database, group_seq, group_member_seq) => {
-    const group_member_model = this.getGroupMemberModel(database);
-    return await group_member_model.getGRoupMemberDetail(group_seq, group_member_seq);
-  }
 }
 
 const group_service = new GroupServiceClass()
