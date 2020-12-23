@@ -556,10 +556,26 @@ export default class GroupMemberModel extends MySQLModel {
     const update_params = {
       status: status,
       join_date: this.database.raw('NOW()'),
-      modify_date: this.database.raw('NOW()')
+      modify_date: this.database.raw('NOW()'),
+      grade: '1',
     }
     for (let cnt = 0; cnt < join_list.length; cnt++) {
       filter.seq = join_list[cnt];
+      await this.update(filter, update_params);
+    }
+    return true;
+  }
+
+  updateGradeList = async (group_seq, change_member_info) => {
+    const filter = {
+      group_seq: group_seq
+    }
+    const update_params = {
+      grade: change_member_info.grade,
+      modify_date: this.database.raw('NOW()'),
+    }
+    for (let cnt = 0; cnt < change_member_info.change_list.length; cnt++) {
+      filter.seq = change_member_info.change_list[cnt];
       await this.update(filter, update_params);
     }
     return true;

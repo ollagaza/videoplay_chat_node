@@ -229,6 +229,7 @@ routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_
     expire_date: (Util.getDateYearAdd(Util.getToDate(), 1)).concat(' 23:59:59'),
     group_name: params.group_name,
     group_open: params.group_open,
+    is_channel: params.group_open,
     group_join_way: params.group_join_way,
     member_open: params.member_open,
     member_name_used: params.member_name_used,
@@ -432,5 +433,18 @@ routes.post('/nonbangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
 
   res.json(output)
 }))
+
+routes.post('/chagegrademember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const change_member_info = req.body.change_member_info;
+  const output = new StdObject()
+
+  const result = await GroupService.changeGradeMemberList(DBMySQL, group_seq, change_member_info)
+  output.add('result', result)
+
+  res.json(output)
+}))
+
 
 export default routes
