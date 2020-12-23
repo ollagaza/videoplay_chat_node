@@ -878,7 +878,7 @@ const OperationServiceClass = class {
       }
 
       if (options.writer_info) {
-        const writer_info = await GroupService.getGroupInfoToGroupCounts(DBMySQL, operation_info.group_seq)
+        const writer_info = await GroupService.getGroupInfoWithGroupCounts(DBMySQL, operation_info.group_seq)
         output.add('writer_info', writer_info)
       }
 
