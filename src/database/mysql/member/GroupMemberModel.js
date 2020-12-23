@@ -134,7 +134,7 @@ export default class GroupMemberModel extends MySQLModel {
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
-  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null) => {
+  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null, detail_search = null) => {
     const filter = {
       group_seq
     }
@@ -186,6 +186,55 @@ export default class GroupMemberModel extends MySQLModel {
           .orWhere('member.email_address', 'like', `%${search_text}%`)
           .orWhere('member.treatcode', 'like', `%${search_text}%`)
       })
+    }
+    if (detail_search) {
+      // detail_search
+      if (detail_search.mem_name) {
+        query.andWhere('member.user_name', 'like', `%${detail_search.mem_name}%`);
+      }
+      if (detail_search.mem_id) {
+        query.andWhere('member.user_id', 'like', `%${detail_search.mem_id}%`);
+      }
+      if (detail_search.mem_nickname) {
+        query.andWhere('member.user_nickname', 'like', `%${detail_search.mem_nickname}%`);
+      }
+      if (detail_search.mem_upload_scount) {
+        query.andWhere('group_member.vid_cnt', '>=', `${detail_search.mem_upload_scount}`);
+      }
+      if (detail_search.mem_upload_ecount) {
+        query.andWhere('group_member.vid_cnt', '<=', `${detail_search.mem_upload_ecount}`);
+      }
+      if (detail_search.reg_sdate) {
+        query.andWhere('group_member.join_date', '>=', `${detail_search.reg_sdate}`);
+      }
+      if (detail_search.reg_edate) {
+        query.andWhere('group_member.join_date', '<=', `${detail_search.reg_edate}`);
+      }
+      if (detail_search.mem_grade_select) {
+        query.andWhere('group_member.grade', '=', `${detail_search.mem_grade_select}`);
+      }
+      if (detail_search.mem_used_sdrive) {
+        let storeage_size_s = 0;
+        if (detail_search.mem_upload_drive_select === 'MB') {
+          storeage_size_s = 1024 * 1024 * Number(detail_search.mem_used_sdrive);
+        } else if (detail_search.mem_upload_drive_select === 'GB') {
+          storeage_size_s = 1024 * 1024 * 1024 * Number(detail_search.mem_used_sdrive);
+        } else if (detail_search.mem_upload_drive_select === 'TB') {
+          storeage_size_s = 1024 * 1024 * 1024 * 1024 * Number(detail_search.mem_used_sdrive);
+        }
+        query.andWhere('group_member.grade', '>=', storeage_size_s);
+      }
+      if (detail_search.mem_used_edrive) {
+        let storeage_size_e = 0;
+        if (detail_search.mem_upload_drive_select === 'MB') {
+          storeage_size_e = 1024 * 1024 * Number(detail_search.mem_used_edrive);
+        } else if (detail_search.mem_upload_drive_select === 'GB') {
+          storeage_size_e = 1024 * 1024 * 1024 * Number(detail_search.mem_used_edrive);
+        } else if (detail_search.mem_upload_drive_select === 'TB') {
+          storeage_size_e = 1024 * 1024 * 1024 * 1024 * Number(detail_search.mem_used_edrive);
+        }
+        query.andWhere('group_member.grade', '<=', storeage_size_e);
+      }
     }
     if (order) {
       query.orderBy(order)

@@ -271,6 +271,7 @@ const GroupServiceClass = class {
     const videos_count = request_body.video_count ? true : false
     const pause_member = request_body.get_pause_name ? true : false
     const delete_member = request_body.get_delete_name ? true : false
+    const detail_search = request_body.search_detail ? request_body.search_detail : null
 
     const paging = {}
     paging.list_count = request_paging.list_count ? request_paging.list_count : 20
@@ -281,7 +282,7 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[getGroupMemberList]', request_body, member_type, search_text, paging)
 
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member)
+    return await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member, detail_search)
   }
 
   getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
