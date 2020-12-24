@@ -446,5 +446,16 @@ routes.post('/chagegrademember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   res.json(output)
 }))
 
+routes.post('/setdelgroupmemcontents', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const target_info = req.body.target_info;
+  const output = new StdObject()
+
+  const result = await GroupService.deleteGroupMemberContents(DBMySQL, group_seq, target_info)
+  output.add('result', result)
+
+  res.json(output)
+}))
 
 export default routes

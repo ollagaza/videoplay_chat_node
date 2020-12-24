@@ -645,4 +645,21 @@ export default class GroupMemberModel extends MySQLModel {
     }
     return true;
   }
+
+  updateMemberContentsInfo = async (group_seq, target_info) => {
+    const filter = {
+      group_seq: group_seq
+    }
+    const update_params = {
+      vid_cnt: 0,
+      anno_cnt: 0,
+      comment_cnt: 0,
+      modify_date: this.database.raw('NOW()'),
+    }
+    for (let cnt = 0; cnt < target_info.target_list.length; cnt++) {
+      filter.seq = target_info.target_list[cnt];
+      await this.update(filter, update_params);
+    }
+    return true;
+  }
 }
