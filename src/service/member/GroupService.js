@@ -849,7 +849,7 @@ const GroupServiceClass = class {
   getAllPersonalGroupUserListForBox = async (database) => {
     const result_list = []
     const group_info_model = this.getGroupModel(database)
-    const user_list = await group_info_model.getAllPersonalGroupUserList()
+    const user_list = await group_info_model.getAllPersonalGroupUserList(true)
     for (let i = 0; i < user_list.length; i++) {
       const user_info = user_list[i]
       const member_info = {
