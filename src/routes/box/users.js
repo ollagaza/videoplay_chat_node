@@ -20,6 +20,7 @@ routes.get('/', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   if (token_info.getGroupSeq() === 0) {
     user_list = await GroupService.getAllPersonalGroupUserListForBox(DBMySQL)
   }
+  log.d(req, '[BOX 01] 의사목록 조회', req.headers)
   const output = new StdObject()
   output.add('user_list', user_list)
   return res.json(output)
