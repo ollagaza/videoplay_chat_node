@@ -300,6 +300,11 @@ const OperationFolderServiceClass = class {
 
     return { allChildFolderList, operation_data }
   }
+
+  getGroupFolderByDepthZero = async (database, group_seq) => {
+    const model = this.getOperationFolderModel(database)
+    return await model.getGroupFolderByDepthZero(group_seq)
+  }
 }
 
 const operation_folder_service = new OperationFolderServiceClass()

@@ -205,4 +205,7 @@ export default class OperationFolderModel extends MySQLModel {
       'modify_date': this.database.raw('NOW()')
     }, filters)
   }
+  getGroupFolderByDepthZero = async (group_seq) => {
+    return await this.find({ group_seq, depth: 0 }, this.selectable_fields, { name: 'sort', direction: 'asc' })
+  }
 }
