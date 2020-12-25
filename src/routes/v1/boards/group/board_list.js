@@ -38,7 +38,7 @@ routes.delete('delmenulist/:group_seq(\\d+)/:menu_seq(\\d+)', Auth.isAuthenticat
         await GroupBoardListService.delGroupBoardList(transaction, group_seq, menu_seq)
         res.json(new StdObject(0, '게시판 삭제가 완료 되었습니다.', '200'))
       } else {
-        res.json(new StdObject(1, '해당 게시판에 게시글이 존재 합니다.<br/>게시글 삭제 또는 이동 후 다시 시도 하여 주세요', '200'))
+        res.json(new StdObject(1, '이 게시판의 게시글을 모두 삭제한 후에<br/>게시판을 삭제하실 수 있습니다.', '200'))
       }
     })
   } catch (e) {
