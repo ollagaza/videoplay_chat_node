@@ -9,6 +9,8 @@ import DBMySQL from '../../database/knex-mysql'
 import GroupService from '../../service/member/GroupService'
 import _ from "lodash";
 import baseutil from "../../utils/baseutil";
+import OperationFolderService from "../../service/operation/OperationFolderService";
+import GroupBoardListService from "../../service/board/GroupBoardListService";
 
 const routes = Router()
 
@@ -450,12 +452,56 @@ routes.post('/chagegrademember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
 routes.post('/setdelgroupmemcontents', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const target_info = req.body.target_info;
+  const target_info = req.body.target_info
   const output = new StdObject()
 
   const result = await GroupService.deleteGroupMemberContents(DBMySQL, group_seq, target_info)
   output.add('result', result)
 
+  res.json(output)
+}))
+
+routes.post('/savefolderandboard/:group_seq(\\d+)/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const group_seq = req.params.group_seq
+  const member_seq = req.params.member_seq
+  const folder_list = req.body.folder_list
+  const board_list = req.body.board_list
+
+  if (folder_list.length > 0) {
+    await DBMySQL.transaction(async (transaction) => {
+      for (let cnt = 0; cnt < folder_list.length; cnt++) {
+        if (folder_list[cnt].change_bool) {
+          if (folder_list[cnt].seq) {
+            const folder_info = {
+              folder_info: folder_list[cnt],
+            }
+            await OperationFolderService.updateOperationFolder(transaction, folder_list[cnt].seq, folder_info)
+          } else {
+            const folder_info = {
+              folder_info: folder_list[cnt],
+            }
+            await OperationFolderService.createOperationFolder(transaction, folder_info, group_seq, member_seq)
+          }
+        }
+      }
+    })
+  }
+
+  if (board_list.length > 0) {
+    await DBMySQL.transaction(async (transaction) => {
+      for (let cnt = 0; cnt < board_list.length; cnt++) {
+        if (board_list[cnt].change_bool) {
+          if (board_list[cnt].seq) {
+            await GroupBoardListService.updateGroupBoard(transaction, board_list[cnt])
+          } else {
+            await GroupBoardListService.createGroupBoard(transaction, board_list[cnt])
+          }
+        }
+      }
+    })
+  }
   res.json(output)
 }))
 

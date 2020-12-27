@@ -15,6 +15,14 @@ export default class GroupBoardListModel extends MySQLModel {
     return this.find({ group_seq }, this.selectable_fields, { name: 'sort', direction: 'asc' })
   }
 
+  createGroupBoard = async (board_info) => {
+    return this.create(board_info)
+  }
+
+  updateGroupBoard = async (board_seq, board_info) => {
+    return this.update({ seq: board_seq }, board_info)
+  }
+
   delGroupBoardList = async (group_seq, menu_seq) => {
     return this.delete( { seq: menu_seq, group_seq })
   }

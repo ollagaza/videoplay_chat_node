@@ -112,6 +112,9 @@ export default class OperationFolderModel extends MySQLModel {
     folder_info.addPrivateKey('seq')
     const update_params = folder_info.toJSON()
     update_params.modify_date = this.database.raw('NOW()')
+    if (update_params.parent_folder_list && typeof update_params.parent_folder_list === 'object') {
+      update_params.parent_folder_list = JSON.stringify(update_params.parent_folder_list)
+    }
     if (update_params.access_users && typeof update_params.access_users === 'object') {
       update_params.access_users = JSON.stringify(update_params.access_users)
     }
