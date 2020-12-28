@@ -277,7 +277,7 @@ const GroupServiceClass = class {
     paging.list_count = request_paging.list_count ? request_paging.list_count : 20
     paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
     paging.page_count = request_paging.page_count ? request_paging.page_count : 10
-    paging.no_paging = request_paging.no_paging ? request_paging.no_paging : 'Y'
+    paging.no_paging = request_paging.no_paging ? request_paging.no_paging : 'y'
 
     log.debug(this.log_prefix, '[getGroupMemberList]', request_body, member_type, search_text, paging)
 
