@@ -1235,8 +1235,15 @@ const GroupServiceClass = class {
     return await group_member_model.updateGradeList(group_seq, change_member_info)
   }
 
-  deleteGroupMemberContents = async (database, group_seq, target_info) => {
+  deleteGroupMemberContents = async (database, group_seq, target_info, token_info) => {
     const group_member_model = this.getGroupMemberModel(database);
+    for (let i = 0; i < target_info.target_list.length; i ++) {
+      const member_seq = await group_member_model.getGroupMemberSeq(target_info.target_list[i]);
+      const operation_list = await OperationService.getAllOperationGroupMemberList(database, group_seq, member_seq);
+      for (let j = 0; j < operation_list.length; j++) {
+        await OperationService.deleteOperation(database, token_info, operation_list[j].seq);
+      }
+    }
     return await group_member_model.updateMemberContentsInfo(group_seq, target_info)
   }
 }

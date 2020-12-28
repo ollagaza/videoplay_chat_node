@@ -968,6 +968,11 @@ const OperationServiceClass = class {
 
     return operation_infos
   }
+
+  getAllOperationGroupMemberList = async (database, group_seq, member_seq) => {
+    const model = this.getOperationModel(database)
+    return await model.getGroupMemberOperationList(group_seq, member_seq);
+  }
 }
 
 const operation_service = new OperationServiceClass()

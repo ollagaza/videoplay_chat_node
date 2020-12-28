@@ -451,11 +451,11 @@ routes.post('/chagegrademember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
 
 routes.post('/setdelgroupmemcontents', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { token_info, group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const target_info = req.body.target_info
   const output = new StdObject()
 
-  const result = await GroupService.deleteGroupMemberContents(DBMySQL, group_seq, target_info)
+  const result = await GroupService.deleteGroupMemberContents(DBMySQL, group_seq, target_info, token_info)
   output.add('result', result)
 
   res.json(output)

@@ -169,7 +169,7 @@ export default class GroupMemberModel extends MySQLModel {
     query.from('group_member')
     query.leftOuterJoin('member', { 'member.seq': 'group_member.member_seq' })
     if (videos_count) {
-      query.joinRaw('LEFT JOIN (SELECT member_seq, group_seq AS gseq, COUNT(*) AS vcnt FROM operation GROUP BY member_seq, group_seq) AS vinfo ON (`group_member`.`group_seq` = `vinfo`.`gseq` AND `group_member`.`member_seq` = `vinfo`.`member_seq`)');
+      query.joinRaw('LEFT JOIN (SELECT member_seq, group_seq AS gseq, COUNT(*) AS vcnt FROM operation  WHERE status!="D" GROUP BY member_seq, group_seq) AS vinfo ON (`group_member`.`group_seq` = `vinfo`.`gseq` AND `group_member`.`member_seq` = `vinfo`.`member_seq`)');
     }
     if (get_pause_name) {
       query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`pause_member_seq` = `submit_member`.`submit_member_seq`)')
