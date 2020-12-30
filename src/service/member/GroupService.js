@@ -220,6 +220,7 @@ const GroupServiceClass = class {
         const group_model = this.getGroupModel(database)
         await group_model.updateGroup(modify_group_info, seq)
         resObj.group_info = await group_model.getGroupInfo(seq, null);
+        resObj.group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
         resObj.group_info.profile_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
       })
       return resObj;
@@ -249,6 +250,10 @@ const GroupServiceClass = class {
       if (group_member_info.profile_image_path) {
         group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
       }
+      if (JSON.parse(group_member_info.profile).image) {
+        group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
+        group_member_list[i].json_keys.push('group_image_url')
+      }
     }
     if (ServiceConfig.isVacs()) {
       const vacs_storage_info = await VacsService.getCurrentStorageStatus()
@@ -259,6 +264,7 @@ const GroupServiceClass = class {
         group_member_info.group_max_storage_size = vacs_storage_info.total_size
       }
     }
+
     return group_member_list
   }
 
@@ -297,6 +303,10 @@ const GroupServiceClass = class {
     if (group_member_info.profile_image_path) {
       if (group_member_info.profile_image_url !== null) {
         group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
+      if (JSON.parse(group_member_info.profile).image) {
+        group_member_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
+        group_member_info.json_keys.push('group_image_url')
       }
     }
     if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
@@ -338,6 +348,9 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.getGroupInfo(group_seq, private_keys)
     group_info.json_keys.push('profile_image_url')
+    if (JSON.parse(group_info.profile).image) {
+      group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image)
+    }
     group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
     return group_info
   }

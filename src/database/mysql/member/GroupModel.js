@@ -75,6 +75,7 @@ export default class GroupModel extends MySQLModel {
     const query_result = await this.findOne(filter)
     const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
     rs_data.json_keys.push('profile_image_url')
+    rs_data.json_keys.push('group_image_url')
     return rs_data;
   }
 

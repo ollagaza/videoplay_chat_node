@@ -505,4 +505,25 @@ routes.post('/savefolderandboard/:group_seq(\\d+)/:member_seq(\\d+)', Auth.isAut
   res.json(output)
 }))
 
+routes.put('/updateprofile', Auth.isAuthenticated(Role.LOGIN_USER), Util.common_path_upload.fields([{ name: 'image' }]), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const params = req.body;
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  _.forEach(req.files, (value) => {
+    if (value[0].fieldname === 'image') {
+      params.image = value[0].filename ? '/common/' + value[0].filename : "";
+    }
+  });
+  if (params.image === "null") {
+    params.image = "";
+  }
+  params.title = "";
+  const options = {
+    profile: JSON.stringify(params)
+  };
+  const output = new StdObject()
+  const rs_gorup_info = await GroupService.updateGroupInfo(DBMySQL, options, group_seq);
+  output.add('result', rs_gorup_info);
+  res.json(output)
+}))
 export default routes
