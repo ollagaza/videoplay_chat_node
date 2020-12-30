@@ -26,6 +26,17 @@ routes.get('/groupmenulist/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_US
   res.json(output)
 }))
 
+routes.get('/getgroupboards/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const group_seq = req.params.group_seq
+  const output = new StdObject()
+  const board_list = await GroupBoardListService.getGroupBoardList(DBMySQL, group_seq)
+
+  output.add('board_list', board_list)
+
+  res.json(output)
+}))
+
 routes.delete('delmenulist/:group_seq(\\d+)/:menu_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
