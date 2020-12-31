@@ -37,7 +37,7 @@ routes.get('/getgroupboards/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_U
   res.json(output)
 }))
 
-routes.delete('delmenulist/:group_seq(\\d+)/:menu_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/delmenulist/:group_seq(\\d+)/:menu_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
     const group_seq = req.params.group_seq
@@ -45,7 +45,7 @@ routes.delete('delmenulist/:group_seq(\\d+)/:menu_seq(\\d+)', Auth.isAuthenticat
     const board_data_cnt = await GroupBoardDataService.getBoardDataCount(DBMySQL, group_seq, menu_seq);
 
     await DBMySQL.transaction(async (transaction) => {
-      if (board_data_cnt > 0) {
+      if (board_data_cnt === 0) {
         await GroupBoardListService.delGroupBoardList(transaction, group_seq, menu_seq)
         res.json(new StdObject(0, '게시판 삭제가 완료 되었습니다.', '200'))
       } else {

@@ -143,12 +143,14 @@ export default class SendMail {
     }
     let send_email_result = null;
     try {
+      const temp_recipients = this.getRecipients(mail_to_list)
+      const recipients = _.reject(temp_recipients, { address: sender_email })
       const mail_info = {
         'senderAddress': sender_email ? sender_email : 'no_reply@surgstory.com',
         'senderName': 'SurgStory',
         'title': title,
         'body': body,
-        'recipients': this.getRecipients(mail_to_list)
+        'recipients': recipients
       }
       if (sender_name) {
         mail_info.senderName = sender_name

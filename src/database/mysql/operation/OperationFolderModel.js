@@ -95,15 +95,15 @@ export default class OperationFolderModel extends MySQLModel {
     const query = this.database
       .select(this.selectable_fields_with_member)
       .from(this.table_name)
-      .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
-      .where(`${this.table_name}.group_seq`, group_seq)
+      .innerJoin('member', 'member.seq', `operation_folder.member_seq`)
+      .where(`operation_folder.group_seq`, group_seq)
     if (include_current_folder) {
       query.andWhere(function () {
-        this.where('seq', folder_seq)
-        this.orWhereRaw(`JSON_CONTAINS(${this.table_name}.parent_folder_list, '${folder_seq}', '$')`)
+        this.where('operation_folder.seq', folder_seq)
+        this.orWhereRaw(`JSON_CONTAINS(operation_folder.parent_folder_list, '${folder_seq}', '$')`)
       })
     } else {
-      query.orWhereRaw(`JSON_CONTAINS(${this.table_name}.parent_folder_list, '${folder_seq}', '$')`)
+      query.orWhereRaw(`JSON_CONTAINS(operation_folder.parent_folder_list, '${folder_seq}', '$')`)
     }
     return query
   }
