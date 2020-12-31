@@ -71,7 +71,7 @@ routes.get('/relation(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output)
 }))
 
-routes.delete('/folder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.delete('/deletefolder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   try {
     const folder_info = req.body.folder_info
     log.debug('[Router Folder -> index]', '[/deletefolder]', folder_info)
