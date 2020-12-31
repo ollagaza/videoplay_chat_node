@@ -1,6 +1,3 @@
-import Zip from 'adm-zip'
-import jschardet from 'jschardet'
-import iconv from 'iconv-lite'
 import { Router } from 'express'
 import Wrap from '../../utils/express-async'
 import Auth from '../../middlewares/auth.middleware'
@@ -13,14 +10,12 @@ import ServiceConfig from '../../service/service-config'
 import OperationService from '../../service/operation/OperationService'
 import GroupService from '../../service/member/GroupService'
 import MemberService from '../../service/member/MemberService'
-import OperationClipService from '../../service/operation/OperationClipService'
 
 const routes = Router()
 
 const checkMachine = async (request) => {
   const token_info = request.token_info
   const machine_id = request.headers['machine-id']
-  log.d(request, machine_id, token_info.toJSON())
   if (token_info.getMachineId() !== machine_id) {
     throw new StdObject(-1, '잘못된 요청입니다.', 403)
   }
@@ -47,10 +42,11 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
     throw new StdObject(-2, '등록된 회원이 아닙니다.', 403)
   }
 
+  const machine_id = req.headers['machine-id']
   const request_body = req.body ? req.body : {}
   const current_date = Util.currentFormattedDate('yyyy-mm-dd HH:MM:ss')
 
-  const operation_name = request_body.operation_name ? request_body.operation_name : `SurgBox_${current_date}`
+  const operation_name = request_body.operation_name ? request_body.operation_name : `${current_date} [${machine_id}]`
   const operation_code = request_body.operation_code ? request_body.operation_code : operation_name
   const operation_date = request_body.operation_date ? request_body.operation_date : current_date.substr(0, 10)
   const hour = request_body.hour ? request_body.hour : current_date.substr(11, 2)
@@ -69,6 +65,9 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   }
 
   const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, operation_body, 'D')
+
+  log.d(req, `[BOX 02] 수술 시작 (id: ${create_operation_result.get('operation_seq')})`, req.headers, request_body, group_seq, member_seq, create_operation_result.toJSON())
+
   const output = new StdObject()
   output.add('operation_id', create_operation_result.get('operation_seq'))
   output.add('operation_name', operation_name)
@@ -80,10 +79,12 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
 
   const operation_seq = req.params.operation_seq
   const file_type = 'video'
-  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
+  log.d(req, `[BOX 03] 수술 동영상 업로드 시작 (id: ${operation_seq})`, req.headers, operation_seq)
 
-  log.d(req, 'operation_info', operation_info)
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
   const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file')
+
+  log.d(req, `[BOX 04] 수술 동영상 업로드 종료 (id: ${operation_seq})`, req.headers, operation_seq, upload_result)
 
   const output = new StdObject()
   output.add('upload_seq', upload_result.upload_seq)
@@ -95,24 +96,19 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
 routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   await checkMachine(req)
   const operation_seq = req.params.operation_seq
+
+  log.d(req, `[BOX 05] 수술 종료 요청 (id: ${operation_seq})`, req.headers, operation_seq)
+
   await OperationService.requestAnalysis(DBMySQL, null, operation_seq, false)
+
+  log.d(req, `[BOX 06] 수술 분석요청 (id: ${operation_seq})`, req.headers, operation_seq)
+
   await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
+
+  log.d(req, `[BOX 08] 수술 종료 요청 완료 (id: ${operation_seq})`, req.headers, operation_seq)
 
   const output = new StdObject()
   output.add('url', ServiceConfig.get('service_url') + `/v2/curation/${operation_seq}`)
-  res.json(output)
-}))
-
-routes.post('/:operation_seq(\\d+)/clip', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
-  await checkMachine(req)
-
-  req.accepts('application/json')
-  const operation_seq = req.params.operation_seq
-  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
-
-  const create_result = await OperationClipService.createClip(operation_info, req.body)
-  const output = new StdObject()
-  output.add('result', create_result)
   res.json(output)
 }))
 
@@ -120,11 +116,14 @@ routes.post('/:operation_seq(\\d+)/file/one', Auth.isAuthenticated(Role.BOX), Wr
   await checkMachine(req)
 
   const operation_seq = req.params.operation_seq
+
+  log.d(req, `[BOX 09] 첨부파일 업로드 시작 (id: ${operation_seq})`, req.headers, operation_seq)
+
   const file_type = 'refer'
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
-  log.d(req, 'operation_info', operation_info)
-
   const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file')
+
+  log.d(req, `[BOX 10] 첨부파일 업로드 완료 (id: ${operation_seq})`, req.headers, operation_seq, upload_result)
 
   const output = new StdObject()
   output.add('upload_seq', upload_result.upload_seq)

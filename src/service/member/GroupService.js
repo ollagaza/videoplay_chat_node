@@ -111,7 +111,7 @@ const GroupServiceClass = class {
       }
     }
     if (check_group_auth && !is_active_group_member && throw_exception) {
-      throw new StdObject(-1, '권한이 없습니다', 403)
+      throw new StdObject(-100, '권한이 없습니다', 403)
     }
     return {
       token_info,
@@ -912,7 +912,7 @@ const GroupServiceClass = class {
   getAllPersonalGroupUserListForBox = async (database) => {
     const result_list = []
     const group_info_model = this.getGroupModel(database)
-    const user_list = await group_info_model.getAllPersonalGroupUserList()
+    const user_list = await group_info_model.getAllPersonalGroupUserList(true)
     for (let i = 0; i < user_list.length; i++) {
       const user_info = user_list[i]
       const member_info = {
@@ -1040,10 +1040,10 @@ const GroupServiceClass = class {
     throw output
   }
 
-  getGroupInfoToGroupCounts = async (database, group_seq) => {
+  getGroupInfoWithGroupCounts = async (database, group_seq) => {
     try {
       const group_model = this.getGroupModel(database)
-      const result = await group_model.getGroupInfoToGroupCounts(group_seq)
+      const result = await group_model.getGroupInfoWithGroupCounts(group_seq)
       if (result && result.profile_image_path) {
         result.profile_image_url = ServiceConfig.get('static_storage_prefix') + result.profile_image_path
       }

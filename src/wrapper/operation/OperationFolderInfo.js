@@ -11,11 +11,13 @@ export default class OperationFolderInfo extends JsonWrapper {
 
     this.setKeys(default_key_list)
 
-    if (data.parent_folder_list && typeof data.parent_folder_list === 'string') {
-      this.parent_folder_list = JSON.parse(data.parent_folder_list)
-    }
-    if (data.access_users && typeof data.access_users === 'string') {
-      this.access_users = JSON.parse(data.access_users)
+    if (data) {
+      if (data.parent_folder_list && typeof data.parent_folder_list === 'string') {
+        this.parent_folder_list = JSON.parse(data.parent_folder_list)
+      }
+      if (data.access_users && typeof data.access_users === 'string') {
+        this.access_users = JSON.parse(data.access_users)
+      }
     }
   }
 }

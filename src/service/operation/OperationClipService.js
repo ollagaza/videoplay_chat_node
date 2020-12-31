@@ -125,10 +125,10 @@ const OperationClipServiceClass = class {
     await OperationClipModel.migrationGroupSeqByOperation(operation_seq, group_seq)
   }
 
-  copyClipByOperation = async (origin_operation_seq, operation_info, origin_content_id) => {
+  copyClipByOperation = async (origin_operation_seq, operation_info) => {
     try {
       const operation_clip_list = await this.findByOperationSeq(origin_operation_seq)
-      if (!operation_clip_list) return
+      if (!operation_clip_list || !operation_clip_list.length) return true
 
       const phase_map = {}
       const clip_list = []
@@ -142,16 +142,19 @@ const OperationClipServiceClass = class {
         }
       }
 
-      const replace_regex = new RegExp(origin_content_id, 'gi')
-      const content_id = operation_info.content_id
       for (let i = 0; i < clip_list.length; i++) {
         const clip_info = clip_list[i]
         const phase_id = clip_info.phase_id
         clip_info.phase_id = phase_id ? phase_map[phase_id] : null
         if (clip_info.thumbnail_url) {
-          clip_info.thumbnail_url = clip_info.thumbnail_url.replace(replace_regex, content_id)
+          clip_info.thumbnail_url = clip_info.thumbnail_url.replace(operation_info.origin_media_path, operation_info.media_path)
         }
-        await this.createClip(operation_info, { clip_info }, false )
+        const member_info = {
+          seq: clip_info.member_seq,
+          user_name: clip_info.user_name,
+          user_nickname: clip_info.user_nickname
+        }
+        await this.createClip(operation_info, member_info, { clip_info }, false )
       }
       return true
     } catch (e) {

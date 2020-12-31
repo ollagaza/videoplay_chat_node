@@ -108,13 +108,14 @@ const OperationServiceClass = class {
     return output
   }
 
-  copyOperation = (group_member_info, request_body) => {
+  copyOperation = (group_seq, member_info, request_body) => {
     (
       async () => {
 
         const operation_seq_list = request_body.copy_seq_list
         const copy_type = request_body.operation_copy_type ? request_body.operation_copy_type : null
         const folder_info = request_body.folder_info ? request_body.folder_info : null
+        const change_group_seq = request_body.group_seq ? request_body.group_seq : group_seq
 
         const result_list = []
         const copy_result = {
@@ -122,13 +123,15 @@ const OperationServiceClass = class {
           operation_seq_list,
           copy_type,
           folder_seq: folder_info ? folder_info.seq : null,
+          group_seq: change_group_seq,
           result_list
         }
+        log.debug(this.log_prefix, '[copyOperation]', 'copy_result', copy_result)
         let has_error = false
 
         for (let i = 0; i < operation_seq_list.length; i++) {
           const origin_operation_seq = operation_seq_list[i]
-          const copy_result = await this.copyOperationOne(origin_operation_seq, group_member_info, request_body)
+          const copy_result = await this.copyOperationOne(member_info, origin_operation_seq, change_group_seq, request_body)
           if (!copy_result.success) {
             has_error = true
           }
@@ -145,12 +148,13 @@ const OperationServiceClass = class {
     )()
   }
 
-  copyOperationOne = async (origin_operation_seq, group_member_info, request_body) => {
+  copyOperationOne = async (member_info, origin_operation_seq, group_seq, request_body) => {
     const copy_type = request_body.operation_copy_type ? request_body.operation_copy_type : null
     const modify_operation_info = request_body.operation_info ? request_body.operation_info : null
     const modify_operation_data = request_body.operation_data ? request_body.operation_data : null
     const folder_info = request_body.folder_info ? request_body.folder_info : null
     const mento_group_seq = request_body.mento_group_seq ? request_body.mento_group_seq : null
+    const group_info = await GroupService.getGroupInfo(null, group_seq)
 
     let is_success = false
     const result = {
@@ -164,9 +168,9 @@ const OperationServiceClass = class {
 
     try {
       const content_id = Util.getContentId()
-      const group_media_path = group_member_info.media_path
+      const group_media_path = group_info.media_path
       const origin_operation_info = await this.getOperationInfoNoJoin(DBMySQL, origin_operation_seq, false)
-      log.debug(this.log_prefix, '[copyOperationOne]', 'origin_operation_info', origin_operation_seq, origin_operation_info)
+      log.debug(this.log_prefix, '[copyOperationOne]', 'origin_operation_info', origin_operation_seq, group_seq)
       const origin_content_id = origin_operation_info.content_id
       delete origin_operation_info.seq
       delete origin_operation_info.reg_date
@@ -176,6 +180,7 @@ const OperationServiceClass = class {
       result.origin_operation_code = origin_operation_info.operation_code
 
       const operation_info = _.clone(origin_operation_info)
+      operation_info.group_seq = group_seq
       if (!operation_info.origin_seq) {
         operation_info.origin_seq = origin_operation_seq
         operation_info.origin_media_path = origin_operation_info.media_path
@@ -204,7 +209,7 @@ const OperationServiceClass = class {
       }
       operation_seq = operation_info.seq
       operation_info.operation_seq = operation_info.seq
-      const operation_media_seq = await OperationMediaService.copyOperationMediaInfo(DBMySQL, operation_info, origin_operation_seq, origin_content_id)
+      const operation_media_seq = await OperationMediaService.copyOperationMediaInfo(DBMySQL, operation_info, origin_operation_seq)
       const operation_storage_info = await this.getOperationStorageModel(DBMySQL).copyOperationStorageInfo(operation_info, origin_operation_seq)
       const storage_seq = operation_storage_info.seq
       const origin_storage_seq = operation_storage_info.origin_storage_seq
@@ -223,7 +228,7 @@ const OperationServiceClass = class {
         await this.createOperationDirectory(operation_info)
         const origin_refer_file_list = await OperationFileService.getReferFileList(DBMySQL, origin_storage_seq, false)
         if (origin_refer_file_list) {
-          await OperationFileService.copyReferFileInfo(DBMySQL, storage_seq, origin_content_id, content_id, origin_refer_file_list)
+          await OperationFileService.copyReferFileInfo(DBMySQL, storage_seq, origin_refer_file_list, operation_info)
         }
         result.copy_refer_file_info = true
 
@@ -231,10 +236,9 @@ const OperationServiceClass = class {
         let index_list = []
         if (video_index_info.index_list) {
           index_list = video_index_info.index_list
-          const replace_regex = new RegExp(origin_content_id, 'gi')
           for (let i = 0; i < index_list.length; i++) {
             if (index_list[i].thumbnail_url) {
-              index_list[i].thumbnail_url = index_list[i].thumbnail_url.replace(replace_regex, content_id)
+              index_list[i].thumbnail_url = index_list[i].thumbnail_url.replace(operation_info.origin_media_path, operation_info.media_path)
             }
           }
         }
@@ -248,7 +252,7 @@ const OperationServiceClass = class {
         }
         result.copy_operation_metadata = true
 
-        const copy_clip_result = await OperationClipService.copyClipByOperation(origin_operation_seq, operation_info, origin_content_id)
+        const copy_clip_result = await OperationClipService.copyClipByOperation(origin_operation_seq, operation_info)
         if (!copy_clip_result) {
           throw new StdObject(-2, '클립 복사에 실패하였습니다.')
         }
@@ -874,7 +878,7 @@ const OperationServiceClass = class {
       }
 
       if (options.writer_info) {
-        const writer_info = await GroupService.getGroupInfoToGroupCounts(DBMySQL, operation_info.group_seq)
+        const writer_info = await GroupService.getGroupInfoWithGroupCounts(DBMySQL, operation_info.group_seq)
         output.add('writer_info', writer_info)
       }
 

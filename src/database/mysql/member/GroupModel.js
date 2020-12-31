@@ -216,7 +216,7 @@ export default class GroupModel extends MySQLModel {
     return await this.update({ seq: group_seq }, { profile_image_path: profile_image_path })
   }
 
-  getGroupInfoToGroupCounts = async (group_seq) => {
+  getGroupInfoWithGroupCounts = async (group_seq) => {
     const query = this.database.select('*')
       .from(this.table_name)
       .innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')

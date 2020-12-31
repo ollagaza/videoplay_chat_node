@@ -227,7 +227,7 @@ const copyDirectory = async (path, dest_path, ignore_error = true) => {
       if (has_error && !ignore_error) break;
     }
   }
-  log.debug(log_prefix, 'copyDirectory', path, dest_path, has_error, result_list)
+  // log.debug(log_prefix, 'copyDirectory', path, dest_path, has_error, result_list)
   return {
     has_error,
     result_list
