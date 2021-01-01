@@ -12,8 +12,12 @@ export default class GroupGradeModel extends MySQLModel {
     this.log_prefix = '[GroupGradeModel]'
   }
 
-  getGroupGradeListWithGroupSeq = async (group_seq) => {
+  getGroupManageGradeListWithGroupSeq = async (group_seq) => {
     return await this.find({ group_seq })
+  }
+
+  getGroupGradeListWithGroupSeq = async (group_seq) => {
+    return await this.find({ group_seq, used: 1 })
   }
 
   insertGroupGrade = async (param) => {

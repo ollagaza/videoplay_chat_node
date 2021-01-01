@@ -1198,6 +1198,11 @@ const GroupServiceClass = class {
     }
   }
 
+  getGradeManageList = async (database, group_seq) => {
+    const grade_model = this.getGroupGradeModel(database)
+    return await grade_model.getGroupManageGradeListWithGroupSeq(group_seq)
+  }
+
   getGradeList = async (database, group_seq) => {
     const grade_model = this.getGroupGradeModel(database)
     return await grade_model.getGroupGradeListWithGroupSeq(group_seq)
