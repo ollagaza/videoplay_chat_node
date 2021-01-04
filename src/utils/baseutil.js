@@ -841,18 +841,21 @@ const addYear = (year, format = 'YYYY-MM-DD') => {
 }
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.resolve(req.upload_directory))
+  destination: function (req, file, callback) {
+    callback(null, path.resolve(req.upload_directory))
   },
-  filename: function (req, file, cb) {
+  filename: function (req, file, callback) {
     if (req.new_file_name) {
       if (req.disable_auto_ext !== true && path.extname(req.new_file_name) === '') {
         req.new_file_name = req.new_file_name + path.extname(file.originalname)
       }
-      cb(null, req.new_file_name)
+      callback(null, req.new_file_name)
+    } else if (req.use_origin_name) {
+      req.new_file_name = file.originalname
+      callback(null, req.new_file_name)
     } else {
       req.new_file_name = 'upload_' + file.originalname
-      cb(null, req.new_file_name)
+      callback(null, req.new_file_name)
     }
   },
 })
@@ -883,8 +886,8 @@ const uploadImageFile = async (user_info, req, res, key = 'image', disable_auto_
   return { image_url: image_url, image_path: upload_path + '/' + new_file_name }
 }
 
-const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null, disable_auto_ext = false) => {
-  const async_func = new Promise((resolve, reject) => {
+const uploadByRequest = async (req, res, key, upload_directory, new_file_name = null, disable_auto_ext = false, use_origin_name = false) => {
+  return new Promise((resolve, reject) => {
     const uploader = multer({
       storage,
       limits: {
@@ -893,6 +896,7 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
     }).single(key)
     req.upload_directory = upload_directory
     req.new_file_name = new_file_name
+    req.use_origin_name = use_origin_name
     req.disable_auto_ext = disable_auto_ext
     uploader(req, res, error => {
       if (error) {
@@ -904,8 +908,6 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
       }
     })
   })
-
-  return async_func
 }
 
 const storate = multer.diskStorage({
