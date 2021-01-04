@@ -240,13 +240,13 @@ export default class GroupMemberModel extends MySQLModel {
         const depart_list = JSON.parse(detail_search.select_depart_list);
         if (detail_search.select_depart_type === 1) {
           for (const index in depart_list) {
-            query.whereRaw(`JSON_SEARCH(JSON_EXTRACT(treatcode, '$[*].code'), 'all', '${depart_list[index].code}')`);
+            query.whereRaw(`JSON_SEARCH(JSON_EXTRACT(treatcode, '$[*].code'), 'all', '${depart_list[index].code}') IS NOT NULL `);
           }
         } else if (detail_search.select_depart_type === 2) {
           query.andWhere(function () {
             for (const index in depart_list) {
               this
-                .orWhereRaw(`JSON_SEARCH(JSON_EXTRACT(treatcode, '$[*].code'), 'all', '${depart_list[index].code}')`)
+                .orWhereRaw(`JSON_SEARCH(JSON_EXTRACT(treatcode, '$[*].code'), 'all', '${depart_list[index].code}') IS NOT NULL `)
             }
           })
         }
