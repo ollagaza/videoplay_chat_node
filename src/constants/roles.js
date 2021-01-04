@@ -3,7 +3,7 @@ const ALL = 0
 const API = 1
 const BOX = 2
 const MEMBER = 5
-const MANAGER = 8
+const MANAGER = 6
 const ADMIN = 99
 
 export default {

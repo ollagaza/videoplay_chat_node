@@ -38,6 +38,7 @@ const GroupServiceClass = class {
     this.MEMBER_STATUS_DELETE = 'D'
     this.MEMBER_GRADE_OWNER = 'O'
     this.MEMBER_GRADE_ADMIN = 'A'
+    this.MEMBER_GRADE_MANAGER = '6'
     this.MEMBER_GRADE_NORMAL = 'N'
   }
 
@@ -97,9 +98,16 @@ const GroupServiceClass = class {
     let group_member_info = null
     let is_active_group_member = false
     let is_group_admin = false
+    let is_group_manager = false
     if (token_info.getRole() === Role.ADMIN) {
       is_active_group_member = true
       is_group_admin = true
+      is_group_manager = true
+      group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
+    } else if (token_info.getRole() === Role.MANAGER) {
+      is_active_group_member = true
+      is_group_admin = false
+      is_group_manager = true
       group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
     } else if (check_group_auth) {
       if (!group_seq) {
@@ -108,6 +116,7 @@ const GroupServiceClass = class {
         group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
         is_active_group_member = group_member_info && group_member_info.group_member_status === this.MEMBER_STATUS_ENABLE
         is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
+        is_group_manager = this.isGroupManagerByMemberInfo(group_member_info)
       }
     }
     if (check_group_auth && !is_active_group_member && throw_exception) {
@@ -120,7 +129,8 @@ const GroupServiceClass = class {
       member_info,
       group_member_info,
       is_active_group_member,
-      is_group_admin
+      is_group_admin,
+      is_group_manager
     }
   }
 
@@ -334,6 +344,10 @@ const GroupServiceClass = class {
 
   isGroupAdminByMemberInfo = (group_member_info) => {
     return group_member_info.grade === this.MEMBER_GRADE_ADMIN || group_member_info.grade === this.MEMBER_GRADE_OWNER
+  }
+
+  isGroupManagerByMemberInfo = (group_member_info) => {
+    return group_member_info.grade === this.MEMBER_GRADE_MANAGER
   }
 
   isActiveGroupMember = async (database, group_seq, member_seq) => {
