@@ -39,6 +39,21 @@ routes.put('/editorimage/:contentid', Auth.isAuthenticated(Role.LOGIN_USER), Wra
   }
 }))
 
+routes.put('/editor/file/:contentid', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  try {
+    const token_info = req.token_info
+    const group_seq = token_info.getGroupSeq()
+    const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq)
+    const output = new StdObject()
+    const { url, upload_file_info } = await EditorService.uploadEditorFile(group_info.media_path, req, res)
+    output.add('result', upload_file_info)
+    output.add('path', url)
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
 routes.post('/checkeditorimage', Wrap(async (req, res) => {
   try {
     const contentid = req.body.contentid

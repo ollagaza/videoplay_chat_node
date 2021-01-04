@@ -51,13 +51,13 @@ export default class MemberInfo extends JsonWrapper {
   //   }
   // }
 
-  // checkEmailAddress = () => {
-  //   this.checkEmpty()
-  //
-  //   if (Util.isEmpty(this.email_address)) {
-  //     return this.returnBoolean(-1, '이메일 주소를 정확하게 입력하세요.', 400)
-  //   }
-  // }
+  checkEmailAddress = () => {
+    this.checkEmpty()
+
+    if (Util.isEmpty(this.email_address)) {
+      return this.returnBoolean(-1, '이메일 주소를 정확하게 입력하세요.', 400)
+    }
+  }
 
   checkPassword = (check_empty = true) => {
     if (check_empty) {

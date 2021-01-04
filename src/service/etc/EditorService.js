@@ -52,6 +52,24 @@ const EditorServiceClass = class {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 400, e)
     }
   }
+
+  uploadEditorFile = async (media_path, request, response) => {
+    const file_path = media_path + '/editor/' + Util.getRandomString(5) + '/'
+    const editor_root = ServiceConfig.get('media_root') + file_path
+    if (!(await Util.fileExists(editor_root))) {
+      await Util.createDirectory(editor_root)
+    }
+    await Util.uploadByRequest(request, response, 'editor', editor_root, null, false, true)
+    const upload_file_info = request.file
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
+    }
+
+    return {
+      upload_file_info,
+      url: ServiceConfig.get('static_storage_prefix') + file_path + upload_file_info.filename
+    }
+  }
 }
 
 const EditorService = new EditorServiceClass()
