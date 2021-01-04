@@ -134,7 +134,7 @@ export default class GroupMemberModel extends MySQLModel {
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
-  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null, detail_search = null) => {
+  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null, detail_search = null, member_grade = null, non_admin = null) => {
     const filter = {
       group_seq
     }
@@ -152,9 +152,11 @@ export default class GroupMemberModel extends MySQLModel {
         filter['group_member.status'] = 'J'
       }
     }
+    if (member_grade && member_grade !== '0') {
+      filter['group_member.grade'] = member_grade;
+    }
     const isSelect = this.group_member_select;
     if(videos_count) {
-      isSelect.push('vcnt');
       isSelect.push('group_member.vid_cnt');
       isSelect.push('group_member.anno_cnt');
       isSelect.push('group_member.comment_cnt');
@@ -168,9 +170,6 @@ export default class GroupMemberModel extends MySQLModel {
     const query = this.database.select(isSelect)
     query.from('group_member')
     query.leftOuterJoin('member', { 'member.seq': 'group_member.member_seq' })
-    if (videos_count) {
-      query.joinRaw('LEFT JOIN (SELECT member_seq, group_seq AS gseq, COUNT(*) AS vcnt FROM operation  WHERE status!="D" GROUP BY member_seq, group_seq) AS vinfo ON (`group_member`.`group_seq` = `vinfo`.`gseq` AND `group_member`.`member_seq` = `vinfo`.`member_seq`)');
-    }
     if (get_pause_name) {
       query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`pause_member_seq` = `submit_member`.`submit_member_seq`)')
     }
@@ -178,6 +177,9 @@ export default class GroupMemberModel extends MySQLModel {
       query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`ban_member_seq` = `submit_member`.`submit_member_seq`)')
     }
     query.where(filter)
+    if (non_admin === 'Y') {
+      query.andWhere('group_member.grade', '!=', 'O');
+    }
     if (search_text) {
       query.andWhere(function () {
         this
@@ -205,10 +207,10 @@ export default class GroupMemberModel extends MySQLModel {
         query.andWhere('group_member.vid_cnt', '<=', `${detail_search.mem_upload_ecount}`);
       }
       if (detail_search.reg_sdate) {
-        query.andWhere('group_member.join_date', '>=', `${detail_search.reg_sdate}`);
+        query.andWhereRaw(`group_member.join_date >= date_format('${detail_search.reg_sdate}', '%Y-%m-%d 00:00:00')`);
       }
       if (detail_search.reg_edate) {
-        query.andWhere('group_member.join_date', '<=', `${detail_search.reg_edate}`);
+        query.andWhereRaw(`group_member.join_date <= date_format('${detail_search.reg_edate}', '%Y-%m-%d 23:59:59')`);
       }
       if (detail_search.mem_grade_select) {
         query.andWhere('group_member.grade', '=', `${detail_search.mem_grade_select}`);
@@ -222,7 +224,7 @@ export default class GroupMemberModel extends MySQLModel {
         } else if (detail_search.mem_upload_drive_select === 'TB') {
           storeage_size_s = 1024 * 1024 * 1024 * 1024 * Number(detail_search.mem_used_sdrive);
         }
-        query.andWhere('group_member.grade', '>=', storeage_size_s);
+        query.andWhere('group_member.used_storage_size', '>=', storeage_size_s);
       }
       if (detail_search.mem_used_edrive) {
         let storeage_size_e = 0;
@@ -233,7 +235,7 @@ export default class GroupMemberModel extends MySQLModel {
         } else if (detail_search.mem_upload_drive_select === 'TB') {
           storeage_size_e = 1024 * 1024 * 1024 * 1024 * Number(detail_search.mem_used_edrive);
         }
-        query.andWhere('group_member.grade', '<=', storeage_size_e);
+        query.andWhere('group_member.used_storage_size', '<=', storeage_size_e);
       }
       if (detail_search.select_depart_list) {
         query.whereRaw('JSON_VALID(treatcode) = 1');
