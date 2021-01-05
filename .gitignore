@@ -67,6 +67,7 @@ typings/
 
 # Custom
 .idea
+.vscode
 dist
 
 public/apidoc
