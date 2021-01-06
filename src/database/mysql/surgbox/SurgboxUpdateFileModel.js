@@ -23,13 +23,13 @@ export default class SurgboxUpdateFileModel extends MySQLModel {
 
   getFileSummary = async (update_seq) => {
     const summary = {
-      total_count: 0,
-      total_size: 0
+      total_file_count: 0,
+      total_file_size: 0
     }
     const result = await this.findOne({ surgbox_update_seq: update_seq }, [this.database.raw('COUNT(*) AS total_count'), this.database.raw('SUM(file_size) AS total_size')])
     if (result && result.total_count) {
-      summary.total_count = result.total_count
-      summary.total_size = result.total_size
+      summary.total_file_count = result.total_count
+      summary.total_file_size = result.total_size
     }
     return summary
   }

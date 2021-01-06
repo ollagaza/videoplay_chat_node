@@ -29,7 +29,7 @@ const SurgboxUpdateServiceClass = class {
     return new SurgboxUpdateFileModel(DBMySQL)
   }
 
-  getUpdateInfoByRequest = (request_body) => {
+  getUpdateInfoByRequest = (request_body, check_version = true) => {
     const request_info = new SurgboxUpdateInfo().getByRequestBody(request_body)
     if (request_info.isEmpty()) {
       throw new StdObject(101, '잘못된 요청입니다.', 400)
@@ -37,7 +37,7 @@ const SurgboxUpdateServiceClass = class {
     request_info.setIgnoreEmpty(true)
     request_info.setAutoTrim(true)
     const update_info = request_info.toJSON()
-    if (!update_info.version) {
+    if (check_version && !update_info.version) {
       throw new StdObject(102, '버전정보가 없습니다.', 400)
     }
     return update_info
@@ -85,32 +85,25 @@ const SurgboxUpdateServiceClass = class {
     const result = {
       has_update: false,
       last_version: null,
-      max_force_update_version: null,
-      min_force_update_version: null,
+      min_version: null,
       update: {}
     }
     const update_model = this.getUpdateModel()
     const query_result = await update_model.getUpdateList()
     if (query_result && query_result.length) {
-      const update = {}
+      const update = result.update
       let last_version = null
-      let max_force_update_version = null
-      let min_force_update_version = null
+      let min_version = null
       for (let i = 0; i < query_result.length; i++) {
         const update_info = query_result[i]
         const version = update_info.version
         const file_path = update_info.file_path
+        const is_force = update_info.is_force === 1
         let version_info = update[version]
-        /*
-        this.update_list_fields = [
-      'surgbox_update.seq', 'surgbox_update.version', 'surgbox_update.title', 'surgbox_update.desc', 'surgbox_update.file_path',
-      'surgbox_update.total_file_count', 'surgbox_update.total_file_size', 'surgbox_update_file.file_name', 'surgbox_update_file.file_size',
-      'surgbox_update.reg_date', 'surgbox_update.modify_date'
-    ]
-         */
         if (!version_info) {
           version_info = {
             version,
+            is_force,
             file_count: update_info.total_file_count,
             file_size: update_info.total_file_size,
             title: update_info.title,
@@ -119,19 +112,30 @@ const SurgboxUpdateServiceClass = class {
             modify_date: update_info.modify_date,
             file_list: []
           }
+          update[version] = version_info
+          if (!last_version) last_version = version
+          else if (semver.gt(version, last_version)) last_version = version
+
+          if (is_force) {
+            if (!min_version) min_version = version
+            else if (semver.gt(version, last_version)) min_version = version
+          }
         }
         if (update_info.file_name) {
-          version_info.file_list.push()
+          version_info.file_list.push(ServiceConfig.get('cdn_url') + file_path + update_info.file_name)
         }
       }
+      result.last_version = last_version
+      result.min_version = min_version
     }
     return result
   }
 
   getUpdateInfoForView = async (update_seq) => {
-    const update_info = await this.getUpdateInfo(update_seq)
+    const update_model = this.getUpdateModel()
+    const update_info = await update_model.getUpdateInfoForView(update_seq)
     const update_file_model = this.getUpdateFileModel()
-    const file_result = await update_file_model.getFileList(update_info.seq)
+    const file_result = await update_file_model.getFileList(update_seq)
     const update_file_list = []
     if (file_result) {
       for (let i = 0; i < file_result.length; i++) {
@@ -187,7 +191,7 @@ const SurgboxUpdateServiceClass = class {
     }
     let update_result = false
     let delete_file_path_list = null
-    const update_info = this.getUpdateInfoByRequest(request_body.update_data)
+    const update_info = this.getUpdateInfoByRequest(request_body.update_data, false)
     await DBMySQL.transaction(async (transaction) => {
       const update_model = this.getUpdateModel(transaction)
       update_result = await update_model.modifyUpdateInfo(update_seq, update_info)
@@ -225,7 +229,7 @@ const SurgboxUpdateServiceClass = class {
         for (let i = 0; i < file_path_list.length; i++) {
           try {
             await Util.deleteFile(upload_directory + file_path_list[i])
-            await NaverObjectStorage.deleteFile(upload_directory, file_path_list[i])
+            // await NaverObjectStorage.deleteFile(upload_directory, file_path_list[i])
           } catch (error) {
             logger.error(this.log_prefix, '[deleteFiles]', file_path_list[i])
           }
@@ -255,7 +259,7 @@ const SurgboxUpdateServiceClass = class {
       async (update_info) => {
         try {
           const file_path = update_info.file_path
-          await Util.deleteDirectory(${ServiceConfig.get('media_root')} + file_path)
+          await Util.deleteDirectory(ServiceConfig.get('media_root') + file_path)
           await NaverObjectStorage.deleteFolder(file_path)
         } catch (error) {
           logger.error(this.log_prefix, '[deleteDirectory]', update_info.toJSON(), error)

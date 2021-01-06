@@ -14,13 +14,13 @@ export default class SurgboxUpdateModel extends MySQLModel {
       'member.user_id', 'member.user_name', 'member.user_nickname'
     ]
     this.view_fields = [
-      'surgbox_update.seq', 'surgbox_update.version', 'surgbox_update.title',
+      'surgbox_update.seq', 'surgbox_update.version', 'surgbox_update.title', 'surgbox_update.desc',
       'surgbox_update.file_path', 'surgbox_update.total_file_count', 'surgbox_update.total_file_size',
       'surgbox_update.is_force', 'surgbox_update.is_hide', 'surgbox_update.reg_date', 'surgbox_update.modify_date',
       'member.user_id', 'member.user_name', 'member.user_nickname'
     ]
     this.update_list_fields = [
-      'surgbox_update.seq', 'surgbox_update.version', 'surgbox_update.title', 'surgbox_update.desc', 'surgbox_update.file_path',
+      'surgbox_update.seq', 'surgbox_update.version', 'surgbox_update.title', 'surgbox_update.desc', 'surgbox_update.file_path', 'surgbox_update.is_force',
       'surgbox_update.total_file_count', 'surgbox_update.total_file_size', 'surgbox_update_file.file_name', 'surgbox_update_file.file_size',
       'surgbox_update.reg_date', 'surgbox_update.modify_date'
     ]
@@ -42,6 +42,15 @@ export default class SurgboxUpdateModel extends MySQLModel {
 
   getUpdateInfo = async (update_seq) => {
     return this.findOne({ seq: update_seq })
+  }
+
+  getUpdateInfoForView = async (update_seq) => {
+    const query = this.database.select(this.view_fields)
+    query.from(this.table_name)
+    query.leftOuterJoin('member', { 'surgbox_update.member_seq': 'member.seq' })
+    query.where('surgbox_update.seq', update_seq)
+    query.first()
+    return query
   }
 
   deleteUpdateInfo = async (update_seq) => {
@@ -79,6 +88,7 @@ export default class SurgboxUpdateModel extends MySQLModel {
     const query = this.database.select(this.update_list_fields)
     query.from(this.table_name)
     query.leftOuterJoin('surgbox_update_file', { 'surgbox_update_file.surgbox_update_seq': 'surgbox_update.seq' })
+    query.where('is_hide', 0)
     query.orderBy([{ column: 'surgbox_update.v1', order: 'asc' }, { column: 'surgbox_update.v2', order: 'asc' }, { column: 'surgbox_update.v3', order: 'asc' }, { column: 'surgbox_update_file.file_name', order: 'asc' }])
 
     return query
