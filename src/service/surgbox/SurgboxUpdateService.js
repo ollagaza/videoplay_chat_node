@@ -125,6 +125,7 @@ const SurgboxUpdateServiceClass = class {
           version_info.file_list.push(ServiceConfig.get('cdn_url') + file_path + update_info.file_name)
         }
       }
+      result.has_update = true
       result.last_version = last_version
       result.min_version = min_version
     }

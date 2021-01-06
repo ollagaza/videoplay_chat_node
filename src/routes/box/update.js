@@ -61,9 +61,7 @@ routes.get('/:update_seq(\\d+)', Auth.isAuthenticated(Role.ADMIN), Wrap(async (r
 
 routes.get('/list', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
   const update_list = await SurgboxUpdateService.getUpdateListForBox()
-  const output = new StdObject()
-  output.adds(update_list)
-  res.json(output)
+  res.json(update_list)
 }))
 
 export default routes
