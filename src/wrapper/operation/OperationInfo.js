@@ -46,7 +46,7 @@ export default class OperationInfo extends JsonWrapper {
 
     if (body != null) {
       this.json_keys.forEach((key) => {
-        if (body[key]) {
+        if (!Util.isEmpty(body[key])) {
           this[key] = body[key]
         }
       })

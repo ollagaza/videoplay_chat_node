@@ -351,5 +351,5 @@ const NaverObjectStorageClass = class {
   }
 }
 
-const naver_object_storage = new NaverObjectStorageClass()
-export default naver_object_storage
+const NaverObjectStorage = new NaverObjectStorageClass()
+export default NaverObjectStorage
