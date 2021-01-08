@@ -175,12 +175,7 @@ const SyncServiceClass = class {
         } catch (error) {
           log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
         }
-        try {
-          const request_result = await CloudFileService.requestMoveToArchive(directory_info.media_origin, true, operation_info.content_id)
-          log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToArchive] - origin', `file_path: ${directory_info.media_origin}`, request_result)
-        } catch (error) {
-          log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToArchive]', error)
-        }
+        this.moveOriginFileToArchive(directory_info.media_origin, true, operation_info.content_id)
       }
     }
     if (analysis_status === 'Y') {
@@ -209,7 +204,20 @@ const SyncServiceClass = class {
     return true
   }
 
-  sendAnalysisCompleteMessage = async (operation_info) => {
+  moveOriginFileToArchive = (origin_directory, content_id) => {
+    (
+      async (origin_directory, content_id) => {
+        try {
+          const request_result = await CloudFileService.requestMoveToArchive(origin_directory, true, content_id)
+          log.debug(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - origin', `file_path: ${origin_directory}`, request_result)
+        } catch (error) {
+          log.error(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - origin', `file_path: ${origin_directory}`, error)
+        }
+      }
+    )(origin_directory, content_id)
+  }
+
+  sendAnalysisCompleteMessage = (operation_info) => {
     if (!operation_info || !operation_info.user_id) return
     (
       async () => {
