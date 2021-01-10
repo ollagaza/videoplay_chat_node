@@ -15,9 +15,45 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.getTotalCount({ group_seq, seq: menu_seq })
   }
 
+  getBoardDataPagingList = async (group_seq, board_seq, paging, order) => {
+    const oKnex = this.database.select('*')
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .andWhere('is_notice', '1')
+      .unionAll([
+        this.database.select('*')
+          .from(this.table_name)
+          .where('group_seq', group_seq)
+          .andWhere('is_notice', '2')
+        ,
+        this.database.select('root.*')
+          .from(`${this.table_name} as root`)
+          .leftOuterJoin(`${this.table_name} as parent`, {'parent.parent_seq': 'root.seq'})
+          .where((query) => {
+            query.where('root.group_seq', group_seq)
+            query.andWhere('root.board_seq', board_seq)
+            query.andWhere('root.is_notice', '3')
+          })
+          .distinct()
+      ])
+      .orderBy([{ column: 'is_notice', order: 'asc' }, { column: 'parent_seq', order: 'asc' }, { column: 'seq', order: 'desc' }])
+
+    return await this.queryPaginated(oKnex, 10, paging.cur_page)
+  }
+
+  getBoardDataDetail = async (board_data_seq) => {
+    const oKnex = this.database.select(['board.*', 'mem.profile_image_path as member_profile_image'])
+      .from(`${this.table_name} as board`)
+      .innerJoin('member as mem', { 'mem.seq': 'board.member_seq' })
+      .where('board.seq', board_data_seq)
+      .first()
+    return oKnex
+  }
+
   CreateUpdateBoardData = async (board_data) => {
     Object.keys(board_data)
       .filter(item => typeof board_data[item] === 'object' ? board_data[item] = JSON.stringify(board_data[item]) : null)
+      .filter(item => board_data[item] === 'null' ? board_data[item] = null : board_data[item])
 
     const exclusions = Object.keys(board_data)
       .filter(item => item !== 'seq')
@@ -31,5 +67,17 @@ export default class GroupBoardDataModel extends MySQLModel {
       .on('query', data => log.debug(this.log_prefix, 'CreateUpdateBoardData', data.sql))
 
     return result.shift().insertId
+  }
+
+  updateBoardViewCnt = async (board_seq) => {
+    return this.update({ seq: board_seq }, { view_cnt: this.database.raw('view_cnt + 1') })
+  }
+
+  updateBoardCommentCnt = async (board_seq, type) => {
+    return this.update({ seq: board_seq }, { comment_cnt: this.database.raw(`comment_cnt + ${type ? 1 : -1}`) })
+  }
+
+  DeleteBoardData = async (board_seq) => {
+    return this.update({ seq: board_seq }, { status: 'D' })
   }
 }
