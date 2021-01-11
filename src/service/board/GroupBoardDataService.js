@@ -88,7 +88,16 @@ const GroupBoardDataServiceClass = class {
   CreateUpdateBoardData = async (database, board_data) => {
     const model = this.getGroupBoardDataModel(database)
     board_data.content_id = baseutil.getContentId();
-    return await model.CreateUpdateBoardData(board_data)
+
+    const board_data_num = await model.getLastBoardDataNum(board_data)
+    board_data.board_data_num = board_data_num.board_data_num + 1
+
+    const result = await model.CreateUpdateBoardData(board_data)
+
+    if (!board_data.origin_seq && result.affectedRows === 1) {
+      await model.updateBoardOriginSeq(result.insertId)
+    }
+    return result.insertId
   }
 
   updateBoardViewCnt = async (database, board_data_seq) => {
@@ -107,7 +116,9 @@ const GroupBoardDataServiceClass = class {
 
   DeleteBoardData = async (database, board_seq) => {
     const model = this.getGroupBoardDataModel(database)
-    return await model.DeleteBoardData(board_seq)
+    await model.DeleteBoardData(board_seq)
+    await model.updateParentDataSubject(board_seq)
+    return await model.updateParentDataSubject(board_seq)
   }
 
   getGroupBoardOpenTopList = async (database, group_seq) => {

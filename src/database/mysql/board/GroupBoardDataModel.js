@@ -1,6 +1,7 @@
 import MySQLModel from '../../mysql-model'
 import log from '../../../libs/logger'
 import logger from "../../../libs/logger";
+import baseutil from "../../../utils/baseutil";
 
 export default class GroupBoardDataModel extends MySQLModel {
   constructor (...args) {
@@ -15,29 +16,37 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.getTotalCount({ group_seq, seq: menu_seq })
   }
 
-  getBoardDataPagingList = async (group_seq, board_seq, paging, order) => {
-    const oKnex = this.database.select('*')
-      .from(this.table_name)
-      .where('group_seq', group_seq)
-      .andWhere('is_notice', '1')
-      .unionAll([
-        this.database.select('*')
-          .from(this.table_name)
-          .where('group_seq', group_seq)
-          .andWhere('is_notice', '2')
-        ,
-        this.database.select('root.*')
-          .from(`${this.table_name} as root`)
-          .leftOuterJoin(`${this.table_name} as parent`, {'parent.parent_seq': 'root.seq'})
-          .where((query) => {
-            query.where('root.group_seq', group_seq)
-            query.andWhere('root.board_seq', board_seq)
-            query.andWhere('root.is_notice', '3')
-          })
-          .distinct()
-      ])
-      .orderBy([{ column: 'is_notice', order: 'asc' }, { column: 'parent_seq', order: 'asc' }, { column: 'seq', order: 'desc' }])
+  getLastBoardDataNum = async (board_data) => {
+    return this.findOne({ board_seq: board_data.board_seq }, ['board_data_num'], { name: 'board_data_num', direction: 'desc' })
+  }
 
+  getBoardDataPagingList = async (group_seq, board_seq, paging, order) => {
+    let oKnex = null;
+    if (baseutil.parseInt(paging.cur_page) === 1) {
+      oKnex = this.database.select('*')
+        .from(this.table_name)
+        .where('group_seq', group_seq)
+        .andWhere('is_notice', '1')
+        .unionAll([
+          this.database.select('*')
+            .from(this.table_name)
+            .where('group_seq', group_seq)
+            .andWhere('is_notice', '2')
+            .andWhere('board_seq', board_seq)
+          ,
+          this.database.select('*')
+            .from(this.table_name)
+            .where('is_notice', '3')
+            .andWhere('board_seq', board_seq)
+        ])
+        .orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'desc'}])
+    } else {
+      oKnex = this.database.select('*')
+        .from(this.table_name)
+        .where('is_notice', '3')
+        .andWhere('board_seq', board_seq)
+        .orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'desc'}])
+    }
     return await this.queryPaginated(oKnex, 10, paging.cur_page)
   }
 
@@ -66,7 +75,15 @@ export default class GroupBoardDataModel extends MySQLModel {
       .raw(query)
       .on('query', data => log.debug(this.log_prefix, 'CreateUpdateBoardData', data.sql))
 
-    return result.shift().insertId
+    return result.shift()
+  }
+
+  updateParentDataSubject = async (board_seq) => {
+    return this.update({ seq: board_seq }, { subject: this.database.raw('concat("<span style="color: #ff0000;">[본글이 삭제된 답글]</span> ", subject)') })
+  }
+
+  updateBoardOriginSeq = async (board_seq) => {
+    return this.update({ seq: board_seq }, { origin_seq: board_seq })
   }
 
   updateBoardViewCnt = async (board_seq) => {
