@@ -11,6 +11,8 @@ import _ from "lodash";
 import baseutil from "../../utils/baseutil";
 import OperationFolderService from "../../service/operation/OperationFolderService";
 import GroupBoardListService from "../../service/board/GroupBoardListService";
+import OperationDataService from "../../service/operation/OperationDataService";
+import GroupBoardDataService from "../../service/board/GroupBoardDataService";
 
 const routes = Router()
 
@@ -546,6 +548,24 @@ routes.put('/updateprofile', Auth.isAuthenticated(Role.LOGIN_USER), Util.common_
   const output = new StdObject()
   const rs_gorup_info = await GroupService.updateGroupInfo(DBMySQL, options, group_seq);
   output.add('result', rs_gorup_info);
+  res.json(output)
+}))
+
+routes.get('/:group_seq(\\d+)/OpenVideoList', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req, false)
+  const group_open_vid = await OperationDataService.getCompleteIsOpenVideoDataLists(group_seq, 12);
+  const output = new StdObject()
+  output.add('vid_list', group_open_vid)
+  res.json(output)
+}))
+
+routes.get('/:group_seq(\\d+)/OpenBoardList', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req, false)
+  const group_open_vid = await GroupBoardDataService.getGroupBoardOpenTopList(DBMySQL, group_seq);
+  const output = new StdObject()
+  output.add('board_list', group_open_vid)
   res.json(output)
 }))
 export default routes

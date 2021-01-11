@@ -109,6 +109,11 @@ const GroupBoardDataServiceClass = class {
     const model = this.getGroupBoardDataModel(database)
     return await model.DeleteBoardData(board_seq)
   }
+
+  getGroupBoardOpenTopList = async (database, group_seq) => {
+    const model = this.getGroupBoardDataModel(database);
+    return await model.getGroupBoardOpenTopList(group_seq);
+  }
 }
 
 const GroupBoardDataService = new GroupBoardDataServiceClass()

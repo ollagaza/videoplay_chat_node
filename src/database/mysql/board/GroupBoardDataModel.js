@@ -80,4 +80,17 @@ export default class GroupBoardDataModel extends MySQLModel {
   DeleteBoardData = async (board_seq) => {
     return this.update({ seq: board_seq }, { status: 'D' })
   }
+
+  getGroupBoardOpenTopList = async (group_seq) => {
+    const oKnex = this.database.select(`${this.table_name}.*`, 'group_board_list.board_open')
+    // const oKnex = this.database.select(`${this.table_name}.*`)
+      .from(this.table_name)
+      .leftJoin('group_board_list', 'group_board_list.seq', `${this.table_name}.board_seq`)
+      .where(`${this.table_name}.group_seq`, group_seq)
+      .andWhere('group_board_list.board_open', '1')
+      .andWhere(`${this.table_name}.is_open`, '1')
+      .orderBy([{ column: `${this.table_name}.seq`, order: 'desc' }])
+      .limit(5);
+    return oKnex;
+  }
 }
