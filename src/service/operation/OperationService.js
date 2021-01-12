@@ -519,69 +519,6 @@ const OperationServiceClass = class {
     return { operation_info, operation_model }
   }
 
-  getOperationDirectoryInfo = (operation_info) => {
-    const media_path = operation_info.media_path
-    const origin_media_path = operation_info.origin_media_path
-    const media_directory = ServiceConfig.get('media_root') + media_path
-    const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
-    const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
-    const origin_media_directory = ServiceConfig.get('media_root') + origin_media_path
-    const origin_url_prefix = ServiceConfig.get('static_storage_prefix') + origin_media_path
-    const origin_cdn_url = ServiceConfig.get('static_cloud_prefix') + origin_media_path
-    const trans_server_root = ServiceConfig.get('trans_server_root')
-    const storage_server_root = ServiceConfig.get('storage_server_root')
-    const content_path = operation_info.content_id + '/'
-    const origin_content_path = operation_info.origin_content_id + '/'
-    log.debug(this.log_prefix, '[getOperationDirectoryInfo]', media_path, origin_media_path)
-    return {
-      'root': media_directory,
-      'root_origin': origin_media_directory,
-      'origin': media_directory + 'origin/',
-      'video': media_directory + 'video/',
-      'video_origin': origin_media_directory + 'video/',
-      'other': media_directory + 'other/',
-      'refer': media_directory + 'refer/',
-      'image': media_directory + 'image/',
-      'temp': media_directory + 'temp/',
-      'media_path': media_path,
-      'media_path_origin': origin_media_path,
-      'media_origin': media_path + 'origin/',
-      'media_video': media_path + 'video/',
-      'media_video_origin': origin_media_path + 'video/',
-      'media_other': media_path + 'other/',
-      'media_refer': media_path + 'refer/',
-      'media_image': media_path + 'image/',
-      'media_temp': media_path + 'temp/',
-      'trans_origin': trans_server_root + media_path + 'origin/',
-      'trans_video': trans_server_root + media_path + 'video/',
-      'storage_path': storage_server_root + media_path,
-      'storage_origin': storage_server_root + media_path + 'origin/',
-      'storage_video': storage_server_root + media_path + 'video/',
-      'url_prefix': url_prefix,
-      'url_origin': url_prefix + 'origin/',
-      'url_video': url_prefix + 'video/',
-      'url_video_origin': origin_url_prefix + 'video/',
-      'url_other': url_prefix + 'other/',
-      'url_refer': url_prefix + 'refer/',
-      'url_image': url_prefix + 'image/',
-      'url_temp': url_prefix + 'temp/',
-      'cdn_prefix': cdn_url,
-      'cdn_video': cdn_url + 'video/',
-      'cdn_video_origin': origin_cdn_url + 'video/',
-      'cdn_other': cdn_url + 'other/',
-      'cdn_refer': cdn_url + 'refer/',
-      'cdn_image': cdn_url + 'image/',
-      'content_path': content_path,
-      'content_origin': content_path + 'origin/',
-      'content_video': content_path + 'video/',
-      'content_video_origin': origin_content_path + 'video/',
-      'content_other': content_path + 'other/',
-      'content_refer': content_path + 'refer/',
-      'content_image': content_path + 'image/',
-      'content_temp': content_path + 'temp/',
-    }
-  }
-
   createOperationDirectory = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
 
@@ -590,6 +527,7 @@ const OperationServiceClass = class {
     await Util.createDirectory(directory_info.refer)
     await Util.createDirectory(directory_info.image)
     await Util.createDirectory(directory_info.temp)
+    await Util.createDirectory(directory_info.file)
   }
 
   getGroupTotalStorageUsedSize = async (database, group_seq) => {
@@ -971,6 +909,75 @@ const OperationServiceClass = class {
     }
 
     return operation_infos
+  }
+
+  getOperationDirectoryInfo = (operation_info) => {
+    const media_path = operation_info.media_path
+    const origin_media_path = operation_info.origin_media_path
+    const media_directory = ServiceConfig.get('media_root') + media_path
+    const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
+    const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
+    const origin_media_directory = ServiceConfig.get('media_root') + origin_media_path
+    const origin_url_prefix = ServiceConfig.get('static_storage_prefix') + origin_media_path
+    const origin_cdn_url = ServiceConfig.get('static_cloud_prefix') + origin_media_path
+    const content_path = operation_info.content_id + '/'
+    const origin_content_path = operation_info.origin_content_id + '/'
+    const trans_server_root = ServiceConfig.get('trans_server_root')
+    const storage_server_root = ServiceConfig.get('storage_server_root')
+
+    return {
+      'root': media_directory,
+      'root_origin': origin_media_directory,
+      'origin': media_directory + 'origin/',
+      'video': media_directory + 'video/',
+      'video_origin': origin_media_directory + 'video/',
+      'other': media_directory + 'other/',
+      'refer': media_directory + 'refer/',
+      'image': media_directory + 'image/',
+      'temp': media_directory + 'temp/',
+      'file': media_directory + 'file/',
+      'media_path': media_path,
+      'media_path_origin': origin_media_path,
+      'media_origin': media_path + 'origin/',
+      'media_video': media_path + 'video/',
+      'media_video_origin': origin_media_path + 'video/',
+      'media_other': media_path + 'other/',
+      'media_refer': media_path + 'refer/',
+      'media_image': media_path + 'image/',
+      'media_temp': media_path + 'temp/',
+      'media_file': media_path + 'file/',
+      'trans_origin': trans_server_root + media_path + 'origin/',
+      'trans_video': trans_server_root + media_path + 'video/',
+      'storage_path': storage_server_root + media_path,
+      'storage_origin': storage_server_root + media_path + 'origin/',
+      'storage_video': storage_server_root + media_path + 'video/',
+      'storage_file': storage_server_root + media_path + 'file/',
+      'url_prefix': url_prefix,
+      'url_origin': url_prefix + 'origin/',
+      'url_video': url_prefix + 'video/',
+      'url_video_origin': origin_url_prefix + 'video/',
+      'url_other': url_prefix + 'other/',
+      'url_refer': url_prefix + 'refer/',
+      'url_image': url_prefix + 'image/',
+      'url_temp': url_prefix + 'temp/',
+      'url_file': url_prefix + 'file/',
+      'cdn_prefix': cdn_url,
+      'cdn_video': cdn_url + 'video/',
+      'cdn_video_origin': origin_cdn_url + 'video/',
+      'cdn_other': cdn_url + 'other/',
+      'cdn_refer': cdn_url + 'refer/',
+      'cdn_image': cdn_url + 'image/',
+      'cdn_file': cdn_url + 'file/',
+      'content_path': content_path,
+      'content_origin': content_path + 'origin/',
+      'content_video': content_path + 'video/',
+      'content_video_origin': origin_content_path + 'video/',
+      'content_other': content_path + 'other/',
+      'content_refer': content_path + 'refer/',
+      'content_image': content_path + 'image/',
+      'content_temp': content_path + 'temp/',
+      'content_file': content_path + 'file/',
+    }
   }
 }
 
