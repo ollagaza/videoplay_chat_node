@@ -59,6 +59,6 @@ const ServiceConfigClass = class {
   }
 }
 
-const service_config = new ServiceConfigClass()
+const ServiceConfig = new ServiceConfigClass()
 
-export default service_config
+export default ServiceConfig
