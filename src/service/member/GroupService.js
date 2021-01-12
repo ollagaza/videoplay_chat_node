@@ -779,7 +779,9 @@ const GroupServiceClass = class {
     const group_profile = JSON.parse(group_info.profile);
     group_profile.image_path = ServiceConfig.get('static_storage_prefix') + group_profile.image;
     group_info.profile = JSON.stringify(group_profile);
-    group_info.profile_image_path = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
+    if (group_info.profile_image_path) {
+      group_info.profile_image_path = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
+    }
     const group_member_model = this.getGroupMemberModel(database)
     const group_summary = await group_member_model.getGroupMemberSummary(group_seq)
     return {
