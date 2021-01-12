@@ -175,7 +175,7 @@ const SyncServiceClass = class {
         } catch (error) {
           log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
         }
-        this.moveOriginFileToArchive(directory_info.media_origin, true, operation_info.content_id)
+        this.moveOriginFileToArchive(directory_info.media_origin, operation_info.content_id, log_info)
       }
     }
     if (analysis_status === 'Y') {
@@ -204,17 +204,17 @@ const SyncServiceClass = class {
     return true
   }
 
-  moveOriginFileToArchive = (origin_directory, content_id) => {
+  moveOriginFileToArchive = (origin_directory, content_id, log_info) => {
     (
       async (origin_directory, content_id) => {
         try {
           const request_result = await CloudFileService.requestMoveToArchive(origin_directory, true, content_id)
-          log.debug(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - origin', `file_path: ${origin_directory}`, request_result)
+          log.debug(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, request_result)
         } catch (error) {
-          log.error(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - origin', `file_path: ${origin_directory}`, error)
+          log.error(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, error)
         }
       }
-    )(origin_directory, content_id)
+    )(origin_directory, content_id, log_info)
   }
 
   sendAnalysisCompleteMessage = (operation_info) => {
