@@ -67,7 +67,7 @@ export default class GroupMemberModel extends MySQLModel {
     return params
   }
 
-  createGroupMember = async (group_info, member_info, grade, max_storage_size, status = null) => {
+  createGroupMember = async (group_info, member_info, grade, max_storage_size, status = null, answer = null) => {
     const group_member_info = {
       group_seq: group_info.seq,
       member_seq: member_info.seq,
@@ -76,7 +76,8 @@ export default class GroupMemberModel extends MySQLModel {
       used_storage_size: 0,
       grade: grade,
       status: status ? status : 'Y',
-      join_date: Util.getCurrentTimestamp()
+      join_date: Util.getCurrentTimestamp(),
+      join_answer: answer,
     }
     const create_params = this.getParams(group_member_info)
     const group_member_seq = await this.create(create_params, 'seq')

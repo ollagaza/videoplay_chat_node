@@ -1161,11 +1161,18 @@ const GroupServiceClass = class {
     return result_list
   }
 
-  requestJoinGroup = async (group_seq, member_info) => {
+  requestJoinGroup = async (database, group_seq, member_info, params) => {
     const group_model = this.getGroupModel()
     const group_info = await group_model.getGroupInfo(group_seq)
+    const grade_model = this.getGroupGradeModel(database)
+    const grade_list = await grade_model.getGroupGradeListWithGroupSeq(group_seq)
+    const grade = grade_list ? grade_list[0].grade : '1';
+
     const group_member_model = this.getGroupMemberModel()
-    return await group_member_model.createGroupMember(group_info, member_info, this.MEMBER_GRADE_NORMAL, null, this.MEMBER_STATUS_JOIN)
+    const group_join_member_state = group_info.group_join_way === 1 ? this.MEMBER_STATUS_JOIN : 'Y';
+    const is_join_answer = params.quest;
+
+    return await group_member_model.createGroupMember(group_info, member_info, grade, null, group_join_member_state, is_join_answer)
   }
 
   confirmJoinGroup = async (group_member_info, group_member_seq) => {

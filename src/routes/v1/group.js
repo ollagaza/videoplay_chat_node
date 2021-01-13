@@ -292,8 +292,7 @@ routes.get('/open', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res)
 
 routes.post('/open/:group_seq(\\d+)/join', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { group_seq, member_info } = await checkGroupAuth(DBMySQL, req, false, true)
-  const result = await GroupService.requestJoinGroup(group_seq, member_info)
-
+  const result = await GroupService.requestJoinGroup(DBMySQL, group_seq, member_info, req.body)
   const output = new StdObject()
   output.add('result', result)
   res.json(output)
