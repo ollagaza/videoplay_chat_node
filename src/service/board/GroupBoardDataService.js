@@ -58,9 +58,9 @@ const GroupBoardDataServiceClass = class {
     return board_data
   }
 
-  getBoardCommentList = async (database, board_data_seq) => {
+  getBoardCommentList = async (database, board_data_seq, member_seq) => {
     const model = this.getGroupBoardCommentModel(database)
-    const comment_list = await model.getBoardCommentList(board_data_seq)
+    const comment_list = await model.getBoardCommentList(board_data_seq, member_seq)
 
     for(let cnt = 0; cnt < comment_list.length; cnt++) {
       if (comment_list[cnt].member_profile_image) {
@@ -73,6 +73,16 @@ const GroupBoardDataServiceClass = class {
   getBoardDataCount = async (database, group_seq, menu_seq) => {
     const model = this.getGroupBoardDataModel(database)
     return await model.getGroupBoardDataCount(group_seq, menu_seq)
+  }
+
+  getTemporarilyList = async (database, group_seq, member_seq) => {
+    const model = this.getGroupBoardDataModel(database)
+    const cnt = await model.getTemporarilyCnt(group_seq, member_seq)
+    const list = await model.getTemporarilyList(group_seq, member_seq)
+    return {
+      temporarily_cnt: cnt,
+      temporarily_list: list
+    }
   }
 
   CreateUpdateBoardComment = async (database, comment_data) => {
@@ -105,6 +115,16 @@ const GroupBoardDataServiceClass = class {
     return await model.updateBoardViewCnt(board_data_seq);
   }
 
+  updateBoardReCommendCnt = async (database, board_data_seq, type = null) => {
+    const model = this.getGroupBoardDataModel(database)
+    return await model.updateBoardRecommendCnt(board_data_seq, type);
+  }
+
+  updateBoardCommentReCommendCnt = async (database, comment_seq, type = null) => {
+    const model = this.getGroupBoardCommentModel(database)
+    return await model.updateBoardCommentRecommendCnt(comment_seq, type);
+  }
+
   DeleteComment = async (database, board_data_seq, comment_seq) => {
     const model = this.getGroupBoardCommentModel(database)
     const result = await model.DeleteComment(comment_seq)
@@ -119,6 +139,16 @@ const GroupBoardDataServiceClass = class {
     await model.DeleteBoardData(board_seq)
     await model.updateParentDataSubject(board_seq)
     return await model.updateParentDataSubject(board_seq)
+  }
+
+  ChangeBoardToNotice = async (database, board_data_seq, notice_num) => {
+    const model = this.getGroupBoardDataModel(database)
+    return await model.ChangeBoardToNotice(board_data_seq, notice_num)
+  }
+
+  MoveBoardData = async (database, board_data_seq, board_seq, board_header_text) => {
+    const model = this.getGroupBoardDataModel(database)
+    return await model.MoveBoardData(board_data_seq, board_seq, board_header_text)
   }
 
   getGroupBoardOpenTopList = async (database, group_seq) => {

@@ -11,18 +11,19 @@ export default class GroupBoardCommentModel extends MySQLModel {
     this.selectable_fields = ['*']
   }
 
-  getBoardCommentList = async (board_data_seq) => {
-    const oKnex = this.database.select(['root.*',  'mem.profile_image_path as member_profile_image'])
-      .from(`${this.table_name} as root`)
-      .leftOuterJoin(`${this.table_name} as parent`, {'parent.parent_seq': 'root.seq'})
-      .innerJoin('member as mem', { 'mem.seq': 'root.member_seq' })
-      .where((query) => {
-        query.where('root.board_data_seq', board_data_seq)
-        // query.andWhere('root.status', 'Y')
+  getBoardCommentList = async (board_data_seq, member_seq) => {
+    const oKnex = this.database.select([`${this.table_name}.*`,  'mem.profile_image_path as member_profile_image', 'recommend.regist_date as recommend_regist_date'])
+      .from(this.table_name)
+      .innerJoin('member as mem', { 'mem.seq': 'member_seq' })
+      .leftOuterJoin('board_comment_recommend as recommend', (query) => {
+        query.on('recommend.board_comment_seq', 'board_comment.seq')
+        query.andOnVal('recommend.member_seq', member_seq)
       })
-      .distinct()
-      .orderBy([{ column: 'root.parent_seq', order: 'asc' }, { column: 'root.seq', order: 'desc' }])
-
+      .where((query) => {
+        query.where('board_comment.board_data_seq', board_data_seq)
+        query.andWhere('status', 'Y')
+      })
+      .orderBy([{column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'desc'}])
     return oKnex
   }
 
@@ -39,6 +40,10 @@ export default class GroupBoardCommentModel extends MySQLModel {
       .on('query', data => log.debug(this.log_prefix, 'CreateUpdateBoardData', data.sql))
 
     return result.shift()
+  }
+
+  updateBoardCommentRecommendCnt = async (comment_seq, type) => {
+    return this.update({ seq: comment_seq }, { recommend_cnt: this.database.raw(`recommend_cnt + ${type ? 1 : -1}`) })
   }
 
   DeleteComment = async (comment_seq) => {
