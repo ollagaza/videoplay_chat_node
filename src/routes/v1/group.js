@@ -25,7 +25,11 @@ const getGroupMemberSeq = (request) => Util.parseInt(request.params.group_member
 routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
-  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq)
+  let is_active_only = true;
+  if (req.query.all_list === 'true') {
+    is_active_only = false;
+  }
+  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, is_active_only)
 
   const output = new StdObject()
   output.add('member_group_list', member_group_list)
