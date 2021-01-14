@@ -23,6 +23,20 @@ routes.get('/getboarddatadetail/:board_data_seq(\\d+)', Auth.isAuthenticated(Rol
   res.json(output);
 }))
 
+routes.get('/getpreviousnextview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const output = new StdObject()
+  const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, req)
+  output.adds(result)
+  let board_data = null;
+  if (req.query.type === 'previous') {
+    board_data = _.findLast(result.data);
+  } else {
+    board_data = result.data[0];
+  }
+  output.add('board_detail', await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data.seq))
+  res.json(output);
+}))
+
 routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
   const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, req)

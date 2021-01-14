@@ -29,6 +29,25 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.findOne({ board_seq: board_data.board_seq }, ['board_data_num'], { name: 'board_data_num', direction: 'desc' })
   }
 
+  getBoardNoticeCount = async (group_seq, board_seq) => {
+    const oKnex = this.database.select('*')
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .andWhere('is_notice', '1')
+      .andWhere('status', 'Y')
+      .unionAll([
+        this.database.select('*')
+          .from(this.table_name)
+          .where('group_seq', group_seq)
+          .andWhere('is_notice', '2')
+          .andWhere('board_seq', board_seq)
+          .andWhere('status', 'Y')
+      ])
+
+    const list = await oKnex;
+    return list.length
+  }
+
   getBoardDataPagingList = async (group_seq, board_seq, paging, order) => {
     let oKnex = null;
     if (baseutil.parseInt(paging.cur_page) === 1) {
@@ -60,7 +79,7 @@ export default class GroupBoardDataModel extends MySQLModel {
         .andWhere('board_seq', board_seq)
         .orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'desc'}])
     }
-    return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page)
+    return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
 
   getBoardDataDetail = async (board_data_seq) => {

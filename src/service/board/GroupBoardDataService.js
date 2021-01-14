@@ -40,11 +40,21 @@ const GroupBoardDataServiceClass = class {
     paging.no_paging = 'N'
 
     const model = this.getGroupBoardDataModel(database)
-    const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
-    for(let cnt = 0; cnt < board_list.length; cnt++) {
-      board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
+    if (paging.cur_page === 1) {
+      const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
+      for (let cnt = 0; cnt < board_list.length; cnt++) {
+        board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
+      }
+      return board_list
+    } else {
+      const notice_count = await model.getBoardNoticeCount(group_seq, board_seq)
+      paging.start_count = (paging.list_count - notice_count) + 1;
+      const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
+      for (let cnt = 0; cnt < board_list.length; cnt++) {
+        board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
+      }
+      return board_list
     }
-    return board_list
   }
 
   getBoardDataDetail = async (database, board_data_seq) => {
@@ -89,8 +99,11 @@ const GroupBoardDataServiceClass = class {
     const model = this.getGroupBoardCommentModel(database)
     const result = await model.CreateUpdateBoardComment(comment_data)
     if (result.affectedRows === 1) {
-      const model = this.getGroupBoardDataModel(database)
-      await model.updateBoardCommentCnt(comment_data.board_data_seq, '+');
+      const board_model = this.getGroupBoardDataModel(database)
+      await board_model.updateBoardCommentCnt(comment_data.board_data_seq, '+');
+      if (!comment_data.origin_seq) {
+        await model.updateBoardCommentOriginSeq(result.insertId)
+      }
     }
     return result;
   }

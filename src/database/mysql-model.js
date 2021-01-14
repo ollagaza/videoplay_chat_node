@@ -198,11 +198,13 @@ export default class MysqlModel {
     return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count, pages.no_paging)
   }
 
-  async queryPaginated (oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
+  async queryPaginated (oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n', start_count = 0) {
     // 강제 형변환
     list_count = parseInt(list_count)
     cur_page = parseInt(cur_page)
     page_count = parseInt(page_count)
+    start_count = parseInt(start_count)
+    const offset_start = parseInt(start_count != 0 ? start_count : list_count)
 
     const use_paging = (no_paging && no_paging.toLowerCase() !== 'y')
 
@@ -211,7 +213,7 @@ export default class MysqlModel {
     if (use_paging) {
       oDataListKnex
         .limit(list_count)
-        .offset(list_count * (cur_page - 1))
+        .offset(offset_start * (cur_page - 1))
     }
 
     // 갯수와 데이터를 동시에 얻기
@@ -224,20 +226,22 @@ export default class MysqlModel {
       cur_page = 1
     }
 
+    const calc_total_count = total_count + (start_count !== 0 ? list_count - start_count : 0)
+
     // 번호 매기기
-    let virtual_no = total_count - (cur_page - 1) * list_count
+    let virtual_no = calc_total_count - (cur_page - 1) * list_count
     for (let i = 0; i < data.length; i++) {
       data[i]['_no'] = virtual_no
       virtual_no--
     }
 
-    const total_page = Math.ceil(total_count / list_count) || 1
+    const total_page = Math.ceil(calc_total_count / list_count) || 1
 
     return {
-      total_count,
+      calc_total_count,
       data,
       total_page,
-      page_navigation: new PageHandler(total_count, total_page, cur_page, page_count, list_count)
+      page_navigation: new PageHandler(calc_total_count, total_page, cur_page, page_count, list_count)
     }
   }
 
