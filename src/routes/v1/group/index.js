@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { Router } from 'express'
 import Auth from '../../../middlewares/auth.middleware'
 import Util from '../../../utils/baseutil'
@@ -6,9 +7,8 @@ import Role from '../../../constants/roles'
 import Wrap from '../../../utils/express-async'
 import StdObject from '../../../wrapper/std-object'
 import DBMySQL from '../../../database/knex-mysql'
-import GroupService from '../../../service/member/GroupService'
-import _ from "lodash";
 import baseutil from "../../../utils/baseutil";
+import GroupService from '../../../service/group/GroupService'
 import OperationFolderService from "../../../service/operation/OperationFolderService";
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
 import OperationDataService from "../../../service/operation/OperationDataService";

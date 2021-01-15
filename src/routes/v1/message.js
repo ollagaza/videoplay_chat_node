@@ -5,7 +5,7 @@ import DBMySQL from '../../database/knex-mysql'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import MessageService from '../../service/mypage/MessageService'
-import GroupService from "../../service/member/GroupService";
+import GroupService from "../../service/group/GroupService";
 
 const routes = Router()
 

@@ -8,7 +8,7 @@ import log from '../../libs/logger'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
 import OperationService from '../../service/operation/OperationService'
-import GroupService from '../../service/member/GroupService'
+import GroupService from '../../service/group/GroupService'
 import MemberService from '../../service/member/MemberService'
 
 const routes = Router()

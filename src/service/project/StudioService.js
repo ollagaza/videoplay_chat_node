@@ -8,7 +8,7 @@ import StdObject from '../../wrapper/std-object'
 import SequenceModel from '../../models/sequence/SequenceModel'
 import Constants from '../../constants/constants'
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
-import GroupService from '../member/GroupService'
+import GroupService from '../group/GroupService'
 import DBMySQL from '../../database/knex-mysql'
 import VacsService from '../vacs/VacsService'
 

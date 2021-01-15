@@ -9,7 +9,7 @@ import StdObject from '../../../wrapper/std-object'
 import DBMySQL from '../../../database/knex-mysql'
 import GroupBoardDataService from '../../../service/board/GroupBoardDataService'
 import GroupReCommendService from "../../../service/board/GroupReCommendService"
-import GroupService from "../../../service/member/GroupService";
+import GroupService from "../../../service/group/GroupService";
 
 const routes = Router()
 

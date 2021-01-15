@@ -12,7 +12,7 @@ import MentoringService from '../../service/mentoring/MentoringService'
 import FollowService from '../../service/follow/FollowService'
 import OperationDataService from '../../service/operation/OperationDataService'
 import ServiceConfig from '../../service/service-config'
-import GroupService from '../../service/member/GroupService'
+import GroupService from '../../service/group/GroupService'
 import ContentCountService from '../../service/member/ContentCountService'
 
 const routes = Router()

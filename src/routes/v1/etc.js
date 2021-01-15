@@ -6,7 +6,7 @@ import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../../service/service-config'
-import GroupService from '../../service/member/GroupService'
+import GroupService from '../../service/group/GroupService'
 import ContactUsService from '../../service/etc/ContactUsService'
 import EditorService from '../../service/etc/EditorService'
 import baseutil from "../../utils/baseutil";

@@ -29,7 +29,7 @@ import socketManager from '../../service/socket-manager'
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
 import FTP from '../../libs/ftp'
 import OperationFolderService from '../../service/operation/OperationFolderService'
-import group_service from "../../service/member/GroupService";
+import group_service from "../../service/group/GroupService";
 import sendmail from '../../libs/send-mail'
 import SendMailService from "../../service/etc/SendMailService";
 
