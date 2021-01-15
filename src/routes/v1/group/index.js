@@ -1,18 +1,18 @@
 import { Router } from 'express'
-import Auth from '../../middlewares/auth.middleware'
-import Util from '../../utils/baseutil'
-import log from '../../libs/logger'
-import Role from '../../constants/roles'
-import Wrap from '../../utils/express-async'
-import StdObject from '../../wrapper/std-object'
-import DBMySQL from '../../database/knex-mysql'
-import GroupService from '../../service/member/GroupService'
+import Auth from '../../../middlewares/auth.middleware'
+import Util from '../../../utils/baseutil'
+import log from '../../../libs/logger'
+import Role from '../../../constants/roles'
+import Wrap from '../../../utils/express-async'
+import StdObject from '../../../wrapper/std-object'
+import DBMySQL from '../../../database/knex-mysql'
+import GroupService from '../../../service/member/GroupService'
 import _ from "lodash";
-import baseutil from "../../utils/baseutil";
-import OperationFolderService from "../../service/operation/OperationFolderService";
-import GroupBoardListService from "../../service/board/GroupBoardListService";
-import OperationDataService from "../../service/operation/OperationDataService";
-import GroupBoardDataService from "../../service/board/GroupBoardDataService";
+import baseutil from "../../../utils/baseutil";
+import OperationFolderService from "../../../service/operation/OperationFolderService";
+import GroupBoardListService from "../../../service/board/GroupBoardListService";
+import OperationDataService from "../../../service/operation/OperationDataService";
+import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
 
 const routes = Router()
 
