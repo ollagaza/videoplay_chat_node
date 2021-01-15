@@ -23,7 +23,8 @@ export default class GroupMemberModel extends MySQLModel {
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
-      'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used'
+      'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
+      'group_member.ban_date'
     ]
 
     this.group_invite_select = [
@@ -89,7 +90,7 @@ export default class GroupMemberModel extends MySQLModel {
     return group_member_info
   }
 
-  getGroupMemberQuery = (member_seq = null, group_seq = null, group_member_seq = null, status = null) => {
+  getGroupMemberQuery = (member_seq = null, group_seq = null, group_member_seq = null, status = null, option = null, page = null) => {
     const filter = {}
     if (member_seq) {
       filter['group_member.member_seq'] = member_seq
@@ -103,20 +104,54 @@ export default class GroupMemberModel extends MySQLModel {
     if (status) {
       filter['group_member.status'] = status
     }
+    if (option) {
+      if (option.grade) {
+        filter['group_member.grade'] = option.grade;
+      }
+      if (option.status) {
+        filter['group_member.status'] = option.status;
+      }
+    }
     const in_raw = this.database.raw('group_info.status IN (\'Y\', \'F\')')
+    if (option) {
+      if (option.member_count) {
+        this.member_group_select.push('member_count.count AS member_count');
+      }
+      if (option.manager === '2') {
+        this.member_group_select.push('grade_info.grade AS grade_info');
+      }
+    }
     const query = this.database.select(this.member_group_select)
     query.from('group_member')
     query.innerJoin('group_info', function () {
       this.on('group_info.seq', 'group_member.group_seq')
         .andOn(in_raw)
     })
-    query.where(filter)
+    if (option) {
+      if (option.member_count) {
+        query.joinRaw('LEFT JOIN (SELECT group_seq, COUNT(*) AS count FROM group_member WHERE status != "D" GROUP BY group_seq) AS member_count ON (member_count.group_seq = group_info.seq)')
+      }
+      if (option.manager === '2') {
+        query.joinRaw('LEFT JOIN (SELECT group_seq, CONCAT("[", GROUP_CONCAT(CONCAT("{\\"grade\\": \\"", grade, "\\", \\"grade_text\\": \\"", grade_text, "\\" }")), "]") AS grade FROM group_grade GROUP BY group_seq) AS grade_info ON (grade_info.group_seq = group_info.seq)')
+      }
+    }
 
+    query.where(filter)
+    if (option) {
+      if (option.manager) {
+        if (option.manager === '1') {
+          query.whereRaw('group_member.grade IN ("O", "6")');
+        } else if (option.manager === '2') {
+          query.whereRaw('group_member.grade NOT IN ("O", "6")');
+        }
+      }
+    }
+    query.orderBy('group_member.seq', 'desc')
     return query
   }
 
-  getMemberGroupList = async (member_seq, status = null, private_keys = null) => {
-    const query = this.getGroupMemberQuery(member_seq, null, null, status)
+  getMemberGroupList = async (member_seq, status = null, private_keys = null, filter = null, page = null) => {
+    const query = this.getGroupMemberQuery(member_seq, null, null, status, filter, page)
     const query_result = await query
     return this.getFindResultList(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
@@ -664,5 +699,25 @@ export default class GroupMemberModel extends MySQLModel {
       await this.update(filter, update_params);
     }
     return true;
+  }
+
+  getMemberGroupAllCount = async (member_seq) => {
+    const filter = {
+      member_seq: member_seq
+    }
+    const select_fields = []
+    select_fields.push(this.database.raw('COUNT(*) AS total_count'))
+    select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade NOT IN (\'O\', \'6\'), 1, 0)) AS mygroup_count'))
+    select_fields.push(this.database.raw('SUM(IF(`status` = \'J\' and grade NOT IN (\'O\', \'6\'), 1, 0)) AS join_wait_count'))
+    select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade IN (\'O\', \'6\'), 1, 0)) AS manage_count'))
+    select_fields.push(this.database.raw('SUM(IF(`status` = \'D\', 1, 0)) AS ban_count'))
+    const query = this.database.select(select_fields)
+    query.from(this.table_name)
+    query.where(filter)
+    query.first()
+
+    const query_result = await query
+    log.debug(this.log_prefix, '[getMemberGroupAllCount]', query_result)
+    return query_result
   }
 }

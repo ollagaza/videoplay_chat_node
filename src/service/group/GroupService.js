@@ -250,11 +250,11 @@ const GroupServiceClass = class {
     return await group_member_model.createGroupMember(group_info, member_info, grade, max_storage_size)
   }
 
-  getMemberGroupList = async (database, member_seq, is_active_only = true) => {
+  getMemberGroupList = async (database, member_seq, is_active_only = true, filter = null, page = null) => {
     log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
     const group_member_model = this.getGroupMemberModel(database)
-    const group_member_list = await group_member_model.getMemberGroupList(member_seq, status)
+    const group_member_list = await group_member_model.getMemberGroupList(member_seq, status, null, filter, page)
     for (let i = 0; i < group_member_list.length; i++) {
       const group_member_info = group_member_list[i]
       if (group_member_info.profile_image_path) {
@@ -1292,6 +1292,12 @@ const GroupServiceClass = class {
       }
     }
     return await group_member_model.updateMemberContentsInfo(group_seq, target_info)
+  }
+
+  getMemberGroupAllCount = async (database, member_seq) => {
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_summary = await group_member_model.getMemberGroupAllCount(member_seq)
+    return group_summary;
   }
 }
 

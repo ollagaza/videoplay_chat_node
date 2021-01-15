@@ -29,7 +29,17 @@ routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   if (req.query.all_list === 'true') {
     is_active_only = false;
   }
-  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, is_active_only)
+  const filter = {
+    status: req.query.status ? req.query.status : null,
+    grade: req.query.grade ? req.query.grade :null,
+    manager: req.query.manager ? req.query.manager : null,
+    member_count: req.query.member_count ? true : false,
+  };
+  const page = {
+    limit: req.query.limit ? req.query.limit : null,
+    page: req.query.page ? req.query.page : null,
+  }
+  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, is_active_only, filter, page)
 
   const output = new StdObject()
   output.add('member_group_list', member_group_list)
@@ -569,6 +579,16 @@ routes.get('/:group_seq(\\d+)/OpenBoardList', Auth.isAuthenticated(Role.DEFAULT)
   const group_open_vid = await GroupBoardDataService.getGroupBoardOpenTopList(DBMySQL, group_seq);
   const output = new StdObject()
   output.add('board_list', group_open_vid)
+  res.json(output)
+}))
+
+routes.get('/membergroupallcount', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
+  req.accepts('application/json')
+  const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
+  const member_group_count = await GroupService.getMemberGroupAllCount(DBMySQL, member_seq)
+
+  const output = new StdObject()
+  output.add('group_all_count', member_group_count)
   res.json(output)
 }))
 export default routes
