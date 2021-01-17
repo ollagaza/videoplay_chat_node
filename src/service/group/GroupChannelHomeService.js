@@ -10,6 +10,8 @@ import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 import GroupGradeModel from '../../database/mysql/group/GroupGradeModel'
 import GroupChannelHomeModel from "../../database/mysql/group/GroupChannelHomeModel"
 import {OperationClipModel} from '../../database/mongodb/OperationClip'
+import Util from "../../utils/baseutil";
+import ServiceConfig from "../service-config";
 
 const GroupChannelHomeServiceClass = class {
   constructor() {
@@ -82,7 +84,14 @@ const GroupChannelHomeServiceClass = class {
 
   getMyGroupNewNews = async (database, arr_group_seq) => {
     const model = this.getGroupChannelHomeModel(database)
-    const result = await model.getMyGroupNewNews(arr_group_seq)
+    const result = [];
+    for (let cnt = 0; cnt < arr_group_seq.length; cnt++) {
+      const data = await model.getMyGroupNewNews(arr_group_seq[cnt])
+      if (data.length > 0) {
+        data.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), data.profile_image_path)
+        result.push(data)
+      }
+    }
     return result
   }
 
@@ -92,10 +101,21 @@ const GroupChannelHomeServiceClass = class {
       { column: 'admin_sort', order: 'asc' },
       { column: 'total_count', order: 'desc' }
     ]
-    let result = await model.getRecommendGroupList(order, limit)
-    if (result.length === 0) {
-      result = await model.getRecommendGroupListOtherDay(order, limit);
+    let group_seqs = await model.getRecommendGroupList(order, limit)
+    if (group_seqs.length === 0) {
+      group_seqs = await model.getRecommendGroupListOtherDay(order, limit);
     }
+
+    const result = [];
+    for (let cnt = 0; cnt < group_seqs.length; cnt++) {
+      const group_seq = group_seqs[cnt].group_seq
+      const group_info = await model.getRecommendGroupInfo(group_seq)
+      group_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
+      const operation_list = await model.getRecommendOperationList(group_seq, 3)
+      const board_list = await model.getRecommendBoardList(group_seq, 3)
+      result.push({ group_info, operation_list, board_list })
+    }
+
     return result
   }
 
@@ -107,6 +127,26 @@ const GroupChannelHomeServiceClass = class {
   getOpenBoardTop5 = async (database) => {
     const model = this.getGroupChannelHomeModel(database)
     return model.getOpenBoardTop5()
+  }
+
+  getCategoryList = async (database, menu_id) => {
+    const result = []
+    const model = this.getGroupChannelHomeModel(database)
+    const group_infos = await this.getCategoryGroupInfo(database, menu_id, 4)
+
+    for (let cnt = 0; cnt < group_infos.length; cnt++) {
+      const group_info = group_infos[cnt]
+      group_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
+      const operation_list = await model.getRecommendOperationList(group_info.seq, 4)
+      result.push({ group_info, operation_list })
+    }
+
+    return result
+  }
+
+  getCategoryGroupInfo = async (database, menu_id, limit = null) => {
+    const model = this.getGroupChannelHomeModel(database)
+    return model.getCategoryGroupInfo(menu_id, limit);
   }
 
   GroupDataCounting = async () => {

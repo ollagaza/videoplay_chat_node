@@ -17,19 +17,34 @@ routes.get('/test', Wrap(async (req, res) => {
   res.end()
 }))
 
-routes.get('/', Wrap(async (req, res) => {
+routes.get('/:menu_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  // const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false)
+  let menu_id = req.params.menu_id
+  const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false)
   const output = new StdObject()
-  output.add('treatlist', await GroupChannelHomeService.getTreatmentList(DBMySQL));
+  const treatlist = await GroupChannelHomeService.getTreatmentList(DBMySQL)
+  output.add('treatlist', treatlist);
   const my_group_list = await GroupService.getMemberGroupList(DBMySQL, 1, true)
   output.add('my_group_list', my_group_list)
   const arr_group_seq = []
   Object.keys(my_group_list).filter(item => arr_group_seq.push(my_group_list[item].group_seq))
   output.add('my_group_new', await GroupChannelHomeService.getMyGroupNewNews(DBMySQL, arr_group_seq))
   output.add('recommend_group_list', await GroupChannelHomeService.getRecommendGroupList(DBMySQL, 3))
+  if (menu_id === 'all_medical') {
+    menu_id = treatlist[0].code;
+  }
+  output.add('category_group_list', await GroupChannelHomeService.getCategoryList(DBMySQL, menu_id))
   output.add('open_operation_top5', await GroupChannelHomeService.getOpenOperationTop5(DBMySQL))
   output.add('open_board_top5', await GroupChannelHomeService.getOpenBoardTop5(DBMySQL))
+  res.json(output)
+}))
+
+routes.get('/getcategorygrouplist/:menu_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  let menu_id = req.params.menu_id
+  const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false)
+  const output = new StdObject()
+  output.add('category_group_list', await GroupChannelHomeService.getCategoryList(DBMySQL, menu_id))
   res.json(output)
 }))
 

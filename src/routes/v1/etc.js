@@ -11,6 +11,7 @@ import ContactUsService from '../../service/etc/ContactUsService'
 import EditorService from '../../service/etc/EditorService'
 import baseutil from "../../utils/baseutil";
 import SendMailService from "../../service/etc/SendMailService";
+import GroupBoardDataService from "../../service/board/GroupBoardDataService";
 
 const routes = Router()
 

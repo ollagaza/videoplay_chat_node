@@ -1299,6 +1299,10 @@ const GroupServiceClass = class {
     const group_summary = await group_member_model.getMemberGroupAllCount(member_seq)
     return group_summary;
   }
+  GroupMemberCountSync = async (database) => {
+    const group_model = this.getGroupModel(database)
+    await group_model.GroupMemberCountSync()
+  }
 }
 
 const group_service = new GroupServiceClass()

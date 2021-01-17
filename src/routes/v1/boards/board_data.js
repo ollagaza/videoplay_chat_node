@@ -199,4 +199,14 @@ routes.put('/update_comment_recommend/:board_data_seq(\\d+)/:comment_seq(\\d+)',
   res.json(output);
 }))
 
+routes.post('/:group_seq(\\d+)/:board_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_seq = req.params.group_seq
+  const board_seq = req.params.board_seq
+  const board_file_list = await GroupBoardDataService.uploadFile(group_seq, board_seq, req, res)
+  const output = new StdObject()
+  output.add('board_file_list', board_file_list)
+  res.json(output)
+}))
+
+
 export default routes

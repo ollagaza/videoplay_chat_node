@@ -26,14 +26,14 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .from('group_info')
       .innerJoin('operation_data as op_data', 'op_data.group_seq', 'group_info.seq')
       .where('group_info.group_type', 'G')
-      .whereIn('group_info.seq', arr_group_seq)
+      .andWhere('group_info.seq', arr_group_seq)
       .andWhere('op_data.reg_date', '>=', this.database.raw('date_sub(now(), interval 7 day)'))
       .unionAll([
         this.database.select(['group_info.*', 'board.subject as title', this.database.raw('\'board\' as gubun'), 'board.write_name as name', 'board.regist_date as regist_date'])
           .from('group_info')
           .innerJoin('board_data as board', 'board.group_seq', 'group_info.seq')
           .where('group_info.group_type', 'G')
-          .whereIn('group_info.seq', arr_group_seq)
+          .andWhere('group_info.seq', arr_group_seq)
           .andWhere('board.regist_date', '>=', this.database.raw('date_sub(now(), interval 7 day)'))
       ])
       .orderBy([{column: 'regist_date', order: 'desc'}])
@@ -74,11 +74,59 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getRecommendGroupList = async (order, limit) => {
-    return this.find(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(now(), \'%y%m%d\')'), null, order, null, limit);
+    return this.find(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(now(), \'%y%m%d\')'))
   }
 
   getRecommendGroupListOtherDay = async (order, limit) => {
-    return this.find(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(date_sub(now(), interval 1 day), \'%y%m%d\')'), null, order, null, limit);
+    return this.find(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(date_sub(now(), interval 1 day), \'%y%m%d\')'))
+  }
+
+  getRecommendGroupInfo = async (group_seq) => {
+    const oQuery = this.database.select('*')
+      .from('group_info')
+      .where('seq', group_seq)
+
+    return oQuery.first()
+  }
+
+  getRecommendOperationList = async (group_seq, limit) => {
+    const oQuery = this.database.select('*')
+      .from('operation_data')
+      .where('group_seq', group_seq)
+      .andWhere(this.database.raw('date_format(reg_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
+
+    if (limit) {
+      oQuery.limit(limit)
+    }
+    return oQuery
+  }
+
+  getRecommendBoardList = async (group_seq, limit) => {
+    const oQuery = this.database.select('*')
+      .from('board_data')
+      .where('group_seq', group_seq)
+      .andWhere(this.database.raw('date_format(regist_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
+
+    if (limit) {
+      oQuery.limit(limit)
+    }
+    return oQuery
+  }
+
+  getCategoryGroupInfo = async (menu_id, limit) => {
+    const oQuery = this.database.select('*')
+      .from('group_info')
+      .innerJoin('member', (query) => {
+        query.on('member.seq', 'group_info.member_seq')
+        query.andOn(this.database.raw(`JSON_SEARCH(JSON_EXTRACT(member.treatcode, '$[*].code'), 'all', '${menu_id}') IS NOT NULL`))
+      })
+      .where('group_info.group_type', 'G')
+      .orderBy('group_info.member_count', 'desc')
+
+    if (limit) {
+      oQuery.limit(limit)
+    }
+    return oQuery
   }
 
   CreateGroupRecommendListCount = async (group_counting) => {

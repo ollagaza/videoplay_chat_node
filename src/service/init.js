@@ -10,6 +10,7 @@ import MongoDataService from './common/MongoDataService'
 import Util from '../utils/baseutil'
 import log from '../libs/logger'
 import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
+import GroupInfoMemberCountSync from "../scheduler/GroupInfoMemberCountSync";
 
 const initDirectories = async () => {
   await Util.createDirectory(ServiceConfig.get('common_root'))
@@ -31,6 +32,7 @@ export default {
       ReservationEmailScheduler.startSchedule()
       ThreeMonthsEmailDeleteScheduler.startSchedule()
       GroupDataCountingScheduler.startSchedule()
+      GroupInfoMemberCountSync.startSchedule()
     } else {
       VacsScheduler.startSchedule()
     }

@@ -6,6 +6,7 @@ import DBMySQL from "../../database/knex-mysql";
 import GroupBoardDataModel from '../../database/mysql/board/GroupBoardDataModel'
 import GroupBoardCommentModel from '../../database/mysql/board/GroupBoardCommentModel'
 import baseutil from "../../utils/baseutil";
+import logger from "../../libs/logger";
 
 const GroupBoardDataServiceClass = class {
   constructor () {
@@ -169,6 +170,55 @@ const GroupBoardDataServiceClass = class {
   getGroupBoardOpenTopList = async (database, group_seq) => {
     const model = this.getGroupBoardDataModel(database);
     return await model.getGroupBoardOpenTopList(group_seq);
+  }
+
+  uploadFile = async (group_seq, board_seq, request, response) => {
+    logger.debug(this.log_prefix, `{ UPLOAD_ROOT: ${this.UPLOAD_ROOT}, FILE_URL_PREFIX: ${ServiceConfig.get('static_storage_prefix')} }`)
+    const board_info = await this.getBoardDataDetail(DBMySQL, board_seq)
+    const upload_path = `/group_board/${board_info.content_id}/`
+    const upload_directory = `${ServiceConfig.get('media_root')}/${upload_path}`
+    logger.debug(this.log_prefix, '[uploadFile]', `{ board_seq: ${board_seq} }`, upload_directory)
+    if (!(await Util.fileExists(upload_directory))) {
+      await Util.createDirectory(upload_directory)
+    }
+
+    const file_field_name = 'board_data_file'
+    await Util.uploadByRequest(request, response, file_field_name, upload_directory)
+    const upload_file_info = request.file
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
+    }
+    const email_file_list = {
+      file_path: `${upload_path}`,
+      file_original_name: upload_file_info.originalname,
+      file_name: request.new_file_name,
+      file_size: upload_file_info.size,
+      file_type: await Util.getFileType(upload_file_info.path, this.file_name),
+      file_url: `${ServiceConfig.get('static_storage_prefix')}${upload_path}/${request.new_file_name}`
+    }
+    logger.debug(this.log_prefix, '[uploadFile]', `{ board_seq: ${board_seq} }`, 'email_file_list', email_file_list)
+
+    let board_file_lists = JSON.parse(board_info.attach_file)
+
+    if (!board_file_lists) {
+      board_file_lists = []
+      board_file_lists.push(email_file_list);
+    } else {
+      board_file_lists.push(email_file_list);
+    }
+
+    const param = {
+      attach_file: JSON.stringify(board_file_lists),
+    }
+
+    const result = await this.fileUpdateBoardData(DBMySQL, board_seq, param)
+
+    return email_file_list
+  }
+
+  fileUpdateBoardData = async (database, board_data_seq, param) => {
+    const model = this.getGroupBoardDataModel(database)
+    return model.fileUpdateBoardData(board_data_seq, param)
   }
 }
 
