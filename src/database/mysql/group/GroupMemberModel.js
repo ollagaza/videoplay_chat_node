@@ -91,6 +91,8 @@ export default class GroupMemberModel extends MySQLModel {
   }
 
   getGroupMemberQuery = (member_seq = null, group_seq = null, group_member_seq = null, status = null, option = null, page = null) => {
+    console.log('----->', option);
+    if (page) {}
     const filter = {}
     if (member_seq) {
       filter['group_member.member_seq'] = member_seq
@@ -101,15 +103,16 @@ export default class GroupMemberModel extends MySQLModel {
     if (group_seq) {
       filter['group_member.group_seq'] = group_seq
     }
-    if (status) {
-      filter['group_member.status'] = status
-    }
     if (option) {
       if (option.grade) {
         filter['group_member.grade'] = option.grade;
       }
-      if (option.status) {
+      if (option.status !== 'J') {
         filter['group_member.status'] = option.status;
+      }
+    } else {
+      if (status) {
+        filter['group_member.status'] = status
       }
     }
     const in_raw = this.database.raw('group_info.status IN (\'Y\', \'F\')')
@@ -143,6 +146,9 @@ export default class GroupMemberModel extends MySQLModel {
           query.whereRaw('group_member.grade IN ("O", "6")');
         } else if (option.manager === '2') {
           query.whereRaw('group_member.grade NOT IN ("O", "6")');
+        }
+        if (option.status === 'J') {
+          query.whereRaw('group_member.status IN ("J", "C")');
         }
       }
     }
@@ -708,7 +714,7 @@ export default class GroupMemberModel extends MySQLModel {
     const select_fields = []
     select_fields.push(this.database.raw('COUNT(*) AS total_count'))
     select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade NOT IN (\'O\', \'6\'), 1, 0)) AS mygroup_count'))
-    select_fields.push(this.database.raw('SUM(IF(`status` = \'J\' and grade NOT IN (\'O\', \'6\'), 1, 0)) AS join_wait_count'))
+    select_fields.push(this.database.raw('SUM(IF((`status` = \'J\' OR `status` = \'C\') and grade NOT IN (\'O\', \'6\'), 1, 0)) AS join_wait_count'))
     select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade IN (\'O\', \'6\'), 1, 0)) AS manage_count'))
     select_fields.push(this.database.raw('SUM(IF(`status` = \'D\', 1, 0)) AS ban_count'))
     const query = this.database.select(select_fields)

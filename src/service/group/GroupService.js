@@ -1263,7 +1263,7 @@ const GroupServiceClass = class {
 
   groupJoinList = async (database, group_seq, join_info) => {
     const group_member_model = this.getGroupMemberModel(database);
-    const status = join_info.join_type === 'join' ? 'Y' : 'N';
+    const status = join_info.join_type === 'join' ? 'Y' : 'C';
     return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
   }
 
