@@ -428,5 +428,5 @@ const NaverArchiveStorageClass = class {
   }
 }
 
-const naver_archive_storage = new NaverArchiveStorageClass()
-export default naver_archive_storage
+const NaverArchiveStorage = new NaverArchiveStorageClass()
+export default NaverArchiveStorage

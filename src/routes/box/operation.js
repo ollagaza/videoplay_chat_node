@@ -45,9 +45,30 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   const machine_id = req.headers['machine-id']
   const request_body = req.body ? req.body : {}
   const current_date = Util.currentFormattedDate('yyyy-mm-dd HH:MM:ss')
+  const has_operation_name = !!request_body.operation_name
+  let operation_name = null;
+  if (has_operation_name) {
+    const name_list = request_body.operation_name.split('_')
+    if (name_list.length >= 4) {
+      const doctor_name = Util.trim(name_list[0])
+      const pid = Util.trim(name_list[1])
+      const date = Util.trim(name_list[2]).replace(/([\d]{4})([\d]{2})([\d]{2})/g, '$1.$2.$3')
+      const time = Util.trim(name_list[3]).replace(/([\d]{2})([\d]{2})([\d]{2})/g, '$1:$2:$3')
 
-  const operation_name = request_body.operation_name ? request_body.operation_name : `${current_date} [${machine_id}]`
-  const operation_code = request_body.operation_code ? request_body.operation_code : operation_name
+      operation_name = ''
+      if (pid && pid !== '0000') {
+        operation_name = pid + ' '
+      }
+      operation_name += `${doctor_name} ${date} ${time} [${machine_id}]`
+    } else {
+      operation_name = request_body.operation_name
+    }
+  }
+  if (!operation_name) {
+    operation_name = `${current_date} [${machine_id}]`
+  }
+
+  const operation_code = `${machine_id}_${current_date}`
   const operation_date = request_body.operation_date ? request_body.operation_date : current_date.substr(0, 10)
   const hour = request_body.hour ? request_body.hour : current_date.substr(11, 2)
   const minute = request_body.minute ? request_body.minute : current_date.substr(14, 2)
