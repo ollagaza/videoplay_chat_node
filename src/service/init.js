@@ -9,6 +9,7 @@ import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDelete
 import MongoDataService from './common/MongoDataService'
 import Util from '../utils/baseutil'
 import log from '../libs/logger'
+import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
 
 const initDirectories = async () => {
   await Util.createDirectory(ServiceConfig.get('common_root'))
@@ -29,6 +30,7 @@ export default {
       await NaverObjectStorageService.init()
       ReservationEmailScheduler.startSchedule()
       ThreeMonthsEmailDeleteScheduler.startSchedule()
+      GroupDataCountingScheduler.startSchedule()
     } else {
       VacsScheduler.startSchedule()
     }

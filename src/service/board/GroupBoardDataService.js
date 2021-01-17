@@ -34,7 +34,7 @@ const GroupBoardDataServiceClass = class {
     const request_order = request_body.order ? JSON.parse(request_body.order) : null
 
     const paging = {}
-    paging.list_count = request_paging.list_count ? request_paging.list_count : 20
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
     paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
     paging.page_count = request_paging.page_count ? request_paging.page_count : 10
     paging.no_paging = 'N'
@@ -113,7 +113,9 @@ const GroupBoardDataServiceClass = class {
     board_data.content_id = baseutil.getContentId();
 
     const board_data_num = await model.getLastBoardDataNum(board_data)
-    board_data.board_data_num = board_data_num.board_data_num + 1
+    if (board_data_num) {
+      board_data.board_data_num = board_data_num.board_data_num + 1
+    }
 
     const result = await model.CreateUpdateBoardData(board_data)
 

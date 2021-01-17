@@ -5,7 +5,7 @@ import log from '../libs/logger'
 
 const LOG_PREFIX = '[ModelObject]'
 
-const queryGenerator = (database, table_name, selectable_fields, filters = null, columns = null, order = null, group = null) => {
+const queryGenerator = (database, table_name, selectable_fields, filters = null, columns = null, order = null, group = null, limit) => {
   let oKnex = null
   if (!columns) {
     oKnex = database.select(selectable_fields)
@@ -27,6 +27,13 @@ const queryGenerator = (database, table_name, selectable_fields, filters = null,
       oKnex.orderBy(order)
     } else {
       oKnex.orderBy(order.name, order.direction)
+    }
+  }
+  if (limit !== null) {
+    if (limit === 1) {
+      oKnex.first()
+    } else {
+      oKnex.limit(limit)
     }
   }
   return oKnex
@@ -189,8 +196,8 @@ export default class MysqlModel {
       .del()
   }
 
-  queryBuilder = (filters = null, columns = null, order = null, group = null) => {
-    return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group)
+  queryBuilder = (filters = null, columns = null, order = null, group = null, limit) => {
+    return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group, limit)
   }
 
   findPaginated = async (filters = null, columns = null, order = null, group = null, pages = null) => {
@@ -245,15 +252,15 @@ export default class MysqlModel {
     }
   }
 
-  async find (filters = null, columns = null, order = null, group = null) {
-    return this.queryBuilder(filters, columns, order, group)
+  async find (filters = null, columns = null, order = null, group = null, limit = null) {
+    return this.queryBuilder(filters, columns, order, group, limit)
   }
 
-  async findOne (filters = null, columns = null, order = null, group = null) {
-    const oKnex = this.queryBuilder(filters, columns, order, group)
-    oKnex.first()
+  async findOne (filters = null, columns = null, order = null, group = null, limit = 1) {
+    // const oKnex = this.queryBuilder(filters, columns, order, group, limit)
+    // oKnex.first()
 
-    return oKnex
+    return this.queryBuilder(filters, columns, order, group, limit)
   }
 
   getTotalCount = async (filters) => {
