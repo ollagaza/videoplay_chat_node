@@ -107,8 +107,10 @@ export default class GroupMemberModel extends MySQLModel {
       if (option.grade) {
         filter['group_member.grade'] = option.grade;
       }
-      if (option.status !== 'J') {
+      if (option.status !== null && option.status !== 'J') {
         filter['group_member.status'] = option.status;
+      } else {
+        filter['group_member.status'] = status;
       }
     } else {
       if (status) {
