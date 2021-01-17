@@ -118,13 +118,13 @@ const GroupChannelHomeServiceClass = class {
     const operation_anotation_count = await OperationClipModel.getGroupSeqCount()
     Object.keys(operation_anotation_count)
       .forEach((item) => {
-        const data = _.find(group_counting, {group_seq: operation_data_count[item].group_seq})
+        const data = _.find(group_counting, {group_seq: operation_anotation_count[item]._id})
         if (data) {
-          data.total_count += operation_data_count[item].count
-          data.video_anotation = operation_data_count[item].count
+          data.total_count += operation_anotation_count[item].count
+          data.video_anotation = operation_anotation_count[item].count
         } else {
           group_counting.push({
-            group_seq: operation_anotation_count[item].group_seq,
+            group_seq: operation_anotation_count[item]._id,
             total_count: operation_anotation_count[item].count,
             video_anotation: operation_anotation_count[item].count
           })
