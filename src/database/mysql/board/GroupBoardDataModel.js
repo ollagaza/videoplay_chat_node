@@ -160,4 +160,8 @@ export default class GroupBoardDataModel extends MySQLModel {
     param.attach_file_cnt = this.database.raw('attach_file_cnt + 1')
     return this.update({ seq: board_data_seq }, param)
   }
+  fileDeleteBoardData = async (board_data_seq, param) => {
+    param.attach_file_cnt = this.database.raw('attach_file_cnt - 1')
+    return this.update({ seq: board_data_seq }, param)
+  }
 }

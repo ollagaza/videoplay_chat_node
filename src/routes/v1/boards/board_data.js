@@ -208,5 +208,14 @@ routes.post('/:group_seq(\\d+)/:board_seq(\\d+)/file', Auth.isAuthenticated(Role
   res.json(output)
 }))
 
+routes.delete('/:board_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const board_seq = req.params.board_seq
+  const file = req.body.file
+  const result = await GroupBoardDataService.deleteFile(DBMySQL, board_seq, file)
+  const output = new StdObject()
+  output.add('board_file_lists', result)
+  res.json(output)
+}))
+
 
 export default routes

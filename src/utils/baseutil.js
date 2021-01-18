@@ -854,8 +854,8 @@ const storage = multer.diskStorage({
       req.new_file_name = file.originalname
       callback(null, req.new_file_name)
     } else {
-      req.new_file_name = file.originalname
-      cb(null, req.new_file_name)
+      req.new_file_name = 'upload_' + file.originalname
+      callback(null, req.new_file_name)
     }
   },
 })
@@ -1217,46 +1217,6 @@ export default {
         req.write(post_data)
       }
       req.end()
-    })
-  },
-
-  'httpRequestFormData': async (options, post_data, is_https = false) => {
-    return new Promise((resolve, reject) => {
-      let req
-      if (is_https) {
-        req = https.request(options)
-      } else {
-        req = http.request(options)
-      }
-
-      post_data.pipe(req);
-
-      req.on('response', res => {
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          // log.error(res)
-          // return reject(new Error('statusCode=' + res.statusCode));
-        }
-
-        const body = []
-        res.setEncoding('utf8')
-        res.on('data', (chunk) => {
-          body.push(Buffer.from(chunk))
-        })
-        res.on('end', () => {
-          const response_body = Buffer.concat(body).toString()
-          if (res.statusCode < 200 || res.statusCode >= 400) {
-            reject(new StdObject(-1, response_body, res.statusCode))
-          } else {
-            resolve(response_body)
-          }
-        })
-        req.end()
-      })
-
-      req.on('error', err => {
-        log.debug(log_prefix, 'Util.httpRequest', err)
-        reject(err)
-      })
     })
   },
 

@@ -116,6 +116,8 @@ const GroupBoardDataServiceClass = class {
     const board_data_num = await model.getLastBoardDataNum(board_data)
     if (board_data_num) {
       board_data.board_data_num = board_data_num.board_data_num + 1
+    } else {
+      board_data.board_data_num = 1
     }
 
     const result = await model.CreateUpdateBoardData(board_data)
@@ -183,7 +185,7 @@ const GroupBoardDataServiceClass = class {
     }
 
     const file_field_name = 'board_data_file'
-    await Util.uploadByRequest(request, response, file_field_name, upload_directory)
+    await Util.uploadByRequest(request, response, file_field_name, upload_directory, null, false,true)
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
@@ -214,6 +216,20 @@ const GroupBoardDataServiceClass = class {
     const result = await this.fileUpdateBoardData(DBMySQL, board_seq, param)
 
     return email_file_list
+  }
+
+  deleteFile = async (database, board_seq, file) => {
+    const board_info = await this.getBoardDataDetail(database, board_seq)
+    let board_file_lists = JSON.parse(board_info.attach_file)
+    board_file_lists = _.reject(board_file_lists, file)
+    const media_root = ServiceConfig.get('media_root')
+    const file_full_path = `${media_root}${file.file_path}${file.file_name}`
+    await baseutil.deleteFile(file_full_path)
+    const param = {
+      attach_file: JSON.stringify(board_file_lists),
+    }
+    await this.fileUpdateBoardData(DBMySQL, board_seq, param)
+    return board_file_lists
   }
 
   fileUpdateBoardData = async (database, board_data_seq, param) => {
