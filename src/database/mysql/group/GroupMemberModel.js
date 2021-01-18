@@ -91,7 +91,6 @@ export default class GroupMemberModel extends MySQLModel {
   }
 
   getGroupMemberQuery = (member_seq = null, group_seq = null, group_member_seq = null, status = null, option = null, page = null) => {
-    console.log('----->', option);
     if (page) {}
     const filter = {}
     if (member_seq) {
@@ -109,7 +108,7 @@ export default class GroupMemberModel extends MySQLModel {
       }
       if (option.status !== null && option.status !== 'J') {
         filter['group_member.status'] = option.status;
-      } else {
+      } else if (status) {
         filter['group_member.status'] = status;
       }
     } else {
@@ -182,18 +181,19 @@ export default class GroupMemberModel extends MySQLModel {
     const filter = {
       group_seq
     }
+    let status = null
     if (member_type && member_type !== 'all') {
       if (member_type === 'active') {
-        filter['group_member.status'] = 'Y'
+        status = ['Y']
       } else if (member_type === 'pause') {
-        filter['group_member.status'] = 'P'
+        status = ['P']
       } else if (member_type === 'delete') {
-        filter['group_member.status'] = 'D'
+        status = ['D', 'L']
       } else if (member_type === 'invite') {
         filter['group_member.status'] = 'N'
-        filter['group_member.invite_status'] = 'Y'
+        status = ['N']
       } else if (member_type === 'join') {
-        filter['group_member.status'] = 'J'
+        status = ['J']
       }
     }
     if (member_grade && member_grade !== '0') {
@@ -221,6 +221,9 @@ export default class GroupMemberModel extends MySQLModel {
       query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`ban_member_seq` = `submit_member`.`submit_member_seq`)')
     }
     query.where(filter)
+    if (status && status.length > 0) {
+      query.whereIn('group_member.status', status)
+    }
     if (non_admin === 'Y') {
       query.andWhere('group_member.grade', '!=', 'O');
     }
@@ -727,5 +730,36 @@ export default class GroupMemberModel extends MySQLModel {
     const query_result = await query
     log.debug(this.log_prefix, '[getMemberGroupAllCount]', query_result)
     return query_result
+  }
+
+  updateMemberStatus = async (group_seq, ban_info) => {
+    const filter = {
+      group_seq: ban_info.group_seq,
+    }
+    let update_params = {};
+    if (ban_info.status === 'D') {
+      update_params = {
+        status: ban_info.status,
+        ban_reason: ban_info.ban_reason,
+        ban_member_seq: ban_info.ban_member ? ban_info.ban_member : null,
+        ban_date: this.database.raw('NOW()'),
+        modify_date: this.database.raw('NOW()'),
+      }
+    } else if (ban_info.status === 'N') {
+      update_params = {
+        status: ban_info.status,
+        ban_reason: ban_info.ban_reason,
+        ban_member_seq: ban_info.ban_member ? ban_info.ban_member : null,
+        modify_date: this.database.raw('NOW()'),
+      }
+    } else {
+      update_params = {
+        status: ban_info.status,
+        modify_date: this.database.raw('NOW()'),
+      }
+    }
+    filter.seq = ban_info.group_member_seq;
+    await this.update(filter, update_params);
+    return true;
   }
 }

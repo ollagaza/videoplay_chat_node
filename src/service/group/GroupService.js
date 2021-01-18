@@ -1303,6 +1303,10 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database)
     await group_model.GroupMemberCountSync()
   }
+  GroupMemberStatusUpdate = async (database, group_seq, mem_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updateMemberStatus(group_seq, mem_info)
+  }
 }
 
 const group_service = new GroupServiceClass()
