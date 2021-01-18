@@ -36,6 +36,7 @@ routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
     member_count: req.query.member_count ? true : false,
   };
   const page = {
+    orderby: req.query.orderby ? req.query.orderby : null,
     limit: req.query.limit ? req.query.limit : null,
     page: req.query.page ? req.query.page : null,
   }

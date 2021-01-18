@@ -91,7 +91,6 @@ export default class GroupMemberModel extends MySQLModel {
   }
 
   getGroupMemberQuery = (member_seq = null, group_seq = null, group_member_seq = null, status = null, option = null, page = null) => {
-    if (page) {}
     const filter = {}
     if (member_seq) {
       filter['group_member.member_seq'] = member_seq
@@ -153,7 +152,21 @@ export default class GroupMemberModel extends MySQLModel {
         }
       }
     }
-    query.orderBy('group_member.seq', 'desc')
+    if (page) {
+      if (page.orderby === '1') {
+        query.orderBy('group_info.group_name', 'ASC');
+      } else if (page.orderby === '2') {
+        query.orderBy('group_member.join_date', 'DESC');
+      } else if (page.orderby === '3') {
+        query.orderBy('group_info.reg_date', 'DESC');
+      } else if (page.orderby === '4') {
+        query.orderBy('group_member.ban_date', 'DESC');
+      } else {
+        query.orderBy('group_member.seq', 'desc')
+      }
+    } else {
+      query.orderBy('group_member.seq', 'desc')
+    }
     return query
   }
 
