@@ -36,6 +36,7 @@ routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
     member_count: req.query.member_count ? true : false,
   };
   const page = {
+    orderby: req.query.orderby ? req.query.orderby : null,
     limit: req.query.limit ? req.query.limit : null,
     page: req.query.page ? req.query.page : null,
   }
@@ -589,6 +590,18 @@ routes.get('/membergroupallcount', Auth.isAuthenticated(Role.DEFAULT), Wrap(asyn
 
   const output = new StdObject()
   output.add('group_all_count', member_group_count)
+  res.json(output)
+}))
+
+routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const mem_info = req.body.mem_info;
+  const output = new StdObject()
+
+  const result = await GroupService.GroupMemberStatusUpdate(DBMySQL, group_seq, mem_info)
+  output.add('result', result)
+
   res.json(output)
 }))
 export default routes
