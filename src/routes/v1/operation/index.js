@@ -410,24 +410,10 @@ routes.post('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.LO
 }))
 
 routes.delete('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const output = new StdObject()
-  const file_type = req.params.file_type
-  if (file_type !== OperationFileService.TYPE_REFER) {
-    throw new StdObject(-1, '잘못된 요청입니다.', 400)
-  }
-
-  const file_seq_list = req.body.file_seq_list
-  if (!file_seq_list || file_seq_list.length <= 0) {
-    throw new StdObject(-2, '잘못된 요청입니다.', 400)
-  }
   const { operation_info } = await getBaseInfo(req, true, true, true)
-
-  await DBMySQL.transaction(async (transaction) => {
-    const storage_seq = operation_info.storage_seq
-    await OperationFileService.deleteReferFileList(transaction, operation_info, file_seq_list)
-    await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
-  })
-
+  const file_type = req.params.file_type
+  await OperationService.deleteFileInfo(operation_info, file_type, req.body)
+  const output = new StdObject()
   res.json(output)
 }))
 

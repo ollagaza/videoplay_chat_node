@@ -603,9 +603,9 @@ const OperationServiceClass = class {
       }
     )(zip.getEntries())
   }
+
   uploadOperationFileAndUpdate = async (database, request, response, operation_info, file_type, field_name = null) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
-    const storage_seq = operation_info.storage_seq
     let media_directory
     if (file_type !== OperationFileService.TYPE_REFER) {
       media_directory = directory_info.origin
@@ -622,6 +622,8 @@ const OperationServiceClass = class {
     if (file_type === OperationFileService.TYPE_REFER) {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
       url_prefix = directory_info.url_refer
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      await Util.uploadByRequest(request, response, file_field_name, media_directory)
     } else {
       await Util.uploadByRequest(request, response, file_field_name, media_directory)
     }
@@ -631,7 +633,7 @@ const OperationServiceClass = class {
     }
     upload_file_info.new_file_name = request.new_file_name
 
-    let upload_seq = await this.createOperationFileInfo(file_type, operation_info, upload_file_info, storage_seq)
+    let upload_seq = await this.createOperationFileInfo(file_type, operation_info, upload_file_info, request.body)
 
     const file_path = upload_file_info.path
     const file_url = url_prefix + upload_file_info.new_file_name
@@ -642,24 +644,45 @@ const OperationServiceClass = class {
     }
   }
 
-  createOperationFileInfo = async (file_type, operation_info, upload_file_info, storage_seq) => {
+  createOperationFileInfo = async (file_type, operation_info, upload_file_info, request_body) => {
     let upload_seq = null
-    await DBMySQL.transaction(async (transaction) => {
-      if (file_type !== OperationFileService.TYPE_REFER) {
-        upload_seq = await OperationFileService.createVideoFileInfo(transaction, operation_info, upload_file_info, false)
-      } else {
-        upload_seq = await OperationFileService.createReferFileInfo(transaction, operation_info, upload_file_info)
-      }
+    if (file_type !== OperationFileService.TYPE_REFER) {
+      upload_seq = await OperationFileService.createReferFileInfo(null, operation_info, upload_file_info)
+    } else if (file_type !== OperationFileService.TYPE_FILE) {
+      upload_seq = await OperationFileService.createOperationFileInfo(null, operation_info, upload_file_info, request_body)
+    } else {
+      upload_seq = await OperationFileService.createVideoFileInfo(null, operation_info, upload_file_info, false)
+    }
 
-      if (!upload_seq) {
-        throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
-      }
-
-      const storage_size = await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
-      await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
-      await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, operation_info.total_file_size, storage_size);
-    })
+    if (!upload_seq) {
+      throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
+    }
     return upload_seq
+  }
+
+  deleteFileInfo = async (operation_info, file_type, request_body) => {
+    if (file_type === OperationFileService.TYPE_VIDEO) {
+      throw new StdObject(-1, '잘못된 요청입니다.', 400)
+    }
+
+    const file_seq_list = request_body.file_seq_list
+    if (!file_seq_list || file_seq_list.length <= 0) {
+      throw new StdObject(-2, '잘못된 요청입니다.', 400)
+    }
+
+    await DBMySQL.transaction(async (transaction) => {
+      const storage_seq = operation_info.storage_seq
+      if (file_type === OperationFileService.TYPE_REFER) {
+        await OperationFileService.deleteReferFileList(transaction, operation_info, file_seq_list)
+      }
+      await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
+    })
+  }
+
+  updateStorageSize = async (operation_info) => {
+    const storage_size = await new OperationStorageModel().updateUploadFileSize(operation_info.storage_seq, OperationFileService.TYPE_ALL)
+    await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
+    await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, storage_size);
   }
 
   createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0) => {

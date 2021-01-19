@@ -358,6 +358,18 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Role.
   res.json(output)
 }))
 
+routes.put('/:operation_seq(\\d+)/files/upload/complete', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const operation_seq = req.params.operation_seq
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info)
+  const upload_seq = await OperationService.updateStorageSize(DBMySQL, operation_info)
+
+  const output = new StdObject()
+  output.add('upload_seq', upload_seq)
+
+  res.json(output)
+}))
+
 routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const token_info = req.token_info
   const operation_seq = req.params.operation_seq

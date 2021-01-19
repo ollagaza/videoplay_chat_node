@@ -39,4 +39,27 @@ export default class OperationFileModel extends MySQLModel {
       .where('operation_seq', operation_seq)
       .where('file_path', 'LIKE', `${file_path}%`)
   }
+
+  operationFileSummary = async (storage_seq) => {
+    const select = ['COUNT(*) AS total_count', 'SUM(file_size) AS total_size']
+    return await this.findOne({ storage_seq: storage_seq, status: 'Y' }, select)
+  }
+
+  deleteSelectedFiles = async (file_seq_list) => {
+    const query = this.database
+      .select(this.selectable_fields)
+      .from(this.table_name)
+      .whereIn('seq', file_seq_list)
+    const result_list = await query
+    if (!result_list || result_list.length <= 0) {
+      return []
+    }
+
+    await this.database
+      .from(this.table_name)
+      .whereIn('seq', file_seq_list)
+      .del()
+
+    return result_list
+  }
 }
