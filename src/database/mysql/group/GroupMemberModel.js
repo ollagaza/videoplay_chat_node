@@ -133,7 +133,7 @@ export default class GroupMemberModel extends MySQLModel {
     })
     if (option) {
       if (option.member_count) {
-        query.joinRaw('LEFT JOIN (SELECT group_seq, COUNT(*) AS count FROM group_member WHERE status != "D" GROUP BY group_seq) AS member_count ON (member_count.group_seq = group_info.seq)')
+        query.joinRaw('LEFT JOIN (SELECT group_seq, COUNT(*) AS count FROM group_member WHERE status NOT IN ("D", "C", "N", "L") GROUP BY group_seq) AS member_count ON (member_count.group_seq = group_info.seq)')
       }
       if (option.manager === '2') {
         query.joinRaw('LEFT JOIN (SELECT group_seq, CONCAT("[", GROUP_CONCAT(CONCAT("{\\"grade\\": \\"", grade, "\\", \\"grade_text\\": \\"", grade_text, "\\" }")), "]") AS grade FROM group_grade GROUP BY group_seq) AS grade_info ON (grade_info.group_seq = group_info.seq)')
