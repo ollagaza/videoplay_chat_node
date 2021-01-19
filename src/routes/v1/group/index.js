@@ -604,4 +604,17 @@ routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(a
 
   res.json(output)
 }))
+
+routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req)
+  const group_member_seq = getGroupMemberSeq(req)
+
+  console.log(group_seq, group_member_seq);
+  const group_member_info = await GroupService.getGroupMemberInfoDetail(DBMySQL, group_seq, group_member_seq)
+
+  const output = new StdObject()
+  output.add('group_member_info', group_member_info)
+  res.json(output)
+}))
 export default routes

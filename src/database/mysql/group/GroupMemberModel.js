@@ -15,7 +15,8 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq', 'group_member.ban_reason',
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
-      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer'
+      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer',
+      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt'
     ]
     this.member_group_select = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
@@ -213,11 +214,6 @@ export default class GroupMemberModel extends MySQLModel {
       filter['group_member.grade'] = member_grade;
     }
     const isSelect = this.group_member_select;
-    if(videos_count) {
-      isSelect.push('group_member.vid_cnt');
-      isSelect.push('group_member.anno_cnt');
-      isSelect.push('group_member.comment_cnt');
-    }
     if (get_pause_name) {
       isSelect.push('submit_member_name');
     }
@@ -774,5 +770,24 @@ export default class GroupMemberModel extends MySQLModel {
     filter.seq = ban_info.group_member_seq;
     await this.update(filter, update_params);
     return true;
+  }
+
+  getGroupMemberDetailQuery = async (group_seq, group_member_seq) => {
+    const filter = {
+      'group_member.seq': group_member_seq,
+      group_seq: group_seq,
+    }
+    this.group_member_select.push('member.profile_image_path');
+    const query = this.database.select(this.group_member_select)
+    query.from(this.table_name)
+    query.innerJoin('member', function () {
+      this.on('member.seq', 'group_member.member_seq')
+    });
+    query.where(filter)
+    query.first()
+
+    const query_result = await query
+    // log.debug(this.log_prefix, '[getMemberGroupAllCount]', query_result)
+    return query_result
   }
 }

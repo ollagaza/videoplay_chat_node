@@ -1307,6 +1307,12 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database);
     return await group_member_model.updateMemberStatus(group_seq, mem_info)
   }
+  getGroupMemberInfoDetail = async (database, group_seq, group_member_seq) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    const group_member_info = await group_member_model.getGroupMemberDetailQuery(group_seq, group_member_seq);
+    group_member_info.member_profile_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+    return group_member_info;
+  }
 }
 
 const group_service = new GroupServiceClass()
