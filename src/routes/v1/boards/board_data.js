@@ -13,11 +13,12 @@ import GroupService from "../../../service/group/GroupService";
 
 const routes = Router()
 
-routes.get('/getboarddatadetail/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/getboarddatadetail/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
   const output = new StdObject()
-  const { member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, false)
   const board_data_seq = req.params.board_data_seq
-  output.add('board_detail', await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data_seq))
+  const board_detail = await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data_seq)
+  output.add('board_detail', board_detail)
   output.add('board_comment_list', await GroupBoardDataService.getBoardCommentList(DBMySQL, board_data_seq, member_seq))
   output.add('board_recommend', await GroupReCommendService.getBoardRecommend(DBMySQL, board_data_seq, member_seq))
   res.json(output);
