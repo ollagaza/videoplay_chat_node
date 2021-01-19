@@ -125,9 +125,9 @@ const GroupChannelHomeServiceClass = class {
   getOpenOperationTop5 = async (database) => {
     const model = this.getGroupChannelHomeModel(database)
     const result = await model.getOpenOperationTop5()
-    for (let v_cnt = 0; v_cnt < result.lenght; v_cnt++) {
+    for (let v_cnt = 0; v_cnt < result.length; v_cnt++) {
       result[v_cnt].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].profile_image_path)
-      result[v_cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].thumbnail)
+      result[v_cnt].thumbnail_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].thumbnail)
     }
     return result
   }
@@ -135,9 +135,8 @@ const GroupChannelHomeServiceClass = class {
   getOpenBoardTop5 = async (database) => {
     const model = this.getGroupChannelHomeModel(database)
     const result = await model.getOpenBoardTop5()
-    for (let v_cnt = 0; v_cnt < result.lenght; v_cnt++) {
+    for (let v_cnt = 0; v_cnt < result.length; v_cnt++) {
       result[v_cnt].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].profile_image_path)
-      result[v_cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].thumbnail)
     }
     return result
   }
