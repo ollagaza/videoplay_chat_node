@@ -43,7 +43,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getOpenOperationTop5 = async () => {
-    const oQuery = this.database.select('op_data.*')
+    const oQuery = this.database.select(['op_data.*', 'group_info.profile_image_path', 'group_info.group_name'])
       .from('operation_data as op_data')
       .innerJoin('group_info', (query) => {
         query.on('group_info.seq', 'op_data.group_seq')
@@ -58,7 +58,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getOpenBoardTop5 = async () => {
-    const oQuery = this.database.select('board.*')
+    const oQuery = this.database.select(['board.*', 'group_info.profile_image_path', 'group_info.group_name'])
       .from('board_data as board')
       .innerJoin('group_info', (query) => {
         query.on('group_info.seq', 'board.group_seq')
@@ -74,11 +74,35 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getRecommendGroupList = async (order, limit) => {
-    return this.find(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(now(), \'%y%m%d\')'))
+    const oQuery = this.database.select(`${this.table_name}.*`)
+      .from(this.table_name)
+      .innerJoin('group_info', (query) => {
+        query.on('group_info.seq', `${this.table_name}.group_seq`)
+        query.andOnVal('group_info.group_open', 1)
+      })
+      .where(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(now(), \'%y%m%d\')'))
+      .orderBy(order)
+
+    if (limit) {
+      oQuery.limit(limit)
+    }
+    return oQuery
   }
 
   getRecommendGroupListOtherDay = async (order, limit) => {
-    return this.find(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(date_sub(now(), interval 1 day), \'%y%m%d\')'))
+    const oQuery = this.database.select(`${this.table_name}.*`)
+      .from(this.table_name)
+      .innerJoin('group_info', (query) => {
+        query.on('group_info.seq', `${this.table_name}.group_seq`)
+        query.andOnVal('group_info.group_open', 1)
+      })
+      .where(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(date_sub(now(), interval 1 day), \'%y%m%d\')'))
+      .orderBy(order)
+
+    if (limit) {
+      oQuery.limit(limit)
+    }
+    return oQuery
   }
 
   getRecommendGroupInfo = async (group_seq) => {
@@ -93,6 +117,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
     const oQuery = this.database.select('*')
       .from('operation_data')
       .where('group_seq', group_seq)
+      .andWhere('is_open_video', 1)
       .andWhere(this.database.raw('date_format(reg_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
 
     if (limit) {

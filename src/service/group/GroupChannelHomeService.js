@@ -112,6 +112,9 @@ const GroupChannelHomeServiceClass = class {
       const group_info = await model.getRecommendGroupInfo(group_seq)
       group_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
       const operation_list = await model.getRecommendOperationList(group_seq, 3)
+      for (let v_cnt = 0; v_cnt < operation_list.lenght; v_cnt++) {
+        operation_list[v_cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_list[v_cnt].thumbnail)
+      }
       const board_list = await model.getRecommendBoardList(group_seq, 3)
       result.push({ group_info, operation_list, board_list })
     }
@@ -121,12 +124,22 @@ const GroupChannelHomeServiceClass = class {
 
   getOpenOperationTop5 = async (database) => {
     const model = this.getGroupChannelHomeModel(database)
-    return model.getOpenOperationTop5()
+    const result = await model.getOpenOperationTop5()
+    for (let v_cnt = 0; v_cnt < result.lenght; v_cnt++) {
+      result[v_cnt].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].profile_image_path)
+      result[v_cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].thumbnail)
+    }
+    return result
   }
 
   getOpenBoardTop5 = async (database) => {
     const model = this.getGroupChannelHomeModel(database)
-    return model.getOpenBoardTop5()
+    const result = await model.getOpenBoardTop5()
+    for (let v_cnt = 0; v_cnt < result.lenght; v_cnt++) {
+      result[v_cnt].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].profile_image_path)
+      result[v_cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), result[v_cnt].thumbnail)
+    }
+    return result
   }
 
   getCategoryList = async (database, menu_id) => {
@@ -163,11 +176,13 @@ const GroupChannelHomeServiceClass = class {
           data.total_count += operation_anotation_count[item].count
           data.video_anotation = operation_anotation_count[item].count
         } else {
-          group_counting.push({
-            group_seq: operation_anotation_count[item]._id,
-            total_count: operation_anotation_count[item].count,
-            video_anotation: operation_anotation_count[item].count
-          })
+          if (operation_anotation_count[item]._id) {
+            group_counting.push({
+              group_seq: operation_anotation_count[item]._id,
+              total_count: operation_anotation_count[item].count,
+              video_anotation: operation_anotation_count[item].count
+            })
+          }
         }
       })
     const operation_data_count = await model.getOperationCount()
