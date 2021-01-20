@@ -90,6 +90,17 @@ const OperationCommentServiceClass = class {
       throw new StdObject(-1, '잘못된 요청입니다', 400)
     }
     const comment_model = this.getOperationCommentModel(database)
+    const comment_info = await comment_model.getComment(operation_data_seq, comment_seq);
+
+    if (comment_info) {
+      const group_member_model = new GroupMemberModel(database);
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y');
+
+      if (group_member_info) {
+        const group_member_model = new GroupMemberModel(database)
+        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid_comment', 'down');
+      }
+    }
     const parent_seq = request_body ? request_body.parent_seq : null
     const is_reply = request_body ? request_body.is_reply === true : false
     const delete_result = await comment_model.deleteComment(operation_data_seq, comment_seq)
