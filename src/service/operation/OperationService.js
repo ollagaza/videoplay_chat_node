@@ -25,6 +25,7 @@ import MongoDataService from '../common/MongoDataService'
 import { OperationAnalysisModel } from '../../database/mongodb/OperationAnalysisModel'
 import Zip from 'adm-zip'
 import iconv from 'iconv-lite'
+import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 
 const OperationServiceClass = class {
   constructor () {
@@ -103,6 +104,11 @@ const OperationServiceClass = class {
 
       if (ServiceConfig.isVacs()) {
         VacsService.increaseCount(1)
+      }
+
+      if (group_member_info) {
+        const group_member_model = new GroupMemberModel(database)
+        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
       }
     }
     return output
