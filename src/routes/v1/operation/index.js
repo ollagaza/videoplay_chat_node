@@ -417,6 +417,14 @@ routes.delete('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.
   res.json(output)
 }))
 
+routes.put('/:api_type/:api_key/files/upload/complete', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info } = await getBaseInfo(req, true, true, true)
+  await OperationService.onUploadComplete(operation_info)
+
+  const output = new StdObject()
+  res.json(output)
+}))
+
 routes.get('/:api_type/:api_key/video/url', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_info } = await getBaseInfo(req, true, false, true)
   const download_url = OperationService.getVideoDownloadURL(operation_info)

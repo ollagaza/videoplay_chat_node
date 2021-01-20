@@ -151,11 +151,14 @@ const OperationFileServiceClass = class {
   deleteFileList = async (database, operation_info, file_seq_list, file_type = this.TYPE_REFER) => {
     let refer_delete_result = false
     let video_delete_result = false
-    if (file_type === this.TYPE_ALL || file_type === this.TYPE_REFER) {
+    if (file_type === this.TYPE_REFER) {
       refer_delete_result = await this.deleteReferFileList(database, operation_info, file_seq_list)
     }
-    if (file_type === this.TYPE_ALL || file_type === this.TYPE_VIDEO) {
+    if (file_type === this.TYPE_VIDEO) {
       video_delete_result = await this.deleteVideoFileList(database, operation_info, file_seq_list)
+    }
+    if (file_type === this.TYPE_FILE) {
+      video_delete_result = await this.deleteOperationFileList(database, operation_info, file_seq_list)
     }
 
     return {
@@ -178,7 +181,7 @@ const OperationFileServiceClass = class {
   }
 
   deleteVideoFileList = async (database, operation_info, file_seq_list) => {
-    const video_file_model = this.getVideoFileList(database)
+    const video_file_model = this.getVideoFileModel(database)
     const delete_file_list = await video_file_model.deleteSelectedFiles(file_seq_list)
 
     if (!delete_file_list) {
@@ -199,7 +202,7 @@ const OperationFileServiceClass = class {
       return false
     }
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-    const file_base_path = directory_info.media_video;
+    const file_base_path = directory_info.media_video
     this.deleteFiles(file_base_path, delete_file_list)
 
     return true

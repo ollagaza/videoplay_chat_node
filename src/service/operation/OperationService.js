@@ -25,6 +25,7 @@ import MongoDataService from '../common/MongoDataService'
 import { OperationAnalysisModel } from '../../database/mongodb/OperationAnalysisModel'
 import Zip from 'adm-zip'
 import iconv from 'iconv-lite'
+import NaverObjectStorageService from '../storage/naver-object-storage-service'
 
 const OperationServiceClass = class {
   constructor () {
@@ -546,8 +547,52 @@ const OperationServiceClass = class {
   }
 
   uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null) => {
-    const upload_result = await this.uploadOperationFileAndUpdate(database, request, response, operation_info, file_type, field_name)
-    return upload_result.upload_seq
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    let media_directory
+    if (file_type === OperationFileService.TYPE_REFER) {
+      media_directory = directory_info.refer
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      media_directory = directory_info.file
+    } else {
+      media_directory = directory_info.origin
+    }
+
+    if (!(await Util.fileExists(media_directory))) {
+      await Util.createDirectory(media_directory)
+    }
+
+    const file_field_name = field_name ? field_name : 'target'
+    if (file_type === OperationFileService.TYPE_REFER) {
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      await Util.uploadByRequest(request, response, file_field_name, media_directory)
+    } else {
+      await Util.uploadByRequest(request, response, file_field_name, media_directory)
+    }
+    const upload_file_info = request.file
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
+    }
+    upload_file_info.new_file_name = request.new_file_name
+    log.debug(this.log_prefix, '[uploadOperationFile]', 'request.body', request.body)
+
+    return await this.createOperationFileInfo(file_type, operation_info, upload_file_info, request.body)
+  }
+
+  createOperationFileInfo = async (file_type, operation_info, upload_file_info, request_body) => {
+    let upload_seq = null
+    if (file_type === OperationFileService.TYPE_REFER) {
+      upload_seq = await OperationFileService.createReferFileInfo(null, operation_info, upload_file_info)
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      upload_seq = await OperationFileService.createOperationFileInfo(null, operation_info, upload_file_info, request_body)
+    } else {
+      upload_seq = await OperationFileService.createVideoFileInfo(null, operation_info, upload_file_info, false)
+    }
+
+    if (!upload_seq) {
+      throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
+    }
+    return upload_seq
   }
 
   uploadOperationFileByZip = (operation_info, temp_directory, zip_file_path, encoding, file_type) => {
@@ -604,60 +649,18 @@ const OperationServiceClass = class {
     )(zip.getEntries())
   }
 
-  uploadOperationFileAndUpdate = async (database, request, response, operation_info, file_type, field_name = null) => {
+  onUploadComplete = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
-    let media_directory
-    if (file_type !== OperationFileService.TYPE_REFER) {
-      media_directory = directory_info.origin
-    } else {
-      media_directory = directory_info.refer
+    if (operation_info.mode === 'file') {
+      await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
     }
-
-    if (!(await Util.fileExists(media_directory))) {
-      await Util.createDirectory(media_directory)
-    }
-
-    const file_field_name = field_name ? field_name : 'target'
-    let url_prefix = directory_info.url_origin
-    if (file_type === OperationFileService.TYPE_REFER) {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
-      url_prefix = directory_info.url_refer
-    } else if (file_type === OperationFileService.TYPE_FILE) {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory)
-    } else {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory)
-    }
-    const upload_file_info = request.file
-    if (Util.isEmpty(upload_file_info)) {
-      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
-    }
-    upload_file_info.new_file_name = request.new_file_name
-
-    let upload_seq = await this.createOperationFileInfo(file_type, operation_info, upload_file_info, request.body)
-
-    const file_path = upload_file_info.path
-    const file_url = url_prefix + upload_file_info.new_file_name
-    return {
-      upload_seq,
-      file_path,
-      file_url
-    }
+    await this.updateStorageSize(operation_info)
   }
 
-  createOperationFileInfo = async (file_type, operation_info, upload_file_info, request_body) => {
-    let upload_seq = null
-    if (file_type !== OperationFileService.TYPE_REFER) {
-      upload_seq = await OperationFileService.createReferFileInfo(null, operation_info, upload_file_info)
-    } else if (file_type !== OperationFileService.TYPE_FILE) {
-      upload_seq = await OperationFileService.createOperationFileInfo(null, operation_info, upload_file_info, request_body)
-    } else {
-      upload_seq = await OperationFileService.createVideoFileInfo(null, operation_info, upload_file_info, false)
-    }
-
-    if (!upload_seq) {
-      throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
-    }
-    return upload_seq
+  updateStorageSize = async (operation_info) => {
+    const storage_size = await new OperationStorageModel(DBMySQL).updateUploadFileSize(operation_info, OperationFileService.TYPE_ALL)
+    await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
+    await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, storage_size);
   }
 
   deleteFileInfo = async (operation_info, file_type, request_body) => {
@@ -670,19 +673,14 @@ const OperationServiceClass = class {
       throw new StdObject(-2, '잘못된 요청입니다.', 400)
     }
 
-    await DBMySQL.transaction(async (transaction) => {
-      const storage_seq = operation_info.storage_seq
-      if (file_type === OperationFileService.TYPE_REFER) {
-        await OperationFileService.deleteReferFileList(transaction, operation_info, file_seq_list)
-      }
-      await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
-    })
-  }
-
-  updateStorageSize = async (operation_info) => {
-    const storage_size = await new OperationStorageModel().updateUploadFileSize(operation_info.storage_seq, OperationFileService.TYPE_ALL)
-    await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
-    await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, storage_size);
+    if (file_type === OperationFileService.TYPE_REFER) {
+      await OperationFileService.deleteReferFileList(DBMySQL, operation_info, file_seq_list)
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      await OperationFileService.deleteOperationFileList(DBMySQL, operation_info, file_seq_list)
+    } else {
+      return
+    }
+    await this.updateStorageSize(operation_info)
   }
 
   createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0) => {

@@ -362,11 +362,9 @@ routes.put('/:operation_seq(\\d+)/files/upload/complete', Auth.isAuthenticated(R
   const token_info = req.token_info
   const operation_seq = req.params.operation_seq
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info)
-  const upload_seq = await OperationService.updateStorageSize(DBMySQL, operation_info)
+  await OperationService.onUploadComplete(operation_info)
 
   const output = new StdObject()
-  output.add('upload_seq', upload_seq)
-
   res.json(output)
 }))
 
@@ -383,13 +381,8 @@ routes.delete('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Rol
   const output = new StdObject()
 
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info)
-
-  await DBMySQL.transaction(async (transaction) => {
-    const storage_seq = operation_info.storage_seq
-    await OperationFileService.deleteFileList(transaction, operation_info, file_seq_list, file_type)
-    const storage_size = await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
-    await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, 0, storage_size);
-  })
+  await OperationFileService.deleteFileList(DBMySQL, operation_info, file_seq_list, file_type)
+  await OperationService.updateStorageSize(operation_info)
 
   res.json(output)
 }))

@@ -1,12 +1,11 @@
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/baseutil'
-import OperationInfo from "./OperationInfo";
 import log from "../../libs/logger";
 import ServiceConfig from "../../service/service-config";
 
 const default_key_list = [
-  'seq', 'list_no', 'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq', 'group_seq', 'member_seq', 'user_name',
-  , 'patient_age', 'patient_sex', 'hour', 'minute', 'status', 'analysis_status', 'is_favorite'
+  'seq', 'list_no', 'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq', 'group_seq', 'member_seq', 'user_name'
+  , 'patient_age', 'patient_sex', 'hour', 'minute', 'status', 'analysis_status', 'is_favorite', 'mode'
   , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress', 'has_link'
   , 'total_file_size', 'total_file_count', 'clip_count', 'index2_file_count', 'origin_video_count', 'trans_video_count', 'modify_date'
   , 'group_name', 'hospital', 'title', 'view_count', 'total_time', 'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html'
@@ -62,27 +61,6 @@ export default class OperationInfoAndData extends JsonWrapper {
     if (this.thumbnail) {
       this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
     }
-  }
-
-  getByRequestBody = (body) => {
-    this.setKeys([
-      'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq'
-      , 'patient_age', 'patient_sex', 'hour', 'minute', 'media_path'
-    ])
-
-    this.setIgnoreEmpty(true)
-
-    if (body != null) {
-      this.json_keys.forEach((key) => {
-        if (body[key]) {
-          this[key] = body[key]
-        }
-      })
-
-      this.is_empty = false
-    }
-
-    return this
   }
 
   setMediaInfo = (media_info) => {

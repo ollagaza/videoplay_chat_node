@@ -40,26 +40,31 @@ const VacsServiceClass = class {
           const port = ServiceConfig.get('vacs_storage_ssh_port')
           const user = ServiceConfig.get('vacs_storage_ssh_user')
           const password = ServiceConfig.get('vacs_storage_ssh_password')
+          const disable_vacs_storage_ssh = Util.isTrue(ServiceConfig.get('disable_vacs_storage_ssh'))
 
-          const ssh_result = await Util.sshExec(cmd, host, port, user, password)
-          if (ssh_result.success && ssh_result.result) {
-            const storage_info = JSON.parse(ssh_result.result)
-            const update_result = await this.updateStorageStatus(null, storage_info.used, storage_info.total)
-            if (update_result.is_success) {
-              const storage_info = JSON.parse(ssh_result.result)
-              const update_result = await this.updateStorageStatus(null, storage_info.used, storage_info.total)
-              const socket_data = {
-                data: {
-                  type: 'storageInfoChange',
-                  used_size: update_result.used_size,
-                  total_size: update_result.total_size
-                }
-              }
-              log.debug(this.log_prefix, '[updateStorageInfo]', 'SocketManager.sendToFrontAll', socket_data)
-              await SocketManager.sendToFrontAll(socket_data)
-            }
+          let storage_info = null
+          if (disable_vacs_storage_ssh) {
+            await Util.execute()
           } else {
-            log.error(this.log_prefix, '[updateStorageInfo]', ssh_result)
+            const ssh_result = await Util.sshExec(cmd, host, port, user, password)
+            if (ssh_result.success && ssh_result.out) {
+              storage_info = JSON.parse(ssh_result.result)
+            } else {
+              log.error(this.log_prefix, '[updateStorageInfo]', ssh_result)
+            }
+          }
+
+          if (storage_info) {
+            const update_result = await this.updateStorageStatus(null, storage_info.used, storage_info.total)
+            const socket_data = {
+              data: {
+                type: 'storageInfoChange',
+                used_size: update_result.used_size,
+                total_size: update_result.total_size
+              }
+            }
+            log.debug(this.log_prefix, '[updateStorageInfo]', 'SocketManager.sendToFrontAll', socket_data)
+            await SocketManager.sendToFrontAll(socket_data)
           }
         } catch (error) {
           log.error(this.log_prefix, '[updateStorageInfo]', error)

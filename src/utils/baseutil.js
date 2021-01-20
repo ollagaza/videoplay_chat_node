@@ -489,6 +489,29 @@ const execute = async (command) => {
   return result
 }
 
+const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpaxldlwl_!') => {
+  return new Promise(async resolve => {
+    SSH(cmd, {
+      host,
+      port,
+      user,
+      password
+    }, function (error, result, stderr) {
+      log.debug(log_prefix, '[sshExec]', cmd, error, result, stderr)
+      const response = {
+        success: true,
+        out: result
+      }
+      if (error) {
+        response.success = false
+        response.error = error
+        response.stderr = stderr
+      }
+      resolve(response)
+    })
+  })
+}
+
 const getMediaInfo = (media_path) => {
   return new Promise((resolve) => {
     (
@@ -933,31 +956,6 @@ const removePathSlash = (path) => {
 const removePathLastSlash = (path) => {
   if (!path) return null
   return path.replace(/\/+$/, '')
-}
-
-const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpaxldlwl_!') => {
-  const async_func = new Promise(async resolve => {
-    SSH(cmd, {
-      host,
-      port,
-      user,
-      password
-    }, function (error, result, stderr) {
-      log.debug(log_prefix, '[sshExec]', cmd, error, result, stderr)
-      const response = {
-        success: true,
-        result
-      }
-      if (error) {
-        response.success = false
-        response.error = error
-        response.stderr = stderr
-      }
-      resolve(response)
-    })
-  })
-
-  return async_func
 }
 
 const trim = (value) => {

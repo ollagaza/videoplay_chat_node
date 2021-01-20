@@ -7,7 +7,7 @@ import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../service-config'
 import logger from '../../libs/logger'
-import NaverObjectStorage from '../storage/naver-object-storage-service'
+import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import semver from 'semver'
 
 const SurgboxUpdateServiceClass = class {
@@ -168,7 +168,7 @@ const SurgboxUpdateServiceClass = class {
       throw new StdObject(201, '파일 업로드가 실패하였습니다.', 500)
     }
     const file_name = request.new_file_name
-    await NaverObjectStorage.moveFile(upload_directory + file_name, upload_path, file_name)
+    await NaverObjectStorageService.moveFile(upload_directory + file_name, upload_path, file_name)
 
     upload_file_info.new_file_name = file_name
     const file_info = new SurgboxUpdateFileInfo().getByUploadFileInfo(update_seq, upload_file_info, upload_path, file_name)
@@ -230,7 +230,7 @@ const SurgboxUpdateServiceClass = class {
         for (let i = 0; i < file_path_list.length; i++) {
           try {
             await Util.deleteFile(upload_directory + file_path_list[i])
-            // await NaverObjectStorage.deleteFile(upload_directory, file_path_list[i])
+            // await NaverObjectStorageService.deleteFile(upload_directory, file_path_list[i])
           } catch (error) {
             logger.error(this.log_prefix, '[deleteFiles]', file_path_list[i])
           }
@@ -261,7 +261,7 @@ const SurgboxUpdateServiceClass = class {
         try {
           const file_path = update_info.file_path
           await Util.deleteDirectory(ServiceConfig.get('media_root') + file_path)
-          await NaverObjectStorage.deleteFolder(file_path)
+          await NaverObjectStorageService.deleteFolder(file_path)
         } catch (error) {
           logger.error(this.log_prefix, '[deleteDirectory]', update_info.toJSON(), error)
         }
