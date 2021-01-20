@@ -617,7 +617,9 @@ export default class GroupMemberModel extends MySQLModel {
     select_fields.push(this.database.raw('SUM(IF(`status` = \'J\', 1, 0)) AS join_count'))
     const query = this.database.select(select_fields)
     query.from(this.table_name)
+    query.joinRaw('LEFT JOIN (SELECT seq, group_type FROM group_info) AS GI ON (group_member.group_seq = GI.seq)')
     query.where(filter)
+    query.andWhere('status', 'Y')
     query.first()
 
     const query_result = await query
