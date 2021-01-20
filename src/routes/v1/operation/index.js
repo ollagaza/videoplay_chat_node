@@ -300,9 +300,9 @@ routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)/like', Auth.isAuth
 
 routes.post('/:api_type/:api_key/clip', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { operation_info, member_info } = await getBaseInfo(req, true, true, true)
+  const { operation_info, member_info, group_member_info } = await getBaseInfo(req, true, true, true)
 
-  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body)
+  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body, true, group_member_info)
   const output = new StdObject()
   output.add('result', create_result)
   res.json(output)
@@ -320,9 +320,9 @@ routes.put('/:api_type/:api_key/clip/:clip_id', Auth.isAuthenticated(Role.DEFAUL
 
 routes.delete('/:api_type/:api_key/clip/:clip_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { clip_id, operation_info } = await getBaseInfo(req, true, true, true)
+  const { clip_id, operation_info, group_member_info } = await getBaseInfo(req, true, true, true)
 
-  const delete_result = await OperationClipService.deleteById(clip_id, operation_info, req.body)
+  const delete_result = await OperationClipService.deleteById(clip_id, operation_info, req.body, group_member_info)
   const output = new StdObject()
   output.add('result', delete_result)
   res.json(output)

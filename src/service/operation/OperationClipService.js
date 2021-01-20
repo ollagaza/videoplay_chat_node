@@ -5,6 +5,7 @@ import log from '../../libs/logger'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import OperationCommentService from './OperationCommentService'
+import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 
 const OperationClipServiceClass = class {
   constructor () {
@@ -20,14 +21,17 @@ const OperationClipServiceClass = class {
     }
   }
 
-  createClip = async (operation_info, member_info, request_body, update_clip_count = true) => {
+  createClip = async (operation_info, member_info, request_body, update_clip_count = true, group_member_info = null) => {
     const clip_info = request_body.clip_info
     const clip_count = request_body.clip_count
     log.debug(this.log_prefix, '[createClip]', clip_info)
     const create_result = await OperationClipModel.createOperationClip(operation_info, member_info, clip_info)
-
     if (update_clip_count) {
       await this.updateClipCount(operation_info, clip_count)
+      if (group_member_info) {
+        const group_member_model = new GroupMemberModel(DBMySQL)
+        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'anno', 'up');
+      }
     }
 
     return create_result
@@ -47,7 +51,7 @@ const OperationClipServiceClass = class {
     return update_result
   }
 
-  deleteById = async (clip_id, operation_info, request_body) => {
+  deleteById = async (clip_id, operation_info, request_body, group_member_info = null) => {
     const delete_result = await OperationClipModel.deleteById(clip_id)
 
     const clip_count = request_body.clip_count
@@ -58,6 +62,11 @@ const OperationClipServiceClass = class {
     }
 
     await OperationCommentService.deleteClipInfo(clip_id)
+
+    if (group_member_info) {
+      const group_member_model = new GroupMemberModel(DBMySQL)
+      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'anno', 'down');
+    }
 
     return delete_result
   }
