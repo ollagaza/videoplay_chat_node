@@ -16,7 +16,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
       'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer',
-      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt'
+      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_comment_cnt'
     ]
     this.member_group_select = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
@@ -103,6 +103,9 @@ export default class GroupMemberModel extends MySQLModel {
       filter['group_member.group_seq'] = group_seq
     }
     if (option) {
+      if (option.group_type) {
+        filter['group_info.group_type'] = option.group_type;
+      }
       if (option.grade) {
         filter['group_member.grade'] = option.grade;
       }
@@ -721,9 +724,14 @@ export default class GroupMemberModel extends MySQLModel {
     return true;
   }
 
-  getMemberGroupAllCount = async (member_seq) => {
+  getMemberGroupAllCount = async (member_seq, option) => {
     const filter = {
       member_seq: member_seq
+    }
+    if (option) {
+      if (option.group_type) {
+        filter.group_type = option.group_type;
+      }
     }
     const select_fields = []
     select_fields.push(this.database.raw('COUNT(*) AS total_count'))
@@ -733,6 +741,7 @@ export default class GroupMemberModel extends MySQLModel {
     select_fields.push(this.database.raw('SUM(IF(`status` = \'D\', 1, 0)) AS ban_count'))
     const query = this.database.select(select_fields)
     query.from(this.table_name)
+    query.joinRaw('LEFT JOIN (SELECT seq, group_type FROM group_info) AS GI ON (group_member.group_seq = GI.seq)')
     query.where(filter)
     query.first()
 
@@ -789,5 +798,30 @@ export default class GroupMemberModel extends MySQLModel {
     const query_result = await query
     // log.debug(this.log_prefix, '[getMemberGroupAllCount]', query_result)
     return query_result
+  }
+
+  setUpdateGroupMemberCounts = async (group_member_seq, update_column, updown_type) => {
+    const filter = {
+      seq: group_member_seq
+    }
+    const update_params = {}
+    if (update_column === 'vid') {
+      update_params.vid_cnt = 1;
+    } else if (update_column === 'anno') {
+      update_params.anno_cnt = 1;
+    } else if (update_column === 'vid_comment') {
+      update_params.comment_cnt = 1;
+    } else if (update_column === 'board_comment') {
+      update_params.board_comment_cnt = 1;
+    }
+    let update_result = null;
+    if (updown_type === 'up') {
+      update_result = await this.increment(filter, update_params)
+    } else if (updown_type === 'down') {
+      update_result = await this.decrement(filter, update_params)
+    }
+    log.debug(this.log_prefix, '[changeMemberGrade]', update_result)
+    return update_result
+
   }
 }

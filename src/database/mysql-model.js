@@ -381,4 +381,26 @@ export default class MysqlModel {
     }
     return update_params
   }
+
+  increment = async (filters, params) => {
+    const oKnex = this.database
+      .increment(params)
+      .from(this.table_name)
+
+    if (filters) {
+      queryWhere(oKnex, filters)
+    }
+    return oKnex
+  }
+
+  decrement = async (filters, params) => {
+    const oKnex = this.database
+      .decrement(params)
+      .from(this.table_name)
+
+    if (filters) {
+      queryWhere(oKnex, filters)
+    }
+    return oKnex
+  }
 }

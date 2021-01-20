@@ -6,6 +6,7 @@ import ServiceConfig from '../../service/service-config'
 import striptags from 'striptags'
 import log from '../../libs/logger'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
+import GroupMemberModel from '../../database/mysql/group/GroupMemberModel'
 
 const OperationCommentServiceClass = class {
   constructor () {
@@ -56,6 +57,10 @@ const OperationCommentServiceClass = class {
     }
 
     const comment_seq = await comment_model.createComment(operation_data_seq, create_params)
+
+    const group_member_model = new GroupMemberModel(database)
+    group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid_comment', 'up');
+
     if (is_reply && parent_seq) {
       await comment_model.updateReplyCount(operation_data_seq, parent_seq)
     }

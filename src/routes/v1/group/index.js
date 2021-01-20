@@ -35,6 +35,9 @@ routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
     manager: req.query.manager ? req.query.manager : null,
     member_count: req.query.member_count ? true : false,
   };
+  if (req.query.group_type) {
+    filter.group_type = req.query.group_type;
+  }
   const page = {
     orderby: req.query.orderby ? req.query.orderby : null,
     limit: req.query.limit ? req.query.limit : null,
@@ -586,7 +589,11 @@ routes.get('/:group_seq(\\d+)/OpenBoardList', Auth.isAuthenticated(Role.DEFAULT)
 routes.get('/membergroupallcount', Auth.isAuthenticated(Role.DEFAULT), Wrap(async(req, res) => {
   req.accepts('application/json')
   const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
-  const member_group_count = await GroupService.getMemberGroupAllCount(DBMySQL, member_seq)
+  const option = {};
+  if (req.query.group_type) {
+    option.group_type = req.query.group_type;
+  }
+  const member_group_count = await GroupService.getMemberGroupAllCount(DBMySQL, member_seq, option)
 
   const output = new StdObject()
   output.add('group_all_count', member_group_count)
