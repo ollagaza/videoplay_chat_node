@@ -53,4 +53,12 @@ export default class GroupBoardCommentModel extends MySQLModel {
   DeleteComment = async (comment_seq) => {
     return this.update({ seq: comment_seq }, { status: 'D' })
   }
+
+  getCommentInfo = async (comment_seq) => {
+    const oKnex = this.database.select(['*'])
+      .from(this.table_name)
+      .where('seq', comment_seq)
+      .first()
+    return oKnex
+  }
 }

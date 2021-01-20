@@ -7,6 +7,7 @@ import GroupBoardDataModel from '../../database/mysql/board/GroupBoardDataModel'
 import GroupBoardCommentModel from '../../database/mysql/board/GroupBoardCommentModel'
 import baseutil from "../../utils/baseutil";
 import logger from "../../libs/logger";
+import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 
 const GroupBoardDataServiceClass = class {
   constructor () {
@@ -105,6 +106,9 @@ const GroupBoardDataServiceClass = class {
       if (!comment_data.origin_seq) {
         await model.updateBoardCommentOriginSeq(result.insertId)
       }
+      const group_member_model = new GroupMemberModel(database);
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_data.group_seq, comment_data.member_seq, 'Y');
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'up');
     }
     return result;
   }
@@ -146,6 +150,14 @@ const GroupBoardDataServiceClass = class {
   DeleteComment = async (database, board_data_seq, comment_seq) => {
     const model = this.getGroupBoardCommentModel(database)
     const result = await model.DeleteComment(comment_seq)
+
+    const comment_info = await model.getCommentInfo(comment_seq)
+    const group_member_model = new GroupMemberModel(database);
+    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y');
+
+    if (group_member_info) {
+      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down');
+    }
 
     const board_model = this.getGroupBoardDataModel(database)
     await board_model.updateBoardCommentCnt(board_data_seq);
