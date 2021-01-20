@@ -346,35 +346,29 @@ const OperationServiceClass = class {
 
   deleteOperation = async (database, token_info, operation_seq) => {
     const operation_info = await this.getOperationInfo(database, operation_seq, token_info, true, false)
-    return await this.deleteOperationByInfo(operation_info)
+    await this.deleteOperationAndUpdateStorage(operation_info)
+    this.onOperationDeleteComplete(operation_info)
+    return true
   }
 
-  updateOperationWithStatusStorage = async (operation_info) => {
-    await DBMySQL.transaction(async (transaction) => {
-      const operation_model = this.getOperationModel(transaction)
-      await operation_model.updateOperationStatus(operation_info.seq)
-      await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, operation_info.total_file_size, 0);
-      await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
-    });
+  deleteOperationAndUpdateStorage = async (operation_info) => {
+    const operation_model = this.getOperationModel()
+    await operation_model.setOperationStatusDelete(operation_info.seq)
+    await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, 0);
+    await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
 
     await this.deleteMongoDBData(operation_info.seq)
 
     return true
   }
 
-  deleteOperationByInfo = async (operation_info) => {
-    await this.updateOperationWithStatusStorage(operation_info)
-    this.onOperationDeleteComplete(operation_info)
-    return true
-  }
-
   deleteOperationByStatus = async (group_seq) => {
     const operation_model = this.getOperationModel(DBMySQL)
-    const remove_opreation_list = await operation_model.getTargetListByStatusD(group_seq);
+    const remove_operation_list = await operation_model.getTargetListByStatusD(group_seq);
 
-    for (let cnt = 0; cnt < remove_opreation_list.length; cnt++) {
-      await this.onOperationDeleteComplete(remove_opreation_list[cnt])
-      await operation_model.deleteOperation(remove_opreation_list[cnt].seq)
+    for (let cnt = 0; cnt < remove_operation_list.length; cnt++) {
+      await this.onOperationDeleteComplete(remove_operation_list[cnt])
+      await operation_model.deleteOperation(remove_operation_list[cnt].seq)
     }
     return true
   }

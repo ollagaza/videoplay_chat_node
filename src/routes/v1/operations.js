@@ -114,7 +114,7 @@ routes.delete('/delete_operations', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
   if (operation_list.length > 0) {
     for (let cnt = 0; cnt < operation_list.length; cnt++) {
-      await OperationService.updateOperationWithStatusStorage(operation_list[cnt])
+      await OperationService.deleteOperationAndUpdateStorage(operation_list[cnt])
     }
   }
 
