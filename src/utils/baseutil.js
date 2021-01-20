@@ -489,70 +489,73 @@ const execute = async (command) => {
   return result
 }
 
-const getMediaInfo = async (media_path) => {
-  const async_func = new Promise(async (resolve) => {
-    const mediainfo_cmd = `mediainfo --Full --Output=XML "${media_path}"`
-    log.debug(log_prefix, '[getMediaInfo] - mediainfo_cmd', mediainfo_cmd)
-    const execute_result = await execute(mediainfo_cmd)
-    const media_result = {
-      success: false,
-      media_type: Constants.NO_MEDIA,
-      media_info: {}
-    }
+const getMediaInfo = (media_path) => {
+  return new Promise((resolve) => {
+    (
+      async (media_path) => {
 
-    try {
-      if (execute_result.success && execute_result.out) {
-        const media_info_xml = await loadXmlString(execute_result.out)
-        const media_info = JsonPath.value(media_info_xml, '$..track')
-        if (media_info && media_info.length > 0) {
-          for (let i = 0; i < media_info.length; i++) {
-            const track = media_info[i]
-            if (track.$ && track.$.type) {
-              const track_type = track.$.type.toLowerCase()
-              const duration = Math.round(getFloat(getXmlText(track.Duration)))
-              const width = getInt(getXmlText(track.Width))
-              const height = getInt(getXmlText(track.Height))
-              const fps = Math.max(getFloat(getXmlText(track.FrameRate)), getFloat(getXmlText(track.Frame_rate)))
-              const frame_count = Math.max(getFloat(getXmlText(track.FrameCount)), getFloat(getXmlText(track.Frame_count)))
-              const sample_rate = Math.max(getFloat(getXmlText(track.SamplingRate)), getFloat(getXmlText(track.Sampling_rate)))
-              const bit_depth = Math.max(getFloat(getXmlText(track.BitDepth)), getFloat(getXmlText(track.Bit_depth)))
-              if (track_type === Constants.VIDEO) {
-                media_result.media_type = Constants.VIDEO
-                media_result.media_info.width = width
-                media_result.media_info.height = height
-                media_result.media_info.fps = fps
-                media_result.media_info.frame_count = frame_count
-                media_result.media_info.duration = duration
-                media_result.media_info.bit_depth = bit_depth
-                media_result.success = true
-                break
-              } else if (track_type === Constants.AUDIO) {
-                media_result.media_type = Constants.AUDIO
-                media_result.media_info.duration = duration
-                media_result.media_info.sample_rate = sample_rate
-                media_result.success = true
-                break
-              } else if (track_type === Constants.IMAGE) {
-                media_result.media_type = Constants.IMAGE
-                media_result.media_info.width = width
-                media_result.media_info.height = height
-                media_result.success = true
-                break
-              } else {
-                media_result.success = false
+        const mediainfo_cmd = `mediainfo --Full --Output=XML "${media_path}"`
+        log.debug(log_prefix, '[getMediaInfo] - mediainfo_cmd', mediainfo_cmd)
+        const execute_result = await execute(mediainfo_cmd)
+        const media_result = {
+          success: false,
+          media_type: Constants.NO_MEDIA,
+          media_info: {}
+        }
+
+        try {
+          if (execute_result.success && execute_result.out) {
+            const media_info_xml = await loadXmlString(execute_result.out)
+            const media_info = JsonPath.value(media_info_xml, '$..track')
+            if (media_info && media_info.length > 0) {
+              for (let i = 0; i < media_info.length; i++) {
+                const track = media_info[i]
+                if (track.$ && track.$.type) {
+                  const track_type = track.$.type.toLowerCase()
+                  const duration = Math.round(getFloat(getXmlText(track.Duration)))
+                  const width = getInt(getXmlText(track.Width))
+                  const height = getInt(getXmlText(track.Height))
+                  const fps = Math.max(getFloat(getXmlText(track.FrameRate)), getFloat(getXmlText(track.Frame_rate)))
+                  const frame_count = Math.max(getFloat(getXmlText(track.FrameCount)), getFloat(getXmlText(track.Frame_count)))
+                  const sample_rate = Math.max(getFloat(getXmlText(track.SamplingRate)), getFloat(getXmlText(track.Sampling_rate)))
+                  const bit_depth = Math.max(getFloat(getXmlText(track.BitDepth)), getFloat(getXmlText(track.Bit_depth)))
+                  if (track_type === Constants.VIDEO) {
+                    media_result.media_type = Constants.VIDEO
+                    media_result.media_info.width = width
+                    media_result.media_info.height = height
+                    media_result.media_info.fps = fps
+                    media_result.media_info.frame_count = frame_count
+                    media_result.media_info.duration = duration
+                    media_result.media_info.bit_depth = bit_depth
+                    media_result.success = true
+                    break
+                  } else if (track_type === Constants.AUDIO) {
+                    media_result.media_type = Constants.AUDIO
+                    media_result.media_info.duration = duration
+                    media_result.media_info.sample_rate = sample_rate
+                    media_result.success = true
+                    break
+                  } else if (track_type === Constants.IMAGE) {
+                    media_result.media_type = Constants.IMAGE
+                    media_result.media_info.width = width
+                    media_result.media_info.height = height
+                    media_result.success = true
+                    break
+                  } else {
+                    media_result.success = false
+                  }
+                }
               }
             }
           }
+        } catch (error) {
+          log.error(log_prefix, 'getMediaInfo', error, execute_result)
         }
+
+        resolve(media_result)
       }
-    } catch (error) {
-      log.error(log_prefix, 'getMediaInfo', error, execute_result)
-    }
-
-    resolve(media_result)
+    )(media_path)
   })
-
-  return await async_func
 }
 
 const getVideoDimension = async (video_path) => {
