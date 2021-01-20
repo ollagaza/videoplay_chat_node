@@ -926,6 +926,19 @@ const OperationServiceClass = class {
     for (let cnt = 0; cnt < seq_list.length; cnt++) {
       const where = { 'operation.seq': seq_list[cnt] }
       const operation_info = await model.getOperation(where);
+
+      const group_member_model = new GroupMemberModel(database);
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(operation_info.group_seq, operation_info.member_seq, 'Y');
+
+      if (group_member_info) {
+        const group_member_model = new GroupMemberModel(database)
+        if (status === 'T') {
+          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'down');
+        } else if (status === 'Y') {
+          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
+        }
+      }
+
       if (operation_info.folder_seq !== null) {
         if (is_delete) {
           await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_info.total_file_size);
