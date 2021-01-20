@@ -822,6 +822,43 @@ export default class GroupMemberModel extends MySQLModel {
     }
     log.debug(this.log_prefix, '[changeMemberGrade]', update_result)
     return update_result
+  }
+  getGroupMemberInfo = async (group_seq, member_seq) => {
+    const filter = {
+      member_seq: member_seq,
+      group_seq: group_seq,
+    }
+    const query = this.database.select(['*'])
+    query.from(this.table_name)
+    query.where(filter)
+    query.first()
 
+    const query_result = await query
+    return query_result
+  }
+
+  updateGroupMemberJoin = async (group_seq, member_seq = null, group_member_seq = null, params) => {
+    const filter = {
+      group_seq: group_seq
+    }
+    if (!member_seq && !group_member_seq) {
+      return false;
+    }
+    if (member_seq) {
+      filter['member_seq'] = member_seq;
+    }
+    if (group_member_seq) {
+      filter['seq'] = group_member_seq;
+    }
+    const update_params = {
+      grade: params.grade,
+      status: params.status,
+      join_date: this.database.raw('NOW()'),
+      modify_date: this.database.raw('NOW()'),
+      join_answer: params.answer,
+    }
+    const update_result = await this.update(filter, update_params)
+    log.debug(this.log_prefix, '[changeMemberGrade]', update_result)
+    return update_result
   }
 }

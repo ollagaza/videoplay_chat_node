@@ -312,7 +312,7 @@ routes.post('/open/:group_seq(\\d+)/join', Auth.isAuthenticated(Role.LOGIN_USER)
   const { group_seq, member_info } = await checkGroupAuth(DBMySQL, req, false, true)
   const result = await GroupService.requestJoinGroup(DBMySQL, group_seq, member_info, req.body)
   const output = new StdObject()
-  output.add('result', result)
+  output.add('res', result)
   res.json(output)
 }))
 
@@ -352,7 +352,7 @@ routes.put('/updatejoinmanage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const params = {
     group_message: req.body.join_message,
-    group_question: JSON.stringify(req.body.question_list)
+    group_question: JSON.stringify(req.body.question_list) === 'null' ? null : JSON.stringify(req.body.question_list)
   }
   const output = new StdObject()
 

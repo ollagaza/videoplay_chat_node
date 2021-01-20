@@ -1169,10 +1169,61 @@ const GroupServiceClass = class {
     const grade = grade_list ? grade_list[0].grade : '1';
 
     const group_member_model = this.getGroupMemberModel()
+
+    const group_member_info = await group_member_model.getGroupMemberInfo(group_seq, member_info.seq);
+
     const group_join_member_state = group_info.group_join_way === 1 ? this.MEMBER_STATUS_JOIN : 'Y';
     const is_join_answer = params.quest;
 
-    return await group_member_model.createGroupMember(group_info, member_info, grade, null, group_join_member_state, is_join_answer)
+    const result_info = {
+      error: 0,
+      msg: '',
+    };
+    if (group_member_info) {
+      switch (group_member_info.status) {
+        case 'D':
+        case 'L':
+          result_info.error = 9;
+          result_info.msg = '탈퇴한 이력이 있어 가입하실 수 없습니다.';
+          break;
+        case 'J':
+          result_info.error = 8;
+          result_info.msg = '이미 가입신청한 상태입니다.';
+          break;
+        case 'C':
+        case 'N':
+          const params = {
+            grade: grade,
+            status: group_join_member_state,
+            answer: is_join_answer,
+          }
+          const update_chk = await group_member_model.updateGroupMemberJoin(group_seq, null, group_member_info.seq, params);
+          if (!update_chk) {
+            result_info.error = 4;
+            result_info.msg = '필수 정보가 누락되었습니다.';
+          }
+          break;
+        case 'P':
+          result_info.error = 7;
+          result_info.msg = '활동 정지된 계정입니다.';
+          break;
+        case 'Y':
+          result_info.error = 6;
+          result_info.msg = '이미 가입한 채널입니다.';
+          break;
+        default:
+          result_info.error = 5;
+          result_info.msg = '알수 없는 오류.';
+          break;
+      }
+    } else {
+      const insert_chk = await group_member_model.createGroupMember(group_info, member_info, grade, null, group_join_member_state, is_join_answer)
+      if (insert_chk) {
+        result_info.error = 3;
+        result_info.msg = '회원가입 신청에 실패하였습니다.';
+      }
+    }
+    return result_info;
   }
 
   confirmJoinGroup = async (group_member_info, group_member_seq) => {
