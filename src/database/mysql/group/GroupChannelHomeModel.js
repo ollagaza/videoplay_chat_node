@@ -130,6 +130,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
     const oQuery = this.database.select('*')
       .from('board_data')
       .where('group_seq', group_seq)
+      .andWhere('is_open', 1)
       .andWhere(this.database.raw('date_format(regist_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
 
     if (limit) {
