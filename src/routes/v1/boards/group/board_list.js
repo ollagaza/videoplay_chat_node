@@ -10,6 +10,7 @@ import _ from "lodash";
 import OperationFolderService from "../../../../service/operation/OperationFolderService";
 import GroupBoardListService from "../../../../service/board/GroupBoardListService";
 import GroupBoardDataService from '../../../../service/board/GroupBoardDataService';
+import GroupService from "../../../../service/group/GroupService";
 
 const routes = Router()
 
@@ -28,10 +29,13 @@ routes.get('/groupmenulist/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_US
 
 routes.get('/getgroupboards/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
+  const { member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, false)
   const group_seq = req.params.group_seq
   const output = new StdObject()
+  const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
   const board_list = await GroupBoardListService.getGroupBoardList(DBMySQL, group_seq)
 
+  output.add('group_member_info', group_member_info)
   output.add('board_list', board_list)
 
   res.json(output)

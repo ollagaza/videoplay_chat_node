@@ -22,14 +22,14 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getMyGroupNewNews = async (arr_group_seq) => {
-    const oQuery = this.database.select(['group_info.*', 'op_data.title', this.database.raw('\'operation\' as gubun'), 'op_data.group_name as name', 'op_data.reg_date as regist_date'])
+    const oQuery = this.database.select(['group_info.*', 'op_data.group_seq as group_seq', 'op_data.operation_seq as target_seq', this.database.raw('\'\' as board_seq'),'op_data.title', this.database.raw('\'operation\' as gubun'), 'op_data.group_name as name', 'op_data.reg_date as regist_date'])
       .from('group_info')
       .innerJoin('operation_data as op_data', 'op_data.group_seq', 'group_info.seq')
       .where('group_info.group_type', 'G')
       .andWhere('group_info.seq', arr_group_seq)
       .andWhere('op_data.reg_date', '>=', this.database.raw('date_sub(now(), interval 7 day)'))
       .unionAll([
-        this.database.select(['group_info.*', 'board.subject as title', this.database.raw('\'board\' as gubun'), 'board.write_name as name', 'board.regist_date as regist_date'])
+        this.database.select(['group_info.*', 'board.group_seq as group_seq', 'board.seq as target_seq', 'board.board_seq as board_seq', 'board.subject as title', this.database.raw('\'board\' as gubun'), 'board.write_name as name', 'board.regist_date as regist_date'])
           .from('group_info')
           .innerJoin('board_data as board', 'board.group_seq', 'group_info.seq')
           .where('group_info.group_type', 'G')
@@ -139,7 +139,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getCategoryGroupInfo = async (menu_id, limit) => {
-    const oQuery = this.database.select('*')
+    const oQuery = this.database.select(['group_info.*', 'member.*', 'group_info.seq as group_seq'])
       .from('group_info')
       .innerJoin('member', (query) => {
         query.on('member.seq', 'group_info.member_seq')
