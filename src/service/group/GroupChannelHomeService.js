@@ -141,6 +141,20 @@ const GroupChannelHomeServiceClass = class {
     return result
   }
 
+  getSearchResult = async (database, search_keyword) => {
+    const model = this.getGroupChannelHomeModel(database)
+    const search_group_info = await model.getSearchGroupInfo(search_keyword)
+    const search_operation_data = await model.getSearchOperationData(search_keyword)
+    const search_board_data = await model.getSearchBoardData(search_keyword)
+
+    return {
+      total_count: search_group_info.length + search_operation_data.length + search_board_data.length,
+      search_group_info,
+      search_operation_data,
+      search_board_data,
+    }
+  }
+
   getCategoryList = async (database, menu_id) => {
     const result = []
     const model = this.getGroupChannelHomeModel(database)

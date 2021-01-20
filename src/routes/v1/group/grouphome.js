@@ -48,4 +48,12 @@ routes.get('/getcategorygrouplist/:menu_id', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output)
 }))
 
+routes.get('/group_search/:search_keyword', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const search_keyword = req.params.search_keyword
+  const output = new StdObject()
+  output.adds(await GroupChannelHomeService.getSearchResult(DBMySQL, search_keyword))
+  res.json(output)
+}))
+
 export default routes

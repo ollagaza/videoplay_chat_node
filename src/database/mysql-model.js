@@ -256,11 +256,8 @@ export default class MysqlModel {
     return this.queryBuilder(filters, columns, order, group, limit)
   }
 
-  async findOne (filters = null, columns = null, order = null, group = null, limit = 1) {
-    // const oKnex = this.queryBuilder(filters, columns, order, group, limit)
-    // oKnex.first()
-
-    return this.queryBuilder(filters, columns, order, group, limit)
+  async findOne (filters = null, columns = null, order = null, group = null) {
+    return this.queryBuilder(filters, columns, order, group, 1)
   }
 
   getTotalCount = async (filters) => {

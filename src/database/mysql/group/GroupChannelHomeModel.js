@@ -105,6 +105,33 @@ export default class GroupChannelHomeModel extends MySQLModel {
     return oQuery
   }
 
+  getSearchGroupInfo = async (search_keyword) => {
+    const oQuery = this.database.select('*')
+      .from('group_info')
+      .whereRaw('MATCH (`group_name`, `group_explain`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
+    return oQuery
+  }
+
+  getSearchOperationData = async (search_keyword) => {
+    const select_fields = ['operation_data.seq', 'operation_data.operation_seq', 'operation_data.group_seq', 'operation_data.view_count'
+      , 'operation_data.thumbnail', 'operation_data.title', 'operation_data.view_count', 'operation_data.reg_date'
+      , 'group_info.group_name', 'group_info.profile_image_path']
+    const oQuery = this.database.select(select_fields)
+      .from('operation_info')
+      .innerJoin('group_info', 'group_seq.seq', 'operation_data.group_seq')
+      .whereRaw('MATCH (`group_name`, `group_explain`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
+    return oQuery
+  }
+
+  getSearchBoardData = async (search_keyword) => {
+    const select_fields = ['board_data.seq', 'board_data.group_seq', 'board_data.write_name', 'board_data.subject', 'board_data.content_text', 'board_data.content'
+      , 'board_data.comment_cnt', 'board_data.view_cnt', 'board_data.recommend_cnt', 'board_data.regist_date']
+    const oQuery = this.database.select(select_fields)
+      .from('board_data')
+      .whereRaw('MATCH (`group_name`, `group_explain`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
+    return oQuery
+  }
+
   getRecommendGroupInfo = async (group_seq) => {
     const oQuery = this.database.select('*')
       .from('group_info')
