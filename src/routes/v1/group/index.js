@@ -600,9 +600,9 @@ routes.get('/membergroupallcount', Auth.isAuthenticated(Role.DEFAULT), Wrap(asyn
   res.json(output)
 }))
 
-routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, true)
   const mem_info = req.body.mem_info;
   const output = new StdObject()
 

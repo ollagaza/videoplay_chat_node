@@ -1189,10 +1189,9 @@ const GroupServiceClass = class {
     };
     if (group_member_info) {
       switch (group_member_info.status) {
-        case 'D':
-        case 'L':
+        case 'B':
           result_info.error = 9;
-          result_info.msg = '탈퇴한 이력이 있어 가입하실 수 없습니다.';
+          result_info.msg = '탈퇴한 이력이 있어 가입하실 수 없습니다. 채널 관리자에게 문의해주세요.';
           break;
         case 'J':
           result_info.error = 8;
@@ -1200,6 +1199,7 @@ const GroupServiceClass = class {
           break;
         case 'C':
         case 'N':
+        case 'D':
           const params = {
             grade: grade,
             status: group_join_member_state,
@@ -1328,7 +1328,11 @@ const GroupServiceClass = class {
 
   updateBanList = async (database, group_seq, ban_info) => {
     const group_member_model = this.getGroupMemberModel(database);
-    return await group_member_model.updateBanList(group_seq, ban_info, 'D')
+    let status = 'D';
+    if (ban_info.join_ban) {
+      status = 'B';
+    }
+    return await group_member_model.updateBanList(group_seq, ban_info, status)
   }
 
   nonupdateBanList = async (database, group_seq, ban_info) => {

@@ -16,7 +16,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
       'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer',
-      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_comment_cnt', 'member.profile_image_path'
+      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_comment_cnt', 'member.profile_image_path', 'group_member.ban_hide'
     ]
     this.member_group_select = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
@@ -102,6 +102,7 @@ export default class GroupMemberModel extends MySQLModel {
     if (group_seq) {
       filter['group_member.group_seq'] = group_seq
     }
+    let status_in = [];
     if (option) {
       if (option.group_type) {
         filter['group_info.group_type'] = option.group_type;
@@ -109,14 +110,28 @@ export default class GroupMemberModel extends MySQLModel {
       if (option.grade) {
         filter['group_member.grade'] = option.grade;
       }
-      if (option.status !== null && option.status !== 'J') {
-        filter['group_member.status'] = option.status;
+      if (option.status !== null) {
+        if (option.status === 'J') {
+          status_in.push('J');
+          status_in.push('C');
+        } else if (option.status === 'D'){
+          status_in.push('D');
+          status_in.push('B');
+        } else {
+          status_in.push(option.status);
+        }
       } else if (status) {
-        filter['group_member.status'] = status;
+        if (status !== 'D') {
+          status_in.push(status);
+        } else if (status === 'D') {
+          status_in.push('D', 'B');
+        }
       }
     } else {
-      if (status) {
-        filter['group_member.status'] = status
+      if (status !== 'D') {
+        status_in.push(status);
+      } else if (status === 'D') {
+        status_in.push('D', 'B');
       }
     }
     const in_raw = this.database.raw('group_info.status IN (\'Y\', \'F\')')
@@ -144,6 +159,9 @@ export default class GroupMemberModel extends MySQLModel {
     }
 
     query.where(filter)
+    if (status_in.length > 0) {
+      query.whereIn('group_member.status', status_in)
+    }
     if (option) {
       if (option.manager) {
         if (option.manager === '1') {
@@ -151,9 +169,9 @@ export default class GroupMemberModel extends MySQLModel {
         } else if (option.manager === '2') {
           query.whereRaw('group_member.grade NOT IN ("O", "6")');
         }
-        if (option.status === 'J') {
-          query.whereRaw('group_member.status IN ("J", "C")');
-        }
+      }
+      if (option.status === 'D') {
+        query.where('group_member.ban_hide', 'N')
       }
     }
     if (page) {
@@ -748,7 +766,7 @@ export default class GroupMemberModel extends MySQLModel {
     select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade NOT IN (\'O\', \'6\'), 1, 0)) AS mygroup_count'))
     select_fields.push(this.database.raw('SUM(IF((`status` = \'J\' OR `status` = \'C\') and grade NOT IN (\'O\', \'6\'), 1, 0)) AS join_wait_count'))
     select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade IN (\'O\', \'6\'), 1, 0)) AS manage_count'))
-    select_fields.push(this.database.raw('SUM(IF(`status` = \'D\', 1, 0)) AS ban_count'))
+    select_fields.push(this.database.raw('SUM(IF((`status` = \'D\' OR `status` = \'B\'), 1, 0) AND `ban_hide` = \'N\') AS ban_count'))
     const query = this.database.select(select_fields)
     query.from(this.table_name)
     query.joinRaw('LEFT JOIN (SELECT seq, group_type FROM group_info) AS GI ON (group_member.group_seq = GI.seq)')
@@ -778,6 +796,11 @@ export default class GroupMemberModel extends MySQLModel {
         status: ban_info.status,
         ban_reason: ban_info.ban_reason,
         ban_member_seq: ban_info.ban_member ? ban_info.ban_member : null,
+        modify_date: this.database.raw('NOW()'),
+      }
+    } else if (ban_info.status === 'L') {
+      update_params = {
+        ban_hide: 'Y',
         modify_date: this.database.raw('NOW()'),
       }
     } else {
