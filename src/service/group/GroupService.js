@@ -302,7 +302,13 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[getGroupMemberList]', request_body, member_type, search_text, paging)
 
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin)
+    const group_member_list = await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin);
+    for(let i = 0; i < group_member_list.data.length; i++) {
+      if (group_member_list.data[i].profile_image_path) {
+        group_member_list.data[i].profile_image_path = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_list.data[i].profile_image_path)
+      }
+    }
+    return group_member_list;
   }
 
   getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
@@ -1220,7 +1226,7 @@ const GroupServiceClass = class {
       }
     } else {
       const insert_chk = await group_member_model.createGroupMember(group_info, member_info, grade, null, group_join_member_state, is_join_answer)
-      if (insert_chk) {
+      if (!insert_chk) {
         result_info.error = 3;
         result_info.msg = '회원가입 신청에 실패하였습니다.';
       }

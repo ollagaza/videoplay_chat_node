@@ -16,7 +16,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
       'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer',
-      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_comment_cnt'
+      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_comment_cnt', 'member.profile_image_path'
     ]
     this.member_group_select = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
@@ -205,12 +205,14 @@ export default class GroupMemberModel extends MySQLModel {
       } else if (member_type === 'pause') {
         status = ['P']
       } else if (member_type === 'delete') {
-        status = ['D', 'L']
+        status = ['D', 'L', 'B']
       } else if (member_type === 'invite') {
         filter['group_member.status'] = 'N'
         status = ['N']
       } else if (member_type === 'join') {
         status = ['J']
+      } else if (member_type === 'all_not_in_ban') {
+        status = ['Y', 'P', 'J']
       }
     }
     if (member_grade && member_grade !== '0') {
@@ -238,6 +240,12 @@ export default class GroupMemberModel extends MySQLModel {
     }
     if (non_admin === 'Y') {
       query.andWhere('group_member.grade', '!=', 'O');
+    } else if (non_admin === 'OnlyManager') {
+      query.andWhere(function () {
+        this
+          .where('group_member.grade', '=', 'O')
+          .orWhere('group_member.grade', '=', '6')
+      })
     }
     if (search_text) {
       query.andWhere(function () {
