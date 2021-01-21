@@ -16,7 +16,7 @@ export default class SurgboxUpdateInfo extends JsonWrapper {
 
   getByRequestBody = (request_body) => {
     this.setKeys([
-      'version', 'v1', 'v2', 'v3', 'is_force', 'is_hide', 'title', 'desc'
+      'version', 'v1', 'v2', 'v3', 'v4', 'is_force', 'is_hide', 'title', 'desc'
     ])
 
     this.setIgnoreEmpty(true)
@@ -32,6 +32,7 @@ export default class SurgboxUpdateInfo extends JsonWrapper {
         this.v1 = -Util.parseInt(version_array[0], 0)
         this.v2 = -Util.parseInt(version_array[1], 0)
         this.v3 = -Util.parseInt(version_array[2], 0)
+        this.v4 = -Util.parseInt(version_array[3], 0)
       }
       this.is_force = Util.isTrue(this.is_force) ? 1 : 0
       this.is_hide = Util.isTrue(this.is_hide) ? 1 : 0
