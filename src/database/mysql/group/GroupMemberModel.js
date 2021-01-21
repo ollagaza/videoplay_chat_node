@@ -783,7 +783,7 @@ export default class GroupMemberModel extends MySQLModel {
       group_seq: ban_info.group_seq,
     }
     let update_params = {};
-    if (ban_info.status === 'D') {
+    if (ban_info.status === 'D' || ban_info.status === 'B') {
       update_params = {
         status: ban_info.status,
         ban_reason: ban_info.ban_reason,
