@@ -160,7 +160,7 @@ const GroupBoardDataServiceClass = class {
     }
 
     const board_model = this.getGroupBoardDataModel(database)
-    await board_model.updateBoardCommentCnt(board_data_seq);
+    await board_model.updateBoardCommentCnt(board_data_seq, '-');
     return result;
   }
 
@@ -248,6 +248,24 @@ const GroupBoardDataServiceClass = class {
     const model = this.getGroupBoardDataModel(database)
     return model.fileUpdateBoardData(board_data_seq, param)
   }
+
+  allDeleteCommentByGrouypSeqMemberSeq = async (database, group_seq, member_seq) => {
+    const board_model = this.getGroupBoardDataModel(database)
+    const comment_model = this.getGroupBoardCommentModel(database);
+    const comment_list = await comment_model.getBoardCommentListByGroupSeqMemberSeq(group_seq, member_seq);
+    const res_data = {};
+    for (let i = 0; i < comment_list.length; i++) {
+      const comment_seq = comment_list[i].seq;
+      const board_data_seq = comment_list[i].board_data_seq;
+      const result = await comment_model.DeleteComment(comment_seq);
+      if (result) {
+        res_data[comment_seq]++;
+      }
+      await board_model.updateBoardCommentCnt(board_data_seq, '-');
+    }
+    return res_data;
+  }
+
 }
 
 const GroupBoardDataService = new GroupBoardDataServiceClass()

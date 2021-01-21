@@ -26,6 +26,7 @@ import { OperationAnalysisModel } from '../../database/mongodb/OperationAnalysis
 import Zip from 'adm-zip'
 import iconv from 'iconv-lite'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
+import OperationCommentService from "./OperationCommentService";
 
 const OperationServiceClass = class {
   constructor () {
@@ -995,6 +996,34 @@ const OperationServiceClass = class {
   getAllOperationGroupMemberList = async (database, group_seq, member_seq) => {
     const model = this.getOperationModel(database)
     return await model.getGroupMemberOperationList(group_seq, member_seq);
+  }
+
+  setAllOperationClipDeleteByGroupSeqAndMemberSeq = async (databases, group_seq, member_seq) => {
+    const clip_list = await OperationClipService.findByMemberSeqAndGroupSeq(member_seq, group_seq);
+    let counting_clip = {};
+    for (let i = 0; i < clip_list.length; i++) {
+      const operation_seq = Number(clip_list[i].operation_seq);
+      if (!counting_clip[operation_seq]) {
+        counting_clip[operation_seq] = 1;
+      } else {
+        counting_clip[operation_seq]++;
+      }
+      const clip_id = clip_list[i]._id.toString();
+      await OperationCommentService.deleteClipInfo(clip_id);
+      await OperationClipModel.deleteById(clip_id);
+    }
+    const operation_storage_model = this.getOperationStorageModel(databases);
+    const operation_seq_list = Object.keys(counting_clip);
+    for (let i = 0; i < operation_seq_list.length; i++) {
+      const operation_seq = operation_seq_list[i];
+      const del_count = counting_clip[operation_seq];
+      const operation_storage_info = await operation_storage_model.getOperationStorageInfo({ seq: operation_seq });
+      let update_clip_count = operation_storage_info.clip_count - del_count;
+      if (update_clip_count <= 0) {
+        update_clip_count = 0;
+      }
+      await OperationClipService.updateClipCount({ seq: operation_storage_info.seq }, update_clip_count);
+    }
   }
 }
 

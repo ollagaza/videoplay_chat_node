@@ -21,6 +21,8 @@ import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 import JsonWrapper from '../../wrapper/json-wrapper'
 import GroupGradeModel from "../../database/mysql/group/GroupGradeModel";
 import data from "../../routes/v1/data";
+import OperationCommentService from '../operation/OperationCommentService'
+import GroupBoardDataService from "../board/GroupBoardDataService";
 
 const GroupServiceClass = class {
   constructor () {
@@ -1341,6 +1343,9 @@ const GroupServiceClass = class {
       for (let j = 0; j < operation_list.length; j++) {
         await OperationService.deleteOperation(database, token_info, operation_list[j].seq);
       }
+      await OperationService.setAllOperationClipDeleteByGroupSeqAndMemberSeq(database, group_seq, member_seq);
+      await OperationCommentService.deleteAllComment(database, group_seq, member_seq);
+      await GroupBoardDataService.allDeleteCommentByGrouypSeqMemberSeq(database, group_seq, member_seq)
     }
     return await group_member_model.updateMemberContentsInfo(group_seq, target_info)
   }

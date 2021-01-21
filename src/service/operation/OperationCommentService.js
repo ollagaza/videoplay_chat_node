@@ -215,6 +215,35 @@ const OperationCommentServiceClass = class {
     await OperationClipModel.updateCommentCount(clip_id, comment_count)
     return comment_count
   }
+
+  deleteAllComment = async (databases, group_seq, member_seq) => {
+    if (!group_seq || !member_seq) {
+      throw new StdObject(-1, '잘못된 요청입니다', 400)
+    }
+    const comment_model = this.getOperationCommentModel(databases)
+    const comment_list = await comment_model.getCommentListByGroupSeqMemberSeq(group_seq, member_seq);
+    let res_data = {};
+    for (let i = 0; i < comment_list.length; i++) {
+      const operation_data_seq = comment_list[i].operation_data_seq;
+      const comment_seq = comment_list[i].seq;
+
+      const delete_result = await comment_model.deleteComment(operation_data_seq, comment_seq)
+      if (!delete_result) {
+        if (!res_data[comment_seq]) {
+          res_data[comment_seq] = 1;
+        } else {
+          res_data[comment_seq]++;
+        }
+      }
+      if (comment_list[i].parent_seq && comment_list[i].is_reply) {
+        await comment_model.updateReplyCount(operation_data_seq, comment_list[i].parent_seq)
+      }
+      if (comment_list[i].clip_id) {
+        await this.updateClipCommentCount(databases, operation_data_seq, comment_list[i].clip_id)
+      }
+    }
+    return res_data;
+  }
 }
 
 const operation_comment_service = new OperationCommentServiceClass()

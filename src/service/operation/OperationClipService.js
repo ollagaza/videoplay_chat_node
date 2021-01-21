@@ -171,6 +171,10 @@ const OperationClipServiceClass = class {
     }
     return false
   }
+
+  findByMemberSeqAndGroupSeq = async (member_seq, group_seq) => {
+    return await OperationClipModel.findByMemberSeqAndGroupSeq(member_seq, group_seq)
+  }
 }
 
 const operation_clip_service = new OperationClipServiceClass()

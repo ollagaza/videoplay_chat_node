@@ -61,4 +61,13 @@ export default class GroupBoardCommentModel extends MySQLModel {
       .first()
     return oKnex
   }
+
+  getBoardCommentListByGroupSeqMemberSeq = async (group_seq, member_seq) => {
+    if (!group_seq && !member_seq) {
+      return null;
+    }
+    return this.database.select(['*'])
+      .from(this.table_name)
+      .where({ group_seq: group_seq, member_seq: member_seq })
+  }
 }
