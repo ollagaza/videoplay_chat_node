@@ -94,15 +94,14 @@ export default class GroupModel extends MySQLModel {
     return query_result
   }
 
-  getPersonalGroupUserForBox = async (user_id) => {
+  getGroupListForBox = async () => {
     const query = this.database
       .select(this.group_user_list)
       .from('group_info')
       .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
-      .where('group_info.group_type', 'P')
       .whereIn('group_info.status', ['Y', 'F'])
-      .where('member.user_id', user_id)
-      .first()
+      .where('group_info.disable_box', 0)
+      .orderBy('member.user_name', 'ASC')
 
     return query
   }
