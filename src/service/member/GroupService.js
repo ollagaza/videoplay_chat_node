@@ -859,7 +859,7 @@ const GroupServiceClass = class {
       const treat_code = group_info.treatcode ? JSON.parse(group_info.treatcode) : null
       const token_result = await Auth.getTokenResult(null, member_info, Role.API, true)
       result_list.push({
-        'user_name': group_info.group_type === this.GROUP_TYPE_PERSONAL ? group_info.user_name : `${group_info.group_name} 팀플랜`,
+        'user_name': group_info.group_type === this.GROUP_TYPE_PERSONAL ? group_info.user_name : `${group_info.group_name}`,
         'user_id': group_info.user_id,
         'user_token': token_result.get('token'),
         'course_name': treat_code && treat_code.length > 0 ? treat_code[0].text : ''
