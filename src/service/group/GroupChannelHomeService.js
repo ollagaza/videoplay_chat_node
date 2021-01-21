@@ -12,6 +12,7 @@ import GroupChannelHomeModel from "../../database/mysql/group/GroupChannelHomeMo
 import {OperationClipModel} from '../../database/mongodb/OperationClip'
 import Util from "../../utils/baseutil";
 import ServiceConfig from "../service-config";
+import GroupService from "./GroupService";
 
 const GroupChannelHomeServiceClass = class {
   constructor() {
@@ -141,17 +142,56 @@ const GroupChannelHomeServiceClass = class {
     return result
   }
 
-  getSearchResult = async (database, search_keyword) => {
+  getSearchResult = async (database, req, member_seq) => {
+    const request_body = req.query ? req.query : {}
+    const search_keyword = request_body.search_keyword
+    const search_tab = request_body.search_tab
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+
+    const paging = {}
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = request_paging.no_paging ? request_paging.no_paging : 'N'
+
+    const my_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, true)
+
     const model = this.getGroupChannelHomeModel(database)
-    const search_group_info = await model.getSearchGroupInfo(search_keyword)
-    const search_operation_data = await model.getSearchOperationData(search_keyword)
-    const search_board_data = await model.getSearchBoardData(search_keyword)
+    const search_group_info = search_tab === 'all' || search_tab === 'group' ? await model.getSearchGroupInfo(search_keyword, search_tab, paging) : null
+
+    if (search_group_info && search_group_info.calc_total_count > 0) {
+      const group_info = search_group_info.data;
+      for (let cnt = 0; cnt < group_info.length; cnt++) {
+        group_info[cnt].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info[cnt].profile_image_path)
+        const operation_list = await model.getRecommendOperationList(group_info[cnt].seq, 3)
+        for (let v_cnt = 0; v_cnt < operation_list.lenght; v_cnt++) {
+          operation_list[v_cnt].thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), operation_list[v_cnt].thumbnail)
+        }
+        group_info[cnt].video = operation_list;
+      }
+    }
+
+    const search_operation_data = search_tab === 'all' || search_tab === 'video' ?  await model.getSearchOperationData(search_keyword, paging) : null
+    const search_board_data = search_tab === 'all' || search_tab === 'board' ? await model.getSearchBoardData(search_keyword, paging) : null
+    let total_count = 0;
+
+    if (search_tab === 'all') {
+      total_count = search_group_info.calc_total_count + search_operation_data.calc_total_count + search_board_data.calc_total_count
+    } else if (search_tab === 'group') {
+      total_count = search_group_info.calc_total_count
+    } else if (search_tab === 'video') {
+      total_count = search_operation_data.calc_total_count
+    } else if (search_tab === 'board') {
+      total_count = search_board_data.calc_total_count
+    }
+
 
     return {
-      total_count: search_group_info.length + search_operation_data.length + search_board_data.length,
+      total_count,
       search_group_info,
       search_operation_data,
       search_board_data,
+      my_group_list: _.filter(my_group_list, { group_type: 'G'})
     }
   }
 

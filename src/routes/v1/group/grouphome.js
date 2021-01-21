@@ -17,7 +17,7 @@ routes.get('/test', Wrap(async (req, res) => {
   res.end()
 }))
 
-routes.get('/:menu_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.get('/home/:menu_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   let menu_id = req.params.menu_id
   const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false)
@@ -48,11 +48,11 @@ routes.get('/getcategorygrouplist/:menu_id', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output)
 }))
 
-routes.get('/group_search/:search_keyword', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.get('/group_search', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const search_keyword = req.params.search_keyword
+  const { member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false)
   const output = new StdObject()
-  output.adds(await GroupChannelHomeService.getSearchResult(DBMySQL, search_keyword))
+  output.adds(await GroupChannelHomeService.getSearchResult(DBMySQL, req, member_seq))
   res.json(output)
 }))
 
