@@ -149,7 +149,11 @@ const GroupChannelHomeServiceClass = class {
     const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
 
     const paging = {}
-    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    if (search_tab === 'all') {
+      paging.list_count = 6
+    } else {
+      paging.list_count = 10
+    }
     paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
     paging.page_count = request_paging.page_count ? request_paging.page_count : 10
     paging.no_paging = request_paging.no_paging ? request_paging.no_paging : 'N'

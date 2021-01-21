@@ -111,7 +111,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .whereRaw('MATCH (`group_name`, `group_explain`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
       .orWhereRaw(`JSON_SEARCH(JSON_EXTRACT(search_keyword, '$[0]'), 'all', '%${search_keyword}%') is not null`)
 
-    return await this.queryPaginated(oQuery, search_tab === 'all' ? 6 : paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
+    return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
   }
 
   getSearchOperationData = async (search_keyword, paging) => {
