@@ -159,7 +159,7 @@ export default class GroupMemberModel extends MySQLModel {
     }
 
     query.where(filter)
-    if (status_in.length > 0) {
+    if (!status_in && status_in.length > 0) {
       query.whereIn('group_member.status', status_in)
     }
     if (option) {
