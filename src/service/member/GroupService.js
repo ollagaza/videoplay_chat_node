@@ -846,47 +846,26 @@ const GroupServiceClass = class {
     return await group_info_model.getMemberGroupInfoAll(member_seq)
   }
 
-  getAllPersonalGroupUserListForBox = async (database) => {
+  getGroupListForBox = async (database) => {
     const result_list = []
     const group_info_model = this.getGroupModel(database)
-    const user_list = await group_info_model.getAllPersonalGroupUserList(true)
-    for (let i = 0; i < user_list.length; i++) {
-      const user_info = user_list[i]
+    const group_list = await group_info_model.getGroupListForBox()
+    for (let i = 0; i < group_list.length; i++) {
+      const group_info = group_list[i]
       const member_info = {
-        'seq': user_info.member_seq,
-        'group_seq': user_info.group_seq
+        'seq': group_info.member_seq,
+        'group_seq': group_info.group_seq
       }
-      const treat_code = user_info.treatcode ? JSON.parse(user_info.treatcode) : null
+      const treat_code = group_info.treatcode ? JSON.parse(group_info.treatcode) : null
       const token_result = await Auth.getTokenResult(null, member_info, Role.API, true)
       result_list.push({
-        'user_name': user_info.user_name,
-        'user_id': user_info.user_id,
+        'user_name': group_info.group_type === this.GROUP_TYPE_PERSONAL ? group_info.user_name : `${group_info.group_name}`,
+        'user_id': group_info.user_id,
         'user_token': token_result.get('token'),
         'course_name': treat_code && treat_code.length > 0 ? treat_code[0].text : ''
       })
     }
     return result_list
-  }
-
-  getPersonalGroupUserForBox = async (database, user_id) => {
-    const group_info_model = this.getGroupModel(database)
-    const user_info = await group_info_model.getPersonalGroupUserForBox(user_id)
-    let result = null
-    if (user_info) {
-      const member_info = {
-        'seq': user_info.member_seq,
-        'group_seq': user_info.group_seq
-      }
-      const treat_code = user_info.treatcode ? JSON.parse(user_info.treatcode) : null
-      const token_result = await Auth.getTokenResult(null, member_info, Role.API, true)
-      result = {
-        'user_name': user_info.user_name,
-        'user_id': user_info.user_id,
-        'user_token': token_result.get('token'),
-        'course_name': treat_code && treat_code.length > 0 ? treat_code[0].text : ''
-      }
-    }
-    return result
   }
 
   getGroupSeqByMemberInfo = async (database, group_seq) => {

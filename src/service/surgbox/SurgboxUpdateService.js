@@ -93,10 +93,16 @@ const SurgboxUpdateServiceClass = class {
     if (query_result && query_result.length) {
       const update = result.update
       let last_version = null
+      let last_minor_version = null
       let min_version = null
+      let min_minor_version = null
+
       for (let i = 0; i < query_result.length; i++) {
         const update_info = query_result[i]
         const version = update_info.version
+        const version_array = `${version}`.split('.')
+        const major_version = version_array.slice(0, 3).join('.')
+        const minor_version = Util.parseInt(version_array[3], 0)
         const file_path = update_info.file_path
         const is_force = update_info.is_force === 1
         let version_info = update[version]
@@ -113,21 +119,40 @@ const SurgboxUpdateServiceClass = class {
             file_list: []
           }
           update[version] = version_info
-          if (!last_version) last_version = version
-          else if (semver.gt(version, last_version)) last_version = version
+          let is_change_version = false
+          if (!last_version || semver.gt(major_version, last_version)) {
+            is_change_version = true
+          } else if (semver.eq(major_version, last_version)) {
+            is_change_version = last_minor_version === null || minor_version > last_minor_version
+          }
+          if (is_change_version) {
+            last_version = major_version
+            last_minor_version = minor_version
+          }
 
           if (is_force) {
-            if (!min_version) min_version = version
-            else if (semver.gt(version, last_version)) min_version = version
+            is_change_version = false
+            if (!min_version || semver.gt(major_version, min_version)) {
+              is_change_version = true
+            }
+            else if (semver.gt(major_version, min_version)) {
+              is_change_version = min_minor_version === null || minor_version > min_minor_version
+            }
+            if (is_change_version) {
+              min_version = major_version
+              min_minor_version = minor_version
+            }
           }
         }
         if (update_info.file_name) {
           version_info.file_list.push(ServiceConfig.get('cdn_url') + file_path + update_info.file_name)
         }
       }
+      if (!last_minor_version) last_minor_version = 0
+      if (!min_minor_version) min_minor_version = 0
       result.has_update = true
-      result.last_version = last_version
-      result.min_version = min_version
+      result.last_version = `${last_version}.${last_minor_version}`
+      result.min_version = `${min_version}.${min_minor_version}`
     }
     return result
   }

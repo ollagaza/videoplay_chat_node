@@ -163,7 +163,7 @@ export default class OperationModel extends MySQLModel {
     return operation_info
   }
 
-  updateOperationStatus = async (operation_seq) => {
+  setOperationStatusDelete = async (operation_seq) => {
     return await this.update({ 'seq': operation_seq }, { 'status': 'D' })
   }
 
@@ -173,17 +173,17 @@ export default class OperationModel extends MySQLModel {
 
   updateStatusTrash = async (operation_seq_list, member_seq, status) => {
     let filters = null
-    if (member_seq) {
-      filters = { member_seq }
-    }
-    return await this.updateIn('seq', operation_seq_list, {
+    // if (member_seq) {
+    //   filters = { member_seq }
+    // }
+    return this.updateIn('seq', operation_seq_list, {
       status,
       'modify_date': this.database.raw('NOW()')
     }, filters)
   }
 
   updateStatus = async (operation_seq_list, status) => {
-    return await this.updateIn('seq', operation_seq_list, { status, 'modify_date': this.database.raw('NOW()') })
+    return this.updateIn('seq', operation_seq_list, { status, 'modify_date': this.database.raw('NOW()') })
   }
 
   updateStatusFavorite = async (operation_seq, is_delete) => {
