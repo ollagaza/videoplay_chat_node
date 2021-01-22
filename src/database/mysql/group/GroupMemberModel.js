@@ -605,7 +605,7 @@ export default class GroupMemberModel extends MySQLModel {
     return update_result
   }
 
-  inviteConfirm = async (group_member_seq, member_seq, max_storage_size = 0) => {
+  inviteConfirm = async (group_member_seq, member_seq, max_storage_size = 0, change_grade = null) => {
     const filter = {
       seq: group_member_seq
     }
@@ -617,6 +617,9 @@ export default class GroupMemberModel extends MySQLModel {
       max_storage_size: max_storage_size,
       join_date: this.database.raw('NOW()'),
       modify_date: this.database.raw('NOW()')
+    }
+    if (change_grade) {
+      update_params.grade = change_grade;
     }
     return await this.update(filter, update_params)
   }

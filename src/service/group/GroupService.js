@@ -565,7 +565,15 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database)
     const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
 
-    await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size)
+    const group_grade_model = this.getGroupGradeModel(database)
+    const group_grade_info = await group_grade_model.getGroupGradeListWithGroupSeq(group_invite_info.group_seq);
+    let change_grade = '1';
+    if (group_grade_info) {
+      if (group_grade_info[0].grade) {
+        change_grade = group_grade_info[0].grade;
+      }
+    }
+    await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
 
     const message_info = {
       title: '신규 회원 가입',
