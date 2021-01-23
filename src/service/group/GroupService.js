@@ -104,17 +104,13 @@ const GroupServiceClass = class {
     let is_active_group_member = false
     let is_group_admin = false
     let is_group_manager = false
-    if (token_info.getRole() === Role.ADMIN) {
-      is_active_group_member = true
-      is_group_admin = true
-      is_group_manager = true
-      group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
-    } else if (token_info.getRole() === Role.MANAGER) {
-      is_active_group_member = true
-      is_group_admin = false
-      is_group_manager = true
-      group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
-    } else if (check_group_auth) {
+    // if (token_info.getRole() === Role.ADMIN) {
+    //   is_active_group_member = true
+    //   is_group_admin = true
+    //   is_group_manager = true
+    //   group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
+    // } else
+    if (check_group_auth) {
       if (!group_seq) {
         is_active_group_member = false
       } else {
