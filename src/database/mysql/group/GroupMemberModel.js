@@ -892,6 +892,7 @@ export default class GroupMemberModel extends MySQLModel {
       join_date: this.database.raw('NOW()'),
       modify_date: this.database.raw('NOW()'),
       join_answer: params.answer,
+      ban_hide: params.ban_hide,
     }
     const update_result = await this.update(filter, update_params)
     log.debug(this.log_prefix, '[changeMemberGrade]', update_result)

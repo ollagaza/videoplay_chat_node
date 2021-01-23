@@ -261,7 +261,7 @@ const GroupBoardDataServiceClass = class {
       if (result) {
         res_data[comment_seq]++;
       }
-      await board_model.updateBoardCommentCnt(board_data_seq, '-');
+      await board_model.updateBoardCommentCnt(board_data_seq);
     }
     return res_data;
   }

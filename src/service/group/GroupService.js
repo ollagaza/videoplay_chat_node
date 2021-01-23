@@ -694,15 +694,17 @@ const GroupServiceClass = class {
     this.sendEmail(title, body, [target_member_info.invite_email], 'unDeleteMember')
   }
 
-  pauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
+  pauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, message = null) => {
     const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
     if (!is_group_admin) {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
-    const group_member_model = this.getGroupMemberModel(database)
-    await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
-
-    const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단 되었습니다.`
+    // const group_member_model = this.getGroupMemberModel(database)
+    // await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
+    let title = `${group_member_info.group_name}의 SurgStory 사용 일시중단 되었습니다.`
+    if (message) {
+      title = `${group_member_info.group_name}의 SurgStory ${message}`
+    }
     const message_info = {
       title: '팀 사용 불가',
       message: title,
@@ -1212,6 +1214,7 @@ const GroupServiceClass = class {
             grade: grade,
             status: group_join_member_state,
             answer: is_join_answer,
+            ban_hide: 'N',
           }
           const update_chk = await group_member_model.updateGroupMemberJoin(group_seq, null, group_member_info.seq, params);
           if (!update_chk) {
@@ -1348,8 +1351,16 @@ const GroupServiceClass = class {
     return await group_member_model.updateBanList(group_seq, ban_info, 'Y')
   }
 
-  changeGradeMemberList = async (database, group_seq, change_member_info) => {
+  changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
     const group_member_model = this.getGroupMemberModel(database);
+    for (let i = 0; i < change_member_info.change_list.length; i++) {
+      const target_member_info = await group_member_model.getGroupMemberInfoBySeq(change_member_info.change_list[i]);
+      if (target_member_info) {
+        if (target_member_info.grade === '6') {
+          await this.changeGradeNormal(database, group_member_info, change_member_info.change_list[i]);
+        }
+      }
+    }
     return await group_member_model.updateGradeList(group_seq, change_member_info)
   }
 

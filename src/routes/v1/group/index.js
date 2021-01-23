@@ -420,8 +420,11 @@ routes.post('/updategradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
 
 routes.post('/pausegroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const pause_list = req.body.pause_list;
+  for (let i = 0; i < pause_list.pause_list.length; i++) {
+    await GroupService.pauseMember(DBMySQL, group_member_info, member_info, pause_list.pause_list[i], token_info.getServiceDomain())
+  }
   const output = new StdObject()
 
   const result = await GroupService.updatePauseList(DBMySQL, group_seq, pause_list)
@@ -456,10 +459,13 @@ routes.post('/joingrouplist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async 
 
 routes.post('/bangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const ban_info = req.body.ban_info;
+  const message = '탈퇴 되었습니다.';
+  for (let i = 0; i < ban_info.ban_list.length; i++) {
+    await GroupService.pauseMember(DBMySQL, group_member_info, member_info, ban_info.ban_list[i], token_info.getServiceDomain(), message)
+  }
   const output = new StdObject()
-
   const result = await GroupService.updateBanList(DBMySQL, group_seq, ban_info)
   output.add('result', result)
 
@@ -480,11 +486,11 @@ routes.post('/nonbangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
 
 routes.post('/chagegrademember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { group_seq, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const change_member_info = req.body.change_member_info;
   const output = new StdObject()
 
-  const result = await GroupService.changeGradeMemberList(DBMySQL, group_seq, change_member_info)
+  const result = await GroupService.changeGradeMemberList(DBMySQL, group_seq, change_member_info, group_member_info)
   output.add('result', result)
 
   res.json(output)
