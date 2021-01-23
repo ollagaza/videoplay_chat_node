@@ -137,14 +137,22 @@ const GroupBoardDataServiceClass = class {
     return await model.updateBoardViewCnt(board_data_seq);
   }
 
-  updateBoardReCommendCnt = async (database, board_data_seq, type = null) => {
+  incrementBoardReCommendCnt = async (database, board_data_seq) => {
     const model = this.getGroupBoardDataModel(database)
-    return await model.updateBoardRecommendCnt(board_data_seq, type);
+    return await model.incrementBoardReCommendCnt(board_data_seq);
+  }
+  decrementBoardReCommendCnt = async (database, board_data_seq) => {
+    const model = this.getGroupBoardDataModel(database)
+    return await model.decrementBoardReCommendCnt(board_data_seq);
   }
 
-  updateBoardCommentReCommendCnt = async (database, comment_seq, type = null) => {
+  incrementBoardCommentReCommendCnt = async (database, comment_seq) => {
     const model = this.getGroupBoardCommentModel(database)
-    return await model.updateBoardCommentRecommendCnt(comment_seq, type);
+    return await model.incrementBoardCommentReCommendCnt(comment_seq);
+  }
+  decrementBoardCommentReCommendCnt = async (database, comment_seq) => {
+    const model = this.getGroupBoardCommentModel(database)
+    return await model.decrementBoardCommentReCommendCnt(comment_seq);
   }
 
   DeleteComment = async (database, board_data_seq, comment_seq) => {

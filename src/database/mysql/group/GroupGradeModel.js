@@ -13,11 +13,11 @@ export default class GroupGradeModel extends MySQLModel {
   }
 
   getGroupManageGradeListWithGroupSeq = async (group_seq) => {
-    return await this.find({ group_seq })
+    return await this.find({ group_seq }, null, { name: 'grade', direction: 'asc' })
   }
 
   getGroupGradeListWithGroupSeq = async (group_seq) => {
-    return await this.find({ group_seq, used: 1 })
+    return await this.find({ group_seq, used: 1 }, null, { name: 'grade', direction: 'asc' })
   }
 
   insertGroupGrade = async (param) => {

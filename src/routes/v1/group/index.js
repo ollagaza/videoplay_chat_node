@@ -370,6 +370,7 @@ routes.get('/getgrademanagelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   let grade_list = await GroupService.getGradeManageList(DBMySQL, group_seq)
   if (!grade_list) {
     grade_list = [
+      { grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '1', grade_text: '기본회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '2', grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '3', grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
@@ -392,6 +393,7 @@ routes.get('/getgradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
   let grade_list = await GroupService.getGradeList(DBMySQL, group_seq)
   if (!grade_list) {
     grade_list = [
+      { grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '1', grade_text: '기본회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '2', grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '3', grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },

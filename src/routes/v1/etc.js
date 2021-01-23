@@ -17,7 +17,7 @@ const routes = Router()
 
 routes.get('/sendmaillist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
     const result = await SendMailService.getSendMailPagingList(DBMySQL, group_seq, req)
     const output = new StdObject()
     output.adds(result)
@@ -29,7 +29,7 @@ routes.get('/sendmaillist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
 
 routes.get('/getsendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
     const mail_seq = req.params.mail_seq
     const result = await SendMailService.getSendMailOne(DBMySQL, mail_seq)
     const output = new StdObject()
@@ -42,7 +42,7 @@ routes.get('/getsendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER)
 
 routes.delete('/sendmail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
     const mail_seq = req.body
     const output = new StdObject();
     for (let cnt = 0; cnt < Object.keys(mail_seq).length; cnt++) {
@@ -57,7 +57,7 @@ routes.delete('/sendmail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (re
 
 routes.get('/sendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
     const mail_seq = req.params.mail_seq
     const result = await SendMailService.sendMail(DBMySQL, mail_seq)
     res.json(result)
@@ -68,7 +68,7 @@ routes.get('/sendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), W
 
 routes.post('/upload_mail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+    const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
     const mail_params = req.body;
     mail_params.group_seq = group_seq;
     mail_params.member_seq = member_seq;

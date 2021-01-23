@@ -118,8 +118,11 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.update({ seq: board_seq }, { origin_seq: board_seq })
   }
 
-  updateBoardRecommendCnt = async (board_seq, type) => {
-    return this.update({ seq: board_seq }, { recommend_cnt: this.database.raw(`recommend_cnt + ${type ? 1 : -1}`) })
+  incrementBoardReCommendCnt = async (board_seq) => {
+    return this.increment({ seq: board_seq }, { recommend_cnt: 1 })
+  }
+  decrementBoardReCommendCnt = async (board_seq) => {
+    return this.decrement({ seq: board_seq }, { recommend_cnt: 1 })
   }
 
   updateBoardViewCnt = async (board_seq) => {

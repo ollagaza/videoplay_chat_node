@@ -178,6 +178,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
         query.andOn(this.database.raw(`JSON_SEARCH(JSON_EXTRACT(member.treatcode, '$[*].code'), 'all', '${menu_id}') IS NOT NULL`))
       })
       .where('group_info.group_type', 'G')
+      .andWhere('group_info.group_open', 1)
       .orderBy('group_info.member_count', 'desc')
 
     if (limit) {

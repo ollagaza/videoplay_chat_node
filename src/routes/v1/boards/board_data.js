@@ -13,11 +13,13 @@ import GroupService from "../../../service/group/GroupService";
 
 const routes = Router()
 
-routes.get('/getboarddatadetail/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+routes.get('/getboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
   const output = new StdObject()
-  const { member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, false)
+  const { member_seq, is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, false, true)
   const board_data_seq = req.params.board_data_seq
   const board_detail = await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data_seq)
+
+  output.add('is_active_group_member', is_active_group_member)
   output.add('board_detail', board_detail)
   output.add('board_comment_list', await GroupBoardDataService.getBoardCommentList(DBMySQL, board_data_seq, member_seq))
   output.add('board_recommend', await GroupReCommendService.getBoardRecommend(DBMySQL, board_data_seq, member_seq))
@@ -26,6 +28,7 @@ routes.get('/getboarddatadetail/:board_data_seq(\\d+)', Auth.isAuthenticated(Rol
 
 routes.get('/getpreviousnextview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
+  const { is_active_group_member, is_group_admin, is_group_manager } = await GroupService.checkGroupAuth(DBMySQL, req, true, true)
   const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, req)
   output.adds(result)
   let board_data = null;
@@ -34,12 +37,16 @@ routes.get('/getpreviousnextview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(a
   } else {
     board_data = result.data[0];
   }
+  output.add('is_manage', is_group_admin || is_group_manager)
+  output.add('is_active_group_member', is_active_group_member)
   output.add('board_detail', await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data.seq))
   res.json(output);
 }))
 
 routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
+  const { is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
+  output.add('is_active_group_member', is_active_group_member)
   const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, req)
   output.adds(result)
   res.json(output);
@@ -47,6 +54,8 @@ routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
 
 routes.get('/gettemporarilylist/:group_seq(\\d+)/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
+  const { is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
+  output.add('is_active_group_member', is_active_group_member)
   const group_seq = req.params.group_seq
   const member_seq = req.params.member_seq
 
@@ -151,7 +160,7 @@ routes.put('/update_recommend/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.
     const result = await GroupReCommendService.getBoardRecommend(transaction, board_data_seq, member_seq)
     if (result) {
       await GroupReCommendService.deleteBoardRecommend(transaction, result.seq)
-      await GroupBoardDataService.updateBoardReCommendCnt(transaction, board_data_seq)
+      await GroupBoardDataService.decrementBoardReCommendCnt(transaction, board_data_seq)
       output.add('result', { message: '추천 해제 되었습니다.', result: false })
     } else {
       const recommend_data = {
@@ -162,7 +171,7 @@ routes.put('/update_recommend/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.
         recommend: 'T',
       }
       await GroupReCommendService.createBoardRecommend(transaction, recommend_data)
-      await GroupBoardDataService.updateBoardReCommendCnt(transaction, board_data_seq, '+')
+      await GroupBoardDataService.incrementBoardReCommendCnt(transaction, board_data_seq)
       output.add('result', { message: '추천 되었습니다.', result: true })
     }
   })
@@ -181,7 +190,7 @@ routes.put('/update_comment_recommend/:board_data_seq(\\d+)/:comment_seq(\\d+)',
     const result = await GroupReCommendService.getBoardCommentRecommendOne(transaction, comment_seq, board_data_seq, member_seq)
     if (result) {
       await GroupReCommendService.deleteBoardCommentRecommend(transaction, result.seq)
-      await GroupBoardDataService.updateBoardCommentReCommendCnt(transaction, comment_seq)
+      await GroupBoardDataService.decrementBoardCommentReCommendCnt(transaction, comment_seq)
       output.add('result', { message: '추천 해제 되었습니다.', result: false })
     } else {
       const recommend_data = {
@@ -193,7 +202,7 @@ routes.put('/update_comment_recommend/:board_data_seq(\\d+)/:comment_seq(\\d+)',
         recommend: 'T',
       }
       await GroupReCommendService.createBoardCommentReCommend(transaction, recommend_data)
-      await GroupBoardDataService.updateBoardCommentReCommendCnt(transaction, comment_seq, '+')
+      await GroupBoardDataService.incrementBoardCommentReCommendCnt(transaction, comment_seq)
       output.add('result', { message: '추천 되었습니다.', result: true })
     }
   })

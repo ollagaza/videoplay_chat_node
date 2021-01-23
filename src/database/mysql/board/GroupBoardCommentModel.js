@@ -46,8 +46,11 @@ export default class GroupBoardCommentModel extends MySQLModel {
     return this.update({ seq: comment_seq }, { origin_seq: comment_seq })
   }
 
-  updateBoardCommentRecommendCnt = async (comment_seq, type) => {
-    return this.update({ seq: comment_seq }, { recommend_cnt: this.database.raw(`recommend_cnt + ${type ? 1 : -1}`) })
+  incrementBoardCommentReCommendCnt = async (comment_seq) => {
+    return this.increment({ seq: comment_seq }, { recommend_cnt: 1 })
+  }
+  decrementBoardCommentReCommendCnt = async (comment_seq) => {
+    return this.decrement({ seq: comment_seq }, { recommend_cnt: 1 })
   }
 
   DeleteComment = async (comment_seq) => {
