@@ -8,6 +8,7 @@ import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 import MemberService from '../member/MemberService'
 import OperationService from '../operation/OperationService'
+import OperationModel from "../../database/mysql/operation/OperationModel";
 import OperationDataService from '../operation/OperationDataService'
 import SocketManager from '../socket-manager'
 import GroupModel from '../../database/mysql/group/GroupModel'
@@ -23,6 +24,8 @@ import GroupGradeModel from "../../database/mysql/group/GroupGradeModel";
 import data from "../../routes/v1/data";
 import OperationCommentService from '../operation/OperationCommentService'
 import GroupBoardDataService from "../board/GroupBoardDataService";
+import OperationClipService from "../operation/OperationClipService";
+import {OperationClipModel} from "../../database/mongodb/OperationClip";
 
 const GroupServiceClass = class {
   constructor () {
@@ -1349,7 +1352,15 @@ const GroupServiceClass = class {
 
   nonupdateBanList = async (database, group_seq, ban_info) => {
     const group_member_model = this.getGroupMemberModel(database);
-    return await group_member_model.updateBanList(group_seq, ban_info, 'Y')
+    const group_grade_model = this.getGroupGradeModel(database)
+    const group_grade_info = await group_grade_model.getGroupGradeListWithGroupSeq(group_seq);
+    let change_grade = '1';
+    if (group_grade_info) {
+      if (group_grade_info[0].grade) {
+        change_grade = group_grade_info[0].grade;
+      }
+    }
+    return await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
   }
 
   changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
@@ -1367,11 +1378,32 @@ const GroupServiceClass = class {
 
   deleteGroupMemberContents = async (database, group_seq, target_info, token_info) => {
     const group_member_model = this.getGroupMemberModel(database);
+    const operation_model = new OperationModel(database);
     for (let i = 0; i < target_info.target_list.length; i ++) {
       const member_seq = await group_member_model.getGroupMemberSeq(target_info.target_list[i]);
       const operation_list = await OperationService.getAllOperationGroupMemberList(database, group_seq, member_seq);
       for (let j = 0; j < operation_list.length; j++) {
+        const operation_data = await OperationDataService.getOperationDataByOperationSeq(database, operation_list[j].seq);
+        const params = {};
+        params.limit = 999;
+        params.start = 0;
+        const operation_comment_list = await OperationCommentService.getCommentList(database, operation_data.seq, params)
+        for (let k = 0; k < operation_comment_list.length; k++) {
+          const del_count = await OperationCommentService.deleteAllComment(database, group_seq, operation_comment_list[k].member_seq);
+
+          const target_group_member_info = await group_member_model.getGroupMemberInfo(group_seq, operation_comment_list[k].member_seq);
+          await group_member_model.setUpdateGroupMemberCounts(target_group_member_info.seq, 'vid_comment', 'down', del_count);
+        }
+        const clip_list = await OperationClipService.findByOperationSeq(operation_list[j].seq);
+        for (let k = 0; k < clip_list.length; k++) {
+          const target_group_member_info = await group_member_model.getGroupMemberInfo(clip_list[k].group_seq, clip_list[k].member_seq);
+          const clip_res_member_info = { group_member_seq: target_group_member_info.seq };
+          const clip_params = {};
+          clip_params.clip_count = clip_list.length - 1;
+          await OperationClipService.deleteById(clip_list[k]._id.toString(), operation_data, clip_params, clip_res_member_info);
+        }
         await OperationService.deleteOperation(database, token_info, operation_list[j].seq);
+        await operation_model.deleteOperation(operation_list[j].seq);
       }
       await OperationService.setAllOperationClipDeleteByGroupSeqAndMemberSeq(database, group_seq, member_seq);
       await OperationCommentService.deleteAllComment(database, group_seq, member_seq);

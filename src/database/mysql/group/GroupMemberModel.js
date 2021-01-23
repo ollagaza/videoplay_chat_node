@@ -688,12 +688,13 @@ export default class GroupMemberModel extends MySQLModel {
     return true;
   }
 
-  updateBanList = async (group_seq, ban_info, status) => {
+  updateBanList = async (group_seq, ban_info, status, grade = 1) => {
     const filter = {
       group_seq: group_seq
     }
     const update_params = {
       status: status,
+      grade: grade,
       ban_reason: ban_info.ban_reason,
       ban_member_seq: ban_info.ban_member,
       ban_date: status === 'D' ? this.database.raw('NOW()') : null,
@@ -836,19 +837,20 @@ export default class GroupMemberModel extends MySQLModel {
     return query_result
   }
 
-  setUpdateGroupMemberCounts = async (group_member_seq, update_column, updown_type) => {
+  setUpdateGroupMemberCounts = async (group_member_seq, update_column, updown_type, count = 1) => {
+    const set_count = count;
     const filter = {
       seq: group_member_seq
     }
     const update_params = {}
     if (update_column === 'vid') {
-      update_params.vid_cnt = 1;
+      update_params.vid_cnt = set_count;
     } else if (update_column === 'anno') {
-      update_params.anno_cnt = 1;
+      update_params.anno_cnt = set_count;
     } else if (update_column === 'vid_comment') {
-      update_params.comment_cnt = 1;
+      update_params.comment_cnt = set_count;
     } else if (update_column === 'board_comment') {
-      update_params.board_comment_cnt = 1;
+      update_params.board_comment_cnt = set_count;
     }
     let update_result = null;
     if (updown_type === 'up') {

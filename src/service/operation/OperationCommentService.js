@@ -222,18 +222,14 @@ const OperationCommentServiceClass = class {
     }
     const comment_model = this.getOperationCommentModel(databases)
     const comment_list = await comment_model.getCommentListByGroupSeqMemberSeq(group_seq, member_seq);
-    let res_data = {};
+    let res_data = 0;
     for (let i = 0; i < comment_list.length; i++) {
       const operation_data_seq = comment_list[i].operation_data_seq;
       const comment_seq = comment_list[i].seq;
 
       const delete_result = await comment_model.deleteComment(operation_data_seq, comment_seq)
-      if (!delete_result) {
-        if (!res_data[comment_seq]) {
-          res_data[comment_seq] = 1;
-        } else {
-          res_data[comment_seq]++;
-        }
+      if (delete_result) {
+        res_data++;
       }
       if (comment_list[i].parent_seq && comment_list[i].is_reply) {
         await comment_model.updateReplyCount(operation_data_seq, comment_list[i].parent_seq)
