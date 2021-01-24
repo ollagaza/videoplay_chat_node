@@ -22,6 +22,11 @@ const GroupBoardListServiceClass = class {
     return await model.getGroupBoardList(group_seq)
   }
 
+  getGroupBoardListOne = async (database, group_seq, board_seq) => {
+    const model = this.getGroupBoardModel(database)
+    return await model.getGroupBoardListOne(group_seq, board_seq)
+  }
+
   createGroupBoard = async (database, board_info) => {
     const model = this.getGroupBoardModel(database)
 

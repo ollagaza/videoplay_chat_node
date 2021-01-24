@@ -10,17 +10,36 @@ import DBMySQL from '../../../database/knex-mysql'
 import GroupBoardDataService from '../../../service/board/GroupBoardDataService'
 import GroupReCommendService from "../../../service/board/GroupReCommendService"
 import GroupService from "../../../service/group/GroupService";
+import GroupBoardListService from "../../../service/board/GroupBoardListService";
 
 const routes = Router()
 
 routes.get('/getboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
   const output = new StdObject()
   const { member_seq, is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, false, true)
+  const group_seq = req.params.group_seq
   const board_data_seq = req.params.board_data_seq
   const board_detail = await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data_seq)
 
   output.add('is_active_group_member', is_active_group_member)
   output.add('board_detail', board_detail)
+  output.add('board_comment_list', await GroupBoardDataService.getBoardCommentList(DBMySQL, board_data_seq, member_seq))
+  output.add('board_recommend', await GroupReCommendService.getBoardRecommend(DBMySQL, board_data_seq, member_seq))
+  res.json(output);
+}))
+
+routes.get('/getopenboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const output = new StdObject()
+  const { member_seq, is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, false, true)
+  const group_seq = req.params.group_seq
+  const board_data_seq = req.params.board_data_seq
+  const board_detail = await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data_seq)
+  const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq)
+
+  output.add('is_active_group_member', is_active_group_member)
+  output.add('group_info', group_info)
+  output.add('board_detail', board_detail)
+  output.add('board_info', await GroupBoardListService.getGroupBoardListOne(DBMySQL, group_seq, board_detail.board_seq))
   output.add('board_comment_list', await GroupBoardDataService.getBoardCommentList(DBMySQL, board_data_seq, member_seq))
   output.add('board_recommend', await GroupReCommendService.getBoardRecommend(DBMySQL, board_data_seq, member_seq))
   res.json(output);
