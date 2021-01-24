@@ -121,6 +121,14 @@ export default class OperationFolderModel extends MySQLModel {
     return await this.update({ seq: folder_seq }, update_params)
   }
 
+  updateOperationFolderAccessType = async (folder_seq, access_type) => {
+    const oKnex = this.database.update({access_type})
+      .from(this.table_name)
+      .where(this.database.raw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}') = 1`))
+
+    return oKnex
+  }
+
   moveFolder = async (folder_info, target_folder_info) => {
     if (target_folder_info && target_folder_info.parent_seq && target_folder_info.total_folder_size > 0) {
       const parent_folder_size_down = this.database

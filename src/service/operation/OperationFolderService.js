@@ -182,6 +182,12 @@ const OperationFolderServiceClass = class {
     return update_result
   }
 
+  updateParentFolderAccessType = async (database, folder_seq, access_type) => {
+    const model = this.getOperationFolderModel(database)
+    const update_result = await model.updateOperationFolderAccessType(folder_seq, access_type)
+    return update_result
+  }
+
   moveFolder = async (database, request_body) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo(request_body.folder_info)
