@@ -25,8 +25,12 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.find({ group_seq, member_seq, status: 'T' })
   }
 
-  getLastBoardDataNum = async (board_data) => {
-    return this.findOne({ board_seq: board_data.board_seq }, ['board_data_num'], { name: 'board_data_num', direction: 'desc' })
+  getLastBoardDataNum = async (board_seq) => {
+    return this.findOne({ board_seq }, ['board_data_num'], { name: 'board_data_num', direction: 'desc' })
+  }
+
+  getLastBoardSortNum = async (origin_seq) => {
+    return this.findOne({ origin_seq }, ['sort_num'], { name: 'sort_num', direction: 'desc' })
   }
 
   getBoardNoticeCount = async (group_seq, board_seq) => {
@@ -71,14 +75,13 @@ export default class GroupBoardDataModel extends MySQLModel {
             .andWhere('board_seq', board_seq)
             .andWhere('status', 'Y')
         ])
-        .orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'desc'}])
     } else {
       oKnex = this.database.select('*')
         .from(this.table_name)
         .where('is_notice', '3')
         .andWhere('board_seq', board_seq)
-        .orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'desc'}])
     }
+    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
     return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
 
@@ -91,23 +94,12 @@ export default class GroupBoardDataModel extends MySQLModel {
     return oKnex
   }
 
-  CreateUpdateBoardData = async (board_data) => {
-    Object.keys(board_data)
-      .filter(item => typeof board_data[item] === 'object' ? board_data[item] = JSON.stringify(board_data[item]) : null)
-      .filter(item => board_data[item] === 'null' ? board_data[item] = null : board_data[item])
+  CreateBoardData = async (board_data) => {
+    return this.create(board_data, 'seq')
+  }
 
-    const exclusions = Object.keys(board_data)
-      .filter(item => item !== 'seq')
-      .map(item => this.database.raw('?? = ?', [item, board_data[item]]).toString())
-      .join(',\n')
-    const insertString = this.database(this.table_name).insert(board_data).toString()
-    const conflictString = this.database.raw(` ON DUPLICATE KEY UPDATE ${exclusions}, \`modify_date\` = current_timestamp()`).toString()
-    const query = (insertString + conflictString)
-    const result = await this.database
-      .raw(query)
-      .on('query', data => log.debug(this.log_prefix, 'CreateUpdateBoardData', data.sql))
-
-    return result.shift()
+  UpdateBoardData = async (seq, board_data) => {
+    return this.update({ seq }, board_data)
   }
 
   updateParentDataSubject = async (board_seq) => {
@@ -129,8 +121,11 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.update({ seq: board_seq }, { view_cnt: this.database.raw('view_cnt + 1') })
   }
 
-  updateBoardCommentCnt = async (board_seq, type) => {
-    return this.update({ seq: board_seq }, { comment_cnt: this.database.raw(`comment_cnt + ${type ? 1 : -1}`) })
+  incrementBoardCommentCnt = async (board_seq) => {
+    return this.increment({ seq: board_seq }, { comment_cnt: 1 })
+  }
+  decrementBoardCommentCnt = async (board_seq, type) => {
+    return this.decrement({ seq: board_seq }, { comment_cnt: 1 })
   }
 
   DeleteBoardData = async (board_seq) => {

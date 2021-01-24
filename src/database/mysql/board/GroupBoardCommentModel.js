@@ -27,19 +27,24 @@ export default class GroupBoardCommentModel extends MySQLModel {
     return oKnex
   }
 
-  CreateUpdateBoardComment = async (comment_data) => {
-    const exclusions = Object.keys(comment_data)
-      .filter(item => item !== 'seq')
-      .map(item => this.database.raw('?? = ?', [item, comment_data[item]]).toString())
-      .join(',\n')
-    const insertString = this.database(this.table_name).insert(comment_data).toString()
-    const conflictString = this.database.raw(` ON DUPLICATE KEY UPDATE ${exclusions}, \`modify_date\` = current_timestamp()`).toString()
-    const query = (insertString + conflictString)
-    const result = await this.database
-      .raw(query)
-      .on('query', data => log.debug(this.log_prefix, 'CreateUpdateBoardData', data.sql))
+  CreateBoardComment = async (comment_data) => {
+    return this.create(comment_data, 'seq');
+    // const exclusions = Object.keys(comment_data)
+    //   .filter(item => item !== 'seq')
+    //   .map(item => this.database.raw('?? = ?', [item, comment_data[item]]).toString())
+    //   .join(',\n')
+    // const insertString = this.database(this.table_name).insert(comment_data).toString()
+    // const conflictString = this.database.raw(` ON DUPLICATE KEY UPDATE ${exclusions}, \`modify_date\` = current_timestamp()`).toString()
+    // const query = (insertString + conflictString)
+    // const result = await this.database
+    //   .raw(query)
+    //   .on('query', data => log.debug(this.log_prefix, 'CreateUpdateBoardData', data.sql))
+    //
+    // return result.shift()
+  }
 
-    return result.shift()
+  UpdateBoardComment = async (seq, comment_data) => {
+    return this.update({ seq }, comment_data);
   }
 
   updateBoardCommentOriginSeq = async (comment_seq) => {
