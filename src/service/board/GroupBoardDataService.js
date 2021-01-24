@@ -184,7 +184,6 @@ const GroupBoardDataServiceClass = class {
   DeleteBoardData = async (database, board_seq) => {
     const model = this.getGroupBoardDataModel(database)
     await model.DeleteBoardData(board_seq)
-    await model.updateParentDataSubject(board_seq)
     return await model.updateParentDataSubject(board_seq)
   }
 
