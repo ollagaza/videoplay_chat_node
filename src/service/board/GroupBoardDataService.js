@@ -10,7 +10,7 @@ import logger from "../../libs/logger";
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 
 const GroupBoardDataServiceClass = class {
-  constructor () {
+  constructor() {
     this.log_prefix = '[GroupBoardDataService]'
   }
 
@@ -68,7 +68,7 @@ const GroupBoardDataServiceClass = class {
     const model = this.getGroupBoardCommentModel(database)
     const comment_list = await model.getBoardCommentList(board_data_seq, member_seq)
 
-    for(let cnt = 0; cnt < comment_list.length; cnt++) {
+    for (let cnt = 0; cnt < comment_list.length; cnt++) {
       if (comment_list[cnt].member_profile_image) {
         comment_list[cnt].member_profile_url = ServiceConfig.get('static_storage_prefix') + comment_list[cnt].member_profile_image
       }
@@ -93,12 +93,17 @@ const GroupBoardDataServiceClass = class {
 
   CreateUpdateBoardComment = async (database, comment_data) => {
     const model = this.getGroupBoardCommentModel(database)
-    const result = await model.CreateUpdateBoardComment(comment_data)
-    if (result.affectedRows === 1) {
+    let result = null;
+
+    if (comment_data.seq) {
+      const seq = comment_data.seq;
+      result = await model.UpdateBoardComment(seq, comment_data)
+    } else {
+      result = await model.CreateBoardComment(comment_data)
       const board_model = this.getGroupBoardDataModel(database)
-      await board_model.updateBoardCommentCnt(comment_data.board_data_seq, '+');
+      await board_model.incrementBoardCommentCnt(comment_data.board_data_seq);
       if (!comment_data.origin_seq) {
-        await model.updateBoardCommentOriginSeq(result.insertId)
+        await model.updateBoardCommentOriginSeq(result)
       }
       const group_member_model = new GroupMemberModel(database);
       const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_data.group_seq, comment_data.member_seq, 'Y');
@@ -109,21 +114,31 @@ const GroupBoardDataServiceClass = class {
 
   CreateUpdateBoardData = async (database, board_data) => {
     const model = this.getGroupBoardDataModel(database)
-    board_data.content_id = baseutil.getContentId();
-
-    const board_data_num = await model.getLastBoardDataNum(board_data)
-    if (board_data_num) {
-      board_data.board_data_num = board_data_num.board_data_num + 1
+    let result = null;
+    if (board_data.seq) {
+      const seq = board_data.seq
+      result = await model.UpdateBoardData(seq, board_data)
     } else {
-      board_data.board_data_num = 1
-    }
+      board_data.content_id = baseutil.getContentId();
 
-    const result = await model.CreateUpdateBoardData(board_data)
+      const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
+      if (board_data_num) {
+        board_data.board_data_num = board_data_num.board_data_num + 1
+      } else {
+        board_data.board_data_num = 1
+      }
 
-    if (!board_data.origin_seq && result.affectedRows === 1) {
-      await model.updateBoardOriginSeq(result.insertId)
+      if (board_data.origin_seq && board_data.depth === 1) {
+        const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
+        board_data.sort_num = baord_data_sort_num + 1
+      }
+
+      result = await model.CreateBoardData(board_data)
+      if (!board_data.origin_seq) {
+        await model.updateBoardOriginSeq(result)
+      }
     }
-    return result.insertId
+    return result
   }
 
   updateBoardViewCnt = async (database, board_data_seq) => {
@@ -162,7 +177,7 @@ const GroupBoardDataServiceClass = class {
     }
 
     const board_model = this.getGroupBoardDataModel(database)
-    await board_model.updateBoardCommentCnt(board_data_seq, '-');
+    await board_model.decrementBoardCommentCnt(board_data_seq);
     return result;
   }
 
@@ -199,7 +214,7 @@ const GroupBoardDataServiceClass = class {
     }
 
     const file_field_name = 'board_data_file'
-    await Util.uploadByRequest(request, response, file_field_name, upload_directory, null, false,true)
+    await Util.uploadByRequest(request, response, file_field_name, upload_directory, null, false, true)
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
@@ -263,7 +278,7 @@ const GroupBoardDataServiceClass = class {
       if (result) {
         res_data[comment_seq]++;
       }
-      await board_model.updateBoardCommentCnt(board_data_seq);
+      await board_model.decrementBoardCommentCnt(board_data_seq);
     }
     return res_data;
   }
