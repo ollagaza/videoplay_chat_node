@@ -89,7 +89,9 @@ const GroupChannelHomeServiceClass = class {
     for (let cnt = 0; cnt < arr_group_seq.length; cnt++) {
       const data = await model.getMyGroupNewNews(arr_group_seq[cnt])
       if (data.length > 0) {
-        data.group_image_url = ServiceConfig.get('static_storage_prefix') + data.profile_image_path
+        if (data.profile_image_path) {
+          data.group_image_url = ServiceConfig.get('static_storage_prefix') + data.profile_image_path
+        }
         result.push(data)
       }
     }
@@ -111,7 +113,9 @@ const GroupChannelHomeServiceClass = class {
     for (let cnt = 0; cnt < group_seqs.length; cnt++) {
       const group_seq = group_seqs[cnt].group_seq
       const group_info = await model.getRecommendGroupInfo(group_seq)
-      group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path
+      if (group_info.profile_image_path) {
+        group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path
+      }
       const operation_list = await model.getRecommendOperationList(group_seq, 3)
       for (let v_cnt = 0; v_cnt < operation_list.length; v_cnt++) {
         operation_list[v_cnt].thumbnail = ServiceConfig.get('static_storage_prefix') + operation_list[v_cnt].thumbnail
@@ -127,8 +131,12 @@ const GroupChannelHomeServiceClass = class {
     const model = this.getGroupChannelHomeModel(database)
     const result = await model.getOpenOperationTop5()
     for (let v_cnt = 0; v_cnt < result.length; v_cnt++) {
-      result[v_cnt].group_image_url = ServiceConfig.get('static_storage_prefix') + result[v_cnt].profile_image_path
-      result[v_cnt].thumbnail_url = ServiceConfig.get('static_storage_prefix') + result[v_cnt].thumbnail
+      if (result[v_cnt].profile_image_path) {
+        result[v_cnt].group_image_url = ServiceConfig.get('static_storage_prefix') + result[v_cnt].profile_image_path
+      }
+      if (result[v_cnt].thumbnail) {
+        result[v_cnt].thumbnail_url = ServiceConfig.get('static_storage_prefix') + result[v_cnt].thumbnail
+      }
     }
     return result
   }
@@ -137,7 +145,9 @@ const GroupChannelHomeServiceClass = class {
     const model = this.getGroupChannelHomeModel(database)
     const result = await model.getOpenBoardTop5()
     for (let v_cnt = 0; v_cnt < result.length; v_cnt++) {
-      result[v_cnt].group_image_url = ServiceConfig.get('static_storage_prefix') + result[v_cnt].profile_image_path
+      if (result[v_cnt].profile_image_path) {
+        result[v_cnt].group_image_url = ServiceConfig.get('static_storage_prefix') + result[v_cnt].profile_image_path
+      }
     }
     return result
   }
@@ -166,10 +176,14 @@ const GroupChannelHomeServiceClass = class {
     if (search_group_info && search_group_info.calc_total_count > 0) {
       const group_info = search_group_info.data;
       for (let cnt = 0; cnt < group_info.length; cnt++) {
-        group_info[cnt].group_image_url = ServiceConfig.get('static_storage_prefix') + group_info[cnt].profile_image_path
+        if (group_info[cnt].profile_image_path) {
+          group_info[cnt].group_image_url = ServiceConfig.get('static_storage_prefix') + group_info[cnt].profile_image_path
+        }
         const operation_list = await model.getRecommendOperationList(group_info[cnt].seq, 3)
         for (let v_cnt = 0; v_cnt < operation_list.length; v_cnt++) {
-          operation_list[v_cnt].thumbnail = ServiceConfig.get('static_storage_prefix') + operation_list[v_cnt].thumbnail
+          if (operation_list[v_cnt].thumbnail) {
+            operation_list[v_cnt].thumbnail = ServiceConfig.get('static_storage_prefix') + operation_list[v_cnt].thumbnail
+          }
         }
         group_info[cnt].video = operation_list;
       }
@@ -178,6 +192,17 @@ const GroupChannelHomeServiceClass = class {
     const search_operation_data = search_tab === 'all' || search_tab === 'video' ?  await model.getSearchOperationData(search_keyword, paging) : null
     const search_board_data = search_tab === 'all' || search_tab === 'board' ? await model.getSearchBoardData(search_keyword, paging) : null
     let total_count = 0;
+
+    if (search_operation_data && search_operation_data.data) {
+      for (let i = 0; i < search_operation_data.data.length; i++) {
+        if (ServiceConfig.get('static_storage_prefix') + search_operation_data.data[i].thumbnail) {
+          search_operation_data.data[i].thumbnail_url = ServiceConfig.get('static_storage_prefix') + search_operation_data.data[i].thumbnail
+        }
+        if (search_operation_data.data[i].profile_image_path) {
+          search_operation_data.data[i].group_image_url = ServiceConfig.get('static_storage_prefix') + search_operation_data.data[i].profile_image_path
+        }
+      }
+    }
 
     if (search_tab === 'all') {
       total_count = search_group_info.calc_total_count + search_operation_data.calc_total_count + search_board_data.calc_total_count
@@ -206,10 +231,14 @@ const GroupChannelHomeServiceClass = class {
 
     for (let cnt = 0; cnt < group_infos.length; cnt++) {
       const group_info = group_infos[cnt]
-      group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path
+      if (group_info.profile_image_path) {
+        group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path
+      }
       const operation_list = await model.getRecommendOperationList(group_info.group_seq, 4)
       for (let v_cnt = 0; v_cnt < operation_list.length; v_cnt++) {
-        operation_list[v_cnt].thumbnail = ServiceConfig.get('static_storage_prefix') + operation_list[v_cnt].thumbnail
+        if (operation_list[v_cnt].thumbnail) {
+          operation_list[v_cnt].thumbnail = ServiceConfig.get('static_storage_prefix') + operation_list[v_cnt].thumbnail
+        }
       }
       result.push({ group_info, operation_list })
     }

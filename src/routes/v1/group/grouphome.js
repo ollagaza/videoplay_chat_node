@@ -19,10 +19,10 @@ routes.get('/test', Wrap(async (req, res) => {
 
 routes.get('/home/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
+  const token_info = req.token_info
+  const member_seq = token_info.getId()
   let menu_id = req.params.menu_id
   const output = new StdObject()
-  const { group_seq, member_seq, is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, false, true, false)
-  output.add('is_active_group_member', is_active_group_member)
   const treatlist = await GroupChannelHomeService.getTreatmentList(DBMySQL)
   output.add('treatlist', treatlist);
   const my_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, true)
@@ -43,7 +43,6 @@ routes.get('/home/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
 routes.get('/getcategorygrouplist/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   let menu_id = req.params.menu_id
-  const { group_seq, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, false, true, false)
   const output = new StdObject()
   output.add('category_group_list', await GroupChannelHomeService.getCategoryList(DBMySQL, menu_id))
   res.json(output)
@@ -51,7 +50,8 @@ routes.get('/getcategorygrouplist/:menu_id', Auth.isAuthenticated(Role.LOGIN_USE
 
 routes.get('/group_search', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, false, true, false)
+  const token_info = req.token_info
+  const member_seq = token_info.getId()
   const output = new StdObject()
   output.adds(await GroupChannelHomeService.getSearchResult(DBMySQL, req, member_seq))
   res.json(output)

@@ -117,11 +117,11 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getSearchOperationData = async (search_keyword, paging) => {
     const select_fields = ['operation_data.seq', 'operation_data.operation_seq', 'operation_data.group_seq'
       , 'operation_data.thumbnail', 'operation_data.title', 'operation_data.view_count', 'operation_data.reg_date'
-      , 'group_info.group_name', 'group_info.profile_image_path']
+      , 'group_info.group_name', 'group_info.profile_image_path', 'operation_data.total_time']
     const oQuery = this.database.select(select_fields)
       .from('operation_data')
       .innerJoin('group_info', 'group_info.seq', 'operation_data.group_seq')
-      .whereRaw('MATCH (`operation_data`.`title`, `operation_data`.`group_name`, `operation_data`.`doc_text`, `operation_data`.`hospital`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
+      .whereRaw('operation_data.is_open_video = 1 and MATCH (`operation_data`.`title`, `operation_data`.`group_name`, `operation_data`.`doc_text`, `operation_data`.`hospital`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
 
     return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
   }
@@ -131,7 +131,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
       , 'board_data.comment_cnt', 'board_data.view_cnt', 'board_data.recommend_cnt', 'board_data.regist_date']
     const oQuery = this.database.select(select_fields)
       .from('board_data')
-      .whereRaw('MATCH (`write_name`, `subject`, `content_text`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
+      .whereRaw('board_data.is_open = ? and MATCH (`write_name`, `subject`, `content_text`) AGAINST (? IN BOOLEAN MODE)', ['1', search_keyword])
 
     return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
   }
@@ -171,7 +171,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getCategoryGroupInfo = async (menu_id, limit) => {
-    const oQuery = this.database.select(['group_info.*', 'member.*', 'group_info.seq as group_seq'])
+    const oQuery = this.database.select(['group_info.*', 'group_info.seq as group_seq'])
       .from('group_info')
       .innerJoin('member', (query) => {
         query.on('member.seq', 'group_info.member_seq')
