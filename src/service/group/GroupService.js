@@ -567,15 +567,8 @@ const GroupServiceClass = class {
     invite_code = `${invite_code}`.toUpperCase()
     const group_member_model = this.getGroupMemberModel(database)
     const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
-
-    const group_grade_model = this.getGroupGradeModel(database)
-    const group_grade_info = await group_grade_model.getGroupGradeListWithGroupSeq(group_invite_info.group_seq);
     let change_grade = '1';
-    if (group_grade_info) {
-      if (group_grade_info[0].grade) {
-        change_grade = group_grade_info[0].grade;
-      }
-    }
+
     await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
 
     const message_info = {
@@ -1185,14 +1178,9 @@ const GroupServiceClass = class {
   requestJoinGroup = async (database, group_seq, member_info, params) => {
     const group_model = this.getGroupModel()
     const group_info = await group_model.getGroupInfo(group_seq)
-    const grade_model = this.getGroupGradeModel(database)
-    const grade_list = await grade_model.getGroupGradeListWithGroupSeq(group_seq)
-    const grade = grade_list ? grade_list[0].grade : '1';
-
+    const grade = '1';
     const group_member_model = this.getGroupMemberModel()
-
     const group_member_info = await group_member_model.getGroupMemberInfo(group_seq, member_info.seq);
-
     const group_join_member_state = group_info.group_join_way === 1 ? this.MEMBER_STATUS_JOIN : 'Y';
     const is_join_answer = params.quest;
 
@@ -1352,14 +1340,7 @@ const GroupServiceClass = class {
 
   nonupdateBanList = async (database, group_seq, ban_info) => {
     const group_member_model = this.getGroupMemberModel(database);
-    const group_grade_model = this.getGroupGradeModel(database)
-    const group_grade_info = await group_grade_model.getGroupGradeListWithGroupSeq(group_seq);
     let change_grade = '1';
-    if (group_grade_info) {
-      if (group_grade_info[0].grade) {
-        change_grade = group_grade_info[0].grade;
-      }
-    }
     return await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
   }
 

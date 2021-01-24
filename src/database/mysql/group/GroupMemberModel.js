@@ -695,6 +695,7 @@ export default class GroupMemberModel extends MySQLModel {
     const update_params = {
       status: status,
       grade: grade,
+      ban_hide: 'N',
       ban_reason: ban_info.ban_reason,
       ban_member_seq: ban_info.ban_member,
       ban_date: status === 'D' ? this.database.raw('NOW()') : null,
