@@ -16,12 +16,11 @@ const routes = Router()
 
 routes.get('/getboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
   const output = new StdObject()
-  const { member_seq, is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, false, true)
-  const group_seq = req.params.group_seq
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
   const board_data_seq = req.params.board_data_seq
   const board_detail = await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data_seq)
 
-  output.add('is_active_group_member', is_active_group_member)
   output.add('board_detail', board_detail)
   output.add('board_comment_list', await GroupBoardDataService.getBoardCommentList(DBMySQL, board_data_seq, member_seq))
   output.add('board_recommend', await GroupReCommendService.getBoardRecommend(DBMySQL, board_data_seq, member_seq))
@@ -47,7 +46,7 @@ routes.get('/getopenboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Aut
 
 routes.get('/getpreviousnextview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
-  const { is_active_group_member, is_group_admin, is_group_manager } = await GroupService.checkGroupAuth(DBMySQL, req, true, true)
+  const { is_group_admin, is_group_manager } = await GroupService.checkGroupAuth(DBMySQL, req, true, true)
   const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, req)
   output.adds(result)
   let board_data = null;
@@ -57,15 +56,12 @@ routes.get('/getpreviousnextview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(a
     board_data = result.data[0];
   }
   output.add('is_manage', is_group_admin || is_group_manager)
-  output.add('is_active_group_member', is_active_group_member)
   output.add('board_detail', await GroupBoardDataService.getBoardDataDetail(DBMySQL, board_data.seq))
   res.json(output);
 }))
 
 routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
-  const { is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
-  output.add('is_active_group_member', is_active_group_member)
   const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, req)
   output.adds(result)
   res.json(output);
@@ -73,8 +69,6 @@ routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
 
 routes.get('/gettemporarilylist/:group_seq(\\d+)/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
-  const { is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
-  output.add('is_active_group_member', is_active_group_member)
   const group_seq = req.params.group_seq
   const member_seq = req.params.member_seq
 

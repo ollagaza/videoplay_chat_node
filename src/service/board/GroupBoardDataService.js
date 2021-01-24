@@ -42,21 +42,15 @@ const GroupBoardDataServiceClass = class {
     paging.no_paging = 'N'
 
     const model = this.getGroupBoardDataModel(database)
-    if (paging.cur_page === 1) {
-      const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
-      for (let cnt = 0; cnt < board_list.length; cnt++) {
-        board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
-      }
-      return board_list
-    } else {
+    if (paging.cur_page !== 1) {
       const notice_count = await model.getBoardNoticeCount(group_seq, board_seq)
       paging.start_count = (paging.list_count - notice_count) + 1;
-      const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
-      for (let cnt = 0; cnt < board_list.length; cnt++) {
-        board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
-      }
-      return board_list
     }
+    const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
+    for (let cnt = 0; cnt < board_list.length; cnt++) {
+      board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
+    }
+    return board_list
   }
 
   getBoardDataDetail = async (database, board_data_seq) => {
