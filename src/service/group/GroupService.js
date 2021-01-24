@@ -790,9 +790,6 @@ const GroupServiceClass = class {
 
   getGroupSummary = async (database, group_seq) => {
     const group_info = await this.getGroupInfoWithProduct(database, group_seq)
-    const group_profile = JSON.parse(group_info.profile);
-    group_profile.image_path = ServiceConfig.get('static_storage_prefix') + group_profile.image;
-    group_info.profile = JSON.stringify(group_profile);
     if (group_info.profile_image_path) {
       group_info.profile_image_path = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
     }
