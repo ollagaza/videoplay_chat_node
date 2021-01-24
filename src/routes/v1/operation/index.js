@@ -25,7 +25,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     throw new StdObject(-1, '잘못된 접근입니다.', 400)
   }
 
-  const { group_seq, group_member_info, member_info, member_seq, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
+  const { group_seq, group_member_info, member_info, member_seq, is_group_admin, token_info } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
   const comment_seq = request.params.comment_seq
   const clip_id = request.params.clip_id
   const phase_id = request.params.phase_id
@@ -49,7 +49,8 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     phase_id,
     operation_seq: null,
     operation_info: null,
-    is_group_admin
+    is_group_admin,
+    token_info
   }
 
   if (api_type === 'mentoring') {
@@ -170,6 +171,17 @@ routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wr
   output.add('is_link', base_info.is_link)
   output.add('is_editor_link', base_info.is_editor_link)
   output.add('is_download_link', base_info.is_download_link)
+  res.json(output)
+}))
+
+routes.delete('/:api_type/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const base_info = await getBaseInfo(req, true)
+  const result = await OperationService.updateStatusTrash(null, [base_info.operation_seq], base_info.member_seq)
+
+  const output = new StdObject()
+  output.add('result', result)
+
   res.json(output)
 }))
 

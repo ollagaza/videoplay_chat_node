@@ -47,6 +47,13 @@ const OperationServiceClass = class {
     return new OperationStorageModel(DBMySQL)
   }
 
+  getGroupMemberModel = (database = null) => {
+    if (database) {
+      return new GroupMemberModel(database)
+    }
+    return new GroupMemberModel(DBMySQL)
+  }
+
   createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
     const output = new StdObject()
     let is_success = false
@@ -108,7 +115,7 @@ const OperationServiceClass = class {
       }
 
       if (group_member_info) {
-        const group_member_model = new GroupMemberModel(database)
+        const group_member_model = this.getGroupMemberModel(database)
         group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
       }
     }
@@ -912,21 +919,20 @@ const OperationServiceClass = class {
     return await model.updateStatusFavorite(operation_seq, is_delete)
   }
 
-  updateStatusTrash = async (database, seq_list, member_seq, is_delete) => {
+  updateStatusTrash = async (database, seq_list, member_seq, is_delete = false) => {
     const model = this.getOperationModel(database)
     const status = is_delete ? 'Y' : 'T'
-    await model.updateStatusTrash(seq_list, member_seq, status)
+    await model.updateStatusTrash(seq_list, status)
     await OperationDataService.updateOperationDataByOperationSeqList(seq_list, status)
 
     for (let cnt = 0; cnt < seq_list.length; cnt++) {
       const where = { 'operation.seq': seq_list[cnt] }
       const operation_info = await model.getOperation(where);
 
-      const group_member_model = new GroupMemberModel(database);
+      const group_member_model = this.getGroupMemberModel(database);
       const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(operation_info.group_seq, operation_info.member_seq, 'Y');
 
       if (group_member_info) {
-        const group_member_model = new GroupMemberModel(database)
         if (status === 'T') {
           group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'down');
         } else if (status === 'Y') {

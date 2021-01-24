@@ -146,7 +146,7 @@ export default class OperationFolderModel extends MySQLModel {
     }
 
     const target_folder_parent_seq_update = this.database
-      .update('parent_seq', folder_info.seq)
+      .update({'parent_seq': folder_info.seq, 'access_type': folder_info.access_type})
       .from(this.table_name)
       .where('seq', target_folder_info.seq)
     await target_folder_parent_seq_update
@@ -180,8 +180,10 @@ export default class OperationFolderModel extends MySQLModel {
     }
 
     const include_target_folder_update = this.database
-      .update({ 'target.parent_folder_list': this.database.raw(`JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}'))`),
-        'target.depth': this.database.raw(`JSON_LENGTH(JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}')))`)
+      .update({
+        'target.parent_folder_list': this.database.raw(`JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}'))`),
+        'target.depth': this.database.raw(`JSON_LENGTH(JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}')))`),
+        'target.access_type': folder_info.access_type
       })
       .from({'target': this.table_name})
       .leftOuterJoin({'parent': this.table_name}, 'parent.seq', target_folder_info.seq)

@@ -147,6 +147,7 @@ const OperationFolderServiceClass = class {
       folder_info.parent_seq = parent_folder_info.seq
       folder_info.parent_folder_list = parent_folder_info.parent_folder_list
       folder_info.parent_folder_list.push(parent_folder_info.seq)
+      folder_info.access_type = parent_folder_info.access_type ? parent_folder_info.access_type : '1';
     } else {
       folder_info.depth = 0
       folder_info.parent_folder_list = []
