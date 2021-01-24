@@ -23,7 +23,7 @@ export default class GroupBoardCommentModel extends MySQLModel {
         query.where('board_comment.board_data_seq', board_data_seq)
         query.andWhere('status', 'Y')
       })
-      .orderBy([{column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'desc'}])
+      .orderBy([{column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }])
     return oKnex
   }
 
