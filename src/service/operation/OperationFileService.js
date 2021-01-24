@@ -8,6 +8,8 @@ import NaverObjectStorageService from '../../service/storage/naver-object-storag
 import ReferFileModel from '../../database/mysql/file/ReferFileModel'
 import VideoFileModel from '../../database/mysql/file/VideoFileModel'
 import FileInfo from '../../wrapper/file/FileInfo'
+import Constants from '../../constants/constants'
+import StdObject from '../../wrapper/std-object'
 
 const OperationFileServiceClass = class {
   constructor () {
@@ -109,6 +111,10 @@ const OperationFileServiceClass = class {
 
   createVideoFileInfo = async (database, operation_info, upload_file_info, create_thumbnail = false) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    const media_info = await Util.getMediaInfo(upload_file_info.path)
+    if (media_info.media_type !== Constants.VIDEO) {
+      throw new StdObject(1000, '동영상 파일만 업로드 가능합니다.', 400, media_info)
+    }
 
     let thumbnail_path = null
     if (create_thumbnail) {

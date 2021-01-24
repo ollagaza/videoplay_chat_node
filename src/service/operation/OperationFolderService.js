@@ -232,10 +232,6 @@ const OperationFolderServiceClass = class {
       return false
     }
   }
-  updateStatusFavorite = async (database, folder_seq, is_delete) => {
-    const model = this.getOperationFolderModel(database)
-    return await model.updateStatusFavorite(folder_seq, is_delete)
-  }
   OperationFolderStorageSize = async (database, operation_info, old_storage_size, new_storage_size) => {
     if (operation_info.folder_seq !== null) {
       const model = this.getOperationFolderModel(database)

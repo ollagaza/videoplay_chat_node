@@ -76,7 +76,7 @@ export default class SurgboxUpdateModel extends MySQLModel {
       // query.where('surgbox_update.user_nickname', 'like', `%${search}%`)
     }
     if (!order_id) {
-      query.orderBy([{ column: 'surgbox_update.v1', order }, { column: 'surgbox_update.v2', order }, { column: 'surgbox_update.v3', order }])
+      query.orderBy([{ column: 'surgbox_update.v1', order }, { column: 'surgbox_update.v2', order }, { column: 'surgbox_update.v3', order }, { column: 'surgbox_update.v4', order }])
     } else {
       query.orderBy([{ column: `surgbox_update.${order_id}`, order }])
     }
@@ -89,7 +89,7 @@ export default class SurgboxUpdateModel extends MySQLModel {
     query.from(this.table_name)
     query.leftOuterJoin('surgbox_update_file', { 'surgbox_update_file.surgbox_update_seq': 'surgbox_update.seq' })
     query.where('is_hide', 0)
-    query.orderBy([{ column: 'surgbox_update.v1', order: 'asc' }, { column: 'surgbox_update.v2', order: 'asc' }, { column: 'surgbox_update.v3', order: 'asc' }, { column: 'surgbox_update_file.file_name', order: 'asc' }])
+    query.orderBy([{ column: 'surgbox_update.v1', order: 'asc' }, { column: 'surgbox_update.v2', order: 'asc' }, { column: 'surgbox_update.v3', order: 'asc' }, { column: 'surgbox_update.v4', order: 'asc' }, { column: 'surgbox_update_file.file_name', order: 'asc' }])
 
     return query
   }
