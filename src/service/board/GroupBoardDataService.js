@@ -76,7 +76,7 @@ const GroupBoardDataServiceClass = class {
 
     for(let cnt = 0; cnt < comment_list.length; cnt++) {
       if (comment_list[cnt].member_profile_image) {
-        comment_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + comment_list[cnt].member_profile_image
+        comment_list[cnt].member_profile_url = ServiceConfig.get('static_storage_prefix') + comment_list[cnt].member_profile_image
       }
     }
     return comment_list
