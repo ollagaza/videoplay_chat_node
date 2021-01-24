@@ -122,6 +122,22 @@ const OperationFolderServiceClass = class {
     return allChildFolders;
   }
 
+  createDefaultOperationFolder = async (database, group_seq, member_seq) => {
+    const model = this.getOperationFolderModel(database)
+    const folder_info = new OperationFolderInfo();
+    folder_info.folder_name = '기본폴더';
+    folder_info.depth = 0
+    folder_info.parent_folder_list = []
+    folder_info.group_seq = group_seq
+    folder_info.member_seq = member_seq
+
+    const folder_seq = await model.createOperationFolder(folder_info)
+    folder_info.seq = folder_seq
+    log.debug(this.log_prefix, '[createDefaultOperationFolder]', folder_seq, folder_info)
+
+    return folder_info
+  }
+
   createOperationFolder = async (database, request_body, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo(request_body.folder_info)

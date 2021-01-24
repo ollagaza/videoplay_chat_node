@@ -26,6 +26,8 @@ import OperationCommentService from '../operation/OperationCommentService'
 import GroupBoardDataService from "../board/GroupBoardDataService";
 import OperationClipService from "../operation/OperationClipService";
 import {OperationClipModel} from "../../database/mongodb/OperationClip";
+import OperationFolderService from "../operation/OperationFolderService";
+import GroupBoardListService from "../board/GroupBoardListService";
 
 const GroupServiceClass = class {
   constructor () {
@@ -196,6 +198,8 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
     await this.createDefaultGroupGrade(database, group_info.seq)
+    await OperationFolderService.createDefaultOperationFolder(database, group_info.seq, group_info.member_seq)
+    await GroupBoardListService.createDefaultGroupBoard(database, group_info.seq)
     const group_counts_model = this.getGroupCountsModel(database)
     await group_counts_model.createCounts(group_info.seq)
     const content_counts_model = this.getContentCountsModel(database)

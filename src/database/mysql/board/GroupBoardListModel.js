@@ -20,7 +20,7 @@ export default class GroupBoardListModel extends MySQLModel {
   }
 
   createGroupBoard = async (board_info) => {
-    return this.create(board_info)
+    return this.create(board_info, 'seq')
   }
 
   updateGroupBoard = async (board_seq, board_info) => {
