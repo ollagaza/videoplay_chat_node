@@ -89,9 +89,11 @@ const GroupChannelHomeServiceClass = class {
     for (let cnt = 0; cnt < arr_group_seq.length; cnt++) {
       const data = await model.getMyGroupNewNews(arr_group_seq[cnt])
       if (data.length > 0) {
-        if (data.profile_image_path) {
-          data.group_image_url = ServiceConfig.get('static_storage_prefix') + data.profile_image_path
-        }
+        _.forEach(data, item => {
+          if (item.profile_image_path) {
+            item.group_image_url = ServiceConfig.get('static_storage_prefix') + item.profile_image_path
+          }
+        })
         result.push(data)
       }
     }
