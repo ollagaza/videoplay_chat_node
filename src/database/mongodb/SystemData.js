@@ -20,7 +20,10 @@ default_data[data_types.SITE_INFO] = {
   main_logo_url: null,
   top_logo_url: null,
   site_name: null,
-  main_bg_url: null
+  main_bg_url: null,
+  navigation : {
+    studio : true
+  }
 }
 
 const schema_field_infos = getFieldInfos()
