@@ -1055,6 +1055,6 @@ const OperationServiceClass = class {
   }
 }
 
-const operation_service = new OperationServiceClass()
+const OperationService = new OperationServiceClass()
 
-export default operation_service
+export default OperationService
