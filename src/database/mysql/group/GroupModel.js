@@ -13,9 +13,10 @@ export default class GroupModel extends MySQLModel {
     this.group_private_fields = ['member_seq', 'content_id', 'media_path', 'start_date', 'reg_date', 'modify_date']
     this.group_with_product_select = [
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
+      'group_info.profile', 'group_info.profile_image_path', 'group_info.search_keyword', 'group_info.group_explain',
       'group_info.group_name', 'group_info.expire_date AS group_expire_date', 'group_info.is_set_group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
-      'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc'
+      'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc', 'group_info.group_question', 'group_info.group_message', 'group_info.group_join_way'
     ]
     this.group_user_list = [
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
@@ -53,12 +54,30 @@ export default class GroupModel extends MySQLModel {
     return group_info
   }
 
+  updateGroup = async (group_info, seq) => {
+    const filter = {
+      seq: seq
+    }
+    const update_params = this.getParams(group_info)
+    return await this.update(filter, update_params)
+  }
+
+  getGroupInfoAllByGroup = async () => {
+    const filter = {
+      group_type: 'G',
+    }
+    return await this.find(filter)
+  }
+
   getGroupInfo = async (group_seq, private_keys = null) => {
     const filter = {
       seq: group_seq
     }
     const query_result = await this.findOne(filter)
-    return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
+    const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
+    rs_data.json_keys.push('profile_image_url')
+    rs_data.json_keys.push('group_image_url')
+    return rs_data;
   }
 
   getMemberSeqbyPersonalGroupInfo = async (member_seq, private_keys = null) => {
@@ -220,6 +239,9 @@ export default class GroupModel extends MySQLModel {
 
     return total_count > 0
   }
+  updateJoinManage = async (filter, params) => {
+    return await this.update(filter, params)
+  }
 
   getOpenGroupList = async (member_seq, search) => {
     const open_group_list_select = [
@@ -248,5 +270,10 @@ export default class GroupModel extends MySQLModel {
     }
     query.orderBy('group_info.group_name', 'asc')
     return query
+  }
+
+  GroupMemberCountSync = async () => {
+    const oKnex = this.database.raw('update group_info set member_count = (select count(seq) from group_member where group_member.group_seq = group_info.seq)')
+    return oKnex
   }
 }

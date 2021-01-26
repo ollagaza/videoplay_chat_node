@@ -203,6 +203,16 @@ operation_clip_schema.statics.updateCommentCount = function (clip_id, comment_co
   return this.updateOne({ _id: clip_id }, update)
 }
 
+operation_clip_schema.statics.getGroupSeqCount = function () {
+  return this.aggregate([{ $project: { 'group_seq': 1 }},
+    { $group: { _id: '$group_seq', count: { $sum: 1 }}},
+    { $sort: { count: -1 }}])
+}
+
+operation_clip_schema.statics.findByMemberSeqAndGroupSeq = function (member_seq, group_seq, projection = null) {
+  return this.find({ member_seq: member_seq, group_seq: group_seq }, projection)
+}
+
 const operation_clip_model = mongoose.model('OperationClip', operation_clip_schema)
 
 export const OperationClipModel = operation_clip_model

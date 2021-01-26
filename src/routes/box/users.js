@@ -5,7 +5,7 @@ import Role from '../../constants/roles'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 import DBMySQL from '../../database/knex-mysql'
-import GroupService from '../../service/member/GroupService'
+import GroupService from '../../service/group/GroupService'
 
 const routes = Router()
 

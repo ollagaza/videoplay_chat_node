@@ -6,7 +6,7 @@ import Wrap from '../../utils/express-async'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import UserService from '../../service/member/MemberService'
-import GroupService from '../../service/member/GroupService'
+import GroupService from '../../service/group/GroupService'
 
 const routes = Router()
 

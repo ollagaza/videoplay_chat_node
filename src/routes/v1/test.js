@@ -29,45 +29,59 @@ import socketManager from '../../service/socket-manager'
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
 import FTP from '../../libs/ftp'
 import OperationFolderService from '../../service/operation/OperationFolderService'
+import group_service from "../../service/group/GroupService";
+import sendmail from '../../libs/send-mail'
+import SendMailService from "../../service/etc/SendMailService";
 
 const routes = Router()
 
 const IS_DEV = Config.isDev()
 
-routes.get('/folder_size_sync', Wrap(async (req, res) => {
-  const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
-  res.json(output)
-}))
-
-routes.get('/socket_test', Wrap(async (req, res) => {
-  const member_seq = req.body.member_seq
-  const group_seq = req.body.group_seq
-  const notifyinfo = new NotifyInfo()
-  notifyinfo.seq = 0
-  notifyinfo.notify_type = 'message'
-  notifyinfo.profile_image = null
-  notifyinfo.regist_datetime = new Date()
-  notifyinfo.text = 'test'
-  const send_socket_message_info = {
-    message_info: {
-      title: 'test',
-      message: 'test',
-      notice_type: '',
-      type: 'globalNotice',
-    },
-    notifyinfo: notifyinfo.toJSON(),
-    data: {
-      type: null,
-      action_type: null
-    }
-  }
-
-  // await socketManager.sendToFrontOne(member_seq, send_socket_message_info);
-  await socketManager.sendToFrontAll(send_socket_message_info)
-  res.end()
-}))
-
 if (IS_DEV) {
+
+  routes.get('/cloud_mail_file_test', Wrap(async (req, res) => {
+    const result = await SendMailService.sendMail(DBMySQL, 24, 30)
+    res.json(result)
+  }))
+
+  routes.get('/group_grade_sync', Wrap(async (req, res) => {
+    const output = await group_service.SyncGroupGrade(DBMySQL)
+    res.json(output)
+  }))
+
+  routes.get('/folder_size_sync', Wrap(async (req, res) => {
+    const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
+    res.json(output)
+  }))
+
+  routes.get('/socket_test', Wrap(async (req, res) => {
+    const member_seq = req.body.member_seq
+    const group_seq = req.body.group_seq
+    const notifyinfo = new NotifyInfo()
+    notifyinfo.seq = 0
+    notifyinfo.notify_type = 'message'
+    notifyinfo.profile_image = null
+    notifyinfo.regist_datetime = new Date()
+    notifyinfo.text = 'test'
+    const send_socket_message_info = {
+      message_info: {
+        title: 'test',
+        message: 'test',
+        notice_type: '',
+        type: 'globalNotice',
+      },
+      notifyinfo: notifyinfo.toJSON(),
+      data: {
+        type: null,
+        action_type: null
+      }
+    }
+
+    // await socketManager.sendToFrontOne(member_seq, send_socket_message_info);
+    await socketManager.sendToFrontAll(send_socket_message_info)
+    res.end()
+  }))
+
   routes.get('/video/:project_seq(\\d+)/:scale', Wrap(async (req, res) => {
     const project_seq = req.params.project_seq
     const scale = Util.parseFloat(req.params.scale, 1)

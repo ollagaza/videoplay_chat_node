@@ -4,9 +4,13 @@ import NaverArchiveStorageService from './storage/naver-archive-storage-service'
 import NaverObjectStorageService from './storage/naver-object-storage-service'
 import SocketManager from './socket-manager'
 import VacsScheduler from '../scheduler/VacsScheduler'
+import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler";
+import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDeleteScheduler";
 import MongoDataService from './common/MongoDataService'
 import Util from '../utils/baseutil'
 import log from '../libs/logger'
+import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
+import GroupInfoMemberCountSync from "../scheduler/GroupInfoMemberCountSync";
 
 const initDirectories = async () => {
   await Util.createDirectory(ServiceConfig.get('common_root'))
@@ -25,6 +29,10 @@ export default {
     if (ServiceConfig.isVacs() === false) {
       await NaverArchiveStorageService.init()
       await NaverObjectStorageService.init()
+      ReservationEmailScheduler.startSchedule()
+      ThreeMonthsEmailDeleteScheduler.startSchedule()
+      GroupDataCountingScheduler.startSchedule()
+      GroupInfoMemberCountSync.startSchedule()
     } else {
       VacsScheduler.startSchedule()
     }

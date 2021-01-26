@@ -4,7 +4,7 @@ import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 import OperationLinkModel from '../../database/mysql/operation/OperationLinkModel'
 import OperationService from './OperationService'
-import GroupService from '../member/GroupService'
+import GroupService from '../group/GroupService'
 import OperationMailTemplate from '../../template/mail/operation.template'
 import SendMail from '../../libs/send-mail'
 

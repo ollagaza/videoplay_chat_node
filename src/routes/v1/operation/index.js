@@ -2,7 +2,7 @@ import { Router } from 'express'
 import Auth from '../../../middlewares/auth.middleware'
 import Role from '../../../constants/roles'
 import Wrap from '../../../utils/express-async'
-import GroupService from '../../../service/member/GroupService'
+import GroupService from '../../../service/group/GroupService'
 import DBMySQL from '../../../database/knex-mysql'
 import OperationDataService from '../../../service/operation/OperationDataService'
 import StdObject from '../../../wrapper/std-object'
@@ -25,7 +25,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     throw new StdObject(-1, '잘못된 접근입니다.', 400)
   }
 
-  const { group_seq, group_member_info, member_info, member_seq, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
+  const { group_seq, group_member_info, member_info, member_seq, is_group_admin, token_info } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
   const comment_seq = request.params.comment_seq
   const clip_id = request.params.clip_id
   const phase_id = request.params.phase_id
@@ -49,7 +49,8 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     phase_id,
     operation_seq: null,
     operation_info: null,
-    is_group_admin
+    is_group_admin,
+    token_info
   }
 
   if (api_type === 'mentoring') {
@@ -170,6 +171,17 @@ routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wr
   output.add('is_link', base_info.is_link)
   output.add('is_editor_link', base_info.is_editor_link)
   output.add('is_download_link', base_info.is_download_link)
+  res.json(output)
+}))
+
+routes.delete('/:api_type/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const base_info = await getBaseInfo(req, true)
+  const result = await OperationService.updateStatusTrash(null, [base_info.operation_seq], base_info.member_seq)
+
+  const output = new StdObject()
+  output.add('result', result)
+
   res.json(output)
 }))
 
@@ -300,9 +312,9 @@ routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)/like', Auth.isAuth
 
 routes.post('/:api_type/:api_key/clip', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { operation_info, member_info } = await getBaseInfo(req, true, true, true)
+  const { operation_info, member_info, group_member_info } = await getBaseInfo(req, true, true, true)
 
-  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body)
+  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body, true, group_member_info)
   const output = new StdObject()
   output.add('result', create_result)
   res.json(output)
@@ -320,9 +332,9 @@ routes.put('/:api_type/:api_key/clip/:clip_id', Auth.isAuthenticated(Role.DEFAUL
 
 routes.delete('/:api_type/:api_key/clip/:clip_id', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { clip_id, operation_info } = await getBaseInfo(req, true, true, true)
+  const { clip_id, operation_info, group_member_info } = await getBaseInfo(req, true, true, true)
 
-  const delete_result = await OperationClipService.deleteById(clip_id, operation_info, req.body)
+  const delete_result = await OperationClipService.deleteById(clip_id, operation_info, req.body, group_member_info)
   const output = new StdObject()
   output.add('result', delete_result)
   res.json(output)

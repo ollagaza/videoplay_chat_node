@@ -6,7 +6,7 @@ import Role from '../../constants/roles'
 import Util from '../../utils/baseutil'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
-import GroupService from '../member/GroupService'
+import GroupService from '../group/GroupService'
 import OperationFileService from './OperationFileService'
 import OperationMediaService from './OperationMediaService'
 import OperationDataService from './OperationDataService'
@@ -26,6 +26,8 @@ import { OperationAnalysisModel } from '../../database/mongodb/OperationAnalysis
 import Zip from 'adm-zip'
 import iconv from 'iconv-lite'
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
+import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
+import OperationCommentService from "./OperationCommentService";
 
 const OperationServiceClass = class {
   constructor () {
@@ -44,6 +46,13 @@ const OperationServiceClass = class {
       return new OperationStorageModel(database)
     }
     return new OperationStorageModel(DBMySQL)
+  }
+
+  getGroupMemberModel = (database = null) => {
+    if (database) {
+      return new GroupMemberModel(database)
+    }
+    return new GroupMemberModel(DBMySQL)
   }
 
   createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
@@ -104,6 +113,11 @@ const OperationServiceClass = class {
 
       if (ServiceConfig.isVacs()) {
         VacsService.increaseCount(1)
+      }
+
+      if (group_member_info) {
+        const group_member_model = this.getGroupMemberModel(database)
+        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
       }
     }
     return output
@@ -864,15 +878,27 @@ const OperationServiceClass = class {
     return await model.updateStatusFavorite(operation_seq, is_delete)
   }
 
-  updateStatusTrash = async (database, seq_list, member_seq, is_delete) => {
+  updateStatusTrash = async (database, seq_list, member_seq, is_delete = false) => {
     const model = this.getOperationModel(database)
     const status = is_delete ? 'Y' : 'T'
-    await model.updateStatusTrash(seq_list, member_seq, status)
+    await model.updateStatusTrash(seq_list, status)
     await OperationDataService.updateOperationDataByOperationSeqList(seq_list, status)
 
     for (let cnt = 0; cnt < seq_list.length; cnt++) {
       const where = { 'operation.seq': seq_list[cnt] }
       const operation_info = await model.getOperation(where);
+
+      const group_member_model = this.getGroupMemberModel(database);
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(operation_info.group_seq, operation_info.member_seq, 'Y');
+
+      if (group_member_info) {
+        if (status === 'T') {
+          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'down');
+        } else if (status === 'Y') {
+          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
+        }
+      }
+
       if (operation_info.folder_seq !== null) {
         if (is_delete) {
           await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_info.total_file_size);
@@ -992,6 +1018,39 @@ const OperationServiceClass = class {
       'content_image': content_path + 'image/',
       'content_temp': content_path + 'temp/',
       'content_file': content_path + 'file/',
+    }
+  }
+
+  getAllOperationGroupMemberList = async (database, group_seq, member_seq) => {
+    const model = this.getOperationModel(database)
+    return await model.getGroupMemberOperationList(group_seq, member_seq);
+  }
+
+  setAllOperationClipDeleteByGroupSeqAndMemberSeq = async (databases, group_seq, member_seq) => {
+    const clip_list = await OperationClipService.findByMemberSeqAndGroupSeq(member_seq, group_seq);
+    let counting_clip = {};
+    for (let i = 0; i < clip_list.length; i++) {
+      const operation_seq = Number(clip_list[i].operation_seq);
+      if (!counting_clip[operation_seq]) {
+        counting_clip[operation_seq] = 1;
+      } else {
+        counting_clip[operation_seq]++;
+      }
+      const clip_id = clip_list[i]._id.toString();
+      await OperationCommentService.deleteClipInfo(clip_id);
+      await OperationClipModel.deleteById(clip_id);
+    }
+    const operation_storage_model = this.getOperationStorageModel(databases);
+    const operation_seq_list = Object.keys(counting_clip);
+    for (let i = 0; i < operation_seq_list.length; i++) {
+      const operation_seq = operation_seq_list[i];
+      const del_count = counting_clip[operation_seq];
+      const operation_storage_info = await operation_storage_model.getOperationStorageInfo({ seq: operation_seq });
+      let update_clip_count = operation_storage_info.clip_count - del_count;
+      if (update_clip_count <= 0) {
+        update_clip_count = 0;
+      }
+      await OperationClipService.updateClipCount({ seq: operation_storage_info.seq }, update_clip_count);
     }
   }
 }

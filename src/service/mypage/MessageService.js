@@ -1,5 +1,6 @@
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
+import GroupMessageModel from "../../database/mysql/mypage/GroupMessageModel";
 import MessageModel from '../../database/mysql/mypage/MessageModel'
 import socketManager from '../socket-manager'
 import MemberLogService from '../member/MemberLogService'
@@ -16,6 +17,14 @@ const MessageServiceClass = class {
       return new MessageModel(database)
     } else {
       return new MessageModel(DBMySQL)
+    }
+  }
+
+  getGroupMessageModel = (database = null) => {
+    if (database) {
+      return new GroupMessageModel(database)
+    } else {
+      return new GroupMessageModel(DBMySQL)
     }
   }
 
@@ -136,7 +145,7 @@ const MessageServiceClass = class {
       await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info)
       send_socket_message_info.message_info.title = '쪽지가 발송 되었습니다.'
       await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info)
-      await MemberLogService.createMemberLog(DBMySQL, group_seq, null, null, null, '1003', '', 0, 0, 1)
+      await MemberLogService.createMemberLog(DBMySQL, group_seq, null, null, '1003', null, '', 0, 0, 1)
 
       return result
     } catch (e) {
@@ -149,6 +158,68 @@ const MessageServiceClass = class {
       const msgModel = this.getMessageModel(database)
       const result = await msgModel.deleteMessage(seq, flag)
 
+      return result
+    } catch (e) {
+      throw e
+    }
+  }
+
+  getGroupMessage = async (database, group_seq, message_seq) => {
+    const groupmsgModel = this.getGroupMessageModel(database)
+    const result = await groupmsgModel.getGroupMessageOne(group_seq, message_seq)
+    return result;
+  }
+
+  getGroupMessageList = async (database, group_seq, req) => {
+    const request_body = req.query ? req.query : {}
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const request_order = request_body.order ? JSON.parse(request_body.order) : null
+
+    const paging = {}
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 20
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = 'N'
+
+    const groupmsgModel = this.getGroupMessageModel(database)
+    return await groupmsgModel.getGroupMessageList(group_seq, paging, request_order)
+  }
+
+  sendGroupMessage = async (database, message_info) => {
+    try {
+      const groupmsgModel = this.getGroupMessageModel(database)
+      const params = {
+        send_seq: message_info.send_seq,
+        send_name: message_info.send_name,
+        receive_seq: JSON.stringify(message_info.receive_seq),
+        receive_names: JSON.stringify(message_info.receive_names),
+        desc: message_info.desc,
+        total_cnt: message_info.receive_seq.length,
+        reservation_datetime: message_info.reservation_datetime
+      }
+      const group_message_seq = await groupmsgModel.sendMessage(params)
+
+      for (let cnt = 0; cnt < message_info.receive_seq.length; cnt++) {
+        const param = {
+          group_seq: message_info.send_seq,
+          send_seq: message_info.send_seq,
+          receive_seq: message_info.receive_seq[cnt],
+          desc: message_info.desc,
+          group_message_seq: group_message_seq,
+        }
+        await MessageService.sendMessage(database, message_info.send_seq, param)
+      }
+
+      return group_message_seq
+    } catch (e) {
+      throw e
+    }
+  }
+
+  deleteGroupMessage = async (database, message_seq) => {
+    try {
+      const groupmsgModel = this.getGroupMessageModel(database)
+      const result = await groupmsgModel.delMessage(message_seq)
       return result
     } catch (e) {
       throw e

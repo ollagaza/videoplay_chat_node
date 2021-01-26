@@ -1,7 +1,7 @@
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 import MemberLogModel from '../../database/mysql/member/MemberLogModel'
-import GroupService from './GroupService'
+import GroupService from '../group/GroupService'
 
 const MemberLogServiceClass = class {
   constructor () {

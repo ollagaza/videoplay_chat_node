@@ -2,7 +2,7 @@ import { Router } from 'express'
 import Auth from '../../../middlewares/auth.middleware'
 import Role from '../../../constants/roles'
 import Wrap from '../../../utils/express-async'
-import GroupService from '../../../service/member/GroupService'
+import GroupService from '../../../service/group/GroupService'
 import DBMySQL from '../../../database/knex-mysql'
 import OperationFolderService from '../../../service/operation/OperationFolderService'
 import OperationService from '../../../service/operation/OperationService'
@@ -71,7 +71,7 @@ routes.get('/relation(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT),
   res.json(output)
 }))
 
-routes.delete('/folder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.delete('/deletefolder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   try {
     const folder_info = req.body.folder_info
     log.debug('[Router Folder -> index]', '[/deletefolder]', folder_info)

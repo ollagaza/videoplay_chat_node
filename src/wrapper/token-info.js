@@ -73,6 +73,10 @@ export default class TokenInfo {
     return this.getRole() === Role.ADMIN
   }
 
+  isManager = () => {
+    return this.getRole() === Role.MANAGER
+  }
+
   isMember = () => {
     return this.getRole() === Role.MEMBER
   }

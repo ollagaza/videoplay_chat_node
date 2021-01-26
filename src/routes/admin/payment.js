@@ -8,7 +8,7 @@ import DBMySQL from '../../database/knex-mysql'
 import AdminPaymentService from '../../service/payment/AdminPaymentService'
 import IamportApiService from '../../service/payment/IamportApiService'
 import PaymentService from '../../service/payment/PaymentService'
-import group_service from '../../service/member/GroupService'
+import group_service from '../../service/group/GroupService'
 import member_service from '../../service/member/MemberService'
 
 const routes = Router()

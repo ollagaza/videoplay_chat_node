@@ -42,7 +42,7 @@ export default class MemberModel extends MySQLModel {
   }
 
   getMemberInfo = async (member_seq) => {
-    const query_result = await this.findOne({ seq: member_seq })
+    const query_result = await this.findOne({ seq: member_seq }, null, { name: 'seq', direction: 'desc' })
     if (query_result && query_result.regist_date) {
       query_result.regist_date = Util.dateFormat(query_result.regist_date.getTime())
     }

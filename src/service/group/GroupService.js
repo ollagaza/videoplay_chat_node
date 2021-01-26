@@ -1,24 +1,33 @@
 import _ from 'lodash'
-import ServiceConfig from '../../service/service-config'
+import ServiceConfig from '../service-config'
 import Util from '../../utils/baseutil'
 import Role from '../../constants/roles'
 import Constants from '../../constants/constants'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
-import MemberService from './MemberService'
+import MemberService from '../member/MemberService'
 import OperationService from '../operation/OperationService'
+import OperationModel from "../../database/mysql/operation/OperationModel";
 import OperationDataService from '../operation/OperationDataService'
 import SocketManager from '../socket-manager'
-import GroupModel from '../../database/mysql/member/GroupModel'
-import GroupMemberModel from '../../database/mysql/member/GroupMemberModel'
+import GroupModel from '../../database/mysql/group/GroupModel'
+import GroupMemberModel from '../../database/mysql/group/GroupMemberModel'
 import SendMail from '../../libs/send-mail'
 import GroupMailTemplate from '../../template/mail/group.template'
 import VacsService from '../vacs/VacsService'
 import Auth from '../../middlewares/auth.middleware'
-import GroupCountModel from '../../database/mysql/member/GroupCountsModel'
+import GroupCountModel from '../../database/mysql/group/GroupCountsModel'
 import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 import JsonWrapper from '../../wrapper/json-wrapper'
+import GroupGradeModel from "../../database/mysql/group/GroupGradeModel";
+import data from "../../routes/v1/data";
+import OperationCommentService from '../operation/OperationCommentService'
+import GroupBoardDataService from "../board/GroupBoardDataService";
+import OperationClipService from "../operation/OperationClipService";
+import {OperationClipModel} from "../../database/mongodb/OperationClip";
+import OperationFolderService from "../operation/OperationFolderService";
+import GroupBoardListService from "../board/GroupBoardListService";
 
 const GroupServiceClass = class {
   constructor () {
@@ -36,6 +45,7 @@ const GroupServiceClass = class {
     this.MEMBER_STATUS_DELETE = 'D'
     this.MEMBER_GRADE_OWNER = 'O'
     this.MEMBER_GRADE_ADMIN = 'A'
+    this.MEMBER_GRADE_MANAGER = '6'
     this.MEMBER_GRADE_NORMAL = 'N'
   }
 
@@ -67,6 +77,13 @@ const GroupServiceClass = class {
     return new ContentCountsModel(DBMySQL)
   }
 
+  getGroupGradeModel = (database) => {
+    if (database) {
+      return new GroupGradeModel(database)
+    }
+    return new GroupGradeModel(DBMySQL)
+  }
+
   getBaseInfo = (req, group_seq_from_token = true) => {
     const token_info = req.token_info
     const member_seq = token_info.getId()
@@ -88,17 +105,21 @@ const GroupServiceClass = class {
     let group_member_info = null
     let is_active_group_member = false
     let is_group_admin = false
-    if (token_info.getRole() === Role.ADMIN) {
-      is_active_group_member = true
-      is_group_admin = true
-      group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
-    } else if (check_group_auth) {
+    let is_group_manager = false
+    // if (token_info.getRole() === Role.ADMIN) {
+    //   is_active_group_member = true
+    //   is_group_admin = true
+    //   is_group_manager = true
+    //   group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
+    // } else
+    if (check_group_auth) {
       if (!group_seq) {
         is_active_group_member = false
       } else {
         group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
         is_active_group_member = group_member_info && group_member_info.group_member_status === this.MEMBER_STATUS_ENABLE
         is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
+        is_group_manager = this.isGroupManagerByMemberInfo(group_member_info)
       }
     }
     if (check_group_auth && !is_active_group_member && throw_exception) {
@@ -111,7 +132,8 @@ const GroupServiceClass = class {
       member_info,
       group_member_info,
       is_active_group_member,
-      is_group_admin
+      is_group_admin,
+      is_group_manager
     }
   }
 
@@ -175,6 +197,9 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[createGroupInfo]', create_group_info, member_seq)
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.createGroup(create_group_info)
+    await this.createDefaultGroupGrade(database, group_info.seq)
+    await OperationFolderService.createDefaultOperationFolder(database, group_info.seq, group_info.member_seq)
+    await GroupBoardListService.createDefaultGroupBoard(database, group_info.seq)
     const group_counts_model = this.getGroupCountsModel(database)
     await group_counts_model.createCounts(group_info.seq)
     const content_counts_model = this.getContentCountsModel(database)
@@ -182,6 +207,43 @@ const GroupServiceClass = class {
     await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
 
     return group_info
+  }
+
+  updateEnterpriseGroup = async (database, member_info, options, seq = {}) => {
+    const modify_group_info = {
+      group_type: this.GROUP_TYPE_ENTERPRISE,
+      group_name: options.group_name?options.group_name:member_info.user_name,
+      group_open: options.group_open?options.group_open:0,
+      group_join_way: options.group_join_way?options.group_join_way:0,
+      member_open: options.member_open?options.member_open:0,
+      member_name_used: options.member_name_used?options.member_name_used:0,
+      search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
+      group_explain: options.group_explain?options.group_explain:null,
+      profile_image_path: options.profile_image_path?options.profile_image_path:null,
+    }
+    return await this.updateGroupInfo(database, modify_group_info, seq)
+  }
+
+  updateGroupInfo = async (database, modify_group_info, seq) => {
+    const resObj = {
+      completed: true,
+      group_seq: seq,
+      group_info: {}
+    }
+    try {
+      await DBMySQL.transaction(async (transaction) => {
+        const group_model = this.getGroupModel(database)
+        await group_model.updateGroup(modify_group_info, seq)
+        resObj.group_info = await group_model.getGroupInfo(seq, null);
+        resObj.group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
+        resObj.group_info.profile_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
+      })
+      return resObj;
+    } catch (e) {
+      log.error(this.log_prefix, '[updateGroupInfo]', e)
+      throw new StdObject(-2, '그룹 정보를 변경할 수 없습니다.', 400)
+      return false;
+    }
   }
 
   addGroupMember = async (database, group_info, member_info, grade, max_storage_size = 0) => {
@@ -193,15 +255,19 @@ const GroupServiceClass = class {
     return await group_member_model.createGroupMember(group_info, member_info, grade, max_storage_size)
   }
 
-  getMemberGroupList = async (database, member_seq, is_active_only = true) => {
+  getMemberGroupList = async (database, member_seq, is_active_only = true, filter = null, page = null) => {
     log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
     const group_member_model = this.getGroupMemberModel(database)
-    const group_member_list = await group_member_model.getMemberGroupList(member_seq, status)
+    const group_member_list = await group_member_model.getMemberGroupList(member_seq, status, null, filter, page)
     for (let i = 0; i < group_member_list.length; i++) {
       const group_member_info = group_member_list[i]
       if (group_member_info.profile_image_path) {
         group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
+      if (JSON.parse(group_member_info.profile).image) {
+        group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
+        group_member_list[i].json_keys.push('group_image_url')
       }
     }
     if (ServiceConfig.isVacs()) {
@@ -213,6 +279,7 @@ const GroupServiceClass = class {
         group_member_info.group_max_storage_size = vacs_storage_info.total_size
       }
     }
+
     return group_member_list
   }
 
@@ -222,17 +289,29 @@ const GroupServiceClass = class {
     const request_order = request_body.order ? request_body.order : null
     const search_text = request_body.search_text ? request_body.search_text : null
     const member_type = request_body.member_type ? request_body.member_type : null
+    const videos_count = request_body.video_count ? true : false
+    const pause_member = request_body.get_pause_name ? true : false
+    const delete_member = request_body.get_delete_name ? true : false
+    const detail_search = request_body.search_detail ? request_body.search_detail : null
+    const member_grade = request_body.member_grade ? request_body.member_grade : null
+    const non_admin = request_body.non_admin ? request_body.non_admin : null
 
     const paging = {}
     paging.list_count = request_paging.list_count ? request_paging.list_count : 20
     paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
     paging.page_count = request_paging.page_count ? request_paging.page_count : 10
-    paging.no_paging = request_paging.no_paging ? request_paging.no_paging : 'Y'
+    paging.no_paging = request_paging.no_paging ? request_paging.no_paging : 'y'
 
     log.debug(this.log_prefix, '[getGroupMemberList]', request_body, member_type, search_text, paging)
 
     const group_member_model = this.getGroupMemberModel(database)
-    return await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order)
+    const group_member_list = await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin);
+    for(let i = 0; i < group_member_list.data.length; i++) {
+      if (group_member_list.data[i].profile_image_path) {
+        group_member_list.data[i].profile_image_path = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_list.data[i].profile_image_path)
+      }
+    }
+    return group_member_list;
   }
 
   getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
@@ -247,6 +326,10 @@ const GroupServiceClass = class {
     if (group_member_info.profile_image_path) {
       if (group_member_info.profile_image_url !== null) {
         group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
+      if (JSON.parse(group_member_info.profile).image) {
+        group_member_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
+        group_member_info.json_keys.push('group_image_url')
       }
     }
     if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
@@ -276,6 +359,10 @@ const GroupServiceClass = class {
     return group_member_info.grade === this.MEMBER_GRADE_ADMIN || group_member_info.grade === this.MEMBER_GRADE_OWNER
   }
 
+  isGroupManagerByMemberInfo = (group_member_info) => {
+    return group_member_info.grade === this.MEMBER_GRADE_MANAGER
+  }
+
   isActiveGroupMember = async (database, group_seq, member_seq) => {
     const group_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
     if (!group_info || group_info.isEmpty()) {
@@ -288,6 +375,9 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.getGroupInfo(group_seq, private_keys)
     group_info.json_keys.push('profile_image_url')
+    if (JSON.parse(group_info.profile).image) {
+      group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image)
+    }
     group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
     return group_info
   }
@@ -477,8 +567,9 @@ const GroupServiceClass = class {
     invite_code = `${invite_code}`.toUpperCase()
     const group_member_model = this.getGroupMemberModel(database)
     const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
+    let change_grade = '1';
 
-    await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size)
+    await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
 
     const message_info = {
       title: '신규 회원 가입',
@@ -599,15 +690,17 @@ const GroupServiceClass = class {
     this.sendEmail(title, body, [target_member_info.invite_email], 'unDeleteMember')
   }
 
-  pauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
+  pauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, message = null) => {
     const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
     if (!is_group_admin) {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
-    const group_member_model = this.getGroupMemberModel(database)
-    await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
-
-    const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단 되었습니다.`
+    // const group_member_model = this.getGroupMemberModel(database)
+    // await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
+    let title = `${group_member_info.group_name}의 SurgStory 사용 일시중단 되었습니다.`
+    if (message) {
+      title = `${group_member_info.group_name}의 SurgStory ${message}`
+    }
     const message_info = {
       title: '팀 사용 불가',
       message: title,
@@ -697,6 +790,9 @@ const GroupServiceClass = class {
 
   getGroupSummary = async (database, group_seq) => {
     const group_info = await this.getGroupInfoWithProduct(database, group_seq)
+    if (group_info.profile_image_path) {
+      group_info.profile_image_path = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
+    }
     const group_member_model = this.getGroupMemberModel(database)
     const group_summary = await group_member_model.getGroupMemberSummary(group_seq)
     return {
@@ -1055,11 +1151,65 @@ const GroupServiceClass = class {
     return result_list
   }
 
-  requestJoinGroup = async (group_seq, member_info) => {
+  requestJoinGroup = async (database, group_seq, member_info, params) => {
     const group_model = this.getGroupModel()
     const group_info = await group_model.getGroupInfo(group_seq)
+    const grade = '1';
     const group_member_model = this.getGroupMemberModel()
-    return await group_member_model.createGroupMember(group_info, member_info, this.MEMBER_GRADE_NORMAL, null, this.MEMBER_STATUS_JOIN)
+    const group_member_info = await group_member_model.getGroupMemberInfo(group_seq, member_info.seq);
+    const group_join_member_state = group_info.group_join_way === 1 ? this.MEMBER_STATUS_JOIN : 'Y';
+    const is_join_answer = params.quest;
+
+    const result_info = {
+      error: 0,
+      msg: '',
+    };
+    if (group_member_info) {
+      switch (group_member_info.status) {
+        case 'B':
+          result_info.error = 9;
+          result_info.msg = '탈퇴한 이력이 있어 가입하실 수 없습니다. 채널 관리자에게 문의해주세요.';
+          break;
+        case 'J':
+          result_info.error = 8;
+          result_info.msg = '이미 가입신청한 상태입니다.';
+          break;
+        case 'C':
+        case 'N':
+        case 'D':
+          const params = {
+            grade: grade,
+            status: group_join_member_state,
+            answer: is_join_answer,
+            ban_hide: 'N',
+          }
+          const update_chk = await group_member_model.updateGroupMemberJoin(group_seq, null, group_member_info.seq, params);
+          if (!update_chk) {
+            result_info.error = 4;
+            result_info.msg = '필수 정보가 누락되었습니다.';
+          }
+          break;
+        case 'P':
+          result_info.error = 7;
+          result_info.msg = '활동 정지된 계정입니다.';
+          break;
+        case 'Y':
+          result_info.error = 6;
+          result_info.msg = '이미 가입한 채널입니다.';
+          break;
+        default:
+          result_info.error = 5;
+          result_info.msg = '알수 없는 오류.';
+          break;
+      }
+    } else {
+      const insert_chk = await group_member_model.createGroupMember(group_info, member_info, grade, null, group_join_member_state, is_join_answer)
+      if (!insert_chk) {
+        result_info.error = 3;
+        result_info.msg = '회원가입 신청에 실패하였습니다.';
+      }
+    }
+    return result_info;
   }
 
   confirmJoinGroup = async (group_member_info, group_member_seq) => {
@@ -1078,6 +1228,165 @@ const GroupServiceClass = class {
     }
     const group_member_model = this.getGroupMemberModel()
     return await group_member_model.deleteGroupMemberInfo(group_seq, group_member_seq)
+  }
+
+  updateJoinManage = async (database, group_seq, params) => {
+    const filter = {
+      seq: group_seq
+    }
+    const group_model = this.getGroupModel(database)
+    return await group_model.updateJoinManage(filter, params);
+  }
+
+  SyncGroupGrade = async (database) => {
+    const group_model = this.getGroupModel(database)
+    const group_infos = await group_model.getGroupInfoAllByGroup()
+
+    for (let cnt = 0; cnt < Object.keys(group_infos).length; cnt++) {
+      await this.createDefaultGroupGrade(database, group_infos[cnt].seq)
+    }
+  }
+
+  createDefaultGroupGrade = async (database, group_seq) => {
+    const grade_model = this.getGroupGradeModel(database)
+    const grade_list = [
+      { group_seq, grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: '1', grade_text: '기본회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: '2', grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: '3', grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: '4', grade_text: '평생회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: '5', grade_text: '명예회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: '6', grade_text: '매니저', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      { group_seq, grade: 'O', grade_text: '관리자', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+    ];
+
+    for (let cnt = 0; cnt < grade_list.length; cnt++) {
+      await grade_model.insertGroupGrade(grade_list[cnt])
+    }
+  }
+
+  getGradeManageList = async (database, group_seq) => {
+    const grade_model = this.getGroupGradeModel(database)
+    return await grade_model.getGroupManageGradeListWithGroupSeq(group_seq)
+  }
+
+  getGradeList = async (database, group_seq) => {
+    const grade_model = this.getGroupGradeModel(database)
+    return await grade_model.getGroupGradeListWithGroupSeq(group_seq)
+  }
+
+  updateGradeList = async (database, group_seq, grade_list) => {
+    const grade_model = this.getGroupGradeModel(database)
+    const filter = {
+      group_seq,
+    }
+    for (let cnt = 0; cnt < grade_list.length; cnt++) {
+      filter.grade = grade_list[cnt].grade
+      delete grade_list[cnt].seq
+      delete grade_list[cnt].reg_date
+      grade_list[cnt].modify_date = database.raw('NOW()')
+      await grade_model.updateGroupGrade(filter, grade_list[cnt])
+    }
+  }
+
+  updatePauseList = async (database, group_seq, pause_list) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updatePauseList(group_seq, pause_list, 'P')
+  }
+
+  nonupdatePauseList = async (database, group_seq, pause_list) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updatePauseList(group_seq, pause_list, 'Y')
+  }
+
+  groupJoinList = async (database, group_seq, join_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    const status = join_info.join_type === 'join' ? 'Y' : 'C';
+    return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
+  }
+
+  updateBanList = async (database, group_seq, ban_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    let status = 'D';
+    if (ban_info.join_ban) {
+      status = 'B';
+    }
+    return await group_member_model.updateBanList(group_seq, ban_info, status)
+  }
+
+  nonupdateBanList = async (database, group_seq, ban_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    let change_grade = '1';
+    return await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
+  }
+
+  changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    for (let i = 0; i < change_member_info.change_list.length; i++) {
+      const target_member_info = await group_member_model.getGroupMemberInfoBySeq(change_member_info.change_list[i]);
+      if (target_member_info) {
+        if (target_member_info.grade === '6') {
+          await this.changeGradeNormal(database, group_member_info, change_member_info.change_list[i]);
+        }
+      }
+    }
+    return await group_member_model.updateGradeList(group_seq, change_member_info)
+  }
+
+  deleteGroupMemberContents = async (database, group_seq, target_info, token_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    const operation_model = new OperationModel(database);
+    for (let i = 0; i < target_info.target_list.length; i ++) {
+      const member_seq = await group_member_model.getGroupMemberSeq(target_info.target_list[i]);
+      const operation_list = await OperationService.getAllOperationGroupMemberList(database, group_seq, member_seq);
+      for (let j = 0; j < operation_list.length; j++) {
+        const operation_data = await OperationDataService.getOperationDataByOperationSeq(database, operation_list[j].seq);
+        const params = {};
+        params.limit = 999;
+        params.start = 0;
+        const operation_comment_list = await OperationCommentService.getCommentList(database, operation_data.seq, params)
+        for (let k = 0; k < operation_comment_list.length; k++) {
+          const del_count = await OperationCommentService.deleteAllComment(database, group_seq, operation_comment_list[k].member_seq);
+
+          const target_group_member_info = await group_member_model.getGroupMemberInfo(group_seq, operation_comment_list[k].member_seq);
+          await group_member_model.setUpdateGroupMemberCounts(target_group_member_info.seq, 'vid_comment', 'down', del_count);
+        }
+        const clip_list = await OperationClipService.findByOperationSeq(operation_list[j].seq);
+        for (let k = 0; k < clip_list.length; k++) {
+          const target_group_member_info = await group_member_model.getGroupMemberInfo(clip_list[k].group_seq, clip_list[k].member_seq);
+          const clip_res_member_info = { group_member_seq: target_group_member_info.seq };
+          const clip_params = {};
+          clip_params.clip_count = clip_list.length - 1;
+          await OperationClipService.deleteById(clip_list[k]._id.toString(), operation_data, clip_params, clip_res_member_info);
+        }
+        await OperationService.deleteOperation(database, token_info, operation_list[j].seq);
+        await operation_model.deleteOperation(operation_list[j].seq);
+      }
+      await OperationService.setAllOperationClipDeleteByGroupSeqAndMemberSeq(database, group_seq, member_seq);
+      await OperationCommentService.deleteAllComment(database, group_seq, member_seq);
+      await GroupBoardDataService.allDeleteCommentByGrouypSeqMemberSeq(database, group_seq, member_seq)
+    }
+    return await group_member_model.updateMemberContentsInfo(group_seq, target_info)
+  }
+
+  getMemberGroupAllCount = async (database, member_seq, option) => {
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_summary = await group_member_model.getMemberGroupAllCount(member_seq, option)
+    return group_summary;
+  }
+  GroupMemberCountSync = async (database) => {
+    const group_model = this.getGroupModel(database)
+    await group_model.GroupMemberCountSync()
+  }
+  GroupMemberStatusUpdate = async (database, group_seq, mem_info) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    return await group_member_model.updateMemberStatus(group_seq, mem_info)
+  }
+  getGroupMemberInfoDetail = async (database, group_seq, group_member_seq) => {
+    const group_member_model = this.getGroupMemberModel(database);
+    const group_member_info = await group_member_model.getGroupMemberDetailQuery(group_seq, group_member_seq);
+    group_member_info.member_profile_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+    return group_member_info;
   }
 }
 

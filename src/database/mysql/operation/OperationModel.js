@@ -171,11 +171,8 @@ export default class OperationModel extends MySQLModel {
     await this.delete({ 'seq': operation_seq })
   }
 
-  updateStatusTrash = async (operation_seq_list, member_seq, status) => {
+  updateStatusTrash = async (operation_seq_list, status) => {
     let filters = null
-    // if (member_seq) {
-    //   filters = { member_seq }
-    // }
     return this.updateIn('seq', operation_seq_list, {
       status,
       'modify_date': this.database.raw('NOW()')
