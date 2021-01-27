@@ -22,6 +22,7 @@ const checkGroupAuth = async (database, req, check_group_auth = true, throw_exce
 }
 
 const getGroupMemberSeq = (request) => Util.parseInt(request.params.group_member_seq, 0)
+const getMemberSeq = (request) => Util.parseInt(request.params.member_seq, 0)
 
 routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
@@ -635,13 +636,4 @@ routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAut
   res.json(output)
 }))
 
-routes.get('/:group_seq(\\d+)/:member_seq(\\d+)/allOperationList', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  req.access('application/json')
-  const { group_seq, member_seq } = await checkGroupAuth(DBMySQL, req)
-  const operation_list = await OperationService.getAllOperationGroupMemberList(DBMySQL, group_seq, member_seq);
-
-  const ouput = new StdObject()
-  output.add('operation_list', operation_list)
-  res.json(output)
-}))
 export default routes
