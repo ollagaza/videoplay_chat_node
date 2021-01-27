@@ -40,6 +40,7 @@ const GroupServiceClass = class {
     this.GROUP_STATUS_DISABLE = 'N'
     this.MEMBER_STATUS_ENABLE = 'Y'
     this.MEMBER_STATUS_DISABLE = 'D'
+    this.MEMBER_STATUS_BAN = 'B'
     this.MEMBER_STATUS_PAUSE = 'P'
     this.MEMBER_STATUS_JOIN = 'J'
     this.MEMBER_STATUS_DELETE = 'D'
@@ -96,7 +97,7 @@ const GroupServiceClass = class {
     }
   }
 
-  checkGroupAuth = async (database, req, group_seq_from_token = true, check_group_auth = true, throw_exception = false) => {
+  checkGroupAuth = async (database, req, group_seq_from_token = true, check_group_auth = true, throw_exception = false, only_admin = false) => {
     const { token_info, member_seq, group_seq } = this.getBaseInfo(req, group_seq_from_token)
     const member_info = await MemberService.getMemberInfo(database, member_seq)
     if (!MemberService.isActiveMember(member_info)) {
@@ -123,7 +124,20 @@ const GroupServiceClass = class {
       }
     }
     if (check_group_auth && !is_active_group_member && throw_exception) {
-      throw new StdObject(-100, '권한이 없습니다', 403)
+      let error_code = 10001
+      let message = '권한이 없습니다'
+      if (group_member_info) {
+        const status = group_member_info.group_member_status
+        if (status === this.MEMBER_STATUS_PAUSE) {
+          message = '팀 사용이 정지되었습니다.';
+        } else if (status === this.MEMBER_STATUS_DISABLE || status === this.MEMBER_STATUS_BAN) {
+          message = '탈퇴한 팀입니다.';
+        }
+      }
+      throw new StdObject(error_code, message, 403)
+    }
+    if (only_admin && !is_group_admin) {
+      throw new StdObject(10000, '권한이 없습니다', 403)
     }
     return {
       token_info,
@@ -356,7 +370,7 @@ const GroupServiceClass = class {
   }
 
   isGroupAdminByMemberInfo = (group_member_info) => {
-    return group_member_info.grade === this.MEMBER_GRADE_ADMIN || group_member_info.grade === this.MEMBER_GRADE_OWNER
+    return group_member_info.grade === this.MEMBER_GRADE_ADMIN || group_member_info.grade === this.MEMBER_GRADE_OWNER || group_member_info.grade === this.MEMBER_GRADE_MANAGER
   }
 
   isGroupManagerByMemberInfo = (group_member_info) => {

@@ -27,6 +27,13 @@ export default class GroupMemberModel extends MySQLModel {
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
       'group_member.ban_date', 'group_info.reg_date', 'group_info.member_count'
     ]
+    this.member_group_select_old = [
+      'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
+      'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
+      'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
+      'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name'
+    ]
 
     this.group_invite_select = [
       'group_member.invite_code', 'group_member.member_seq AS join_member_seq', 'group_member.seq AS invite_seq', 'group_member.grade',
@@ -89,6 +96,32 @@ export default class GroupMemberModel extends MySQLModel {
     }
     group_member_info.addKey('seq')
     return group_member_info
+  }
+
+  getGroupMemberQueryOLD = (member_seq = null, group_seq = null, group_member_seq = null, status = null) => {
+    const filter = {}
+    if (member_seq) {
+      filter['group_member.member_seq'] = member_seq
+    }
+    if (group_member_seq) {
+      filter['group_member.seq'] = group_member_seq
+    }
+    if (group_seq) {
+      filter['group_member.group_seq'] = group_seq
+    }
+    if (status) {
+      filter['group_member.status'] = status
+    }
+    const in_raw = this.database.raw("group_info.status IN ('Y', 'F')")
+    const query = this.database.select(this.member_group_select_old)
+    query.from('group_member')
+    query.innerJoin("group_info", function() {
+      this.on("group_info.seq", "group_member.group_seq")
+        .andOn(in_raw)
+    })
+    query.where(filter)
+
+    return query
   }
 
   getGroupMemberQuery = (member_seq = null, group_seq = null, group_member_seq = null, status = null, option = null, page = null) => {
