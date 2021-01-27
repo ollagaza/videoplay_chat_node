@@ -131,7 +131,7 @@ const GroupBoardDataServiceClass = class {
 
       if (board_data.origin_seq && board_data.depth === 1) {
         const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
-        board_data.sort_num = baord_data_sort_num + 1
+        board_data.sort_num = baord_data_sort_num.sort_num + 1
       }
 
       result = await model.CreateBoardData(board_data)

@@ -78,8 +78,10 @@ export default class GroupBoardDataModel extends MySQLModel {
     } else {
       oKnex = this.database.select('*')
         .from(this.table_name)
-        .where('is_notice', '3')
+        .where('group_seq', group_seq)
+        .andWhere('is_notice', '3')
         .andWhere('board_seq', board_seq)
+        .andWhere('status', 'Y')
     }
     oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
     return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)

@@ -390,9 +390,9 @@ const GroupServiceClass = class {
     const group_info = await group_model.getGroupInfo(group_seq, private_keys)
     group_info.json_keys.push('profile_image_url')
     if (JSON.parse(group_info.profile).image) {
-      group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image)
+      group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + JSON.parse(group_info.profile).image
     }
-    group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
+    group_info.profile_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path
     return group_info
   }
 
