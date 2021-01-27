@@ -13,6 +13,7 @@ import OperationFolderService from "../../../service/operation/OperationFolderSe
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
 import OperationDataService from "../../../service/operation/OperationDataService";
 import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
+import OperationService from "../../../service/operation/OperationService";
 
 const routes = Router()
 
@@ -631,6 +632,16 @@ routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAut
 
   const output = new StdObject()
   output.add('group_member_info', group_member_info)
+  res.json(output)
+}))
+
+routes.get('/:group_seq(\\d+)/:member_seq(\\d+)/allOperationList', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.access('application/json')
+  const { group_seq, member_seq } = await checkGroupAuth(DBMySQL, req)
+  const operation_list = await OperationService.getAllOperationGroupMemberList(DBMySQL, group_seq, member_seq);
+
+  const ouput = new StdObject()
+  output.add('operation_list', operation_list)
   res.json(output)
 }))
 export default routes

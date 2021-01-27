@@ -885,6 +885,8 @@ export default class GroupMemberModel extends MySQLModel {
       update_params.comment_cnt = set_count;
     } else if (update_column === 'board_comment') {
       update_params.board_comment_cnt = set_count;
+    } else if (update_column === 'board_cnt') {
+      update_params.board_cnt = set_count;
     }
     let update_result = null;
     if (updown_type === 'up') {
