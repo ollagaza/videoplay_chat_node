@@ -114,6 +114,7 @@ const GroupBoardDataServiceClass = class {
 
   CreateUpdateBoardData = async (database, board_data) => {
     const model = this.getGroupBoardDataModel(database)
+    const group_member_model = new GroupMemberModel(database);
     let result = null;
     if (board_data.seq) {
       const seq = board_data.seq
@@ -137,6 +138,8 @@ const GroupBoardDataServiceClass = class {
       if (!board_data.origin_seq) {
         await model.updateBoardOriginSeq(result)
       }
+      const group_member_info = await group_member_model.getGroupMemberInfo(board_data.group_seq, board_data.member_seq);
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.seq, 'board_cnt', 'up');
     }
     return result
   }
@@ -183,6 +186,12 @@ const GroupBoardDataServiceClass = class {
 
   DeleteBoardData = async (database, board_seq) => {
     const model = this.getGroupBoardDataModel(database)
+    const target_info = await model.getBoardDataDetail(board_seq);
+
+    const group_member_model = new GroupMemberModel(database);
+    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(target_info.group_seq, target_info.member_seq, 'Y');
+    await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_cnt', 'down');
+
     await model.DeleteBoardData(board_seq)
     return await model.updateParentDataSubject(board_seq)
   }
