@@ -291,6 +291,27 @@ const GroupBoardDataServiceClass = class {
     return res_data;
   }
 
+  getBoardDataPagingListWithMemberAllList = async (database, req) => {
+    const request_body = req.query ? req.query : {}
+    const group_seq = request_body.group_seq
+    const member_seq = request_body.member_seq
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const request_order = request_body.order ? JSON.parse(request_body.order) : null
+
+    const paging = {}
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = 'N'
+
+    const model = this.getGroupBoardDataModel(database)
+    const board_list = await model.getBoardDataPagingListByGroupAndSeqMemberSeq(group_seq, member_seq, paging, request_order)
+    for (let cnt = 0; cnt < board_list.length; cnt++) {
+      board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
+    }
+    return board_list
+  }
+
 }
 
 const GroupBoardDataService = new GroupBoardDataServiceClass()

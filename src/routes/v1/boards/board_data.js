@@ -240,5 +240,11 @@ routes.delete('/:board_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), W
   res.json(output)
 }))
 
+routes.get('/getboarddatalistWithMember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const output = new StdObject()
+  const result = await GroupBoardDataService.getBoardDataPagingListWithMemberAllList(DBMySQL, req)
+  output.adds(result)
+  res.json(output);
+}))
 
 export default routes

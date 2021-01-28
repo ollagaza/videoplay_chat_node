@@ -83,7 +83,10 @@ export default class GroupBoardDataModel extends MySQLModel {
         .andWhere('board_seq', board_seq)
         .andWhere('status', 'Y')
     }
-    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
+    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, {
+      column: 'sort_num',
+      order: 'asc'
+    }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
     return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
 
@@ -164,5 +167,16 @@ export default class GroupBoardDataModel extends MySQLModel {
   fileDeleteBoardData = async (board_data_seq, param) => {
     param.attach_file_cnt = this.database.raw('attach_file_cnt - 1')
     return this.update({ seq: board_data_seq }, param)
+  }
+
+  getBoardDataPagingListByGroupAndSeqMemberSeq = async (group_seq, member_seq, paging) => {
+    let oKnex = this.database.select('board_data.*', 'group_board_list.read_grade')
+      .from(this.table_name)
+      .joinRaw('LEFT JOIN (SELECT seq, read_grade FROM group_board_list) AS group_board_list ON (board_data.board_seq = group_board_list.seq)')
+      .where('group_seq', group_seq)
+      .andWhere('member_seq', member_seq)
+      .andWhere('status', 'Y')
+    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
+    return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
 }
