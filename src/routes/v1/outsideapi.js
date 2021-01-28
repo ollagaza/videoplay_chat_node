@@ -30,7 +30,7 @@ routes.post('/searchHosp', Wrap(async (req, res) => {
       method: 'GET'
     }
 
-    const resultList = await Util.httpRequest(api_options, false)
+    const resultList = await Util.httpRequest(api_options, null, false)
     const resultjson = await Util.getXmlToJson(resultList)
     output.add('searchText', searchText)
     output.add('resultList', resultjson)
@@ -65,7 +65,7 @@ routes.post('/searchUniv', Wrap(async (req, res) => {
       method: 'GET'
     }
 
-    const resultList = await Util.httpRequest(api_options, false)
+    const resultList = await Util.httpRequest(api_options, null, true)
 
     const univ_list = JSON.parse(resultList).dataSearch.content;
 

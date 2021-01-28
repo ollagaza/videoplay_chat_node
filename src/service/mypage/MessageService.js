@@ -216,6 +216,11 @@ const MessageServiceClass = class {
     }
   }
 
+  updateGroupViewCount = async (database, group_message_seq, member_seq) => {
+    const groupmsgModel = this.getGroupMessageModel(database)
+    return groupmsgModel.updateGroupViewCount(group_message_seq, member_seq)
+  }
+
   deleteGroupMessage = async (database, message_seq) => {
     try {
       const groupmsgModel = this.getGroupMessageModel(database)
