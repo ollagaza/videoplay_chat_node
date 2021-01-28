@@ -93,7 +93,7 @@ const GroupBoardDataServiceClass = class {
 
   CreateUpdateBoardComment = async (database, comment_data) => {
     const model = this.getGroupBoardCommentModel(database)
-    let result = null;
+    let result = null
 
     if (comment_data.seq) {
       const seq = comment_data.seq;
@@ -101,26 +101,42 @@ const GroupBoardDataServiceClass = class {
     } else {
       result = await model.CreateBoardComment(comment_data)
       const board_model = this.getGroupBoardDataModel(database)
-      await board_model.incrementBoardCommentCnt(comment_data.board_data_seq);
+      await board_model.incrementBoardCommentCnt(comment_data.board_data_seq)
       if (!comment_data.origin_seq) {
         await model.updateBoardCommentOriginSeq(result)
       }
       const group_member_model = new GroupMemberModel(database);
-      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_data.group_seq, comment_data.member_seq, 'Y');
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'up');
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_data.group_seq, comment_data.member_seq, 'Y')
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'up')
     }
     return result;
   }
 
+  createCheckLinkCode = async (model, link_code) => {
+
+    if (check_link_code) {
+      return true;
+    }
+    return false;
+  }
+
   CreateUpdateBoardData = async (database, board_data) => {
     const model = this.getGroupBoardDataModel(database)
-    const group_member_model = new GroupMemberModel(database);
-    let result = null;
+    const group_member_model = new GroupMemberModel(database)
+    let result = null
     if (board_data.seq) {
       const seq = board_data.seq
       result = await model.UpdateBoardData(seq, board_data)
     } else {
-      board_data.content_id = baseutil.getContentId();
+      board_data.content_id = baseutil.getContentId()
+      let check_bool = true;
+      while (check_bool) {
+        board_data.link_code = Util.getRandomString(10)
+        const check_link_code = await model.getLinkCodeCheck(board_data.link_code)
+        if (!check_link_code) {
+          check_bool = false;
+        }
+      }
 
       const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
       if (board_data_num) {
@@ -129,17 +145,19 @@ const GroupBoardDataServiceClass = class {
         board_data.board_data_num = 1
       }
 
-      if (board_data.origin_seq && board_data.depth === 1) {
+      if (board_data.origin_seq && board_data.depth >= 1) {
         const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
         board_data.sort_num = baord_data_sort_num.sort_num + 1
+      } else {
+        board_data.sort_num = 0
       }
 
       result = await model.CreateBoardData(board_data)
       if (!board_data.origin_seq) {
         await model.updateBoardOriginSeq(result)
       }
-      const group_member_info = await group_member_model.getGroupMemberInfo(board_data.group_seq, board_data.member_seq);
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.seq, 'board_cnt', 'up');
+      const group_member_info = await group_member_model.getGroupMemberInfo(board_data.group_seq, board_data.member_seq)
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.seq, 'board_cnt', 'up')
     }
     return result
   }

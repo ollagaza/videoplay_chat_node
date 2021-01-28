@@ -29,6 +29,10 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.findOne({ board_seq }, ['board_data_num'], { name: 'board_data_num', direction: 'desc' })
   }
 
+  getLinkCodeCheck = async (link_code) => {
+    return this.findOne({ link_code }, ['link_code'])
+  }
+
   getLastBoardSortNum = async (origin_seq) => {
     return this.findOne({ origin_seq }, ['sort_num'], { name: 'sort_num', direction: 'desc' })
   }
