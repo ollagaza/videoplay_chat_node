@@ -140,9 +140,10 @@ const OperationFileServiceClass = class {
   }
 
   createOperationFileInfo = async (database, operation_info, upload_file_info, request_body) => {
-    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    // const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    // log.debug(this.log_prefix, '[createOperationFileInfo]', request_body)
 
-    const file_info = (await new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory, directory_info.media_file)).toJSON()
+    const file_info = (await new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory)).toJSON()
 
     const operation_file_model = this.getOperationFileModel(database)
     return await operation_file_model.createOperationFile(file_info)

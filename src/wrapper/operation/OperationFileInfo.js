@@ -22,18 +22,17 @@ export default class OperationFileInfo extends JsonWrapper {
     return this
   }
 
-  getByUploadFileInfo = async (operation_seq, upload_file_info, directory, media_path) => {
+  getByUploadFileInfo = async (operation_seq, upload_file_info, directory) => {
     this.setIgnoreEmpty(true)
 
     this.setKeys([
-      'operation_seq', 'directory', 'file_name', 'file_size', 'file_type', 'file_path'
+      'operation_seq', 'file_name', 'file_size', 'file_type', 'file_path'
     ])
 
     this.operation_seq = operation_seq
-    this.directory = directory
     this.file_name = upload_file_info.originalname
     this.file_size = upload_file_info.size
-    this.file_path = media_path + upload_file_info.new_file_name
+    this.file_path = directory + '/' + this.file_name
     this.file_type = await Util.getFileType(upload_file_info.path, this.file_name)
 
     this.is_empty = false

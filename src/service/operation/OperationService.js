@@ -32,6 +32,8 @@ import OperationCommentService from "./OperationCommentService";
 const OperationServiceClass = class {
   constructor () {
     this.log_prefix = '[OperationServiceClass]'
+    this.MODE_OPERATION = 'operation'
+    this.MODE_FILE = 'file'
   }
 
   getOperationModel = (database = null) => {
@@ -669,6 +671,9 @@ const OperationServiceClass = class {
     const storage_size = await new OperationStorageModel(DBMySQL).updateUploadFileSize(operation_info, OperationFileService.TYPE_ALL)
     await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
     await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, storage_size);
+    if (ServiceConfig.isVacs()) {
+      VacsService.updateStorageInfo()
+    }
   }
 
   deleteFileInfo = async (operation_info, file_type, request_body) => {
@@ -717,46 +722,54 @@ const OperationServiceClass = class {
   }
 
   requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
+    if (operation_info.mode === this.MODE_FILE) {
+      return await this.moveOperationFiles(operation_info)
+    } else {
+      return await this.requestTranscoder(operation_info)
+    }
+  }
+
+  moveOperationFiles = async (operation_info) => {
+    await this.updateAnalysisStatus(null, operation_info, 'Y')
+  }
+
+  requestTranscoder = async (operation_info) => {
+    const operation_seq = operation_info.seq
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
     let api_request_result = null
     let is_execute_success = false
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
-    const directory_info = this.getOperationDirectoryInfo(operation_info)
 
-    await database.transaction(async (transaction) => {
-      const operation_model = this.getOperationModel(transaction)
-      const operation_update_param = {}
-      operation_update_param.analysis_status = 'R'
+    const operation_model = this.getOperationModel(DBMySQL)
+    const operation_update_param = {}
+    operation_update_param.analysis_status = 'R'
 
-      const content_id = operation_info.content_id
-      const query_data = {
-        'DirPath': directory_info.trans_origin,
-        'ContentID': content_id
-      }
-      const query_str = querystring.stringify(query_data)
+    const content_id = operation_info.content_id
+    const query_data = {
+      'DirPath': directory_info.trans_origin,
+      'ContentID': content_id
+    }
+    const query_str = querystring.stringify(query_data)
 
-      const request_options = {
-        hostname: ServiceConfig.get('trans_server_domain'),
-        port: ServiceConfig.get('trans_server_port'),
-        path: ServiceConfig.get('trans_start_api') + '?' + query_str,
-        method: 'GET'
-      }
-      const api_url = 'http://' + ServiceConfig.get('trans_server_domain') + ':' + ServiceConfig.get('trans_server_port') + ServiceConfig.get('trans_start_api') + '?' + query_str
-      log.debug(this.log_prefix, '[requestAnalysis]', 'trans api url', api_url)
-      try {
-        api_request_result = await Util.httpRequest(request_options, false)
-        is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done'
-      } catch (error) {
-        log.error(this.log_prefix, '[requestAnalysis]', 'trans api url', api_url, error)
-      }
+    const request_options = {
+      hostname: ServiceConfig.get('trans_server_domain'),
+      port: ServiceConfig.get('trans_server_port'),
+      path: ServiceConfig.get('trans_start_api') + '?' + query_str,
+      method: 'GET'
+    }
+    const api_url = 'http://' + ServiceConfig.get('trans_server_domain') + ':' + ServiceConfig.get('trans_server_port') + ServiceConfig.get('trans_start_api') + '?' + query_str
+    log.debug(this.log_prefix, '[requestTranscoder]', 'trans api url', api_url)
+    try {
+      api_request_result = await Util.httpRequest(request_options, false)
+      is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done'
+    } catch (error) {
+      log.error(this.log_prefix, '[requestTranscoder]', 'trans api url', api_url, error)
+    }
 
-      if (is_execute_success) {
-        await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param))
-      } else {
-        throw new StdObject(-1, '비디오 분석 요청 실패', 500)
-      }
-    })
-    if (ServiceConfig.isVacs()) {
-      VacsService.updateStorageInfo()
+    if (is_execute_success) {
+      await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param))
+    } else {
+      throw new StdObject(-1, '비디오 분석 요청 실패', 500)
     }
   }
 

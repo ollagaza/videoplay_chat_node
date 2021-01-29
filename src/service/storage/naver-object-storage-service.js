@@ -65,9 +65,10 @@ const NaverObjectStorageClass = class {
     if (!(await Util.fileExists(local_file_path))) {
       throw new StdObject(101, `file not exists - ${local_file_path}`, 400)
     }
-    const file_list = await Util.getDirectoryFileList(local_file_path)
     local_file_path = Util.removePathLastSlash(local_file_path)
+    const file_list = await Util.getDirectoryFileList(local_file_path)
     remote_path = Util.removePathSlash(remote_path)
+    log.debug(this.log_prefix, '[uploadFolder]', local_file_path, remote_path, file_list)
     let folder_file_list = []
     let upload_file_list = []
     for (let i = 0; i < file_list.length; i++) {
