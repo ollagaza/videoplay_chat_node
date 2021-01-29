@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import GroupMemberInfo from '../../../wrapper/member/GroupMemberInfo'
@@ -25,7 +26,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
-      'group_member.ban_date', 'group_info.reg_date', 'group_info.member_count'
+      'group_member.ban_date', 'group_info.reg_date', 'group_info.member_count', 'group_member.pause_sdate', 'group_member.pause_edate'
     ]
     this.member_group_select_old = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
@@ -145,13 +146,15 @@ export default class GroupMemberModel extends MySQLModel {
       }
       if (option.status !== null) {
         if (option.status === 'J') {
-          status_in.push('J');
-          status_in.push('C');
+          status_in.push('J', 'C');
         } else if (option.status === 'D'){
-          status_in.push('D');
-          status_in.push('B');
+          status_in.push('D', 'B');
         } else {
-          status_in.push(option.status);
+          if (typeof option.status === 'object') {
+            status_in = option.status;
+          } else {
+            status_in.push(option.status);
+          }
         }
       } else if (status) {
         if (status !== 'D') {
@@ -172,7 +175,7 @@ export default class GroupMemberModel extends MySQLModel {
       if (option.member_count) {
         this.member_group_select.push('member_count.count AS member_count');
       }
-      if (option.manager === '2') {
+      if (_.includes(option.manager, '2')) {
         this.member_group_select.push('grade_info.grade AS grade_info');
       }
     }
@@ -186,7 +189,7 @@ export default class GroupMemberModel extends MySQLModel {
       if (option.member_count) {
         query.joinRaw('LEFT JOIN (SELECT group_seq, COUNT(*) AS count FROM group_member WHERE status NOT IN ("D", "C", "N", "L") GROUP BY group_seq) AS member_count ON (member_count.group_seq = group_info.seq)')
       }
-      if (option.manager === '2') {
+      if (_.includes(option.manager, '2')) {
         query.joinRaw('LEFT JOIN (SELECT group_seq, CONCAT("[", GROUP_CONCAT(CONCAT("{\\"grade\\": \\"", grade, "\\", \\"grade_text\\": \\"", grade_text, "\\" }")), "]") AS grade FROM group_grade GROUP BY group_seq) AS grade_info ON (grade_info.group_seq = group_info.seq)')
       }
     }
