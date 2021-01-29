@@ -13,7 +13,6 @@ import OperationFolderService from "../../../service/operation/OperationFolderSe
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
 import OperationDataService from "../../../service/operation/OperationDataService";
 import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
-import OperationService from "../../../service/operation/OperationService";
 import OperationCommentService from "../../../service/operation/OperationCommentService";
 
 const routes = Router()
@@ -28,25 +27,7 @@ const getMemberSeq = (request) => Util.parseInt(request.params.member_seq, 0)
 routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
-  let is_active_only = true;
-  if (req.query.all_list === 'true') {
-    is_active_only = false;
-  }
-  const filter = {
-    status: req.query.status ? req.query.status : null,
-    grade: req.query.grade ? req.query.grade :null,
-    manager: req.query.manager ? req.query.manager : null,
-    member_count: req.query.member_count ? true : false,
-  };
-  if (req.query.group_type) {
-    filter.group_type = req.query.group_type;
-  }
-  const page = {
-    orderby: req.query.orderby ? req.query.orderby : null,
-    limit: req.query.limit ? req.query.limit : null,
-    page: req.query.page ? req.query.page : null,
-  }
-  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, is_active_only, filter, page)
+  const member_group_list = await GroupService.getMemberGroupListOLD(DBMySQL, member_seq)
 
   const output = new StdObject()
   output.add('member_group_list', member_group_list)
@@ -662,5 +643,33 @@ routes.delete('/delete/comments', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
     })
   }
   res.json(output);
+}))
+
+routes.get('/mychannellist', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
+  let is_active_only = true;
+  if (req.query.all_list === 'true') {
+    is_active_only = false;
+  }
+  const filter = {
+    status: req.query.status ? req.query.status : null,
+    grade: req.query.grade ? req.query.grade :null,
+    manager: req.query.manager ? req.query.manager : null,
+    member_count: req.query.member_count ? true : false,
+  };
+  if (req.query.group_type) {
+    filter.group_type = req.query.group_type;
+  }
+  const page = {
+    orderby: req.query.orderby ? req.query.orderby : null,
+    limit: req.query.limit ? req.query.limit : null,
+    page: req.query.page ? req.query.page : null,
+  }
+  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, is_active_only, filter, page)
+
+  const output = new StdObject()
+  output.add('member_group_list', member_group_list)
+  res.json(output)
 }))
 export default routes

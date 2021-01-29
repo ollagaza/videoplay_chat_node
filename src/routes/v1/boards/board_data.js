@@ -44,6 +44,22 @@ routes.get('/getopenboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Aut
   res.json(output);
 }))
 
+routes.get('/getopenboarddatadetail/:group_seq(\\d+)/:link_code', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const output = new StdObject()
+  const { group_seq, member_seq, is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, false, true)
+  const link_code = req.params.link_code
+  const board_detail = await GroupBoardDataService.getOpenBoardDataDetail(DBMySQL, link_code)
+  const group_info = await GroupService.getGroupInfo(DBMySQL, group_seq)
+
+  output.add('is_active_group_member', is_active_group_member)
+  output.add('group_info', group_info)
+  output.add('board_detail', board_detail)
+  output.add('board_info', await GroupBoardListService.getGroupBoardListOne(DBMySQL, group_seq, board_detail.board_seq))
+  output.add('board_comment_list', await GroupBoardDataService.getBoardCommentList(DBMySQL, board_detail.seq, member_seq))
+  output.add('board_recommend', await GroupReCommendService.getBoardRecommend(DBMySQL, board_detail.seq, member_seq))
+  res.json(output);
+}))
+
 routes.get('/getpreviousnextview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
   const { is_group_admin, is_group_manager } = await GroupService.checkGroupAuth(DBMySQL, req, true, true)

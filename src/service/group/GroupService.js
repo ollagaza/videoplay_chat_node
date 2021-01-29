@@ -269,6 +269,34 @@ const GroupServiceClass = class {
     return await group_member_model.createGroupMember(group_info, member_info, grade, max_storage_size)
   }
 
+  getMemberGroupListOLD = async (database, member_seq, is_active_only = true) => {
+    log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
+    const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_member_list = await group_member_model.getMemberGroupListOLD(member_seq, status)
+    for (let i = 0; i < group_member_list.length; i++) {
+      const group_member_info = group_member_list[i]
+      if (group_member_info.profile_image_path) {
+        group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
+      if (JSON.parse(group_member_info.profile).image) {
+        group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
+        group_member_list[i].json_keys.push('group_image_url')
+      }
+    }
+    if (ServiceConfig.isVacs()) {
+      const vacs_storage_info = await VacsService.getCurrentStorageStatus()
+      log.debug(this.log_prefix, '[getMemberGroupList]', '[vacs_storage_info]', vacs_storage_info)
+      for (let i = 0; i < group_member_list.length; i++) {
+        const group_member_info = group_member_list[i]
+        group_member_info.group_used_storage_size = vacs_storage_info.used_size
+        group_member_info.group_max_storage_size = vacs_storage_info.total_size
+      }
+    }
+
+    return group_member_list
+  }
+
   getMemberGroupList = async (database, member_seq, is_active_only = true, filter = null, page = null) => {
     log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null

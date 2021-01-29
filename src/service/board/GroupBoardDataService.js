@@ -64,6 +64,17 @@ const GroupBoardDataServiceClass = class {
     return board_data
   }
 
+  getOpenBoardDataDetail = async (database, link_code) => {
+    const model = this.getGroupBoardDataModel(database)
+    const board_data = await model.getOpenBoardDataDetail(link_code)
+
+    if (board_data.member_profile_image) {
+      board_data.member_profile_image = ServiceConfig.get('static_storage_prefix') + board_data.member_profile_image
+    }
+
+    return board_data
+  }
+
   getBoardCommentList = async (database, board_data_seq, member_seq) => {
     const model = this.getGroupBoardCommentModel(database)
     const comment_list = await model.getBoardCommentList(board_data_seq, member_seq)
@@ -110,14 +121,6 @@ const GroupBoardDataServiceClass = class {
       await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'up')
     }
     return result;
-  }
-
-  createCheckLinkCode = async (model, link_code) => {
-
-    if (check_link_code) {
-      return true;
-    }
-    return false;
   }
 
   CreateUpdateBoardData = async (database, board_data) => {

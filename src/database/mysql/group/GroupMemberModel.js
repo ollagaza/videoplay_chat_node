@@ -231,15 +231,21 @@ export default class GroupMemberModel extends MySQLModel {
     return this.getFindResultList(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
+  getMemberGroupListOLD = async (member_seq, status = null, private_keys = null) => {
+    const query = this.getGroupMemberQueryOLD(member_seq, null, null, status)
+    const query_result = await query
+    return this.getFindResultList(query_result, private_keys ? private_keys : this.group_member_private_fields)
+  }
+
   getMemberGroupInfoWithGroup = async (group_seq, member_seq, status = null, private_keys = null) => {
-    const query = this.getGroupMemberQuery(member_seq, group_seq, null, status)
+    const query = this.getGroupMemberQueryOLD(member_seq, group_seq, null, status)
     query.first()
     const query_result = await query
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
   getGroupMemberInfoBySeq = async (group_member_seq, private_keys = null) => {
-    const query = this.getGroupMemberQuery(null, null, group_member_seq)
+    const query = this.getGroupMemberQueryOLD(null, null, group_member_seq)
     query.first()
     const query_result = await query
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)

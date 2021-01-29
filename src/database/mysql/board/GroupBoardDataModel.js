@@ -103,6 +103,15 @@ export default class GroupBoardDataModel extends MySQLModel {
     return oKnex
   }
 
+  getOpenBoardDataDetail = async (link_code) => {
+    const oKnex = this.database.select(['board.*', 'mem.profile_image_path as member_profile_image'])
+      .from(`${this.table_name} as board`)
+      .innerJoin('member as mem', { 'mem.seq': 'board.member_seq' })
+      .where('link_code', link_code)
+      .first()
+    return oKnex
+  }
+
   CreateBoardData = async (board_data) => {
     return this.create(board_data, 'seq')
   }
