@@ -276,4 +276,32 @@ export default class GroupModel extends MySQLModel {
     const oKnex = this.database.raw('update group_info set member_count = (select count(seq) from group_member where group_member.group_seq = group_info.seq)')
     return oKnex
   }
+
+  GroupSummaryCommentListByGroupSeqMemberSeq = async (group_seq, member_seq, paging) => {
+    const query = this.database.select('*')
+      .from(
+        this.database.raw(`
+        (
+          SELECT board_comment.seq, board_comment.board_seq as content_seq, board_comment.board_data_seq AS content_data_seq, board_comment.content, board_comment.regist_date, 'board' AS type, board_data.status
+          FROM board_comment
+            INNER JOIN (SELECT seq, status FROM board_data) AS board_data ON (board_comment.board_data_seq = board_data.seq)
+          WHERE group_seq = :group_seq AND member_seq = :member_seq AND board_comment.status = 'Y'
+
+          union
+
+          SELECT operation_comment.seq, operation_data.operation_seq as content_seq, operation_comment.operation_data_seq AS content_data_seq, operation_comment.comment_text, operation_comment.reg_date, 'operation' AS type, operation_data.status
+          FROM (
+            SELECT seq, operation_data_seq, comment_text, reg_date
+            FROM operation_comment
+            WHERE operation_comment.group_seq = :group_seq AND operation_comment.member_seq = :member_seq
+          ) AS operation_comment
+          inner join operation_data
+            ON operation_data.seq = operation_comment.operation_data_seq
+        ) as L
+        `, { group_seq, member_seq })
+      )
+      .orderBy('regist_date', 'desc')
+
+    return this.queryPaginated(query, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
+  }
 }

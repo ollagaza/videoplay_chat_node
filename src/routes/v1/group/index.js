@@ -14,6 +14,7 @@ import GroupBoardListService from "../../../service/board/GroupBoardListService"
 import OperationDataService from "../../../service/operation/OperationDataService";
 import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
 import OperationService from "../../../service/operation/OperationService";
+import OperationCommentService from "../../../service/operation/OperationCommentService";
 
 const routes = Router()
 
@@ -628,7 +629,6 @@ routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAut
   const { group_seq } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
 
-  console.log(group_seq, group_member_seq);
   const group_member_info = await GroupService.getGroupMemberInfoDetail(DBMySQL, group_seq, group_member_seq)
 
   const output = new StdObject()
@@ -636,4 +636,31 @@ routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAut
   res.json(output)
 }))
 
+routes.get('/:group_seq(\\d+)/member/:member_seq(\\d+)/summary/comment', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req)
+  const member_seq = await getMemberSeq(req)
+
+  const group_summary_comment_list = await GroupService.getSummaryCommentList(DBMySQL, group_seq, member_seq, req)
+
+  const output = new StdObject()
+  output.adds(group_summary_comment_list)
+  res.json(output)
+}))
+
+routes.delete('/delete/comments', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const comment_data_seq = req.body
+
+  for (let cnt = 0; cnt < comment_data_seq.operation.length; cnt++) {
+    await OperationCommentService.deleteComment(DBMySQL, comment_data_seq.operation[cnt].content_data_seq, comment_data_seq.operation[cnt].seq, req)
+  }
+  for (let cnt = 0; cnt < comment_data_seq.board.length; cnt++) {
+    await DBMySQL.transaction(async (transaction) => {
+      await GroupBoardDataService.DeleteComment(transaction, comment_data_seq.board[cnt].content_data_seq, comment_data_seq.board[cnt].seq);
+    })
+  }
+  res.json(output);
+}))
 export default routes

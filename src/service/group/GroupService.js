@@ -1402,6 +1402,20 @@ const GroupServiceClass = class {
     group_member_info.member_profile_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
     return group_member_info;
   }
+  getSummaryCommentList = async (database, group_seq, member_seq, req) => {
+    const group_model = this.getGroupModel(database)
+
+    const request_body = req.query ? req.query : {}
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const paging = {};
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = 'N'
+    const group_summary_comment_list = await group_model.GroupSummaryCommentListByGroupSeqMemberSeq(group_seq, member_seq, paging)
+    log.debug(this.log_prefix, '[getSummaryCommentList]', group_summary_comment_list);
+    return group_summary_comment_list;
+  }
 }
 
 const group_service = new GroupServiceClass()
