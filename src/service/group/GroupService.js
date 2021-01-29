@@ -356,8 +356,8 @@ const GroupServiceClass = class {
     return group_member_list;
   }
 
-  getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
-    const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
+  getGroupMemberCount = async (database, group_seq, is_active_only = true, in_status = null) => {
+    const status = is_active_only ? this.MEMBER_STATUS_ENABLE : in_status
     const group_member_model = this.getGroupMemberModel(database)
     return await group_member_model.getGroupMemberCount(group_seq, status)
   }

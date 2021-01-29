@@ -71,6 +71,17 @@ routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wra
   res.json(output)
 }))
 
+routes.get('/:group_seq(\\d+)/member_count/:in_status', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req)
+  const in_status = req.params.in_status
+  const member_count = await GroupService.getGroupMemberCount(DBMySQL, group_seq, false, in_status)
+
+  const output = new StdObject()
+  output.add('member_count', member_count)
+  res.json(output)
+}))
+
 routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/delete', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
