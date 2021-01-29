@@ -32,6 +32,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
         this.database.select(['board.group_seq as group_seq', 'board.seq as target_seq', 'board.board_seq as board_seq', 'board.subject as title', this.database.raw('\'board\' as gubun'), 'board.write_name as name', 'board.regist_date as regist_date'])
           .from('board_data as board')
           .where('board.group_seq', arr_group_seq)
+          .andWhere('status', 'Y')
           .andWhere('board.regist_date', '>=', this.database.raw('date_sub(now(), interval 7 day)'))
       ])
       .orderBy([{column: 'regist_date', order: 'desc'}])
