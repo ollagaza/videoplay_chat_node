@@ -350,7 +350,7 @@ const GroupServiceClass = class {
     const group_member_list = await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin);
     for(let i = 0; i < group_member_list.data.length; i++) {
       if (group_member_list.data[i].profile_image_path) {
-        group_member_list.data[i].profile_image_path = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_list.data[i].profile_image_path)
+        group_member_list.data[i].profile_image_path = ServiceConfig.get('static_storage_prefix') + group_member_list.data[i].profile_image_path
       }
     }
     return group_member_list;
@@ -1292,7 +1292,7 @@ const GroupServiceClass = class {
   createDefaultGroupGrade = async (database, group_seq) => {
     const grade_model = this.getGroupGradeModel(database)
     const grade_list = [
-      { group_seq, grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      // { group_seq, grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { group_seq, grade: '1', grade_text: '기본회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { group_seq, grade: '2', grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { group_seq, grade: '3', grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },

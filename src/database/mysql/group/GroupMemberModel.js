@@ -33,7 +33,8 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
-      'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name', 'group_info.reg_date'
+      'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
+      'group_info.reg_date', 'group_info.member_count'
     ]
 
     this.group_invite_select = [
@@ -289,10 +290,10 @@ export default class GroupMemberModel extends MySQLModel {
     query.from('group_member')
     query.leftOuterJoin('member', { 'member.seq': 'group_member.member_seq' })
     if (get_pause_name) {
-      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`pause_member_seq` = `submit_member`.`submit_member_seq`)')
+      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM `member`) AS submit_member ON (`group_member`.`pause_member_seq` = `submit_member`.`submit_member_seq`)')
     }
     if (get_delete_name) {
-      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`ban_member_seq` = `submit_member`.`submit_member_seq`)')
+      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM `member`) AS submit_member ON (`group_member`.`ban_member_seq` = `submit_member`.`submit_member_seq`)')
     }
     query.where(filter)
     if (status && status.length > 0) {

@@ -10,7 +10,6 @@ import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 import GroupGradeModel from '../../database/mysql/group/GroupGradeModel'
 import GroupChannelHomeModel from "../../database/mysql/group/GroupChannelHomeModel"
 import {OperationClipModel} from '../../database/mongodb/OperationClip'
-import Util from "../../utils/baseutil";
 import ServiceConfig from "../service-config";
 import GroupService from "./GroupService";
 
@@ -214,13 +213,12 @@ const GroupChannelHomeServiceClass = class {
       total_count = search_board_data.calc_total_count
     }
 
-
     return {
       total_count,
       search_group_info,
       search_operation_data,
       search_board_data,
-      my_group_list: _.filter(my_group_list, { group_type: 'G'})
+      my_group_list: _.filter(my_group_list, { group_type: 'G', group_open: 1 })
     }
   }
 
