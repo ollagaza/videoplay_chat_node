@@ -273,7 +273,7 @@ export default class GroupModel extends MySQLModel {
   }
 
   GroupMemberCountSync = async () => {
-    const oKnex = this.database.raw('update group_info set member_count = (select count(seq) from group_member where group_member.group_seq = group_info.seq)')
+    const oKnex = this.database.raw('update group_info, (select group_seq, count(*) member_cnt from group_member where status in (\'Y\', \'P\') group by group_seq) group_mem set member_count = group_mem.member_cnt where group_info.seq = group_mem.group_seq')
     return oKnex
   }
 
