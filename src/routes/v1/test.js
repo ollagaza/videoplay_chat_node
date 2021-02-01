@@ -32,6 +32,7 @@ import OperationFolderService from '../../service/operation/OperationFolderServi
 import group_service from "../../service/group/GroupService";
 import sendmail from '../../libs/send-mail'
 import SendMailService from "../../service/etc/SendMailService";
+import TempService from "../../service/TempService";
 
 const routes = Router()
 
@@ -46,6 +47,13 @@ if (IS_DEV) {
 
   routes.get('/group_grade_sync', Wrap(async (req, res) => {
     const output = await group_service.SyncGroupGrade(DBMySQL)
+    res.json(output)
+  }))
+
+  routes.get('/member_trearcode_sync', Wrap(async (req, res) => {
+    const output = new StdObject()
+    output.add('board_linkcode_sync', await TempService.updateBoardLinkCodeSync(DBMySQL))
+    output.add('member_treat_code_sync', await TempService.updateMemberTreatCodeSync(DBMySQL))
     res.json(output)
   }))
 
