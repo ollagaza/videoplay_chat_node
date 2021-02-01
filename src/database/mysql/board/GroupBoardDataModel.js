@@ -14,7 +14,7 @@ export default class GroupBoardDataModel extends MySQLModel {
   }
 
   getGroupBoardDataCount = async (group_seq, menu_seq) => {
-    return this.getTotalCount({ group_seq, seq: menu_seq })
+    return this.getTotalCount({ group_seq, board_seq: menu_seq })
   }
 
   getTemporarilyCnt = async (group_seq, member_seq) => {
@@ -148,6 +148,10 @@ export default class GroupBoardDataModel extends MySQLModel {
 
   DeleteBoardData = async (board_seq) => {
     return this.update({ seq: board_seq }, { status: 'D' })
+  }
+
+  DeleteTempBoardData = async (board_seq) => {
+    return this.delete({ seq: board_seq })
   }
 
   ChangeBoardToNotice = async (board_data_seq, notice_num) => {

@@ -3,6 +3,8 @@ import StdObject from "../wrapper/std-object";
 import baseutil from "../utils/baseutil";
 import log from '../libs/logger'
 import { MedicalModel } from '../database/mongodb/Medical'
+import OperationFolderService from "./operation/OperationFolderService";
+import GroupBoardListService from "./board/GroupBoardListService";
 
 const TempServiceClass = class {
   constructor () {
@@ -44,6 +46,20 @@ const TempServiceClass = class {
           await database.update({treatcode: JSON.stringify(treat_input)}).from('member').where({seq: member.seq})
         }
       }
+    }
+  }
+
+  defaultFolderAndBoardMake = async (database) => {
+    const noFolder_GroupList = await database.select(['group_info.seq as group_seq', 'group_info.member_seq'])
+      .from('group_info')
+      .leftOuterJoin('operation_folder', 'operation_folder.group_seq', 'group_info.seq')
+      .whereNull('operation_folder.seq')
+      .andWhere('group_info.group_type', 'G')
+
+    for (let cnt = 0; cnt < noFolder_GroupList.length; cnt++) {
+      const group_info = noFolder_GroupList[cnt]
+      await OperationFolderService.createDefaultOperationFolder(database, group_info.group_seq, group_info.member_seq)
+      await GroupBoardListService.createDefaultGroupBoard(database, group_info.group_seq)
     }
   }
 }

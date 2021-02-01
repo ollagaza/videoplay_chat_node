@@ -127,6 +127,21 @@ const GroupBoardDataServiceClass = class {
     const model = this.getGroupBoardDataModel(database)
     const group_member_model = new GroupMemberModel(database)
     let result = null
+
+    const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
+    if (board_data_num) {
+      board_data.board_data_num = board_data_num.board_data_num + 1
+    } else {
+      board_data.board_data_num = 1
+    }
+
+    if (board_data.origin_seq && board_data.depth >= 1) {
+      const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
+      board_data.sort_num = baord_data_sort_num.sort_num + 1
+    } else {
+      board_data.sort_num = 0
+    }
+
     if (board_data.seq) {
       const seq = board_data.seq
       result = await model.UpdateBoardData(seq, board_data)
@@ -141,24 +156,13 @@ const GroupBoardDataServiceClass = class {
         }
       }
 
-      const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
-      if (board_data_num) {
-        board_data.board_data_num = board_data_num.board_data_num + 1
-      } else {
-        board_data.board_data_num = 1
-      }
-
-      if (board_data.origin_seq && board_data.depth >= 1) {
-        const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
-        board_data.sort_num = baord_data_sort_num.sort_num + 1
-      } else {
-        board_data.sort_num = 0
-      }
-
       result = await model.CreateBoardData(board_data)
       if (!board_data.origin_seq) {
         await model.updateBoardOriginSeq(result)
       }
+    }
+
+    if (board_data.status !== 'T') {
       const group_member_info = await group_member_model.getGroupMemberInfo(board_data.group_seq, board_data.member_seq)
       await group_member_model.setUpdateGroupMemberCounts(group_member_info.seq, 'board_cnt', 'up')
     }
@@ -194,27 +198,32 @@ const GroupBoardDataServiceClass = class {
 
     const comment_info = await model.getCommentInfo(comment_seq)
     const group_member_model = new GroupMemberModel(database);
-    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y');
+    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y')
 
     if (group_member_info) {
-      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down');
+      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down')
     }
 
     const board_model = this.getGroupBoardDataModel(database)
-    await board_model.decrementBoardCommentCnt(board_data_seq);
+    await board_model.decrementBoardCommentCnt(board_data_seq)
     return result;
   }
 
   DeleteBoardData = async (database, board_seq) => {
     const model = this.getGroupBoardDataModel(database)
-    const target_info = await model.getBoardDataDetail(board_seq);
+    const target_info = await model.getBoardDataDetail(board_seq)
 
-    const group_member_model = new GroupMemberModel(database);
-    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(target_info.group_seq, target_info.member_seq, 'Y');
-    await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_cnt', 'down');
+    if (target_info.status === 'Y') {
+      const group_member_model = new GroupMemberModel(database)
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(target_info.group_seq, target_info.member_seq, 'Y')
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_cnt', 'down')
 
-    await model.DeleteBoardData(board_seq)
-    return await model.updateParentDataSubject(board_seq)
+      await model.DeleteBoardData(board_seq)
+      await model.updateParentDataSubject(board_seq)
+    } else {
+      await model.DeleteTempBoardData(board_seq)
+    }
+    return true
   }
 
   ChangeBoardToNotice = async (database, board_data_seq, notice_num) => {
