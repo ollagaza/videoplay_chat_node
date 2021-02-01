@@ -194,7 +194,6 @@ const MessageServiceClass = class {
         receive_seq: JSON.stringify(message_info.receive_seq),
         receive_names: JSON.stringify(message_info.receive_names),
         desc: message_info.desc,
-        total_cnt: message_info.receive_seq.length,
         reservation_datetime: message_info.reservation_datetime
       }
       const group_message_seq = await groupmsgModel.sendMessage(params)
