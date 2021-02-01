@@ -189,7 +189,7 @@ export default class GroupBoardDataModel extends MySQLModel {
       .where('group_seq', group_seq)
       .andWhere('member_seq', member_seq)
       .andWhere('status', 'Y')
-      .orderBy({column: 'regist_date', order: 'desc'})
+      .orderBy('regist_date', 'desc')
     return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
 }
