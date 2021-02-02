@@ -173,7 +173,11 @@ const MessageServiceClass = class {
   getGroupMessageList = async (database, group_seq, req) => {
     const request_body = req.query ? req.query : {}
     const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
-    const request_order = request_body.order ? JSON.parse(request_body.order) : null
+    let request_order = request_body.order ? JSON.parse(request_body.order) : null
+
+    if (!request_order) {
+      request_order = {name: 'regist_date', direction: 'desc'}
+    }
 
     const paging = {}
     paging.list_count = request_paging.list_count ? request_paging.list_count : 20

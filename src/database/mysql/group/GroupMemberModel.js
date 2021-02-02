@@ -123,6 +123,7 @@ export default class GroupMemberModel extends MySQLModel {
         .andOn(in_raw)
     })
     query.where(filter)
+    query.orderBy([{column: 'group_info.group_type', order: 'desc'}, { column: 'group_member.join_date', order: 'desc' }]);
 
     return query
   }
@@ -225,7 +226,8 @@ export default class GroupMemberModel extends MySQLModel {
         query.orderBy('group_member.seq', 'desc')
       }
     } else {
-      query.orderBy('group_member.seq', 'desc')
+      // query.orderBy('group_member.seq', 'desc')
+      query.orderBy('group_info.seq', 'asc');
     }
     return query
   }

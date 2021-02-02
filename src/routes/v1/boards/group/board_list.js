@@ -53,12 +53,15 @@ routes.delete('/delmenulist/:group_seq(\\d+)/:menu_seq(\\d+)', Auth.isAuthentica
     const group_seq = req.params.group_seq
     const menu_seq = req.params.menu_seq
     const board_data_cnt = await GroupBoardDataService.getBoardDataCount(DBMySQL, group_seq, menu_seq);
+    const board_list_cnt = await GroupBoardListService.getBoardListCount(DBMySQL, group_seq);
 
     if (is_group_admin || is_group_manager) {
       await DBMySQL.transaction(async (transaction) => {
-        if (board_data_cnt === 0) {
+        if (board_list_cnt === 1) {
+          res.json(new StdObject(1, '게시판 삭제가 불가능합니다.<br/>최소 한 개의 게시판이 존재해야 합니다.', '200'))
+        } else if (board_data_cnt === 0) {
           await GroupBoardListService.delGroupBoardList(transaction, group_seq, menu_seq)
-          res.json(new StdObject(0, '게시판 삭제가 완료 되었습니다.', '200'))
+          res.json(new StdObject(0, '성공적으로 반영되었습니다.', '200'))
         } else {
           res.json(new StdObject(1, '이 게시판의 게시글을 모두 삭제한 후에<br/>게시판을 삭제하실 수 있습니다.', '200'))
         }
