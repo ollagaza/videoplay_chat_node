@@ -14,7 +14,7 @@ import GroupService from "../../../../service/group/GroupService";
 
 const routes = Router()
 
-routes.get('/groupmenulist/:group_seq(\\d+)', Auth.isAuthenticated(Role.ADMINS), Wrap(async (req, res) => {
+routes.get('/groupmenulist/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const group_seq = req.params.group_seq
   const { is_active_group_member, is_group_admin, is_group_manager } = await GroupService.checkGroupAuth(DBMySQL, req, false, true)
