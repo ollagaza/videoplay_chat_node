@@ -304,4 +304,18 @@ export default class GroupModel extends MySQLModel {
 
     return this.queryPaginated(query, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
+
+  group_member_count = async (group_seq, type, count = 1) => {
+    const filter = {
+      seq: group_seq,
+    }
+    const params = {
+      member_count: count,
+    }
+    if (type === 'up') {
+      await this.increment(filter, params);
+    } else if (type === 'down') {
+      await this.decrement(filter, params);
+    }
+  }
 }

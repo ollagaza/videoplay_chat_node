@@ -747,11 +747,13 @@ export default class GroupMemberModel extends MySQLModel {
       ban_date: status === 'D' ? this.database.raw('NOW()') : null,
       modify_date: this.database.raw('NOW()'),
     }
+    let update_cnt = 0;
     for (let cnt = 0; cnt < ban_info.ban_list.length; cnt++) {
       filter.seq = ban_info.ban_list[cnt];
       await this.update(filter, update_params);
+      update_cnt++;
     }
-    return true;
+    return update_cnt;
   }
 
   groupJoinList = async (group_seq, join_list, status) => {

@@ -459,8 +459,13 @@ routes.post('/bangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const ban_info = req.body.ban_info;
   const message = '탈퇴 되었습니다.';
+  let ban_cnt = 0;
   for (let i = 0; i < ban_info.ban_list.length; i++) {
     await GroupService.pauseMember(DBMySQL, group_member_info, member_info, ban_info.ban_list[i], token_info.getServiceDomain(), message)
+    ban_cnt++;
+  }
+  if (ban_cnt > 0) {
+    await GroupService.setGroupMemberCount(DBMySQL, group_seq, 'down', ban_cnt);
   }
   const output = new StdObject()
   const result = await GroupService.updateBanList(DBMySQL, group_seq, ban_info)
@@ -610,7 +615,12 @@ routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.DEFAULT), Wrap(asyn
   const mem_info = req.body.mem_info;
   const output = new StdObject()
 
-  const result = await GroupService.GroupMemberStatusUpdate(DBMySQL, group_seq, mem_info)
+  const result = await GroupService.GroupMemberStatusUpdate(DBMySQL, mem_info.group_seq, mem_info)
+  if (mem_info.count) {
+    if (mem_info.status === 'D') {
+      await GroupService.setGroupMemberCount(DBMySQL, mem_info.group_seq, 'down');
+    }
+  }
   output.add('result', result)
 
   res.json(output)

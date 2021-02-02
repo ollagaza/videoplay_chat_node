@@ -1229,6 +1229,8 @@ const GroupServiceClass = class {
           if (!update_chk) {
             result_info.error = 4;
             result_info.msg = '필수 정보가 누락되었습니다.';
+          } else {
+            await group_model.group_member_count(group_seq, 'up');
           }
           break;
         case 'P':
@@ -1249,6 +1251,8 @@ const GroupServiceClass = class {
       if (!insert_chk) {
         result_info.error = 3;
         result_info.msg = '회원가입 신청에 실패하였습니다.';
+      } else {
+        await group_model.group_member_count(group_seq, 'up');
       }
     }
     return result_info;
@@ -1343,7 +1347,11 @@ const GroupServiceClass = class {
 
   groupJoinList = async (database, group_seq, join_info) => {
     const group_member_model = this.getGroupMemberModel(database);
+    const group_model = this.getGroupModel(database);
     const status = join_info.join_type === 'join' ? 'Y' : 'C';
+    if (status === 'Y') {
+      await group_model.group_member_count(group_seq, 'up');
+    }
     return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
   }
 
@@ -1358,8 +1366,10 @@ const GroupServiceClass = class {
 
   nonupdateBanList = async (database, group_seq, ban_info) => {
     const group_member_model = this.getGroupMemberModel(database);
+    const group_model = this.getGroupModel(database);
     let change_grade = '1';
-    return await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
+    const update_cnt = await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
+    return await group_model.group_member_count(group_seq, 'up', update_cnt);
   }
 
   changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
@@ -1443,6 +1453,14 @@ const GroupServiceClass = class {
     const group_summary_comment_list = await group_model.GroupSummaryCommentListByGroupSeqMemberSeq(group_seq, member_seq, paging)
     log.debug(this.log_prefix, '[getSummaryCommentList]', group_summary_comment_list);
     return group_summary_comment_list;
+  }
+  setGroupMemberCount = async (databases, group_seq, type, count = 1) => {
+    const group_model = this.getGroupModel(databases);
+    if (type === 'up') {
+      await group_model.group_member_count(group_seq, 'up', count);
+    } else if (type === 'down') {
+      await group_model.group_member_count(group_seq, 'down', count);
+    }
   }
 }
 
