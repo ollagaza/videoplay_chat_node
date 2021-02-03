@@ -115,7 +115,7 @@ export default class GroupMemberModel extends MySQLModel {
     if (status) {
       filter['group_member.status'] = status
     }
-    const in_raw = this.database.raw("group_info.status IN ('Y', 'F')")
+    const in_raw = this.database.raw("group_info.status IN ('Y', 'P', 'F')")
     const query = this.database.select(this.member_group_select_old)
     query.from('group_member')
     query.innerJoin("group_info", function() {

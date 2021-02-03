@@ -17,6 +17,8 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .from('group_info')
       .innerJoin('member', 'member.seq', 'group_info.member_seq')
       .where('group_info.group_type', 'G')
+      .andWhere('group_info.status', 'Y')
+      .andWhere('group_info.group_open', '1')
 
     return oQuery
   }
