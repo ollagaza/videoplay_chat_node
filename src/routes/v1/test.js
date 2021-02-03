@@ -38,6 +38,16 @@ const routes = Router()
 
 const IS_DEV = Config.isDev()
 
+routes.get('/default_data_setting', Wrap(async (req, res) => {
+  const output = new StdObject()
+  output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
+  output.add('folder_size_sync', await OperationFolderService.SyncFolderTotalSize(DBMySQL))
+  output.add('board_linkcode_sync', await TempService.updateBoardLinkCodeSync(DBMySQL))
+  output.add('member_treat_code_sync', await TempService.updateMemberTreatCodeSync(DBMySQL))
+  output.add('defaultFolderAndBoardMake', await TempService.defaultFolderAndBoardMake(DBMySQL))
+  res.json(output)
+}))
+
 if (IS_DEV) {
 
   routes.get('/cloud_mail_file_test', Wrap(async (req, res) => {
@@ -52,7 +62,7 @@ if (IS_DEV) {
 
   routes.get('/default_data_setting', Wrap(async (req, res) => {
     const output = new StdObject()
-    // output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
+    output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
     output.add('folder_size_sync', await OperationFolderService.SyncFolderTotalSize(DBMySQL))
     output.add('board_linkcode_sync', await TempService.updateBoardLinkCodeSync(DBMySQL))
     output.add('member_treat_code_sync', await TempService.updateMemberTreatCodeSync(DBMySQL))
