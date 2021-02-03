@@ -194,15 +194,17 @@ const GroupBoardDataServiceClass = class {
 
   DeleteComment = async (database, board_data_seq, comment_seq) => {
     const model = this.getGroupBoardCommentModel(database)
+    const comment_info = await model.getCommentInfo(comment_seq)
     const delete_comment_cnt = await model.getCommentCount(comment_seq)
+
     const result = await model.DeleteComment(comment_seq)
 
-    const comment_info = await model.getCommentInfo(comment_seq)
-    const group_member_model = new GroupMemberModel(database);
-    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y')
 
-    if (group_member_info) {
-      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down', delete_comment_cnt)
+    const group_member_model = new GroupMemberModel(database);
+    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq)
+
+    if (!group_member_info.isEmpty()) {
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down', delete_comment_cnt)
     }
 
     const board_model = this.getGroupBoardDataModel(database)
