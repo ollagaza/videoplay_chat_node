@@ -64,6 +64,17 @@ const GroupBoardDataServiceClass = class {
     return board_data
   }
 
+  getOpenBoardDataDetail = async (database, link_code) => {
+    const model = this.getGroupBoardDataModel(database)
+    const board_data = await model.getOpenBoardDataDetail(link_code)
+
+    if (board_data.member_profile_image) {
+      board_data.member_profile_image = ServiceConfig.get('static_storage_prefix') + board_data.member_profile_image
+    }
+
+    return board_data
+  }
+
   getBoardCommentList = async (database, board_data_seq, member_seq) => {
     const model = this.getGroupBoardCommentModel(database)
     const comment_list = await model.getBoardCommentList(board_data_seq, member_seq)
@@ -93,7 +104,7 @@ const GroupBoardDataServiceClass = class {
 
   CreateUpdateBoardComment = async (database, comment_data) => {
     const model = this.getGroupBoardCommentModel(database)
-    let result = null;
+    let result = null
 
     if (comment_data.seq) {
       const seq = comment_data.seq;
@@ -101,45 +112,59 @@ const GroupBoardDataServiceClass = class {
     } else {
       result = await model.CreateBoardComment(comment_data)
       const board_model = this.getGroupBoardDataModel(database)
-      await board_model.incrementBoardCommentCnt(comment_data.board_data_seq);
+      await board_model.incrementBoardCommentCnt(comment_data.board_data_seq)
       if (!comment_data.origin_seq) {
         await model.updateBoardCommentOriginSeq(result)
       }
       const group_member_model = new GroupMemberModel(database);
-      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_data.group_seq, comment_data.member_seq, 'Y');
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'up');
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_data.group_seq, comment_data.member_seq, 'Y')
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'up')
     }
     return result;
   }
 
   CreateUpdateBoardData = async (database, board_data) => {
     const model = this.getGroupBoardDataModel(database)
-    const group_member_model = new GroupMemberModel(database);
-    let result = null;
+    const group_member_model = new GroupMemberModel(database)
+    let result = null
+
+    const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
+    if (board_data_num) {
+      board_data.board_data_num = board_data_num.board_data_num + 1
+    } else {
+      board_data.board_data_num = 1
+    }
+
+    if (board_data.origin_seq && board_data.depth >= 1) {
+      const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
+      board_data.sort_num = baord_data_sort_num.sort_num + 1
+    } else {
+      board_data.sort_num = 0
+    }
+
     if (board_data.seq) {
       const seq = board_data.seq
       result = await model.UpdateBoardData(seq, board_data)
     } else {
-      board_data.content_id = baseutil.getContentId();
-
-      const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
-      if (board_data_num) {
-        board_data.board_data_num = board_data_num.board_data_num + 1
-      } else {
-        board_data.board_data_num = 1
-      }
-
-      if (board_data.origin_seq && board_data.depth === 1) {
-        const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
-        board_data.sort_num = baord_data_sort_num + 1
+      board_data.content_id = baseutil.getContentId()
+      let check_bool = true;
+      while (check_bool) {
+        board_data.link_code = Util.getRandomString(10)
+        const check_link_code = await model.getLinkCodeCheck(board_data.link_code)
+        if (!check_link_code) {
+          check_bool = false;
+        }
       }
 
       result = await model.CreateBoardData(board_data)
       if (!board_data.origin_seq) {
         await model.updateBoardOriginSeq(result)
       }
-      const group_member_info = await group_member_model.getGroupMemberInfo(board_data.group_seq, board_data.member_seq);
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.seq, 'board_cnt', 'up');
+    }
+
+    if (board_data.status !== 'T') {
+      const group_member_info = await group_member_model.getGroupMemberInfo(board_data.group_seq, board_data.member_seq)
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.seq, 'board_cnt', 'up')
     }
     return result
   }
@@ -173,27 +198,32 @@ const GroupBoardDataServiceClass = class {
 
     const comment_info = await model.getCommentInfo(comment_seq)
     const group_member_model = new GroupMemberModel(database);
-    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y');
+    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y')
 
     if (group_member_info) {
-      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down');
+      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down')
     }
 
     const board_model = this.getGroupBoardDataModel(database)
-    await board_model.decrementBoardCommentCnt(board_data_seq);
+    await board_model.decrementBoardCommentCnt(board_data_seq)
     return result;
   }
 
   DeleteBoardData = async (database, board_seq) => {
     const model = this.getGroupBoardDataModel(database)
-    const target_info = await model.getBoardDataDetail(board_seq);
+    const target_info = await model.getBoardDataDetail(board_seq)
 
-    const group_member_model = new GroupMemberModel(database);
-    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(target_info.group_seq, target_info.member_seq, 'Y');
-    await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_cnt', 'down');
+    if (target_info.status === 'Y') {
+      const group_member_model = new GroupMemberModel(database)
+      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(target_info.group_seq, target_info.member_seq, 'Y')
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_cnt', 'down')
 
-    await model.DeleteBoardData(board_seq)
-    return await model.updateParentDataSubject(board_seq)
+      await model.DeleteBoardData(board_seq)
+      await model.updateParentDataSubject(board_seq)
+    } else {
+      await model.DeleteTempBoardData(board_seq)
+    }
+    return true
   }
 
   ChangeBoardToNotice = async (database, board_data_seq, notice_num) => {
@@ -289,6 +319,27 @@ const GroupBoardDataServiceClass = class {
       await board_model.decrementBoardCommentCnt(board_data_seq);
     }
     return res_data;
+  }
+
+  getBoardDataPagingListWithMemberAllList = async (database, req) => {
+    const request_body = req.query ? req.query : {}
+    const group_seq = request_body.group_seq
+    const member_seq = request_body.member_seq
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const request_order = request_body.order ? JSON.parse(request_body.order) : null
+
+    const paging = {}
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = 'N'
+
+    const model = this.getGroupBoardDataModel(database)
+    const board_list = await model.getBoardDataPagingListByGroupAndSeqMemberSeq(group_seq, member_seq, paging, request_order)
+    for (let cnt = 0; cnt < board_list.length; cnt++) {
+      board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
+    }
+    return board_list
   }
 
 }

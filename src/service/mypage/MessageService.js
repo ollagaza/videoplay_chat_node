@@ -173,7 +173,11 @@ const MessageServiceClass = class {
   getGroupMessageList = async (database, group_seq, req) => {
     const request_body = req.query ? req.query : {}
     const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
-    const request_order = request_body.order ? JSON.parse(request_body.order) : null
+    let request_order = request_body.order ? JSON.parse(request_body.order) : null
+
+    if (!request_order) {
+      request_order = {name: 'regist_date', direction: 'desc'}
+    }
 
     const paging = {}
     paging.list_count = request_paging.list_count ? request_paging.list_count : 20
@@ -194,7 +198,6 @@ const MessageServiceClass = class {
         receive_seq: JSON.stringify(message_info.receive_seq),
         receive_names: JSON.stringify(message_info.receive_names),
         desc: message_info.desc,
-        total_cnt: message_info.receive_seq.length,
         reservation_datetime: message_info.reservation_datetime
       }
       const group_message_seq = await groupmsgModel.sendMessage(params)
@@ -214,6 +217,11 @@ const MessageServiceClass = class {
     } catch (e) {
       throw e
     }
+  }
+
+  updateGroupViewCount = async (database, group_message_seq, member_seq) => {
+    const groupmsgModel = this.getGroupMessageModel(database)
+    return groupmsgModel.updateGroupViewCount(group_message_seq, member_seq)
   }
 
   deleteGroupMessage = async (database, message_seq) => {

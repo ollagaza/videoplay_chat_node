@@ -48,11 +48,17 @@ routes.post('/getsendlist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
 routes.post('/setview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
+    const token_info = req.token_info
+    const member_seq = token_info.getId()
     const output = new StdObject()
     const seq = req.body.seq
+    const group_message_seq = req.body.group_message_seq
 
     await DBMySQL.transaction(async (transaction) => {
       const result = await MessageService.setViewMessage(transaction, seq)
+      if (group_message_seq) {
+        await MessageService.updateGroupViewCount(transaction, group_message_seq, member_seq);
+      }
       output.add('result', result)
     })
 

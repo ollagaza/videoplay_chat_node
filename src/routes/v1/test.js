@@ -32,6 +32,7 @@ import OperationFolderService from '../../service/operation/OperationFolderServi
 import group_service from "../../service/group/GroupService";
 import sendmail from '../../libs/send-mail'
 import SendMailService from "../../service/etc/SendMailService";
+import TempService from "../../service/TempService";
 
 const routes = Router()
 
@@ -44,13 +45,18 @@ if (IS_DEV) {
     res.json(result)
   }))
 
-  routes.get('/group_grade_sync', Wrap(async (req, res) => {
-    const output = await group_service.SyncGroupGrade(DBMySQL)
+  routes.get('/folder_size_sync', Wrap(async (req, res) => {
+    const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
     res.json(output)
   }))
 
-  routes.get('/folder_size_sync', Wrap(async (req, res) => {
-    const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
+  routes.get('/default_data_setting', Wrap(async (req, res) => {
+    const output = new StdObject()
+    // output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
+    output.add('folder_size_sync', await OperationFolderService.SyncFolderTotalSize(DBMySQL))
+    output.add('board_linkcode_sync', await TempService.updateBoardLinkCodeSync(DBMySQL))
+    output.add('member_treat_code_sync', await TempService.updateMemberTreatCodeSync(DBMySQL))
+    output.add('defaultFolderAndBoardMake', await TempService.defaultFolderAndBoardMake(DBMySQL))
     res.json(output)
   }))
 

@@ -49,9 +49,9 @@ export default class OperationModel extends MySQLModel {
   }
 
   getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false) => {
-    const page = page_params.page | 1
-    const list_count = page_params.list_count | 20
-    const page_count = page_params.page_count | 10
+    const page = page_params.page ? page_params.page : 1
+    const list_count = page_params.list_count ? page_params.list_count : 20
+    const page_count = page_params.page_count ? page_params.page_count : 10
 
     const query = this.database.select(join_select)
     query.column(['operation_data.total_time', 'operation_data.thumbnail'])
@@ -67,6 +67,9 @@ export default class OperationModel extends MySQLModel {
     // }
     if (filter_params.status) {
       query.andWhere('operation.status', filter_params.status.toUpperCase())
+    }
+    if (filter_params.member_seq) {
+      query.andWhere('operation.member_seq', filter_params.member_seq)
     }
     let check_folder = true
     const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
@@ -92,6 +95,10 @@ export default class OperationModel extends MySQLModel {
       case 'drive':
         query.andWhere('operation.status', 'Y')
         break
+      case 'collect':
+        query.andWhere('operation.status', 'Y')
+        check_folder = true
+        break
       default:
         query.andWhere('operation.status', 'Y')
         check_folder = false
@@ -100,7 +107,9 @@ export default class OperationModel extends MySQLModel {
 
     if (check_folder) {
       if (filter_params.folder_seq) {
-        query.andWhere('operation.folder_seq', Util.parseInt(filter_params.folder_seq, null))
+        if (filter_params.folder_seq !== 'all') {
+          query.andWhere('operation.folder_seq', Util.parseInt(filter_params.folder_seq, null))
+        }
       } else {
         query.whereNull('operation.folder_seq')
       }
@@ -238,7 +247,8 @@ export default class OperationModel extends MySQLModel {
   getGroupMemberOperationList = async (group_seq, member_seq) => {
     const filter = {
       group_seq,
-      member_seq
+      member_seq,
+      status: 'Y',
     }
     const operation_list = []
     const query_result = await this.find(filter)

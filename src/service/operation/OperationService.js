@@ -461,6 +461,7 @@ const OperationServiceClass = class {
     filter_params.analysis_complete = request_query.analysis_complete
     filter_params.status = request_query.status
     filter_params.menu = request_query.menu
+    filter_params.member_seq = request_query.member_seq ? request_query.member_seq : null
     if (request_query.folder_seq) {
       filter_params.folder_seq = request_query.folder_seq
     }
@@ -471,7 +472,7 @@ const OperationServiceClass = class {
   }
 
   getOperationList = async (database, group_seq, page_params = {}, filter_params = {}) => {
-    page_params.no_paging = page_params.no_paging | 'n'
+    page_params.no_paging = page_params.no_paging ? page_params.no_paging : 'n'
     log.debug(this.log_prefix, '[getOperationList]', page_params, filter_params)
     const operation_model = this.getOperationModel(database)
     return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)

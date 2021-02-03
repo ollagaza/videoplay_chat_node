@@ -29,7 +29,7 @@ routes.get('/home/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   output.add('my_group_list', _.filter(my_group_list, { group_type: 'G'}))
   const arr_group_seq = []
   Object.keys(my_group_list).filter(item => arr_group_seq.push(my_group_list[item].group_seq))
-  output.add('my_group_new', await GroupChannelHomeService.getMyGroupNewNews(DBMySQL, arr_group_seq))
+  output.add('my_group_new', await GroupChannelHomeService.getMyGroupNewNews(DBMySQL, my_group_list, arr_group_seq))
   output.add('recommend_group_list', await GroupChannelHomeService.getRecommendGroupList(DBMySQL, 3))
   if (menu_id === 'all_medical') {
     menu_id = treatlist[0].code;

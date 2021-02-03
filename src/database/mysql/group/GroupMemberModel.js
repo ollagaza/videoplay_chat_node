@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/baseutil'
 import GroupMemberInfo from '../../../wrapper/member/GroupMemberInfo'
@@ -16,7 +17,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
       'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer',
-      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_comment_cnt', 'member.profile_image_path', 'group_member.ban_hide'
+      'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_cnt', 'group_member.board_comment_cnt', 'member.profile_image_path', 'group_member.ban_hide'
     ]
     this.member_group_select = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
@@ -25,14 +26,16 @@ export default class GroupMemberModel extends MySQLModel {
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
-      'group_member.ban_date', 'group_info.reg_date', 'group_info.member_count'
+      'group_member.ban_date', 'group_info.reg_date', 'group_info.member_count', 'group_member.pause_sdate', 'group_member.pause_edate'
     ]
     this.member_group_select_old = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
       'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
-      'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name'
+      'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
+      'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
+      'group_info.reg_date', 'group_info.member_count', 'group_member.status AS member_status'
     ]
 
     this.group_invite_select = [
@@ -120,6 +123,7 @@ export default class GroupMemberModel extends MySQLModel {
         .andOn(in_raw)
     })
     query.where(filter)
+    query.orderBy([{column: 'group_info.group_type', order: 'desc'}, { column: 'group_member.join_date', order: 'desc' }]);
 
     return query
   }
@@ -145,13 +149,15 @@ export default class GroupMemberModel extends MySQLModel {
       }
       if (option.status !== null) {
         if (option.status === 'J') {
-          status_in.push('J');
-          status_in.push('C');
+          status_in.push('J', 'C');
         } else if (option.status === 'D'){
-          status_in.push('D');
-          status_in.push('B');
+          status_in.push('D', 'B');
         } else {
-          status_in.push(option.status);
+          if (typeof option.status === 'object') {
+            status_in = option.status;
+          } else {
+            status_in.push(option.status);
+          }
         }
       } else if (status) {
         if (status !== 'D') {
@@ -172,7 +178,7 @@ export default class GroupMemberModel extends MySQLModel {
       if (option.member_count) {
         this.member_group_select.push('member_count.count AS member_count');
       }
-      if (option.manager === '2') {
+      if (_.includes(option.manager, '2')) {
         this.member_group_select.push('grade_info.grade AS grade_info');
       }
     }
@@ -186,7 +192,7 @@ export default class GroupMemberModel extends MySQLModel {
       if (option.member_count) {
         query.joinRaw('LEFT JOIN (SELECT group_seq, COUNT(*) AS count FROM group_member WHERE status NOT IN ("D", "C", "N", "L") GROUP BY group_seq) AS member_count ON (member_count.group_seq = group_info.seq)')
       }
-      if (option.manager === '2') {
+      if (_.includes(option.manager, '2')) {
         query.joinRaw('LEFT JOIN (SELECT group_seq, CONCAT("[", GROUP_CONCAT(CONCAT("{\\"grade\\": \\"", grade, "\\", \\"grade_text\\": \\"", grade_text, "\\" }")), "]") AS grade FROM group_grade GROUP BY group_seq) AS grade_info ON (grade_info.group_seq = group_info.seq)')
       }
     }
@@ -220,7 +226,8 @@ export default class GroupMemberModel extends MySQLModel {
         query.orderBy('group_member.seq', 'desc')
       }
     } else {
-      query.orderBy('group_member.seq', 'desc')
+      // query.orderBy('group_member.seq', 'desc')
+      query.orderBy('group_info.seq', 'asc');
     }
     return query
   }
@@ -231,15 +238,21 @@ export default class GroupMemberModel extends MySQLModel {
     return this.getFindResultList(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
+  getMemberGroupListOLD = async (member_seq, status = null, private_keys = null) => {
+    const query = this.getGroupMemberQueryOLD(member_seq, null, null, status)
+    const query_result = await query
+    return this.getFindResultList(query_result, private_keys ? private_keys : this.group_member_private_fields)
+  }
+
   getMemberGroupInfoWithGroup = async (group_seq, member_seq, status = null, private_keys = null) => {
-    const query = this.getGroupMemberQuery(member_seq, group_seq, null, status)
+    const query = this.getGroupMemberQueryOLD(member_seq, group_seq, null, status)
     query.first()
     const query_result = await query
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
   getGroupMemberInfoBySeq = async (group_member_seq, private_keys = null) => {
-    const query = this.getGroupMemberQuery(null, null, group_member_seq)
+    const query = this.getGroupMemberQueryOLD(null, null, group_member_seq)
     query.first()
     const query_result = await query
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
@@ -280,10 +293,10 @@ export default class GroupMemberModel extends MySQLModel {
     query.from('group_member')
     query.leftOuterJoin('member', { 'member.seq': 'group_member.member_seq' })
     if (get_pause_name) {
-      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`pause_member_seq` = `submit_member`.`submit_member_seq`)')
+      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM `member`) AS submit_member ON (`group_member`.`pause_member_seq` = `submit_member`.`submit_member_seq`)')
     }
     if (get_delete_name) {
-      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM member) AS submit_member ON (`group_member`.`ban_member_seq` = `submit_member`.`submit_member_seq`)')
+      query.joinRaw('LEFT JOIN (SELECT seq AS submit_member_seq, user_name AS submit_member_name FROM `member`) AS submit_member ON (`group_member`.`ban_member_seq` = `submit_member`.`submit_member_seq`)')
     }
     query.where(filter)
     if (status && status.length > 0) {
@@ -734,11 +747,13 @@ export default class GroupMemberModel extends MySQLModel {
       ban_date: status === 'D' ? this.database.raw('NOW()') : null,
       modify_date: this.database.raw('NOW()'),
     }
+    let update_cnt = 0;
     for (let cnt = 0; cnt < ban_info.ban_list.length; cnt++) {
       filter.seq = ban_info.ban_list[cnt];
       await this.update(filter, update_params);
+      update_cnt++;
     }
-    return true;
+    return update_cnt;
   }
 
   groupJoinList = async (group_seq, join_list, status) => {
@@ -801,7 +816,7 @@ export default class GroupMemberModel extends MySQLModel {
     }
     const select_fields = []
     select_fields.push(this.database.raw('COUNT(*) AS total_count'))
-    select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade NOT IN (\'O\', \'6\'), 1, 0)) AS mygroup_count'))
+    select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade NOT IN (\'6\'), 1, 0)) AS mygroup_count'))
     select_fields.push(this.database.raw('SUM(IF((`status` = \'J\' OR `status` = \'C\') and grade NOT IN (\'O\', \'6\'), 1, 0)) AS join_wait_count'))
     select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade IN (\'O\', \'6\'), 1, 0)) AS manage_count'))
     select_fields.push(this.database.raw('SUM(IF((`status` = \'D\' OR `status` = \'B\'), 1, 0) AND `ban_hide` = \'N\') AS ban_count'))

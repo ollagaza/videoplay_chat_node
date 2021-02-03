@@ -269,6 +269,34 @@ const GroupServiceClass = class {
     return await group_member_model.createGroupMember(group_info, member_info, grade, max_storage_size)
   }
 
+  getMemberGroupListOLD = async (database, member_seq, is_active_only = true) => {
+    log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
+    const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
+    const group_member_model = this.getGroupMemberModel(database)
+    const group_member_list = await group_member_model.getMemberGroupListOLD(member_seq, status)
+    for (let i = 0; i < group_member_list.length; i++) {
+      const group_member_info = group_member_list[i]
+      if (group_member_info.profile_image_path) {
+        group_member_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
+      }
+      if (JSON.parse(group_member_info.profile).image) {
+        group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
+        group_member_list[i].json_keys.push('group_image_url')
+      }
+    }
+    if (ServiceConfig.isVacs()) {
+      const vacs_storage_info = await VacsService.getCurrentStorageStatus()
+      log.debug(this.log_prefix, '[getMemberGroupList]', '[vacs_storage_info]', vacs_storage_info)
+      for (let i = 0; i < group_member_list.length; i++) {
+        const group_member_info = group_member_list[i]
+        group_member_info.group_used_storage_size = vacs_storage_info.used_size
+        group_member_info.group_max_storage_size = vacs_storage_info.total_size
+      }
+    }
+
+    return group_member_list
+  }
+
   getMemberGroupList = async (database, member_seq, is_active_only = true, filter = null, page = null) => {
     log.debug(this.log_prefix, '[getMemberGroupList]', member_seq, is_active_only)
     const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
@@ -322,14 +350,14 @@ const GroupServiceClass = class {
     const group_member_list = await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin);
     for(let i = 0; i < group_member_list.data.length; i++) {
       if (group_member_list.data[i].profile_image_path) {
-        group_member_list.data[i].profile_image_path = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_list.data[i].profile_image_path)
+        group_member_list.data[i].profile_image_path = ServiceConfig.get('static_storage_prefix') + group_member_list.data[i].profile_image_path
       }
     }
     return group_member_list;
   }
 
-  getGroupMemberCount = async (database, group_seq, is_active_only = true) => {
-    const status = is_active_only ? this.MEMBER_STATUS_ENABLE : null
+  getGroupMemberCount = async (database, group_seq, is_active_only = true, in_status = null) => {
+    const status = is_active_only ? this.MEMBER_STATUS_ENABLE : in_status
     const group_member_model = this.getGroupMemberModel(database)
     return await group_member_model.getGroupMemberCount(group_seq, status)
   }
@@ -390,9 +418,9 @@ const GroupServiceClass = class {
     const group_info = await group_model.getGroupInfo(group_seq, private_keys)
     group_info.json_keys.push('profile_image_url')
     if (JSON.parse(group_info.profile).image) {
-      group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image)
+      group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + JSON.parse(group_info.profile).image
     }
-    group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
+    group_info.profile_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path
     return group_info
   }
 
@@ -1201,6 +1229,8 @@ const GroupServiceClass = class {
           if (!update_chk) {
             result_info.error = 4;
             result_info.msg = '필수 정보가 누락되었습니다.';
+          } else {
+            await group_model.group_member_count(group_seq, 'up');
           }
           break;
         case 'P':
@@ -1221,6 +1251,8 @@ const GroupServiceClass = class {
       if (!insert_chk) {
         result_info.error = 3;
         result_info.msg = '회원가입 신청에 실패하였습니다.';
+      } else {
+        await group_model.group_member_count(group_seq, 'up');
       }
     }
     return result_info;
@@ -1264,7 +1296,7 @@ const GroupServiceClass = class {
   createDefaultGroupGrade = async (database, group_seq) => {
     const grade_model = this.getGroupGradeModel(database)
     const grade_list = [
-      { group_seq, grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      // { group_seq, grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { group_seq, grade: '1', grade_text: '기본회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { group_seq, grade: '2', grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { group_seq, grade: '3', grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
@@ -1315,7 +1347,11 @@ const GroupServiceClass = class {
 
   groupJoinList = async (database, group_seq, join_info) => {
     const group_member_model = this.getGroupMemberModel(database);
+    const group_model = this.getGroupModel(database);
     const status = join_info.join_type === 'join' ? 'Y' : 'C';
+    if (status === 'Y') {
+      await group_model.group_member_count(group_seq, 'up');
+    }
     return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
   }
 
@@ -1330,8 +1366,10 @@ const GroupServiceClass = class {
 
   nonupdateBanList = async (database, group_seq, ban_info) => {
     const group_member_model = this.getGroupMemberModel(database);
+    const group_model = this.getGroupModel(database);
     let change_grade = '1';
-    return await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
+    const update_cnt = await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
+    return await group_model.group_member_count(group_seq, 'up', update_cnt);
   }
 
   changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
@@ -1401,6 +1439,28 @@ const GroupServiceClass = class {
     const group_member_info = await group_member_model.getGroupMemberDetailQuery(group_seq, group_member_seq);
     group_member_info.member_profile_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.profile_image_path)
     return group_member_info;
+  }
+  getSummaryCommentList = async (database, group_seq, member_seq, req) => {
+    const group_model = this.getGroupModel(database)
+
+    const request_body = req.query ? req.query : {}
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const paging = {};
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    paging.no_paging = 'N'
+    const group_summary_comment_list = await group_model.GroupSummaryCommentListByGroupSeqMemberSeq(group_seq, member_seq, paging)
+    log.debug(this.log_prefix, '[getSummaryCommentList]', group_summary_comment_list);
+    return group_summary_comment_list;
+  }
+  setGroupMemberCount = async (databases, group_seq, type, count = 1) => {
+    const group_model = this.getGroupModel(databases);
+    if (type === 'up') {
+      await group_model.group_member_count(group_seq, 'up', count);
+    } else if (type === 'down') {
+      await group_model.group_member_count(group_seq, 'down', count);
+    }
   }
 }
 

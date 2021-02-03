@@ -14,7 +14,7 @@ export default class GroupBoardDataModel extends MySQLModel {
   }
 
   getGroupBoardDataCount = async (group_seq, menu_seq) => {
-    return this.getTotalCount({ group_seq, seq: menu_seq })
+    return this.getTotalCount({ group_seq, board_seq: menu_seq })
   }
 
   getTemporarilyCnt = async (group_seq, member_seq) => {
@@ -27,6 +27,10 @@ export default class GroupBoardDataModel extends MySQLModel {
 
   getLastBoardDataNum = async (board_seq) => {
     return this.findOne({ board_seq }, ['board_data_num'], { name: 'board_data_num', direction: 'desc' })
+  }
+
+  getLinkCodeCheck = async (link_code) => {
+    return this.findOne({ link_code }, ['link_code'])
   }
 
   getLastBoardSortNum = async (origin_seq) => {
@@ -78,10 +82,15 @@ export default class GroupBoardDataModel extends MySQLModel {
     } else {
       oKnex = this.database.select('*')
         .from(this.table_name)
-        .where('is_notice', '3')
+        .where('group_seq', group_seq)
+        .andWhere('is_notice', '3')
         .andWhere('board_seq', board_seq)
+        .andWhere('status', 'Y')
     }
-    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
+    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, {
+      column: 'sort_num',
+      order: 'asc'
+    }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
     return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
 
@@ -90,6 +99,15 @@ export default class GroupBoardDataModel extends MySQLModel {
       .from(`${this.table_name} as board`)
       .innerJoin('member as mem', { 'mem.seq': 'board.member_seq' })
       .where('board.seq', board_data_seq)
+      .first()
+    return oKnex
+  }
+
+  getOpenBoardDataDetail = async (link_code) => {
+    const oKnex = this.database.select(['board.*', 'mem.profile_image_path as member_profile_image'])
+      .from(`${this.table_name} as board`)
+      .innerJoin('member as mem', { 'mem.seq': 'board.member_seq' })
+      .where('link_code', link_code)
       .first()
     return oKnex
   }
@@ -132,6 +150,10 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.update({ seq: board_seq }, { status: 'D' })
   }
 
+  DeleteTempBoardData = async (board_seq) => {
+    return this.delete({ seq: board_seq })
+  }
+
   ChangeBoardToNotice = async (board_data_seq, notice_num) => {
     return this.update({ seq: board_data_seq }, { is_notice: notice_num })
   }
@@ -162,5 +184,16 @@ export default class GroupBoardDataModel extends MySQLModel {
   fileDeleteBoardData = async (board_data_seq, param) => {
     param.attach_file_cnt = this.database.raw('attach_file_cnt - 1')
     return this.update({ seq: board_data_seq }, param)
+  }
+
+  getBoardDataPagingListByGroupAndSeqMemberSeq = async (group_seq, member_seq, paging) => {
+    let oKnex = this.database.select('board_data.*', 'group_board_list.read_grade')
+      .from(this.table_name)
+      .joinRaw('LEFT JOIN (SELECT seq, read_grade FROM group_board_list) AS group_board_list ON (board_data.board_seq = group_board_list.seq)')
+      .where('group_seq', group_seq)
+      .andWhere('member_seq', member_seq)
+      .andWhere('status', 'Y')
+      .orderBy('regist_date', 'desc')
+    return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
   }
 }

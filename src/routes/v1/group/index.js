@@ -13,7 +13,7 @@ import OperationFolderService from "../../../service/operation/OperationFolderSe
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
 import OperationDataService from "../../../service/operation/OperationDataService";
 import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
-import OperationService from "../../../service/operation/OperationService";
+import OperationCommentService from "../../../service/operation/OperationCommentService";
 
 const routes = Router()
 
@@ -22,29 +22,12 @@ const checkGroupAuth = async (database, req, check_group_auth = true, throw_exce
 }
 
 const getGroupMemberSeq = (request) => Util.parseInt(request.params.group_member_seq, 0)
+const getMemberSeq = (request) => Util.parseInt(request.params.member_seq, 0)
 
 routes.get('/me', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
-  let is_active_only = true;
-  if (req.query.all_list === 'true') {
-    is_active_only = false;
-  }
-  const filter = {
-    status: req.query.status ? req.query.status : null,
-    grade: req.query.grade ? req.query.grade :null,
-    manager: req.query.manager ? req.query.manager : null,
-    member_count: req.query.member_count ? true : false,
-  };
-  if (req.query.group_type) {
-    filter.group_type = req.query.group_type;
-  }
-  const page = {
-    orderby: req.query.orderby ? req.query.orderby : null,
-    limit: req.query.limit ? req.query.limit : null,
-    page: req.query.page ? req.query.page : null,
-  }
-  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, is_active_only, filter, page)
+  const member_group_list = await GroupService.getMemberGroupListOLD(DBMySQL, member_seq)
 
   const output = new StdObject()
   output.add('member_group_list', member_group_list)
@@ -85,6 +68,17 @@ routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wra
 
   const output = new StdObject()
   output.adds(group_member_list)
+  res.json(output)
+}))
+
+routes.get('/:group_seq(\\d+)/member_count/:in_status', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req)
+  const in_status = req.params.in_status
+  const member_count = await GroupService.getGroupMemberCount(DBMySQL, group_seq, false, in_status)
+
+  const output = new StdObject()
+  output.add('member_count', member_count)
   res.json(output)
 }))
 
@@ -371,7 +365,7 @@ routes.get('/getgrademanagelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   let grade_list = await GroupService.getGradeManageList(DBMySQL, group_seq)
   if (!grade_list) {
     grade_list = [
-      { grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      // { grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '1', grade_text: '기본회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '2', grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '3', grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
@@ -394,7 +388,7 @@ routes.get('/getgradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
   let grade_list = await GroupService.getGradeList(DBMySQL, group_seq)
   if (!grade_list) {
     grade_list = [
-      { grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
+      // { grade: '0', grade_text: '비회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '1', grade_text: '기본회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '2', grade_text: '준회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
       { grade: '3', grade_text: '정회원', grade_explain: '', auto_grade: 0, video_upload_cnt: 0, annotation_cnt: 0, comment_cnt: 0, used: 1 },
@@ -465,8 +459,13 @@ routes.post('/bangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const ban_info = req.body.ban_info;
   const message = '탈퇴 되었습니다.';
+  let ban_cnt = 0;
   for (let i = 0; i < ban_info.ban_list.length; i++) {
     await GroupService.pauseMember(DBMySQL, group_member_info, member_info, ban_info.ban_list[i], token_info.getServiceDomain(), message)
+    ban_cnt++;
+  }
+  if (ban_cnt > 0) {
+    await GroupService.setGroupMemberCount(DBMySQL, group_seq, 'down', ban_cnt);
   }
   const output = new StdObject()
   const result = await GroupService.updateBanList(DBMySQL, group_seq, ban_info)
@@ -616,7 +615,12 @@ routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.DEFAULT), Wrap(asyn
   const mem_info = req.body.mem_info;
   const output = new StdObject()
 
-  const result = await GroupService.GroupMemberStatusUpdate(DBMySQL, group_seq, mem_info)
+  const result = await GroupService.GroupMemberStatusUpdate(DBMySQL, mem_info.group_seq, mem_info)
+  if (mem_info.count) {
+    if (mem_info.status === 'D') {
+      await GroupService.setGroupMemberCount(DBMySQL, mem_info.group_seq, 'down');
+    }
+  }
   output.add('result', result)
 
   res.json(output)
@@ -627,7 +631,6 @@ routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAut
   const { group_seq } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
 
-  console.log(group_seq, group_member_seq);
   const group_member_info = await GroupService.getGroupMemberInfoDetail(DBMySQL, group_seq, group_member_seq)
 
   const output = new StdObject()
@@ -635,13 +638,59 @@ routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAut
   res.json(output)
 }))
 
-routes.get('/:group_seq(\\d+)/:member_seq(\\d+)/allOperationList', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  req.access('application/json')
-  const { group_seq, member_seq } = await checkGroupAuth(DBMySQL, req)
-  const operation_list = await OperationService.getAllOperationGroupMemberList(DBMySQL, group_seq, member_seq);
+routes.get('/:group_seq(\\d+)/member/:member_seq(\\d+)/summary/comment', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req)
+  const member_seq = await getMemberSeq(req)
 
-  const ouput = new StdObject()
-  output.add('operation_list', operation_list)
+  const group_summary_comment_list = await GroupService.getSummaryCommentList(DBMySQL, group_seq, member_seq, req)
+
+  const output = new StdObject()
+  output.adds(group_summary_comment_list)
+  res.json(output)
+}))
+
+routes.delete('/delete/comments', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const comment_data_seq = req.body
+
+  for (let cnt = 0; cnt < comment_data_seq.operation.length; cnt++) {
+    await OperationCommentService.deleteComment(DBMySQL, comment_data_seq.operation[cnt].content_data_seq, comment_data_seq.operation[cnt].seq, req)
+  }
+  for (let cnt = 0; cnt < comment_data_seq.board.length; cnt++) {
+    await DBMySQL.transaction(async (transaction) => {
+      await GroupBoardDataService.DeleteComment(transaction, comment_data_seq.board[cnt].content_data_seq, comment_data_seq.board[cnt].seq);
+    })
+  }
+  res.json(output);
+}))
+
+routes.get('/mychannellist', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { member_seq } = await checkGroupAuth(DBMySQL, req, false)
+  let is_active_only = true;
+  if (req.query.all_list === 'true') {
+    is_active_only = false;
+  }
+  const filter = {
+    status: req.query.status ? req.query.status : null,
+    grade: req.query.grade ? req.query.grade :null,
+    manager: req.query.manager ? req.query.manager : null,
+    member_count: req.query.member_count ? true : false,
+  };
+  if (req.query.group_type) {
+    filter.group_type = req.query.group_type;
+  }
+  const page = {
+    orderby: req.query.orderby ? req.query.orderby : null,
+    limit: req.query.limit ? req.query.limit : null,
+    page: req.query.page ? req.query.page : null,
+  }
+  const member_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, is_active_only, filter, page)
+
+  const output = new StdObject()
+  output.add('member_group_list', member_group_list)
   res.json(output)
 }))
 export default routes

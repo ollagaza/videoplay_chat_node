@@ -22,18 +22,17 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getMyGroupNewNews = async (arr_group_seq) => {
-    const oQuery = this.database.select(['group_info.*', 'op_data.group_seq as group_seq', 'op_data.seq as target_seq', this.database.raw('\'\' as board_seq'),'op_data.title', this.database.raw('\'operation\' as gubun'), 'op_data.group_name as name', 'op_data.reg_date as regist_date'])
-      .from('group_info')
-      .innerJoin('operation_data as op_data', 'op_data.group_seq', 'group_info.seq')
-      .where('group_info.group_type', 'G')
-      .andWhere('group_info.seq', arr_group_seq)
+    const oQuery = this.database.select(['op_data.group_seq as group_seq', 'op_data.seq as target_seq', this.database.raw('\'\' as board_seq'),'op_data.title', this.database.raw('\'operation\' as gubun'), 'mem.user_name as name', 'op_data.reg_date as regist_date'])
+      .from('operation as op')
+      .innerJoin('operation_data as op_data', 'op_data.operation_seq', 'op.seq')
+      .innerJoin('member as mem', 'mem.seq', 'op.member_seq')
+      .where('op.group_seq', arr_group_seq)
       .andWhere('op_data.reg_date', '>=', this.database.raw('date_sub(now(), interval 7 day)'))
       .unionAll([
-        this.database.select(['group_info.*', 'board.group_seq as group_seq', 'board.seq as target_seq', 'board.board_seq as board_seq', 'board.subject as title', this.database.raw('\'board\' as gubun'), 'board.write_name as name', 'board.regist_date as regist_date'])
-          .from('group_info')
-          .innerJoin('board_data as board', 'board.group_seq', 'group_info.seq')
-          .where('group_info.group_type', 'G')
-          .andWhere('group_info.seq', arr_group_seq)
+        this.database.select(['board.group_seq as group_seq', 'board.seq as target_seq', 'board.board_seq as board_seq', 'board.subject as title', this.database.raw('\'board\' as gubun'), 'board.write_name as name', 'board.regist_date as regist_date'])
+          .from('board_data as board')
+          .where('board.group_seq', arr_group_seq)
+          .andWhere('status', 'Y')
           .andWhere('board.regist_date', '>=', this.database.raw('date_sub(now(), interval 7 day)'))
       ])
       .orderBy([{column: 'regist_date', order: 'desc'}])
@@ -108,8 +107,9 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getSearchGroupInfo = async (search_keyword, search_tab, paging) => {
     const oQuery = this.database.select('*')
       .from('group_info')
-      .whereRaw('MATCH (`group_name`, `group_explain`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
-      .orWhereRaw(`JSON_SEARCH(JSON_EXTRACT(search_keyword, '$[0]'), 'all', '%${search_keyword}%') is not null`)
+      .whereRaw('(MATCH (`group_name`, `group_explain`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
+      .orWhereRaw(`JSON_SEARCH(JSON_EXTRACT(search_keyword, '$[0]'), 'all', '%${search_keyword}%') is not null)`)
+      .andWhere('group_info.group_open', 1)
 
     return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
   }
@@ -120,7 +120,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
       , 'group_info.group_name', 'group_info.profile_image_path', 'operation_data.total_time']
     const oQuery = this.database.select(select_fields)
       .from('operation_data')
-      .innerJoin('group_info', 'group_info.seq', 'operation_data.group_seq')
+      .innerJoin('group_info', query => {
+        query.on('group_info.seq', 'operation_data.group_seq')
+        query.andOnVal('group_info.group_open', 1)
+      })
       .whereRaw('operation_data.is_open_video = 1 and MATCH (`operation_data`.`title`, `operation_data`.`group_name`, `operation_data`.`doc_text`, `operation_data`.`hospital`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
 
     return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
@@ -131,6 +134,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
       , 'board_data.comment_cnt', 'board_data.view_cnt', 'board_data.recommend_cnt', 'board_data.regist_date']
     const oQuery = this.database.select(select_fields)
       .from('board_data')
+      .innerJoin('group_info', query => {
+        query.on('group_info.seq', 'board_data.group_seq')
+        query.andOnVal('group_info.group_open', 1)
+      })
       .whereRaw('board_data.is_open = ? and MATCH (`write_name`, `subject`, `content_text`) AGAINST (? IN BOOLEAN MODE)', ['1', search_keyword])
 
     return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
