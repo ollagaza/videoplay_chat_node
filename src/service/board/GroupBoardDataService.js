@@ -58,7 +58,7 @@ const GroupBoardDataServiceClass = class {
     const board_data = await model.getBoardDataDetail(board_data_seq)
 
     if (board_data.member_profile_image) {
-      board_data.member_profile_image = ServiceConfig.get('static_storage_prefix') + board_data.member_profile_image
+      board_data.member_profile_url = ServiceConfig.get('static_storage_prefix') + board_data.member_profile_image
     }
 
     return board_data
@@ -69,7 +69,7 @@ const GroupBoardDataServiceClass = class {
     const board_data = await model.getOpenBoardDataDetail(link_code)
 
     if (board_data.member_profile_image) {
-      board_data.member_profile_image = ServiceConfig.get('static_storage_prefix') + board_data.member_profile_image
+      board_data.member_profile_url = ServiceConfig.get('static_storage_prefix') + board_data.member_profile_image
     }
 
     return board_data
