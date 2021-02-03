@@ -94,4 +94,11 @@ export default class GroupBoardCommentModel extends MySQLModel {
       .from(this.table_name)
       .where({ group_seq: group_seq, member_seq: member_seq })
   }
+
+  getBoardCommentCountList = async (board_data_seq) => {
+    return this.database.select(['member_seq', this.database.raw('count(*) as cnt')])
+      .from(this.table_name)
+      .where({board_data_seq: board_data_seq})
+      .groupBy(['member_seq'])
+  }
 }

@@ -1,8 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import log from '../../../libs/logger'
-import logger from "../../../libs/logger";
 import baseutil from "../../../utils/baseutil";
-import board_data from "../../../routes/v1/boards/board_data";
 
 export default class GroupBoardDataModel extends MySQLModel {
   constructor (...args) {

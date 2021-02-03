@@ -11,6 +11,7 @@ import GroupBoardDataService from '../../../service/board/GroupBoardDataService'
 import GroupReCommendService from "../../../service/board/GroupReCommendService"
 import GroupService from "../../../service/group/GroupService";
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
+import logger from "../../../libs/logger";
 
 const routes = Router()
 
