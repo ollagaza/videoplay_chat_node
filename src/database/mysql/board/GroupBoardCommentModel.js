@@ -58,6 +58,15 @@ export default class GroupBoardCommentModel extends MySQLModel {
     return this.decrement({ seq: comment_seq }, { recommend_cnt: 1 })
   }
 
+  getCommentCount = async (comment_seq) => {
+    const result = await this.database.count('* as total_count').from(this.table_name).where('seq', comment_seq).orWhere('origin_seq', comment_seq).first()
+    if (!result || !result.total_count) {
+      return 0
+    } else {
+      return result.total_count
+    }
+  }
+
   DeleteComment = async (comment_seq) => {
     return this.update({ seq: comment_seq }, { status: 'D' })
   }
