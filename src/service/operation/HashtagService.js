@@ -2,7 +2,7 @@ import Util from '../../utils/baseutil'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 
-import GroupService from '../member/GroupService'
+import GroupService from '../group/GroupService'
 import HashtagModel from '../../database/mysql/operation/HashtagModel'
 import HashtagUseModel from '../../database/mysql/operation/HashtagUseModel'
 

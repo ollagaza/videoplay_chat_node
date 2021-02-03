@@ -122,6 +122,22 @@ const OperationFolderServiceClass = class {
     return allChildFolders;
   }
 
+  createDefaultOperationFolder = async (database, group_seq, member_seq) => {
+    const model = this.getOperationFolderModel(database)
+    const folder_info = new OperationFolderInfo();
+    folder_info.folder_name = '기본폴더';
+    folder_info.depth = 0
+    folder_info.parent_folder_list = []
+    folder_info.group_seq = group_seq
+    folder_info.member_seq = member_seq
+
+    const folder_seq = await model.createOperationFolder(folder_info)
+    folder_info.seq = folder_seq
+    log.debug(this.log_prefix, '[createDefaultOperationFolder]', folder_seq, folder_info)
+
+    return folder_info
+  }
+
   createOperationFolder = async (database, request_body, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo(request_body.folder_info)
@@ -131,6 +147,7 @@ const OperationFolderServiceClass = class {
       folder_info.parent_seq = parent_folder_info.seq
       folder_info.parent_folder_list = parent_folder_info.parent_folder_list
       folder_info.parent_folder_list.push(parent_folder_info.seq)
+      folder_info.access_type = parent_folder_info.access_type ? parent_folder_info.access_type : '1';
     } else {
       folder_info.depth = 0
       folder_info.parent_folder_list = []
@@ -163,6 +180,12 @@ const OperationFolderServiceClass = class {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo(request_body.folder_info)
     const update_result = await model.updateOperationFolder(folder_seq, folder_info)
+    return update_result
+  }
+
+  updateParentFolderAccessType = async (database, folder_seq, access_type) => {
+    const model = this.getOperationFolderModel(database)
+    const update_result = await model.updateOperationFolderAccessType(folder_seq, access_type)
     return update_result
   }
 
@@ -295,6 +318,11 @@ const OperationFolderServiceClass = class {
     const operation_data = await OperationService.getAllChildFolderInOperationDatas(database, group_seq, folder_seq)
 
     return { allChildFolderList, operation_data }
+  }
+
+  getGroupFolderByDepthZero = async (database, group_seq) => {
+    const model = this.getOperationFolderModel(database)
+    return await model.getGroupFolderByDepthZero(group_seq)
   }
 }
 

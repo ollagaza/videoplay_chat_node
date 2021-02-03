@@ -13,9 +13,10 @@ export default class GroupModel extends MySQLModel {
     this.group_private_fields = ['member_seq', 'content_id', 'media_path', 'start_date', 'reg_date', 'modify_date']
     this.group_with_product_select = [
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
+      'group_info.profile', 'group_info.profile_image_path', 'group_info.search_keyword', 'group_info.group_explain',
       'group_info.group_name', 'group_info.expire_date AS group_expire_date', 'group_info.is_set_group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
-      'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc'
+      'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc', 'group_info.group_question', 'group_info.group_message', 'group_info.group_join_way'
     ]
     this.group_user_list = [
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
@@ -53,12 +54,30 @@ export default class GroupModel extends MySQLModel {
     return group_info
   }
 
+  updateGroup = async (group_info, seq) => {
+    const filter = {
+      seq: seq
+    }
+    const update_params = this.getParams(group_info)
+    return await this.update(filter, update_params)
+  }
+
+  getGroupInfoAllByGroup = async () => {
+    const filter = {
+      group_type: 'G',
+    }
+    return await this.find(filter)
+  }
+
   getGroupInfo = async (group_seq, private_keys = null) => {
     const filter = {
       seq: group_seq
     }
     const query_result = await this.findOne(filter)
-    return new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields)
+    const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
+    rs_data.json_keys.push('profile_image_url')
+    rs_data.json_keys.push('group_image_url')
+    return rs_data;
   }
 
   getMemberSeqbyPersonalGroupInfo = async (member_seq, private_keys = null) => {
@@ -220,6 +239,9 @@ export default class GroupModel extends MySQLModel {
 
     return total_count > 0
   }
+  updateJoinManage = async (filter, params) => {
+    return await this.update(filter, params)
+  }
 
   getOpenGroupList = async (member_seq, search) => {
     const open_group_list_select = [
@@ -248,5 +270,52 @@ export default class GroupModel extends MySQLModel {
     }
     query.orderBy('group_info.group_name', 'asc')
     return query
+  }
+
+  GroupMemberCountSync = async () => {
+    const oKnex = this.database.raw('update group_info, (select group_seq, count(*) member_cnt from group_member where status in (\'Y\', \'P\') group by group_seq) group_mem set member_count = group_mem.member_cnt where group_info.seq = group_mem.group_seq')
+    return oKnex
+  }
+
+  GroupSummaryCommentListByGroupSeqMemberSeq = async (group_seq, member_seq, paging) => {
+    const query = this.database.select('*')
+      .from(
+        this.database.raw(`
+        (
+          SELECT board_comment.seq, board_comment.board_seq as content_seq, board_comment.board_data_seq AS content_data_seq, board_comment.content, board_comment.regist_date, 'board' AS type, board_data.status
+          FROM board_comment
+            INNER JOIN (SELECT seq, status FROM board_data) AS board_data ON (board_comment.board_data_seq = board_data.seq)
+          WHERE group_seq = :group_seq AND member_seq = :member_seq AND board_comment.status = 'Y'
+
+          union
+
+          SELECT operation_comment.seq, operation_data.operation_seq as content_seq, operation_comment.operation_data_seq AS content_data_seq, operation_comment.comment_text, operation_comment.reg_date, 'operation' AS type, operation_data.status
+          FROM (
+            SELECT seq, operation_data_seq, comment_text, reg_date
+            FROM operation_comment
+            WHERE operation_comment.group_seq = :group_seq AND operation_comment.member_seq = :member_seq
+          ) AS operation_comment
+          inner join operation_data
+            ON operation_data.seq = operation_comment.operation_data_seq
+        ) as L
+        `, { group_seq, member_seq })
+      )
+      .orderBy('regist_date', 'desc')
+
+    return this.queryPaginated(query, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
+  }
+
+  group_member_count = async (group_seq, type, count = 1) => {
+    const filter = {
+      seq: group_seq,
+    }
+    const params = {
+      member_count: count,
+    }
+    if (type === 'up') {
+      await this.increment(filter, params);
+    } else if (type === 'down') {
+      await this.decrement(filter, params);
+    }
   }
 }

@@ -7,7 +7,7 @@ import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import PaymentService from '../../service/payment/PaymentService'
 import IamportApiService from '../../service/payment/IamportApiService'
-import group_service from '../../service/member/GroupService'
+import group_service from '../../service/group/GroupService'
 import log from '../../libs/logger'
 
 const routes = Router()

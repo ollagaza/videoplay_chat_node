@@ -95,15 +95,15 @@ export default class OperationFolderModel extends MySQLModel {
     const query = this.database
       .select(this.selectable_fields_with_member)
       .from(this.table_name)
-      .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
-      .where(`${this.table_name}.group_seq`, group_seq)
+      .innerJoin('member', 'member.seq', `operation_folder.member_seq`)
+      .where(`operation_folder.group_seq`, group_seq)
     if (include_current_folder) {
       query.andWhere(function () {
-        this.where('seq', folder_seq)
-        this.orWhereRaw(`JSON_CONTAINS(${this.table_name}.parent_folder_list, '${folder_seq}', '$')`)
+        this.where('operation_folder.seq', folder_seq)
+        this.orWhereRaw(`JSON_CONTAINS(operation_folder.parent_folder_list, '${folder_seq}', '$')`)
       })
     } else {
-      query.orWhereRaw(`JSON_CONTAINS(${this.table_name}.parent_folder_list, '${folder_seq}', '$')`)
+      query.orWhereRaw(`JSON_CONTAINS(operation_folder.parent_folder_list, '${folder_seq}', '$')`)
     }
     return query
   }
@@ -112,10 +112,21 @@ export default class OperationFolderModel extends MySQLModel {
     folder_info.addPrivateKey('seq')
     const update_params = folder_info.toJSON()
     update_params.modify_date = this.database.raw('NOW()')
+    if (update_params.parent_folder_list && typeof update_params.parent_folder_list === 'object') {
+      update_params.parent_folder_list = JSON.stringify(update_params.parent_folder_list)
+    }
     if (update_params.access_users && typeof update_params.access_users === 'object') {
       update_params.access_users = JSON.stringify(update_params.access_users)
     }
     return await this.update({ seq: folder_seq }, update_params)
+  }
+
+  updateOperationFolderAccessType = async (folder_seq, access_type) => {
+    const oKnex = this.database.update({access_type})
+      .from(this.table_name)
+      .where(this.database.raw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}') = 1`))
+
+    return oKnex
   }
 
   moveFolder = async (folder_info, target_folder_info) => {
@@ -135,7 +146,7 @@ export default class OperationFolderModel extends MySQLModel {
     }
 
     const target_folder_parent_seq_update = this.database
-      .update('parent_seq', folder_info.seq)
+      .update({'parent_seq': folder_info.seq, 'access_type': folder_info.access_type})
       .from(this.table_name)
       .where('seq', target_folder_info.seq)
     await target_folder_parent_seq_update
@@ -169,8 +180,10 @@ export default class OperationFolderModel extends MySQLModel {
     }
 
     const include_target_folder_update = this.database
-      .update({ 'target.parent_folder_list': this.database.raw(`JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}'))`),
-        'target.depth': this.database.raw(`JSON_LENGTH(JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}')))`)
+      .update({
+        'target.parent_folder_list': this.database.raw(`JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}'))`),
+        'target.depth': this.database.raw(`JSON_LENGTH(JSON_MERGE(parent.parent_folder_list, JSON_REMOVE(target.parent_folder_list, '${include_target_folder_replace.join('\', \'')}')))`),
+        'target.access_type': folder_info.access_type
       })
       .from({'target': this.table_name})
       .leftOuterJoin({'parent': this.table_name}, 'parent.seq', target_folder_info.seq)
@@ -204,5 +217,8 @@ export default class OperationFolderModel extends MySQLModel {
       status,
       'modify_date': this.database.raw('NOW()')
     }, filters)
+  }
+  getGroupFolderByDepthZero = async (group_seq) => {
+    return await this.find({ group_seq, depth: 0 }, this.selectable_fields, { name: 'sort', direction: 'asc' })
   }
 }

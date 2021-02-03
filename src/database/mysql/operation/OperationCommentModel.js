@@ -191,4 +191,17 @@ export default class OperationCommentModel extends MySQLModel {
     }
     return query_result[0].cnt
   }
+
+  getCommentListByGroupSeqMemberSeq = async (group_seq, member_seq) => {
+    if (!group_seq || !member_seq) {
+      return null;
+    }
+    return this.database.select('*')
+      .from(this.table_name)
+      .where({ group_seq: group_seq, member_seq: member_seq })
+  }
+
+  deleteAllCommentGroupSeqMemberSeq = async (group_seq, member_seq) => {
+    return await this.delete({ group_seq: group_seq, member_seq: member_seq })
+  }
 }

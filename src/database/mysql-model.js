@@ -5,7 +5,7 @@ import log from '../libs/logger'
 
 const LOG_PREFIX = '[ModelObject]'
 
-const queryGenerator = (database, table_name, selectable_fields, filters = null, columns = null, order = null, group = null) => {
+const queryGenerator = (database, table_name, selectable_fields, filters = null, columns = null, order = null, group = null, limit) => {
   let oKnex = null
   if (!columns) {
     oKnex = database.select(selectable_fields)
@@ -27,6 +27,13 @@ const queryGenerator = (database, table_name, selectable_fields, filters = null,
       oKnex.orderBy(order)
     } else {
       oKnex.orderBy(order.name, order.direction)
+    }
+  }
+  if (limit !== null) {
+    if (limit === 1) {
+      oKnex.first()
+    } else {
+      oKnex.limit(limit)
     }
   }
   return oKnex
@@ -189,8 +196,8 @@ export default class MysqlModel {
       .del()
   }
 
-  queryBuilder = (filters = null, columns = null, order = null, group = null) => {
-    return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group)
+  queryBuilder = (filters = null, columns = null, order = null, group = null, limit) => {
+    return queryGenerator(this.database, this.table_name, this.selectable_fields, filters, columns, order, group, limit)
   }
 
   findPaginated = async (filters = null, columns = null, order = null, group = null, pages = null) => {
@@ -198,11 +205,13 @@ export default class MysqlModel {
     return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count, pages.no_paging)
   }
 
-  async queryPaginated (oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n') {
+  async queryPaginated (oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n', start_count = 0) {
     // 강제 형변환
     list_count = parseInt(list_count)
     cur_page = parseInt(cur_page)
     page_count = parseInt(page_count)
+    start_count = parseInt(start_count)
+    const offset_start = parseInt(start_count != 0 ? start_count : list_count)
 
     const use_paging = (no_paging && no_paging.toLowerCase() !== 'y')
 
@@ -211,7 +220,7 @@ export default class MysqlModel {
     if (use_paging) {
       oDataListKnex
         .limit(list_count)
-        .offset(list_count * (cur_page - 1))
+        .offset(offset_start * (cur_page - 1))
     }
 
     // 갯수와 데이터를 동시에 얻기
@@ -224,32 +233,31 @@ export default class MysqlModel {
       cur_page = 1
     }
 
+    const calc_total_count = total_count + (start_count !== 0 ? list_count - start_count : 0)
+
     // 번호 매기기
-    let virtual_no = total_count - (cur_page - 1) * list_count
+    let virtual_no = calc_total_count - (cur_page - 1) * list_count
     for (let i = 0; i < data.length; i++) {
       data[i]['_no'] = virtual_no
       virtual_no--
     }
 
-    const total_page = Math.ceil(total_count / list_count) || 1
+    const total_page = Math.ceil(calc_total_count / list_count) || 1
 
     return {
-      total_count,
+      calc_total_count,
       data,
       total_page,
-      page_navigation: new PageHandler(total_count, total_page, cur_page, page_count, list_count)
+      page_navigation: new PageHandler(calc_total_count, total_page, cur_page, page_count, list_count)
     }
   }
 
-  async find (filters = null, columns = null, order = null, group = null) {
-    return this.queryBuilder(filters, columns, order, group)
+  async find (filters = null, columns = null, order = null, group = null, limit = null) {
+    return this.queryBuilder(filters, columns, order, group, limit)
   }
 
   async findOne (filters = null, columns = null, order = null, group = null) {
-    const oKnex = this.queryBuilder(filters, columns, order, group)
-    oKnex.first()
-
-    return oKnex
+    return this.queryBuilder(filters, columns, order, group, 1)
   }
 
   getTotalCount = async (filters) => {
@@ -369,5 +377,27 @@ export default class MysqlModel {
       return null
     }
     return update_params
+  }
+
+  increment = async (filters, params) => {
+    const oKnex = this.database
+      .increment(params)
+      .from(this.table_name)
+
+    if (filters) {
+      queryWhere(oKnex, filters)
+    }
+    return oKnex
+  }
+
+  decrement = async (filters, params) => {
+    const oKnex = this.database
+      .decrement(params)
+      .from(this.table_name)
+
+    if (filters) {
+      queryWhere(oKnex, filters)
+    }
+    return oKnex
   }
 }

@@ -1,5 +1,5 @@
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
-import GroupInfoService from '../member/GroupService'
+import GroupInfoService from '../group/GroupService'
 import Util from '../../utils/baseutil'
 import ServiceConfig from '../service-config'
 

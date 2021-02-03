@@ -6,7 +6,7 @@ import DBMySQL from '../../../database/knex-mysql'
 import StdObject from '../../../wrapper/std-object'
 import OperationLinkService from '../../../service/operation/OperationLinkService'
 import OperationService from '../../../service/operation/OperationService'
-import GroupService from '../../../service/member/GroupService'
+import GroupService from '../../../service/group/GroupService'
 import Util from '../../../utils/baseutil'
 
 const routes = Router()
