@@ -24,7 +24,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getMyGroupNewNews = async (arr_group_seq) => {
-    const oQuery = this.database.select(['op_data.group_seq as group_seq', 'op_data.seq as target_seq', this.database.raw('\'\' as board_seq'),'op_data.title', this.database.raw('\'operation\' as gubun'), 'mem.user_name as name', 'op_data.reg_date as regist_date'])
+    const oQuery = this.database.select(['op_data.group_seq as group_seq', 'op_data.seq as target_seq', 'op.seq as board_seq', 'op_data.title', this.database.raw('\'operation\' as gubun'), 'mem.user_name as name', 'op_data.reg_date as regist_date'])
       .from('operation as op')
       .innerJoin('operation_data as op_data', (query) => {
         query.on('op_data.operation_seq', 'op.seq')
