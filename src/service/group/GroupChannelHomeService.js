@@ -103,11 +103,14 @@ const GroupChannelHomeServiceClass = class {
       { column: 'admin_sort', order: 'asc' },
       { column: 'total_count', order: 'desc' }
     ]
+    log.debug('getRecommendGroupList', '1')
     let group_seqs = await model.getRecommendGroupList(order, limit)
     if (group_seqs.length === 0) {
+      log.debug('getRecommendGroupList', '2')
       group_seqs = await model.getRecommendGroupListOtherDay(order, limit);
     }
 
+    log.debug('getRecommendGroupList', '3')
     const result = [];
     for (let cnt = 0; cnt < group_seqs.length; cnt++) {
       const group_seq = group_seqs[cnt].group_seq
@@ -122,7 +125,7 @@ const GroupChannelHomeServiceClass = class {
       const board_list = await model.getRecommendBoardList(group_seq, 3)
       result.push({ group_info, operation_list, board_list })
     }
-
+    log.debug('getRecommendGroupList', '4')
     return result
   }
 
