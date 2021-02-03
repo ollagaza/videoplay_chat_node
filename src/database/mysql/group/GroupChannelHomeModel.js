@@ -26,7 +26,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getMyGroupNewNews = async (arr_group_seq) => {
     const oQuery = this.database.select(['op_data.group_seq as group_seq', 'op_data.seq as target_seq', this.database.raw('\'\' as board_seq'),'op_data.title', this.database.raw('\'operation\' as gubun'), 'mem.user_name as name', 'op_data.reg_date as regist_date'])
       .from('operation as op')
-      .innerJoin('operation_data as op_data', 'op_data.operation_seq', 'op.seq')
+      .innerJoin('operation_data as op_data', (query) => {
+        query.on('op_data.operation_seq', 'op.seq')
+        query.andOnVal('op_data.status', 'Y')
+      })
       .innerJoin('member as mem', 'mem.seq', 'op.member_seq')
       .where('op.group_seq', arr_group_seq)
       .andWhere('op_data.reg_date', '>=', this.database.raw('date_sub(now(), interval 7 day)'))
@@ -158,6 +161,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .from('operation_data')
       .where('group_seq', group_seq)
       .andWhere('is_open_video', 1)
+      .andWhere('status', 'Y')
       .andWhere(this.database.raw('date_format(reg_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
 
     if (limit) {
@@ -171,6 +175,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .from('board_data')
       .where('group_seq', group_seq)
       .andWhere('is_open', 1)
+      .andWhere('status', 'Y')
       .andWhere(this.database.raw('date_format(regist_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
 
     if (limit) {

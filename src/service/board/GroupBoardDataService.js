@@ -128,24 +128,23 @@ const GroupBoardDataServiceClass = class {
     const group_member_model = new GroupMemberModel(database)
     let result = null
 
-    const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
-    if (board_data_num) {
-      board_data.board_data_num = board_data_num.board_data_num + 1
-    } else {
-      board_data.board_data_num = 1
-    }
-
-    if (board_data.origin_seq && board_data.depth >= 1) {
-      const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
-      board_data.sort_num = baord_data_sort_num.sort_num + 1
-    } else {
-      board_data.sort_num = 0
-    }
-
     if (board_data.seq) {
       const seq = board_data.seq
       result = await model.UpdateBoardData(seq, board_data)
     } else {
+      const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
+      if (board_data_num) {
+        board_data.board_data_num = board_data_num.board_data_num + 1
+      } else {
+        board_data.board_data_num = 1
+      }
+
+      if (board_data.origin_seq && board_data.depth >= 1) {
+        const baord_data_sort_num = await model.getLastBoardSortNum(board_data.origin_seq)
+        board_data.sort_num = baord_data_sort_num.sort_num + 1
+      } else {
+        board_data.sort_num = 0
+      }
       board_data.content_id = baseutil.getContentId()
       let check_bool = true;
       while (check_bool) {
