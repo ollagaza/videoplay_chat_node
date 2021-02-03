@@ -393,7 +393,7 @@ export default class MysqlModel {
   decrement = async (filters, params) => {
     const decrement_params = {}
     Object.keys(params).forEach((key) => {
-      decrement_params[key] = this.database.raw(`IF(${key} >= 1, ${key} - ?, 0)`, [params[key]])
+      decrement_params[key] = this.database.raw(`IF(${key} >= ?, ${key} - ?, 0)`, [params[key], params[key]])
     })
     const oKnex = this.database
       .update(decrement_params)

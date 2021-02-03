@@ -909,7 +909,34 @@ export default class GroupMemberModel extends MySQLModel {
     } else if (updown_type === 'down') {
       update_result = await this.decrement(filter, update_params)
     }
-    log.debug(this.log_prefix, '[changeMemberGrade]', update_result)
+    log.debug(this.log_prefix, '[setUpdateGroupMemberCounts]', update_result)
+    return update_result
+  }
+  setUpdateGroupMemberCountsWithGroupSeqMemberSeq = async (group_seq, member_seq, update_column, updown_type, count = 1) => {
+    const set_count = count;
+    const filter = {
+      group_seq,
+      member_seq
+    };
+    const update_params = {}
+    if (update_column === 'vid') {
+      update_params.vid_cnt = set_count;
+    } else if (update_column === 'anno') {
+      update_params.anno_cnt = set_count;
+    } else if (update_column === 'vid_comment') {
+      update_params.comment_cnt = set_count;
+    } else if (update_column === 'board_comment') {
+      update_params.board_comment_cnt = set_count;
+    } else if (update_column === 'board_cnt') {
+      update_params.board_cnt = set_count;
+    }
+    let update_result = null;
+    if (updown_type === 'up') {
+      update_result = await this.increment(filter, update_params)
+    } else if (updown_type === 'down') {
+      update_result = await this.decrement(filter, update_params)
+    }
+    log.debug(this.log_prefix, '[setUpdateGroupMemberCountsWithGroupSeqMemberSeq]', update_result)
     return update_result
   }
   getGroupMemberInfo = async (group_seq, member_seq) => {

@@ -214,19 +214,35 @@ const GroupBoardDataServiceClass = class {
 
   DeleteBoardData = async (database, board_seq) => {
     const model = this.getGroupBoardDataModel(database)
+    const board_comment_model = this.getGroupBoardCommentModel(database)
     const target_info = await model.getBoardDataDetail(board_seq)
 
     if (target_info.status === 'Y') {
       const group_member_model = new GroupMemberModel(database)
-      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(target_info.group_seq, target_info.member_seq, 'Y')
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_cnt', 'down')
-
+      await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(target_info.group_seq, target_info.member_seq, 'board_cnt', 'down')
+      const comment_count_list = await board_comment_model.getBoardCommentCountList(board_seq)
+      this.decreaseCommentCount(comment_count_list, target_info.group_seq)
       await model.DeleteBoardData(board_seq)
       await model.updateParentDataSubject(board_seq)
     } else {
       await model.DeleteTempBoardData(board_seq)
     }
     return true
+  }
+
+  decreaseCommentCount = (comment_count_list, group_seq) => {
+    (
+      async (comment_count_list, group_seq) => {
+        const group_member_model = new GroupMemberModel(DBMySQL)
+        for (let i = 0; i < comment_count_list.length; i++) {
+          try {
+            await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_seq, comment_count_list[i].member_seq, 'board_comment', 'down', comment_count_list[i].cnt)
+          } catch (e) {
+            logger.error(this.log_prefix, 'decreaseCommentCount', comment_count_list, group_seq, e)
+          }
+        }
+      }
+    )(comment_count_list, group_seq)
   }
 
   ChangeBoardToNotice = async (database, board_data_seq, notice_num) => {
@@ -344,6 +360,7 @@ const GroupBoardDataServiceClass = class {
     }
     return board_list
   }
+
 
 }
 
