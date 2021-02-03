@@ -103,6 +103,7 @@ const GroupChannelHomeServiceClass = class {
       { column: 'admin_sort', order: 'asc' },
       { column: 'total_count', order: 'desc' }
     ]
+
     let group_seqs = await model.getRecommendGroupList(order, limit)
     if (group_seqs.length === 0) {
       group_seqs = await model.getRecommendGroupListOtherDay(order, limit);
@@ -122,7 +123,6 @@ const GroupChannelHomeServiceClass = class {
       const board_list = await model.getRecommendBoardList(group_seq, 3)
       result.push({ group_info, operation_list, board_list })
     }
-
     return result
   }
 

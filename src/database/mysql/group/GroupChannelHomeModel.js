@@ -162,7 +162,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .where('group_seq', group_seq)
       .andWhere('is_open_video', 1)
       .andWhere('status', 'Y')
-      .andWhere(this.database.raw('date_format(reg_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
+      // .andWhere(this.database.raw('date_format(reg_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
 
     if (limit) {
       oQuery.limit(limit)
@@ -176,7 +176,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .where('group_seq', group_seq)
       .andWhere('is_open', 1)
       .andWhere('status', 'Y')
-      .andWhere(this.database.raw('date_format(regist_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
+      // .andWhere(this.database.raw('date_format(regist_date, \'%y%m%d\') >= date_format(date_sub(now(), interval 7 day), \'%y%m%d\')'))
 
     if (limit) {
       oQuery.limit(limit)
