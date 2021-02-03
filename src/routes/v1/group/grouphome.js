@@ -25,8 +25,9 @@ routes.get('/home/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   const output = new StdObject()
   const treatlist = await GroupChannelHomeService.getTreatmentList(DBMySQL)
   output.add('treatlist', treatlist);
-  const my_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, false)
-  output.add('my_group_list', _.filter(my_group_list, item => item.group_type === 'G' && (item.group_member_status === 'Y' || item.group_member_status === 'P')))
+  let my_group_list = await GroupService.getMemberGroupList(DBMySQL, member_seq, false)
+  my_group_list = _.filter(my_group_list, item => item.group_type === 'G' && (item.group_member_status === 'Y' || item.group_member_status === 'P'))
+  output.add('my_group_list', my_group_list)
   const arr_group_seq = []
   Object.keys(my_group_list).filter(item => my_group_list[item].group_member_status === 'Y' ? arr_group_seq.push(my_group_list[item].group_seq) : null)
   output.add('my_group_new', await GroupChannelHomeService.getMyGroupNewNews(DBMySQL, my_group_list, arr_group_seq))
