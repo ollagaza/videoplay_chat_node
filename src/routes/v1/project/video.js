@@ -5,7 +5,7 @@ import Auth from '../../../middlewares/auth.middleware'
 import Role from '../../../constants/roles'
 import StdObject from '../../../wrapper/std-object'
 import DBMySQL from '../../../database/knex-mysql'
-import GroupService from '../../../service/member/GroupService'
+import GroupService from '../../../service/group/GroupService'
 import StudioService from '../../../service/project/StudioService'
 import { VideoProjectModel } from '../../../database/mongodb/VideoProject'
 

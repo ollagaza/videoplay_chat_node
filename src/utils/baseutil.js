@@ -1223,6 +1223,46 @@ export default {
     })
   },
 
+  'httpRequestFormData': async (options, post_data, is_https = false) => {
+    return new Promise((resolve, reject) => {
+      let req
+      if (is_https) {
+        req = https.request(options)
+      } else {
+        req = http.request(options)
+      }
+
+      post_data.pipe(req);
+
+      req.on('response', res => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          // log.error(res)
+          // return reject(new Error('statusCode=' + res.statusCode));
+        }
+
+        const body = []
+        res.setEncoding('utf8')
+        res.on('data', (chunk) => {
+          body.push(Buffer.from(chunk))
+        })
+        res.on('end', () => {
+          const response_body = Buffer.concat(body).toString()
+          if (res.statusCode < 200 || res.statusCode >= 400) {
+            reject(new StdObject(-1, response_body, res.statusCode))
+          } else {
+            resolve(response_body)
+          }
+        })
+        req.end()
+      })
+
+      req.on('error', err => {
+        log.debug(log_prefix, 'Util.httpRequest', err)
+        reject(err)
+      })
+    })
+  },
+
   'byteToMB': (byte) => {
     return Math.ceil(byte / 1024 / 1024)
   },

@@ -29,45 +29,65 @@ import socketManager from '../../service/socket-manager'
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
 import FTP from '../../libs/ftp'
 import OperationFolderService from '../../service/operation/OperationFolderService'
+import group_service from "../../service/group/GroupService";
+import sendmail from '../../libs/send-mail'
+import SendMailService from "../../service/etc/SendMailService";
+import TempService from "../../service/TempService";
 
 const routes = Router()
 
 const IS_DEV = Config.isDev()
 
-routes.get('/folder_size_sync', Wrap(async (req, res) => {
-  const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
-  res.json(output)
-}))
-
-routes.get('/socket_test', Wrap(async (req, res) => {
-  const member_seq = req.body.member_seq
-  const group_seq = req.body.group_seq
-  const notifyinfo = new NotifyInfo()
-  notifyinfo.seq = 0
-  notifyinfo.notify_type = 'message'
-  notifyinfo.profile_image = null
-  notifyinfo.regist_datetime = new Date()
-  notifyinfo.text = 'test'
-  const send_socket_message_info = {
-    message_info: {
-      title: 'test',
-      message: 'test',
-      notice_type: '',
-      type: 'globalNotice',
-    },
-    notifyinfo: notifyinfo.toJSON(),
-    data: {
-      type: null,
-      action_type: null
-    }
-  }
-
-  // await socketManager.sendToFrontOne(member_seq, send_socket_message_info);
-  await socketManager.sendToFrontAll(send_socket_message_info)
-  res.end()
-}))
-
 if (IS_DEV) {
+
+  routes.get('/cloud_mail_file_test', Wrap(async (req, res) => {
+    const result = await SendMailService.sendMail(DBMySQL, 24, 30)
+    res.json(result)
+  }))
+
+  routes.get('/folder_size_sync', Wrap(async (req, res) => {
+    const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
+    res.json(output)
+  }))
+
+  routes.get('/default_data_setting', Wrap(async (req, res) => {
+    const output = new StdObject()
+    // output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
+    output.add('folder_size_sync', await OperationFolderService.SyncFolderTotalSize(DBMySQL))
+    output.add('board_linkcode_sync', await TempService.updateBoardLinkCodeSync(DBMySQL))
+    output.add('member_treat_code_sync', await TempService.updateMemberTreatCodeSync(DBMySQL))
+    output.add('defaultFolderAndBoardMake', await TempService.defaultFolderAndBoardMake(DBMySQL))
+    res.json(output)
+  }))
+
+  routes.get('/socket_test', Wrap(async (req, res) => {
+    const member_seq = req.body.member_seq
+    const group_seq = req.body.group_seq
+    const notifyinfo = new NotifyInfo()
+    notifyinfo.seq = 0
+    notifyinfo.notify_type = 'message'
+    notifyinfo.profile_image = null
+    notifyinfo.regist_datetime = new Date()
+    notifyinfo.text = 'test'
+    const send_socket_message_info = {
+      message_info: {
+        title: 'test',
+        message: 'test',
+        notice_type: '',
+        type: 'globalNotice',
+      },
+      notifyinfo: notifyinfo.toJSON(),
+      data: {
+        type: null,
+        action_type: null
+      }
+    }
+
+    // await socketManager.sendToFrontOne(member_seq, send_socket_message_info);
+    await socketManager.sendToFrontAll(send_socket_message_info)
+    res.end()
+  }))
+
   routes.get('/video/:project_seq(\\d+)/:scale', Wrap(async (req, res) => {
     const project_seq = req.params.project_seq
     const scale = Util.parseFloat(req.params.scale, 1)
