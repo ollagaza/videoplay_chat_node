@@ -951,4 +951,9 @@ export default class GroupMemberModel extends MySQLModel {
     log.debug(this.log_prefix, '[changeMemberGrade]', update_result)
     return update_result
   }
+
+  setPauseMemberReset = async () => {
+    const oKnex = this.database.raw('UPDATE group_member SET status = \'Y\', pause_edate = null WHERE status = \'p\' AND pause_edate <= now() AND pause_edate IS NOT NULL');
+    return oKnex
+  }
 }

@@ -1462,6 +1462,10 @@ const GroupServiceClass = class {
       await group_model.group_member_count(group_seq, 'down', count);
     }
   }
+  setMemberPauseReset = async () => {
+    const group_member_model = this.getGroupMemberModel()
+    return await group_member_model.setPauseMemberReset()
+  }
 }
 
 const group_service = new GroupServiceClass()
