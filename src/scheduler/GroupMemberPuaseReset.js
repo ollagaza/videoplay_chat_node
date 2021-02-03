@@ -13,7 +13,7 @@ class GroupMemberPuaseReset {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('0 0 * * * *', this.GroupDataCounting)
+        this.current_job = scheduler.scheduleJob('* 0 0,1 * * *', this.GroupDataCounting)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
