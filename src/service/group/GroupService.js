@@ -833,7 +833,8 @@ const GroupServiceClass = class {
   getGroupSummary = async (database, group_seq) => {
     const group_info = await this.getGroupInfoWithProduct(database, group_seq)
     if (group_info.profile_image_path) {
-      group_info.profile_image_path = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
+      group_info.profile_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
+      group_info.json_keys.push('profile_image_url')
     }
     const group_member_model = this.getGroupMemberModel(database)
     const group_summary = await group_member_model.getGroupMemberSummary(group_seq)
