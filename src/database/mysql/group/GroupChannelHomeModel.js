@@ -205,6 +205,21 @@ export default class GroupChannelHomeModel extends MySQLModel {
     await this.create(group_counting)
   }
 
+  updateGroupMemberCnts = async (group_member_counting) => {
+    const result_map = []
+    for (let cnt = 0; cnt < group_member_counting.length; cnt++) {
+      const filter = { group_seq: group_member_counting[cnt].group_seq, member_seq: group_member_counting[cnt].member_seq }
+      const params = group_member_counting[cnt];
+      delete params.group_seq
+      delete params.member_seq
+      const result = await this.database.update(params).from('group_member').where(filter)
+      if (result === 1) {
+        result_map.push(group_member_counting[cnt])
+      }
+    }
+    return result_map;
+  }
+
   checkGroupRecommendCount = async () => {
     return this.findOne(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(now(), \'%y%m%d\')'))
   }
@@ -218,6 +233,16 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .groupBy('group_info.seq')
     return oQuery
   }
+  getOperationGroupMemberCount = async () => {
+    const oQuery = this.database.select(['op.group_seq', 'op.member_seq', this.database.raw('count(op_data.seq) as count')])
+      .from('group_info')
+      .innerJoin('operation_data as op_data', 'op_data.group_seq', 'group_info.seq')
+      .innerJoin('operation as op', 'op.seq', 'op_data.operation_seq')
+      .where('group_info.group_type', 'G')
+      .groupBy('op.group_seq', 'op.member_seq')
+    return oQuery
+  }
+
   getOperationCommentCount = async () => {
     const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op_comment.seq) as count')])
       .from('group_info')
@@ -227,6 +252,15 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .groupBy('group_info.seq')
     return oQuery
   }
+  getOperationGroupMemberCommentCount = async () => {
+    const oQuery = this.database.select(['op_comment.group_seq', 'op_comment.member_seq', this.database.raw('count(op_comment.seq) as count')])
+      .from('group_info')
+      .innerJoin('operation_comment as op_comment', 'op_comment.group_seq', 'group_info.seq')
+      .where('group_info.group_type', 'G')
+      .groupBy('op_comment.group_seq', 'op_comment.member_seq')
+    return oQuery
+  }
+
   getBoardCount = async () => {
     const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(board.seq) as count')])
       .from('group_info')
@@ -236,6 +270,15 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .groupBy('group_info.seq')
     return oQuery
   }
+  getBoardGroupMemberCount = async () => {
+    const oQuery = this.database.select(['board.group_seq', 'board.member_seq', this.database.raw('count(board.seq) as count')])
+      .from('group_info')
+      .innerJoin('board_data as board', 'board.group_seq', 'group_info.seq')
+      .where('group_info.group_type', 'G')
+      .groupBy('board.group_seq', 'board.member_seq')
+    return oQuery
+  }
+
   getBoardCommentCount = async () => {
     const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(b_comment.seq) as count')])
       .from('group_info')
@@ -243,6 +286,14 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .where('group_info.group_type', 'G')
       .andWhere(this.database.raw('date_format(date_sub(b_comment.regist_date, interval 7 day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'))
       .groupBy('group_info.seq')
+    return oQuery
+  }
+  getBoardCommentGroupMemberCount = async () => {
+    const oQuery = this.database.select(['b_comment.group_seq', 'b_comment.member_seq', this.database.raw('count(b_comment.seq) as count')])
+      .from('group_info')
+      .innerJoin('board_comment as b_comment', 'b_comment.group_seq', 'group_info.seq')
+      .where('group_info.group_type', 'G')
+      .groupBy('b_comment.group_seq', 'b_comment.member_seq')
     return oQuery
   }
 }
