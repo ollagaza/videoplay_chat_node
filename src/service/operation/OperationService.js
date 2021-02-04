@@ -576,7 +576,7 @@ const OperationServiceClass = class {
     if (file_type === OperationFileService.TYPE_REFER) {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
     } else if (file_type === OperationFileService.TYPE_FILE) {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory)
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
     } else {
       await Util.uploadByRequest(request, response, file_field_name, media_directory)
     }

@@ -140,10 +140,19 @@ const OperationFileServiceClass = class {
   }
 
   createOperationFileInfo = async (database, operation_info, upload_file_info, request_body) => {
-    // const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-    // log.debug(this.log_prefix, '[createOperationFileInfo]', request_body)
+    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    const file_info = (await new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory, directory_info.media_file)).toJSON()
+    if (file_info.file_type === Constants.IMAGE || file_info.file_type === Constants.VIDEO) {
+      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
+      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
+      await Util.getThumbnail(upload_file_info.path, `${upload_file_info.path}_thumb`, -1, thumb_width, thumb_height)
+      const thumbnail_image_path = `${upload_file_info.path}_thumb`
 
-    const file_info = (await new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory)).toJSON()
+      const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height)
+      if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
+        file_info.thumbnail_path = directory_info.media_file + upload_file_info.new_file_name
+      }
+    }
 
     const operation_file_model = this.getOperationFileModel(database)
     return await operation_file_model.createOperationFile(file_info)
