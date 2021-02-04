@@ -5,10 +5,12 @@ import DBMySQL from "../../database/knex-mysql";
 import TempService from "../../service/TempService";
 import {Router} from "express";
 import group_service from "../../service/group/GroupService";
+import Auth from "../../middlewares/auth.middleware";
+import Role from "../../constants/roles";
 
 const routes = Router()
 
-routes.get('/default_data_setting', Wrap(async (req, res) => {
+routes.get('/default_data_setting', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
   output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
   output.add('folder_size_sync', await OperationFolderService.SyncFolderTotalSize(DBMySQL))
