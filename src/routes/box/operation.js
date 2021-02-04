@@ -36,7 +36,7 @@ routes.post('/start', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   log.d(req, '[user_token_info]', user_token_info)
   const member_seq = user_token_info.getId()
   const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
-  const group_seq = user_token_info.setGroupSeq()
+  const group_seq = user_token_info.getGroupSeq()
   const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
   if (group_member_info.isEmpty()) {
     throw new StdObject(-2, '등록된 회원이 아닙니다.', 403)

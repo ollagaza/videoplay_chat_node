@@ -110,7 +110,7 @@ const OperationCommentServiceClass = class {
     }
 
     const comment_clip_id = request_body.comment_clip_id ? request_body.comment_clip_id : null
-    const clip_comment_count = null;
+    let clip_comment_count = null;
     if (comment_clip_id) {
       clip_comment_count = await this.updateClipCommentCount(database, operation_data_seq, comment_clip_id)
     }

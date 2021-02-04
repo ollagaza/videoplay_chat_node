@@ -1,8 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import log from '../../../libs/logger'
-import logger from "../../../libs/logger";
 import baseutil from "../../../utils/baseutil";
-import board_data from "../../../routes/v1/boards/board_data";
 
 export default class GroupBoardDataModel extends MySQLModel {
   constructor (...args) {
@@ -139,11 +136,11 @@ export default class GroupBoardDataModel extends MySQLModel {
     return this.update({ seq: board_seq }, { view_cnt: this.database.raw('view_cnt + 1') })
   }
 
-  incrementBoardCommentCnt = async (board_seq) => {
-    return this.increment({ seq: board_seq }, { comment_cnt: 1 })
+  incrementBoardCommentCnt = async (board_seq, count = 1) => {
+    return this.increment({ seq: board_seq }, { comment_cnt: count })
   }
-  decrementBoardCommentCnt = async (board_seq, type) => {
-    return this.decrement({ seq: board_seq }, { comment_cnt: 1 })
+  decrementBoardCommentCnt = async (board_seq, count = 1) => {
+    return this.decrement({ seq: board_seq }, { comment_cnt: count })
   }
 
   DeleteBoardData = async (board_seq) => {

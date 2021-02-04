@@ -391,10 +391,13 @@ export default class MysqlModel {
   }
 
   decrement = async (filters, params) => {
+    const decrement_params = {}
+    Object.keys(params).forEach((key) => {
+      decrement_params[key] = this.database.raw(`IF(${key} >= ?, ${key} - ?, 0)`, [params[key], params[key]])
+    })
     const oKnex = this.database
-      .decrement(params)
+      .update(decrement_params)
       .from(this.table_name)
-
     if (filters) {
       queryWhere(oKnex, filters)
     }
