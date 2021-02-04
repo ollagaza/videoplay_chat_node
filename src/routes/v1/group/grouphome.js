@@ -35,6 +35,8 @@ routes.get('/home/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   log.debug('getRecommendGroupList', treatlist)
   if (menu_id === 'all_medical') {
     menu_id = treatlist[0].code;
+  } else {
+    menu_id = { id: 'all_medical', text: '전체보기', icon: '/img/renewal/memuicon/all_medical.png' }
   }
   output.add('category_group_list', await GroupChannelHomeService.getCategoryList(DBMySQL, menu_id))
   output.add('open_operation_top5', await GroupChannelHomeService.getOpenOperationTop5(DBMySQL))
