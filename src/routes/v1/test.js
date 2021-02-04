@@ -49,16 +49,6 @@ if (IS_DEV) {
     res.json(output)
   }))
 
-  routes.get('/default_data_setting', Wrap(async (req, res) => {
-    const output = new StdObject()
-    // output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
-    output.add('folder_size_sync', await OperationFolderService.SyncFolderTotalSize(DBMySQL))
-    output.add('board_linkcode_sync', await TempService.updateBoardLinkCodeSync(DBMySQL))
-    output.add('member_treat_code_sync', await TempService.updateMemberTreatCodeSync(DBMySQL))
-    output.add('defaultFolderAndBoardMake', await TempService.defaultFolderAndBoardMake(DBMySQL))
-    res.json(output)
-  }))
-
   routes.get('/socket_test', Wrap(async (req, res) => {
     const member_seq = req.body.member_seq
     const group_seq = req.body.group_seq
