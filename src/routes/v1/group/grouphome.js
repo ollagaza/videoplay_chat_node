@@ -59,4 +59,11 @@ routes.get('/group_search', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
   res.json(output)
 }))
 
+routes.get('/remote/group_member/update/counts', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  output.adds(await GroupChannelHomeService.GroupMemberDataCounting())
+  res.json(output)
+}))
+
 export default routes
