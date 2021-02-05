@@ -14,7 +14,7 @@ export default class OperationFileModel extends MySQLModel {
   }
 
   getOperationFileList = async (operation_seq) => {
-    return this.find({operation_seq}, this.selectable_fields, [{ column: 'file_path', order: 'asc' }, { column: 'file_name', order: 'asc' }])
+    return this.find({operation_seq}, this.selectable_fields, [{ column: 'directory', order: 'asc' }, { column: 'file_name', order: 'asc' }])
   }
 
   deleteFile = async (file_seq, operation_seq) => {

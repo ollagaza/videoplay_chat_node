@@ -1,5 +1,5 @@
 import log from '../../libs/logger'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../service-config'
 import CloudFileInfo from '../../wrapper/file/CloudFileInfo'
 import Constants from '../../constants/constants'

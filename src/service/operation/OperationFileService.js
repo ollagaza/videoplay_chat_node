@@ -1,5 +1,5 @@
 import ServiceConfig from '../../service/service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 import OperationService from '../../service/operation/OperationService'
@@ -141,17 +141,30 @@ const OperationFileServiceClass = class {
 
   createOperationFileInfo = async (database, operation_info, upload_file_info, request_body) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-    const file_info = (await new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory, directory_info.media_file)).toJSON()
-    if (file_info.file_type === Constants.IMAGE || file_info.file_type === Constants.VIDEO) {
+    log.debug(this.log_prefix, '[createOperationFileInfo]', 'request_body')
+    log.debug(request_body)
+    const file_info = new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory, directory_info.media_file).toJSON()
+    if (!file_info.file_name) {
+      throw new StdObject(-1, '파일을 업로드에 실패하였습니다.', 400)
+    }
+    const media_info = await Util.getMediaInfo(upload_file_info.path)
+    if (!media_info || !media_info.media_info.width || !media_info.media_info.height) return false
+    if (media_info.media_type === Constants.VIDEO || media_info.media_type === Constants.IMAGE) {
+      file_info.width = media_info.media_info.width
+      file_info.height = media_info.media_info.height
+
       const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
       const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
-      await Util.getThumbnail(upload_file_info.path, `${upload_file_info.path}_thumb`, -1, thumb_width, thumb_height)
-      const thumbnail_image_path = `${upload_file_info.path}_thumb`
-
+      const thumbnail_image_path = `${upload_file_info.path}_thumb.jpg`
       const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height)
+      log.debug(this.log_prefix, '[createOperationFileInfo]', `upload_file_info.path: ${upload_file_info.path}, thumbnail_image_path: ${thumbnail_image_path}, get_thumbnail_result:`, get_thumbnail_result)
+
       if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
-        file_info.thumbnail_path = directory_info.media_file + upload_file_info.new_file_name
+        file_info.thumbnail_path = directory_info.media_file + `${upload_file_info.new_file_name}_thumb.jpg`
       }
+      file_info.file_type = media_info.media_type
+    } else {
+      file_info.file_type = Util.getMimeType(upload_file_info.path, file_info.file_name)
     }
 
     const operation_file_model = this.getOperationFileModel(database)

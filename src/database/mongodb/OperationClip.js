@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import log from '../../libs/logger'
 
 const Schema = mongoose.Schema
@@ -25,6 +25,8 @@ const getFieldInfos = () => {
     comment_count: { type: Number, default: 0, require: false, message: '댓글 개수가 없습니다.' },
     type: { type: String, default: 'operation', require: false, message: '클립 유형이 없습니다.' },
     full_path: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
+    directory: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
+    file_name: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   }

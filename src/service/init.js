@@ -7,7 +7,7 @@ import VacsScheduler from '../scheduler/VacsScheduler'
 import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler";
 import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDeleteScheduler";
 import MongoDataService from './common/MongoDataService'
-import Util from '../utils/baseutil'
+import Util from '../utils/Util'
 import log from '../libs/logger'
 import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
 import GroupInfoMemberCountSync from "../scheduler/GroupInfoMemberCountSync";

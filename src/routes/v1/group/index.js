@@ -1,13 +1,12 @@
 import _ from "lodash";
 import { Router } from 'express'
 import Auth from '../../../middlewares/auth.middleware'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import log from '../../../libs/logger'
 import Role from '../../../constants/roles'
 import Wrap from '../../../utils/express-async'
 import StdObject from '../../../wrapper/std-object'
 import DBMySQL from '../../../database/knex-mysql'
-import baseutil from "../../../utils/baseutil";
 import GroupService from '../../../service/group/GroupService'
 import OperationFolderService from "../../../service/operation/OperationFolderService";
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
@@ -259,7 +258,7 @@ routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_
   res.json(output)
 }))
 
-routes.post('/update_group', baseutil.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const params = JSON.parse(req.body.params)
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'group_profile_img') {

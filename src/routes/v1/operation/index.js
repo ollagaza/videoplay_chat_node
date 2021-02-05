@@ -12,7 +12,7 @@ import OperationClipService from '../../../service/operation/OperationClipServic
 import log from '../../../libs/logger'
 import OperationFileService from '../../../service/operation/OperationFileService'
 import OperationStorageModel from '../../../database/mysql/operation/OperationStorageModel'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import OperationLinkService from '../../../service/operation/OperationLinkService'
 
 const routes = Router()
@@ -171,6 +171,24 @@ routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wr
   output.add('is_link', base_info.is_link)
   output.add('is_editor_link', base_info.is_editor_link)
   output.add('is_download_link', base_info.is_download_link)
+  res.json(output)
+}))
+
+routes.get('/:api_type/:api_key/view/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const base_info = await getBaseInfo(req, true)
+  const output = await OperationService.getOperationDataViewFile(base_info.operation_seq, base_info.group_seq)
+  output.add('is_link', base_info.is_link)
+  output.add('is_editor_link', base_info.is_editor_link)
+  output.add('is_download_link', base_info.is_download_link)
+  res.json(output)
+}))
+
+routes.get('/:api_type/:api_key/mode', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const base_info = await getBaseInfo(req, true, false, true)
+  const mode_info = await OperationService.getOperationMode(base_info.operation_seq)
+  const output = new StdObject()
+  output.adds(mode_info)
   res.json(output)
 }))
 
@@ -404,10 +422,9 @@ routes.put('/:api_type/:api_key/thumbnail', Auth.isAuthenticated(Role.LOGIN_USER
 routes.get('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_info } = await getBaseInfo(req, true, false, true)
   const file_type = req.params.file_type
-  const { video_file_list, refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, file_type)
+  const file_list = await OperationFileService.getFileList(DBMySQL, operation_info, file_type)
   const output = new StdObject()
-  output.add('video_file_list', video_file_list)
-  output.add('refer_file_list', refer_file_list)
+  output.adds(file_list)
   res.json(output)
 }))
 

@@ -4,7 +4,7 @@ import PaymentModel from '../../database/mysql/payment/PaymentModel'
 import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel'
 import Payment_SubscribeModel from '../../database/mysql/payment/Payment_SubscribeModel'
 import Payment_Member_Result_Model from '../../database/mysql/payment/Payment_Member_Result_Model'
-import BaseUtil from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 
 const PaymentServiceClass = class {

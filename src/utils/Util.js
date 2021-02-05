@@ -41,7 +41,7 @@ if ('/' === '/') {
   PATH_EXP = new RegExp(/\\/, 'g')
 }
 
-const log_prefix = '[baseutil]'
+const log_prefix = '[Util]'
 
 const removePathSEQ = (media_path) => {
   return media_path.replace(/SEQ.*$/i, '')
@@ -793,6 +793,11 @@ const getFileType = async (file_path, file_name) => {
       break
   }
 
+  return getMimeType(file_path, file_name)
+}
+
+const getMimeType = (file_path, file_name) => {
+  const file_ext = getFileExt(file_name)
   let mime_type = mime.lookup(file_path)
   log.debug(log_prefix, '[getFileType]', mime_type)
   if (!mime_type || isEmpty(mime_type)) {
@@ -1308,8 +1313,12 @@ export default {
   'getVideoDuration': getVideoDuration,
   'getThumbnail': getThumbnail,
 
-  'isNull': (value) => {
-    return value === null || value === undefined
+  'isNull': (value, check_str_null = true) => {
+    if (value === null || value === undefined) return true;
+    if (check_str_null) {
+      return value === 'null' || value === 'undefined'
+    }
+    return false
   },
   'getPayload': (data, fields, set_modify_date = true, allow_blank = true, allow_empty_array = true) => {
     const model = {}
@@ -1349,6 +1358,7 @@ export default {
   getDirectoryName,
   getRandomNumber,
   getFileType,
+  getMimeType,
   uploadImageFile,
   sshExec,
 

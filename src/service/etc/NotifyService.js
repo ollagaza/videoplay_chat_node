@@ -1,6 +1,6 @@
 import NotifyInfo from '../../wrapper/common/NotifyInfo'
 import GroupInfoService from '../group/GroupService'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../service-config'
 
 const NotifyServiceClass = class {

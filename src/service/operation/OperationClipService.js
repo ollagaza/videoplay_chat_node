@@ -1,5 +1,5 @@
 import DBMySQL from '../../database/knex-mysql'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import log from '../../libs/logger'
 
 import { OperationClipModel } from '../../database/mongodb/OperationClip'

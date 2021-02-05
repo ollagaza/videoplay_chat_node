@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import logger from '../../libs/logger'
 
 const Schema = mongoose.Schema

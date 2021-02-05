@@ -1,7 +1,7 @@
 import MySQLModel from '../mysql-model'
 import ServiceErrorInfo from '../../wrapper/service/service-error-info'
 import SendMail from '../../libs/send-mail'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../../service/service-config'
 
 export default class ServiceErrorModel extends MySQLModel {

@@ -1,6 +1,6 @@
 import DBMySQL from '../../database/knex-mysql'
 import OperationCommentModel from '../../database/mysql/operation/OperationCommentModel'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../../service/service-config'
 import striptags from 'striptags'

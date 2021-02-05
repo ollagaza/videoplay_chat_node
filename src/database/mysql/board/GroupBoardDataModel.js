@@ -1,5 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import baseutil from "../../../utils/baseutil";
+import Util from "../../../utils/Util";
 
 export default class GroupBoardDataModel extends MySQLModel {
   constructor (...args) {
@@ -55,7 +55,7 @@ export default class GroupBoardDataModel extends MySQLModel {
 
   getBoardDataPagingList = async (group_seq, board_seq, paging, order) => {
     let oKnex = null;
-    if (baseutil.parseInt(paging.cur_page) === 1) {
+    if (Util.parseInt(paging.cur_page) === 1) {
       oKnex = this.database.select('*')
         .from(this.table_name)
         .where('group_seq', group_seq)

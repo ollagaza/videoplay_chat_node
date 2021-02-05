@@ -1,5 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import log from '../../../libs/logger'
 import Constant from '../../../constants/constants'
 
@@ -359,5 +359,8 @@ export default class OperationModel extends MySQLModel {
   }
   getTargetListByStatusD = async (group_seq) => {
     return this.find({ group_seq, 'status': 'D' })
+  }
+  getOperationMode = async (operation_seq) => {
+    return this.findOne({ seq: operation_seq}, ['mode'])
   }
 }

@@ -3,7 +3,7 @@ import querystring from 'querystring'
 import DBMySQL from '../../database/knex-mysql'
 import ServiceConfig from '../../service/service-config'
 import Role from '../../constants/roles'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 import GroupService from '../group/GroupService'
@@ -103,7 +103,7 @@ const OperationServiceClass = class {
         await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info)
         await OperationMetadataModel.createOperationMetadata(operation_info, request_body.meta_data)
         if (operation_info.operation_type) {
-          await UserDataModel.updateByMemberSeq(member_info.seq, { operation_type: operation_info.operation_type })
+          await UserDataModel.updateByMemberSeq(member_info.seq, { operation_type: operation_info.operation_type, operation_mode: operation_info.mode })
         }
       } catch (error) {
         log.error(this.log_prefix, '[createOperation]', 'create metadata error', error)
@@ -576,7 +576,7 @@ const OperationServiceClass = class {
     if (file_type === OperationFileService.TYPE_REFER) {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
     } else if (file_type === OperationFileService.TYPE_FILE) {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId(), true)
     } else {
       await Util.uploadByRequest(request, response, file_field_name, media_directory)
     }
@@ -599,10 +599,9 @@ const OperationServiceClass = class {
     } else {
       upload_seq = await OperationFileService.createVideoFileInfo(null, operation_info, upload_file_info, false)
     }
-
-    if (!upload_seq) {
-      throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
-    }
+    // if (!upload_seq) {
+    //   throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
+    // }
     return upload_seq
   }
 
@@ -817,6 +816,11 @@ const OperationServiceClass = class {
     return video_path + operation_info.media_info.video_file_name
   }
 
+  getOperationMode = async (operation_seq) => {
+    const operation_model = this.getOperationModel()
+    return operation_model.getOperationMode(operation_seq)
+  }
+
   getOperationDataView = async (operation_seq, group_seq) => {
     const options = {
       index_list: true,
@@ -824,6 +828,18 @@ const OperationServiceClass = class {
       writer_info: true,
       refer_file_list: true,
       import_media_info: true,
+    }
+    return this.getOperationDataInfo(operation_seq, group_seq, options)
+  }
+
+  getOperationDataViewFile = async (operation_seq, group_seq) => {
+    const options = {
+      operation_file_list: false,
+      index_list: false,
+      clip_list: true,
+      writer_info: true,
+      refer_file_list: true,
+      import_media_info: false,
     }
     return this.getOperationDataInfo(operation_seq, group_seq, options)
   }
@@ -848,6 +864,12 @@ const OperationServiceClass = class {
     output.add('is_writer', operation_info.group_seq === group_seq)
 
     if (options) {
+      log.debug(this.log_prefix, '[getOperationDataInfo]', 'options', options)
+      if (options.operation_file_list) {
+        const { operation_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_FILE)
+        output.add('operation_file_list', operation_file_list)
+      }
+
       if (options.index_list) {
         const index_list = await this.getVideoIndexList(operation_seq)
         output.add('index_list', index_list)

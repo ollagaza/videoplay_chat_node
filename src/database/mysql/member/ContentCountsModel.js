@@ -1,5 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import log from '../../../libs/logger'
 
 export default class ContentCountsModel extends MySQLModel {

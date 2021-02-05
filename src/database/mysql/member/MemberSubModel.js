@@ -1,6 +1,6 @@
 import ServiceConfig from '../../../service/service-config'
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import MemberInfo from '../../../wrapper/member/MemberInfo'
 import MongoDataService from '../../../service/common/MongoDataService'
 

@@ -1,5 +1,5 @@
 import request from 'request-promise'
-import util from '../../utils/baseutil'
+import util from '../../utils/Util'
 import Service_Config from '../service-config'
 import StdObject from '../../wrapper/std-object'
 
