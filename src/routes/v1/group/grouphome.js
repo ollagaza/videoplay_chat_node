@@ -33,10 +33,16 @@ routes.get('/home/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   output.add('my_group_new', await GroupChannelHomeService.getMyGroupNewNews(DBMySQL, my_group_list, arr_group_seq))
   output.add('recommend_group_list', await GroupChannelHomeService.getRecommendGroupList(DBMySQL, 3))
   log.debug('getRecommendGroupList', treatlist)
-  if (menu_id === 'all_medical') {
+  if (treatlist.length !== 0 && menu_id === 'all_medical') {
     menu_id = treatlist[0].code;
+  } else {
+    menu_id = null
   }
-  output.add('category_group_list', await GroupChannelHomeService.getCategoryList(DBMySQL, menu_id))
+  if (menu_id) {
+    output.add('category_group_list', await GroupChannelHomeService.getCategoryList(DBMySQL, menu_id))
+  } else {
+    output.add('category_group_list', null)
+  }
   output.add('open_operation_top5', await GroupChannelHomeService.getOpenOperationTop5(DBMySQL))
   output.add('open_board_top5', await GroupChannelHomeService.getOpenBoardTop5(DBMySQL))
   res.json(output)
@@ -56,6 +62,13 @@ routes.get('/group_search', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
   const member_seq = token_info.getId()
   const output = new StdObject()
   output.adds(await GroupChannelHomeService.getSearchResult(DBMySQL, req, member_seq))
+  res.json(output)
+}))
+
+routes.get('/remote/group_member/update/counts', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  output.adds(await GroupChannelHomeService.GroupMemberDataCounting())
   res.json(output)
 }))
 
