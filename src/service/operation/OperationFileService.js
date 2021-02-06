@@ -170,7 +170,7 @@ const OperationFileServiceClass = class {
       const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
       const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
       const thumbnail_image_path = `${upload_file_info.path}_thumb.jpg`
-      const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height)
+      const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height, media_info)
 
       if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
         file_info.thumbnail_path = directory_info.media_file + `${upload_file_info.new_file_name}_thumb.jpg`

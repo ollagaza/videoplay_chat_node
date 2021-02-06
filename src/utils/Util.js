@@ -620,13 +620,19 @@ const getImageScaling = async (origin_path, scaling_path = null, scaling_type = 
   return await execute(command)
 }
 
-const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1) => {
+const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1, media_info = null) => {
   let filter = ''
   let time_option = ''
   if (width > 0 && height > 0) {
-    const dimension = await getVideoDimension(origin_path)
-    if (!dimension.success) {
-      return dimension
+    let dimension = null
+    if (media_info) {
+      dimension.width = media_info.media_info.width
+      dimension.height = media_info.media_info.height
+    } else {
+      dimension = await getVideoDimension(origin_path)
+      if (!dimension.success) {
+        return dimension
+      }
     }
 
     const w_ratio = dimension.width / width
