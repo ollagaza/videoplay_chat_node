@@ -68,9 +68,12 @@ const OperationFileServiceClass = class {
     return this.getFileInfoList(result_list)
   }
 
-  getOperationFileList = async (database, operation_seq) => {
+  getOperationFileList = async (database, operation_seq, wrap_result = true) => {
     const operation_file_model = this.getOperationFileModel(database)
     const result_list = await operation_file_model.getOperationFileList(operation_seq)
+    if (!wrap_result) {
+      return result_list
+    }
     const file_list = []
     if (result_list) {
       for (let i = 0; i < result_list.length; i++) {
@@ -118,6 +121,19 @@ const OperationFileServiceClass = class {
     }
   }
 
+  copyOperationFileInfo = async (database, operation_seq, operation_file_list) => {
+    const operation_file_model = this.getOperationFileModel(database)
+
+    for (let cnt = 0; cnt < operation_file_list.length; cnt++) {
+      const operation_file = operation_file_list[cnt]
+
+      delete operation_file.seq
+      delete operation_file.reg_date
+      operation_file.operation_seq = operation_seq
+      await operation_file_model.createOperationFile(operation_file)
+    }
+  }
+
   createVideoFileInfo = async (database, operation_info, upload_file_info, create_thumbnail = false) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const media_info = await Util.getMediaInfo(upload_file_info.path)
@@ -141,11 +157,9 @@ const OperationFileServiceClass = class {
 
   createOperationFileInfo = async (database, operation_info, upload_file_info, request_body) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-    log.debug(this.log_prefix, '[createOperationFileInfo]', 'request_body')
-    log.debug(request_body)
     const file_info = new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory, directory_info.media_file).toJSON()
     if (!file_info.file_name) {
-      throw new StdObject(-1, '파일을 업로드에 실패하였습니다.', 400)
+      throw new StdObject(-1, '파일을 업로드에 실패하였습니다.', 400, file_info)
     }
     const media_info = await Util.getMediaInfo(upload_file_info.path)
     if (!media_info || !media_info.media_info.width || !media_info.media_info.height) return false
@@ -157,7 +171,6 @@ const OperationFileServiceClass = class {
       const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
       const thumbnail_image_path = `${upload_file_info.path}_thumb.jpg`
       const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height)
-      log.debug(this.log_prefix, '[createOperationFileInfo]', `upload_file_info.path: ${upload_file_info.path}, thumbnail_image_path: ${thumbnail_image_path}, get_thumbnail_result:`, get_thumbnail_result)
 
       if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
         file_info.thumbnail_path = directory_info.media_file + `${upload_file_info.new_file_name}_thumb.jpg`
@@ -218,15 +231,15 @@ const OperationFileServiceClass = class {
   }
 
   deleteOperationFileList = async (database, operation_info, file_seq_list) => {
-    const video_file_model = this.getVideoFileList(database)
-    const delete_file_list = await video_file_model.deleteSelectedFiles(file_seq_list)
+    const operation_file_model = this.getOperationFileModel(database)
+    const delete_file_list = await operation_file_model.deleteSelectedFiles(file_seq_list)
 
     if (!delete_file_list) {
       return false
     }
-    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-    const file_base_path = directory_info.media_video
-    this.deleteFiles(file_base_path, delete_file_list)
+    // const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    // const file_base_path = directory_info.media_video
+    // this.deleteFiles(file_base_path, delete_file_list)
 
     return true
   }

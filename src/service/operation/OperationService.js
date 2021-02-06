@@ -28,6 +28,7 @@ import iconv from 'iconv-lite'
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 import OperationCommentService from "./OperationCommentService";
+import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 
 const OperationServiceClass = class {
   constructor () {
@@ -243,6 +244,13 @@ const OperationServiceClass = class {
 
       if (is_success) {
         await this.createOperationDirectory(operation_info)
+
+        const origin_operation_file_list = await OperationFileService.getOperationFileList(DBMySQL, origin_operation_seq, false)
+        if (origin_operation_file_list && origin_operation_file_list.length) {
+          await OperationFileService.copyOperationFileInfo(DBMySQL, operation_seq, origin_operation_file_list)
+        }
+        result.copy_operation_file_info = true
+
         const origin_refer_file_list = await OperationFileService.getReferFileList(DBMySQL, origin_storage_seq, false)
         if (origin_refer_file_list) {
           await OperationFileService.copyReferFileInfo(DBMySQL, storage_seq, origin_refer_file_list, operation_info)
@@ -275,8 +283,11 @@ const OperationServiceClass = class {
         }
         result.copy_clip_list = true
 
-        result.operation_data_seq = await OperationDataService.copyOperationDataByRequest(operation_info, origin_operation_seq, copy_type, modify_operation_data, mento_group_seq)
+        const { operation_data_seq, origin_data_seq } = await OperationDataService.copyOperationDataByRequest(operation_info, origin_operation_seq, copy_type, modify_operation_data, mento_group_seq)
+        result.operation_data_seq = operation_data_seq
         result.copy_operation_data = true
+
+        await OperationCommentService.copyComment(operation_data_seq, origin_data_seq, group_seq)
 
         const origin_directory_info = this.getOperationDirectoryInfo(origin_operation_info)
 
@@ -361,38 +372,55 @@ const OperationServiceClass = class {
     return output
   }
 
+  deleteOperationByList = (group_seq, request_data) => {
+    (
+      async (group_seq, request_data) => {
+        try {
+          let operation_list = null
+          let folder_operation_list = null
+          if (request_data.operation_folder_list) {
+            folder_operation_list = await OperationFolderService.deleteChildFolderAndRtnOperationList(DBMySQL, group_seq, request_data.operation_folder_list)
+            operation_list = folder_operation_list.operation_data
+          }
+          if (request_data.operation_info_list) {
+            if (operation_list) {
+              operation_list = operation_list.concat(request_data.operation_info_list)
+            } else {
+              operation_list = request_data.operation_info_list
+            }
+          }
+
+          if (operation_list && operation_list.length > 0) {
+            for (let cnt = 0; cnt < operation_list.length; cnt++) {
+              await OperationService.deleteOperationAndUpdateStorage(operation_list[cnt])
+            }
+          }
+          if (folder_operation_list) {
+            await OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, folder_operation_list.allChildFolderList)
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[deleteOperationBySeqList]', group_seq, request_data, error)
+        }
+      }
+    )(group_seq, request_data)
+  }
+
   deleteOperation = async (database, token_info, operation_seq) => {
     const operation_info = await this.getOperationInfo(database, operation_seq, token_info, true, false)
     await this.deleteOperationAndUpdateStorage(operation_info)
-    this.onOperationDeleteComplete(operation_info)
     return true
   }
 
   deleteOperationAndUpdateStorage = async (operation_info) => {
     const operation_model = this.getOperationModel()
     await operation_model.setOperationStatusDelete(operation_info.seq)
+    await OperationDataService.changeStatus(operation_info.seq, 'D')
     await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, 0);
     await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
 
     await this.deleteMongoDBData(operation_info.seq)
-
+    this.onOperationDeleteComplete(operation_info)
     return true
-  }
-
-  deleteOperationByStatus = async (group_seq) => {
-    const operation_model = this.getOperationModel(DBMySQL)
-    const remove_operation_list = await operation_model.getTargetListByStatusD(group_seq);
-
-    for (let cnt = 0; cnt < remove_operation_list.length; cnt++) {
-      await this.onOperationDeleteComplete(remove_operation_list[cnt])
-      await operation_model.deleteOperation(remove_operation_list[cnt].seq)
-    }
-    return true
-  }
-
-  getTargetListByStatusD = async () => {
-    const operation_model = this.getOperationModel(DBMySQL)
-    return await operation_model.getTargetListByStatusD()
   }
 
   onOperationDeleteComplete = (operation_info) => {
@@ -401,14 +429,18 @@ const OperationServiceClass = class {
         try {
           let delete_link_file = false
           let delete_origin = false
+          let has_copy = false
           const operation_model = this.getOperationModel()
           if (operation_info.origin_seq) {
             const has_origin = await operation_model.hasOrigin(operation_info.origin_seq)
             delete_origin = !has_origin
             delete_link_file = true
           } else {
-            const has_copy = await operation_model.hasCopy(operation_info.seq)
+            has_copy = await operation_model.hasCopy(operation_info.seq)
             delete_link_file = !has_copy
+          }
+          if (!has_copy) {
+            await operation_model.deleteOperation(operation_info.seq)
           }
 
           await this.deleteOperationFiles(operation_info, delete_link_file, delete_origin)
@@ -445,6 +477,9 @@ const OperationServiceClass = class {
         await Util.deleteDirectory(directory_info.temp)
         await Util.deleteDirectory(directory_info.other)
         await Util.deleteDirectory(directory_info.origin)
+        if (!ServiceConfig.isVacs()) {
+          await Util.deleteDirectory(directory_info.file)
+        }
       }
     }
   }
@@ -662,7 +697,9 @@ const OperationServiceClass = class {
   onUploadComplete = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === 'file') {
-      await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
+      if (!ServiceConfig.isVacs()) {
+        await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
+      }
     }
     await this.updateStorageSize(operation_info)
   }

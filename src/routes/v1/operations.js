@@ -89,40 +89,9 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wr
 }))
 
 routes.delete('/delete_operations', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const { token_info, group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const output = new StdObject()
-  const data = req.body.operations
-  let folder_operation_list = null
-  let operation_list = [];
-
-  if (data.operation_folder_list) {
-    folder_operation_list = await OperationFolderService.deleteChildFolderAndRtnOperationList(DBMySQL, group_seq, data.operation_folder_list)
-
-    if (operation_list.length > 0) {
-      operation_list = operation_list.concat(folder_operation_list.operation_data)
-    } else {
-      operation_list = folder_operation_list.operation_data
-    }
-  }
-  if (data.operation_info_list) {
-    if (operation_list.length > 0) {
-      operation_list = operation_list.concat(data.operation_info_list)
-    } else {
-      operation_list = data.operation_info_list
-    }
-  }
-
-  if (operation_list.length > 0) {
-    for (let cnt = 0; cnt < operation_list.length; cnt++) {
-      await OperationService.deleteOperationAndUpdateStorage(operation_list[cnt])
-    }
-  }
-
-  res.json(output)
-  if (folder_operation_list) {
-    OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, folder_operation_list.allChildFolderList)
-  }
-  OperationService.deleteOperationByStatus(group_seq);
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  OperationService.deleteOperationByList(group_seq, req.body.operations)
+  res.json(new StdObject())
 }))
 
 routes.get('/:operation_seq(\\d+)/indexes', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {

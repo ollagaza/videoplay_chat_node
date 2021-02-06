@@ -125,7 +125,7 @@ operation_clip_schema.statics.deleteByOperationSeq = function (operation_seq) {
   return this.deleteMany({ operation_seq: operation_seq }, { 'multi': true })
 }
 
-operation_clip_schema.statics.createPhase = function (operation_info, phase_desc) {
+operation_clip_schema.statics.createPhase = function (operation_info, phase_desc, phase_type = null) {
   const payload = {
     operation_seq: operation_info.seq,
     group_seq: operation_info.group_seq,
@@ -135,6 +135,9 @@ operation_clip_schema.statics.createPhase = function (operation_info, phase_desc
     is_phase: true,
     created_date: Date.now(),
     modify_date: Date.now()
+  }
+  if (phase_type) {
+    payload.type = phase_type
   }
   const model = new this(payload)
   return model.save()
