@@ -626,13 +626,15 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
   if (width > 0 && height > 0) {
     let dimension = null
     if (media_info) {
-      dimension.width = media_info.media_info.width
-      dimension.height = media_info.media_info.height
+      dimension = {
+        width: media_info.media_info.width,
+        height: media_info.media_info.height
+      }
     } else {
       dimension = await getVideoDimension(origin_path)
-      if (!dimension.success) {
-        return dimension
-      }
+    }
+    if (dimension.width <= 0 || dimension.height <= 0) {
+      return { success: false }
     }
 
     const w_ratio = dimension.width / width
