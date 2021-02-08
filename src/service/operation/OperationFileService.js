@@ -1,3 +1,4 @@
+import path from 'path'
 import ServiceConfig from '../../service/service-config'
 import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
@@ -167,13 +168,16 @@ const OperationFileServiceClass = class {
       file_info.width = media_info.media_info.width
       file_info.height = media_info.media_info.height
 
+      const upload_file_path = path.parse(upload_file_info.path)
+      const ext = upload_file_path.ext === '.png' ? '.png' : '.jpg';
       const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
       const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
-      const thumbnail_image_path = `${upload_file_info.path.split('.').slice(0, -1).join('.')}_thumb.jpg`
+      const thumb_file_name = `${upload_file_path.name}_thumb${upload_file_path.ext}`
+      const thumbnail_image_path = `${upload_file_path.dir}/${thumb_file_name}`
       const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height, media_info)
 
       if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
-        file_info.thumbnail_path = directory_info.media_file + `${upload_file_info.new_file_name.split('.').slice(0, -1).join('.')}_thumb.jpg`
+        file_info.thumbnail_path = directory_info.media_file + thumb_file_name
       }
       file_info.file_type = media_info.media_type
     } else {
