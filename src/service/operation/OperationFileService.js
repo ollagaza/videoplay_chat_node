@@ -1,13 +1,15 @@
+import path from 'path'
 import ServiceConfig from '../../service/service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 import OperationService from '../../service/operation/OperationService'
 import CloudFileService from '../../service/cloud/CloudFileService'
-import NaverObjectStorageService from '../../service/storage/naver-object-storage-service'
 import ReferFileModel from '../../database/mysql/file/ReferFileModel'
 import VideoFileModel from '../../database/mysql/file/VideoFileModel'
+import OperationFileModel from '../../database/mysql/operation/OperationFileModel'
 import FileInfo from '../../wrapper/file/FileInfo'
+import OperationFileInfo from '../../wrapper/operation/OperationFileInfo'
 import Constants from '../../constants/constants'
 import StdObject from '../../wrapper/std-object'
 
@@ -16,6 +18,7 @@ const OperationFileServiceClass = class {
     this.log_prefix = '[OperationFileService]'
     this.TYPE_VIDEO = 'video'
     this.TYPE_REFER = 'refer'
+    this.TYPE_FILE = 'file'
     this.TYPE_ALL = 'all'
   }
 
@@ -33,19 +36,25 @@ const OperationFileServiceClass = class {
     return new VideoFileModel(DBMySQL)
   }
 
+  getOperationFileModel = (database = null) => {
+    if (database) {
+      return new OperationFileModel(database)
+    }
+    return new OperationFileModel(DBMySQL)
+  }
+
   getFileList = async (database, operation_info, file_type = this.TYPE_REFER) => {
-    let refer_file_list = null
-    let video_file_list = null
+    const result = {}
     if (file_type === this.TYPE_ALL || file_type === this.TYPE_REFER) {
-      refer_file_list = await this.getReferFileList(database, operation_info.storage_seq)
+      result.refer_file_list = await this.getReferFileList(database, operation_info.storage_seq)
     }
     if (file_type === this.TYPE_ALL || file_type === this.TYPE_VIDEO) {
-      video_file_list = await this.getVideoFileList(database, operation_info.storage_seq)
+      result.video_file_list = await this.getVideoFileList(database, operation_info.storage_seq)
     }
-    return {
-      refer_file_list,
-      video_file_list
+    if (file_type === this.TYPE_ALL || file_type === this.TYPE_FILE) {
+      result.operation_file_list = await this.getOperationFileList(database, operation_info.seq)
     }
+    return result;
   }
 
   getReferFileList = async (database, storage_seq, wrap_result = true) => {
@@ -58,6 +67,21 @@ const OperationFileServiceClass = class {
     const video_file_model = this.getVideoFileModel(database)
     const result_list = await video_file_model.getVideoFileList(storage_seq)
     return this.getFileInfoList(result_list)
+  }
+
+  getOperationFileList = async (database, operation_seq, wrap_result = true) => {
+    const operation_file_model = this.getOperationFileModel(database)
+    const result_list = await operation_file_model.getOperationFileList(operation_seq)
+    if (!wrap_result) {
+      return result_list
+    }
+    const file_list = []
+    if (result_list) {
+      for (let i = 0; i < result_list.length; i++) {
+        file_list.push(new OperationFileInfo(result_list[i]).setUrl())
+      }
+    }
+    return file_list
   }
 
   getFileInfoList = (result_list) => {
@@ -76,17 +100,6 @@ const OperationFileServiceClass = class {
 
     const file_info = (await new FileInfo().getByUploadFileInfo(upload_file_info, directory_info.media_refer)).toJSON()
     file_info.storage_seq = operation_info.storage_seq
-
-    // const file_name = upload_file_info.new_file_name
-    // let is_moved = false
-    // if (ServiceConfig.isVacs() === false) {
-    //   try {
-    //     await NaverObjectStorageService.moveFile(upload_file_info.path, directory_info.media_refer, file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
-    //     is_moved = true
-    //   } catch (error) {
-    //     log.error(this.log_prefix, '[createReferFileInfo]', 'NaverObjectStorageService.moveFile', error)
-    //   }
-    // }
     file_info.is_moved = false
 
     return await refer_file_model.createReferFile(file_info)
@@ -106,6 +119,19 @@ const OperationFileServiceClass = class {
         refer_file.file_path = refer_file.file_path.replace(operation_info.origin_media_path, operation_info.media_path)
       }
       await refer_file_model.createReferData(refer_file)
+    }
+  }
+
+  copyOperationFileInfo = async (database, operation_seq, operation_file_list) => {
+    const operation_file_model = this.getOperationFileModel(database)
+
+    for (let cnt = 0; cnt < operation_file_list.length; cnt++) {
+      const operation_file = operation_file_list[cnt]
+
+      delete operation_file.seq
+      delete operation_file.reg_date
+      operation_file.operation_seq = operation_seq
+      await operation_file_model.createOperationFile(operation_file)
     }
   }
 
@@ -130,14 +156,49 @@ const OperationFileServiceClass = class {
     return await video_file_model.createVideoFile(file_info)
   }
 
+  createOperationFileInfo = async (database, operation_info, upload_file_info, request_body) => {
+    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    const file_info = new OperationFileInfo().getByUploadFileInfo(operation_info.seq, upload_file_info, request_body.directory, directory_info.media_file).toJSON()
+    if (!file_info.file_name) {
+      throw new StdObject(-1, '파일을 업로드에 실패하였습니다.', 400, file_info)
+    }
+    const media_info = await Util.getMediaInfo(upload_file_info.path)
+    if (!media_info || !media_info.media_info.width || !media_info.media_info.height) return false
+    if (media_info.media_type === Constants.VIDEO || media_info.media_type === Constants.IMAGE) {
+      file_info.width = media_info.media_info.width
+      file_info.height = media_info.media_info.height
+
+      const upload_file_path = path.parse(upload_file_info.path)
+      const ext = upload_file_path.ext === '.png' ? '.png' : '.jpg';
+      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
+      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
+      const thumb_file_name = `${upload_file_path.name}_thumb${upload_file_path.ext}`
+      const thumbnail_image_path = `${upload_file_path.dir}/${thumb_file_name}`
+      const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height, media_info)
+
+      if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
+        file_info.thumbnail_path = directory_info.media_file + thumb_file_name
+      }
+      file_info.file_type = media_info.media_type
+    } else {
+      file_info.file_type = Util.getMimeType(upload_file_info.path, file_info.file_name)
+    }
+
+    const operation_file_model = this.getOperationFileModel(database)
+    return await operation_file_model.createOperationFile(file_info)
+  }
+
   deleteFileList = async (database, operation_info, file_seq_list, file_type = this.TYPE_REFER) => {
     let refer_delete_result = false
     let video_delete_result = false
-    if (file_type === this.TYPE_ALL || file_type === this.TYPE_REFER) {
+    if (file_type === this.TYPE_REFER) {
       refer_delete_result = await this.deleteReferFileList(database, operation_info, file_seq_list)
     }
-    if (file_type === this.TYPE_ALL || file_type === this.TYPE_VIDEO) {
+    if (file_type === this.TYPE_VIDEO) {
       video_delete_result = await this.deleteVideoFileList(database, operation_info, file_seq_list)
+    }
+    if (file_type === this.TYPE_FILE) {
+      video_delete_result = await this.deleteOperationFileList(database, operation_info, file_seq_list)
     }
 
     return {
@@ -160,7 +221,7 @@ const OperationFileServiceClass = class {
   }
 
   deleteVideoFileList = async (database, operation_info, file_seq_list) => {
-    const video_file_model = this.getVideoFileList(database)
+    const video_file_model = this.getVideoFileModel(database)
     const delete_file_list = await video_file_model.deleteSelectedFiles(file_seq_list)
 
     if (!delete_file_list) {
@@ -169,6 +230,20 @@ const OperationFileServiceClass = class {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const file_base_path = directory_info.media_video;
     this.deleteFiles(file_base_path, delete_file_list)
+
+    return true
+  }
+
+  deleteOperationFileList = async (database, operation_info, file_seq_list) => {
+    const operation_file_model = this.getOperationFileModel(database)
+    const delete_file_list = await operation_file_model.deleteSelectedFiles(file_seq_list)
+
+    if (!delete_file_list) {
+      return false
+    }
+    // const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    // const file_base_path = directory_info.media_video
+    // this.deleteFiles(file_base_path, delete_file_list)
 
     return true
   }

@@ -1,6 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import log from '../../../libs/logger'
-import baseutil from "../../../utils/baseutil";
+import Util from "../../../utils/Util";
 
 export default class OperationFolderModel extends MySQLModel {
   constructor (...args) {
@@ -175,7 +175,7 @@ export default class OperationFolderModel extends MySQLModel {
     }
 
     const include_target_folder_replace = []
-    for (let cnt = 0; cnt < baseutil.parseInt(before_update_target_depth_result.depth); cnt++) {
+    for (let cnt = 0; cnt < Util.parseInt(before_update_target_depth_result.depth); cnt++) {
       include_target_folder_replace.push(`$[0]`)
     }
 

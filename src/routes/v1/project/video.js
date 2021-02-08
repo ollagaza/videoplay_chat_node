@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import Wrap from '../../../utils/express-async'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import Auth from '../../../middlewares/auth.middleware'
 import Role from '../../../constants/roles'
 import StdObject from '../../../wrapper/std-object'

@@ -1,5 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 
 export default class OperationExpansionDataModel extends MySQLModel {
   constructor (...args) {

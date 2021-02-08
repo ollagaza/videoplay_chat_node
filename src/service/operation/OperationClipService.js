@@ -1,5 +1,5 @@
 import DBMySQL from '../../database/knex-mysql'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import log from '../../libs/logger'
 
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
@@ -24,7 +24,6 @@ const OperationClipServiceClass = class {
   createClip = async (operation_info, member_info, request_body, update_clip_count = true, group_member_info = null) => {
     const clip_info = request_body.clip_info
     const clip_count = request_body.clip_count
-    log.debug(this.log_prefix, '[createClip]', clip_info)
     const create_result = await OperationClipModel.createOperationClip(operation_info, member_info, clip_info)
     if (update_clip_count) {
       await this.updateClipCount(operation_info, clip_count)
@@ -84,7 +83,7 @@ const OperationClipServiceClass = class {
   }
 
   createPhase = async (operation_info, request_body) => {
-    const phase_info = await OperationClipModel.createPhase(operation_info, request_body.phase_desc)
+    const phase_info = await OperationClipModel.createPhase(operation_info, request_body.phase_desc, request_body.phase_type)
     const phase_id = phase_info._id
     await this.setPhase(phase_id, request_body)
     return {
@@ -144,7 +143,7 @@ const OperationClipServiceClass = class {
       for (let i = 0; i < operation_clip_list.length; i++) {
         const clip_info = operation_clip_list[i]
         if (clip_info.is_phase) {
-          const phase_info = await this.createPhase(operation_info, { phase_desc: clip_info.desc })
+          const phase_info = await this.createPhase(operation_info, { phase_desc: clip_info.desc, phase_type: clip_info.type })
           phase_map[clip_info._id] = phase_info.phase_id
         } else {
           clip_list.push(clip_info)
@@ -155,7 +154,7 @@ const OperationClipServiceClass = class {
         const clip_info = clip_list[i]
         const phase_id = clip_info.phase_id
         clip_info.phase_id = phase_id ? phase_map[phase_id] : null
-        if (clip_info.thumbnail_url) {
+        if (clip_info.type !== 'file' && clip_info.thumbnail_url) {
           clip_info.thumbnail_url = clip_info.thumbnail_url.replace(operation_info.origin_media_path, operation_info.media_path)
         }
         const member_info = {

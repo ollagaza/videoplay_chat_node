@@ -1,5 +1,5 @@
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import GroupInfo from '../../../wrapper/member/GroupInfo'
 import log from '../../../libs/logger'
 

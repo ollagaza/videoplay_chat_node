@@ -1,6 +1,6 @@
 import * as ftp from 'basic-ftp'
 import log from './logger'
-import Util from '../utils/baseutil'
+import Util from '../utils/Util'
 
 const FTP = class {
   _timeout = null

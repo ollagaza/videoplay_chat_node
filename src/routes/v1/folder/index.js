@@ -8,7 +8,7 @@ import OperationFolderService from '../../../service/operation/OperationFolderSe
 import OperationService from '../../../service/operation/OperationService'
 import StdObject from '../../../wrapper/std-object'
 import log from '../../../libs/logger'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 
 const routes = Router()
 

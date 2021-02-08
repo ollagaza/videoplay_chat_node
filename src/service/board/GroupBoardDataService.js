@@ -1,11 +1,10 @@
 import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../service-config'
 import DBMySQL from "../../database/knex-mysql";
 import GroupBoardDataModel from '../../database/mysql/board/GroupBoardDataModel'
 import GroupBoardCommentModel from '../../database/mysql/board/GroupBoardCommentModel'
-import baseutil from "../../utils/baseutil";
 import logger from "../../libs/logger";
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 
@@ -145,7 +144,7 @@ const GroupBoardDataServiceClass = class {
       } else {
         board_data.sort_num = 0
       }
-      board_data.content_id = baseutil.getContentId()
+      board_data.content_id = Util.getContentId()
       let check_bool = true;
       while (check_bool) {
         board_data.link_code = Util.getRandomString(10)
@@ -309,7 +308,7 @@ const GroupBoardDataServiceClass = class {
     board_file_lists = _.reject(board_file_lists, file)
     const media_root = ServiceConfig.get('media_root')
     const file_full_path = `${media_root}${file.file_path}${file.file_name}`
-    await baseutil.deleteFile(file_full_path)
+    await Util.deleteFile(file_full_path)
     const param = {
       attach_file: JSON.stringify(board_file_lists),
     }

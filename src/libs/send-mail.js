@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import fs from 'fs'
 import FormData from 'form-data'
-import Util from '../utils/baseutil'
+import Util from '../utils/Util'
 import ServiceConfig from '../service/service-config'
 import StdObject from '../wrapper/std-object'
 

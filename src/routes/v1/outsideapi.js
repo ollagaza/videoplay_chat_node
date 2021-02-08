@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { Router } from 'express'
 import ServiceConfig from '../../service/service-config'
 import Wrap from '../../utils/express-async'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 
 const routes = Router()

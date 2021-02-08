@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import GroupMemberInfo from '../../../wrapper/member/GroupMemberInfo'
 import log from '../../../libs/logger'
 

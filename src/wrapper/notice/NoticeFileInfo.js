@@ -1,5 +1,5 @@
 import JsonWrapper from '../json-wrapper'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../../service/service-config'
 
 export default class NoticeFileInfo extends JsonWrapper {

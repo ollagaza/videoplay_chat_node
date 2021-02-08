@@ -1,5 +1,5 @@
 import ServiceConfig from '../service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import ProFileModel from '../../database/mysql/mypage/ProFileModel'
 import ProfileHistoryModel from '../../database/mysql/mypage/ProfileHistoryModel'

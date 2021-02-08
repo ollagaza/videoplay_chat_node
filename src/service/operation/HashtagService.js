@@ -1,4 +1,4 @@
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 

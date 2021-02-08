@@ -1,4 +1,4 @@
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import log from '../../libs/logger'
 
 import EmbedModel from './EmbedModel'

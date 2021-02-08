@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import ServiceConfig from '../service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import FollowerModel from '../../database/mysql/Follow/FollowerModel'
 import FollowingModel from '../../database/mysql/Follow/FollowingModel'
