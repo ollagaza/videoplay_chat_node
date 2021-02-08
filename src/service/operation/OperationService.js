@@ -500,6 +500,12 @@ const OperationServiceClass = class {
     if (request_query.folder_seq) {
       filter_params.folder_seq = request_query.folder_seq
     }
+    if (request_query.search_keyword) {
+      filter_params.search_keyword = request_query.search_keyword;
+    }
+    if (request_query.member_grade) {
+      filter_params.member_grade = request_query.member_grade;
+    }
 
     log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params)
 
@@ -510,7 +516,11 @@ const OperationServiceClass = class {
     page_params.no_paging = page_params.no_paging ? page_params.no_paging : 'n'
     log.debug(this.log_prefix, '[getOperationList]', page_params, filter_params)
     const operation_model = this.getOperationModel(database)
-    return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
+    if (filter_params.search_keyword) {
+      return await operation_model.getOperationInfoSearchListPage(group_seq, page_params, filter_params)
+    } else {
+      return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
+    }
   }
 
   setMediaInfo = async (database, operation_info) => {
