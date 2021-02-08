@@ -1,8 +1,7 @@
 import { Router } from 'express'
 import log from '../../libs/logger'
 import Wrap from '../../utils/express-async'
-import Util from '../../utils/baseutil'
-import baseutil from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import StdObject from '../../wrapper/std-object'
@@ -62,7 +61,7 @@ routes.post('/memberlist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (re
   res.json(output)
 }))
 
-routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.put('/:member_seq(\\d+)', Util.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info
   const member_seq = Util.parseInt(req.params.member_seq)
 

@@ -1,6 +1,6 @@
 import querystring from 'querystring'
 import ServiceConfig from '../../service/service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import log from '../../libs/logger'
 import CloudFileService from '../cloud/CloudFileService'
 import { VideoProjectField, VideoProjectModel } from '../../database/mongodb/VideoProject'

@@ -1,6 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import log from '../../../libs/logger'
-import baseutil from "../../../utils/baseutil";
+import Util from "../../../utils/Util";
 
 export default class GroupBoardListModel extends MySQLModel {
   constructor (...args) {

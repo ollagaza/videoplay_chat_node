@@ -4,7 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import log from '../../libs/logger'
 import ServiceConfig from '../service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import NaverArchiveStorageService from './naver-archive-storage-service'
 import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
@@ -65,9 +65,10 @@ const NaverObjectStorageClass = class {
     if (!(await Util.fileExists(local_file_path))) {
       throw new StdObject(101, `file not exists - ${local_file_path}`, 400)
     }
-    const file_list = await Util.getDirectoryFileList(local_file_path)
     local_file_path = Util.removePathLastSlash(local_file_path)
+    const file_list = await Util.getDirectoryFileList(local_file_path)
     remote_path = Util.removePathSlash(remote_path)
+    log.debug(this.log_prefix, '[uploadFolder]', local_file_path, remote_path, file_list)
     let folder_file_list = []
     let upload_file_list = []
     for (let i = 0; i < file_list.length; i++) {
@@ -96,22 +97,6 @@ const NaverObjectStorageClass = class {
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
     const remote_file_path = remote_file_name !== null ? `${remote_path}/${remote_file_name}` : remote_path
-    log.debug(this.log_prefix, '[uploadFile]', `local_file_path: ${local_file_path}`, `remote_file_path: ${bucket_name}/${remote_file_path}`)
-    const object_params = {
-      Bucket: target_bucket_name,
-      Key: remote_file_path,
-      ACL: acl ? acl : this.ACL_PUBLIC_READ,
-      Body: fs.createReadStream(local_file_path)
-    }
-    return await storage_client.putObject(object_params).promise()
-  }
-
-  copyFolders = async (local_file_path, remote_path, bucket_name = null, client = null, acl = null) => {
-    if (!(await Util.fileExists(local_file_path))) {
-      throw new StdObject(102, `file not exists - ${local_file_path}`, 400)
-    }
-    const storage_client = this.getStorageClient(client)
-    const target_bucket_name = this.getBucketName(bucket_name)
     log.debug(this.log_prefix, '[uploadFile]', `local_file_path: ${local_file_path}`, `remote_file_path: ${bucket_name}/${remote_file_path}`)
     const object_params = {
       Bucket: target_bucket_name,
@@ -166,9 +151,14 @@ const NaverObjectStorageClass = class {
     await this.uploadFile(local_file_path, remote_path, remote_file_name, remote_bucket_name, storage_client)
     await Util.deleteFile(local_file_path)
   }
-  copyAllFiles = async (local_file_path, remote_path, remote_bucket_name = null, client = null) => {
-    const storage_client = await this.getStorageClient(client)
-    await this.copyFolders(local_file_path, remote_path, remote_bucket_name, storage_client)
+  move = async (remote_path, move_path, is_folder = false, bucket_name = null, client = null, acl = null) => {
+    if (is_folder) {
+      await this.copyFolder(remote_path, move_path, bucket_name, client, acl)
+      await this.deleteFolder(remote_path, bucket_name, client)
+    } else {
+      await this.copy(remote_path, move_path, bucket_name, client, acl)
+      await this.deleteFolder(remote_path, null, bucket_name, client)
+    }
   }
 
   deleteFolder = async (remote_path, bucket_name = null, client = null) => {
@@ -216,7 +206,7 @@ const NaverObjectStorageClass = class {
     await Util.deleteFile(download_file_path)
     const directory = Util.getDirectoryName(download_file_path)
     const create_result = await Util.createDirectory(directory)
-    if (!create_result) {
+    if ( !create_result ) {
       throw new StdObject(102, `can't create directory. download_directory: ${download_directory}, download_file_name: ${download_file_name}, download_file_path: ${download_file_path}, directory: ${directory}`, 400)
     }
   }
@@ -275,6 +265,47 @@ const NaverObjectStorageClass = class {
     const download_result = await download_promise
     log.debug(this.log_prefix, '[downloadFile]', `download ${target_bucket_name}/${remote_path}/${remote_file_name} to ${download_file_path}`, download_result)
     return download_result
+  }
+
+  copyFile = async (remote_path, copy_path, bucket_name = null, client = null, acl = null) => {
+    const storage_client = await this.getStorageClient(client)
+    const target_bucket_name = this.getBucketName(bucket_name)
+    const object_params = {
+      Bucket: target_bucket_name,
+      Key: copy_path,
+      CopySource: `${target_bucket_name}${remote_path}`,
+      ACL: acl ? acl : this.ACL_PUBLIC_READ,
+    }
+    return await storage_client.copyObject(object_params).promise()
+  }
+
+  copyFolder = async (remote_path, copy_path, bucket_name = null, client = null, acl = null, is_first = true) => {
+    const storage_client = await this.getStorageClient(client)
+    const target_bucket_name = this.getBucketName(bucket_name)
+    const folder_object = await this.getFolderObjectList(object_path, target_bucket_name, storage_client)
+    copy_path = Util.removePathLastSlash(copy_path)
+    log.debug(this.log_prefix, '[copyFolder]', '[start]', `remote_path: ${remote_path}, copy_path: ${copy_path}, bucket_name: ${bucket_name}`, folder_object)
+    let folder_file_list = []
+    if (folder_object.file_list.length > 0) {
+      for (let i = 0; i < folder_object.file_list.length; i++) {
+        const file_path = folder_object.file_list[i]
+        const file_name = path.parse(file_path).base
+        await this.copyFile(file_path, copy_path + '/' + file_name, target_bucket_name, storage_client, acl, false)
+      }
+    }
+    if (folder_object.directory_list.length > 0) {
+      for (let i = 0; i < folder_object.directory_list.length; i++) {
+        const directory_path = folder_object.directory_list[i]
+        const sub_directory = directory_path.replace(remote_path, '')
+        const copy_folder_result = await this.copyFolder(directory_path, copy_path + sub_directory, target_bucket_name, storage_client, acl, false)
+        folder_file_list = _.union(folder_file_list, copy_folder_result)
+      }
+    }
+    const result = _.union(folder_object.file_list, folder_file_list)
+    if (is_first) {
+      log.debug(this.log_prefix, '[copyFolder]', '[complete]', `remote_path: ${remote_path}, copy_path: ${copy_path}, bucket_name: ${bucket_name}`, result)
+    }
+    return result
   }
 
   copyFolderToArchive = async (object_path, archive_path, download_directory, object_bucket_name = null, archive_bucket_name = null, client = null) => {
@@ -351,5 +382,5 @@ const NaverObjectStorageClass = class {
   }
 }
 
-const NaverObjectStorage = new NaverObjectStorageClass()
-export default NaverObjectStorage
+const NaverObjectStorageService = new NaverObjectStorageClass()
+export default NaverObjectStorageService

@@ -1,6 +1,6 @@
 import DBMySQL from '../../database/knex-mysql'
 import OperationCommentModel from '../../database/mysql/operation/OperationCommentModel'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../../service/service-config'
 import striptags from 'striptags'
@@ -151,6 +151,22 @@ const OperationCommentServiceClass = class {
       }
     }
     return comment_list
+  }
+
+  copyComment = async (operation_data_seq, origin_data_seq, group_seq) => {
+    const comment_model = this.getOperationCommentModel()
+    const origin_list = await comment_model.getOriginCommentList(origin_data_seq)
+    if (origin_list && origin_list.length) {
+      const change_seq_map = {}
+      for (let i = 0; i < origin_list.length; i++) {
+        const comment_info = origin_list[i]
+        if (comment_info.is_reply === 0) {
+          await comment_model.copyParentComment(comment_info, operation_data_seq, group_seq, change_seq_map)
+        } else {
+          await comment_model.copyReplyComment(comment_info, operation_data_seq, group_seq, change_seq_map)
+        }
+      }
+    }
   }
 
   getComment = async (database, operation_data_seq, comment_seq) => {

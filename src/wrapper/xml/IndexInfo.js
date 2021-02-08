@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import fs from 'fs'
 import JsonWrapper from '../json-wrapper'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../../service/service-config'
 
 const seq_exp = new RegExp(/\\/, 'g')

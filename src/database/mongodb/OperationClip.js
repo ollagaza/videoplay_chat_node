@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import log from '../../libs/logger'
 
 const Schema = mongoose.Schema
@@ -23,6 +23,10 @@ const getFieldInfos = () => {
     is_shape: { type: Boolean, default: false, index: false, require: false, message: '마킹 정보가 없습니다.' },
     shape_info_list: { type: [Object], default: null, require: false, message: '마킹 정보가 없습니다.' },
     comment_count: { type: Number, default: 0, require: false, message: '댓글 개수가 없습니다.' },
+    type: { type: String, default: 'operation', require: false, message: '클립 유형이 없습니다.' },
+    full_path: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
+    directory: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
+    file_name: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   }
@@ -33,8 +37,6 @@ schema_field_infos.operation_seq.require = true
 schema_field_infos.group_seq.require = true
 schema_field_infos.member_seq.require = true
 schema_field_infos.content_id.require = true
-schema_field_infos.start_time.require = true
-schema_field_infos.end_time.require = true
 schema_field_infos.desc.require = true
 
 const operation_clip_schema = new Schema(schema_field_infos, { strict: false })
@@ -123,7 +125,7 @@ operation_clip_schema.statics.deleteByOperationSeq = function (operation_seq) {
   return this.deleteMany({ operation_seq: operation_seq }, { 'multi': true })
 }
 
-operation_clip_schema.statics.createPhase = function (operation_info, phase_desc) {
+operation_clip_schema.statics.createPhase = function (operation_info, phase_desc, phase_type = null) {
   const payload = {
     operation_seq: operation_info.seq,
     group_seq: operation_info.group_seq,
@@ -133,6 +135,9 @@ operation_clip_schema.statics.createPhase = function (operation_info, phase_desc
     is_phase: true,
     created_date: Date.now(),
     modify_date: Date.now()
+  }
+  if (phase_type) {
+    payload.type = phase_type
   }
   const model = new this(payload)
   return model.save()

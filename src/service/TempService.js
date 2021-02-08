@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import StdObject from "../wrapper/std-object";
-import baseutil from "../utils/baseutil";
+import Util from "../utils/Util";
 import log from '../libs/logger'
 import { MedicalModel } from '../database/mongodb/Medical'
 import OperationFolderService from "./operation/OperationFolderService";
@@ -16,7 +16,7 @@ const TempServiceClass = class {
 
     for (let cnt = 0; cnt < result.length; cnt++) {
       const board_data = result[cnt]
-      const link_code = baseutil.getRandomString()
+      const link_code = Util.getRandomString()
 
       await database.update({ link_code }).from('board_data').where({ seq: board_data.seq })
     }

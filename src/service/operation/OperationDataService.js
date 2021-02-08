@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
@@ -78,6 +78,7 @@ const OperationDataServiceClass = class {
     const origin_operation_data = await operation_data_model.getOperationDataByOperationSeq(origin_operation_seq)
     const operation_data_info = origin_operation_data.toJSON()
 
+    const origin_data_seq = operation_data_info.seq
     delete operation_data_info.seq
     delete operation_data_info.view_count
     delete operation_data_info.reg_date
@@ -112,7 +113,7 @@ const OperationDataServiceClass = class {
     this.updateHashtag(operation_data_seq, operation_data_info.group_seq, hashtag)
     await this.updateCount(operation_data_info.group_seq, operation_data_info)
 
-    return operation_data_seq
+    return { operation_data_seq, origin_data_seq }
   }
 
   updateOperationDataByRequest = async (database, operation_seq, request_body) => {
@@ -328,5 +329,5 @@ const OperationDataServiceClass = class {
   }
 }
 
-const operation_data_service = new OperationDataServiceClass()
-export default operation_data_service
+const OperationDataService = new OperationDataServiceClass()
+export default OperationDataService

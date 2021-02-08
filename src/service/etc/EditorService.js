@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../service-config'
 
 const EditorServiceClass = class {

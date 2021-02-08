@@ -1,5 +1,5 @@
 import Constants from '../../constants/constants'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../../service/service-config'
 
 /*

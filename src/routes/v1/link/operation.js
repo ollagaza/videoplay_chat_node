@@ -7,7 +7,7 @@ import StdObject from '../../../wrapper/std-object'
 import OperationLinkService from '../../../service/operation/OperationLinkService'
 import OperationService from '../../../service/operation/OperationService'
 import GroupService from '../../../service/group/GroupService'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 
 const routes = Router()
 

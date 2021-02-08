@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import log from '../../libs/logger'
-import baseutil from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import MemberModel from "../../database/mysql/member/MemberModel"
 import GroupModel from '../../database/mysql/group/GroupModel'
@@ -67,7 +67,7 @@ const GroupChannelHomeServiceClass = class {
     const member_treatlist = await model.getGroupOwnerTreatLists()
     const treatlist = []
     for (let cnt = 0; cnt < member_treatlist.length; cnt++) {
-      if (!baseutil.isEmpty(member_treatlist[cnt])) {
+      if (!Util.isEmpty(member_treatlist[cnt])) {
         try {
           const treat_json = JSON.parse(member_treatlist[cnt].treatcode)
           for (let cnt_sub = 0; cnt_sub < treat_json.length; cnt_sub++) {

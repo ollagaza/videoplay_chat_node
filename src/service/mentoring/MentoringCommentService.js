@@ -1,6 +1,6 @@
 import DBMySQL from '../../database/knex-mysql'
 import MentoringCommentModel from '../../database/mysql/mentoring/MentoringCommentModel'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../../service/service-config'
 

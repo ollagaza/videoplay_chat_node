@@ -1,6 +1,6 @@
 import ServiceConfig from '../../../service/service-config'
 import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import StdObject from '../../../wrapper/std-object'
 import log from '../../../libs/logger'
 import MemberInfo from '../../../wrapper/member/MemberInfo'

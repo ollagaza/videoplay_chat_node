@@ -2,7 +2,7 @@ import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../service-config'
 import DBMySQL from "../../database/knex-mysql";
-import baseutil from "../../utils/baseutil";
+import Util from "../../utils/Util";
 import GroupBoardReCommendModel from "../../database/mysql/board/GroupBoardReCommendModel";
 import GroupBoardCommentReCommendModel from "../../database/mysql/board/GroupBoardCommentReCommendModel";
 

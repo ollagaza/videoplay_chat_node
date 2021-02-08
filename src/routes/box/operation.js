@@ -5,7 +5,7 @@ import Role from '../../constants/roles'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../../service/service-config'
 import OperationService from '../../service/operation/OperationService'
 import GroupService from '../../service/group/GroupService'
@@ -103,7 +103,7 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
   log.d(req, `[BOX 03] 수술 동영상 업로드 시작 (id: ${operation_seq})`, req.headers, operation_seq)
 
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
-  const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file')
+  const upload_result = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
 
   log.d(req, `[BOX 04] 수술 동영상 업로드 종료 (id: ${operation_seq})`, req.headers, operation_seq, upload_result)
 
@@ -117,9 +117,10 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
 routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   await checkMachine(req)
   const operation_seq = req.params.operation_seq
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
+  await OperationService.onUploadComplete(operation_info)
 
   log.d(req, `[BOX 05] 수술 종료 요청 (id: ${operation_seq})`, req.headers, operation_seq)
-
   await OperationService.requestAnalysis(DBMySQL, null, operation_seq, false)
 
   log.d(req, `[BOX 06] 수술 분석요청 (id: ${operation_seq})`, req.headers, operation_seq)
@@ -142,7 +143,7 @@ routes.post('/:operation_seq(\\d+)/file/one', Auth.isAuthenticated(Role.BOX), Wr
 
   const file_type = 'refer'
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
-  const upload_result = await OperationService.uploadOperationFileAndUpdate(DBMySQL, req, res, operation_info, file_type, 'file')
+  const upload_result = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
 
   log.d(req, `[BOX 10] 첨부파일 업로드 완료 (id: ${operation_seq})`, req.headers, operation_seq, upload_result)
 
