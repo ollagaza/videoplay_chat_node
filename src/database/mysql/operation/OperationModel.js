@@ -12,6 +12,12 @@ const join_select = [
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
 ]
+const join_search_select = [
+  'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
+  'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
+  'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count',
+  'operation_folder.access_type'
+]
 
 export default class OperationModel extends MySQLModel {
   constructor (database) {
@@ -114,6 +120,88 @@ export default class OperationModel extends MySQLModel {
         query.whereNull('operation.folder_seq')
       }
     }
+
+    const order_by = { name: 'operation.seq', direction: 'DESC' }
+    if (asc) {
+      order_by.direction = 'ASC'
+    }
+    query.orderBy(order_by.name, order_by.direction)
+
+    const paging_result = await this.queryPaginated(query, list_count, page, page_count, page_params.no_paging)
+
+    const result = []
+
+    if (paging_result && paging_result.data) {
+      for (const key in paging_result.data) {
+        let query_result = paging_result.data[key]
+        result.push(this.getOperationInfoByResult(query_result))
+      }
+    }
+
+    paging_result.data = result
+    return paging_result
+  }
+
+  getOperationInfoSearchListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false) => {
+    const page = page_params.page ? page_params.page : 1
+    const list_count = page_params.list_count ? page_params.list_count : 20
+    const page_count = page_params.page_count ? page_params.page_count : 10
+
+    const query = this.database.select(join_search_select)
+    query.column(['operation_data.total_time', 'operation_data.thumbnail'])
+    query.from('operation')
+    query.joinRaw('LEFT JOIN (SELECT seq, access_type FROM operation_folder WHERE group_seq = ? ) AS operation_folder ON (operation_folder.seq = operation.folder_seq)', group_seq)
+    query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
+    query.innerJoin('member', 'member.seq', 'operation.member_seq')
+    query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
+    query.andWhere('operation.group_seq', group_seq)
+    query.andWhereRaw('(operation_folder.access_type <= ? OR operation_folder.access_type IS NULL)', filter_params.member_grade)
+    if (filter_params.member_grade !== 'O') {
+      query.andWhere('operation_folder.access_type',  '!=', 'O')
+    }
+    query.whereIn('operation.status', ['Y', 'T'])
+    log.debug(this.log_prefix, '[getOperationInfoSearchListPage]', 'filter_params', filter_params)
+
+    if (filter_params.status) {
+      query.andWhere('operation.status', filter_params.status.toUpperCase())
+    }
+    if (filter_params.member_seq) {
+      query.andWhere('operation.member_seq', filter_params.member_seq)
+    }
+    let check_folder = true
+    const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
+    switch (filter_params.menu) {
+      case 'recent':
+        query.andWhere('operation.reg_date', '>=', recent_timestamp)
+        query.andWhere('operation.status', 'Y')
+        check_folder = false
+        break
+      case 'favorite':
+        query.andWhere('operation.is_favorite', 1)
+        query.andWhere('operation.status', 'Y')
+        check_folder = false
+        break
+      case 'trash':
+        query.andWhere('operation.status', 'T')
+        check_folder = false
+        break
+      case 'clip':
+        query.andWhere('operation.status', 'Y')
+        check_folder = false
+        break
+      case 'drive':
+        query.andWhere('operation.status', 'Y')
+        break
+      case 'collect':
+        query.andWhere('operation.status', 'Y')
+        check_folder = true
+        break
+      default:
+        query.andWhere('operation.status', 'Y')
+        check_folder = false
+        break
+    }
+    query.andWhere('operation_name', 'like', `%${filter_params.search_keyword}%`)
 
     const order_by = { name: 'operation.seq', direction: 'DESC' }
     if (asc) {
