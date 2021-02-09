@@ -44,14 +44,20 @@ const VacsServiceClass = class {
 
           let storage_info = null
           if (disable_vacs_storage_ssh) {
-            await Util.execute()
+            const exec_result = await Util.execute(cmd)
+            log.debug(this.log_prefix, '[updateStorageInfo]', 'exec_result', exec_result, cmd)
+            if (exec_result.success && exec_result.out) {
+              storage_info = JSON.parse(exec_result.out)
+            } else {
+              log.error(this.log_prefix, '[updateStorageInfo]', exec_result, cmd)
+            }
           } else {
             const ssh_result = await Util.sshExec(cmd, host, port, user, password)
-            log.debug(this.log_prefix, 'updateStorageInfo', ssh_result);
+            log.debug(this.log_prefix, '[updateStorageInfo]', 'ssh_result', ssh_result, cmd)
             if (ssh_result.success && ssh_result.out) {
               storage_info = JSON.parse(ssh_result.out)
             } else {
-              log.error(this.log_prefix, '[updateStorageInfo]', ssh_result)
+              log.error(this.log_prefix, '[updateStorageInfo]', ssh_result, cmd)
             }
           }
 
