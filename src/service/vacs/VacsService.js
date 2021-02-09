@@ -47,8 +47,9 @@ const VacsServiceClass = class {
             await Util.execute()
           } else {
             const ssh_result = await Util.sshExec(cmd, host, port, user, password)
+            log.debug(this.log_prefix, 'updateStorageInfo', ssh_result);
             if (ssh_result.success && ssh_result.out) {
-              storage_info = JSON.parse(ssh_result.result)
+              storage_info = JSON.parse(ssh_result.out)
             } else {
               log.error(this.log_prefix, '[updateStorageInfo]', ssh_result)
             }
