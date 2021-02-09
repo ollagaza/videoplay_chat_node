@@ -276,7 +276,7 @@ export default class GroupMemberModel extends MySQLModel {
       } else if (member_type === 'join') {
         status = ['J']
       } else if (member_type === 'all_not_in_ban') {
-        status = ['Y', 'P', 'J']
+        status = ['Y', 'P']
       }
     }
     if (member_grade && member_grade !== '0') {
