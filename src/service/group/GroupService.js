@@ -1253,7 +1253,9 @@ const GroupServiceClass = class {
         result_info.error = 3;
         result_info.msg = '회원가입 신청에 실패하였습니다.';
       } else {
-        await group_model.group_member_count(group_seq, 'up');
+        if (group_info.group_join_way !== 1) {
+          await group_model.group_member_count(group_seq, 'up');
+        }
       }
     }
     return result_info;

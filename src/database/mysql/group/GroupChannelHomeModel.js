@@ -130,7 +130,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
         query.andOnVal('group_info.group_open', 1)
       })
       .whereRaw('operation_data.is_open_video = 1 and MATCH (`operation_data`.`title`, `operation_data`.`group_name`, `operation_data`.`doc_text`, `operation_data`.`hospital`) AGAINST (? IN BOOLEAN MODE)', search_keyword)
-
+      .andWhere('operation_data.status', 'Y')
     return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
   }
 
@@ -144,7 +144,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
         query.andOnVal('group_info.group_open', 1)
       })
       .whereRaw('board_data.is_open = ? and MATCH (`write_name`, `subject`, `content_text`) AGAINST (? IN BOOLEAN MODE)', ['1', search_keyword])
-
+      .andWhere('board_data.status', 'Y')
     return await this.queryPaginated(oQuery, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
   }
 
