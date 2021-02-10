@@ -38,7 +38,7 @@ const GroupBoardListServiceClass = class {
     const board_info = {
       group_seq,
       board_name: '기본 게시판',
-      sort: 1,
+      sort: 0,
     }
 
     return await model.createGroupBoard(board_info)
