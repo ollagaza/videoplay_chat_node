@@ -1231,7 +1231,9 @@ const GroupServiceClass = class {
             result_info.error = 4;
             result_info.msg = '필수 정보가 누락되었습니다.';
           } else {
-            await group_model.group_member_count(group_seq, 'up');
+            if (group_info.group_join_way !== 1) {
+              await group_model.group_member_count(group_seq, 'up');
+            }
           }
           break;
         case 'P':
