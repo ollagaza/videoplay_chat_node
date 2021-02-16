@@ -21,7 +21,6 @@ export default class GroupBoardCommentModel extends MySQLModel {
       })
       .where((query) => {
         query.where('board_comment.board_data_seq', board_data_seq)
-        query.andWhere('status', 'Y')
       })
       .orderBy([{column: 'origin_seq', order: 'desc'}, { column: 'sort_num', order: 'asc' }])
     return oKnex
@@ -58,28 +57,13 @@ export default class GroupBoardCommentModel extends MySQLModel {
     return this.decrement({ seq: comment_seq }, { recommend_cnt: 1 })
   }
 
-  getCommentCount = async (comment_seq) => {
-    const result = await this.database.count('* as total_count').from(this.table_name)
-      .where((query) => {
-        query.orWhere('seq', comment_seq)
-        query.orWhere('parent_seq', comment_seq)
-        query.orWhere('origin_seq', comment_seq)
-      })
-      .andWhere('status', 'Y')
-      .first()
-    if (!result || !result.total_count) {
-      return 0
-    } else {
-      return result.total_count
-    }
-  }
 
-  DeleteComment = async (comment_seq) => {
-    return this.database.update({ status: 'D' }).from(this.table_name).where('seq', comment_seq).orWhere('parent_seq', comment_seq).orWhere('origin_seq', comment_seq)
+  DeleteComment = async (status, comment_seq) => {
+    return this.database.update({ status }).from(this.table_name).where('seq', comment_seq)
   }
 
   getCommentInfo = async (comment_seq) => {
-    const oKnex = this.database.select(['*'])
+    const oKnex = this.database.select('*')
       .from(this.table_name)
       .where('seq', comment_seq)
       .first()

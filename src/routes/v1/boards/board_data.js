@@ -155,12 +155,17 @@ routes.put('/changeNotice/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
 
 routes.delete('/delete_comment/:board_data_seq(\\d+)/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
+  const { is_group_admin, is_group_manager } = await GroupService.checkGroupAuth(DBMySQL, req, true, true)
   const output = new StdObject()
+  let is_admin = false;
   const comment_seq = req.params.comment_seq
   const board_data_seq = req.params.board_data_seq
+  if (is_group_admin || is_group_manager) {
+    is_admin = true
+  }
 
   await DBMySQL.transaction(async (transaction) => {
-    const result = await GroupBoardDataService.DeleteComment(transaction, board_data_seq, comment_seq)
+    const result = await GroupBoardDataService.DeleteComment(transaction, is_admin, board_data_seq, comment_seq)
     output.add('result', result)
   })
   res.json(output);
