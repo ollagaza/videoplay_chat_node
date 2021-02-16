@@ -190,23 +190,26 @@ const GroupBoardDataServiceClass = class {
     return await model.decrementBoardCommentReCommendCnt(comment_seq);
   }
 
-  DeleteComment = async (database, board_data_seq, comment_seq) => {
+  DeleteComment = async (database, is_admin, board_data_seq, comment_seq) => {
+    let delete_status = 'D'
     const model = this.getGroupBoardCommentModel(database)
     const comment_info = await model.getCommentInfo(comment_seq)
-    const delete_comment_cnt = await model.getCommentCount(comment_seq)
 
-    const result = await model.DeleteComment(comment_seq)
+    if (is_admin) {
+      delete_status = 'A'
+    }
 
+    const result = await model.DeleteComment(delete_status, comment_seq)
 
     const group_member_model = new GroupMemberModel(database);
     const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq)
 
     if (!group_member_info.isEmpty()) {
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down', delete_comment_cnt)
+      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down', 1)
     }
 
     const board_model = this.getGroupBoardDataModel(database)
-    await board_model.decrementBoardCommentCnt(board_data_seq, delete_comment_cnt)
+    await board_model.decrementBoardCommentCnt(board_data_seq, 1)
     return result;
   }
 
@@ -329,7 +332,14 @@ const GroupBoardDataServiceClass = class {
     for (let i = 0; i < comment_list.length; i++) {
       const comment_seq = comment_list[i].seq;
       const board_data_seq = comment_list[i].board_data_seq;
-      const result = await comment_model.DeleteComment(comment_seq);
+      let delete_status = 'N'
+      const comment_info = await comment_model.getCommentInfo(comment_seq)
+
+      if (comment_info.total_count > 1) {
+        delete_status = 'D'
+      }
+      const result = await comment_model.DeleteComment(delete_status, comment_seq);
+
       if (result) {
         res_data[comment_seq]++;
       }

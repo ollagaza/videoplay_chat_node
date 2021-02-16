@@ -44,11 +44,6 @@ if (IS_DEV) {
     res.json(result)
   }))
 
-  routes.get('/folder_size_sync', Wrap(async (req, res) => {
-    const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
-    res.json(output)
-  }))
-
   routes.get('/socket_test', Wrap(async (req, res) => {
     const member_seq = req.body.member_seq
     const group_seq = req.body.group_seq
