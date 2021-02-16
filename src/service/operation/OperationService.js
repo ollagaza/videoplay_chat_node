@@ -728,6 +728,11 @@ const OperationServiceClass = class {
       throw new StdObject(-1, '잘못된 요청입니다.', 400)
     }
 
+    if (file_type === OperationFileService.TYPE_FILE) {
+      await OperationFileService.deleteOperationFileList(DBMySQL, operation_info, request_body)
+      return
+    }
+
     const file_seq_list = request_body.file_seq_list
     if (!file_seq_list || file_seq_list.length <= 0) {
       throw new StdObject(-2, '잘못된 요청입니다.', 400)
@@ -735,8 +740,6 @@ const OperationServiceClass = class {
 
     if (file_type === OperationFileService.TYPE_REFER) {
       await OperationFileService.deleteReferFileList(DBMySQL, operation_info, file_seq_list)
-    } else if (file_type === OperationFileService.TYPE_FILE) {
-      await OperationFileService.deleteOperationFileList(DBMySQL, operation_info, file_seq_list)
     } else {
       return
     }

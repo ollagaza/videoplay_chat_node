@@ -17,15 +17,18 @@ export default class OperationFileModel extends MySQLModel {
     return this.find({operation_seq}, this.selectable_fields, [{ column: 'directory', order: 'asc' }, { column: 'file_name', order: 'asc' }])
   }
 
-  deleteFile = async (file_seq, operation_seq) => {
+  deleteFile = async (operation_seq, file_seq) => {
     return this.delete({ seq: file_seq, operation_seq})
   }
 
-  deleteFolder = async (operation_seq, file_path) => {
+  deleteFolder = async (operation_seq, directory) => {
     return this.database
       .from(this.table_name)
       .where('operation_seq', operation_seq)
-      .where('file_path', 'LIKE', `${file_path}%`)
+      .where((builder) => {
+        builder.where('directory', directory)
+        builder.orWhere('directory', 'LIKE', `${directory}/%`)
+      })
       .del()
   }
 
@@ -45,10 +48,11 @@ export default class OperationFileModel extends MySQLModel {
     return await this.findOne({ operation_seq }, select)
   }
 
-  deleteSelectedFiles = async (file_seq_list) => {
+  deleteSelectedFiles = async (operation_seq, file_seq_list) => {
     const query = this.database
       .select(this.selectable_fields)
       .from(this.table_name)
+      .where('operation_seq', operation_seq)
       .whereIn('seq', file_seq_list)
     const result_list = await query
     if (!result_list || result_list.length <= 0) {
@@ -57,6 +61,7 @@ export default class OperationFileModel extends MySQLModel {
 
     await this.database
       .from(this.table_name)
+      .where('operation_seq', operation_seq)
       .whereIn('seq', file_seq_list)
       .del()
 
