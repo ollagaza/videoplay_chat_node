@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import JsonWrapper from '../json-wrapper'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 
 /**
  * @swagger

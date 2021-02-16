@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import DBMySQL from '../../database/knex-mysql'
-import baseutil from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import PaymentModel from '../../database/mysql/payment/PaymentModel'
 import PaymentResultModel from '../../database/mysql/payment/PaymentResultModel'
@@ -108,14 +108,14 @@ const PaymentServiceClass = class {
       const orderInfo = data[0][0]
       const pay_moneys = JSON.parse(orderInfo.moneys)
       orderInfo.pay_money = _.find(pay_moneys, { paycode: orderInfo['pay_code'] })
-      orderInfo.paid_at = baseutil.dateFormat(orderInfo.paid_at)
-      orderInfo.start_paid_at = baseutil.dateFormat(orderInfo.paid_at, 'yyyy-mm-dd')
+      orderInfo.paid_at = Util.dateFormat(orderInfo.paid_at)
+      orderInfo.start_paid_at = Util.dateFormat(orderInfo.paid_at, 'yyyy-mm-dd')
       if (orderInfo.pay_money.pay === 'month') {
-        orderInfo.end_paid_at = baseutil.getDateMonthAdd(baseutil.dateFormat(orderInfo.paid_at), 1)
+        orderInfo.end_paid_at = Util.getDateMonthAdd(Util.dateFormat(orderInfo.paid_at), 1)
       } else {
-        orderInfo.end_paid_at = baseutil.getDateYearAdd(baseutil.dateFormat(orderInfo.paid_at), 1)
+        orderInfo.end_paid_at = Util.getDateYearAdd(Util.dateFormat(orderInfo.paid_at), 1)
       }
-      if (baseutil.dateFormat(new Date()) >= orderInfo.start_paid_at && baseutil.dateFormat(new Date()) <= orderInfo.end_paid_at) {
+      if (Util.dateFormat(new Date()) >= orderInfo.start_paid_at && Util.dateFormat(new Date()) <= orderInfo.end_paid_at) {
         switch (orderInfo.status) {
           case 'cancelled':
             orderInfo.progress_code = 'C'
@@ -147,7 +147,7 @@ const PaymentServiceClass = class {
         }
       }
 
-      const diffDay = baseutil.dayDiffenrence(orderInfo.start_paid_at)
+      const diffDay = Util.dayDiffenrence(orderInfo.start_paid_at)
       let amount = 0
       if (diffDay > 7) {
         amount = (orderInfo.amount * (31 - diffDay) / 30) * 0.7

@@ -41,7 +41,7 @@ if ('/' === '/') {
   PATH_EXP = new RegExp(/\\/, 'g')
 }
 
-const log_prefix = '[baseutil]'
+const log_prefix = '[Util]'
 
 const removePathSEQ = (media_path) => {
   return media_path.replace(/SEQ.*$/i, '')
@@ -489,6 +489,29 @@ const execute = async (command) => {
   return result
 }
 
+const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpaxldlwl_!') => {
+  return new Promise(async resolve => {
+    SSH(cmd, {
+      host,
+      port,
+      user,
+      password
+    }, function (error, result, stderr) {
+      log.debug(log_prefix, '[sshExec]', cmd, error, result, stderr)
+      const response = {
+        success: true,
+        out: result
+      }
+      if (error) {
+        response.success = false
+        response.error = error
+        response.stderr = stderr
+      }
+      resolve(response)
+    })
+  })
+}
+
 const getMediaInfo = (media_path) => {
   return new Promise((resolve) => {
     (
@@ -597,13 +620,21 @@ const getImageScaling = async (origin_path, scaling_path = null, scaling_type = 
   return await execute(command)
 }
 
-const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1) => {
+const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1, media_info = null) => {
   let filter = ''
   let time_option = ''
   if (width > 0 && height > 0) {
-    const dimension = await getVideoDimension(origin_path)
-    if (!dimension.success) {
-      return dimension
+    let dimension = null
+    if (media_info) {
+      dimension = {
+        width: media_info.media_info.width,
+        height: media_info.media_info.height
+      }
+    } else {
+      dimension = await getVideoDimension(origin_path)
+    }
+    if (dimension.width <= 0 || dimension.height <= 0) {
+      return { success: false }
     }
 
     const w_ratio = dimension.width / width
@@ -770,6 +801,11 @@ const getFileType = async (file_path, file_name) => {
       break
   }
 
+  return getMimeType(file_path, file_name)
+}
+
+const getMimeType = (file_path, file_name) => {
+  const file_ext = getFileExt(file_name)
   let mime_type = mime.lookup(file_path)
   log.debug(log_prefix, '[getFileType]', mime_type)
   if (!mime_type || isEmpty(mime_type)) {
@@ -933,31 +969,6 @@ const removePathSlash = (path) => {
 const removePathLastSlash = (path) => {
   if (!path) return null
   return path.replace(/\/+$/, '')
-}
-
-const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpaxldlwl_!') => {
-  const async_func = new Promise(async resolve => {
-    SSH(cmd, {
-      host,
-      port,
-      user,
-      password
-    }, function (error, result, stderr) {
-      log.debug(log_prefix, '[sshExec]', cmd, error, result, stderr)
-      const response = {
-        success: true,
-        result
-      }
-      if (error) {
-        response.success = false
-        response.error = error
-        response.stderr = stderr
-      }
-      resolve(response)
-    })
-  })
-
-  return async_func
 }
 
 const trim = (value) => {
@@ -1310,8 +1321,12 @@ export default {
   'getVideoDuration': getVideoDuration,
   'getThumbnail': getThumbnail,
 
-  'isNull': (value) => {
-    return value === null || value === undefined
+  'isNull': (value, check_str_null = true) => {
+    if (value === null || value === undefined) return true;
+    if (check_str_null) {
+      return value === 'null' || value === 'undefined'
+    }
+    return false
   },
   'getPayload': (data, fields, set_modify_date = true, allow_blank = true, allow_empty_array = true) => {
     const model = {}
@@ -1351,6 +1366,7 @@ export default {
   getDirectoryName,
   getRandomNumber,
   getFileType,
+  getMimeType,
   uploadImageFile,
   sshExec,
 

@@ -100,6 +100,28 @@ export default class OperationCommentModel extends MySQLModel {
     return query
   }
 
+  getOriginCommentList = async (origin_data_seq) => {
+    return this.find({ operation_data_seq: origin_data_seq }, this.selectable_fields, { name: 'is_reply', direction: 'asc' })
+  }
+
+  copyParentComment = async (comment_info, operation_data_seq, group_seq, change_seq_map) => {
+    const origin_seq = comment_info.seq
+    delete comment_info.seq
+    comment_info.operation_data_seq = operation_data_seq
+    comment_info.group_seq = group_seq
+    const copy_seq = await this.createComment(operation_data_seq, comment_info)
+    change_seq_map[origin_seq] = copy_seq
+  }
+
+  copyReplyComment = async (comment_info, operation_data_seq, group_seq, change_seq_map) => {
+    const origin_parent_seq = comment_info.parent_seq
+    delete comment_info.seq
+    comment_info.operation_data_seq = operation_data_seq
+    comment_info.group_seq = group_seq
+    comment_info.parent_seq = change_seq_map[origin_parent_seq]
+    await this.createComment(operation_data_seq, comment_info)
+  }
+
   getComment = async (operation_data_seq, comment_seq) => {
     const query = this.database.select(this.list_select_fileds)
       .from(this.table_name)

@@ -14,6 +14,7 @@
     "prestart": "npm run -s build",
     "start": "node dist/index.prod.js",
     "local": "nodemon src/index.local.js --exec \"node -r dotenv/config -r babel-register\"",
+    "prod": "nodemon src/index.prod.js --exec \"node -r dotenv/config -r babel-register\"",
     "dev": "nodemon src/index.dev.js --exec \"node -r dotenv/config -r babel-register\"",
     "demon": "nodemon src/index.demon.js --exec \"node -r dotenv/config -r babel-register\"",
     "clean": "rimraf dist",

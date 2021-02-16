@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import ServiceConfig from '../service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import Role from '../../constants/roles'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'

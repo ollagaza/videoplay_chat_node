@@ -3,7 +3,7 @@ import querystring from 'querystring'
 import DBMySQL from '../../database/knex-mysql'
 import ServiceConfig from '../../service/service-config'
 import Role from '../../constants/roles'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import log from '../../libs/logger'
 import GroupService from '../group/GroupService'
@@ -25,12 +25,16 @@ import MongoDataService from '../common/MongoDataService'
 import { OperationAnalysisModel } from '../../database/mongodb/OperationAnalysisModel'
 import Zip from 'adm-zip'
 import iconv from 'iconv-lite'
+import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 import OperationCommentService from "./OperationCommentService";
+import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 
 const OperationServiceClass = class {
   constructor () {
     this.log_prefix = '[OperationServiceClass]'
+    this.MODE_OPERATION = 'operation'
+    this.MODE_FILE = 'file'
   }
 
   getOperationModel = (database = null) => {
@@ -100,7 +104,7 @@ const OperationServiceClass = class {
         await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info)
         await OperationMetadataModel.createOperationMetadata(operation_info, request_body.meta_data)
         if (operation_info.operation_type) {
-          await UserDataModel.updateByMemberSeq(member_info.seq, { operation_type: operation_info.operation_type })
+          await UserDataModel.updateByMemberSeq(member_info.seq, { operation_type: operation_info.operation_type, operation_mode: operation_info.mode })
         }
       } catch (error) {
         log.error(this.log_prefix, '[createOperation]', 'create metadata error', error)
@@ -240,6 +244,13 @@ const OperationServiceClass = class {
 
       if (is_success) {
         await this.createOperationDirectory(operation_info)
+
+        const origin_operation_file_list = await OperationFileService.getOperationFileList(DBMySQL, origin_operation_seq, false)
+        if (origin_operation_file_list && origin_operation_file_list.length) {
+          await OperationFileService.copyOperationFileInfo(DBMySQL, operation_seq, origin_operation_file_list)
+        }
+        result.copy_operation_file_info = true
+
         const origin_refer_file_list = await OperationFileService.getReferFileList(DBMySQL, origin_storage_seq, false)
         if (origin_refer_file_list) {
           await OperationFileService.copyReferFileInfo(DBMySQL, storage_seq, origin_refer_file_list, operation_info)
@@ -272,8 +283,11 @@ const OperationServiceClass = class {
         }
         result.copy_clip_list = true
 
-        result.operation_data_seq = await OperationDataService.copyOperationDataByRequest(operation_info, origin_operation_seq, copy_type, modify_operation_data, mento_group_seq)
+        const { operation_data_seq, origin_data_seq } = await OperationDataService.copyOperationDataByRequest(operation_info, origin_operation_seq, copy_type, modify_operation_data, mento_group_seq)
+        result.operation_data_seq = operation_data_seq
         result.copy_operation_data = true
+
+        await OperationCommentService.copyComment(operation_data_seq, origin_data_seq, group_seq)
 
         const origin_directory_info = this.getOperationDirectoryInfo(origin_operation_info)
 
@@ -358,38 +372,55 @@ const OperationServiceClass = class {
     return output
   }
 
+  deleteOperationByList = (group_seq, request_data) => {
+    (
+      async (group_seq, request_data) => {
+        try {
+          let operation_list = null
+          let folder_operation_list = null
+          if (request_data.operation_folder_list) {
+            folder_operation_list = await OperationFolderService.deleteChildFolderAndRtnOperationList(DBMySQL, group_seq, request_data.operation_folder_list)
+            operation_list = folder_operation_list.operation_data
+          }
+          if (request_data.operation_info_list) {
+            if (operation_list) {
+              operation_list = operation_list.concat(request_data.operation_info_list)
+            } else {
+              operation_list = request_data.operation_info_list
+            }
+          }
+
+          if (operation_list && operation_list.length > 0) {
+            for (let cnt = 0; cnt < operation_list.length; cnt++) {
+              await OperationService.deleteOperationAndUpdateStorage(operation_list[cnt])
+            }
+          }
+          if (folder_operation_list) {
+            await OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, folder_operation_list.allChildFolderList)
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[deleteOperationBySeqList]', group_seq, request_data, error)
+        }
+      }
+    )(group_seq, request_data)
+  }
+
   deleteOperation = async (database, token_info, operation_seq) => {
     const operation_info = await this.getOperationInfo(database, operation_seq, token_info, true, false)
     await this.deleteOperationAndUpdateStorage(operation_info)
-    this.onOperationDeleteComplete(operation_info)
     return true
   }
 
   deleteOperationAndUpdateStorage = async (operation_info) => {
     const operation_model = this.getOperationModel()
     await operation_model.setOperationStatusDelete(operation_info.seq)
+    await OperationDataService.changeStatus(operation_info.seq, 'D')
     await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, 0);
     await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
 
     await this.deleteMongoDBData(operation_info.seq)
-
+    this.onOperationDeleteComplete(operation_info)
     return true
-  }
-
-  deleteOperationByStatus = async (group_seq) => {
-    const operation_model = this.getOperationModel(DBMySQL)
-    const remove_operation_list = await operation_model.getTargetListByStatusD(group_seq);
-
-    for (let cnt = 0; cnt < remove_operation_list.length; cnt++) {
-      await this.onOperationDeleteComplete(remove_operation_list[cnt])
-      await operation_model.deleteOperation(remove_operation_list[cnt].seq)
-    }
-    return true
-  }
-
-  getTargetListByStatusD = async () => {
-    const operation_model = this.getOperationModel(DBMySQL)
-    return await operation_model.getTargetListByStatusD()
   }
 
   onOperationDeleteComplete = (operation_info) => {
@@ -398,14 +429,18 @@ const OperationServiceClass = class {
         try {
           let delete_link_file = false
           let delete_origin = false
+          let has_copy = false
           const operation_model = this.getOperationModel()
           if (operation_info.origin_seq) {
             const has_origin = await operation_model.hasOrigin(operation_info.origin_seq)
             delete_origin = !has_origin
             delete_link_file = true
           } else {
-            const has_copy = await operation_model.hasCopy(operation_info.seq)
+            has_copy = await operation_model.hasCopy(operation_info.seq)
             delete_link_file = !has_copy
+          }
+          if (!has_copy) {
+            await operation_model.deleteOperation(operation_info.seq)
           }
 
           await this.deleteOperationFiles(operation_info, delete_link_file, delete_origin)
@@ -442,6 +477,9 @@ const OperationServiceClass = class {
         await Util.deleteDirectory(directory_info.temp)
         await Util.deleteDirectory(directory_info.other)
         await Util.deleteDirectory(directory_info.origin)
+        if (!ServiceConfig.isVacs()) {
+          await Util.deleteDirectory(directory_info.file)
+        }
       }
     }
   }
@@ -462,6 +500,12 @@ const OperationServiceClass = class {
     if (request_query.folder_seq) {
       filter_params.folder_seq = request_query.folder_seq
     }
+    if (request_query.search_keyword) {
+      filter_params.search_keyword = request_query.search_keyword;
+    }
+    if (request_query.member_grade) {
+      filter_params.member_grade = request_query.member_grade;
+    }
 
     log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params)
 
@@ -472,7 +516,11 @@ const OperationServiceClass = class {
     page_params.no_paging = page_params.no_paging ? page_params.no_paging : 'n'
     log.debug(this.log_prefix, '[getOperationList]', page_params, filter_params)
     const operation_model = this.getOperationModel(database)
-    return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
+    if (filter_params.search_keyword) {
+      return await operation_model.getOperationInfoSearchListPage(group_seq, page_params, filter_params)
+    } else {
+      return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
+    }
   }
 
   setMediaInfo = async (database, operation_info) => {
@@ -528,69 +576,6 @@ const OperationServiceClass = class {
     return { operation_info, operation_model }
   }
 
-  getOperationDirectoryInfo = (operation_info) => {
-    const media_path = operation_info.media_path
-    const origin_media_path = operation_info.origin_media_path
-    const media_directory = ServiceConfig.get('media_root') + media_path
-    const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
-    const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
-    const origin_media_directory = ServiceConfig.get('media_root') + origin_media_path
-    const origin_url_prefix = ServiceConfig.get('static_storage_prefix') + origin_media_path
-    const origin_cdn_url = ServiceConfig.get('static_cloud_prefix') + origin_media_path
-    const trans_server_root = ServiceConfig.get('trans_server_root')
-    const storage_server_root = ServiceConfig.get('storage_server_root')
-    const content_path = operation_info.content_id + '/'
-    const origin_content_path = operation_info.origin_content_id + '/'
-    log.debug(this.log_prefix, '[getOperationDirectoryInfo]', media_path, origin_media_path)
-    return {
-      'root': media_directory,
-      'root_origin': origin_media_directory,
-      'origin': media_directory + 'origin/',
-      'video': media_directory + 'video/',
-      'video_origin': origin_media_directory + 'video/',
-      'other': media_directory + 'other/',
-      'refer': media_directory + 'refer/',
-      'image': media_directory + 'image/',
-      'temp': media_directory + 'temp/',
-      'media_path': media_path,
-      'media_path_origin': origin_media_path,
-      'media_origin': media_path + 'origin/',
-      'media_video': media_path + 'video/',
-      'media_video_origin': origin_media_path + 'video/',
-      'media_other': media_path + 'other/',
-      'media_refer': media_path + 'refer/',
-      'media_image': media_path + 'image/',
-      'media_temp': media_path + 'temp/',
-      'trans_origin': trans_server_root + media_path + 'origin/',
-      'trans_video': trans_server_root + media_path + 'video/',
-      'storage_path': storage_server_root + media_path,
-      'storage_origin': storage_server_root + media_path + 'origin/',
-      'storage_video': storage_server_root + media_path + 'video/',
-      'url_prefix': url_prefix,
-      'url_origin': url_prefix + 'origin/',
-      'url_video': url_prefix + 'video/',
-      'url_video_origin': origin_url_prefix + 'video/',
-      'url_other': url_prefix + 'other/',
-      'url_refer': url_prefix + 'refer/',
-      'url_image': url_prefix + 'image/',
-      'url_temp': url_prefix + 'temp/',
-      'cdn_prefix': cdn_url,
-      'cdn_video': cdn_url + 'video/',
-      'cdn_video_origin': origin_cdn_url + 'video/',
-      'cdn_other': cdn_url + 'other/',
-      'cdn_refer': cdn_url + 'refer/',
-      'cdn_image': cdn_url + 'image/',
-      'content_path': content_path,
-      'content_origin': content_path + 'origin/',
-      'content_video': content_path + 'video/',
-      'content_video_origin': origin_content_path + 'video/',
-      'content_other': content_path + 'other/',
-      'content_refer': content_path + 'refer/',
-      'content_image': content_path + 'image/',
-      'content_temp': content_path + 'temp/',
-    }
-  }
-
   createOperationDirectory = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
 
@@ -599,6 +584,7 @@ const OperationServiceClass = class {
     await Util.createDirectory(directory_info.refer)
     await Util.createDirectory(directory_info.image)
     await Util.createDirectory(directory_info.temp)
+    await Util.createDirectory(directory_info.file)
   }
 
   getGroupTotalStorageUsedSize = async (database, group_seq) => {
@@ -617,8 +603,51 @@ const OperationServiceClass = class {
   }
 
   uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null) => {
-    const upload_result = await this.uploadOperationFileAndUpdate(database, request, response, operation_info, file_type, field_name)
-    return upload_result.upload_seq
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    let media_directory
+    if (file_type === OperationFileService.TYPE_REFER) {
+      media_directory = directory_info.refer
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      media_directory = directory_info.file
+    } else {
+      media_directory = directory_info.origin
+    }
+
+    if (!(await Util.fileExists(media_directory))) {
+      await Util.createDirectory(media_directory)
+    }
+
+    const file_field_name = field_name ? field_name : 'target'
+    if (file_type === OperationFileService.TYPE_REFER) {
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
+    } else {
+      await Util.uploadByRequest(request, response, file_field_name, media_directory)
+    }
+    const upload_file_info = request.file
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
+    }
+    upload_file_info.new_file_name = request.new_file_name
+    log.debug(this.log_prefix, '[uploadOperationFile]', 'request.body', request.body)
+
+    return await this.createOperationFileInfo(file_type, operation_info, upload_file_info, request.body)
+  }
+
+  createOperationFileInfo = async (file_type, operation_info, upload_file_info, request_body) => {
+    let upload_seq = null
+    if (file_type === OperationFileService.TYPE_REFER) {
+      upload_seq = await OperationFileService.createReferFileInfo(null, operation_info, upload_file_info)
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      upload_seq = await OperationFileService.createOperationFileInfo(null, operation_info, upload_file_info, request_body)
+    } else {
+      upload_seq = await OperationFileService.createVideoFileInfo(null, operation_info, upload_file_info, false)
+    }
+    // if (!upload_seq) {
+    //   throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
+    // }
+    return upload_seq
   }
 
   uploadOperationFileByZip = (operation_info, temp_directory, zip_file_path, encoding, file_type) => {
@@ -674,63 +703,44 @@ const OperationServiceClass = class {
       }
     )(zip.getEntries())
   }
-  uploadOperationFileAndUpdate = async (database, request, response, operation_info, file_type, field_name = null) => {
+
+  onUploadComplete = async (operation_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
-    const storage_seq = operation_info.storage_seq
-    let media_directory
-    if (file_type !== OperationFileService.TYPE_REFER) {
-      media_directory = directory_info.origin
-    } else {
-      media_directory = directory_info.refer
+    if (operation_info.mode === 'file') {
+      if (!ServiceConfig.isVacs()) {
+        await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
+      }
     }
+    await this.updateStorageSize(operation_info)
+  }
 
-    if (!(await Util.fileExists(media_directory))) {
-      await Util.createDirectory(media_directory)
-    }
-
-    const file_field_name = field_name ? field_name : 'target'
-    let url_prefix = directory_info.url_origin
-    if (file_type === OperationFileService.TYPE_REFER) {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
-      url_prefix = directory_info.url_refer
-    } else {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory)
-    }
-    const upload_file_info = request.file
-    if (Util.isEmpty(upload_file_info)) {
-      throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
-    }
-    upload_file_info.new_file_name = request.new_file_name
-
-    let upload_seq = await this.createOperationFileInfo(file_type, operation_info, upload_file_info, storage_seq)
-
-    const file_path = upload_file_info.path
-    const file_url = url_prefix + upload_file_info.new_file_name
-    return {
-      upload_seq,
-      file_path,
-      file_url
+  updateStorageSize = async (operation_info) => {
+    const storage_size = await new OperationStorageModel(DBMySQL).updateUploadFileSize(operation_info, OperationFileService.TYPE_ALL)
+    await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
+    await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, storage_size);
+    if (ServiceConfig.isVacs()) {
+      VacsService.updateStorageInfo()
     }
   }
 
-  createOperationFileInfo = async (file_type, operation_info, upload_file_info, storage_seq) => {
-    let upload_seq = null
-    await DBMySQL.transaction(async (transaction) => {
-      if (file_type !== OperationFileService.TYPE_REFER) {
-        upload_seq = await OperationFileService.createVideoFileInfo(transaction, operation_info, upload_file_info, false)
-      } else {
-        upload_seq = await OperationFileService.createReferFileInfo(transaction, operation_info, upload_file_info)
-      }
+  deleteFileInfo = async (operation_info, file_type, request_body) => {
+    if (file_type === OperationFileService.TYPE_VIDEO) {
+      throw new StdObject(-1, '잘못된 요청입니다.', 400)
+    }
 
-      if (!upload_seq) {
-        throw new StdObject(-1, '파일 정보를 저장하지 못했습니다.', 500)
-      }
+    const file_seq_list = request_body.file_seq_list
+    if (!file_seq_list || file_seq_list.length <= 0) {
+      throw new StdObject(-2, '잘못된 요청입니다.', 400)
+    }
 
-      const storage_size = await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
-      await GroupService.updateMemberUsedStorage(transaction, operation_info.group_seq, operation_info.member_seq)
-      await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, operation_info.total_file_size, storage_size);
-    })
-    return upload_seq
+    if (file_type === OperationFileService.TYPE_REFER) {
+      await OperationFileService.deleteReferFileList(DBMySQL, operation_info, file_seq_list)
+    } else if (file_type === OperationFileService.TYPE_FILE) {
+      await OperationFileService.deleteOperationFileList(DBMySQL, operation_info, file_seq_list)
+    } else {
+      return
+    }
+    await this.updateStorageSize(operation_info)
   }
 
   createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0) => {
@@ -759,46 +769,54 @@ const OperationServiceClass = class {
   }
 
   requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
+    if (operation_info.mode === this.MODE_FILE) {
+      return await this.moveOperationFiles(operation_info)
+    } else {
+      return await this.requestTranscoder(operation_info)
+    }
+  }
+
+  moveOperationFiles = async (operation_info) => {
+    await this.updateAnalysisStatus(null, operation_info, 'Y')
+  }
+
+  requestTranscoder = async (operation_info) => {
+    const operation_seq = operation_info.seq
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
     let api_request_result = null
     let is_execute_success = false
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
-    const directory_info = this.getOperationDirectoryInfo(operation_info)
 
-    await database.transaction(async (transaction) => {
-      const operation_model = this.getOperationModel(transaction)
-      const operation_update_param = {}
-      operation_update_param.analysis_status = 'R'
+    const operation_model = this.getOperationModel(DBMySQL)
+    const operation_update_param = {}
+    operation_update_param.analysis_status = 'R'
 
-      const content_id = operation_info.content_id
-      const query_data = {
-        'DirPath': directory_info.trans_origin,
-        'ContentID': content_id
-      }
-      const query_str = querystring.stringify(query_data)
+    const content_id = operation_info.content_id
+    const query_data = {
+      'DirPath': directory_info.trans_origin,
+      'ContentID': content_id
+    }
+    const query_str = querystring.stringify(query_data)
 
-      const request_options = {
-        hostname: ServiceConfig.get('trans_server_domain'),
-        port: ServiceConfig.get('trans_server_port'),
-        path: ServiceConfig.get('trans_start_api') + '?' + query_str,
-        method: 'GET'
-      }
-      const api_url = 'http://' + ServiceConfig.get('trans_server_domain') + ':' + ServiceConfig.get('trans_server_port') + ServiceConfig.get('trans_start_api') + '?' + query_str
-      log.debug(this.log_prefix, '[requestAnalysis]', 'trans api url', api_url)
-      try {
-        api_request_result = await Util.httpRequest(request_options, false)
-        is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done'
-      } catch (error) {
-        log.error(this.log_prefix, '[requestAnalysis]', 'trans api url', api_url, error)
-      }
+    const request_options = {
+      hostname: ServiceConfig.get('trans_server_domain'),
+      port: ServiceConfig.get('trans_server_port'),
+      path: ServiceConfig.get('trans_start_api') + '?' + query_str,
+      method: 'GET'
+    }
+    const api_url = 'http://' + ServiceConfig.get('trans_server_domain') + ':' + ServiceConfig.get('trans_server_port') + ServiceConfig.get('trans_start_api') + '?' + query_str
+    log.debug(this.log_prefix, '[requestTranscoder]', 'trans api url', api_url)
+    try {
+      api_request_result = await Util.httpRequest(request_options, false)
+      is_execute_success = api_request_result && api_request_result.toLowerCase() === 'done'
+    } catch (error) {
+      log.error(this.log_prefix, '[requestTranscoder]', 'trans api url', api_url, error)
+    }
 
-      if (is_execute_success) {
-        await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param))
-      } else {
-        throw new StdObject(-1, '비디오 분석 요청 실패', 500)
-      }
-    })
-    if (ServiceConfig.isVacs()) {
-      VacsService.updateStorageInfo()
+    if (is_execute_success) {
+      await operation_model.updateOperationInfo(operation_seq, new OperationInfo(operation_update_param))
+    } else {
+      throw new StdObject(-1, '비디오 분석 요청 실패', 500)
     }
   }
 
@@ -845,6 +863,11 @@ const OperationServiceClass = class {
     return video_path + operation_info.media_info.video_file_name
   }
 
+  getOperationMode = async (operation_seq) => {
+    const operation_model = this.getOperationModel()
+    return operation_model.getOperationMode(operation_seq)
+  }
+
   getOperationDataView = async (operation_seq, group_seq) => {
     const options = {
       index_list: true,
@@ -852,6 +875,18 @@ const OperationServiceClass = class {
       writer_info: true,
       refer_file_list: true,
       import_media_info: true,
+    }
+    return this.getOperationDataInfo(operation_seq, group_seq, options)
+  }
+
+  getOperationDataViewFile = async (operation_seq, group_seq) => {
+    const options = {
+      operation_file_list: false,
+      index_list: false,
+      clip_list: true,
+      writer_info: true,
+      refer_file_list: true,
+      import_media_info: false,
     }
     return this.getOperationDataInfo(operation_seq, group_seq, options)
   }
@@ -876,6 +911,12 @@ const OperationServiceClass = class {
     output.add('is_writer', operation_info.group_seq === group_seq)
 
     if (options) {
+      log.debug(this.log_prefix, '[getOperationDataInfo]', 'options', options)
+      if (options.operation_file_list) {
+        const { operation_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_FILE)
+        output.add('operation_file_list', operation_file_list)
+      }
+
       if (options.index_list) {
         const index_list = await this.getVideoIndexList(operation_seq)
         output.add('index_list', index_list)
@@ -994,6 +1035,75 @@ const OperationServiceClass = class {
     return operation_infos
   }
 
+  getOperationDirectoryInfo = (operation_info) => {
+    const media_path = operation_info.media_path
+    const origin_media_path = operation_info.origin_media_path
+    const media_directory = ServiceConfig.get('media_root') + media_path
+    const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
+    const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
+    const origin_media_directory = ServiceConfig.get('media_root') + origin_media_path
+    const origin_url_prefix = ServiceConfig.get('static_storage_prefix') + origin_media_path
+    const origin_cdn_url = ServiceConfig.get('static_cloud_prefix') + origin_media_path
+    const content_path = operation_info.content_id + '/'
+    const origin_content_path = operation_info.origin_content_id + '/'
+    const trans_server_root = ServiceConfig.get('trans_server_root')
+    const storage_server_root = ServiceConfig.get('storage_server_root')
+
+    return {
+      'root': media_directory,
+      'root_origin': origin_media_directory,
+      'origin': media_directory + 'origin/',
+      'video': media_directory + 'video/',
+      'video_origin': origin_media_directory + 'video/',
+      'other': media_directory + 'other/',
+      'refer': media_directory + 'refer/',
+      'image': media_directory + 'image/',
+      'temp': media_directory + 'temp/',
+      'file': media_directory + 'file/',
+      'media_path': media_path,
+      'media_path_origin': origin_media_path,
+      'media_origin': media_path + 'origin/',
+      'media_video': media_path + 'video/',
+      'media_video_origin': origin_media_path + 'video/',
+      'media_other': media_path + 'other/',
+      'media_refer': media_path + 'refer/',
+      'media_image': media_path + 'image/',
+      'media_temp': media_path + 'temp/',
+      'media_file': media_path + 'file/',
+      'trans_origin': trans_server_root + media_path + 'origin/',
+      'trans_video': trans_server_root + media_path + 'video/',
+      'storage_path': storage_server_root + media_path,
+      'storage_origin': storage_server_root + media_path + 'origin/',
+      'storage_video': storage_server_root + media_path + 'video/',
+      'storage_file': storage_server_root + media_path + 'file/',
+      'url_prefix': url_prefix,
+      'url_origin': url_prefix + 'origin/',
+      'url_video': url_prefix + 'video/',
+      'url_video_origin': origin_url_prefix + 'video/',
+      'url_other': url_prefix + 'other/',
+      'url_refer': url_prefix + 'refer/',
+      'url_image': url_prefix + 'image/',
+      'url_temp': url_prefix + 'temp/',
+      'url_file': url_prefix + 'file/',
+      'cdn_prefix': cdn_url,
+      'cdn_video': cdn_url + 'video/',
+      'cdn_video_origin': origin_cdn_url + 'video/',
+      'cdn_other': cdn_url + 'other/',
+      'cdn_refer': cdn_url + 'refer/',
+      'cdn_image': cdn_url + 'image/',
+      'cdn_file': cdn_url + 'file/',
+      'content_path': content_path,
+      'content_origin': content_path + 'origin/',
+      'content_video': content_path + 'video/',
+      'content_video_origin': origin_content_path + 'video/',
+      'content_other': content_path + 'other/',
+      'content_refer': content_path + 'refer/',
+      'content_image': content_path + 'image/',
+      'content_temp': content_path + 'temp/',
+      'content_file': content_path + 'file/',
+    }
+  }
+
   getAllOperationGroupMemberList = async (database, group_seq, member_seq) => {
     const model = this.getOperationModel(database)
     return await model.getGroupMemberOperationList(group_seq, member_seq);
@@ -1028,6 +1138,6 @@ const OperationServiceClass = class {
   }
 }
 
-const operation_service = new OperationServiceClass()
+const OperationService = new OperationServiceClass()
 
-export default operation_service
+export default OperationService

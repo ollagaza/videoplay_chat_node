@@ -4,7 +4,7 @@ import TokenInfo from '../wrapper/token-info'
 import Role from '../constants/roles'
 import Config from '../config/config'
 import Constants from '../constants/constants'
-import Util from '../utils/baseutil'
+import Util from '../utils/Util'
 
 const IS_DEV = Config.isDev()
 

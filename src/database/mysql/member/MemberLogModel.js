@@ -2,7 +2,7 @@ import _ from 'lodash'
 import MySQLModel from '../../mysql-model'
 import { LogCodeModel } from '../../mongodb/MemberLogCode'
 import NotifyInfo from '../../../wrapper/common/NotifyInfo'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import ServiceConfig from '../../../service/service-config'
 
 export default class MemberLogModel extends MySQLModel {

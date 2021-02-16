@@ -2,7 +2,7 @@ import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
-import util from "../../utils/baseutil";
+import util from "../../utils/Util";
 import OperationService from '../operation/OperationService'
 import OperationModel from "../../database/mysql/operation/OperationModel";
 import OperationFolderModel from '../../database/mysql/operation/OperationFolderModel'

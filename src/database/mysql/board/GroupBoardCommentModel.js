@@ -58,8 +58,24 @@ export default class GroupBoardCommentModel extends MySQLModel {
     return this.decrement({ seq: comment_seq }, { recommend_cnt: 1 })
   }
 
+  getCommentCount = async (comment_seq) => {
+    const result = await this.database.count('* as total_count').from(this.table_name)
+      .where((query) => {
+        query.orWhere('seq', comment_seq)
+        query.orWhere('parent_seq', comment_seq)
+        query.orWhere('origin_seq', comment_seq)
+      })
+      .andWhere('status', 'Y')
+      .first()
+    if (!result || !result.total_count) {
+      return 0
+    } else {
+      return result.total_count
+    }
+  }
+
   DeleteComment = async (comment_seq) => {
-    return this.update({ seq: comment_seq }, { status: 'D' })
+    return this.database.update({ status: 'D' }).from(this.table_name).where('seq', comment_seq).orWhere('parent_seq', comment_seq).orWhere('origin_seq', comment_seq)
   }
 
   getCommentInfo = async (comment_seq) => {
@@ -77,5 +93,12 @@ export default class GroupBoardCommentModel extends MySQLModel {
     return this.database.select(['*'])
       .from(this.table_name)
       .where({ group_seq: group_seq, member_seq: member_seq })
+  }
+
+  getBoardCommentCountList = async (board_data_seq) => {
+    return this.database.select(['member_seq', this.database.raw('count(*) as cnt')])
+      .from(this.table_name)
+      .where({board_data_seq: board_data_seq})
+      .groupBy(['member_seq'])
   }
 }

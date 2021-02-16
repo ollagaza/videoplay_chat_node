@@ -12,7 +12,7 @@ import OperationClipService from '../../../service/operation/OperationClipServic
 import log from '../../../libs/logger'
 import OperationFileService from '../../../service/operation/OperationFileService'
 import OperationStorageModel from '../../../database/mysql/operation/OperationStorageModel'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import OperationLinkService from '../../../service/operation/OperationLinkService'
 
 const routes = Router()
@@ -171,6 +171,24 @@ routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wr
   output.add('is_link', base_info.is_link)
   output.add('is_editor_link', base_info.is_editor_link)
   output.add('is_download_link', base_info.is_download_link)
+  res.json(output)
+}))
+
+routes.get('/:api_type/:api_key/view/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const base_info = await getBaseInfo(req, true)
+  const output = await OperationService.getOperationDataViewFile(base_info.operation_seq, base_info.group_seq)
+  output.add('is_link', base_info.is_link)
+  output.add('is_editor_link', base_info.is_editor_link)
+  output.add('is_download_link', base_info.is_download_link)
+  res.json(output)
+}))
+
+routes.get('/:api_type/:api_key/mode', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const base_info = await getBaseInfo(req, true, false, true)
+  const mode_info = await OperationService.getOperationMode(base_info.operation_seq)
+  const output = new StdObject()
+  output.adds(mode_info)
   res.json(output)
 }))
 
@@ -404,10 +422,9 @@ routes.put('/:api_type/:api_key/thumbnail', Auth.isAuthenticated(Role.LOGIN_USER
 routes.get('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_info } = await getBaseInfo(req, true, false, true)
   const file_type = req.params.file_type
-  const { video_file_list, refer_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, file_type)
+  const file_list = await OperationFileService.getFileList(DBMySQL, operation_info, file_type)
   const output = new StdObject()
-  output.add('video_file_list', video_file_list)
-  output.add('refer_file_list', refer_file_list)
+  output.adds(file_list)
   res.json(output)
 }))
 
@@ -422,24 +439,18 @@ routes.post('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.LO
 }))
 
 routes.delete('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const output = new StdObject()
-  const file_type = req.params.file_type
-  if (file_type !== OperationFileService.TYPE_REFER) {
-    throw new StdObject(-1, '잘못된 요청입니다.', 400)
-  }
-
-  const file_seq_list = req.body.file_seq_list
-  if (!file_seq_list || file_seq_list.length <= 0) {
-    throw new StdObject(-2, '잘못된 요청입니다.', 400)
-  }
   const { operation_info } = await getBaseInfo(req, true, true, true)
+  const file_type = req.params.file_type
+  await OperationService.deleteFileInfo(operation_info, file_type, req.body)
+  const output = new StdObject()
+  res.json(output)
+}))
 
-  await DBMySQL.transaction(async (transaction) => {
-    const storage_seq = operation_info.storage_seq
-    await OperationFileService.deleteReferFileList(transaction, operation_info, file_seq_list)
-    await new OperationStorageModel(transaction).updateUploadFileSize(storage_seq, file_type)
-  })
+routes.put('/:api_type/:api_key/files/upload/complete', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info } = await getBaseInfo(req, true, true, true)
+  await OperationService.onUploadComplete(operation_info)
 
+  const output = new StdObject()
   res.json(output)
 }))
 

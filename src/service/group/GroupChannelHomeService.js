@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import log from '../../libs/logger'
-import baseutil from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import MemberModel from "../../database/mysql/member/MemberModel"
 import GroupModel from '../../database/mysql/group/GroupModel'
@@ -67,7 +67,7 @@ const GroupChannelHomeServiceClass = class {
     const member_treatlist = await model.getGroupOwnerTreatLists()
     const treatlist = []
     for (let cnt = 0; cnt < member_treatlist.length; cnt++) {
-      if (!baseutil.isEmpty(member_treatlist[cnt])) {
+      if (!Util.isEmpty(member_treatlist[cnt])) {
         try {
           const treat_json = JSON.parse(member_treatlist[cnt].treatcode)
           for (let cnt_sub = 0; cnt_sub < treat_json.length; cnt_sub++) {
@@ -103,6 +103,7 @@ const GroupChannelHomeServiceClass = class {
       { column: 'admin_sort', order: 'asc' },
       { column: 'total_count', order: 'desc' }
     ]
+
     let group_seqs = await model.getRecommendGroupList(order, limit)
     if (group_seqs.length === 0) {
       group_seqs = await model.getRecommendGroupListOtherDay(order, limit);
@@ -122,7 +123,6 @@ const GroupChannelHomeServiceClass = class {
       const board_list = await model.getRecommendBoardList(group_seq, 3)
       result.push({ group_info, operation_list, board_list })
     }
-
     return result
   }
 
@@ -334,6 +334,87 @@ const GroupChannelHomeServiceClass = class {
       })
 
     await model.CreateGroupRecommendListCount(group_counting)
+  }
+
+  GroupMemberDataCounting = async () => {
+    const model = this.getGroupChannelHomeModel()
+    const group_counting = []
+
+    const operation_anotation_count = await OperationClipModel.getGroupMemberSeqCount()
+    Object.keys(operation_anotation_count)
+      .forEach((item) => {
+        const data = _.find(group_counting, { group_seq: operation_anotation_count[item]._id.group_seq, member_seq: operation_anotation_count[item]._id.member_seq })
+        if (data) {
+          data.anno_cnt = operation_anotation_count[item].count
+        } else {
+          if (operation_anotation_count[item]._id) {
+            group_counting.push({
+              group_seq: operation_anotation_count[item]._id.group_seq,
+              member_seq: operation_anotation_count[item]._id.member_seq,
+              anno_cnt: operation_anotation_count[item].count
+            })
+          }
+        }
+      })
+    const operation_data_count = await model.getOperationGroupMemberCount()
+    await Object.keys(operation_data_count)
+      .forEach((item) => {
+        const data = _.find(group_counting, { group_seq: operation_data_count[item].group_seq, member_seq: operation_data_count[item].member_seq })
+        if (data) {
+          data.vid_cnt = operation_data_count[item].count
+        } else {
+          group_counting.push({
+            group_seq: operation_data_count[item].group_seq,
+            member_seq: operation_data_count[item].member_seq,
+            vid_cnt: operation_data_count[item].count
+          })
+        }
+      })
+    const operation_comment_count = await model.getOperationGroupMemberCommentCount()
+    await Object.keys(operation_comment_count)
+      .forEach((item) => {
+        const data = _.find(group_counting, { group_seq: operation_comment_count[item].group_seq, member_seq: operation_comment_count[item].member_seq})
+        if (data) {
+          data.comment_cnt = operation_comment_count[item].count
+        } else {
+          group_counting.push({
+            group_seq: operation_comment_count[item].group_seq,
+            member_seq: operation_comment_count[item].member_seq,
+            comment_cnt: operation_comment_count[item].count
+          })
+        }
+      })
+    const board_data_count = await model.getBoardGroupMemberCount()
+    await Object.keys(board_data_count)
+      .forEach((item) => {
+        const data = _.find(group_counting, { group_seq: board_data_count[item].group_seq, member_seq: board_data_count[item].member_seq})
+        if (data) {
+          data.board_cnt = board_data_count[item].count
+        } else {
+          group_counting.push({
+            group_seq: board_data_count[item].group_seq,
+            member_seq: board_data_count[item].member_seq,
+            board_cnt: board_data_count[item].count
+          })
+        }
+      })
+    const board_comment_count = await model.getBoardCommentGroupMemberCount()
+    await Object.keys(board_comment_count)
+      .forEach((item) => {
+        const data = _.find(group_counting, { group_seq: board_comment_count[item].group_seq, member_seq: board_comment_count[item].member_seq })
+        if (data) {
+          data.board_comment_cnt = board_comment_count[item].count
+        } else {
+          group_counting.push({
+            group_seq: board_comment_count[item].group_seq,
+            member_seq: board_comment_count[item].member_seq,
+            board_comment_cnt: board_comment_count[item].count
+          })
+        }
+      })
+
+    const result_map = await model.updateGroupMemberCnts(_.reject(group_counting, { group_seq: undefined, member_seq: undefined }))
+    return result_map;
   }
 }
 const GroupChannelHomeService = new GroupChannelHomeServiceClass()

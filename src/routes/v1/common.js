@@ -1,8 +1,7 @@
 import { Router } from 'express'
 import ServiceConfig from '../../service/service-config'
 import Wrap from '../../utils/express-async'
-import Util from '../../utils/baseutil'
-import baseutil from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import StdObject from '../../wrapper/std-object'
@@ -14,7 +13,7 @@ const routes = Router()
 
 routes.post('/newcontentid', Wrap(async (req, res) => {
   const output = new StdObject()
-  output.add('contentid', baseutil.getContentId())
+  output.add('contentid', Util.getContentId())
   res.json(output)
 }))
 

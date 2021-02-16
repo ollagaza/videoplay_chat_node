@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../service-config'
 import DBMySQL from "../../database/knex-mysql";
 import GroupBoardListModel from "../../database/mysql/board/GroupBoardListModel";
@@ -38,6 +38,7 @@ const GroupBoardListServiceClass = class {
     const board_info = {
       group_seq,
       board_name: '기본 게시판',
+      sort: 0,
     }
 
     return await model.createGroupBoard(board_info)

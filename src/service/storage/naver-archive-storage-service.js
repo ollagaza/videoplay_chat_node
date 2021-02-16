@@ -4,7 +4,7 @@ import _ from 'lodash'
 import SwiftClient from '../../libs/swift-client'
 import Constants from '../../constants/constants'
 import ServiceConfig from '../../service/service-config'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import log from '../../libs/logger'
 import NaverObjectStorageService from './naver-object-storage-service'
 import StdObject from '../../wrapper/std-object'
@@ -128,19 +128,27 @@ const NaverArchiveStorageClass = class {
     if (!(await Util.fileExists(local_file_path))) {
       throw new StdObject(101, `file not exists - ${local_file_path}`, 400)
     }
-    local_file_path = Util.removePathLastSlash(local_file_path)
-    remote_path = Util.removePathSlash(remote_path)
     const storage_client = await this.getStorageClient(client)
     const file_list = await Util.getDirectoryFileList(local_file_path)
+    local_file_path = Util.removePathLastSlash(local_file_path)
+    remote_path = Util.removePathSlash(remote_path)
+    let folder_file_list = []
+    let upload_file_list = []
     for (let i = 0; i < file_list.length; i++) {
       const file = file_list[i]
       const file_path = local_file_path + '/' + file.name
       if (file.isDirectory()) {
-        await this.uploadFolder(file_path, remote_path + '/' + file.name, remote_bucket_name, storage_client)
+        const upload_folder_result = await this.uploadFolder(file_path, remote_path + '/' + file.name, remote_bucket_name, storage_client)
+        folder_file_list = _.union(folder_file_list, upload_folder_result)
       } else {
         await this.uploadFile(file_path, remote_path, file.name, remote_bucket_name, storage_client)
+        upload_file_list.push(file_path)
       }
     }
+
+    const result = _.union(upload_file_list, folder_file_list)
+    log.debug(this.log_prefix, '[uploadFolder]', '[complete]', `local_file_path: ${local_file_path}, remote_path: ${remote_bucket_name}/${remote_path}`, result)
+    return result
   }
 
   uploadFile = async (local_file_path, remote_path, remote_file_name, remote_bucket_name = null, client = null) => {
@@ -182,7 +190,7 @@ const NaverArchiveStorageClass = class {
       for (let i = 0; i < split_file_info_list.length; i++) {
         const split_file_path = split_file_info_list[i]
         const split_file_name = path.basename(split_file_path)
-        await this.uploadFileOne(remote_file_path, split_file_name, split_file_path, target_bucket_name, storage_client)
+        await this.uploadFileOne(split_file_path, remote_file_path, split_file_name, target_bucket_name, storage_client)
         slo_remote_path_list.push({
           path: `/${target_bucket_name}/${remote_file_path}/${split_file_name}`
         })
@@ -248,7 +256,7 @@ const NaverArchiveStorageClass = class {
     await Util.deleteFile(download_file_path)
     const directory = Util.getDirectoryName(download_file_path)
     const create_result = await Util.createDirectory(directory)
-    if (!create_result) {
+    if ( !create_result ) {
       throw new StdObject(102, `can't create directory. download_directory: ${download_directory}, download_file_name: ${download_file_name}, download_file_path: ${download_file_path}, directory: ${directory}`, 400)
     }
   }

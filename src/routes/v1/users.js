@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import Wrap from '../../utils/express-async'
-import Util from '../../utils/baseutil'
-import baseutil from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import StdObject from '../../wrapper/std-object'
@@ -61,7 +60,7 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   res.json(output)
 }))
 
-routes.post('/', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async (req, res) => {
+routes.post('/', Util.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async (req, res) => {
   const output = new StdObject()
   const params = JSON.parse(req.body.params)
 
@@ -79,7 +78,7 @@ routes.post('/', baseutil.common_path_upload.fields([{ name: 'profile_image' }, 
   res.json(output)
 }))
 
-routes.post('/noCheckCreate', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async (req, res) => {
+routes.post('/noCheckCreate', Util.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async (req, res) => {
   const output = new StdObject()
   const params = JSON.parse(req.body.params)
 
@@ -100,7 +99,7 @@ routes.post('/noCheckCreate', baseutil.common_path_upload.fields([{ name: 'profi
   res.json(output)
 }))
 
-routes.put('/:member_seq(\\d+)', baseutil.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+routes.put('/:member_seq(\\d+)', Util.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const token_info = req.token_info
   const member_seq = Util.parseInt(req.params.member_seq)
   const params = JSON.parse(req.body.params)

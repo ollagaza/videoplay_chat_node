@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import StdObject from './std-object'
-import Util from '../utils/baseutil'
+import Util from '../utils/Util'
 
 export default class JsonWrapper {
   constructor (data = null, private_keys = []) {

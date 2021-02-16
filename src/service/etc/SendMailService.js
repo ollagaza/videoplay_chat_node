@@ -5,7 +5,7 @@ import SendMail from '../../libs/send-mail'
 import SendMailModel from '../../database/mysql/etc/SendMailModel'
 import logger from "../../libs/logger";
 import ServiceConfig from "../service-config";
-import Util from "../../utils/baseutil";
+import Util from "../../utils/Util";
 
 const SendMailServiceClass = class {
   constructor () {

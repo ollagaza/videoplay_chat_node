@@ -3,6 +3,7 @@ import OperationFileService from '../../../service/operation/OperationFileServic
 import OperationStorageInfo from '../../../wrapper/operation/OperationStorageInfo'
 import VideoFileModel from '../file/VideoFileModel'
 import ReferFileModel from '../file/ReferFileModel'
+import OperationFileModel from './OperationFileModel'
 
 export default class OperationStorageModel extends MySQLModel {
   constructor (database) {
@@ -53,10 +54,12 @@ export default class OperationStorageModel extends MySQLModel {
     return operation_storage_info
   }
 
-  updateUploadFileSize = async (storage_seq, file_type, update_summary = true) => {
+  updateUploadFileSize = async (operation_info, file_type, update_summary = true) => {
     let file_size_info = null
     let update_params = {}
     let total_size = 0
+    const storage_seq = operation_info.storage_seq
+    const operation_seq = operation_info.seq
 
     if (file_type === OperationFileService.TYPE_ALL || file_type === OperationFileService.TYPE_VIDEO) {
       file_size_info = await new VideoFileModel(this.database).videoFileSummary(storage_seq)
@@ -69,6 +72,12 @@ export default class OperationStorageModel extends MySQLModel {
       total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0
       update_params.refer_file_size = total_size
       update_params.refer_file_count = (file_size_info.total_count ? parseInt(file_size_info.total_count) : 0)
+    }
+    if (file_type === OperationFileService.TYPE_ALL || file_type === OperationFileService.TYPE_FILE) {
+      file_size_info = await new OperationFileModel(this.database).operationFileSummary(operation_seq)
+      total_size = file_size_info.total_size ? parseInt(file_size_info.total_size) : 0
+      update_params.operation_file_size = total_size
+      update_params.operation_file_count = (file_size_info.total_count ? parseInt(file_size_info.total_count) : 0)
     }
 
     await this.update({ seq: storage_seq }, update_params)
@@ -85,8 +94,8 @@ export default class OperationStorageModel extends MySQLModel {
 
   updateStorageSummary = async (storage_seq) => {
     const update_params = {
-      'total_file_size': this.database.raw('origin_video_size + refer_file_size'),
-      'total_file_count': this.database.raw('origin_video_count + refer_file_count'),
+      'total_file_size': this.database.raw('origin_video_size + refer_file_size + operation_file_size'),
+      'total_file_count': this.database.raw('origin_video_count + refer_file_count + operation_file_count'),
       'modify_date': this.database.raw('NOW()')
     }
     await this.update({ seq: storage_seq }, update_params)

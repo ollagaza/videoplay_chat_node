@@ -1,4 +1,4 @@
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
@@ -40,26 +40,38 @@ const VacsServiceClass = class {
           const port = ServiceConfig.get('vacs_storage_ssh_port')
           const user = ServiceConfig.get('vacs_storage_ssh_user')
           const password = ServiceConfig.get('vacs_storage_ssh_password')
+          const disable_vacs_storage_ssh = Util.isTrue(ServiceConfig.get('disable_vacs_storage_ssh'))
 
-          const ssh_result = await Util.sshExec(cmd, host, port, user, password)
-          if (ssh_result.success && ssh_result.result) {
-            const storage_info = JSON.parse(ssh_result.result)
-            const update_result = await this.updateStorageStatus(null, storage_info.used, storage_info.total)
-            if (update_result.is_success) {
-              const storage_info = JSON.parse(ssh_result.result)
-              const update_result = await this.updateStorageStatus(null, storage_info.used, storage_info.total)
-              const socket_data = {
-                data: {
-                  type: 'storageInfoChange',
-                  used_size: update_result.used_size,
-                  total_size: update_result.total_size
-                }
-              }
-              log.debug(this.log_prefix, '[updateStorageInfo]', 'SocketManager.sendToFrontAll', socket_data)
-              await SocketManager.sendToFrontAll(socket_data)
+          let storage_info = null
+          if (disable_vacs_storage_ssh) {
+            const exec_result = await Util.execute(cmd)
+            log.debug(this.log_prefix, '[updateStorageInfo]', 'exec_result', exec_result, cmd)
+            if (exec_result.success && exec_result.out) {
+              storage_info = JSON.parse(exec_result.out)
+            } else {
+              log.error(this.log_prefix, '[updateStorageInfo]', exec_result, cmd)
             }
           } else {
-            log.error(this.log_prefix, '[updateStorageInfo]', ssh_result)
+            const ssh_result = await Util.sshExec(cmd, host, port, user, password)
+            log.debug(this.log_prefix, '[updateStorageInfo]', 'ssh_result', ssh_result, cmd)
+            if (ssh_result.success && ssh_result.out) {
+              storage_info = JSON.parse(ssh_result.out)
+            } else {
+              log.error(this.log_prefix, '[updateStorageInfo]', ssh_result, cmd)
+            }
+          }
+
+          if (storage_info) {
+            const update_result = await this.updateStorageStatus(null, storage_info.used, storage_info.total)
+            const socket_data = {
+              data: {
+                type: 'storageInfoChange',
+                used_size: update_result.used_size,
+                total_size: update_result.total_size
+              }
+            }
+            log.debug(this.log_prefix, '[updateStorageInfo]', 'SocketManager.sendToFrontAll', socket_data)
+            await SocketManager.sendToFrontAll(socket_data)
           }
         } catch (error) {
           log.error(this.log_prefix, '[updateStorageInfo]', error)

@@ -1,5 +1,5 @@
 import Constants from '../../constants/constants'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import text2png from '../../libs/text-to-image'
 import log from '../../libs/logger'
 import EmbedBackgroundColorModel from './EmbedBackgroundColorModel'

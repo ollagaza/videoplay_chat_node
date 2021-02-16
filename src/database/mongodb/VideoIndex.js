@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 
 const Schema = mongoose.Schema
 

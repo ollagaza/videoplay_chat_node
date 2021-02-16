@@ -4,14 +4,12 @@ import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import ServiceConfig from '../../service/service-config'
 import GroupService from '../../service/group/GroupService'
 import ContactUsService from '../../service/etc/ContactUsService'
 import EditorService from '../../service/etc/EditorService'
-import baseutil from "../../utils/baseutil";
 import SendMailService from "../../service/etc/SendMailService";
-import GroupBoardDataService from "../../service/board/GroupBoardDataService";
 
 const routes = Router()
 
@@ -72,7 +70,7 @@ routes.post('/upload_mail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
     const mail_params = req.body;
     mail_params.group_seq = group_seq;
     mail_params.member_seq = member_seq;
-    mail_params.content_id = baseutil.getContentId();
+    mail_params.content_id = Util.getContentId();
     const mail_seq = await SendMailService.createSendMail(DBMySQL, mail_params)
     const result = new StdObject()
     result.add('result', mail_seq)

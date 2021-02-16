@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import _ from "lodash";
 import Auth from '../../../middlewares/auth.middleware'
-import Util from '../../../utils/baseutil'
+import Util from '../../../utils/Util'
 import log from '../../../libs/logger'
 import Role from '../../../constants/roles'
 import Wrap from '../../../utils/express-async'
@@ -11,6 +11,7 @@ import GroupBoardDataService from '../../../service/board/GroupBoardDataService'
 import GroupReCommendService from "../../../service/board/GroupReCommendService"
 import GroupService from "../../../service/group/GroupService";
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
+import logger from "../../../libs/logger";
 
 const routes = Router()
 

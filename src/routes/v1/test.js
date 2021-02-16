@@ -2,7 +2,7 @@ import { Router } from 'express'
 import _ from 'lodash'
 import ServiceConfig from '../../service/service-config'
 import Wrap from '../../utils/express-async'
-import Util from '../../utils/baseutil'
+import Util from '../../utils/Util'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import Constants from '../../constants/constants'
@@ -39,7 +39,6 @@ const routes = Router()
 const IS_DEV = Config.isDev()
 
 if (IS_DEV) {
-
   routes.get('/cloud_mail_file_test', Wrap(async (req, res) => {
     const result = await SendMailService.sendMail(DBMySQL, 24, 30)
     res.json(result)
@@ -47,16 +46,6 @@ if (IS_DEV) {
 
   routes.get('/folder_size_sync', Wrap(async (req, res) => {
     const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
-    res.json(output)
-  }))
-
-  routes.get('/default_data_setting', Wrap(async (req, res) => {
-    const output = new StdObject()
-    // output.add('group_grade_sync', await group_service.SyncGroupGrade(DBMySQL))
-    output.add('folder_size_sync', await OperationFolderService.SyncFolderTotalSize(DBMySQL))
-    output.add('board_linkcode_sync', await TempService.updateBoardLinkCodeSync(DBMySQL))
-    output.add('member_treat_code_sync', await TempService.updateMemberTreatCodeSync(DBMySQL))
-    output.add('defaultFolderAndBoardMake', await TempService.defaultFolderAndBoardMake(DBMySQL))
     res.json(output)
   }))
 
