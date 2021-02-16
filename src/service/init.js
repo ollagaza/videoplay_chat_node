@@ -12,6 +12,7 @@ import log from '../libs/logger'
 import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
 import GroupInfoMemberCountSync from "../scheduler/GroupInfoMemberCountSync";
 import GroupMemberPuaseReset from "../scheduler/GroupMemberPuaseReset";
+import FolderTotalSizeSyncScheduler from "../scheduler/FolderTotalSizeSyncScheduler";
 
 const initDirectories = async () => {
   await Util.createDirectory(ServiceConfig.get('common_root'))
@@ -30,6 +31,7 @@ export default {
     if (ServiceConfig.isVacs() === false) {
       await NaverArchiveStorageService.init()
       await NaverObjectStorageService.init()
+      FolderTotalSizeSyncScheduler.startSchedule()
       ReservationEmailScheduler.startSchedule()
       ThreeMonthsEmailDeleteScheduler.startSchedule()
       GroupDataCountingScheduler.startSchedule()

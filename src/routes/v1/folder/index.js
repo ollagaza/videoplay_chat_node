@@ -175,4 +175,10 @@ routes.get('/folder_size_sync', Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.get('/folder_size_sync/:group_seq(\\d+)', Wrap(async (req, res) => {
+  const group_seq = req.params.group_seq
+  const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL, group_seq)
+  res.json(output)
+}))
+
 export default routes
