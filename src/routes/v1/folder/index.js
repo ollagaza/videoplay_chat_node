@@ -170,4 +170,9 @@ routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, 
   res.json(output)
 }))
 
+routes.get('/folder_size_sync', Wrap(async (req, res) => {
+  const output = await OperationFolderService.SyncFolderTotalSize(DBMySQL)
+  res.json(output)
+}))
+
 export default routes
