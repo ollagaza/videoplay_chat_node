@@ -267,11 +267,15 @@ const OperationFolderServiceClass = class {
     }
   }
 
-  SyncFolderTotalSize = async (database) => {
+  SyncFolderTotalSize = async (database, group_seq = null) => {
     const output = new StdObject();
     const model = this.getOperationFolderModel(database)
     const operation_model = new OperationModel(database)
-    const folder_list = await model.getAllFolderList();
+    const filter = {}
+    if (group_seq) {
+      filter.group_seq = group_seq
+    }
+    const folder_list = await model.getAllFolderList(filter);
     output.add('folder_list', folder_list)
 
     for (let cnt = 0; cnt < folder_list.length; cnt++) {
