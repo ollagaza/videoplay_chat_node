@@ -43,7 +43,9 @@ const GroupBoardDataServiceClass = class {
     const model = this.getGroupBoardDataModel(database)
     if (paging.cur_page !== 1) {
       const notice_count = await model.getBoardNoticeCount(group_seq, board_seq)
-      paging.start_count = (paging.list_count - notice_count) + 1;
+      if (notice_count > 0) {
+        paging.start_count = (paging.list_count - notice_count) + 1;
+      }
     }
     const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
     for (let cnt = 0; cnt < board_list.length; cnt++) {
@@ -128,7 +130,8 @@ const GroupBoardDataServiceClass = class {
 
     if (board_data.seq) {
       const seq = board_data.seq
-      result = await model.UpdateBoardData(seq, board_data)
+      await model.UpdateBoardData(seq, board_data)
+      result = seq
     } else {
       const board_data_num = await model.getLastBoardDataNum(board_data.board_seq)
       if (board_data_num) {
@@ -309,13 +312,18 @@ const GroupBoardDataServiceClass = class {
     const param = {
       attach_file: JSON.stringify(board_file_lists),
     }
-    await this.fileUpdateBoardData(DBMySQL, board_seq, param)
+    await this.fileDeleteBoardData(DBMySQL, board_seq, param)
     return board_file_lists
   }
 
   fileUpdateBoardData = async (database, board_data_seq, param) => {
     const model = this.getGroupBoardDataModel(database)
     return model.fileUpdateBoardData(board_data_seq, param)
+  }
+
+  fileDeleteBoardData = async (database, board_data_seq, param) => {
+    const model = this.getGroupBoardDataModel(database)
+    return model.fileDeleteBoardData(board_data_seq, param)
   }
 
   allDeleteCommentByGrouypSeqMemberSeq = async (database, group_seq, member_seq) => {
