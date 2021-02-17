@@ -1,18 +1,13 @@
+import Util from '../utils/Util'
+import log from '../libs/logger'
 import MongoDB from '../database/mongo-db'
 import ServiceConfig from '../service/service-config'
 import NaverArchiveStorageService from './storage/naver-archive-storage-service'
 import NaverObjectStorageService from './storage/naver-object-storage-service'
 import SocketManager from './socket-manager'
 import VacsScheduler from '../scheduler/VacsScheduler'
-import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler";
-import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDeleteScheduler";
 import MongoDataService from './common/MongoDataService'
-import Util from '../utils/Util'
-import log from '../libs/logger'
-import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
-import GroupInfoMemberCountSync from "../scheduler/GroupInfoMemberCountSync";
-import GroupMemberPuaseReset from "../scheduler/GroupMemberPuaseReset";
-import FolderTotalSizeSyncScheduler from "../scheduler/FolderTotalSizeSyncScheduler";
+import SchedulerManager from './scheduler-manager'
 
 const initDirectories = async () => {
   await Util.createDirectory(ServiceConfig.get('common_root'))
@@ -31,12 +26,7 @@ export default {
     if (ServiceConfig.isVacs() === false) {
       await NaverArchiveStorageService.init()
       await NaverObjectStorageService.init()
-      FolderTotalSizeSyncScheduler.startSchedule()
-      ReservationEmailScheduler.startSchedule()
-      ThreeMonthsEmailDeleteScheduler.startSchedule()
-      GroupDataCountingScheduler.startSchedule()
-      GroupInfoMemberCountSync.startSchedule()
-      GroupMemberPuaseReset.startSchedule()
+      SchedulerManager.init()
     } else {
       VacsScheduler.startSchedule()
     }

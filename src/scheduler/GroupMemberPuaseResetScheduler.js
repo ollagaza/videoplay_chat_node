@@ -2,10 +2,10 @@ import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import GroupService from '../service/group/GroupService'
 
-class GroupMemberPuaseReset {
+class GroupMemberPuaseResetScheduler {
   constructor () {
     this.current_job = null
-    this.log_prefix = '[GroupMemberPuaseReset]'
+    this.log_prefix = '[GroupMemberPuaseResetScheduler]'
   }
 
   startSchedule = () => {
@@ -39,6 +39,6 @@ class GroupMemberPuaseReset {
   }
 }
 
-const group_member_pause_reset = new GroupMemberPuaseReset()
+const group_member_pause_reset_scheduler = new GroupMemberPuaseResetScheduler()
 
-export default group_member_pause_reset
+export default group_member_pause_reset_scheduler
