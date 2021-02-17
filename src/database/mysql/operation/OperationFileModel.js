@@ -13,8 +13,18 @@ export default class OperationFileModel extends MySQLModel {
     return this.create(operation_file_info, 'seq')
   }
 
-  getOperationFileList = async (operation_seq) => {
-    return this.find({operation_seq}, this.selectable_fields, [{ column: 'directory', order: 'asc' }, { column: 'file_name', order: 'asc' }])
+  getOperationFileList = async (operation_seq, last_seq = null, limit = 0) => {
+    const query = this.database
+      .select(this.selectable_fields)
+      .from(this.database.raw('operation_file use index (`INDEX_of_operation_seq`)'))
+      .where('operation_seq', operation_seq)
+    if (last_seq) {
+      query.andWhere('seq', '>', last_seq)
+    }
+    if (limit > 0) {
+      query.limit(limit)
+    }
+    return query
   }
 
   deleteFile = async (operation_seq, file_seq) => {
@@ -32,15 +42,24 @@ export default class OperationFileModel extends MySQLModel {
       .del()
   }
 
-  moveFolder = async (operation_seq, file_path, move_path) => {
+  changeFileName = async (operation_seq, file_seq, new_file_name) => {
     const update_params = {
-      file_path: this.database.raw('REPLACE(file_path, ?, ?)', file_path, move_path)
+      file_name: new_file_name
+    }
+    return this.update({ seq: file_seq, operation_seq }, update_params )
+  }
+  changeFolderName = async (operation_seq, directory, new_directory) => {
+    const update_params = {
+      directory: this.database.raw('REPLACE(directory, ?, ?)', directory, new_directory)
     }
     return this.database
       .update(update_params)
       .from(this.table_name)
       .where('operation_seq', operation_seq)
-      .where('file_path', 'LIKE', `${file_path}%`)
+      .where((builder) => {
+        builder.where('directory', directory)
+        builder.orWhere('directory', 'LIKE', `${directory}/%`)
+      })
   }
 
   operationFileSummary = async (operation_seq) => {
