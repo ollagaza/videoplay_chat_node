@@ -116,8 +116,7 @@ const GroupBoardDataServiceClass = class {
         await model.updateBoardCommentOriginSeq(result)
       }
       const group_member_model = new GroupMemberModel(database);
-      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_data.group_seq, comment_data.member_seq, 'Y')
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'up')
+      await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(comment_data.group_seq, comment_data.member_seq, 'board_comment', 'up')
     }
     return result;
   }
@@ -161,8 +160,7 @@ const GroupBoardDataServiceClass = class {
     }
 
     if (board_data.status !== 'T') {
-      const group_member_info = await group_member_model.getGroupMemberInfo(board_data.group_seq, board_data.member_seq)
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.seq, 'board_cnt', 'up')
+      await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(board_data.group_seq, board_data.member_seq, 'board_cnt', 'up')
     }
     return result
   }
@@ -202,11 +200,7 @@ const GroupBoardDataServiceClass = class {
     const result = await model.DeleteComment(delete_status, comment_seq)
 
     const group_member_model = new GroupMemberModel(database);
-    const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq)
-
-    if (!group_member_info.isEmpty()) {
-      await group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'board_comment', 'down', 1)
-    }
+    await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(comment_info.group_seq, comment_info.member_seq, 'board_comment', 'down', 1)
 
     const board_model = this.getGroupBoardDataModel(database)
     await board_model.decrementBoardCommentCnt(board_data_seq, 1)

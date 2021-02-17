@@ -1404,9 +1404,7 @@ const GroupServiceClass = class {
         const operation_comment_list = await OperationCommentService.getCommentList(database, operation_data.seq, params)
         for (let k = 0; k < operation_comment_list.length; k++) {
           const del_count = await OperationCommentService.deleteAllComment(database, group_seq, operation_comment_list[k].member_seq);
-
-          const target_group_member_info = await group_member_model.getGroupMemberInfo(group_seq, operation_comment_list[k].member_seq);
-          await group_member_model.setUpdateGroupMemberCounts(target_group_member_info.seq, 'vid_comment', 'down', del_count);
+          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_seq, operation_comment_list[k].member_seq, 'vid_comment', 'down', del_count);
         }
         const clip_list = await OperationClipService.findByOperationSeq(operation_list[j].seq);
         for (let k = 0; k < clip_list.length; k++) {

@@ -59,7 +59,7 @@ const OperationCommentServiceClass = class {
     const comment_seq = await comment_model.createComment(operation_data_seq, create_params)
 
     const group_member_model = new GroupMemberModel(database)
-    group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid_comment', 'up');
+    group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid_comment', 'up');
 
     if (is_reply && parent_seq) {
       await comment_model.updateReplyCount(operation_data_seq, parent_seq)
@@ -93,13 +93,8 @@ const OperationCommentServiceClass = class {
     const comment_info = await comment_model.getComment(operation_data_seq, comment_seq);
 
     if (comment_info) {
-      const group_member_model = new GroupMemberModel(database);
-      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(comment_info.group_seq, comment_info.member_seq, 'Y');
-
-      if (group_member_info) {
-        const group_member_model = new GroupMemberModel(database)
-        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid_comment', 'down');
-      }
+      const group_member_model = new GroupMemberModel(database)
+      group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(comment_info.group_seq, comment_info.member_seq, 'vid_comment', 'down');
     }
     const parent_seq = request_body ? request_body.parent_seq : null
     const is_reply = request_body ? request_body.is_reply === true : false

@@ -120,7 +120,7 @@ const OperationServiceClass = class {
 
       if (group_member_info) {
         const group_member_model = this.getGroupMemberModel(database)
-        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
+        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid', 'up');
       }
     }
     return output
@@ -975,14 +975,11 @@ const OperationServiceClass = class {
       const operation_info = await model.getOperation(where);
 
       const group_member_model = this.getGroupMemberModel(database);
-      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(operation_info.group_seq, operation_info.member_seq, 'Y');
 
-      if (group_member_info) {
-        if (status === 'T') {
-          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'down');
-        } else if (status === 'Y') {
-          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
-        }
+      if (status === 'T') {
+        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'down');
+      } else if (status === 'Y') {
+        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'up');
       }
 
       if (operation_info.folder_seq !== null) {
