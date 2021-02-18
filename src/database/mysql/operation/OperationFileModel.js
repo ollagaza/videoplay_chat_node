@@ -1,4 +1,6 @@
 import MySQLModel from '../../mysql-model'
+import Util from '../../../utils/Util'
+import logger from '../../../libs/logger'
 
 export default class OperationFileModel extends MySQLModel {
   constructor (database) {
@@ -50,7 +52,7 @@ export default class OperationFileModel extends MySQLModel {
   }
   changeFolderName = async (operation_seq, directory, new_directory) => {
     const update_params = {
-      directory: this.database.raw('REPLACE(directory, ?, ?)', directory, new_directory)
+      directory: this.database.raw('REPLACE(directory, ?, ?)', [directory, new_directory])
     }
     return this.database
       .update(update_params)
@@ -85,5 +87,27 @@ export default class OperationFileModel extends MySQLModel {
       .del()
 
     return result_list
+  }
+
+  isValidFileName = async (operation_seq, file_seq, directory, new_file_name) => {
+    const query = this.database.select(this.database.raw('COUNT(*) AS cnt'))
+      .from(this.database.raw('operation_file use index (`INDEX_of_default`)'))
+      .where('operation_seq', operation_seq)
+      .andWhere('directory', directory)
+      .andWhere('file_name', new_file_name)
+      .whereNot('seq', file_seq)
+      .first()
+    const query_result = await query
+    return !query_result || Util.parseInt(query_result.cnt, 0) === 0
+  }
+
+  isValidFolderName = async (operation_seq, new_directory) => {
+    const query = this.database.select(this.database.raw('COUNT(*) AS cnt'))
+      .from(this.database.raw('operation_file use index (`INDEX_of_default`)'))
+      .where('operation_seq', operation_seq)
+      .andWhere('directory', new_directory)
+      .first()
+    const query_result = await query
+    return !query_result || Util.parseInt(query_result.cnt, 0) === 0
   }
 }

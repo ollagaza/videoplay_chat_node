@@ -290,10 +290,24 @@ const OperationFileServiceClass = class {
     if (request_body.is_file) {
       await operation_file_model.changeFileName(operation_seq, request_body.file_seq, request_body.new_file_name)
     } else if (request_body.is_folder) {
-      await operation_file_model.changeFolderName(operation_seq, request_body.origin_file_name, request_body.new_file_name)
+      await operation_file_model.changeFolderName(operation_seq, request_body.directory, request_body.new_file_name)
     } else {
       throw new StdObject(-2, '잘못된 요청입니다.', 400)
     }
+  }
+
+  isValidOperationFileName = async (operation_info, request_body) => {
+    const operation_file_model = this.getOperationFileModel()
+    const operation_seq = operation_info.seq
+    if (!request_body) {
+      return false
+    }
+    if (request_body.is_file) {
+      return operation_file_model.isValidFileName(operation_seq, request_body.file_seq, request_body.directory, request_body.new_file_name)
+    } else if (request_body.is_folder) {
+      return operation_file_model.isValidFolderName(operation_seq, request_body.new_file_name)
+    }
+    return false;
   }
 }
 
