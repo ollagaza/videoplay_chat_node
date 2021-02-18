@@ -884,7 +884,6 @@ const OperationServiceClass = class {
 
   getOperationDataViewFile = async (operation_seq, group_seq) => {
     const options = {
-      operation_file_list: false,
       index_list: false,
       clip_list: true,
       writer_info: true,
@@ -914,12 +913,6 @@ const OperationServiceClass = class {
     output.add('is_writer', operation_info.group_seq === group_seq)
 
     if (options) {
-      log.debug(this.log_prefix, '[getOperationDataInfo]', 'options', options)
-      if (options.operation_file_list) {
-        const { operation_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_FILE)
-        output.add('operation_file_list', operation_file_list)
-      }
-
       if (options.index_list) {
         const index_list = await this.getVideoIndexList(operation_seq)
         output.add('index_list', index_list)
