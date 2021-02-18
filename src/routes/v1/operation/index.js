@@ -9,9 +9,7 @@ import StdObject from '../../../wrapper/std-object'
 import OperationService from '../../../service/operation/OperationService'
 import OperationCommentService from '../../../service/operation/OperationCommentService'
 import OperationClipService from '../../../service/operation/OperationClipService'
-import log from '../../../libs/logger'
 import OperationFileService from '../../../service/operation/OperationFileService'
-import OperationStorageModel from '../../../database/mysql/operation/OperationStorageModel'
 import Util from '../../../utils/Util'
 import OperationLinkService from '../../../service/operation/OperationLinkService'
 
@@ -422,7 +420,7 @@ routes.put('/:api_type/:api_key/thumbnail', Auth.isAuthenticated(Role.LOGIN_USER
 routes.get('/:api_type/:api_key/files/:file_type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_info } = await getBaseInfo(req, true, false, true)
   const file_type = req.params.file_type
-  const file_list = await OperationFileService.getFileList(DBMySQL, operation_info, file_type)
+  const file_list = await OperationFileService.getFileList(DBMySQL, operation_info, file_type, req.query)
   const output = new StdObject()
   output.adds(file_list)
   res.json(output)
@@ -461,4 +459,20 @@ routes.get('/:api_type/:api_key/video/url', Auth.isAuthenticated(Role.LOGIN_USER
   output.add('download_url', download_url)
   res.json(output)
 }))
+
+routes.put('/:api_type/:api_key/operation/files/name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info } = await getBaseInfo(req, true, true, true)
+  await OperationFileService.changeOperationFileName(operation_info, req.body)
+  const output = new StdObject()
+  res.json(output)
+}))
+
+routes.post('/:api_type/:api_key/operation/files/name/validation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info } = await getBaseInfo(req, true, true, true)
+  const is_valid = await OperationFileService.isValidOperationFileName(operation_info, req.body)
+  const output = new StdObject()
+  output.add('is_valid', is_valid);
+  res.json(output)
+}))
+
 export default routes

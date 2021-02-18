@@ -1,4 +1,5 @@
 import log from '../libs/logger'
+import config from '../config/config'
 import FolderTotalSizeSyncScheduler from "../scheduler/FolderTotalSizeSyncScheduler";
 import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler";
 import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDeleteScheduler";
@@ -13,7 +14,7 @@ const SchedulerManagerClass = class {
 
   init = () => {
     log.debug(this.log_prefix, process.env.SERVER_MODE)
-    if (process.env.SERVER_MODE !== 'demon') {
+    if (config.isDemon()) {
       FolderTotalSizeSyncScheduler.startSchedule()
       ReservationEmailScheduler.startSchedule()
       ThreeMonthsEmailDeleteScheduler.startSchedule()

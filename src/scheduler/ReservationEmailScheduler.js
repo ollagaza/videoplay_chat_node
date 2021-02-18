@@ -5,7 +5,7 @@ import SendMailService from "../service/etc/SendMailService";
 class ReservationEmailScheduler {
   constructor () {
     this.current_job = null
-    this.log_prefix = '[VacsScheduler]'
+    this.log_prefix = '[ReservationEmailScheduler]'
   }
 
   startSchedule = () => {
@@ -35,7 +35,7 @@ class ReservationEmailScheduler {
   }
 
   sendReservationEmail = () => {
-    log.debug(this.log_prefix, '[sendReservationEmail]')
+    log.debug(this.log_prefix, '[ReservationEmailScheduler]')
     SendMailService.sendReservationEmail()
   }
 }
