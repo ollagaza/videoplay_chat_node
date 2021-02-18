@@ -23,7 +23,11 @@ export default class OperationFileInfo extends JsonWrapper {
       this.download_url = cloud_url + this.file_path
       this.thumbnail_url = cdn_url + this.thumbnail_path
     }
-    this.full_path = this.directory + '/' + this.file_name
+    if (this.directory) {
+      this.full_path = this.directory + '/' + this.file_name
+    } else {
+      this.full_path = this.file_name
+    }
 
     return this
   }

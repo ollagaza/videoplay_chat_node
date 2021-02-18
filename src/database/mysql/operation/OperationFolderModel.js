@@ -219,6 +219,6 @@ export default class OperationFolderModel extends MySQLModel {
     }, filters)
   }
   getGroupFolderByDepthZero = async (group_seq) => {
-    return await this.find({ group_seq, depth: 0 }, this.selectable_fields, { name: 'sort', direction: 'asc' })
+    return await this.find({ group_seq, status: 'Y', depth: 0 }, this.selectable_fields, { name: 'sort', direction: 'asc' })
   }
 }
