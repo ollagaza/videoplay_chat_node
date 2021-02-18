@@ -7,6 +7,7 @@ import Role from '../../../constants/roles'
 import Wrap from '../../../utils/express-async'
 import StdObject from '../../../wrapper/std-object'
 import DBMySQL from '../../../database/knex-mysql'
+import AuthService from '../../../service/member/AuthService'
 import GroupService from '../../../service/group/GroupService'
 import OperationFolderService from "../../../service/operation/OperationFolderService";
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
@@ -692,4 +693,30 @@ routes.get('/mychannellist', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req
   output.add('member_group_list', member_group_list)
   res.json(output)
 }))
+
+routes.post('/check/member', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  try {
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, true)
+    const member_info = await AuthService.login(DBMySQL, req)
+    const output = new StdObject()
+    if (member_info) {
+      const group_check = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_info.seq);
+      if (group_check.grade === 'O') {
+        output.add('pass', true);
+      } else {
+        output.add('pass', false);
+        output.add('err_msg', '권한이 없습니다.');
+      }
+    } else {
+      output.add('pass', false);
+      output.add('err_msg', '아이디 혹은 비밀번호를 확인해주세요.');
+    }
+    res.json(output)
+  } catch (e) {
+    log.e(req, e)
+    throw new StdObject(-1, '아이디 혹은 비밀번호가 일치하지 않습니다.<br/>입력한 내용을 다시 확인해 주세요.', 400)
+  }
+}))
+
 export default routes
