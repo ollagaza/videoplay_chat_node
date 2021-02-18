@@ -43,7 +43,7 @@ const OperationFileServiceClass = class {
     return new OperationFileModel(DBMySQL)
   }
 
-  getFileList = async (database, operation_info, file_type = this.TYPE_REFER) => {
+  getFileList = async (database, operation_info, file_type = this.TYPE_REFER, request_query = null) => {
     const result = {}
     if (file_type === this.TYPE_ALL || file_type === this.TYPE_REFER) {
       result.refer_file_list = await this.getReferFileList(database, operation_info.storage_seq)
@@ -52,7 +52,7 @@ const OperationFileServiceClass = class {
       result.video_file_list = await this.getVideoFileList(database, operation_info.storage_seq)
     }
     if (file_type === this.TYPE_ALL || file_type === this.TYPE_FILE) {
-      result.operation_file_list = await this.getOperationFileList(database, operation_info.seq)
+      result.operation_file_list = await this.getOperationFileList(database, operation_info.seq, true, request_query)
     }
     return result;
   }
@@ -69,9 +69,15 @@ const OperationFileServiceClass = class {
     return this.getFileInfoList(result_list)
   }
 
-  getOperationFileList = async (database, operation_seq, wrap_result = true) => {
+  getOperationFileList = async (database, operation_seq, wrap_result = true, request_query = null) => {
+    let last_seq = null
+    let limit = 0
+    if (request_query) {
+      last_seq = Util.parseInt(request_query.last_seq, null)
+      limit = Util.parseInt(request_query.limit, 0)
+    }
     const operation_file_model = this.getOperationFileModel(database)
-    const result_list = await operation_file_model.getOperationFileList(operation_seq)
+    const result_list = await operation_file_model.getOperationFileList(operation_seq, last_seq, limit)
     if (!wrap_result) {
       return result_list
     }
@@ -273,6 +279,35 @@ const OperationFileServiceClass = class {
         }
       }
     )()
+  }
+
+  changeOperationFileName = async (operation_info, request_body) => {
+    const operation_file_model = this.getOperationFileModel()
+    const operation_seq = operation_info.seq
+    if (!request_body) {
+      throw new StdObject(-1, '잘못된 요청입니다.', 400)
+    }
+    if (request_body.is_file) {
+      await operation_file_model.changeFileName(operation_seq, request_body.file_seq, request_body.new_file_name)
+    } else if (request_body.is_folder) {
+      await operation_file_model.changeFolderName(operation_seq, request_body.directory, request_body.new_file_name)
+    } else {
+      throw new StdObject(-2, '잘못된 요청입니다.', 400)
+    }
+  }
+
+  isValidOperationFileName = async (operation_info, request_body) => {
+    const operation_file_model = this.getOperationFileModel()
+    const operation_seq = operation_info.seq
+    if (!request_body) {
+      return false
+    }
+    if (request_body.is_file) {
+      return operation_file_model.isValidFileName(operation_seq, request_body.file_seq, request_body.directory, request_body.new_file_name)
+    } else if (request_body.is_folder) {
+      return operation_file_model.isValidFolderName(operation_seq, request_body.new_file_name)
+    }
+    return false;
   }
 }
 
