@@ -139,8 +139,6 @@ export default class OperationCommentModel extends MySQLModel {
       .where('operation_comment.operation_data_seq', operation_data_seq)
     if (parent_seq) {
       query.andWhere('operation_comment.parent_seq', parent_seq)
-    } else {
-      query.whereNull('operation_comment.parent_seq')
     }
     query.first()
     return query

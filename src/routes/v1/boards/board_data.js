@@ -244,17 +244,17 @@ routes.put('/update_comment_recommend/:board_data_seq(\\d+)/:comment_seq(\\d+)',
   res.json(output);
 }))
 
-routes.post('/:group_seq(\\d+)/:board_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/:group_seq(\\d+)/:board_data_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_seq = req.params.group_seq
-  const board_seq = req.params.board_seq
+  const board_seq = req.params.board_data_seq
   const board_file_list = await GroupBoardDataService.uploadFile(group_seq, board_seq, req, res)
   const output = new StdObject()
   output.add('board_file_list', board_file_list)
   res.json(output)
 }))
 
-routes.delete('/:board_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const board_seq = req.params.board_seq
+routes.delete('/:board_data_seq(\\d+)/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const board_seq = req.params.board_data_seq
   const file = req.body.file
   const result = await GroupBoardDataService.deleteFile(DBMySQL, board_seq, file)
   const output = new StdObject()

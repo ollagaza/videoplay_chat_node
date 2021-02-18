@@ -234,16 +234,19 @@ const OperationFileServiceClass = class {
     return true
   }
 
-  deleteOperationFileList = async (database, operation_info, file_seq_list) => {
+  deleteOperationFileList = async (database, operation_info, request_body) => {
     const operation_file_model = this.getOperationFileModel(database)
-    const delete_file_list = await operation_file_model.deleteSelectedFiles(file_seq_list)
-
-    if (!delete_file_list) {
+    const operation_seq = operation_info.seq
+    log.debug(this.log_prefix, '[deleteOperationFileList]', request_body)
+    if (request_body.is_folder) {
+      await operation_file_model.deleteFolder(operation_seq, request_body.directory)
+    } else if (request_body.is_file) {
+      await operation_file_model.deleteFile(operation_seq, request_body.file_seq)
+    } else if (request_body.file_seq_list) {
+      await operation_file_model.deleteSelectedFiles(operation_seq, request_body.file_seq_list)
+    } else {
       return false
     }
-    // const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-    // const file_base_path = directory_info.media_video
-    // this.deleteFiles(file_base_path, delete_file_list)
 
     return true
   }

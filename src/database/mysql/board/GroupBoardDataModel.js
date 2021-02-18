@@ -11,7 +11,7 @@ export default class GroupBoardDataModel extends MySQLModel {
   }
 
   getGroupBoardDataCount = async (group_seq, menu_seq) => {
-    return this.getTotalCount({ group_seq, board_seq: menu_seq })
+    return this.getTotalCount({ group_seq, board_seq: menu_seq, status: 'Y' })
   }
 
   getTemporarilyCnt = async (group_seq, member_seq) => {

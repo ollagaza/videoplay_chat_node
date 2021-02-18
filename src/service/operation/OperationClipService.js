@@ -6,6 +6,7 @@ import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import OperationCommentService from './OperationCommentService'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
+import logger from "../../libs/logger";
 
 const OperationClipServiceClass = class {
   constructor () {
@@ -29,7 +30,7 @@ const OperationClipServiceClass = class {
       await this.updateClipCount(operation_info, clip_count)
       if (group_member_info) {
         const group_member_model = new GroupMemberModel(DBMySQL)
-        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'anno', 'up');
+        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'anno', 'up');
       }
     }
 
@@ -64,7 +65,7 @@ const OperationClipServiceClass = class {
 
     if (group_member_info) {
       const group_member_model = new GroupMemberModel(DBMySQL)
-      group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'anno', 'down');
+      group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, group_member_info.member_seq, 'anno', 'down');
     }
 
     return delete_result

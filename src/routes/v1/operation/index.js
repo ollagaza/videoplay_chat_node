@@ -461,5 +461,4 @@ routes.get('/:api_type/:api_key/video/url', Auth.isAuthenticated(Role.LOGIN_USER
   output.add('download_url', download_url)
   res.json(output)
 }))
-
 export default routes

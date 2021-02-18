@@ -205,8 +205,8 @@ export default class OperationFolderModel extends MySQLModel {
     })
   }
 
-  getAllFolderList = async () => {
-    return this.find(null, null, { name: 'depth', direction: 'desc' })
+  getAllFolderList = async (filter) => {
+    return this.find(filter, null, { name: 'depth', direction: 'desc' })
   }
   updateStatusTrash = async (operation_seq_list, group_seq, status) => {
     let filters = null

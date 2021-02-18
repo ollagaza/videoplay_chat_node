@@ -120,7 +120,7 @@ const OperationServiceClass = class {
 
       if (group_member_info) {
         const group_member_model = this.getGroupMemberModel(database)
-        group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
+        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid', 'up');
       }
     }
     return output
@@ -728,6 +728,11 @@ const OperationServiceClass = class {
       throw new StdObject(-1, '잘못된 요청입니다.', 400)
     }
 
+    if (file_type === OperationFileService.TYPE_FILE) {
+      await OperationFileService.deleteOperationFileList(DBMySQL, operation_info, request_body)
+      return
+    }
+
     const file_seq_list = request_body.file_seq_list
     if (!file_seq_list || file_seq_list.length <= 0) {
       throw new StdObject(-2, '잘못된 요청입니다.', 400)
@@ -735,8 +740,6 @@ const OperationServiceClass = class {
 
     if (file_type === OperationFileService.TYPE_REFER) {
       await OperationFileService.deleteReferFileList(DBMySQL, operation_info, file_seq_list)
-    } else if (file_type === OperationFileService.TYPE_FILE) {
-      await OperationFileService.deleteOperationFileList(DBMySQL, operation_info, file_seq_list)
     } else {
       return
     }
@@ -972,14 +975,11 @@ const OperationServiceClass = class {
       const operation_info = await model.getOperation(where);
 
       const group_member_model = this.getGroupMemberModel(database);
-      const group_member_info = await group_member_model.getMemberGroupInfoWithGroup(operation_info.group_seq, operation_info.member_seq, 'Y');
 
-      if (group_member_info) {
-        if (status === 'T') {
-          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'down');
-        } else if (status === 'Y') {
-          group_member_model.setUpdateGroupMemberCounts(group_member_info.group_member_seq, 'vid', 'up');
-        }
+      if (status === 'T') {
+        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'down');
+      } else if (status === 'Y') {
+        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'up');
       }
 
       if (operation_info.folder_seq !== null) {
