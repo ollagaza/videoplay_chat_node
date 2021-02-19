@@ -122,6 +122,19 @@ const OperationFolderServiceClass = class {
     return allChildFolders;
   }
 
+  getAllChildFolderSeqListBySeqList = async (database, group_seq, folder_seq_list) => {
+    let child_folder_list;
+    const child_folder_seq_list = [];
+    for (let i = 0; i < folder_seq_list.length; i++) {
+      child_folder_list = await this.getChildAllFolderList(database, group_seq, folder_seq_list[i])
+      for (let cnt = 0; cnt < child_folder_list.length; cnt++) {
+        child_folder_seq_list.push(child_folder_list[cnt].seq);
+      }
+    }
+
+    return child_folder_seq_list;
+  }
+
   createDefaultOperationFolder = async (database, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo();
@@ -208,10 +221,10 @@ const OperationFolderServiceClass = class {
     }
   }
 
-  deleteOperationFolders = async (database, group_seq, folder_seqs) => {
+  deleteOperationFolders = async (database, group_seq, folder_seq_list) => {
     const model = this.getOperationFolderModel(database)
-    for (let cnt = 0; cnt < folder_seqs.length; cnt++) {
-      await model.deleteOperationFolder(group_seq, folder_seqs[cnt].seq)
+    for (let cnt = 0; cnt < folder_seq_list.length; cnt++) {
+      await model.deleteOperationFolder(group_seq, folder_seq_list[cnt])
     }
   }
 
@@ -307,21 +320,6 @@ const OperationFolderServiceClass = class {
     await model.updateStatusTrash(seq_list, group_seq, status)
 
     return true
-  }
-
-  deleteChildFolderAndRtnOperationList = async (database, group_seq, operation_folder_list) => {
-    const folder_seq = []
-    let allChildFolderList = null
-
-    for (let i = 0; i < operation_folder_list.length; i++) {
-      allChildFolderList = await this.getChildAllFolderList(database, group_seq, operation_folder_list[i].seq)
-      for (let cnt = 0; cnt < allChildFolderList.length; cnt++) {
-        folder_seq.push(allChildFolderList[cnt].seq);
-      }
-    }
-    const operation_data = await OperationService.getAllChildFolderInOperationDatas(database, group_seq, folder_seq)
-
-    return { allChildFolderList, operation_data }
   }
 
   getGroupFolderByDepthZero = async (database, group_seq) => {
