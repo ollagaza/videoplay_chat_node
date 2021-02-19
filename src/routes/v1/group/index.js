@@ -704,6 +704,7 @@ routes.post('/check/member', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req
       const group_check = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_info.seq);
       if (group_check.grade === 'O') {
         output.add('pass', true);
+        output.add('target_seq', group_seq);
       } else {
         output.add('pass', false);
         output.add('err_msg', '권한이 없습니다.');
@@ -717,6 +718,15 @@ routes.post('/check/member', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req
     log.e(req, e)
     throw new StdObject(-1, '아이디 혹은 비밀번호가 일치하지 않습니다.<br/>입력한 내용을 다시 확인해 주세요.', 400)
   }
+}))
+
+routes.post('/closure', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, true)
+  const result = await GroupService.setGroupClosure(DBMySQL, group_seq);
+  output.add('result', result);
+  res.json(output)
 }))
 
 export default routes

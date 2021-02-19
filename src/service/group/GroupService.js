@@ -1469,6 +1469,13 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel()
     return await group_member_model.setPauseMemberReset()
   }
+  setGroupClosure = async (databases, group_seq) => {
+    const group_model = this.getGroupModel(databases);
+    if (group_seq) {
+      return await group_model.set_group_closure(group_seq);
+    }
+    return false;
+  }
 }
 
 const group_service = new GroupServiceClass()

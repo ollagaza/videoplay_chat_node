@@ -319,4 +319,14 @@ export default class GroupModel extends MySQLModel {
       await this.decrement(filter, params);
     }
   }
+
+  set_group_closure = async (group_seq) => {
+    const filter = {
+      seq: group_seq,
+    }
+    const update_params = {
+      status: 'X',
+    }
+    return await this.update(filter, update_params);
+  }
 }
