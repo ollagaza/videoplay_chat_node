@@ -434,13 +434,24 @@ export default class OperationModel extends MySQLModel {
     const result = await query
     return result && result.total_count > 0
   }
-  getAllChildFolderInOperationDatas = async (group_seq, folder_seq) => {
-    folder_seq.unshift('in')
+  getOperationListInFolderSeqList = async (group_seq, folder_seq_list) => {
+    folder_seq_list.unshift('in')
     const params = {
       is_new: true,
       query: [
         { group_seq },
-        { folder_seq }
+        { folder_seq: folder_seq_list }
+      ]
+    }
+    return this.find(params)
+  }
+  getOperationListInSeqList = async (group_seq, seq_list) => {
+    seq_list.unshift('in')
+    const params = {
+      is_new: true,
+      query: [
+        { group_seq },
+        { seq: seq_list }
       ]
     }
     return this.find(params)

@@ -376,27 +376,30 @@ const OperationServiceClass = class {
     (
       async (group_seq, request_data) => {
         try {
-          let operation_list = null
-          let folder_operation_list = null
-          if (request_data.operation_folder_list) {
-            folder_operation_list = await OperationFolderService.deleteChildFolderAndRtnOperationList(DBMySQL, group_seq, request_data.operation_folder_list)
-            operation_list = folder_operation_list.operation_data
+          let target_operation_list = []
+          let child_folder_seq_list = null
+          log.debug(this.log_prefix, 'deleteOperationByList', request_data)
+          if (request_data.folder_seq_list) {
+            child_folder_seq_list = await OperationFolderService.getAllChildFolderSeqListBySeqList(DBMySQL, group_seq, request_data.folder_seq_list)
+            target_operation_list = await OperationService.getOperationListInFolderSeqList(DBMySQL, group_seq, child_folder_seq_list)
           }
-          if (request_data.operation_info_list) {
+          if (request_data.operation_seq_list) {
+            const operation_model = this.getOperationModel()
+            const operation_list = await operation_model.getOperationListInSeqList(group_seq, request_data.operation_seq_list)
+            log.debug(this.log_prefix, '[deleteOperationByList]', 'operation_list', operation_list)
             if (operation_list) {
-              operation_list = operation_list.concat(request_data.operation_info_list)
-            } else {
-              operation_list = request_data.operation_info_list
+              target_operation_list = _.concat(target_operation_list, operation_list)
             }
           }
+          log.debug(this.log_prefix, '[deleteOperationByList]', 'target_operation_list', target_operation_list)
 
-          if (operation_list && operation_list.length > 0) {
-            for (let cnt = 0; cnt < operation_list.length; cnt++) {
-              await OperationService.deleteOperationAndUpdateStorage(operation_list[cnt])
+          if (target_operation_list && target_operation_list.length > 0) {
+            for (let cnt = 0; cnt < target_operation_list.length; cnt++) {
+              await OperationService.deleteOperationAndUpdateStorage(target_operation_list[cnt])
             }
           }
-          if (folder_operation_list) {
-            await OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, folder_operation_list.allChildFolderList)
+          if (child_folder_seq_list) {
+            await OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, child_folder_seq_list)
           }
         } catch (error) {
           log.error(this.log_prefix, '[deleteOperationBySeqList]', group_seq, request_data, error)
@@ -461,6 +464,7 @@ const OperationServiceClass = class {
       await Util.deleteDirectory(directory_info.root_origin)
     }
     if (ServiceConfig.isVacs() === false) {
+      log.debug(this.log_prefix, '[deleteOperationFiles]', 'directory_info.root', directory_info.root)
       await Util.deleteDirectory(directory_info.root)
       if (delete_link_file) {
         await CloudFileService.requestDeleteObjectFile(directory_info.media_path, true)
@@ -585,6 +589,7 @@ const OperationServiceClass = class {
     await Util.createDirectory(directory_info.image)
     await Util.createDirectory(directory_info.temp)
     await Util.createDirectory(directory_info.file)
+    await Util.createDirectory(directory_info.origin)
   }
 
   getGroupTotalStorageUsedSize = async (database, group_seq) => {
@@ -1017,15 +1022,15 @@ const OperationServiceClass = class {
     }
   }
 
-  getAllChildFolderInOperationDatas = async (database, group_seq, folder_seq) => {
+  getOperationListInFolderSeqList = async (database, group_seq, folder_seq) => {
     const model = this.getOperationModel(database)
-    const operation_infos = await model.getAllChildFolderInOperationDatas(group_seq, folder_seq)
+    const operation_info_list = await model.getOperationListInFolderSeqList(group_seq, folder_seq)
 
-    for (let cnt = 0; cnt < operation_infos.length; cnt++) {
-      operation_infos[cnt] = new OperationInfo(operation_infos[cnt], null);
+    for (let cnt = 0; cnt < operation_info_list.length; cnt++) {
+      operation_info_list[cnt] = new OperationInfo(operation_info_list[cnt], null);
     }
 
-    return operation_infos
+    return operation_info_list
   }
 
   getOperationDirectoryInfo = (operation_info) => {
