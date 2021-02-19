@@ -259,16 +259,20 @@ routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_
   res.json(output)
 }))
 
-routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_profile_img' }, { name: 'group_channel_top_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const params = JSON.parse(req.body.params)
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'group_profile_img') {
       params.profile_image_path = '/common/' + value[0].filename
     }
+    if (value[0].fieldname === 'group_channel_top_img') {
+      params.channel_top_img_path = '/common/' + value[0].filename
+    }
   })
   const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const options = {
     group_name: params.group_name,
+    gnb_color: params.group_color,
     group_open: params.group_open,
     group_join_way: params.group_join_way,
     member_open: params.member_open,
@@ -276,6 +280,7 @@ routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_prof
     search_keyword: params.search_keyword,
     group_explain: params.group_explain,
     profile_image_path: params.profile_image_path,
+    channel_top_img_path: params.channel_top_img_path,
   }
   const output = new StdObject()
   const rs_gorup_info = await GroupService.updateEnterpriseGroup(DBMySQL, member_info, options, params.seq);

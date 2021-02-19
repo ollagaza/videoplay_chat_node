@@ -227,6 +227,7 @@ const GroupServiceClass = class {
     const modify_group_info = {
       group_type: this.GROUP_TYPE_ENTERPRISE,
       group_name: options.group_name?options.group_name:member_info.user_name,
+      gnb_color: options.gnb_color?options.gnb_color:'1c3048',
       group_open: options.group_open?options.group_open:0,
       group_join_way: options.group_join_way?options.group_join_way:0,
       member_open: options.member_open?options.member_open:0,
@@ -234,6 +235,7 @@ const GroupServiceClass = class {
       search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
       group_explain: options.group_explain?options.group_explain:null,
       profile_image_path: options.profile_image_path?options.profile_image_path:null,
+      channel_top_img_path: options.channel_top_img_path?options.channel_top_img_path:null,
     }
     return await this.updateGroupInfo(database, modify_group_info, seq)
   }
@@ -282,6 +284,11 @@ const GroupServiceClass = class {
       if (JSON.parse(group_member_info.profile).image) {
         group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
         group_member_list[i].json_keys.push('group_image_url')
+      }
+      if (group_member_info.channel_top_img_path) {
+        if (group_member_info.channel_top_img_url !== null) {
+          group_member_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.channel_top_img_path)
+        }
       }
     }
     if (ServiceConfig.isVacs()) {
@@ -372,6 +379,11 @@ const GroupServiceClass = class {
       if (JSON.parse(group_member_info.profile).image) {
         group_member_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
         group_member_info.json_keys.push('group_image_url')
+      }
+    }
+    if (group_member_info.channel_top_img_path) {
+      if (group_member_info.channel_top_img_url !== null) {
+        group_member_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.channel_top_img_path)
       }
     }
     if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
