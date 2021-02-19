@@ -31,11 +31,11 @@ export default class GroupMemberModel extends MySQLModel {
     this.member_group_select_old = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
       'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
-      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name', 'group_info.gnb_color',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
-      'group_info.reg_date', 'group_info.member_count', 'group_member.status AS member_status', 'group_member.grade',
+      'group_info.reg_date', 'group_info.member_count', 'group_member.status AS member_status', 'group_member.grade'
     ]
 
     this.group_invite_select = [
@@ -886,6 +886,32 @@ export default class GroupMemberModel extends MySQLModel {
     return query_result
   }
 
+  setUpdateGroupMemberCounts = async (group_member_seq, update_column, updown_type, count = 1) => {
+    const set_count = count;
+    const filter = {
+      seq: group_member_seq
+    }
+    const update_params = {}
+    if (update_column === 'vid') {
+      update_params.vid_cnt = set_count;
+    } else if (update_column === 'anno') {
+      update_params.anno_cnt = set_count;
+    } else if (update_column === 'vid_comment') {
+      update_params.comment_cnt = set_count;
+    } else if (update_column === 'board_comment') {
+      update_params.board_comment_cnt = set_count;
+    } else if (update_column === 'board_cnt') {
+      update_params.board_cnt = set_count;
+    }
+    let update_result = null;
+    if (updown_type === 'up') {
+      update_result = await this.increment(filter, update_params)
+    } else if (updown_type === 'down') {
+      update_result = await this.decrement(filter, update_params)
+    }
+    log.debug(this.log_prefix, '[setUpdateGroupMemberCounts]', update_result)
+    return update_result
+  }
   setUpdateGroupMemberCountsWithGroupSeqMemberSeq = async (group_seq, member_seq, update_column, updown_type, count = 1) => {
     const set_count = count;
     const filter = {
