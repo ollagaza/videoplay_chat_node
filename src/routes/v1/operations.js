@@ -331,7 +331,7 @@ routes.put('/:operation_seq(\\d+)/files/upload/complete', Auth.isAuthenticated(R
   const token_info = req.token_info
   const operation_seq = req.params.operation_seq
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info)
-  await OperationService.onUploadComplete(operation_info)
+  await OperationService.onUploadComplete(operation_info, req.body)
 
   const output = new StdObject()
   res.json(output)
