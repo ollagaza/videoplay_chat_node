@@ -17,7 +17,7 @@ export default class GroupModel extends MySQLModel {
       'group_info.group_name', 'group_info.expire_date AS group_expire_date', 'group_info.is_set_group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
       'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc', 'group_info.group_question', 'group_info.group_message', 'group_info.group_join_way',
-      'group_info.member_count'
+      'group_info.member_count', 'group_info.channel_top_img_path'
     ]
     this.group_user_list = [
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',

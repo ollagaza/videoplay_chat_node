@@ -848,6 +848,10 @@ const GroupServiceClass = class {
       group_info.profile_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
       group_info.json_keys.push('profile_image_url')
     }
+    if (group_info.channel_top_img_path) {
+      group_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.channel_top_img_path)
+      group_info.json_keys.push('channel_top_img_url')
+    }
     const group_member_model = this.getGroupMemberModel(database)
     const group_summary = await group_member_model.getGroupMemberSummary(group_seq)
     return {
