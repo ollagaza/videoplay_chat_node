@@ -728,6 +728,8 @@ const OperationServiceClass = class {
     if (operation_info.mode === this.MODE_FILE) {
       if (ServiceConfig.isVacs()) {
         await this.updateAnalysisStatus(null, operation_info, 'Y')
+      } else {
+        await this.updateAnalysisStatus(null, operation_info, 'R')
       }
     } else {
       return await this.requestTranscoder(operation_info)
