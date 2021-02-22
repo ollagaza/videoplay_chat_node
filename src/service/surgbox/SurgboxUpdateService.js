@@ -78,10 +78,10 @@ const SurgboxUpdateServiceClass = class {
       order,
       order_id
     }
-    return update_model.getUpdatePageList(search_options)
+    return update_model.getUpdatePageList(search_options, request_query.type)
   }
 
-  getUpdateListForBox = async () => {
+  getUpdateListForBox = async (type = null) => {
     const result = {
       has_update: false,
       last_version: null,
@@ -89,7 +89,7 @@ const SurgboxUpdateServiceClass = class {
       update: {}
     }
     const update_model = this.getUpdateModel()
-    const query_result = await update_model.getUpdateList()
+    const query_result = await update_model.getUpdateList(type)
     if (query_result && query_result.length) {
       const update = result.update
       let last_version = null

@@ -57,7 +57,7 @@ export default class SurgboxUpdateModel extends MySQLModel {
     return this.delete({ seq: update_seq })
   }
 
-  getUpdatePageList = async (options) => {
+  getUpdatePageList = async (options, type = 'box') => {
     const page = options.page
     const limit = options.limit
     const search = options.search
@@ -75,6 +75,11 @@ export default class SurgboxUpdateModel extends MySQLModel {
       query.where('surgbox_update.user_id', 'like', `%${search}%`)
       // query.where('surgbox_update.user_nickname', 'like', `%${search}%`)
     }
+    if (type) {
+      query.andWhere('type', type)
+    } else {
+      query.andWhere('type', 'box')
+    }
     if (!order_id) {
       query.orderBy([{ column: 'surgbox_update.v1', order }, { column: 'surgbox_update.v2', order }, { column: 'surgbox_update.v3', order }, { column: 'surgbox_update.v4', order }])
     } else {
@@ -84,11 +89,16 @@ export default class SurgboxUpdateModel extends MySQLModel {
     return this.queryPaginated(query, limit, page)
   }
 
-  getUpdateList = async () => {
+  getUpdateList = async (type = 'box') => {
     const query = this.database.select(this.update_list_fields)
     query.from(this.table_name)
     query.leftOuterJoin('surgbox_update_file', { 'surgbox_update_file.surgbox_update_seq': 'surgbox_update.seq' })
     query.where('is_hide', 0)
+    if (type) {
+      query.andWhere('type', type)
+    } else {
+      query.andWhere('type', 'box')
+    }
     query.orderBy([{ column: 'surgbox_update.v1', order: 'asc' }, { column: 'surgbox_update.v2', order: 'asc' }, { column: 'surgbox_update.v3', order: 'asc' }, { column: 'surgbox_update.v4', order: 'asc' }, { column: 'surgbox_update_file.file_name', order: 'asc' }])
 
     return query

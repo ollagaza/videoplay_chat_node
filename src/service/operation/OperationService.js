@@ -709,14 +709,29 @@ const OperationServiceClass = class {
     )(zip.getEntries())
   }
 
-  onUploadComplete = async (operation_info) => {
+  onUploadComplete = async (operation_info, request_body = null) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === 'file') {
       if (!ServiceConfig.isVacs()) {
-        await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
+        if (request_body && request_body.on_create) {
+          await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
+        } else {
+          await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
+        }
       }
     }
     await this.updateStorageSize(operation_info)
+  }
+
+  requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
+    if (operation_info.mode === this.MODE_FILE) {
+      if (ServiceConfig.isVacs()) {
+        await this.updateAnalysisStatus(null, operation_info, 'Y')
+      }
+    } else {
+      return await this.requestTranscoder(operation_info)
+    }
   }
 
   updateStorageSize = async (operation_info) => {
@@ -774,19 +789,6 @@ const OperationServiceClass = class {
       }
     }
     return null
-  }
-
-  requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
-    if (operation_info.mode === this.MODE_FILE) {
-      return await this.moveOperationFiles(operation_info)
-    } else {
-      return await this.requestTranscoder(operation_info)
-    }
-  }
-
-  moveOperationFiles = async (operation_info) => {
-    await this.updateAnalysisStatus(null, operation_info, 'Y')
   }
 
   requestTranscoder = async (operation_info) => {
