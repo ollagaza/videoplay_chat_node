@@ -189,7 +189,7 @@ const MessageServiceClass = class {
     return await groupmsgModel.getGroupMessageList(group_seq, paging, request_order)
   }
 
-  sendGroupMessage = async (database, message_info) => {
+  sendGroupMessage = async (database, member_seq, message_info) => {
     try {
       const groupmsgModel = this.getGroupMessageModel(database)
       const params = {
@@ -205,7 +205,7 @@ const MessageServiceClass = class {
       for (let cnt = 0; cnt < message_info.receive_seq.length; cnt++) {
         const param = {
           group_seq: message_info.send_seq,
-          send_seq: message_info.send_seq,
+          send_seq: member_seq,
           receive_seq: message_info.receive_seq[cnt],
           desc: message_info.desc,
           group_message_seq: group_message_seq,
