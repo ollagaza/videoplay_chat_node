@@ -2,6 +2,7 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/Util'
 import log from '../../../libs/logger'
 import Constant from '../../../constants/constants'
+import _ from 'lodash'
 
 import OperationMediaModel from './OperationMediaModel'
 import OperationInfo from '../../../wrapper/operation/OperationInfo'
@@ -409,12 +410,11 @@ export default class OperationModel extends MySQLModel {
     return await this.find({ group_seq, folder_seq })
   }
 
-  moveOperationFolder = async (operation_seq, folder_seq) => {
-    operation_seq.unshift('in')
+  moveOperationFolder = async (operation_seq_list, folder_seq) => {
     const filters = {
       is_new: true,
       query: [
-        { seq: operation_seq },
+        { seq: _.concat(['in'], operation_seq_list) },
       ],
     }
     return await this.update(filters, { folder_seq })
@@ -435,23 +435,21 @@ export default class OperationModel extends MySQLModel {
     return result && result.total_count > 0
   }
   getOperationListInFolderSeqList = async (group_seq, folder_seq_list) => {
-    folder_seq_list.unshift('in')
     const params = {
       is_new: true,
       query: [
         { group_seq },
-        { folder_seq: folder_seq_list }
+        { folder_seq: _.concat(['in'], folder_seq_list) }
       ]
     }
     return this.find(params)
   }
   getOperationListInSeqList = async (group_seq, seq_list) => {
-    seq_list.unshift('in')
     const params = {
       is_new: true,
       query: [
         { group_seq },
-        { seq: seq_list }
+        { seq: _.concat(['in'], seq_list) }
       ]
     }
     return this.find(params)

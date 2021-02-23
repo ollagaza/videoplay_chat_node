@@ -399,6 +399,7 @@ const OperationServiceClass = class {
             }
           }
           if (child_folder_seq_list) {
+            log.debug(this.log_prefix, '[deleteOperationByList]', 'child_folder_seq_list', child_folder_seq_list)
             await OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, child_folder_seq_list)
           }
         } catch (error) {
@@ -1026,9 +1027,9 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListInFolderSeqList = async (database, group_seq, folder_seq) => {
+  getOperationListInFolderSeqList = async (database, group_seq, folder_seq_list) => {
     const model = this.getOperationModel(database)
-    const operation_info_list = await model.getOperationListInFolderSeqList(group_seq, folder_seq)
+    const operation_info_list = await model.getOperationListInFolderSeqList(group_seq, folder_seq_list)
 
     for (let cnt = 0; cnt < operation_info_list.length; cnt++) {
       operation_info_list[cnt] = new OperationInfo(operation_info_list[cnt], null);
