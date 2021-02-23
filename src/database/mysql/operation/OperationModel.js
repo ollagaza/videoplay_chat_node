@@ -460,4 +460,12 @@ export default class OperationModel extends MySQLModel {
   getOperationMode = async (operation_seq) => {
     return this.findOne({ seq: operation_seq}, ['mode'])
   }
+
+  getOperationFolderGrade = async (operation_seq) => {
+    return this.database.select(['operation.seq', 'operation.folder_seq', 'operation_folder.access_type'])
+      .from('operation')
+      .leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
+      .where('operation.seq', operation_seq)
+      .first()
+  }
 }

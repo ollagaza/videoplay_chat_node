@@ -29,6 +29,7 @@ import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 import OperationCommentService from "./OperationCommentService";
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
+import GroupAlarmService from '../group/GroupAlarmService'
 
 const OperationServiceClass = class {
   constructor () {
@@ -123,6 +124,12 @@ const OperationServiceClass = class {
         group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid', 'up');
       }
     }
+
+    if (status !== 'D') {
+      const alarm_message = `{name}님이 ${operation_info.operation_name}수술을 등록했습니다.`
+      GroupAlarmService.createOperationGroupAlarm(group_member_info, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, { operation_seq: operation_info.seq })
+    }
+
     return output
   }
 
@@ -1138,6 +1145,18 @@ const OperationServiceClass = class {
       }
       await OperationClipService.updateClipCount({ seq: operation_storage_info.seq }, update_clip_count);
     }
+  }
+
+  getFolderGrade = async (operation_seq) => {
+    const model = this.getOperationModel()
+    const query_result = await model.getOperationFolderGrade(operation_seq)
+    if (!query_result || !query_result.seq) return 100
+    if (query_result.folder_seq === null) return 1
+    const folder_grade = query_result.access_type
+    if (folder_grade === 'O' || folder_grade === 'A') {
+      return 99
+    }
+    return Util.parseInt(folder_grade, 99)
   }
 }
 
