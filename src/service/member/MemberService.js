@@ -417,8 +417,8 @@ const MemberServiceClass = class {
       await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
 
       await MemberLogService.memberJoinLog(database, create_member_info.seq)
-      group_info = await GroupService.createPersonalGroup(database, create_member_info)
-      await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq, group_info)
+//      group_info = await GroupService.createPersonalGroup(database, create_member_info)
+//      await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq, group_info)
     })
 
     if (ServiceConfig.isVacs() === false && ServiceConfig.supporterEmailList()) {
