@@ -29,6 +29,7 @@ const GroupAlarmServiceClass = class {
           const group_seq = group_member_info.group_seq
           const operation_seq = operation_info.seq
           const folder_grade = await this.getFolderGrade(operation_seq)
+          data.type = type
           alarm_data = {
             message,
             group_seq,
@@ -63,6 +64,47 @@ const GroupAlarmServiceClass = class {
 
   getFolderGrade = async (operation_seq) => {
     return await OperationService.getFolderGrade(operation_seq)
+  }
+
+  onReadAlarm = (group_seq, member_seq, grade_number, request_body) => {
+    (
+      async (group_seq, member_seq, request_body) => {
+        try {
+          const group_alarm_model = this.getGroupAlarmModel()
+          await group_alarm_model.onGroupAlarmRead(group_seq, member_seq, grade_number, request_body)
+        } catch (error) {
+          logger.error(this.log_prefix, '[onReadAlarm]', group_seq, member_seq, grade_number, request_body, error)
+        }
+      }
+    )(group_seq, member_seq, request_body)
+  }
+
+  onDeleteAlarm = (group_seq, member_seq, grade_number, request_body) => {
+    (
+      async (group_seq, member_seq, request_body) => {
+        try {
+          const group_alarm_model = this.getGroupAlarmModel()
+          await group_alarm_model.onGroupAlarmDelete(group_seq, member_seq, grade_number, request_body)
+        } catch (error) {
+          logger.error(this.log_prefix, '[onDeleteAlarm]', group_seq, member_seq, grade_number, request_body, error)
+        }
+      }
+    )(group_seq, member_seq, request_body)
+  }
+
+  getNewGroupAlarmCount = async (group_seq, member_seq, grade_number, request_query) => {
+    const group_alarm_model = this.getGroupAlarmModel()
+    return group_alarm_model.getNewGroupAlarmCount(group_seq, member_seq, grade_number, request_query)
+  }
+
+  getNewGroupAlarmList = async (group_seq, member_seq, grade_number, request_query) => {
+    const group_alarm_model = this.getGroupAlarmModel()
+    return group_alarm_model.getNewGroupAlarmList(group_seq, member_seq, grade_number, request_query)
+  }
+
+  getGroupAlarmList = async (group_seq, member_seq, grade_number, request_query) => {
+    const group_alarm_model = this.getGroupAlarmModel()
+    return group_alarm_model.getGroupAlarmList(group_seq, member_seq, grade_number, request_query)
   }
 }
 

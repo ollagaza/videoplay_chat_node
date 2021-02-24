@@ -14,21 +14,30 @@ export default class GroupAlarmModel extends MySQLModel {
     return this.create(create_params, 'seq')
   }
 
-  getGroupAlarmList = async (group_seq, grade, member_seq, options) => {
+  getAlarmFieldList = (member_seq) => {
+    const field_list = ['seq', 'type', 'message', 'data', 'user_name', 'user_nickname', 'reg_date']
+    field_list.push(this.database.raw('IF(JSON_EXTRACT(member_state, ?) = \'Y\', \'Y\', \'N\') AS is_read', [`$.m_${member_seq}.is_read`]))
+
+    return field_list
+  }
+
+  getGroupAlarmList = async (group_seq, member_seq, grade_number, options) => {
     const page = options.page
     const limit = options.limit
     const order_id = options.order_id
     const order = options.order
 
-    const select_for_list = ['seq', 'type', 'data', 'reg_date']
-    select_for_list.push(this.database.raw('IF(JSON_EXTRACT(member_state, ?) = \'Y\', \'Y\', \'N\') AS is_read', [`$.m_${member_seq}.is_read`]))
-    const query = this.database.select(select_for_list)
-    query.where('group_seq', group_seq)
-    query.where('grade', '<=', grade)
-    query.where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?'), ['Y', `$.m_${member_seq}.is_delete`, 0])
+    const query = this.database.select(this.getAlarmFieldList(member_seq))
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .where('grade', '<=', grade_number)
+      .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_delete`, 0]))
     if (options) {
       if (options.interval) {
-        query.andWhere(this.database.raw('date_format(date_sub(group_alarm.reg_date, interval ? day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'), options.interval)
+        query.where(this.database.raw('date_format(date_sub(group_alarm.reg_date, interval ? day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')', [options.interval]))
+      }
+      if (options.search) {
+        query.where('message', 'LIKE', `%${options.search}%`)
       }
     }
     if (!order_id) {
@@ -40,35 +49,68 @@ export default class GroupAlarmModel extends MySQLModel {
     return this.queryPaginated(query, limit, page)
   }
 
-  getNewGroupAlarmCount = async (group_seq, grade, member_seq, options) => {
-    const query = this.database.select(this.database.raw('COUNT(*) AS total_count'))
-    query.where('group_seq', group_seq)
-    query.where('grade', '<=', grade)
-    query.where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?'), ['Y', `$.m_${member_seq}.is_read`, 0])
-    query.where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?'), ['Y', `$.m_${member_seq}.is_delete`, 0])
-    if (options.interval) {
-      query.andWhere(this.database.raw('date_format(date_sub(group_alarm.reg_date, interval ? day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'), options.interval)
-    }
+  getNewGroupAlarmCount = async (group_seq, member_seq, grade_number, options) => {
+    const query = this.getNewGroupAlarmQuery([this.database.raw('COUNT(*) AS total_count')], group_seq, member_seq, grade_number, options)
     query.first()
     const query_result = await query
     if (!query_result) return 0
     return Util.parseInt(query_result.total_count, 0)
   }
 
-  onGroupAlarmRead = async (alarm_seq, member_seq) => {
-    const member_state = await this.getMemberState(alarm_seq, member_seq)
-    if (!member_state) return
-    const member_key = this.getMemberKey(member_seq)
-    member_state[member_key].is_read = 'Y'
-    await this.update({ seq: alarm_seq }, { member_state: JSON.stringify(member_state) })
+  getNewGroupAlarmList = async (group_seq, member_seq, grade_number, options) => {
+    return this.getNewGroupAlarmQuery(this.getAlarmFieldList(member_seq), group_seq, member_seq, grade_number, options)
   }
 
-  onGroupAlarmDelete = async (alarm_seq, member_seq) => {
-    const member_state = await this.getMemberState(alarm_seq, member_seq)
-    if (!member_state) return
+  getNewGroupAlarmQuery = (select_field, group_seq, member_seq, grade_number, options) => {
+    const query = this.database
+      .select(select_field)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .where('grade', '<=', grade_number)
+      .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_read`, 0]))
+      .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_delete`, 0]))
+    if (options.interval) {
+      query.where(this.database.raw('date_format(date_sub(group_alarm.reg_date, interval ? day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')', [options.interval]))
+    }
+
+    return query
+  }
+
+  onGroupAlarmRead = async (group_seq, member_seq, grade_number, options) => {
     const member_key = this.getMemberKey(member_seq)
-    member_state[member_key].is_delete = 'Y'
-    await this.update({ seq: alarm_seq }, { member_state: JSON.stringify(member_state) })
+    const state = {}
+    state[member_key] = { "is_read": "Y" }
+    return this.updateMemberState(group_seq, grade_number, state, options)
+  }
+
+  onGroupAlarmDelete = async (group_seq, member_seq, grade_number, options) => {
+    const member_key = this.getMemberKey(member_seq)
+    const state = {}
+    state[member_key] = { "is_delete": "Y" }
+    return this.updateMemberState(group_seq, grade_number, state, options)
+  }
+
+  updateMemberState = async (group_seq, grade_number, state, options) => {
+    const update_params = {
+      member_state: this.database.raw('JSON_MERGE_PATCH(member_state, ?)', JSON.stringify(state))
+    }
+
+    const query = this.database
+      .update(update_params)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .where('grade', '<=', grade_number)
+
+    if (options) {
+      if (options.by_seq_list) {
+        query.whereIn('seq', options.alarm_seq_list)
+      } else if (options.by_min_seq) {
+        query.where('seq', '>=', options.min_seq)
+      } else if (options.by_seq) {
+        query.where('seq', options.alarm_seq)
+      }
+    }
+    return query
   }
 
   getMemberState = async (alarm_seq, member_seq) => {

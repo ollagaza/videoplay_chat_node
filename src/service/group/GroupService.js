@@ -106,7 +106,7 @@ const GroupServiceClass = class {
     let is_group_admin = false
     let is_group_manager = false
     let group_grade = 0
-    let group_grade_num = 0
+    let group_grade_number = 0
     // if (token_info.getRole() === Role.ADMIN) {
     //   is_active_group_member = true
     //   is_group_admin = true
@@ -123,9 +123,9 @@ const GroupServiceClass = class {
         is_group_manager = this.isGroupManagerByMemberInfo(group_member_info)
         group_grade = group_member_info.grade
         if (is_group_admin) {
-          group_grade_num = 99
+          group_grade_number = 99
         } else {
-          group_grade_num = Util.parseInt(group_grade, 0)
+          group_grade_number = Util.parseInt(group_grade, 0)
         }
       }
     }
@@ -145,18 +145,19 @@ const GroupServiceClass = class {
     if (only_admin && !is_group_admin) {
       throw new StdObject(10000, '권한이 없습니다', 403)
     }
-    return {
-      token_info,
-      member_seq,
-      group_seq,
-      member_info,
-      group_member_info,
-      is_active_group_member,
-      is_group_admin,
-      is_group_manager,
-      group_grade,
-      group_grade_num
+    const result = {
+      token_info: token_info,
+      member_seq: member_seq,
+      group_seq: group_seq,
+      member_info: member_info,
+      group_member_info: group_member_info,
+      is_active_group_member: is_active_group_member,
+      is_group_admin: is_group_admin,
+      is_group_manager: is_group_manager,
+      group_grade: group_grade,
+      group_grade_number: group_grade_number
     }
+    return result
   }
 
   createPersonalGroup = async (database, member_info, options = {}) => {

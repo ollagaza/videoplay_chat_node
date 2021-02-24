@@ -83,7 +83,7 @@ const getDriveInfo = async (result, operation_seq, check_folder_auth = false) =>
 
   if (check_folder_auth) {
     const folder_grade = await OperationService.getFolderGrade(operation_seq)
-    if (folder_grade > result.group_grade_num) {
+    if (folder_grade > result.group_grade_number) {
       throw new StdObject(101, '접근권한이 없습니다.', 400)
     }
   }
