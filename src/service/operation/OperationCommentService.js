@@ -7,6 +7,7 @@ import striptags from 'striptags'
 import log from '../../libs/logger'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import GroupMemberModel from '../../database/mysql/group/GroupMemberModel'
+import GroupAlarmService from '../group/GroupAlarmService'
 
 const OperationCommentServiceClass = class {
   constructor () {
@@ -20,8 +21,8 @@ const OperationCommentServiceClass = class {
     return new OperationCommentModel(DBMySQL)
   }
 
-  createComment = async (database, member_info, group_member_info, operation_data_seq, request_body) => {
-    if (!member_info || !group_member_info || !request_body || !operation_data_seq || !request_body.comment) {
+  createComment = async (database, member_info, group_member_info, operation_info, operation_data_seq, request_body) => {
+    if (!member_info || !group_member_info || !request_body || !operation_info || !operation_data_seq || !request_body.comment) {
       throw new StdObject(-1, '잘못된 요청입니다', 400)
     }
     const comment_model = this.getOperationCommentModel(database)
@@ -67,6 +68,26 @@ const OperationCommentServiceClass = class {
 
     const comment_clip_id = request_body.comment_clip_id ? request_body.comment_clip_id : null
     const clip_comment_count = await this.updateClipCommentCount(database, operation_data_seq, comment_clip_id)
+
+    const alarm_data = {
+      operation_seq: operation_info.seq,
+      comment_seq,
+    }
+    const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술에 댓글을 작성하였습니다.`
+    const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
+    const socket_message = {
+      title: `'${operation_info.operation_name}' 수술에 댓글을 추가되었습니다.`,
+      message: `${name}님이 '${operation_info.operation_name}' 수술에 댓글을 작성하였습니다.<br/>확인시하려면 클릭하세요.`
+    }
+    const socket_data = {
+      comment_seq,
+      parent_seq,
+      comment_clip_id,
+      clip_comment_count,
+      member_seq: member_info.seq,
+      message: `${name}님이 댓글을 작성하였습니다.`
+    }
+    GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_COMMENT, alarm_message, operation_info, member_info, alarm_data, socket_message, socket_data)
 
     return {
       comment_seq,

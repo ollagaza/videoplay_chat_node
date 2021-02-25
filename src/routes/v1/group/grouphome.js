@@ -12,11 +12,6 @@ import GroupChannelHomeService from "../../../service/group/GroupChannelHomeServ
 
 const routes = Router()
 
-routes.get('/test', Wrap(async (req, res) => {
-  GroupChannelHomeService.GroupDataCounting();
-  res.end()
-}))
-
 routes.get('/home/:menu_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const token_info = req.token_info

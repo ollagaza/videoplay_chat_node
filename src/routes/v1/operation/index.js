@@ -15,7 +15,7 @@ import OperationLinkService from '../../../service/operation/OperationLinkServic
 
 const routes = Router()
 
-const getBaseInfo = async (request, check_auth = false, check_writer = false, import_operation_info = false) => {
+const getBaseInfo = async (request, check_auth = false, check_writer = false, import_operation_info = false, check_folder_auth = false) => {
   const api_type = request.params.api_type
   const api_key = request.params.api_key
 
@@ -23,16 +23,15 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     throw new StdObject(-1, '잘못된 접근입니다.', 400)
   }
 
-  const { group_seq, group_member_info, member_info, member_seq, is_group_admin, token_info } = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, request, true, true, true)
   const comment_seq = request.params.comment_seq
   const clip_id = request.params.clip_id
   const phase_id = request.params.phase_id
 
   const result = {
-    member_seq,
-    group_seq,
-    group_member_info,
-    member_info,
+    api_type,
+    api_key,
+    ...group_auth,
     operation_data_info: null,
     operation_data_seq: null,
     is_writer: false,
@@ -46,9 +45,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     clip_id,
     phase_id,
     operation_seq: null,
-    operation_info: null,
-    is_group_admin,
-    token_info
+    operation_info: null
   }
 
   if (api_type === 'mentoring') {
@@ -56,7 +53,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
   } else if (api_type === 'link') {
     await getLinkInfo(result, api_key)
   } else if (api_type === 'drive') {
-    await getDriveInfo(result, api_key)
+    await getDriveInfo(result, api_key, check_folder_auth)
   } else if (api_type === 'open_video') {
     await getOpenVideoInfo(result, api_key)
   } else {
@@ -77,11 +74,18 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
   return result
 }
 
-const getDriveInfo = async (result, operation_seq) => {
+const getDriveInfo = async (result, operation_seq, check_folder_auth = false) => {
   const group_seq = result.group_seq
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, true)
   if (!operation_info || operation_info.isEmpty()) {
     throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+  }
+
+  if (check_folder_auth) {
+    const folder_grade = await OperationService.getFolderGrade(operation_seq)
+    if (folder_grade > result.group_grade_number) {
+      throw new StdObject(101, '접근권한이 없습니다.', 400)
+    }
   }
 
   const is_writer = operation_info.group_seq === group_seq
@@ -164,7 +168,7 @@ const getOpenVideoInfo = async (result, operation_data_seq) => {
 
 routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const base_info = await getBaseInfo(req, true)
+  const base_info = await getBaseInfo(req, true, false, false, true)
   const output = await OperationService.getOperationDataView(base_info.operation_seq, base_info.group_seq)
   output.add('is_link', base_info.is_link)
   output.add('is_editor_link', base_info.is_editor_link)
@@ -174,7 +178,8 @@ routes.get('/:api_type/:api_key/view', Auth.isAuthenticated(Role.LOGIN_USER), Wr
 
 routes.get('/:api_type/:api_key/view/file', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const base_info = await getBaseInfo(req, true)
+  const base_info = await getBaseInfo(req, true, false, false, true)
+
   const output = await OperationService.getOperationDataViewFile(base_info.operation_seq, base_info.group_seq)
   output.add('is_link', base_info.is_link)
   output.add('is_editor_link', base_info.is_editor_link)
@@ -253,8 +258,8 @@ routes.get('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER),
 
 routes.post('/:api_type/:api_key/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { member_info, group_member_info, operation_data_seq } = await getBaseInfo(req, true)
-  const create_result = await OperationCommentService.createComment(DBMySQL, member_info, group_member_info, operation_data_seq, req.body)
+  const { member_info, group_member_info, operation_data_seq, operation_info } = await getBaseInfo(req, true, false, true)
+  const create_result = await OperationCommentService.createComment(DBMySQL, member_info, group_member_info, operation_info, operation_data_seq, req.body)
 
   const output = new StdObject()
   output.adds(create_result)
@@ -330,7 +335,7 @@ routes.post('/:api_type/:api_key/clip', Auth.isAuthenticated(Role.DEFAULT), Wrap
   req.accepts('application/json')
   const { operation_info, member_info, group_member_info } = await getBaseInfo(req, true, true, true)
 
-  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body, true, group_member_info)
+  const create_result = await OperationClipService.createClip(operation_info, member_info, req.body, true, group_member_info, true)
   const output = new StdObject()
   output.add('result', create_result)
   res.json(output)
