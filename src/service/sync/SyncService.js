@@ -14,6 +14,7 @@ import OperationStorageModel from '../../database/mysql/operation/OperationStora
 import IndexInfo from '../../wrapper/xml/IndexInfo'
 import CloudFileService from '../cloud/CloudFileService'
 import OperationFolderService from "../operation/OperationFolderService";
+import GroupAlarmService from '../group/GroupAlarmService'
 
 const SyncServiceClass = class {
   constructor () {
@@ -231,12 +232,29 @@ const SyncServiceClass = class {
   }
 
   sendMessageToSocket = async (operation_info) => {
-    const sub_type = 'analysisComplete'
-    const message_info = {
-      title: '수술 분석이 완료되었습니다.',
-      message: `'${operation_info.operation_name}'수술 분석이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
+    // const sub_type = 'analysisComplete'
+    const socket_message = {}
+    let alarm_message = null
+    if (operation_info.mode === OperationService.MODE_FILE) {
+      alarm_message = `'${operation_info.operation_name}'수술 이미지 업로드가 완료되었습니다.`;
+      socket_message.title = '이미지 업로드가 완료되었습니다.';
+      socket_message.message = `'${operation_info.operation_name}' 이미지 업로드가 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
+    } else {
+      alarm_message = `'${operation_info.operation_name}'수술 동영상 인코딩이 완료되었습니다.`;
+      socket_message.title = '동영상 인코딩이 완료되었습니다.';
+      socket_message.message = `'${operation_info.operation_name}' 동영상 인코딩이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
     }
-    await GroupService.onGroupStateChange(operation_info.group_seq, sub_type, 'moveCuration', [operation_info.seq], message_info)
+    const alarm_data = {
+      operation_seq: operation_info.seq
+    }
+    const socket_data = {
+      operation_seq: operation_info.seq,
+      member_seq: operation_info.member_seq,
+      message: socket_message.title,
+      is_sync_complete: true
+    }
+    GroupAlarmService.createOperationGroupAlarm(operation_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, null, alarm_data, socket_message, socket_data)
+    // await GroupService.onGroupStateChange(operation_info.group_seq, sub_type, 'moveCuration', [operation_info.seq], message_info)
   }
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {

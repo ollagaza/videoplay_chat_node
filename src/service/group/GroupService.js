@@ -21,11 +21,9 @@ import GroupCountModel from '../../database/mysql/group/GroupCountsModel'
 import ContentCountsModel from '../../database/mysql/member/ContentCountsModel'
 import JsonWrapper from '../../wrapper/json-wrapper'
 import GroupGradeModel from "../../database/mysql/group/GroupGradeModel";
-import data from "../../routes/v1/data";
 import OperationCommentService from '../operation/OperationCommentService'
 import GroupBoardDataService from "../board/GroupBoardDataService";
 import OperationClipService from "../operation/OperationClipService";
-import {OperationClipModel} from "../../database/mongodb/OperationClip";
 import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
 
@@ -107,6 +105,8 @@ const GroupServiceClass = class {
     let is_active_group_member = false
     let is_group_admin = false
     let is_group_manager = false
+    let group_grade = 0
+    let group_grade_number = 0
     // if (token_info.getRole() === Role.ADMIN) {
     //   is_active_group_member = true
     //   is_group_admin = true
@@ -121,6 +121,12 @@ const GroupServiceClass = class {
         is_active_group_member = group_member_info && group_member_info.group_member_status === this.MEMBER_STATUS_ENABLE
         is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
         is_group_manager = this.isGroupManagerByMemberInfo(group_member_info)
+        group_grade = group_member_info.grade
+        if (is_group_admin) {
+          group_grade_number = 99
+        } else {
+          group_grade_number = Util.parseInt(group_grade, 0)
+        }
       }
     }
     if (check_group_auth && !is_active_group_member && throw_exception) {
@@ -139,16 +145,19 @@ const GroupServiceClass = class {
     if (only_admin && !is_group_admin) {
       throw new StdObject(10000, '권한이 없습니다', 403)
     }
-    return {
-      token_info,
-      member_seq,
-      group_seq,
-      member_info,
-      group_member_info,
-      is_active_group_member,
-      is_group_admin,
-      is_group_manager
+    const result = {
+      token_info: token_info,
+      member_seq: member_seq,
+      group_seq: group_seq,
+      member_info: member_info,
+      group_member_info: group_member_info,
+      is_active_group_member: is_active_group_member,
+      is_group_admin: is_group_admin,
+      is_group_manager: is_group_manager,
+      group_grade: group_grade,
+      group_grade_number: group_grade_number
     }
+    return result
   }
 
   createPersonalGroup = async (database, member_info, options = {}) => {
@@ -245,18 +254,15 @@ const GroupServiceClass = class {
       group_info: {}
     }
     try {
-      await DBMySQL.transaction(async (transaction) => {
-        const group_model = this.getGroupModel(database)
-        await group_model.updateGroup(modify_group_info, seq)
-        resObj.group_info = await group_model.getGroupInfo(seq, null);
-        resObj.group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
-        resObj.group_info.profile_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
-      })
+      const group_model = this.getGroupModel(database)
+      await group_model.updateGroup(modify_group_info, seq)
+      resObj.group_info = await group_model.getGroupInfo(seq, null);
+      resObj.group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
+      resObj.group_info.profile_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
       return resObj;
     } catch (e) {
       log.error(this.log_prefix, '[updateGroupInfo]', e)
       throw new StdObject(-2, '그룹 정보를 변경할 수 없습니다.', 400)
-      return false;
     }
   }
 

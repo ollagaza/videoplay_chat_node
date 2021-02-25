@@ -253,9 +253,9 @@ const OperationFolderServiceClass = class {
       let folder_seqs = null
 
       if (folder_info.parent_folder_list !== null && folder_info.parent_folder_list.length !== 0) {
-        folder_seqs = _.concat([operation_info.folder_seq], folder_info.parent_folder_list)
+        folder_seqs = _.concat(['in', operation_info.folder_seq], folder_info.parent_folder_list)
       } else {
-        folder_seqs = [operation_info.folder_seq]
+        folder_seqs = ['in', operation_info.folder_seq]
       }
       let file_size = 0;
 
@@ -264,8 +264,6 @@ const OperationFolderServiceClass = class {
       } else {
         file_size = (((util.isEmpty(old_storage_size) ? 0 : old_storage_size) - new_storage_size) * -1)
       }
-
-      folder_seqs.unshift('in')
 
       const filters = {
         is_new: true,
@@ -296,13 +294,13 @@ const OperationFolderServiceClass = class {
       const total_size_filter = { group_seq: folder_info.group_seq, folder_seq: folder_info.seq }
       const total_folder_file_size = await operation_model.getGroupUsedStorageSize(total_size_filter)
 
-      const folder_seqs = folder_info.parent_folder_list
-      folder_seqs.push(folder_info.seq)
-      folder_seqs.unshift('in')
+      const folder_seq_list = folder_info.parent_folder_list
+      folder_seq_list.push(folder_info.seq)
+      folder_seq_list.unshift('in')
       const update_folder_size_filter = {
         is_new: true,
         query: [
-          { seq: folder_seqs }
+          { seq: folder_seq_list }
         ],
       }
       await model.updateFolderStorageSize(update_folder_size_filter, total_folder_file_size)
