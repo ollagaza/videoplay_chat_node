@@ -59,7 +59,7 @@ const OperationServiceClass = class {
     return new GroupMemberModel(DBMySQL)
   }
 
-  createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
+  createOperation = async (database, member_info, group_member_info, request_body, status = null, create_alarm = false) => {
     const output = new StdObject()
     let is_success = false
 
@@ -125,9 +125,13 @@ const OperationServiceClass = class {
       }
     }
 
-    if (status !== 'D') {
-      const alarm_message = `{name}님이 ${operation_info.operation_name}수술을 등록했습니다.`
-      GroupAlarmService.createOperationGroupAlarm(group_member_info, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, { operation_seq: operation_info.seq })
+    if (create_alarm) {
+      const alarm_data = {
+        operation_seq: operation_info.seq,
+        member_seq: member_info.seq
+      }
+      const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`
+      GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, alarm_data)
     }
 
     return output

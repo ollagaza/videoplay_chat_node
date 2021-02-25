@@ -39,7 +39,7 @@ routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
 routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const output = await OperationService.createOperation(DBMySQL, member_info, group_member_info, req.body, null)
+  const output = await OperationService.createOperation(DBMySQL, member_info, group_member_info, req.body, null, true)
   res.json(output)
 }))
 

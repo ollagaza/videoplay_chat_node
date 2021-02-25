@@ -1,10 +1,9 @@
 import logger from '../../libs/logger'
-import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import GroupAlarmModel from '../../database/mysql/group/GroupAlarmModel'
 import OperationService from '../operation/OperationService'
-import formatter from 'string-template'
 import _ from 'lodash'
+import SocketManager from '../socket-manager'
 
 const GroupAlarmServiceClass = class {
   constructor () {
@@ -21,12 +20,11 @@ const GroupAlarmServiceClass = class {
     return new GroupAlarmModel(database)
   }
 
-  createOperationGroupAlarm = (group_member_info, type, message, operation_info, member_info, data) => {
+  createOperationGroupAlarm = (group_seq, type, message, operation_info, member_info, data, socket_message = null, socket_extra_data = null) => {
     (
-      async (group_member_info, type, message, operation_info, member_info, data) => {
+      async (group_seq, type, message, operation_info, member_info, data, socket_message, socket_extra_data) => {
         let alarm_data = null;
         try {
-          const group_seq = group_member_info.group_seq
           const operation_seq = operation_info.seq
           const folder_grade = await this.getFolderGrade(operation_seq)
           data.type = type
@@ -36,30 +34,52 @@ const GroupAlarmServiceClass = class {
             grade: folder_grade,
             type,
             data: JSON.stringify(data),
-            user_name: member_info.user_name,
-            user_nickname: member_info.user_nickname,
             member_state: JSON.stringify({})
           }
-          const message_option = {
-            name: group_member_info.member_name_used === 0 ? member_info.user_nickname : member_info.user_name
+          if (member_info) {
+            alarm_data.user_name = member_info.user_name
+            alarm_data.user_nickname = member_info.user_nickname
           }
-          const socket_message = formatter(message, message_option)
-          await this.createGroupAlarm(alarm_data, true, socket_message)
+          await this.createGroupAlarm(group_seq, alarm_data, socket_message, 'onChangeOperationState', socket_extra_data)
         } catch (error) {
           logger.error(this.log_prefix, '[createOperationCommentAlarm]', alarm_data, data, error)
         }
       }
-    )(group_member_info, type, message, operation_info, member_info, data)
+    )(group_seq, type, message, operation_info, member_info, data, socket_message, socket_extra_data)
   }
 
-  createGroupAlarm = async (alarm_data, send_socket = true, socket_message = null) => {
+  createGroupAlarm = async (group_seq, alarm_data, socket_message = null, socket_action_type = null, socket_extra_data = null) => {
     const group_alarm_model = this.getGroupAlarmModel()
     const alarm_seq = await group_alarm_model.createGroupAlarm(alarm_data)
 
-    if (send_socket) {
-
+    if (socket_message) {
+      await this.sendSocket(group_seq, alarm_data, socket_message, socket_action_type, socket_extra_data)
     }
     return alarm_seq
+  }
+  sendSocket = async (group_seq, alarm_data, message_info, action_type = null, extra_data = null) => {
+    let data = {}
+
+    if (alarm_data.data) {
+      if (typeof alarm_data.data === 'string') data = JSON.parse(alarm_data.data)
+      else if (typeof alarm_data.data === 'object') data = alarm_data.data
+    }
+
+    data.group_seq = group_seq
+    data.grade = alarm_data.grade
+    data.type = alarm_data.type
+
+    if (action_type) data.action_type = action_type
+    if (extra_data) data.extra_data = extra_data
+
+    const socket_data = {
+      data
+    }
+    if (message_info) {
+      message_info.type = 'pushNotice'
+      socket_data.message_info = message_info
+    }
+    await SocketManager.sendToFrontGroup(group_seq, socket_data)
   }
 
   getFolderGrade = async (operation_seq) => {

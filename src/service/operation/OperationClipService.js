@@ -36,8 +36,23 @@ const OperationClipServiceClass = class {
     }
 
     if (create_alarm && group_member_info) {
-      const alarm_message = `{name}님이 ${operation_info.operation_name}수술에 클립을 추가했습니다.`
-      GroupAlarmService.createOperationGroupAlarm(group_member_info, GroupAlarmService.ALARM_TYPE_CLIP, alarm_message, operation_info, member_info, { operation_seq: operation_info.seq, clip_id: create_result._id })
+      const alarm_data = {
+        operation_seq: operation_info.seq,
+        clip_id: create_result._id,
+        member_seq: member_info.seq
+      }
+      const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술에 클립을 추가하였습니다.`
+      const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
+      const socket_message = {
+        title: `'${operation_info.operation_name}' 수술에 클립이 추가되었습니다.`,
+        message: `${name}님이 '${operation_info.operation_name}' 수술에 클립을 추가하였습니다.<br/>확인시하려면 클릭하세요.`
+      }
+      const socket_data = {
+        clip_info: create_result,
+        member_seq: member_info.seq,
+        message: `${name}님이 클립을 추가하였습니다.`
+      }
+      GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_CLIP, alarm_message, operation_info, member_info, alarm_data, socket_message, socket_data)
     }
 
     return create_result

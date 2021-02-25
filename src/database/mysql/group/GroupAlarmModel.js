@@ -1,5 +1,6 @@
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/Util'
+import Constant from '../../../constants/constants'
 
 export default class GroupAlarmModel extends MySQLModel {
   constructor(database) {
@@ -125,6 +126,14 @@ export default class GroupAlarmModel extends MySQLModel {
       }
     }
     return member_state
+  }
+
+  deleteOLDAlarm = async (interval = 30) => {
+    const recent_timestamp = Util.addDay(-(Util.parseInt(interval, 30)), Constant.TIMESTAMP)
+    return this.database
+      .from(this.table_name)
+      .where('reg_date', '<=', recent_timestamp)
+      .del()
   }
 
   getMemberKey = member_seq => `m_${member_seq}`
