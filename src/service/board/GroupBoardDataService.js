@@ -103,29 +103,56 @@ const GroupBoardDataServiceClass = class {
     }
   }
 
-  CreateUpdateBoardComment = async (database, comment_data) => {
-    const model = this.getGroupBoardCommentModel(database)
+  CreateUpdateBoardComment = async (comment_data) => {
     let result = null
 
     if (comment_data.seq) {
       const seq = comment_data.seq;
+      const model = this.getGroupBoardCommentModel()
       result = await model.UpdateBoardComment(seq, comment_data)
     } else {
-      result = await model.CreateBoardComment(comment_data)
-      const board_model = this.getGroupBoardDataModel(database)
-      await board_model.incrementBoardCommentCnt(comment_data.board_data_seq)
-      if (!comment_data.origin_seq) {
-        await model.updateBoardCommentOriginSeq(result)
-      }
-      const group_member_model = new GroupMemberModel(database);
-      await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(comment_data.group_seq, comment_data.member_seq, 'board_comment', 'up')
+      await DBMySQL.transaction(async (transaction) => {
+        const model = this.getGroupBoardCommentModel(transaction)
+        result = await model.CreateBoardComment(comment_data)
+        if (!comment_data.origin_seq) {
+          await model.updateBoardCommentOriginSeq(result)
+        }
+      })
+      this.incrementBoardCommentCount(comment_data.board_data_seq)
+
+      this.updateGroupMemberCount(comment_data.group_seq, comment_data.member_seq, 'board_comment', 'up')
     }
     return result;
   }
 
+  incrementBoardCommentCount = (board_data_seq) => {
+    (
+      async (board_data_seq) => {
+        try {
+          const board_model = this.getGroupBoardDataModel()
+          await board_model.incrementBoardCommentCnt(board_data_seq)
+        } catch (error) {
+          logger.error(this.log_prefix, '[incrementBoardCommentCount]', board_data_seq, error)
+        }
+      }
+    )(board_data_seq)
+  }
+
+  updateGroupMemberCount = (group_seq, member_seq, update_column, updown_type, count = 1) => {
+    (
+      async (group_seq, member_seq, update_column, updown_type, count) => {
+        try {
+          const group_member_model = new GroupMemberModel(DBMySQL);
+          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_seq, member_seq, update_column, updown_type, count)
+        } catch (error) {
+          logger.error(this.log_prefix, '[updateGroupMemberCount]', group_seq, member_seq, update_column, updown_type, count, error)
+        }
+      }
+    )(group_seq, member_seq, update_column, updown_type, count)
+  }
+
   CreateUpdateBoardData = async (database, board_data) => {
     const model = this.getGroupBoardDataModel(database)
-    const group_member_model = new GroupMemberModel(database)
     let result = null
 
     if (board_data.seq) {
@@ -163,7 +190,7 @@ const GroupBoardDataServiceClass = class {
     }
 
     if (board_data.status !== 'T') {
-      await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(board_data.group_seq, board_data.member_seq, 'board_cnt', 'up')
+      this.updateGroupMemberCount(board_data.group_seq, board_data.member_seq, 'board_cnt', 'up')
     }
     return result
   }
@@ -202,8 +229,7 @@ const GroupBoardDataServiceClass = class {
 
     const result = await model.DeleteComment(delete_status, comment_seq)
 
-    const group_member_model = new GroupMemberModel(database);
-    await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(comment_info.group_seq, comment_info.member_seq, 'board_comment', 'down', 1)
+    this.updateGroupMemberCount(comment_info.group_seq, comment_info.member_seq, 'board_comment', 'down', 1)
 
     const board_model = this.getGroupBoardDataModel(database)
     await board_model.decrementBoardCommentCnt(board_data_seq, 1)
@@ -216,8 +242,7 @@ const GroupBoardDataServiceClass = class {
     const target_info = await model.getBoardDataDetail(board_seq)
 
     if (target_info.status === 'Y') {
-      const group_member_model = new GroupMemberModel(database)
-      await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(target_info.group_seq, target_info.member_seq, 'board_cnt', 'down')
+      this.updateGroupMemberCount(target_info.group_seq, target_info.member_seq, 'board_cnt', 'down')
       const comment_count_list = await board_comment_model.getBoardCommentCountList(board_seq)
       this.decreaseCommentCount(comment_count_list, target_info.group_seq)
       await model.DeleteBoardData(board_seq)
