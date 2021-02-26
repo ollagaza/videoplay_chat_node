@@ -69,9 +69,10 @@ export default class GroupAlarmModel extends MySQLModel {
       .where('group_seq', group_seq)
       .where('grade', '<=', grade_number)
       .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_read`, 0]))
-      .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_delete`, 0]))
+      // .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_delete`, 0]))
     if (options.interval) {
-      query.where(this.database.raw('date_format(date_sub(group_alarm.reg_date, interval ? day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')', [options.interval]))
+      const recent_timestamp = Util.addDay(-(Util.parseInt(options.interval, 1)), Constant.TIMESTAMP)
+      query.where(this.database.raw('group_alarm.reg_date >= ?', [recent_timestamp]))
     }
 
     return query
