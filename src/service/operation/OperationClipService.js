@@ -45,7 +45,7 @@ const OperationClipServiceClass = class {
       const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
       const socket_message = {
         title: `'${operation_info.operation_name}' 수술에 클립이 추가되었습니다.`,
-        message: `${name}님이 '${operation_info.operation_name}' 수술에 클립을 추가하였습니다.<br/>확인시하려면 클릭하세요.`
+        message: `${name}님이 '${operation_info.operation_name}' 수술에 클립을 추가하였습니다.<br/>확인하려면 클릭하세요.`
       }
       const socket_data = {
         clip_info: create_result,
