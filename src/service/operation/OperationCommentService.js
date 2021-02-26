@@ -77,7 +77,7 @@ const OperationCommentServiceClass = class {
     const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
     const socket_message = {
       title: `'${operation_info.operation_name}' 수술에 댓글을 추가되었습니다.`,
-      message: `${name}님이 '${operation_info.operation_name}' 수술에 댓글을 작성하였습니다.<br/>확인시하려면 클릭하세요.`
+      message: `${name}님이 '${operation_info.operation_name}' 수술에 댓글을 작성하였습니다.<br/>확인하려면 클릭하세요.`
     }
     const socket_data = {
       comment_seq,
