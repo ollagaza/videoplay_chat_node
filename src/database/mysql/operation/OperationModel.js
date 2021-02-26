@@ -54,7 +54,7 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperation(where, import_media_info)
   }
 
-  getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false) => {
+  getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
@@ -122,8 +122,47 @@ export default class OperationModel extends MySQLModel {
     }
 
     const order_by = { name: 'operation.seq', direction: 'DESC' }
-    if (asc) {
-      order_by.direction = 'ASC'
+    if (order_params.field) {
+      switch (order_params.field) {
+        case 'seq':
+          order_by.name = 'operation.seq'
+          order_by.direction = order_params.type
+          break;
+        case 'operation_name':
+          order_by.name = 'operation.operation_name'
+          order_by.direction = order_params.type
+          break;
+        case 'operation_date':
+          order_by.name = 'operation.modify_date'
+          order_by.direction = order_params.type
+          break;
+        case 'reg_date':
+          order_by.name = 'operation.reg_date'
+          order_by.direction = order_params.type
+          break;
+        case 'user_name':
+          order_by.name = 'member.user_name'
+          order_by.direction = order_params.type
+          break;
+        case 'patient_age':
+          order_by.name = 'member.birth_day'
+          order_by.direction = order_params.type
+          break;
+        case 'patient_sex':
+          order_by.name = 'member.gender'
+          order_by.direction = order_params.type
+          break;
+        case 'total_file_size':
+          order_by.name = 'operation_storage.total_file_size'
+          order_by.direction = order_params.type
+          break;
+        default :
+          break;
+      }
+    } else {
+      if (asc) {
+        order_by.direction = 'ASC'
+      }
     }
     query.orderBy(order_by.name, order_by.direction)
 
@@ -142,7 +181,7 @@ export default class OperationModel extends MySQLModel {
     return paging_result
   }
 
-  getOperationInfoSearchListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false) => {
+  getOperationInfoSearchListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
