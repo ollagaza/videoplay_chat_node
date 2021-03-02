@@ -59,8 +59,9 @@ routes.get('/:update_seq(\\d+)', Auth.isAuthenticated(Role.ADMIN), Wrap(async (r
   res.json(output)
 }))
 
-routes.get('/list', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
-  const update_list = await SurgboxUpdateService.getUpdateListForBox()
+routes.get('/list(/:type)?', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const type = req.params.type
+  const update_list = await SurgboxUpdateService.getUpdateListForBox(type)
   res.json(update_list)
 }))
 

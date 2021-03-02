@@ -7,6 +7,7 @@ import OperationStorageModel from '../../database/mysql/operation/OperationStora
 import OperationCommentService from './OperationCommentService'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 import logger from "../../libs/logger";
+import GroupAlarmService from '../group/GroupAlarmService'
 
 const OperationClipServiceClass = class {
   constructor () {
@@ -22,7 +23,7 @@ const OperationClipServiceClass = class {
     }
   }
 
-  createClip = async (operation_info, member_info, request_body, update_clip_count = true, group_member_info = null) => {
+  createClip = async (operation_info, member_info, request_body, update_clip_count = true, group_member_info = null, create_alarm = false) => {
     const clip_info = request_body.clip_info
     const clip_count = request_body.clip_count
     const create_result = await OperationClipModel.createOperationClip(operation_info, member_info, clip_info)
@@ -32,6 +33,26 @@ const OperationClipServiceClass = class {
         const group_member_model = new GroupMemberModel(DBMySQL)
         group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'anno', 'up');
       }
+    }
+
+    if (create_alarm && group_member_info) {
+      const alarm_data = {
+        operation_seq: operation_info.seq,
+        clip_id: create_result._id,
+        member_seq: member_info.seq
+      }
+      const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술에 클립을 추가하였습니다.`
+      const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
+      const socket_message = {
+        title: `'${operation_info.operation_name}' 수술에 클립이 추가되었습니다.`,
+        message: `${name}님이 '${operation_info.operation_name}' 수술에 클립을 추가하였습니다.<br/>확인하려면 클릭하세요.`
+      }
+      const socket_data = {
+        clip_info: create_result,
+        member_seq: member_info.seq,
+        message: `${name}님이 클립을 추가하였습니다.`
+      }
+      GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_CLIP, alarm_message, operation_info, member_info, alarm_data, socket_message, socket_data)
     }
 
     return create_result

@@ -136,11 +136,12 @@ routes.get('/getgroupmessage/:message_seq(\\d+)', Auth.isAuthenticated(Role.LOGI
 routes.post('/sendgroupmsg', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
+    const { member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, false)
     const output = new StdObject()
     const message_info = req.body.message_info
 
     await DBMySQL.transaction(async (transaction) => {
-      const result = await MessageService.sendGroupMessage(transaction, message_info)
+      const result = await MessageService.sendGroupMessage(transaction, member_seq, message_info)
       output.add('result', result)
     })
 

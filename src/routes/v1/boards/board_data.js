@@ -99,10 +99,8 @@ routes.post('/save_board_comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(a
   const output = new StdObject()
   const comment_data = req.body.comment_data
 
-  await DBMySQL.transaction(async (transaction) => {
-    const result = await GroupBoardDataService.CreateUpdateBoardComment(transaction, comment_data)
-    output.add('result', result)
-  })
+  const result = await GroupBoardDataService.CreateUpdateBoardComment(comment_data)
+  output.add('result', result)
   res.json(output);
 }))
 

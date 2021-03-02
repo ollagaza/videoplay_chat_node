@@ -2,6 +2,7 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/Util'
 import log from '../../../libs/logger'
 import Constant from '../../../constants/constants'
+import _ from 'lodash'
 
 import OperationMediaModel from './OperationMediaModel'
 import OperationInfo from '../../../wrapper/operation/OperationInfo'
@@ -448,12 +449,11 @@ export default class OperationModel extends MySQLModel {
     return await this.find({ group_seq, folder_seq })
   }
 
-  moveOperationFolder = async (operation_seq, folder_seq) => {
-    operation_seq.unshift('in')
+  moveOperationFolder = async (operation_seq_list, folder_seq) => {
     const filters = {
       is_new: true,
       query: [
-        { seq: operation_seq },
+        { seq: _.concat(['in'], operation_seq_list) },
       ],
     }
     return await this.update(filters, { folder_seq })
@@ -473,13 +473,22 @@ export default class OperationModel extends MySQLModel {
     const result = await query
     return result && result.total_count > 0
   }
-  getAllChildFolderInOperationDatas = async (group_seq, folder_seq) => {
-    folder_seq.unshift('in')
+  getOperationListInFolderSeqList = async (group_seq, folder_seq_list) => {
     const params = {
       is_new: true,
       query: [
         { group_seq },
-        { folder_seq }
+        { folder_seq: _.concat(['in'], folder_seq_list) }
+      ]
+    }
+    return this.find(params)
+  }
+  getOperationListInSeqList = async (group_seq, seq_list) => {
+    const params = {
+      is_new: true,
+      query: [
+        { group_seq },
+        { seq: _.concat(['in'], seq_list) }
       ]
     }
     return this.find(params)
@@ -489,5 +498,13 @@ export default class OperationModel extends MySQLModel {
   }
   getOperationMode = async (operation_seq) => {
     return this.findOne({ seq: operation_seq}, ['mode'])
+  }
+
+  getOperationFolderGrade = async (operation_seq) => {
+    return this.database.select(['operation.seq', 'operation.folder_seq', 'operation_folder.access_type'])
+      .from('operation')
+      .leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
+      .where('operation.seq', operation_seq)
+      .first()
   }
 }

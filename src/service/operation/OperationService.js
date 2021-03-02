@@ -29,6 +29,7 @@ import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 import OperationCommentService from "./OperationCommentService";
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
+import GroupAlarmService from '../group/GroupAlarmService'
 
 const OperationServiceClass = class {
   constructor () {
@@ -58,7 +59,7 @@ const OperationServiceClass = class {
     return new GroupMemberModel(DBMySQL)
   }
 
-  createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
+  createOperation = async (database, member_info, group_member_info, request_body, status = null, create_alarm = false) => {
     const output = new StdObject()
     let is_success = false
 
@@ -123,6 +124,16 @@ const OperationServiceClass = class {
         group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid', 'up');
       }
     }
+
+    if (create_alarm) {
+      const alarm_data = {
+        operation_seq: operation_info.seq,
+        member_seq: member_info.seq
+      }
+      const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`
+      GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, alarm_data)
+    }
+
     return output
   }
 
@@ -376,27 +387,31 @@ const OperationServiceClass = class {
     (
       async (group_seq, request_data) => {
         try {
-          let operation_list = null
-          let folder_operation_list = null
-          if (request_data.operation_folder_list) {
-            folder_operation_list = await OperationFolderService.deleteChildFolderAndRtnOperationList(DBMySQL, group_seq, request_data.operation_folder_list)
-            operation_list = folder_operation_list.operation_data
+          let target_operation_list = []
+          let child_folder_seq_list = null
+          log.debug(this.log_prefix, 'deleteOperationByList', request_data)
+          if (request_data.folder_seq_list) {
+            child_folder_seq_list = await OperationFolderService.getAllChildFolderSeqListBySeqList(DBMySQL, group_seq, request_data.folder_seq_list)
+            target_operation_list = await OperationService.getOperationListInFolderSeqList(DBMySQL, group_seq, child_folder_seq_list)
           }
-          if (request_data.operation_info_list) {
+          if (request_data.operation_seq_list) {
+            const operation_model = this.getOperationModel()
+            const operation_list = await operation_model.getOperationListInSeqList(group_seq, request_data.operation_seq_list)
+            log.debug(this.log_prefix, '[deleteOperationByList]', 'operation_list', operation_list)
             if (operation_list) {
-              operation_list = operation_list.concat(request_data.operation_info_list)
-            } else {
-              operation_list = request_data.operation_info_list
+              target_operation_list = _.concat(target_operation_list, operation_list)
             }
           }
+          log.debug(this.log_prefix, '[deleteOperationByList]', 'target_operation_list', target_operation_list)
 
-          if (operation_list && operation_list.length > 0) {
-            for (let cnt = 0; cnt < operation_list.length; cnt++) {
-              await OperationService.deleteOperationAndUpdateStorage(operation_list[cnt])
+          if (target_operation_list && target_operation_list.length > 0) {
+            for (let cnt = 0; cnt < target_operation_list.length; cnt++) {
+              await OperationService.deleteOperationAndUpdateStorage(target_operation_list[cnt])
             }
           }
-          if (folder_operation_list) {
-            await OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, folder_operation_list.allChildFolderList)
+          if (child_folder_seq_list) {
+            log.debug(this.log_prefix, '[deleteOperationByList]', 'child_folder_seq_list', child_folder_seq_list)
+            await OperationFolderService.deleteOperationFolders(DBMySQL, group_seq, child_folder_seq_list)
           }
         } catch (error) {
           log.error(this.log_prefix, '[deleteOperationBySeqList]', group_seq, request_data, error)
@@ -461,6 +476,7 @@ const OperationServiceClass = class {
       await Util.deleteDirectory(directory_info.root_origin)
     }
     if (ServiceConfig.isVacs() === false) {
+      log.debug(this.log_prefix, '[deleteOperationFiles]', 'directory_info.root', directory_info.root)
       await Util.deleteDirectory(directory_info.root)
       if (delete_link_file) {
         await CloudFileService.requestDeleteObjectFile(directory_info.media_path, true)
@@ -588,6 +604,7 @@ const OperationServiceClass = class {
     await Util.createDirectory(directory_info.image)
     await Util.createDirectory(directory_info.temp)
     await Util.createDirectory(directory_info.file)
+    await Util.createDirectory(directory_info.origin)
   }
 
   getGroupTotalStorageUsedSize = async (database, group_seq) => {
@@ -707,14 +724,31 @@ const OperationServiceClass = class {
     )(zip.getEntries())
   }
 
-  onUploadComplete = async (operation_info) => {
+  onUploadComplete = async (operation_info, request_body = null) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === 'file') {
       if (!ServiceConfig.isVacs()) {
-        await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
+        if (request_body && request_body.on_create) {
+          await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
+        } else {
+          await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
+        }
       }
     }
     await this.updateStorageSize(operation_info)
+  }
+
+  requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
+    if (operation_info.mode === this.MODE_FILE) {
+      if (ServiceConfig.isVacs()) {
+        await this.updateAnalysisStatus(null, operation_info, 'Y')
+      } else {
+        await this.updateAnalysisStatus(null, operation_info, 'R')
+      }
+    } else {
+      return await this.requestTranscoder(operation_info)
+    }
   }
 
   updateStorageSize = async (operation_info) => {
@@ -772,19 +806,6 @@ const OperationServiceClass = class {
       }
     }
     return null
-  }
-
-  requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
-    if (operation_info.mode === this.MODE_FILE) {
-      return await this.moveOperationFiles(operation_info)
-    } else {
-      return await this.requestTranscoder(operation_info)
-    }
-  }
-
-  moveOperationFiles = async (operation_info) => {
-    await this.updateAnalysisStatus(null, operation_info, 'Y')
   }
 
   requestTranscoder = async (operation_info) => {
@@ -887,7 +908,6 @@ const OperationServiceClass = class {
 
   getOperationDataViewFile = async (operation_seq, group_seq) => {
     const options = {
-      operation_file_list: false,
       index_list: false,
       clip_list: true,
       writer_info: true,
@@ -917,12 +937,6 @@ const OperationServiceClass = class {
     output.add('is_writer', operation_info.group_seq === group_seq)
 
     if (options) {
-      log.debug(this.log_prefix, '[getOperationDataInfo]', 'options', options)
-      if (options.operation_file_list) {
-        const { operation_file_list } = await OperationFileService.getFileList(DBMySQL, operation_info, OperationFileService.TYPE_FILE)
-        output.add('operation_file_list', operation_file_list)
-      }
-
       if (options.index_list) {
         const index_list = await this.getVideoIndexList(operation_seq)
         output.add('index_list', index_list)
@@ -1027,15 +1041,15 @@ const OperationServiceClass = class {
     }
   }
 
-  getAllChildFolderInOperationDatas = async (database, group_seq, folder_seq) => {
+  getOperationListInFolderSeqList = async (database, group_seq, folder_seq_list) => {
     const model = this.getOperationModel(database)
-    const operation_infos = await model.getAllChildFolderInOperationDatas(group_seq, folder_seq)
+    const operation_info_list = await model.getOperationListInFolderSeqList(group_seq, folder_seq_list)
 
-    for (let cnt = 0; cnt < operation_infos.length; cnt++) {
-      operation_infos[cnt] = new OperationInfo(operation_infos[cnt], null);
+    for (let cnt = 0; cnt < operation_info_list.length; cnt++) {
+      operation_info_list[cnt] = new OperationInfo(operation_info_list[cnt], null);
     }
 
-    return operation_infos
+    return operation_info_list
   }
 
   getOperationDirectoryInfo = (operation_info) => {
@@ -1138,6 +1152,18 @@ const OperationServiceClass = class {
       }
       await OperationClipService.updateClipCount({ seq: operation_storage_info.seq }, update_clip_count);
     }
+  }
+
+  getFolderGrade = async (operation_seq) => {
+    const model = this.getOperationModel()
+    const query_result = await model.getOperationFolderGrade(operation_seq)
+    if (!query_result || !query_result.seq) return 100
+    if (query_result.folder_seq === null) return 1
+    const folder_grade = query_result.access_type
+    if (folder_grade === 'O' || folder_grade === 'A') {
+      return 99
+    }
+    return Util.parseInt(folder_grade, 99)
   }
 }
 

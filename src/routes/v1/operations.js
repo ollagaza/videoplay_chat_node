@@ -39,7 +39,7 @@ routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
 routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const output = await OperationService.createOperation(DBMySQL, member_info, group_member_info, req.body, null)
+  const output = await OperationService.createOperation(DBMySQL, member_info, group_member_info, req.body, null, true)
   res.json(output)
 }))
 
@@ -331,7 +331,7 @@ routes.put('/:operation_seq(\\d+)/files/upload/complete', Auth.isAuthenticated(R
   const token_info = req.token_info
   const operation_seq = req.params.operation_seq
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info)
-  await OperationService.onUploadComplete(operation_info)
+  await OperationService.onUploadComplete(operation_info, req.body)
 
   const output = new StdObject()
   res.json(output)

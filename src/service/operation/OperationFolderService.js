@@ -122,6 +122,19 @@ const OperationFolderServiceClass = class {
     return allChildFolders;
   }
 
+  getAllChildFolderSeqListBySeqList = async (database, group_seq, folder_seq_list) => {
+    let child_folder_list;
+    const child_folder_seq_list = [];
+    for (let i = 0; i < folder_seq_list.length; i++) {
+      child_folder_list = await this.getChildAllFolderList(database, group_seq, folder_seq_list[i])
+      for (let cnt = 0; cnt < child_folder_list.length; cnt++) {
+        child_folder_seq_list.push(child_folder_list[cnt].seq);
+      }
+    }
+
+    return child_folder_seq_list;
+  }
+
   createDefaultOperationFolder = async (database, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo();
@@ -208,10 +221,10 @@ const OperationFolderServiceClass = class {
     }
   }
 
-  deleteOperationFolders = async (database, group_seq, folder_seqs) => {
+  deleteOperationFolders = async (database, group_seq, folder_seq_list) => {
     const model = this.getOperationFolderModel(database)
-    for (let cnt = 0; cnt < folder_seqs.length; cnt++) {
-      await model.deleteOperationFolder(group_seq, folder_seqs[cnt].seq)
+    for (let cnt = 0; cnt < folder_seq_list.length; cnt++) {
+      await model.deleteOperationFolder(group_seq, folder_seq_list[cnt])
     }
   }
 
@@ -240,9 +253,9 @@ const OperationFolderServiceClass = class {
       let folder_seqs = null
 
       if (folder_info.parent_folder_list !== null && folder_info.parent_folder_list.length !== 0) {
-        folder_seqs = _.concat([operation_info.folder_seq], folder_info.parent_folder_list)
+        folder_seqs = _.concat(['in', operation_info.folder_seq], folder_info.parent_folder_list)
       } else {
-        folder_seqs = [operation_info.folder_seq]
+        folder_seqs = ['in', operation_info.folder_seq]
       }
       let file_size = 0;
 
@@ -251,8 +264,6 @@ const OperationFolderServiceClass = class {
       } else {
         file_size = (((util.isEmpty(old_storage_size) ? 0 : old_storage_size) - new_storage_size) * -1)
       }
-
-      folder_seqs.unshift('in')
 
       const filters = {
         is_new: true,
@@ -283,13 +294,13 @@ const OperationFolderServiceClass = class {
       const total_size_filter = { group_seq: folder_info.group_seq, folder_seq: folder_info.seq }
       const total_folder_file_size = await operation_model.getGroupUsedStorageSize(total_size_filter)
 
-      const folder_seqs = folder_info.parent_folder_list
-      folder_seqs.push(folder_info.seq)
-      folder_seqs.unshift('in')
+      const folder_seq_list = folder_info.parent_folder_list
+      folder_seq_list.push(folder_info.seq)
+      folder_seq_list.unshift('in')
       const update_folder_size_filter = {
         is_new: true,
         query: [
-          { seq: folder_seqs }
+          { seq: folder_seq_list }
         ],
       }
       await model.updateFolderStorageSize(update_folder_size_filter, total_folder_file_size)
@@ -307,21 +318,6 @@ const OperationFolderServiceClass = class {
     await model.updateStatusTrash(seq_list, group_seq, status)
 
     return true
-  }
-
-  deleteChildFolderAndRtnOperationList = async (database, group_seq, operation_folder_list) => {
-    const folder_seq = []
-    let allChildFolderList = null
-
-    for (let i = 0; i < operation_folder_list.length; i++) {
-      allChildFolderList = await this.getChildAllFolderList(database, group_seq, operation_folder_list[i].seq)
-      for (let cnt = 0; cnt < allChildFolderList.length; cnt++) {
-        folder_seq.push(allChildFolderList[cnt].seq);
-      }
-    }
-    const operation_data = await OperationService.getAllChildFolderInOperationDatas(database, group_seq, folder_seq)
-
-    return { allChildFolderList, operation_data }
   }
 
   getGroupFolderByDepthZero = async (database, group_seq) => {
