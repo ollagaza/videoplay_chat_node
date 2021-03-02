@@ -90,4 +90,8 @@ export default class MessageModel extends MySQLModel {
       return this.update(param, updateData)
     }
   }
+
+  getReceiveAllCountWithMemberSeq = async (member_seq) => {
+    return await this.getTotalCount({ receive_seq: member_seq, is_view: 0 })
+  }
 }
