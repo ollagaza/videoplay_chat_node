@@ -47,7 +47,7 @@ const GroupBoardDataServiceClass = class {
     if (paging.cur_page !== 1) {
       const notice_count = await model.getBoardNoticeCount(group_seq, board_seq)
       if (notice_count > 0) {
-        paging.start_count = (paging.list_count - notice_count) + 1;
+        paging.start_count = (paging.list_count - notice_count);
       }
     }
     let board_list = null
