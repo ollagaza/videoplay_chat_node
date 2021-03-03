@@ -145,7 +145,7 @@ const GroupServiceClass = class {
     if (only_admin && !is_group_admin) {
       throw new StdObject(10000, '권한이 없습니다', 403)
     }
-    const result = {
+    return {
       token_info: token_info,
       member_seq: member_seq,
       group_seq: group_seq,
@@ -157,7 +157,6 @@ const GroupServiceClass = class {
       group_grade: group_grade,
       group_grade_number: group_grade_number
     }
-    return result
   }
 
   createPersonalGroup = async (database, member_info, options = {}) => {
@@ -1007,10 +1006,10 @@ const GroupServiceClass = class {
     return await group_info_model.getMemberGroupInfoAll(member_seq)
   }
 
-  getGroupListForBox = async (database) => {
+  getGroupListForBox = async (database, group_seq_list = null) => {
     const result_list = []
     const group_info_model = this.getGroupModel(database)
-    const group_list = await group_info_model.getGroupListForBox()
+    const group_list = await group_info_model.getGroupListForBox(group_seq_list)
     for (let i = 0; i < group_list.length; i++) {
       const group_info = group_list[i]
       const member_info = {

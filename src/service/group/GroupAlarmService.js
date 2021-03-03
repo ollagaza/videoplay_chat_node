@@ -87,16 +87,8 @@ const GroupAlarmServiceClass = class {
   }
 
   onReadAlarm = (group_seq, member_seq, grade_number, request_body) => {
-    (
-      async (group_seq, member_seq, request_body) => {
-        try {
-          const group_alarm_model = this.getGroupAlarmModel()
-          await group_alarm_model.onGroupAlarmRead(group_seq, member_seq, grade_number, request_body)
-        } catch (error) {
-          logger.error(this.log_prefix, '[onReadAlarm]', group_seq, member_seq, grade_number, request_body, error)
-        }
-      }
-    )(group_seq, member_seq, request_body)
+    const group_alarm_model = this.getGroupAlarmModel()
+    return group_alarm_model.onGroupAlarmRead(group_seq, member_seq, grade_number, request_body)
   }
 
   onDeleteAlarm = (group_seq, member_seq, grade_number, request_body) => {

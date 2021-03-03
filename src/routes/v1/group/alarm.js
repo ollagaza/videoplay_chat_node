@@ -35,7 +35,7 @@ routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => 
 
 routes.put('/read', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  GroupAlarmService.onReadAlarm(group_auth.group_seq, group_auth.member_seq, group_auth.group_grade_number, req.body)
+  await GroupAlarmService.onReadAlarm(group_auth.group_seq, group_auth.member_seq, group_auth.group_grade_number, req.body)
   res.json(new StdObject())
 }))
 
