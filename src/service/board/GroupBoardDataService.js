@@ -27,10 +27,11 @@ const GroupBoardDataServiceClass = class {
     return new GroupBoardCommentModel(DBMySQL)
   }
 
-  getBoardDataPagingList = async (database, req) => {
+  getBoardDataPagingList = async (database, _group_seq, req, group_grade_number = null) => {
     const request_body = req.query ? req.query : {}
-    const group_seq = request_body.group_seq
-    const board_seq = request_body.board_seq
+    const page = request_body.page ? request_body.page : null
+    const group_seq = request_body.group_seq ? request_body.group_seq : _group_seq
+    const board_seq = request_body.board_seq ? request_body.board_seq : null
     const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
     const request_order = request_body.order ? JSON.parse(request_body.order) : null
 
@@ -38,7 +39,9 @@ const GroupBoardDataServiceClass = class {
     paging.list_count = request_paging.list_count ? request_paging.list_count : 10
     paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
     paging.page_count = request_paging.page_count ? request_paging.page_count : 10
-    paging.no_paging = 'N'
+
+    paging.no_paging = request_body.no_paging ? request_body.no_paging : 'n'
+    paging.limit = request_body.limit ? request_body.limit : null
 
     const model = this.getGroupBoardDataModel(database)
     if (paging.cur_page !== 1) {
@@ -47,7 +50,13 @@ const GroupBoardDataServiceClass = class {
         paging.start_count = (paging.list_count - notice_count) + 1;
       }
     }
-    const board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order)
+    let board_list = null
+    if (page === 'main') {
+      board_list = await model.getBoardDataMainList(group_seq, group_grade_number)
+    } else {
+      board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order, group_grade_number)
+    }
+
     for (let cnt = 0; cnt < board_list.length; cnt++) {
       board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
     }

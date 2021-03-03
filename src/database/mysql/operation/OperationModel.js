@@ -55,7 +55,7 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperation(where, import_media_info)
   }
 
-  getOperationInfoListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
+  getOperationInfoListPage = async (group_seq, group_grade_number = null, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
@@ -82,7 +82,15 @@ export default class OperationModel extends MySQLModel {
     const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
     switch (filter_params.menu) {
       case 'recent':
-        query.andWhere('operation.reg_date', '>=', recent_timestamp)
+        query.leftOuterJoin('operation_folder', (joinQuery) => {
+          joinQuery.on('operation.folder_seq', 'operation_folder.seq')
+          joinQuery.onVal(this.database.raw('if(access_type = \'A\' or access_type = \'O\', 99, access_type)'), '<=', group_grade_number)
+        })
+        if (filter_params.limit) {
+          query.limit(filter_params.limit)
+        } else {
+          query.andWhere('operation.reg_date', '>=', recent_timestamp)
+        }
         query.andWhere('operation.status', 'Y')
         check_folder = false
         break
@@ -182,7 +190,7 @@ export default class OperationModel extends MySQLModel {
     return paging_result
   }
 
-  getOperationInfoSearchListPage = async (group_seq, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
+  getOperationInfoSearchListPage = async (group_seq, group_grade_number = null, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10

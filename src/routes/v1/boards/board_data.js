@@ -79,7 +79,8 @@ routes.get('/getpreviousnextview', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(a
 
 routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
-  const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, req)
+  const { group_seq, group_grade_number } = await GroupService.checkGroupAuth(DBMySQL, req, true, true)
+  const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, group_seq, group_grade_number, req)
   output.adds(result)
   res.json(output);
 }))
