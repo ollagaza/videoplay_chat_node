@@ -14,9 +14,9 @@ const GroupSurgboxServiceClass = class {
     return new GroupSurgboxModel(DBMySQL)
   }
 
-  checkDuplicate = async (group_seq, machine_id) => {
+  isDuplicateMachineId = async (group_seq, request_query) => {
     const model = this.getModel()
-    return model.checkDuplicate(group_seq, machine_id)
+    return model.isDuplicateMachineId(group_seq, request_query.new_machine_id, request_query.seq)
   }
 
   createGroupSurgboxInfo = async (group_seq, member_seq, machine_id) => {
@@ -39,6 +39,11 @@ const GroupSurgboxServiceClass = class {
   deleteGroupSurgboxInfo = async (seq) => {
     const model = this.getModel()
     return model.deleteGroupSurgboxInfo(seq)
+  }
+
+  modifyGroupSurgboxInfo = async (seq, new_machine_id) => {
+    const model = this.getModel()
+    return model.modifyGroupSurgboxInfo(seq, new_machine_id)
   }
 
   getGroupBoxUserList = async (machine_id) => {

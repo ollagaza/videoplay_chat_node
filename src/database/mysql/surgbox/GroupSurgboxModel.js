@@ -10,9 +10,17 @@ export default class GroupSurgboxModel extends MySQLModel {
     this.log_prefix = '[GroupSurgboxModel]'
   }
 
-  checkDuplicate = async (group_seq, machine_id) => {
+  isDuplicateMachineId = async (group_seq, machine_id, seq = null) => {
+    const query = this.database
+      .select(['COUNT(*) AS total_count'])
+      .from(this.table_name)
+    if (seq) {
+      query.whereNot('seq', seq)
+    }
+    query.where('group_seq', group_seq)
+    query.where('machine_id', machine_id)
     const query_result = await this.findOne({ group_seq, machine_id }, ['COUNT(*) AS total_count'])
-    return !query_result || Util.parseInt(query_result.total_count) === 0
+    return query_result && Util.parseInt(query_result.total_count, 0) > 0
 
   }
 
@@ -26,6 +34,10 @@ export default class GroupSurgboxModel extends MySQLModel {
 
   deleteGroupSurgboxInfo = async (seq) => {
     return this.delete({ seq })
+  }
+
+  modifyGroupSurgboxInfo = async (seq, new_machine_id) => {
+    return this.update({ seq }, { machine_id: new_machine_id })
   }
 
   getBoxGroupList = async (machine_id) => {
