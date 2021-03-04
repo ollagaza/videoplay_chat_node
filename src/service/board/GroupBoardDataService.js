@@ -55,11 +55,12 @@ const GroupBoardDataServiceClass = class {
       board_list = await model.getBoardDataMainList(group_seq, group_grade_number)
     } else {
       board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order, group_grade_number)
+
+      for (let cnt = 0; cnt < board_list.length; cnt++) {
+        board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
+      }
     }
 
-    for (let cnt = 0; cnt < board_list.length; cnt++) {
-      board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
-    }
     return board_list
   }
 
