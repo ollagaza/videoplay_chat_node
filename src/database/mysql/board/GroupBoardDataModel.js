@@ -61,10 +61,10 @@ export default class GroupBoardDataModel extends MySQLModel {
       'union all' +
       '(select `board_data`.* from `board_data` ' +
       'inner join `group_board_list` on `group_board_list`.`group_seq` = ? and `group_board_list`.`seq` = `board_data`.`board_seq` ' +
-      'and if(`group_board_list`.`read_grade` = \'O\' or `group_board_list`.`read_grade` = \'A\', \'99\', `group_board_list`.`read_grade`) <= 1 ' +
+      'and if(`group_board_list`.`read_grade` = \'O\' or `group_board_list`.`read_grade` = \'A\', \'99\', `group_board_list`.`read_grade`) <= ? ' +
       'where `board_data`.`group_seq` = ? and `board_data`.`status` = \'Y\' and `is_notice` != 1 ' +
       'order by `regist_date` desc limit 10)' +
-      'limit 10', [group_seq, group_seq, group_seq]
+      'limit 10', [group_seq, group_seq, group_grade_number, group_seq]
     )
 
     const data = await oKnex;
