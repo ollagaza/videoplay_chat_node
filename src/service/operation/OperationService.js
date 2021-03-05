@@ -59,7 +59,7 @@ const OperationServiceClass = class {
     return new GroupMemberModel(DBMySQL)
   }
 
-  createOperation = async (database, member_info, group_member_info, request_body, status = null, create_alarm = false) => {
+  createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
     const output = new StdObject()
     let is_success = false
 
@@ -87,9 +87,11 @@ const OperationServiceClass = class {
     const operation_seq = operation_info.seq
     output.add('operation_info', operation_info)
 
+    let operation_storage_seq = null
+
     await database.transaction(async (transaction) => {
       const operation_media_seq = await OperationMediaService.createOperationMediaInfo(database, operation_info)
-      const operation_storage_seq = await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info)
+      operation_storage_seq = await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info)
 
       output.add('operation_seq', operation_seq)
       output.add('operation_media_seq', operation_media_seq)
@@ -123,15 +125,6 @@ const OperationServiceClass = class {
         const group_member_model = this.getGroupMemberModel(database)
         group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid', 'up');
       }
-    }
-
-    if (create_alarm) {
-      const alarm_data = {
-        operation_seq: operation_info.seq,
-        member_seq: member_info.seq
-      }
-      const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`
-      GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, alarm_data)
     }
 
     return output
@@ -730,11 +723,11 @@ const OperationServiceClass = class {
     )(zip.getEntries())
   }
 
-  onUploadComplete = async (operation_info, request_body = null) => {
+  onUploadComplete = async (operation_info, is_create = false) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === 'file') {
       if (!ServiceConfig.isVacs()) {
-        if (request_body && request_body.on_create) {
+        if (is_create) {
           await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
         } else {
           await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
@@ -744,8 +737,8 @@ const OperationServiceClass = class {
     await this.updateStorageSize(operation_info)
   }
 
-  requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
+  requestAnalysis = async (database, token_info, operation_seq, group_member_info, member_info) => {
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
     if (operation_info.mode === this.MODE_FILE) {
       if (ServiceConfig.isVacs()) {
         await this.updateAnalysisStatus(null, operation_info, 'Y')
@@ -753,8 +746,41 @@ const OperationServiceClass = class {
         await this.updateAnalysisStatus(null, operation_info, 'R')
       }
     } else {
-      return await this.requestTranscoder(operation_info)
+      await this.requestTranscoder(operation_info)
     }
+    this.onOperationCreateComplete(operation_info, group_member_info, member_info)
+  }
+
+  onOperationCreateComplete(operation_info, group_member_info, member_info) {
+    (
+      async () => {
+        try {
+
+          const alarm_data = {
+            operation_seq: operation_info.seq,
+            member_seq: member_info.seq
+          }
+          const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`
+
+          const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
+          const socket_message = {
+            title: `'${name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`,
+          }
+          const socket_data = {
+            operation_seq: operation_info.seq,
+            folder_seq: operation_info.folder_seq,
+            member_seq: operation_info.member_seq,
+            message: socket_message.title,
+            analysis_complete: false,
+            reload_operation_list: true,
+            disable_click: true
+          }
+          GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, alarm_data, socket_message, socket_data, true)
+        } catch (error) {
+          log.error(this.log_prefix, '[onOperationCreateComplete]', error)
+        }
+      }
+    )()
   }
 
   updateStorageSize = async (operation_info) => {

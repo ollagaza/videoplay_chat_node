@@ -6,7 +6,6 @@ import StdObject from '../../../wrapper/std-object'
 import GroupSurgboxService from '../../../service/surgbox/GroupSurgboxService'
 import GroupService from '../../../service/group/GroupService'
 import DBMySQL from '../../../database/knex-mysql'
-import logger from '../../../libs/logger'
 
 const routes = Router()
 

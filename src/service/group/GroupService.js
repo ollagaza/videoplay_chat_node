@@ -288,7 +288,7 @@ const GroupServiceClass = class {
       }
       if (JSON.parse(group_member_info.profile).image) {
         group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
-        group_member_list[i].json_keys.push('group_image_url')
+        group_member_list[i].addKey('group_image_url')
       }
       if (group_member_info.channel_top_img_path) {
         if (group_member_info.channel_top_img_url !== null) {
@@ -321,7 +321,7 @@ const GroupServiceClass = class {
       }
       if (JSON.parse(group_member_info.profile).image) {
         group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
-        group_member_list[i].json_keys.push('group_image_url')
+        group_member_list[i].addKey('group_image_url')
       }
     }
     if (ServiceConfig.isVacs()) {
@@ -383,7 +383,7 @@ const GroupServiceClass = class {
       }
       if (JSON.parse(group_member_info.profile).image) {
         group_member_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
-        group_member_info.json_keys.push('group_image_url')
+        group_member_info.addKey('group_image_url')
       }
     }
     if (group_member_info.channel_top_img_path) {
@@ -433,7 +433,7 @@ const GroupServiceClass = class {
   getGroupInfo = async (database, group_seq, private_keys = null) => {
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.getGroupInfo(group_seq, private_keys)
-    group_info.json_keys.push('profile_image_url')
+    group_info.addKey('profile_image_url')
     if (JSON.parse(group_info.profile).image) {
       group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + JSON.parse(group_info.profile).image
     }
@@ -851,7 +851,7 @@ const GroupServiceClass = class {
     const group_info = await this.getGroupInfoWithProduct(database, group_seq)
     if (group_info.profile_image_path) {
       group_info.profile_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
-      group_info.json_keys.push('profile_image_url')
+      group_info.addKey('profile_image_url')
     }
     if (group_info.channel_top_img_path) {
       group_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.channel_top_img_path)
@@ -1496,6 +1496,19 @@ const GroupServiceClass = class {
       return await group_model.set_group_closure(group_seq);
     }
     return false;
+  }
+
+  async getGroupStorageStatus (group_seq) {
+    const status = {
+      max_storage_size: 0,
+      use_storage_size: 0
+    }
+    const group_info = await this.getGroupInfo(DBMySQL, group_seq)
+    if (group_info) {
+      status.max_storage_size = Util.parseInt(group_info.storage_size)
+      status.use_storage_size = Util.parseInt(group_info.used_storage_size)
+    }
+    return status
   }
 }
 
