@@ -417,7 +417,12 @@ const MemberServiceClass = class {
       await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
 
       await MemberLogService.memberJoinLog(database, create_member_info.seq)
-      group_info = await GroupService.createEnterpriseGroup(database, create_member_info)
+      // group_info = await GroupService.createPersonalGroup(database, create_member_info)
+      const options = {
+        pay_code: 'f_12TB',
+        is_set_group_name: 0,
+      };
+      group_info = await GroupService.createEnterpriseGroup(database, create_member_info, options)
       await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq, group_info)
     })
 

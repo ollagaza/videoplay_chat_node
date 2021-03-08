@@ -26,6 +26,7 @@ import GroupBoardDataService from "../board/GroupBoardDataService";
 import OperationClipService from "../operation/OperationClipService";
 import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
+import * as util from "util";
 
 const GroupServiceClass = class {
   constructor () {
@@ -186,6 +187,7 @@ const GroupServiceClass = class {
     const start_date = options.start_date ? options.start_date : null
     const expire_date = options.expire_date ? options.expire_date : null
     const status = pay_code !== 'free' ? this.GROUP_STATUS_ENABLE : this.GROUP_STATUS_FREE
+    const is_set_group_name = !Util.isEmpty(options.is_set_group_name) ? options.is_set_group_name : 1
     const create_group_info = {
       member_seq: member_info.seq,
       group_type: this.GROUP_TYPE_ENTERPRISE,
@@ -193,6 +195,7 @@ const GroupServiceClass = class {
       group_name: options.group_name?options.group_name:member_info.user_name,
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size: 0,
+      is_set_group_name,
       pay_code,
       start_date,
       expire_date,
@@ -244,6 +247,7 @@ const GroupServiceClass = class {
       group_explain: options.group_explain?options.group_explain:null,
       profile_image_path: options.profile_image_path?options.profile_image_path:null,
       channel_top_img_path: options.channel_top_img_path?options.channel_top_img_path:null,
+      is_set_group_name: 1,
     }
     return await this.updateGroupInfo(database, modify_group_info, seq)
   }
