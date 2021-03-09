@@ -951,7 +951,17 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
 
 const storate = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, ServiceConfig.get('common_root'))
+    const params = JSON.parse(req.body.params)
+    const media_root = ServiceConfig.get('media_root')
+    const user_id = params.user_info.user_id;
+    const path = `${media_root}/user/${user_id}`;
+    try {
+      fs.statSync(path)
+    } catch (err) {
+      fs.mkdirSync(path)
+    }
+    req.body[file.fieldname] = `/user/${user_id}`;
+    cb(null, path)
   },
   limits: {
     fileSize: 20 * 1024 * 1024, ///< 20MB 제한

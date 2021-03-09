@@ -66,9 +66,9 @@ routes.post('/', Util.common_path_upload.fields([{ name: 'profile_image' }, { na
 
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'profile_image') {
-      params.user_info.profile_image_path = '/common/' + value[0].filename
+      params.user_info.profile_image_path = req.body.profile_image + '/' + value[0].filename
     } else if (value[0].fieldname === 'licens_image') {
-      params.user_sub_info.license_image_path = '/common/' + value[0].filename
+      params.user_sub_info.license_image_path = req.body.licens_image + '/' + value[0].filename
     }
   })
 
@@ -84,9 +84,9 @@ routes.post('/noCheckCreate', Util.common_path_upload.fields([{ name: 'profile_i
 
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'profile_image') {
-      params.user_info.profile_image_path = '/common/' + value[0].filename
+      params.user_info.profile_image_path = req.body.profile_image + '/' + value[0].filename
     } else if (value[0].fieldname === 'licens_image') {
-      params.user_sub_info.license_image_path = '/common/' + value[0].filename
+      params.user_sub_info.license_image_path = req.body.licens_image + '/' + value[0].filename
     }
   })
 
@@ -111,9 +111,9 @@ routes.put('/:member_seq(\\d+)', Util.common_path_upload.fields([{ name: 'profil
 
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'profile_image') {
-      params.user_info.profile_image_path = '/common/' + value[0].filename
+      params.user_info.profile_image_path = req.body.profile_image + '/' + value[0].filename
     } else if (value[0].fieldname === 'licens_image') {
-      params.user_sub_info.license_image_path = '/common/' + value[0].filename
+      params.user_sub_info.license_image_path = req.body.licens_image + '/' + value[0].filename
     }
   })
 
@@ -131,8 +131,8 @@ routes.put('/:member_seq(\\d+)', Util.common_path_upload.fields([{ name: 'profil
     }
   })
 
-  const group_info = await GroupService.getMemberSeqbyPersonalGroupInfo(DBMySQL, member_seq)
-  const update_operation_hospital = await OperationDataService.changeGroupHospital(DBMySQL, group_info.seq, member_info.hospname)
+  // 병원정보를 사용하는 부분이 없으므로 주석처리
+  // const update_operation_hospital = await OperationDataService.changeGroupHospital(DBMySQL, group_info.seq, member_info.hospname)
 
   res.json(new StdObject())
 }))
