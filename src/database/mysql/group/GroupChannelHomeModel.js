@@ -276,6 +276,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
       .from('group_info')
       .innerJoin('board_data as board', 'board.group_seq', 'group_info.seq')
       .where('group_info.group_type', 'G')
+      .where('board.status', 'Y')
       .groupBy('board.group_seq', 'board.member_seq')
     return oQuery
   }
