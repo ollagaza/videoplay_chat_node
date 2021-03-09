@@ -76,6 +76,7 @@ export default class GroupModel extends MySQLModel {
     }
     const query_result = await this.findOne(filter)
     const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
+    rs_data.addKey('channel_top_img_url')
     rs_data.addKey('profile_image_url')
     rs_data.addKey('group_image_url')
     return rs_data;
