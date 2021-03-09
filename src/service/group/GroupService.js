@@ -545,9 +545,9 @@ const GroupServiceClass = class {
         let group_member_seq
         const group_seq = group_info.group_seq
         let group_member_info = await this.getGroupMemberInfoByInviteEmail(null, group_seq, email_address)
-        if (!group_member_info.isEmpty() && group_member_info.status !== this.MEMBER_STATUS_DISABLE) {
-          return
-        }
+        // if (!group_member_info.isEmpty() && group_member_info.status !== this.MEMBER_STATUS_DISABLE) {
+        //   return
+        // }
         const invite_code = await this.getAvailableInviteId()
 
         const group_member_model = this.getGroupMemberModel(null)
