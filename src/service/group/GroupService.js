@@ -249,6 +249,28 @@ const GroupServiceClass = class {
       channel_top_img_path: options.channel_top_img_path?options.channel_top_img_path:null,
       is_set_group_name: 1,
     }
+    if (options.delete_channel_top_img || options.delete_channel_profile_img || modify_group_info.profile_image_path || modify_group_info.channel_top_img_path) {
+      const group_model = this.getGroupModel(database);
+      const group_info = await group_model.getGroupInfo(seq);
+      if (options.delete_channel_top_img) {
+        await Util.deleteFile(group_info.channel_top_img_path);
+        modify_group_info.channel_top_img_path = '';
+      }
+      if (options.delete_channel_profile_img) {
+        await Util.deleteFile(group_info.profile_image_path);
+        modify_group_info.profile_image_path = '';
+      }
+      if (modify_group_info.channel_top_img_path) {
+        if (group_info.channel_top_img_path) {
+          await Util.deleteFile(group_info.channel_top_img_path);
+        }
+      }
+      if (modify_group_info.profile_image_path) {
+        if (group_info.profile_image_path) {
+          await Util.deleteFile(group_info.profile_image_path);
+        }
+      }
+    }
     return await this.updateGroupInfo(database, modify_group_info, seq)
   }
 
