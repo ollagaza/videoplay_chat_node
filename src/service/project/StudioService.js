@@ -81,6 +81,11 @@ const StudioServiceClass = class {
     return await VideoProjectModel.updateStatus(group_seq, project_seq_list, status)
   }
 
+  updateStatusTrash = async (request_body, group_seq, is_trash) => {
+    const project_seq_list = request_body.id_list
+    return await VideoProjectModel.updateStatusTrash(group_seq, project_seq_list, is_trash ? 'T' : 'Y')
+  }
+
   deleteVideoProject = async (group_seq, project_seq) => {
     const project_info = await VideoProjectModel.deleteById(group_seq, project_seq)
     this.deleteProjectFiles(project_info)

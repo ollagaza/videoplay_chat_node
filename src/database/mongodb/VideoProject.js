@@ -117,6 +117,16 @@ video_project_schema.statics.updateStatus = function (group_seq, id_list, status
   return this.updateMany({ group_seq: group_seq, _id: { $in: id_list } }, update, { 'multi': true })
 }
 
+video_project_schema.statics.updateStatusTrash = function (group_seq, id_list, status) {
+  const update = {
+    status
+  }
+  if (status === 'T') {
+    update.delete_date = Date.now()
+  }
+  return this.updateMany({ group_seq: group_seq, _id: { $in: id_list } }, update, { 'multi': true })
+}
+
 video_project_schema.statics.updateFavorite = function (id, is_favorite) {
   const update = {
     is_favorite,
