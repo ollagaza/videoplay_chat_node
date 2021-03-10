@@ -657,6 +657,9 @@ const GroupServiceClass = class {
 
     await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
 
+    const group_model = this.getGroupModel(database);
+    await group_model.group_member_count(group_invite_info.group_seq, 'up');
+
     const message_info = {
       title: '신규 회원 가입',
       message: `'${member_info.user_name}'님이 '${group_invite_info.group_name}'팀에 가입하셨습니다.`
