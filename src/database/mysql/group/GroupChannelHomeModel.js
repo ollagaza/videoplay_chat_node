@@ -207,7 +207,7 @@ export default class GroupChannelHomeModel extends MySQLModel {
 
   updateGroupMemberCnts = async (group_member_counting) => {
     const result_map = []
-    this.database.update({vid_cnt: 0, anno_cnt: 0, comment_cnt: 0, board_cnt: 0, board_comment_cnt: 0}).from('group_member')
+    await this.database.update({vid_cnt: 0, anno_cnt: 0, comment_cnt: 0, board_cnt: 0, board_comment_cnt: 0}).from('group_member')
     for (let cnt = 0; cnt < group_member_counting.length; cnt++) {
       const filter = { group_seq: group_member_counting[cnt].group_seq, member_seq: group_member_counting[cnt].member_seq }
       const params = group_member_counting[cnt];
