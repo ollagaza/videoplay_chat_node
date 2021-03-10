@@ -27,7 +27,7 @@ const StudioServiceClass = class {
     return await VideoProjectModel.findOneById(project_seq)
   }
 
-  createVideoProject = async (group_member_info, member_seq, request) => {
+  createVideoProject = async (group_member_info, member_info, request) => {
     const data = request.body
 
     const content_id = Util.getContentId()
@@ -36,7 +36,9 @@ const StudioServiceClass = class {
 
     await Util.createDirectory(media_root + project_path)
     data.group_seq = group_member_info.group_seq
-    data.member_seq = member_seq
+    data.member_seq = member_info.seq
+    data.user_name = member_info.user_name
+    data.user_nickname = member_info.user_nickname
     data.content_id = content_id
     data.project_path = project_path
     data.parent_directory = data.parent_directory || ''

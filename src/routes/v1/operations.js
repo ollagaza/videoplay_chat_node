@@ -18,8 +18,8 @@ import OperationFolderService from "../../service/operation/OperationFolderServi
 const routes = Router()
 
 routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const { token_info, group_grade_number } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, token_info, group_grade_number, req)
+  const { group_seq, group_grade_number, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, group_seq, group_member_info, group_grade_number, req)
 
   const output = new StdObject()
   output.adds(operation_info_page)

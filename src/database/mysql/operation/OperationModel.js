@@ -66,8 +66,9 @@ export default class OperationModel extends MySQLModel {
     query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
     query.innerJoin('member', 'member.seq', 'operation.member_seq')
     query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
-    query.andWhere('operation.group_seq', group_seq)
-    query.whereIn('operation.status', ['Y', 'T'])
+    query.leftOuterJoin('operation_folder', 'operation.folder_seq', 'operation_folder.seq')
+    query.where('operation.group_seq', group_seq)
+    query.where(this.database.raw('(CASE WHEN operation_folder.access_type IS NULL THEN 1 WHEN operation_folder.access_type = \'A\' THEN 99 WHEN operation_folder.access_type = \'O\' THEN 99 ELSE operation_folder.access_type END) <= ?', [group_grade_number]))
     log.debug(this.log_prefix, '[getOperationInfoListPage]', 'filter_params', filter_params)
     // if (filter_params.analysis_complete) {
     //   query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
@@ -75,22 +76,12 @@ export default class OperationModel extends MySQLModel {
     if (filter_params.status) {
       query.andWhere('operation.status', filter_params.status.toUpperCase())
     }
-    if (filter_params.member_seq) {
-      query.andWhere('operation.member_seq', filter_params.member_seq)
-    }
+
     let check_folder = true
     const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
     switch (filter_params.menu) {
       case 'recent':
-        query.leftOuterJoin('operation_folder', (joinQuery) => {
-          joinQuery.on('operation.folder_seq', 'operation_folder.seq')
-          joinQuery.onVal(this.database.raw('if(access_type = \'A\' or access_type = \'O\', 99, access_type)'), '<=', group_grade_number)
-        })
-        if (filter_params.limit) {
-          query.limit(filter_params.limit)
-        } else {
-          query.andWhere('operation.reg_date', '>=', recent_timestamp)
-        }
+        query.andWhere('operation.reg_date', '>=', recent_timestamp)
         query.andWhere('operation.status', 'Y')
         check_folder = false
         break
@@ -120,7 +111,22 @@ export default class OperationModel extends MySQLModel {
         break
     }
 
-    if (check_folder) {
+    if (filter_params.search_keyword || filter_params.member_seq) {
+      if (filter_params.member_seq) {
+        query.andWhere('operation.member_seq', filter_params.member_seq)
+      }
+      if (filter_params.search_keyword) {
+        query.where((builder) => {
+          builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)
+          builder.orWhere('operation.operation_date', 'like', `%${filter_params.search_keyword}%`)
+          if (filter_params.use_user_name) {
+            builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
+          } else {
+            builder.orWhere('member.user_nickname', 'like', `%${filter_params.search_keyword}%`)
+          }
+        })
+      }
+    } else if (check_folder) {
       if (filter_params.folder_seq) {
         if (filter_params.folder_seq !== 'all') {
           query.andWhere('operation.folder_seq', Util.parseInt(filter_params.folder_seq, null))
@@ -172,88 +178,6 @@ export default class OperationModel extends MySQLModel {
       if (asc) {
         order_by.direction = 'ASC'
       }
-    }
-    query.orderBy(order_by.name, order_by.direction)
-
-    const paging_result = await this.queryPaginated(query, list_count, page, page_count, page_params.no_paging)
-
-    const result = []
-
-    if (paging_result && paging_result.data) {
-      for (const key in paging_result.data) {
-        let query_result = paging_result.data[key]
-        result.push(this.getOperationInfoByResult(query_result))
-      }
-    }
-
-    paging_result.data = result
-    return paging_result
-  }
-
-  getOperationInfoSearchListPage = async (group_seq, group_grade_number = null, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
-    const page = page_params.page ? page_params.page : 1
-    const list_count = page_params.list_count ? page_params.list_count : 20
-    const page_count = page_params.page_count ? page_params.page_count : 10
-
-    const query = this.database.select(join_search_select)
-    query.column(['operation_data.total_time', 'operation_data.thumbnail'])
-    query.from('operation')
-    query.joinRaw('LEFT JOIN (SELECT seq, access_type FROM operation_folder WHERE group_seq = ? ) AS operation_folder ON (operation_folder.seq = operation.folder_seq)', group_seq)
-    query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
-    query.innerJoin('member', 'member.seq', 'operation.member_seq')
-    query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
-    query.andWhere('operation.group_seq', group_seq)
-    query.andWhereRaw('(operation_folder.access_type <= ? OR operation_folder.access_type IS NULL)', filter_params.member_grade)
-    if (filter_params.member_grade !== 'O') {
-      query.andWhere('operation_folder.access_type',  '!=', 'O')
-    }
-    query.whereIn('operation.status', ['Y', 'T'])
-    log.debug(this.log_prefix, '[getOperationInfoSearchListPage]', 'filter_params', filter_params)
-
-    if (filter_params.status) {
-      query.andWhere('operation.status', filter_params.status.toUpperCase())
-    }
-    if (filter_params.member_seq) {
-      query.andWhere('operation.member_seq', filter_params.member_seq)
-    }
-    let check_folder = true
-    const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
-    switch (filter_params.menu) {
-      case 'recent':
-        query.andWhere('operation.reg_date', '>=', recent_timestamp)
-        query.andWhere('operation.status', 'Y')
-        check_folder = false
-        break
-      case 'favorite':
-        query.andWhere('operation.is_favorite', 1)
-        query.andWhere('operation.status', 'Y')
-        check_folder = false
-        break
-      case 'trash':
-        query.andWhere('operation.status', 'T')
-        check_folder = false
-        break
-      case 'clip':
-        query.andWhere('operation.status', 'Y')
-        check_folder = false
-        break
-      case 'drive':
-        query.andWhere('operation.status', 'Y')
-        break
-      case 'collect':
-        query.andWhere('operation.status', 'Y')
-        check_folder = true
-        break
-      default:
-        query.andWhere('operation.status', 'Y')
-        check_folder = false
-        break
-    }
-    query.andWhere('operation_name', 'like', `%${filter_params.search_keyword}%`)
-
-    const order_by = { name: 'operation.seq', direction: 'DESC' }
-    if (asc) {
-      order_by.direction = 'ASC'
     }
     query.orderBy(order_by.name, order_by.direction)
 

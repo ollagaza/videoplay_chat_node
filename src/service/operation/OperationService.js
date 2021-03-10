@@ -493,13 +493,13 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListByRequest = async (database, token_info, group_grade_number, request) => {
+  getOperationListByRequest = async (database, group_seq, group_member_info, group_grade_number, request) => {
     const request_query = request.query ? request.query : {}
     const page_params = {}
     page_params.page = request_query.page
     page_params.list_count = request_query.list_count
     page_params.page_count = request_query.page_count
-    page_params.no_paging = request_query.no_paging
+    page_params.no_paging = request_query.no_paging === 'y' ? 'y' : 'n'
 
     const filter_params = {}
     filter_params.analysis_complete = request_query.analysis_complete
@@ -521,24 +521,15 @@ const OperationServiceClass = class {
     if (request_query.limit) {
       filter_params.limit = request_query.limit
     }
+    filter_params.use_user_name = group_member_info.member_name_used === 1
     const order_params = {}
     order_params.field = request_query.order_fields
     order_params.type = request_query.order_type
 
     log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params, order_params)
 
-    return await this.getOperationList(database, token_info.getGroupSeq(), group_grade_number, page_params, filter_params, order_params)
-  }
-
-  getOperationList = async (database, group_seq, group_grade_number = null, page_params = {}, filter_params = {}, order_params = {}) => {
-    page_params.no_paging = page_params.no_paging ? page_params.no_paging : 'n'
-    log.debug(this.log_prefix, '[getOperationList]', page_params, filter_params)
     const operation_model = this.getOperationModel(database)
-    if (filter_params.search_keyword) {
-      return await operation_model.getOperationInfoSearchListPage(group_seq, group_grade_number, page_params, filter_params, null, order_params)
-    } else {
-      return await operation_model.getOperationInfoListPage(group_seq, group_grade_number, page_params, filter_params, null, order_params)
-    }
+    return operation_model.getOperationInfoListPage(group_seq, group_grade_number, page_params, filter_params, null, order_params)
   }
 
   setMediaInfo = async (database, operation_info) => {

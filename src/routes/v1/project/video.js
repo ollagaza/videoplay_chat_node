@@ -39,8 +39,8 @@ routes.get('/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
 
 routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { member_seq, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const result = await StudioService.createVideoProject(group_member_info, member_seq, req)
+  const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const result = await StudioService.createVideoProject(group_member_info, member_info, req)
 
   const output = new StdObject()
   output.add('result', result)
