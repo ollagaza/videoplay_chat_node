@@ -4,6 +4,7 @@ import GroupAlarmModel from '../../database/mysql/group/GroupAlarmModel'
 import OperationService from '../operation/OperationService'
 import _ from 'lodash'
 import SocketManager from '../socket-manager'
+import Util from '../../utils/Util'
 
 const GroupAlarmServiceClass = class {
   constructor () {
@@ -122,9 +123,10 @@ const GroupAlarmServiceClass = class {
     return group_alarm_model.getNewGroupAlarmList(group_seq, member_seq, grade_number, request_query)
   }
 
-  getGroupAlarmList = async (group_seq, member_seq, grade_number, request_query) => {
+  getGroupAlarmList = async (group_seq, member_seq, grade_number, group_member_info, request_query) => {
     const group_alarm_model = this.getGroupAlarmModel()
-    return group_alarm_model.getGroupAlarmList(group_seq, member_seq, grade_number, request_query)
+    const use_nickname = Util.parseInt(group_member_info.member_name_used, 0)
+    return group_alarm_model.getGroupAlarmList(group_seq, member_seq, grade_number, use_nickname, request_query)
   }
 }
 
