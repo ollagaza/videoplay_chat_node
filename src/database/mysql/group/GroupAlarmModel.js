@@ -1,6 +1,7 @@
 import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/Util'
 import Constant from '../../../constants/constants'
+import logger from '../../../libs/logger'
 
 export default class GroupAlarmModel extends MySQLModel {
   constructor(database) {
@@ -22,11 +23,12 @@ export default class GroupAlarmModel extends MySQLModel {
     return field_list
   }
 
-  getGroupAlarmList = async (group_seq, member_seq, grade_number, options) => {
+  getGroupAlarmList = async (group_seq, member_seq, grade_number, use_nickname, options) => {
     const page = options.page
     const limit = options.limit
     const order_id = options.order_id
     const order = options.order
+    logger.debug(this.log_prefix, '[getGroupAlarmList] options', options)
 
     const query = this.database.select(this.getAlarmFieldList(member_seq))
       .from(this.table_name)
@@ -38,7 +40,14 @@ export default class GroupAlarmModel extends MySQLModel {
         query.where(this.database.raw('date_format(date_sub(group_alarm.reg_date, interval ? day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')', [options.interval]))
       }
       if (options.search) {
-        query.where('message', 'LIKE', `%${options.search}%`)
+        query.where((builder) => {
+          builder.where('message', 'LIKE', `%${options.search}%`)
+          if (use_nickname) {
+            builder.orWhere('user_nickname', 'LIKE', `%${options.search}%`)
+          } else {
+            builder.orWhere('user_name', 'LIKE', `%${options.search}%`)
+          }
+        });
       }
     }
     if (!order_id) {
