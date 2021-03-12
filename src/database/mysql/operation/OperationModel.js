@@ -77,6 +77,10 @@ export default class OperationModel extends MySQLModel {
       query.andWhere('operation.status', filter_params.status.toUpperCase())
     }
 
+    if (filter_params.limit) {
+      query.limit(filter_params.limit)
+    }
+
     let check_folder = true
     const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constant.TIMESTAMP)
     switch (filter_params.menu) {
