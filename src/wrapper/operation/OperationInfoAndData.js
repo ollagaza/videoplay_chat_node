@@ -45,7 +45,15 @@ export default class OperationInfoAndData extends JsonWrapper {
       this.is_complete = Util.isTrue(data.is_complete)
       this.is_open_refer_file = Util.isTrue(data.is_open_refer_file)
       this.is_open_video = Util.isTrue(data.is_open_video)
-      this.thumbnail = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), this.thumbnail)
+      if (this.mode === 'file') {
+        if (this.analysis_status !== 'Y') {
+          this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
+        } else {
+          this.thumbnail = ServiceConfig.get('static_cloud_prefix') + this.thumbnail
+        }
+      } else {
+        this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
+      }
 
       if (this.reg_date) {
         this.reg_diff_hour = Util.hourDifference(this.reg_date, 'Y-m-d')
@@ -59,7 +67,15 @@ export default class OperationInfoAndData extends JsonWrapper {
 
   setUrl = () => {
     if (this.thumbnail) {
-      this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
+      if (this.mode === 'file') {
+        if (this.analysis_status !== 'Y') {
+          this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
+        } else {
+          this.thumbnail = ServiceConfig.get('static_cloud_prefix') + this.thumbnail
+        }
+      } else {
+        this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
+      }
     }
   }
 
