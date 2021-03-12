@@ -199,6 +199,7 @@ const SyncServiceClass = class {
     await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status)
 
     if (status === 'Y') {
+      await OperationService.updateOperationDataFileThumbnail(operation_info)
       this.sendAnalysisCompleteMessage(operation_info)
     }
 

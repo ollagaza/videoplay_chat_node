@@ -724,7 +724,6 @@ const OperationServiceClass = class {
           await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
         }
       }
-      await this.updateOperationDataFileThumbnail(operation_info)
     }
     await this.updateStorageSize(operation_info)
   }
