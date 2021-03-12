@@ -730,7 +730,9 @@ const OperationServiceClass = class {
 
   updateOperationDataFileThumbnail = async (operation_info) => {
     const result = await OperationFileService.getFileList(DBMySQL, operation_info, 'file', { limit: 1 })
-    await OperationDataService.setThumbnailAuto(operation_info.seq, result.operation_file_list[0].thumbnail_path);
+    if (result) {
+      await OperationDataService.setThumbnailAuto(operation_info.seq, result.operation_file_list[0].thumbnail_path);
+    }
   }
 
   requestAnalysis = async (database, token_info, operation_seq, group_member_info, member_info) => {
