@@ -291,8 +291,8 @@ export default class GroupModel extends MySQLModel {
         (
           SELECT board_comment.seq, board_comment.board_seq as content_seq, board_comment.board_data_seq AS content_data_seq, board_comment.content, board_comment.regist_date, 'board' AS type, board_data.status
           FROM board_comment
-            INNER JOIN (SELECT seq, status FROM board_data) AS board_data ON (board_comment.board_data_seq = board_data.seq)
-          WHERE group_seq = :group_seq AND member_seq = :member_seq
+            INNER JOIN board_data ON (board_comment.board_data_seq = board_data.seq and board_data.status = 'Y')
+          WHERE board_comment.group_seq = :group_seq AND board_comment.member_seq = :member_seq and board_comment.status = 'Y'
 
           union
 
