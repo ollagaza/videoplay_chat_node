@@ -33,12 +33,22 @@ import group_service from "../../service/group/GroupService";
 import sendmail from '../../libs/send-mail'
 import SendMailService from "../../service/etc/SendMailService";
 import TempService from "../../service/TempService";
+import ExifReader from 'exifreader'
+import fs from 'fs'
 
 const routes = Router()
 
 const IS_DEV = Config.isDev()
 
 if (IS_DEV) {
+  routes.get('/exif', Wrap(async (req, res) => {
+    const a1 = await Util.isImageRotate('d:/a1.jpg')
+    const a2 = await Util.isImageRotate('d:/a2.jpg')
+    const a3 = await Util.isImageRotate('d:/a3.jpg')
+    const a4 = await Util.isImageRotate('d:/a4.jpg')
+    res.json({ a1, a2, a3, a4 })
+  }))
+
   routes.get('/cloud_mail_file_test', Wrap(async (req, res) => {
     const result = await SendMailService.sendMail(DBMySQL, 24, 30)
     res.json(result)
