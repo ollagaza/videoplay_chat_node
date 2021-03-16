@@ -188,24 +188,25 @@ const GroupServiceClass = class {
     const expire_date = options.expire_date ? options.expire_date : null
     const status = pay_code !== 'free' ? this.GROUP_STATUS_ENABLE : this.GROUP_STATUS_FREE
     const is_set_group_name = !Util.isEmpty(options.is_set_group_name) ? options.is_set_group_name : 1
+
     const create_group_info = {
       member_seq: member_info.seq,
       group_type: this.GROUP_TYPE_ENTERPRISE,
       status,
-      group_name: options.group_name?options.group_name:member_info.user_nickname,
+      group_name: options.group_name ? options.group_name : member_info.user_nickname,
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size: 0,
       is_set_group_name,
       pay_code,
       start_date,
       expire_date,
-      group_open: options.group_open?options.group_open:0,
-      group_join_way: options.group_join_way?options.group_join_way:0,
-      member_open: options.member_open?options.member_open:0,
-      member_name_used: options.member_name_used?options.member_name_used:0,
-      search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
-      group_explain: options.group_explain?options.group_explain:null,
-      profile_image_path: options.profile_image_path?options.profile_image_path:null,
+      group_open: options.group_open ? options.group_open : 0,
+      group_join_way: options.group_join_way ? options.group_join_way : 0,
+      member_open: options.member_open ? options.member_open : 0,
+      member_name_used: options.member_name_used ? options.member_name_used : 0,
+      search_keyword: options.search_keyword ? JSON.stringify(options.search_keyword) : null,
+      group_explain: options.group_explain ? options.group_explain : null,
+      profile_image_path: options.profile_image_path ? options.profile_image_path : null,
     }
     if (ServiceConfig.isVacs()) {
       create_group_info.is_channel = 1

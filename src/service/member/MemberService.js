@@ -11,13 +11,13 @@ import MemberModel from '../../database/mysql/member/MemberModel'
 import MemberSubModel from '../../database/mysql/member/MemberSubModel'
 import AdminMemberModel from '../../database/mysql/member/AdminMemberModel'
 import FindPasswordModel from '../../database/mysql/member/FindPasswordModel'
-import { UserDataModel } from '../../database/mongodb/UserData'
+import {UserDataModel} from '../../database/mongodb/UserData'
 import MemberInfo from '../../wrapper/member/MemberInfo'
 import MemberTemplate from '../../template/mail/member.template'
 import SendMail from '../../libs/send-mail'
 
 const MemberServiceClass = class {
-  constructor () {
+  constructor() {
     this.log_prefix = '[MemberServiceClass]'
     this.member_private_fields = ['password',
       'license_no', 'license_image_path', 'special_no',
@@ -66,7 +66,7 @@ const MemberServiceClass = class {
   }
 
   getMemberInfo = async (database, member_seq) => {
-    const { member_info } = await this.getMemberInfoWithModel(database, member_seq)
+    const {member_info} = await this.getMemberInfoWithModel(database, member_seq)
     return member_info
   }
 
@@ -192,7 +192,7 @@ const MemberServiceClass = class {
   }
 
   changePassword = async (database, member_seq, request_body, is_admin = false) => {
-    const { member_info, member_model } = await this.getMemberInfoWithModel(database, member_seq)
+    const {member_info, member_model} = await this.getMemberInfoWithModel(database, member_seq)
     if (!member_info || member_info.isEmpty()) {
       throw new StdObject(100, '등록된 회원이 아닙니다.', 400)
     }
@@ -367,13 +367,13 @@ const MemberServiceClass = class {
     const find_users = await member_model.findMembers(searchObj)
 
     searchObj.query = []
-    searchObj.query = [{ member_seq: _.concat('in', _.map(find_users.data, 'seq')) }]
+    searchObj.query = [{member_seq: _.concat('in', _.map(find_users.data, 'seq'))}]
 
     const find_sub_users = await member_sub_model.findMembers(searchObj)
     const res = []
     _.keyBy(find_users.data, data => {
-      if (_.find(find_sub_users, { member_seq: data.seq })) {
-        res.push(_.merge(data, _.find(find_sub_users, { member_seq: data.seq })))
+      if (_.find(find_sub_users, {member_seq: data.seq})) {
+        res.push(_.merge(data, _.find(find_sub_users, {member_seq: data.seq})))
       } else {
         res.push(_.merge(data))
       }
@@ -415,13 +415,23 @@ const MemberServiceClass = class {
       }
 
       await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
-
       await MemberLogService.memberJoinLog(database, create_member_info.seq)
-      // group_info = await GroupService.createPersonalGroup(database, create_member_info)
+
+      const search_keyword = {}
+      const group_explain = member_info.foreigner === 'N' ? `안녕하세요. ${member_info.user_nickname} 채널입니다.` : `Welcome! This is ${member_info.user_nickname}'s channel.`
+
+      _.forEach(JSON.parse(member_info.treatcode), async (item, index) => {
+        search_keyword[index] = item.text
+      })
+
       const options = {
         pay_code: 'f_12TB',
-        is_set_group_name: 0,
+        storage_size: 12 * 1024 * 1024 * 1024 * 1024,
+        is_set_group_name: 1,
+        search_keyword,
+        group_explain,
       };
+      // group_info = await GroupService.createPersonalGroup(database, create_member_info)
       group_info = await GroupService.createEnterpriseGroup(database, create_member_info, options)
       await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq, group_info)
     })
