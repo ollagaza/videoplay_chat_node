@@ -143,14 +143,12 @@ export default class SendMail {
     }
     let send_email_result = null;
     try {
-      const temp_recipients = this.getRecipients(mail_to_list)
-      const recipients = _.reject(temp_recipients, { address: sender_email })
       const mail_info = {
         'senderAddress': sender_email ? sender_email : 'no_reply@surgstory.com',
         'senderName': 'SurgStory',
         'title': title,
         'body': body,
-        'recipients': recipients
+        'recipients': _.reject(recipients, { address: sender_email })
       }
       if (sender_name) {
         mail_info.senderName = sender_name
@@ -194,17 +192,25 @@ export default class SendMail {
 
   getRecipients = (mail_to_list) => {
     const recipients = []
-    for (let i = 0; i < mail_to_list.length; i++) {
-      const email_info = this.parseMailAddress(mail_to_list[i])
-      if (email_info && email_info.address) {
-        const recipient = {
-          'address': email_info.address,
-          'type': 'R'
+    if (typeof mail_to_list === 'string') {
+      const recipient = {
+        'address': mail_to_list,
+        'type': 'R'
+      }
+      recipients.push(recipient)
+    } else {
+      for (let i = 0; i < mail_to_list.length; i++) {
+        const email_info = this.parseMailAddress(mail_to_list[i])
+        if (email_info && email_info.address) {
+          const recipient = {
+            'address': email_info.address,
+            'type': 'R'
+          }
+          if (email_info.name) {
+            recipient.name = email_info.name
+          }
+          recipients.push(recipient)
         }
-        if (email_info.name) {
-          recipient.name = email_info.name
-        }
-        recipients.push(recipient)
       }
     }
     return recipients
