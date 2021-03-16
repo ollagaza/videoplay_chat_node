@@ -85,6 +85,7 @@ const OperationDataServiceClass = class {
     delete operation_data_info.modify_date
 
     operation_data_info.operation_seq = operation_info.seq
+    operation_data_info.group_seq = operation_info.group_seq
     operation_data_info.type = type ? type : 'N'
     operation_data_info.mento_group_seq = mento_group_seq
 
