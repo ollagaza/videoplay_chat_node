@@ -17,7 +17,9 @@ export default class MessageModel extends MySQLModel {
   getReceiveList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
-      this.database.raw('case when message.group_seq is null then member.user_name else group_info.group_name end group_name'),
+      'group_info.group_name',
+      'member.user_name',
+      'member.user_nickname',
       'member.user_id',
       'member.hospname',
     ]
@@ -42,7 +44,8 @@ export default class MessageModel extends MySQLModel {
   getSendList = async (filters, page_navigation) => {
     const select_fields = [
       `${this.table_name}.*`,
-      'member.user_name as group_name',
+      'member.user_name',
+      'member.user_nickname',
       'member.user_id',
       'member.hospname',
     ]
