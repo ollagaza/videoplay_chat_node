@@ -30,10 +30,11 @@ export default class OperationModel extends MySQLModel {
   }
 
   getOperationInfoNoJoin = async (operation_seq, wrap_result = true) => {
+    const operation_info = await this.findOne({ seq: operation_seq })
     if (wrap_result) {
-      return new OperationInfo(await this.findOne({ seq: operation_seq }))
+      return new OperationInfo(operation_info)
     } else {
-      return this.findOne({ seq: operation_seq })
+      return operation_info
     }
   }
 

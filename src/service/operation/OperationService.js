@@ -1195,6 +1195,11 @@ const OperationServiceClass = class {
     }
     return Util.parseInt(folder_grade, 99)
   }
+
+  async isOperationActive (operation_seq) {
+    const operation_info = await this.getOperationInfoNoJoin(null, operation_seq, true)
+    return operation_info && Util.parseInt(operation_info.seq, 0) === Util.parseInt(operation_seq, 0) && operation_info.status === 'Y'
+  }
 }
 
 const OperationService = new OperationServiceClass()
