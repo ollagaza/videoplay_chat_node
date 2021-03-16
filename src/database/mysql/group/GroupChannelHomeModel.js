@@ -228,7 +228,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getOperationCount = async () => {
     const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op_data.seq) as count')])
       .from('group_info')
-      .innerJoin('operation_data as op_data', 'op_data.group_seq', 'group_info.seq')
+      .innerJoin('operation_data as op_data', (query) => {
+        query.on('op_data.group_seq', 'group_info.seq')
+        query.andOnVal('op_data.status', 'Y')
+      })
       .where('group_info.group_type', 'G')
       .andWhere(this.database.raw('date_format(date_sub(op_data.reg_date, interval 7 day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'))
       .groupBy('group_info.seq')
@@ -237,7 +240,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getOperationGroupMemberCount = async () => {
     const oQuery = this.database.select(['op.group_seq', 'op.member_seq', this.database.raw('count(op_data.seq) as count')])
       .from('group_info')
-      .innerJoin('operation_data as op_data', 'op_data.group_seq', 'group_info.seq')
+      .innerJoin('operation_data as op_data', (query) => {
+        query.on('op_data.group_seq', 'group_info.seq')
+        query.andOnVal('op_data.status', 'Y')
+      })
       .innerJoin('operation as op', 'op.seq', 'op_data.operation_seq')
       .where('group_info.group_type', 'G')
       .groupBy('op.group_seq', 'op.member_seq')
@@ -248,6 +254,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
     const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op_comment.seq) as count')])
       .from('group_info')
       .innerJoin('operation_comment as op_comment', 'op_comment.group_seq', 'group_info.seq')
+      .innerJoin('operation_data', (query) => {
+        query.on('operation_data.seq', 'op_comment.operation_data_seq')
+        query.andOnVal('operation_data.status', 'Y')
+      })
       .where('group_info.group_type', 'G')
       .andWhere(this.database.raw('date_format(date_sub(op_comment.reg_date, interval 7 day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'))
       .groupBy('group_info.seq')
@@ -269,7 +279,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getBoardCount = async () => {
     const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(board.seq) as count')])
       .from('group_info')
-      .innerJoin('board_data as board', 'board.group_seq', 'group_info.seq')
+      .innerJoin('board_data as board', (query) => {
+        query.on('board.group_seq', 'group_info.seq')
+        query.andOnVal('board.status', 'Y')
+      })
       .where('group_info.group_type', 'G')
       .andWhere(this.database.raw('date_format(date_sub(board.regist_date, interval 7 day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'))
       .groupBy('group_info.seq')
@@ -278,7 +291,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getBoardGroupMemberCount = async () => {
     const oQuery = this.database.select(['board.group_seq', 'board.member_seq', this.database.raw('count(board.seq) as count')])
       .from('group_info')
-      .innerJoin('board_data as board', 'board.group_seq', 'group_info.seq')
+      .innerJoin('board_data as board', (query) => {
+        query.on('board.group_seq', 'group_info.seq')
+        query.andOnVal('board.status', 'Y')
+      })
       .where('group_info.group_type', 'G')
       .where('board.status', 'Y')
       .groupBy('board.group_seq', 'board.member_seq')
@@ -288,7 +304,14 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getBoardCommentCount = async () => {
     const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(b_comment.seq) as count')])
       .from('group_info')
-      .innerJoin('board_comment as b_comment', 'b_comment.group_seq', 'group_info.seq')
+      .innerJoin('board_data as board', (query) => {
+        query.on('board.group_seq', 'group_info.seq')
+        query.andOnVal('board.status', 'Y')
+      })
+      .innerJoin('board_comment as b_comment', (query) => {
+        query.on('b_comment.board_data_seq', 'board.seq')
+        query.andOnVal('b_comment.status', 'Y')
+      })
       .where('group_info.group_type', 'G')
       .andWhere(this.database.raw('date_format(date_sub(b_comment.regist_date, interval 7 day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'))
       .groupBy('group_info.seq')
@@ -297,7 +320,14 @@ export default class GroupChannelHomeModel extends MySQLModel {
   getBoardCommentGroupMemberCount = async () => {
     const oQuery = this.database.select(['b_comment.group_seq', 'b_comment.member_seq', this.database.raw('count(b_comment.seq) as count')])
       .from('group_info')
-      .innerJoin('board_comment as b_comment', 'b_comment.group_seq', 'group_info.seq')
+      .innerJoin('board_data as board', (query) => {
+        query.on('board.group_seq', 'group_info.seq')
+        query.andOnVal('board.status', 'Y')
+      })
+      .innerJoin('board_comment as b_comment', (query) => {
+        query.on('b_comment.board_data_seq', 'board.seq')
+        query.andOnVal('b_comment.status', 'Y')
+      })
       .where('group_info.group_type', 'G')
       .groupBy('b_comment.group_seq', 'b_comment.member_seq')
     return oQuery
