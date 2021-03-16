@@ -405,4 +405,13 @@ routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap
   res.json(output)
 }))
 
+routes.get('/:operation_seq(\\d+)/active', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const operation_seq = req.params.operation_seq
+  const is_active = await OperationService.isOperationActive(operation_seq)
+
+  const output = new StdObject()
+  output.add('is_active', is_active)
+  res.json(output)
+}))
+
 export default routes
