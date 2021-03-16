@@ -303,7 +303,7 @@ export default class GroupModel extends MySQLModel {
             WHERE operation_comment.group_seq = :group_seq AND operation_comment.member_seq = :member_seq
           ) AS operation_comment
           inner join operation_data
-            ON operation_data.seq = operation_comment.operation_data_seq
+            ON operation_data.seq = operation_comment.operation_data_seq and operation_data.status = 'Y'
         ) as L
         `, { group_seq, member_seq })
       )
