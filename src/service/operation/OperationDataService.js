@@ -236,7 +236,7 @@ const OperationDataServiceClass = class {
 
     const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_info.seq)
     operation_data_info.total_time = media_info ? media_info.total_time : 0
-    if (!operation_data_info.thumbnail) {
+    if (!operation_data_info.thumbnail && media_info.thumbnail) {
       operation_data_info.thumbnail = media_info ? media_info.thumbnail : null
     }
 

@@ -14,7 +14,7 @@ export default class FileInfo extends JsonWrapper {
     const cloud_url = ServiceConfig.get('static_cloud_prefix')
     const static_url = ServiceConfig.get('static_storage_prefix')
     if (this.file_path) {
-      if (this.is_moved) {
+      if (ServiceConfig.isVacs() && this.is_moved) {
         this.url = cloud_url + this.file_path
       } else {
         this.url = static_url + this.file_path

@@ -731,7 +731,15 @@ const OperationServiceClass = class {
   updateOperationDataFileThumbnail = async (operation_info) => {
     const result = await OperationFileService.getFileList(DBMySQL, operation_info, 'file', { limit: 1 })
     if (result) {
-      await OperationDataService.setThumbnailAuto(operation_info.seq, result.operation_file_list[0].thumbnail_path);
+      if (result.operation_file_list && result.operation_file_list.length > 0) {
+        let thumbnail = result.operation_file_list[0].thumbnail_path
+        if (ServiceConfig.isVacs()) {
+          thumbnail = ServiceConfig.get('static_storage_prefix') + thumbnail
+        } else {
+          thumbnail = ServiceConfig.get('static_cloud_prefix') + thumbnail
+        }
+        await OperationDataService.setThumbnailAuto(operation_info.seq, thumbnail);
+      }
     }
   }
 
@@ -959,7 +967,9 @@ const OperationServiceClass = class {
         operation_data_info = await OperationDataService.getOperationDataByOperationSeq(DBMySQL, operation_data_seq)
       }
     }
-    operation_data_info.setUrl()
+    if (operation_data_info.thumbnail && !operation_data_info.thumbnail.startsWith('/static/')) {
+      operation_data_info.setUrl(ServiceConfig.get('static_storage_prefix'))
+    }
 
     const output = new StdObject()
     output.add('operation_info', operation_info)
@@ -1196,7 +1206,7 @@ const OperationServiceClass = class {
     return Util.parseInt(folder_grade, 99)
   }
 
-  async isOperationActive (operation_seq) {
+  isOperationActive = async (operation_seq) => {
     const operation_info = await this.getOperationInfoNoJoin(null, operation_seq, true)
     return operation_info && Util.parseInt(operation_info.seq, 0) === Util.parseInt(operation_seq, 0) && operation_info.status === 'Y'
   }
