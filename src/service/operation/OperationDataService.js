@@ -99,7 +99,7 @@ const OperationDataServiceClass = class {
     }
 
     const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
-    if (operation_data_info.thumbnail) {
+    if (operation_info.mode !== OperationService.MODE_FILE && operation_data_info.thumbnail) {
       operation_data_info.thumbnail = operation_data_info.thumbnail.replace(replace_regex, operation_info.content_id)
     }
 
