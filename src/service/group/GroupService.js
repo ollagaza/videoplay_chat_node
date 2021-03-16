@@ -26,7 +26,7 @@ import GroupBoardDataService from "../board/GroupBoardDataService";
 import OperationClipService from "../operation/OperationClipService";
 import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
-import * as util from "util";
+import striptags from "striptags";
 
 const GroupServiceClass = class {
   constructor () {
@@ -1506,6 +1506,9 @@ const GroupServiceClass = class {
     paging.no_paging = 'N'
     const group_summary_comment_list = await group_model.GroupSummaryCommentListByGroupSeqMemberSeq(group_seq, member_seq, paging)
     log.debug(this.log_prefix, '[getSummaryCommentList]', group_summary_comment_list);
+    _.forEach(group_summary_comment_list.data, async (item) => {
+      item.content = striptags(item.content)
+    })
     return group_summary_comment_list;
   }
   setGroupMemberCount = async (databases, group_seq, type, count = 1) => {
