@@ -257,6 +257,10 @@ export default class GroupChannelHomeModel extends MySQLModel {
     const oQuery = this.database.select(['op_comment.group_seq', 'op_comment.member_seq', this.database.raw('count(op_comment.seq) as count')])
       .from('group_info')
       .innerJoin('operation_comment as op_comment', 'op_comment.group_seq', 'group_info.seq')
+      .innerJoin('operation_data', (query) => {
+        query.on('operation_data.seq', 'op_comment.operation_data_seq')
+        query.andOnVal('operation_data.status', 'Y')
+      })
       .where('group_info.group_type', 'G')
       .groupBy('op_comment.group_seq', 'op_comment.member_seq')
     return oQuery
