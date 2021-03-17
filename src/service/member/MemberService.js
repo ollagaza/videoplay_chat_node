@@ -426,7 +426,6 @@ const MemberServiceClass = class {
 
       const options = {
         pay_code: 'f_12TB',
-        storage_size: 12 * 1024 * 1024 * 1024 * 1024,
         is_set_group_name: 1,
         search_keyword,
         group_explain,
