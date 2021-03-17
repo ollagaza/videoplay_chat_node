@@ -420,9 +420,13 @@ const MemberServiceClass = class {
       const search_keyword = {}
       const group_explain = member_info.foreigner === 'Y' ? `Welcome! This is ${member_info.user_nickname}'s channel.` : `안녕하세요. ${member_info.user_nickname} 채널입니다.`
 
-      _.forEach(JSON.parse(member_info.treatcode), async (item, index) => {
-        search_keyword[index] = item.text
-      })
+      if (member_info.treatcode) {
+        _.forEach(JSON.parse(member_info.treatcode), async (item, index) => {
+          search_keyword[index] = item.text
+        })
+      } else {
+        search_keyword[0] = member_info.user_nickname
+      }
 
       const options = {
         pay_code: 'f_12TB',
