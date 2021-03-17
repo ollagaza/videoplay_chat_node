@@ -59,7 +59,7 @@ const OperationServiceClass = class {
     return new GroupMemberModel(DBMySQL)
   }
 
-  createOperation = async (database, member_info, group_member_info, request_body, status = null, create_alarm = false) => {
+  createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
     const output = new StdObject()
     let is_success = false
 
@@ -87,9 +87,11 @@ const OperationServiceClass = class {
     const operation_seq = operation_info.seq
     output.add('operation_info', operation_info)
 
+    let operation_storage_seq = null
+
     await database.transaction(async (transaction) => {
       const operation_media_seq = await OperationMediaService.createOperationMediaInfo(database, operation_info)
-      const operation_storage_seq = await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info)
+      operation_storage_seq = await this.getOperationStorageModel(transaction).createOperationStorageInfo(operation_info)
 
       output.add('operation_seq', operation_seq)
       output.add('operation_media_seq', operation_media_seq)
@@ -123,15 +125,6 @@ const OperationServiceClass = class {
         const group_member_model = this.getGroupMemberModel(database)
         group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid', 'up');
       }
-    }
-
-    if (create_alarm) {
-      const alarm_data = {
-        operation_seq: operation_info.seq,
-        member_seq: member_info.seq
-      }
-      const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`
-      GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, alarm_data)
     }
 
     return output
@@ -500,13 +493,13 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListByRequest = async (database, token_info, request) => {
+  getOperationListByRequest = async (database, group_seq, group_member_info, group_grade_number, request) => {
     const request_query = request.query ? request.query : {}
     const page_params = {}
     page_params.page = request_query.page
     page_params.list_count = request_query.list_count
     page_params.page_count = request_query.page_count
-    page_params.no_paging = request_query.no_paging
+    page_params.no_paging = request_query.no_paging === 'y' ? 'y' : 'n'
 
     const filter_params = {}
     filter_params.analysis_complete = request_query.analysis_complete
@@ -522,21 +515,21 @@ const OperationServiceClass = class {
     if (request_query.member_grade) {
       filter_params.member_grade = request_query.member_grade;
     }
-
-    log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params)
-
-    return await this.getOperationList(database, token_info.getGroupSeq(), page_params, filter_params)
-  }
-
-  getOperationList = async (database, group_seq, page_params = {}, filter_params = {}) => {
-    page_params.no_paging = page_params.no_paging ? page_params.no_paging : 'n'
-    log.debug(this.log_prefix, '[getOperationList]', page_params, filter_params)
-    const operation_model = this.getOperationModel(database)
-    if (filter_params.search_keyword) {
-      return await operation_model.getOperationInfoSearchListPage(group_seq, page_params, filter_params)
-    } else {
-      return await operation_model.getOperationInfoListPage(group_seq, page_params, filter_params)
+    if (request_query.day) {
+      filter_params.day = request_query.day
     }
+    if (request_query.limit) {
+      filter_params.limit = request_query.limit
+    }
+    filter_params.use_user_name = group_member_info.member_name_used === 1
+    const order_params = {}
+    order_params.field = request_query.order_fields
+    order_params.type = request_query.order_type
+
+    log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params, order_params)
+
+    const operation_model = this.getOperationModel(database)
+    return operation_model.getOperationInfoListPage(group_seq, group_grade_number, page_params, filter_params, null, order_params)
   }
 
   setMediaInfo = async (database, operation_info) => {
@@ -721,11 +714,11 @@ const OperationServiceClass = class {
     )(zip.getEntries())
   }
 
-  onUploadComplete = async (operation_info, request_body = null) => {
+  onUploadComplete = async (operation_info, is_create = false) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === 'file') {
       if (!ServiceConfig.isVacs()) {
-        if (request_body && request_body.on_create) {
+        if (is_create) {
           await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
         } else {
           await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
@@ -735,8 +728,23 @@ const OperationServiceClass = class {
     await this.updateStorageSize(operation_info)
   }
 
-  requestAnalysis = async (database, token_info, operation_seq, check_owner = true) => {
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner)
+  updateOperationDataFileThumbnail = async (operation_info) => {
+    const result = await OperationFileService.getFileList(DBMySQL, operation_info, 'file', { limit: 1 })
+    if (result) {
+      if (result.operation_file_list && result.operation_file_list.length > 0) {
+        let thumbnail = result.operation_file_list[0].thumbnail_path
+        if (ServiceConfig.isVacs()) {
+          thumbnail = ServiceConfig.get('static_storage_prefix') + thumbnail
+        } else {
+          thumbnail = ServiceConfig.get('static_cloud_prefix') + thumbnail
+        }
+        await OperationDataService.setThumbnailAuto(operation_info.seq, thumbnail);
+      }
+    }
+  }
+
+  requestAnalysis = async (database, token_info, operation_seq, group_member_info, member_info) => {
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
     if (operation_info.mode === this.MODE_FILE) {
       if (ServiceConfig.isVacs()) {
         await this.updateAnalysisStatus(null, operation_info, 'Y')
@@ -744,8 +752,41 @@ const OperationServiceClass = class {
         await this.updateAnalysisStatus(null, operation_info, 'R')
       }
     } else {
-      return await this.requestTranscoder(operation_info)
+      await this.requestTranscoder(operation_info)
     }
+    this.onOperationCreateComplete(operation_info, group_member_info, member_info)
+  }
+
+  onOperationCreateComplete(operation_info, group_member_info, member_info) {
+    (
+      async () => {
+        try {
+
+          const alarm_data = {
+            operation_seq: operation_info.seq,
+            member_seq: member_info.seq
+          }
+          const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`
+
+          const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
+          const socket_message = {
+            title: `'${name}'님이 '${operation_info.operation_name}'수술을 등록했습니다.`,
+          }
+          const socket_data = {
+            operation_seq: operation_info.seq,
+            folder_seq: operation_info.folder_seq,
+            member_seq: operation_info.member_seq,
+            message: socket_message.title,
+            analysis_complete: false,
+            reload_operation_list: true,
+            disable_click: true
+          }
+          GroupAlarmService.createOperationGroupAlarm(group_member_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, member_info, alarm_data, socket_message, socket_data, true)
+        } catch (error) {
+          log.error(this.log_prefix, '[onOperationCreateComplete]', error)
+        }
+      }
+    )()
   }
 
   updateStorageSize = async (operation_info) => {
@@ -926,7 +967,9 @@ const OperationServiceClass = class {
         operation_data_info = await OperationDataService.getOperationDataByOperationSeq(DBMySQL, operation_data_seq)
       }
     }
-    operation_data_info.setUrl()
+    if (operation_data_info.thumbnail && !operation_data_info.thumbnail.startsWith('/static/')) {
+      operation_data_info.setUrl(ServiceConfig.get('static_storage_prefix'))
+    }
 
     const output = new StdObject()
     output.add('operation_info', operation_info)
@@ -1161,6 +1204,11 @@ const OperationServiceClass = class {
       return 99
     }
     return Util.parseInt(folder_grade, 99)
+  }
+
+  isOperationActive = async (operation_seq) => {
+    const operation_info = await this.getOperationInfoNoJoin(null, operation_seq, true)
+    return operation_info && Util.parseInt(operation_info.seq, 0) === Util.parseInt(operation_seq, 0) && operation_info.status === 'Y'
   }
 }
 

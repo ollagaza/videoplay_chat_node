@@ -1,6 +1,7 @@
 import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import GroupService from "../service/group/GroupService";
+import GroupChannelHomeService from "../service/group/GroupChannelHomeService";
 
 class GroupInfoMemberCountSyncScheduler {
   constructor () {
@@ -37,6 +38,7 @@ class GroupInfoMemberCountSyncScheduler {
   GroupMemberCountSync = () => {
     log.debug(this.log_prefix, '[GroupInfoMemberCountSyncScheduler]')
     GroupService.GroupMemberCountSync()
+    GroupChannelHomeService.GroupMemberDataCounting()
   }
 }
 

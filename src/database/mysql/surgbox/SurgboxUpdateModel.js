@@ -45,7 +45,8 @@ export default class SurgboxUpdateModel extends MySQLModel {
   }
 
   getUpdateInfoForView = async (update_seq) => {
-    const query = this.database.select(this.view_fields)
+    const query = this.database
+      .select(this.view_fields)
     query.from(this.table_name)
     query.leftOuterJoin('member', { 'surgbox_update.member_seq': 'member.seq' })
     query.where('surgbox_update.seq', update_seq)

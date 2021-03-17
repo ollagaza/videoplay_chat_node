@@ -85,6 +85,7 @@ const OperationDataServiceClass = class {
     delete operation_data_info.modify_date
 
     operation_data_info.operation_seq = operation_info.seq
+    operation_data_info.group_seq = operation_info.group_seq
     operation_data_info.type = type ? type : 'N'
     operation_data_info.mento_group_seq = mento_group_seq
 
@@ -98,7 +99,7 @@ const OperationDataServiceClass = class {
     }
 
     const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
-    if (operation_data_info.thumbnail) {
+    if (operation_info.mode !== OperationService.MODE_FILE && operation_data_info.thumbnail) {
       operation_data_info.thumbnail = operation_data_info.thumbnail.replace(replace_regex, operation_info.content_id)
     }
 
@@ -235,7 +236,7 @@ const OperationDataServiceClass = class {
 
     const media_info = await OperationMediaService.getOperationMediaInfoByOperationSeq(DBMySQL, operation_info.seq)
     operation_data_info.total_time = media_info ? media_info.total_time : 0
-    if (!operation_data_info.thumbnail) {
+    if (!operation_data_info.thumbnail && media_info.thumbnail) {
       operation_data_info.thumbnail = media_info ? media_info.thumbnail : null
     }
 

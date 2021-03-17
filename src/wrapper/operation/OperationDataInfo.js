@@ -35,9 +35,9 @@ export default class OperationDataInfo extends JsonWrapper {
     }
   }
 
-  setUrl = () => {
+  setUrl = (prefix) => {
     if (this.thumbnail) {
-      this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
+      this.thumbnail = prefix + this.thumbnail
     }
   }
 }

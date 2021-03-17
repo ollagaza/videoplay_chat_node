@@ -8,6 +8,8 @@ const getFieldInfos = () => {
     group_seq: { type: Number, index: true, require: false, message: '그룹 아이디가 없습니다.' },
     member_seq: { type: Number, index: true, require: false, message: '사용자 아이디가 없습니다.' },
     content_id: { type: String, index: true, unique: true, require: false, message: '콘텐츠 아이디가 없습니다.' },
+    user_name: { type: String, index: false, require: false, message: '사용자 이름이 없습니다.' },
+    user_nickname: { type: String, index: false, require: false, message: '사용자 닉네임이 없습니다.' },
     operation_seq_list: { type: [Number], default: [], require: false, message: '사용한 수술 목록이 없습니다.' },
     project_name: { type: String, require: false, message: '프로젝트 제목이 없습니다.' },
     project_path: { type: String, require: false, message: '프로젝트 저장 경로가 없습니다.' },
@@ -26,7 +28,8 @@ const getFieldInfos = () => {
     download_url: { type: String, default: null, require: false, message: '다운로드 URL이 없습니다.' },
     stream_url: { type: String, default: null, require: false, message: '스트리밍 URL이 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
-    modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
+    modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' },
+    delete_date: { type: Date, default: Date.now, require: false, message: '삭제 일자가 없습니다.' },
   }
 }
 
@@ -108,6 +111,19 @@ video_project_schema.statics.updateStatus = function (group_seq, id_list, status
     status,
     modify_date: Date.now()
   }
+  if (status === 'T') {
+    update.delete_date = Date.now()
+  }
+  return this.updateMany({ group_seq: group_seq, _id: { $in: id_list } }, update, { 'multi': true })
+}
+
+video_project_schema.statics.updateStatusTrash = function (group_seq, id_list, status) {
+  const update = {
+    status
+  }
+  if (status === 'T') {
+    update.delete_date = Date.now()
+  }
   return this.updateMany({ group_seq: group_seq, _id: { $in: id_list } }, update, { 'multi': true })
 }
 
@@ -141,6 +157,14 @@ video_project_schema.statics.findByOperationSeq = function (group_seq, operation
 
 video_project_schema.statics.deleteById = function (group_seq, id) {
   return this.findOneAndDelete({ group_seq: group_seq, _id: id })
+}
+
+video_project_schema.statics.updateUserInfo = function (member_seq, user_name, user_nickname) {
+  const update = {
+    user_name,
+    user_nickname
+  }
+  return this.updateMany({ member_seq: member_seq }, update, { 'multi': true })
 }
 
 const video_project_model = mongoose.model('VideoProject', video_project_schema)

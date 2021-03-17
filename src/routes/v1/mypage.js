@@ -12,6 +12,7 @@ import ServiceConfig from '../../service/service-config'
 import FollowService from '../../service/follow/FollowService'
 import MemberLogService from '../../service/member/MemberLogService'
 import OperationDataService from '../../service/operation/OperationDataService'
+import MessageService from '../../service/mypage/MessageService';
 
 const routes = Router()
 
@@ -167,4 +168,15 @@ routes.get('/open/video/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER)
   res.json(output)
 }))
 
+routes.get('/notice/message/allcount', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const member_seq = token_info.getId()
+  const notice_count = await MemberLogService.getMemberNoticeAllCountWhitMemberSeq(DBMySQL, member_seq);
+  const message_count = await MessageService.getReceiveAllCountWithMemberSeq(DBMySQL, member_seq);
+
+  const output = new StdObject()
+  output.add('notice_count', notice_count)
+  output.add('message_count', message_count)
+  res.json(output)
+}))
 export default routes

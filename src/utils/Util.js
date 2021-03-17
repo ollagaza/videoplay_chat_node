@@ -25,6 +25,7 @@ import log from '../libs/logger'
 import StdObject from '../wrapper/std-object'
 import Constants from '../constants/constants'
 import numeral from 'numeral';
+import ExifReader from 'exifreader'
 
 const XML_PARSER = new xml2js.Parser({ trim: true })
 const XML_BUILDER = new xml2js.Builder({ trim: true, cdata: true })
@@ -235,7 +236,7 @@ const copyDirectory = async (path, dest_path, ignore_error = true) => {
 }
 
 const getFileStat = async (file_path) => {
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if (!(await fileExists(file_path))) {
       log.debug(log_prefix, 'Util.getFileStat', `file not exists. path=${file_path}`)
       resolve(null)
@@ -250,13 +251,11 @@ const getFileStat = async (file_path) => {
       })
     }
   })
-
-  return await async_func
 }
 
 const createDirectory = async (dir_path) => {
   if (!dir_path) return false
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if ((await fileExists(dir_path))) {
       log.debug(log_prefix, 'Util.createDirectory', `directory already exists. path=${dir_path}`)
       resolve(true)
@@ -271,12 +270,10 @@ const createDirectory = async (dir_path) => {
       })
     }
   })
-
-  return await async_func
 }
 
 const removeDirectory = async (dir_path) => {
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if (!(await fileExists(dir_path))) {
       resolve(true)
     } else {
@@ -290,12 +287,10 @@ const removeDirectory = async (dir_path) => {
       })
     }
   })
-
-  return await async_func
 }
 
 const deleteFile = async (target_path) => {
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if (!(await fileExists(target_path))) {
       // log.debug(log_prefix, 'Util.deleteFile', `file not exists. path=${target_path}`);
       resolve(true)
@@ -311,8 +306,6 @@ const deleteFile = async (target_path) => {
       })
     }
   })
-
-  return await async_func
 }
 
 const deleteDirectory = async (path) => {
@@ -333,7 +326,7 @@ const deleteDirectory = async (path) => {
 }
 
 const getDirectoryFileList = async (directory_path, dirent = true) => {
-  const async_func = new Promise(async resolve => {
+  return new Promise(async resolve => {
     if (!(await fileExists(directory_path))) {
       log.debug(log_prefix, 'Util.getDirectoryFileList', `directory not exists. path=${directory_path}`)
       resolve([])
@@ -348,8 +341,6 @@ const getDirectoryFileList = async (directory_path, dirent = true) => {
       })
     }
   })
-
-  return await async_func
 }
 
 const getDirectoryFileSize = async (directory_path) => {
@@ -1022,7 +1013,49 @@ const fileSizeText = (size, zero = '-') => {
   return `${numeral(Math.floor(file_size * 10) / 10).format('0,0.[0]')} ${suffix}`
 }
 
+const getFileBuffer = async (file_path) => {
+  const result = {
+    success: false,
+    data: null
+  }
+  return new Promise((resolve) => {
+    fs.readFile(file_path, (error, data) => {
+      if (error) {
+        log.error(log_prefix, '[getFileBuffer]', error)
+      } else {
+        result.success = true
+        result.data = data
+      }
+      resolve(result)
+    })
+  })
+}
+
+const getImageTags = async (file_path) => {
+  const result = {
+    success: false,
+    data: null
+  }
+  const file_buffer = await getFileBuffer(file_path)
+  if (!file_buffer.success) {
+    return result
+  }
+  result.data = ExifReader.load(file_buffer.data, {expanded: true});
+  return result
+}
+const isImageRotate = async (file_path) => {
+  const tags = await getImageTags(file_path)
+  if (!tags || !tags.data || !tags.data.exif) return false
+  const exif = tags.data.exif
+  if (!exif.Orientation) return false
+  const orientation = getInt(exif.Orientation.value, 1)
+  return orientation >= 5 && orientation <= 8
+}
+
 export default {
+  getFileBuffer,
+  getImageTags,
+  isImageRotate,
   removePathSlash,
   removePathLastSlash,
   duplicateObject,

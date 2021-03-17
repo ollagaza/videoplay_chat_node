@@ -53,7 +53,25 @@ export default class GroupBoardDataModel extends MySQLModel {
     return list.length
   }
 
-  getBoardDataPagingList = async (group_seq, board_seq, paging, order) => {
+  getBoardDataMainList = async (group_seq, group_grade_number) => {
+    const oKnex = this.database.raw(
+      '(select `board_data`.* from `board_data` ' +
+      'where `board_data`.`group_seq` = ? and `is_notice` = 1 and `status` = \'Y\' ' +
+      'order by `regist_date` desc limit 10)' +
+      'union all' +
+      '(select `board_data`.* from `board_data` ' +
+      'inner join `group_board_list` on `group_board_list`.`group_seq` = ? and `group_board_list`.`seq` = `board_data`.`board_seq` ' +
+      'and if(`group_board_list`.`read_grade` = \'O\' or `group_board_list`.`read_grade` = \'A\', \'99\', `group_board_list`.`read_grade`) <= ? ' +
+      'where `board_data`.`group_seq` = ? and `board_data`.`status` = \'Y\' and `is_notice` != 1 ' +
+      'order by `regist_date` desc limit 10)' +
+      'limit 10', [group_seq, group_seq, group_grade_number, group_seq]
+    )
+
+    const data = await oKnex;
+    return { data: data[0] } ;
+  }
+
+  getBoardDataPagingList = async (group_seq, board_seq, paging, order, group_grade_number = null) => {
     let oKnex = null;
     if (Util.parseInt(paging.cur_page) === 1) {
       oKnex = this.database.select('*')
@@ -84,11 +102,8 @@ export default class GroupBoardDataModel extends MySQLModel {
         .andWhere('board_seq', board_seq)
         .andWhere('status', 'Y')
     }
-    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, {
-      column: 'sort_num',
-      order: 'asc'
-    }, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
-    return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, 'n', paging.start_count)
+    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, {column: 'sort_num', order: 'asc'}, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
+    return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging, paging.start_count)
   }
 
   getBoardDataDetail = async (board_data_seq) => {

@@ -80,7 +80,8 @@
     "to": "^0.2.9",
     "update": "^0.7.4",
     "url-parse": "^1.4.7",
-    "semver": "^7.3.4"
+    "semver": "^7.3.4",
+    "exifreader": "^3.14.1"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

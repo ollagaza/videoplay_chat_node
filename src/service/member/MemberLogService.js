@@ -67,6 +67,11 @@ const MemberLogServiceClass = class {
     const member_log_model = this.getMemberLogModel(database)
     return await member_log_model.getNoticeListMemberLog(lang, member_seq)
   }
+
+  getMemberNoticeAllCountWhitMemberSeq = async (database, member_seq) => {
+    const member_log_model = this.getMemberLogModel(database)
+    return await member_log_model.getMemberNoticeAllCountWhitMemberSeq(member_seq);
+  }
 }
 
 const member_log_service = new MemberLogServiceClass()

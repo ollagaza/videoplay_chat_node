@@ -147,9 +147,9 @@ export default class OperationCommentModel extends MySQLModel {
   updateReplyCount = async (operation_data_seq, comment_seq) => {
     const sql = `
       update operation_comment,
-        (select parent_seq, count(*) as cnt from operation_comment where operation_data_seq = ? and parent_seq = ? group by parent_seq) as reply_count
+        (select count(*) as cnt from operation_comment where operation_data_seq = ? and parent_seq = ?) as reply_count
       set operation_comment.reply_count = reply_count.cnt
-      where operation_comment.seq = ? and operation_comment.seq = reply_count.parent_seq
+      where operation_comment.seq = ?
     `
     const query_result = (await this.database.raw(sql, [operation_data_seq, comment_seq, comment_seq]))[0]
     return !(!query_result || !query_result.length || !query_result[0]);
