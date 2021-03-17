@@ -504,10 +504,6 @@ const GroupServiceClass = class {
     if (group_member_info.group_type === this.GROUP_TYPE_PERSONAL) {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
-    const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
-    if (!is_group_admin) {
-      throw new StdObject(-1, '권한이 없습니다.', 400)
-    }
 
     const group_info_json = group_member_info.toJSON()
     const active_user_count = await this.getGroupMemberCount(database, group_seq)
