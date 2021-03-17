@@ -131,7 +131,7 @@ const MessageServiceClass = class {
       const notifyinfo = await NotifyService.rtnSendMessage(database, message_info, null)
       const send_socket_message_info = {
         message_info: {
-          title: '쪽지가 도착 하였습니다.',
+          title: '쪽지가 도착하였습니다.',
           message: '쪽지',
           notice_type: '',
           type: 'pushNotice',
@@ -143,7 +143,7 @@ const MessageServiceClass = class {
         }
       }
       await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info)
-      send_socket_message_info.message_info.title = '쪽지가 발송 되었습니다.'
+      send_socket_message_info.message_info.title = '쪽지가 발송되었습니다.'
       await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info)
       await MemberLogService.createMemberLog(DBMySQL, group_seq, null, null, '1003', null, '', 0, 0, 1)
 
