@@ -18,8 +18,8 @@ import OperationFolderService from "../../service/operation/OperationFolderServi
 const routes = Router()
 
 routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, token_info, req)
+  const { group_seq, group_grade_number, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, group_seq, group_member_info, group_grade_number, req)
 
   const output = new StdObject()
   output.adds(operation_info_page)
@@ -39,7 +39,7 @@ routes.get('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
 
 routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const output = await OperationService.createOperation(DBMySQL, member_info, group_member_info, req.body, null, true)
+  const output = await OperationService.createOperation(DBMySQL, member_info, group_member_info, req.body, null)
   res.json(output)
 }))
 
@@ -213,9 +213,9 @@ routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role
 }))
 
 routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  const token_info = req.token_info
+  const { member_info, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq
-  await OperationService.requestAnalysis(DBMySQL, token_info, operation_seq)
+  await OperationService.requestAnalysis(DBMySQL, token_info, operation_seq, group_member_info, member_info)
 
   res.json(new StdObject())
 }))
@@ -328,10 +328,10 @@ routes.post('/:operation_seq(\\d+)/files/:file_type', Auth.isAuthenticated(Role.
 }))
 
 routes.put('/:operation_seq(\\d+)/files/upload/complete', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const token_info = req.token_info
+  const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, token_info)
-  await OperationService.onUploadComplete(operation_info, req.body)
+  await OperationService.onUploadComplete(operation_info, req.body && req.body.on_create === true)
 
   const output = new StdObject()
   res.json(output)
@@ -402,6 +402,15 @@ routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap
 
   const output = new StdObject()
   output.add('clip_list', clip_list)
+  res.json(output)
+}))
+
+routes.get('/:operation_seq(\\d+)/active', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const operation_seq = req.params.operation_seq
+  const is_active = await OperationService.isOperationActive(operation_seq)
+
+  const output = new StdObject()
+  output.add('is_active', is_active)
   res.json(output)
 }))
 

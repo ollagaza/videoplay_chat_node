@@ -17,7 +17,7 @@ export default class GroupModel extends MySQLModel {
       'group_info.group_name', 'group_info.expire_date AS group_expire_date', 'group_info.is_set_group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
       'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc', 'group_info.group_question', 'group_info.group_message', 'group_info.group_join_way',
-      'group_info.member_count'
+      'group_info.member_count', 'group_info.channel_top_img_path'
     ]
     this.group_user_list = [
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
@@ -76,8 +76,9 @@ export default class GroupModel extends MySQLModel {
     }
     const query_result = await this.findOne(filter)
     const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
-    rs_data.json_keys.push('profile_image_url')
-    rs_data.json_keys.push('group_image_url')
+    rs_data.addKey('channel_top_img_url')
+    rs_data.addKey('profile_image_url')
+    rs_data.addKey('group_image_url')
     return rs_data;
   }
 
@@ -114,14 +115,19 @@ export default class GroupModel extends MySQLModel {
     return query_result
   }
 
-  getGroupListForBox = async () => {
+  getGroupListForBox = async (group_seq_list = null) => {
     const query = this.database
       .select(this.group_user_list)
       .from('group_info')
       .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
       .whereIn('group_info.status', ['Y', 'F'])
-      .where('group_info.disable_box', 0)
-      .orderBy('member.user_name', 'ASC')
+
+    if (group_seq_list) {
+      query.whereIn('group_info.seq', group_seq_list)
+    } else {
+      query.where('group_info.disable_box', 0)
+    }
+    query.orderBy('member.user_name', 'ASC')
 
     return query
   }
@@ -285,8 +291,8 @@ export default class GroupModel extends MySQLModel {
         (
           SELECT board_comment.seq, board_comment.board_seq as content_seq, board_comment.board_data_seq AS content_data_seq, board_comment.content, board_comment.regist_date, 'board' AS type, board_data.status
           FROM board_comment
-            INNER JOIN (SELECT seq, status FROM board_data) AS board_data ON (board_comment.board_data_seq = board_data.seq)
-          WHERE group_seq = :group_seq AND member_seq = :member_seq AND board_comment.status = 'Y'
+            INNER JOIN board_data ON (board_comment.board_data_seq = board_data.seq and board_data.status = 'Y')
+          WHERE board_comment.group_seq = :group_seq AND board_comment.member_seq = :member_seq and board_comment.status = 'Y'
 
           union
 
@@ -297,7 +303,7 @@ export default class GroupModel extends MySQLModel {
             WHERE operation_comment.group_seq = :group_seq AND operation_comment.member_seq = :member_seq
           ) AS operation_comment
           inner join operation_data
-            ON operation_data.seq = operation_comment.operation_data_seq
+            ON operation_data.seq = operation_comment.operation_data_seq and operation_data.status = 'Y'
         ) as L
         `, { group_seq, member_seq })
       )
@@ -318,5 +324,15 @@ export default class GroupModel extends MySQLModel {
     } else if (type === 'down') {
       await this.decrement(filter, params);
     }
+  }
+
+  set_group_closure = async (group_seq) => {
+    const filter = {
+      seq: group_seq,
+    }
+    const update_params = {
+      status: 'X',
+    }
+    return await this.update(filter, update_params);
   }
 }

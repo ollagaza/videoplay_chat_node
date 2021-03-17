@@ -199,6 +199,7 @@ const SyncServiceClass = class {
     await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status)
 
     if (status === 'Y') {
+      await OperationService.updateOperationDataFileThumbnail(operation_info)
       this.sendAnalysisCompleteMessage(operation_info)
     }
 
@@ -232,7 +233,6 @@ const SyncServiceClass = class {
   }
 
   sendMessageToSocket = async (operation_info) => {
-    // const sub_type = 'analysisComplete'
     const socket_message = {}
     let alarm_message = null
     if (operation_info.mode === OperationService.MODE_FILE) {
@@ -249,12 +249,13 @@ const SyncServiceClass = class {
     }
     const socket_data = {
       operation_seq: operation_info.seq,
+      folder_seq: operation_info.folder_seq,
       member_seq: operation_info.member_seq,
       message: socket_message.title,
-      is_sync_complete: true
+      analysis_complete: true,
+      reload_operation_list: true
     }
-    GroupAlarmService.createOperationGroupAlarm(operation_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, null, alarm_data, socket_message, socket_data)
-    // await GroupService.onGroupStateChange(operation_info.group_seq, sub_type, 'moveCuration', [operation_info.seq], message_info)
+    GroupAlarmService.createOperationGroupAlarm(operation_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERATION, alarm_message, operation_info, null, alarm_data, socket_message, socket_data, true)
   }
 
   getIndexInfoByMedia = async (video_file_path, operation_info, media_info, log_info) => {

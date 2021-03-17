@@ -233,6 +233,15 @@ const MessageServiceClass = class {
       throw e
     }
   }
+
+  getReceiveAllCountWithMemberSeq = async (database, member_seq) => {
+    try {
+      const msgModel = this.getMessageModel(database)
+      return await msgModel.getReceiveAllCountWithMemberSeq(member_seq)
+    } catch (e) {
+      throw e
+    }
+  }
 }
 
 const MessageService = new MessageServiceClass()

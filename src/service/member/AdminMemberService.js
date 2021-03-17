@@ -237,27 +237,29 @@ const AdminMemberServiceClass = class {
       value.regist_date = value.regist_date ? Util.dateFormatter(value.regist_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_start_date = value.stop_start_date ? Util.dateFormatter(value.stop_start_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_end_date = value.stop_end_date ? Util.dateFormatter(value.stop_end_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
+      const sender_name = 'SurgStory'
+      const sender_mail = 'no_reply@surgstory.com'
       switch (appr_code) {
         case '1':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 가입승인이 완료 되었습니다.', Admin_MemberTemplate.joinconfrim_member(value))
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 가입승인이 완료 되었습니다.', Admin_MemberTemplate.joinconfrim_member(value), sender_name, sender_mail)
           break
         case '2':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원탈퇴 안내', Admin_MemberTemplate.forced_leave_member(value))
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원탈퇴 안내', Admin_MemberTemplate.forced_leave_member(value), sender_name, sender_mail)
           break
         case '3':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 탈퇴 되었습니다.', Admin_MemberTemplate.leave_member(value))
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 탈퇴 되었습니다.', Admin_MemberTemplate.leave_member(value), sender_name, sender_mail)
           break
         case '4':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 장기간 사용하지 않아 휴면계정 처리 되었습니다.', Admin_MemberTemplate.dormant_member(value))
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 장기간 사용하지 않아 휴면계정 처리 되었습니다.', Admin_MemberTemplate.dormant_member(value), sender_name, sender_mail)
           break
         case '5':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원활동이 정지 되었습니다.', Admin_MemberTemplate.stop_member(value))
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원활동이 정지 되었습니다.', Admin_MemberTemplate.stop_member(value), sender_name, sender_mail)
           break
         case '5-1':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원활동 정지가 해제 되었습니다.', Admin_MemberTemplate.stopclear_member(value))
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원활동 정지가 해제 되었습니다.', Admin_MemberTemplate.stopclear_member(value), sender_name, sender_mail)
           break
         case '6':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 가입승인이 거절 되었습니다.', Admin_MemberTemplate.reject_member(value))
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 가입승인이 거절 되었습니다.', Admin_MemberTemplate.reject_member(value), sender_name, sender_mail)
           break
         default:
           break

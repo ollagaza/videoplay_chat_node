@@ -26,6 +26,7 @@ import GroupBoardDataService from "../board/GroupBoardDataService";
 import OperationClipService from "../operation/OperationClipService";
 import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
+import striptags from "striptags";
 
 const GroupServiceClass = class {
   constructor () {
@@ -145,7 +146,7 @@ const GroupServiceClass = class {
     if (only_admin && !is_group_admin) {
       throw new StdObject(10000, '권한이 없습니다', 403)
     }
-    const result = {
+    return {
       token_info: token_info,
       member_seq: member_seq,
       group_seq: group_seq,
@@ -157,7 +158,6 @@ const GroupServiceClass = class {
       group_grade: group_grade,
       group_grade_number: group_grade_number
     }
-    return result
   }
 
   createPersonalGroup = async (database, member_info, options = {}) => {
@@ -187,23 +187,26 @@ const GroupServiceClass = class {
     const start_date = options.start_date ? options.start_date : null
     const expire_date = options.expire_date ? options.expire_date : null
     const status = pay_code !== 'free' ? this.GROUP_STATUS_ENABLE : this.GROUP_STATUS_FREE
+    const is_set_group_name = !Util.isEmpty(options.is_set_group_name) ? options.is_set_group_name : 1
+
     const create_group_info = {
       member_seq: member_info.seq,
       group_type: this.GROUP_TYPE_ENTERPRISE,
       status,
-      group_name: options.group_name?options.group_name:member_info.user_name,
+      group_name: options.group_name ? options.group_name : member_info.user_nickname,
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size: 0,
+      is_set_group_name,
       pay_code,
       start_date,
       expire_date,
-      group_open: options.group_open?options.group_open:0,
-      group_join_way: options.group_join_way?options.group_join_way:0,
-      member_open: options.member_open?options.member_open:0,
-      member_name_used: options.member_name_used?options.member_name_used:0,
-      search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
-      group_explain: options.group_explain?options.group_explain:null,
-      profile_image_path: options.profile_image_path?options.profile_image_path:null,
+      group_open: options.group_open ? options.group_open : 0,
+      group_join_way: options.group_join_way ? options.group_join_way : 0,
+      member_open: options.member_open ? options.member_open : 0,
+      member_name_used: options.member_name_used ? options.member_name_used : 0,
+      search_keyword: options.search_keyword ? JSON.stringify(options.search_keyword) : null,
+      group_explain: options.group_explain ? options.group_explain : null,
+      profile_image_path: options.profile_image_path ? options.profile_image_path : null,
     }
     if (ServiceConfig.isVacs()) {
       create_group_info.is_channel = 1
@@ -236,6 +239,7 @@ const GroupServiceClass = class {
     const modify_group_info = {
       group_type: this.GROUP_TYPE_ENTERPRISE,
       group_name: options.group_name?options.group_name:member_info.user_name,
+      gnb_color: options.gnb_color?options.gnb_color:'1c3048',
       group_open: options.group_open?options.group_open:0,
       group_join_way: options.group_join_way?options.group_join_way:0,
       member_open: options.member_open?options.member_open:0,
@@ -243,6 +247,30 @@ const GroupServiceClass = class {
       search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
       group_explain: options.group_explain?options.group_explain:null,
       profile_image_path: options.profile_image_path?options.profile_image_path:null,
+      channel_top_img_path: options.channel_top_img_path?options.channel_top_img_path:null,
+      is_set_group_name: 1,
+    }
+    if (options.delete_channel_top_img || options.delete_channel_profile_img || modify_group_info.profile_image_path || modify_group_info.channel_top_img_path) {
+      const group_model = this.getGroupModel(database);
+      const group_info = await group_model.getGroupInfo(seq);
+      if (options.delete_channel_top_img) {
+        await Util.deleteFile(group_info.channel_top_img_path);
+        modify_group_info.channel_top_img_path = '';
+      }
+      if (options.delete_channel_profile_img) {
+        await Util.deleteFile(group_info.profile_image_path);
+        modify_group_info.profile_image_path = '';
+      }
+      if (modify_group_info.channel_top_img_path) {
+        if (group_info.channel_top_img_path) {
+          await Util.deleteFile(group_info.channel_top_img_path);
+        }
+      }
+      if (modify_group_info.profile_image_path) {
+        if (group_info.profile_image_path) {
+          await Util.deleteFile(group_info.profile_image_path);
+        }
+      }
     }
     return await this.updateGroupInfo(database, modify_group_info, seq)
   }
@@ -259,6 +287,7 @@ const GroupServiceClass = class {
       resObj.group_info = await group_model.getGroupInfo(seq, null);
       resObj.group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
       resObj.group_info.profile_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
+      resObj.group_info.channel_top_img_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.channel_top_img_path)
       return resObj;
     } catch (e) {
       log.error(this.log_prefix, '[updateGroupInfo]', e)
@@ -287,7 +316,12 @@ const GroupServiceClass = class {
       }
       if (JSON.parse(group_member_info.profile).image) {
         group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
-        group_member_list[i].json_keys.push('group_image_url')
+        group_member_list[i].addKey('group_image_url')
+      }
+      if (group_member_info.channel_top_img_path) {
+        if (group_member_info.channel_top_img_url !== null) {
+          group_member_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.channel_top_img_path)
+        }
       }
     }
     if (ServiceConfig.isVacs()) {
@@ -315,7 +349,7 @@ const GroupServiceClass = class {
       }
       if (JSON.parse(group_member_info.profile).image) {
         group_member_list[i].group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
-        group_member_list[i].json_keys.push('group_image_url')
+        group_member_list[i].addKey('group_image_url')
       }
     }
     if (ServiceConfig.isVacs()) {
@@ -377,7 +411,12 @@ const GroupServiceClass = class {
       }
       if (JSON.parse(group_member_info.profile).image) {
         group_member_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_member_info.profile).image)
-        group_member_info.json_keys.push('group_image_url')
+        group_member_info.addKey('group_image_url')
+      }
+    }
+    if (group_member_info.channel_top_img_path) {
+      if (group_member_info.channel_top_img_url !== null) {
+        group_member_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_member_info.channel_top_img_path)
       }
     }
     if (!group_member_info.isEmpty() && ServiceConfig.isVacs()) {
@@ -422,7 +461,7 @@ const GroupServiceClass = class {
   getGroupInfo = async (database, group_seq, private_keys = null) => {
     const group_model = this.getGroupModel(database)
     const group_info = await group_model.getGroupInfo(group_seq, private_keys)
-    group_info.json_keys.push('profile_image_url')
+    group_info.addKey('profile_image_url')
     if (JSON.parse(group_info.profile).image) {
       group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + JSON.parse(group_info.profile).image
     }
@@ -465,10 +504,6 @@ const GroupServiceClass = class {
     if (group_member_info.group_type === this.GROUP_TYPE_PERSONAL) {
       throw new StdObject(-1, '권한이 없습니다.', 400)
     }
-    const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
-    if (!is_group_admin) {
-      throw new StdObject(-1, '권한이 없습니다.', 400)
-    }
 
     const group_info_json = group_member_info.toJSON()
     const active_user_count = await this.getGroupMemberCount(database, group_seq)
@@ -507,9 +542,9 @@ const GroupServiceClass = class {
         let group_member_seq
         const group_seq = group_info.group_seq
         let group_member_info = await this.getGroupMemberInfoByInviteEmail(null, group_seq, email_address)
-        if (!group_member_info.isEmpty() && group_member_info.status !== this.MEMBER_STATUS_DISABLE) {
-          return
-        }
+        // if (!group_member_info.isEmpty() && group_member_info.status !== this.MEMBER_STATUS_DISABLE) {
+        //   return
+        // }
         const invite_code = await this.getAvailableInviteId()
 
         const group_member_model = this.getGroupMemberModel(null)
@@ -530,7 +565,7 @@ const GroupServiceClass = class {
           admin_name: member_info.user_name,
           invite_code,
           message: Util.nlToBr(invite_message),
-          btn_link_url: `${service_domain}/v2/invite/group/${encrypt_invite_code}`
+          btn_link_url: `${service_domain}/v2/invite/channel/${encrypt_invite_code}`
         }
         const body = GroupMailTemplate.inviteGroupMember(template_data, !invite_message)
         const send_mail_result = await new SendMail().sendMailHtml([email_address], title, body)
@@ -618,6 +653,9 @@ const GroupServiceClass = class {
     let change_grade = '1';
 
     await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
+
+    const group_model = this.getGroupModel(database);
+    await group_model.group_member_count(group_invite_info.group_seq, 'up');
 
     const message_info = {
       title: '신규 회원 가입',
@@ -840,7 +878,11 @@ const GroupServiceClass = class {
     const group_info = await this.getGroupInfoWithProduct(database, group_seq)
     if (group_info.profile_image_path) {
       group_info.profile_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path;
-      group_info.json_keys.push('profile_image_url')
+      group_info.addKey('profile_image_url')
+    }
+    if (group_info.channel_top_img_path) {
+      group_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.channel_top_img_path)
+      group_info.json_keys.push('channel_top_img_url')
     }
     const group_member_model = this.getGroupMemberModel(database)
     const group_summary = await group_member_model.getGroupMemberSummary(group_seq)
@@ -991,10 +1033,10 @@ const GroupServiceClass = class {
     return await group_info_model.getMemberGroupInfoAll(member_seq)
   }
 
-  getGroupListForBox = async (database) => {
+  getGroupListForBox = async (database, group_seq_list = null) => {
     const result_list = []
     const group_info_model = this.getGroupModel(database)
-    const group_list = await group_info_model.getGroupListForBox()
+    const group_list = await group_info_model.getGroupListForBox(group_seq_list)
     for (let i = 0; i < group_list.length; i++) {
       const group_info = group_list[i]
       const member_info = {
@@ -1461,6 +1503,9 @@ const GroupServiceClass = class {
     paging.no_paging = 'N'
     const group_summary_comment_list = await group_model.GroupSummaryCommentListByGroupSeqMemberSeq(group_seq, member_seq, paging)
     log.debug(this.log_prefix, '[getSummaryCommentList]', group_summary_comment_list);
+    _.forEach(group_summary_comment_list.data, async (item) => {
+      item.content = striptags(item.content)
+    })
     return group_summary_comment_list;
   }
   setGroupMemberCount = async (databases, group_seq, type, count = 1) => {
@@ -1474,6 +1519,26 @@ const GroupServiceClass = class {
   setMemberPauseReset = async () => {
     const group_member_model = this.getGroupMemberModel()
     return await group_member_model.setPauseMemberReset()
+  }
+  setGroupClosure = async (databases, group_seq) => {
+    const group_model = this.getGroupModel(databases);
+    if (group_seq) {
+      return await group_model.set_group_closure(group_seq);
+    }
+    return false;
+  }
+
+  async getGroupStorageStatus (group_seq) {
+    const status = {
+      max_storage_size: 0,
+      use_storage_size: 0
+    }
+    const group_info = await this.getGroupInfo(DBMySQL, group_seq)
+    if (group_info) {
+      status.max_storage_size = Util.parseInt(group_info.storage_size)
+      status.use_storage_size = Util.parseInt(group_info.used_storage_size)
+    }
+    return status
   }
 }
 

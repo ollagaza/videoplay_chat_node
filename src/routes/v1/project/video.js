@@ -39,8 +39,8 @@ routes.get('/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
 
 routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { member_seq, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const result = await StudioService.createVideoProject(group_member_info, member_seq, req)
+  const { member_info, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const result = await StudioService.createVideoProject(group_member_info, member_info, req)
 
   const output = new StdObject()
   output.add('result', result)
@@ -84,7 +84,7 @@ routes.delete('/favorite/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_US
 routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const result = await StudioService.updateStatus(req.body, group_seq, 'T')
+  const result = await StudioService.updateStatusTrash(req.body, group_seq, true)
 
   const output = new StdObject()
   output.add('result', result)
@@ -95,7 +95,7 @@ routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res
 routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const result = await StudioService.updateStatus(req.body, group_seq, 'Y')
+  const result = await StudioService.updateStatusTrash(req.body, group_seq, false)
 
   const output = new StdObject()
   output.add('result', result)

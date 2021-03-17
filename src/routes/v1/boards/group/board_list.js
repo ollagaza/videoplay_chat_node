@@ -42,6 +42,7 @@ routes.get('/getgroupboards/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_U
   output.add('is_active_group_member', is_active_group_member)
   output.add('group_member_info', group_member_info)
   output.add('board_list', board_list)
+  output.add('last_update', await GroupBoardListService.getGroupBoardLastUpdate(DBMySQL, group_seq))
 
   res.json(output)
 }))

@@ -131,8 +131,8 @@ routes.put('/:member_seq(\\d+)', Util.common_path_upload.fields([{ name: 'profil
     }
   })
 
-  const group_info = await GroupService.getMemberSeqbyPersonalGroupInfo(DBMySQL, member_seq)
-  const update_operation_hospital = await OperationDataService.changeGroupHospital(DBMySQL, group_info.seq, member_info.hospname)
+  // 병원정보를 사용하는 부분이 없으므로 주석처리
+  // const update_operation_hospital = await OperationDataService.changeGroupHospital(DBMySQL, group_info.seq, member_info.hospname)
 
   res.json(new StdObject())
 }))

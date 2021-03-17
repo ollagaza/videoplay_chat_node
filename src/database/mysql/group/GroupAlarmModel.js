@@ -119,6 +119,9 @@ export default class GroupAlarmModel extends MySQLModel {
         query.where('seq', '>=', options.min_seq)
       } else if (options.by_seq) {
         query.where('seq', options.alarm_seq)
+      } else if (options.by_seq_range) {
+        query.where('seq', '>=', options.min_seq)
+        query.where('seq', '<=', options.max_seq)
       }
     }
     return query

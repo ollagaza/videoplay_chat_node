@@ -7,6 +7,7 @@ import Role from '../../../constants/roles'
 import Wrap from '../../../utils/express-async'
 import StdObject from '../../../wrapper/std-object'
 import DBMySQL from '../../../database/knex-mysql'
+import AuthService from '../../../service/member/AuthService'
 import GroupService from '../../../service/group/GroupService'
 import OperationFolderService from "../../../service/operation/OperationFolderService";
 import GroupBoardListService from "../../../service/board/GroupBoardListService";
@@ -258,16 +259,20 @@ routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_
   res.json(output)
 }))
 
-routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_profile_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_profile_img' }, { name: 'group_channel_top_img' }]), Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const params = JSON.parse(req.body.params)
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'group_profile_img') {
       params.profile_image_path = '/common/' + value[0].filename
     }
+    if (value[0].fieldname === 'group_channel_top_img') {
+      params.channel_top_img_path = '/common/' + value[0].filename
+    }
   })
   const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const options = {
     group_name: params.group_name,
+    gnb_color: params.group_color,
     group_open: params.group_open,
     group_join_way: params.group_join_way,
     member_open: params.member_open,
@@ -275,6 +280,9 @@ routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_prof
     search_keyword: params.search_keyword,
     group_explain: params.group_explain,
     profile_image_path: params.profile_image_path,
+    channel_top_img_path: params.channel_top_img_path,
+    delete_channel_top_img: params.delete_channel_top_img?params.delete_channel_top_img:null,
+    delete_channel_profile_img: params.delete_channel_profile_img?params.delete_channel_profile_img:null,
   }
   const output = new StdObject()
   const rs_gorup_info = await GroupService.updateEnterpriseGroup(DBMySQL, member_info, options, params.seq);
@@ -692,4 +700,40 @@ routes.get('/mychannellist', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req
   output.add('member_group_list', member_group_list)
   res.json(output)
 }))
+
+routes.post('/check/member', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  try {
+    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, true)
+    const member_info = await AuthService.login(DBMySQL, req)
+    const output = new StdObject()
+    if (member_info) {
+      const group_check = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_info.seq);
+      if (group_check.grade === 'O') {
+        output.add('pass', true);
+        output.add('target_seq', group_seq);
+      } else {
+        output.add('pass', false);
+        output.add('err_msg', '권한이 없습니다.');
+      }
+    } else {
+      output.add('pass', false);
+      output.add('err_msg', '아이디 혹은 비밀번호를 확인해주세요.');
+    }
+    res.json(output)
+  } catch (e) {
+    log.e(req, e)
+    throw new StdObject(-1, '아이디 혹은 비밀번호가 일치하지 않습니다.<br/>입력한 내용을 다시 확인해 주세요.', 400)
+  }
+}))
+
+routes.post('/closure', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, false, true)
+  const result = await GroupService.setGroupClosure(DBMySQL, group_seq);
+  output.add('result', result);
+  res.json(output)
+}))
+
 export default routes

@@ -24,8 +24,8 @@ export default class MemberSubModel extends MySQLModel {
   getMemberSubInfo = async (member_seq, lang) => {
     const query_result = await this.findOne({ member_seq: member_seq })
     const member_info = new MemberInfo(query_result)
-    member_info.json_keys.push('medical')
-    member_info.json_keys.push('interrest')
+    member_info.addKey('medical')
+    member_info.addKey('interrest')
     member_info.medical = MongoDataService.getMedicalInfo(lang)
     member_info.interrest = MongoDataService.getInterestInfo(lang)
     if (!member_info.isEmpty() && !Util.isEmpty(member_info.license_image_path)) {

@@ -130,9 +130,12 @@ const arrayToSafeQuery = (database, columns) => {
 
   const select = []
   const function_column = /\(.+\)/i
+  const as_column = / as /i
   Object.keys(columns).forEach((key) => {
     const column = columns[key]
     if (function_column.test(column)) {
+      select.push(database.raw(columns[key]))
+    } else if (as_column.test(column)) {
       select.push(database.raw(columns[key]))
     } else {
       select.push(columns[key])

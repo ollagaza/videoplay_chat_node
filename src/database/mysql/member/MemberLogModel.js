@@ -121,4 +121,8 @@ export default class MemberLogModel extends MySQLModel {
     searchObj.query.push({ log_code: '9999' })
     return await this.find(searchObj)
   }
+
+  getMemberNoticeAllCountWhitMemberSeq = async (member_seq) => {
+    return await this.getTotalCount({ member_seq: member_seq, is_view: 0, notice_page: 1 })
+  }
 }
