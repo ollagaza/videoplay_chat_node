@@ -252,7 +252,7 @@ export default class GroupModel extends MySQLModel {
 
   getOpenGroupList = async (member_seq, search) => {
     const open_group_list_select = [
-      'group_info.seq AS group_seq', 'group_info.group_name', 'group_info.profile', 'group_info.profile_image_path', 'group_info.reg_date'
+      'group_info.seq AS group_seq', 'group_info.group_name', 'group_info.profile', 'group_info.group_explain', 'group_info.profile_image_path', 'group_info.reg_date'
       , 'member.user_name', 'member.user_nickname', 'group_counts.video_count', 'group_member.status', 'group_member.grade'
     ]
     const query = this.database
@@ -264,6 +264,7 @@ export default class GroupModel extends MySQLModel {
       .where('group_info.group_type', 'G')
       .whereIn('group_info.status', ['Y', 'F'])
       .where('group_info.is_channel', 1)
+      .where('group_info.group_open', 1)
       // .where((builder) => {
       //   builder.whereNull('group_member.grade')
       //     .orWhereNot('group_member.grade', 'O')
