@@ -263,7 +263,6 @@ export default class GroupModel extends MySQLModel {
       .leftOuterJoin('group_member', { 'group_member.member_seq': member_seq, 'group_member.group_seq': 'group_info.seq' })
       .where('group_info.group_type', 'G')
       .whereIn('group_info.status', ['Y', 'F'])
-      .where('group_info.is_channel', 1)
       .where('group_info.group_open', 1)
       // .where((builder) => {
       //   builder.whereNull('group_member.grade')
