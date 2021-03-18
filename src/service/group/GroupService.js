@@ -27,6 +27,7 @@ import OperationClipService from "../operation/OperationClipService";
 import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
 import striptags from "striptags";
+import GroupAlarmService from './GroupAlarmService'
 
 const GroupServiceClass = class {
   constructor () {
@@ -657,11 +658,7 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database);
     await group_model.group_member_count(group_invite_info.group_seq, 'up');
 
-    const message_info = {
-      title: '신규 회원 가입',
-      message: `'${member_info.user_name}'님이 '${group_invite_info.group_name}'채널에 가입하셨습니다.`
-    }
-    await this.noticeGroupAdmin(group_invite_info.group_seq, null, message_info)
+    this.sendGroupJoinAlarm(group_invite_info.group_seq, member_info)
 
     return group_invite_info.group_seq
   }
@@ -1274,13 +1271,16 @@ const GroupServiceClass = class {
             answer: is_join_answer,
             ban_hide: 'N',
           }
-          const update_chk = await group_member_model.updateGroupMemberJoin(group_seq, null, group_member_info.seq, params);
+          const update_chk = await group_member_model.updateGroupMemberJoin(group_seq, null, group_member_info.seq, params)
           if (!update_chk) {
             result_info.error = 4;
-            result_info.msg = '필수 정보가 누락되었습니다.';
+            result_info.msg = '필수 정보가 누락되었습니다.'
           } else {
             if (group_info.group_join_way !== 1) {
-              await group_model.group_member_count(group_seq, 'up');
+              await group_model.group_member_count(group_seq, 'up')
+              this.sendGroupJoinAlarm(group_seq, member_info)
+            } else {
+              this.sendGroupJoinRequestAlarm(group_seq, member_info)
             }
           }
           break;
@@ -1301,14 +1301,79 @@ const GroupServiceClass = class {
       const insert_chk = await group_member_model.createGroupMember(group_info, member_info, grade, null, group_join_member_state, is_join_answer)
       if (!insert_chk) {
         result_info.error = 3;
-        result_info.msg = '회원가입 신청에 실패하였습니다.';
+        result_info.msg = '회원가입 신청에 실패하였습니다.'
       } else {
         if (group_info.group_join_way !== 1) {
-          await group_model.group_member_count(group_seq, 'up');
+          await group_model.group_member_count(group_seq, 'up')
+          this.sendGroupJoinAlarm(group_seq, member_info)
+        } else {
+          this.sendGroupJoinRequestAlarm(group_seq, member_info)
         }
       }
     }
     return result_info;
+  }
+
+  sendGroupJoinAlarm = (group_seq, member_info) => {
+    (
+      async (group_seq, member_info) => {
+        try {
+          group_seq = Util.parseInt(group_seq, 0)
+          const group_info = await this.getGroupInfo(null, group_seq)
+          const alarm_data = {
+            page: 'group_admin',
+            query: {
+              menu: 'member_manage',
+              tab: 'active'
+            },
+            on_click: 'move_page'
+          }
+          const alarm_message = `'{name}'님이 '${group_info.group_name}'채널에 가입하였습니다.`
+          const name = group_info.member_name_used ? member_info.user_name : member_info.user_nickname
+          const socket_message = {
+            title: '신규 회원 가입',
+            message: `'${name}'님이 '${group_info.group_name}'채널에 가입하였습니다.<br/>확인하려면 클릭하세요.`
+          }
+          const socket_data = {
+            member_seq: member_info.seq
+          }
+          GroupAlarmService.createGroupAdminAlarm(group_seq, 'join', alarm_message, member_info, alarm_data, socket_message, socket_data)
+        } catch (error) {
+          log.error(this.log_prefix, '[sendGroupJoinAlarm]', group_seq, member_info.user_id, error)
+        }
+      }
+    )(group_seq, member_info)
+  }
+
+  sendGroupJoinRequestAlarm = (group_seq, member_info) => {
+    (
+      async (group_seq, member_info) => {
+        try {
+          group_seq = Util.parseInt(group_seq, 0)
+          const group_info = await this.getGroupInfo(null, group_seq)
+          const alarm_data = {
+            page: 'group_admin',
+            query: {
+              menu: 'member_manage',
+              tab: 'join'
+            },
+            on_click: 'move_page'
+          }
+          const alarm_message = `'{name}'님이 '${group_info.group_name}'채널에 가입신청을 하였습니다.`
+          const name = group_info.member_name_used ? member_info.user_name : member_info.user_nickname
+          const socket_message = {
+            title: '신규 회원 가입 신청',
+            message: `'${name}'님이 '${group_info.group_name}'채널에 가입신청을 하였습니다.<br/>확인하려면 클릭하세요.`
+          }
+          const socket_data = {
+            member_seq: member_info.seq
+          }
+          GroupAlarmService.createGroupAdminAlarm(group_seq, 'join_request', alarm_message, member_info, alarm_data, socket_message, socket_data)
+        } catch (error) {
+          log.error(this.log_prefix, '[sendGroupJoinRequestAlarm]', group_seq, member_info.user_id, error)
+        }
+      }
+    )(group_seq, member_info)
   }
 
   confirmJoinGroup = async (group_member_info, group_member_seq) => {
