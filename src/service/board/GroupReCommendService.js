@@ -59,6 +59,13 @@ const GroupReCommendServiceClass = class {
     const model = this.getGroupBoardCommentReCommendModel(database)
     return await model.deleteBoardCommentReCommend(recommend_seq)
   }
+
+  setMoveBoardDataToReCommend = async (database, board_data_seq, board_seq) => {
+    const board_coment_recoment_model = this.getGroupBoardCommentReCommendModel(database)
+    const board_recoment_model = this.getGroupBoardReCommendModel(database)
+    await board_recoment_model.setMoveBoardDataToBoardReComment(board_data_seq, board_seq)
+    return await board_coment_recoment_model.setMoveBoardDataToReComment(board_data_seq, board_seq)
+  }
 }
 
 const GroupReCommendService = new GroupReCommendServiceClass()

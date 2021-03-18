@@ -26,4 +26,14 @@ export default class GroupBoardCommentReCommendModel extends MySQLModel {
   deleteBoardCommentReCommend = async (recommend_seq) => {
     return await this.delete({ seq: recommend_seq })
   }
+
+  setMoveBoardDataToReComment = async (board_data_seq, board_seq) => {
+    const params = {
+      board_seq,
+    }
+    const filter = {
+      board_data_seq,
+    }
+    return this.update(filter, params);
+  }
 }

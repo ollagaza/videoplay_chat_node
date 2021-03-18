@@ -136,6 +136,7 @@ routes.put('/move_boarddata/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
 
   for (let cnt = 0; cnt < move_data.board_data_seqs.length; cnt++) {
     await GroupBoardDataService.MoveBoardData(DBMySQL, move_data.board_data_seqs[cnt], move_data.board_seq, move_data.board_header_text)
+    await GroupReCommendService.setMoveBoardDataToReCommend(DBMySQL, move_data.board_data_seqs[cnt], move_data.board_seq);
   }
   res.json(output);
 }))

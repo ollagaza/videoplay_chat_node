@@ -85,4 +85,14 @@ export default class GroupBoardCommentModel extends MySQLModel {
       .where({board_data_seq: board_data_seq})
       .groupBy(['member_seq'])
   }
+
+  setBoardCommentMove = async (board_data_seq, board_seq) => {
+    const params = {
+      board_seq,
+    }
+    const filter = {
+      board_data_seq,
+    }
+    return this.update(filter, params);
+  }
 }
