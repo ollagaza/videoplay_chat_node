@@ -30,6 +30,7 @@ import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 import OperationCommentService from "./OperationCommentService";
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import GroupAlarmService from '../group/GroupAlarmService'
+import SyncService from '../sync/SyncService'
 
 const OperationServiceClass = class {
   constructor () {
@@ -733,12 +734,12 @@ const OperationServiceClass = class {
     if (result) {
       if (result.operation_file_list && result.operation_file_list.length > 0) {
         let thumbnail = result.operation_file_list[0].thumbnail_path
-        if (ServiceConfig.isVacs()) {
-          thumbnail = ServiceConfig.get('static_storage_prefix') + thumbnail
-        } else {
-          thumbnail = ServiceConfig.get('static_cloud_prefix') + thumbnail
+        if (thumbnail) {
+          if (!ServiceConfig.isVacs()) {
+            thumbnail = ServiceConfig.get('static_cloud_prefix') + thumbnail
+          }
+          await OperationDataService.setThumbnailAuto(operation_info.seq, thumbnail);
         }
-        await OperationDataService.setThumbnailAuto(operation_info.seq, thumbnail);
       }
     }
   }
@@ -747,14 +748,17 @@ const OperationServiceClass = class {
     const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
     if (operation_info.mode === this.MODE_FILE) {
       if (ServiceConfig.isVacs()) {
+        await OperationService.updateOperationDataFileThumbnail(operation_info)
         await this.updateAnalysisStatus(null, operation_info, 'Y')
+        SyncService.sendAnalysisCompleteMessage(operation_info)
       } else {
         await this.updateAnalysisStatus(null, operation_info, 'R')
+        this.onOperationCreateComplete(operation_info, group_member_info, member_info)
       }
     } else {
       await this.requestTranscoder(operation_info)
+      this.onOperationCreateComplete(operation_info, group_member_info, member_info)
     }
-    this.onOperationCreateComplete(operation_info, group_member_info, member_info)
   }
 
   onOperationCreateComplete(operation_info, group_member_info, member_info) {

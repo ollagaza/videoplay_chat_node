@@ -136,9 +136,9 @@ const GroupServiceClass = class {
       if (group_member_info) {
         const status = group_member_info.group_member_status
         if (status === this.MEMBER_STATUS_PAUSE) {
-          message = '팀 사용이 정지되었습니다.';
+          message = '채널 사용이 정지되었습니다.';
         } else if (status === this.MEMBER_STATUS_DISABLE || status === this.MEMBER_STATUS_BAN) {
-          message = '탈퇴한 팀입니다.';
+          message = '탈퇴한 채널입니다.';
         }
       }
       throw new StdObject(error_code, message, 403)
@@ -615,7 +615,7 @@ const GroupServiceClass = class {
     }
     if (group_invite_info.group_status !== this.GROUP_STATUS_ENABLE || group_invite_info.group_type === this.GROUP_TYPE_PERSONAL) {
       log.debug(this.log_prefix, '[getInviteGroupInfo]', 'check group status', group_invite_info.group_status, this.GROUP_STATUS_ENABLE, group_invite_info.group_type, this.GROUP_TYPE_PERSONAL)
-      throw new StdObject(-4, '가입이 불가능한 팀입니다.', 400)
+      throw new StdObject(-4, '가입이 불가능한 채널입니다.', 400)
     }
     if (member_seq) {
       const group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
@@ -632,15 +632,15 @@ const GroupServiceClass = class {
     const output = new StdObject()
     if (member_status === this.MEMBER_STATUS_ENABLE) {
       output.error = 1
-      output.message = '이미 가입된 팀입니다.'
+      output.message = '이미 가입된 채널입니다.'
       output.add('group_seq', group_seq)
       throw output
     } else if (member_status === this.MEMBER_STATUS_PAUSE) {
       output.error = 2
-      output.message = `'${group_name}'팀 사용이 일시중지 되었습니다.`
+      output.message = `'${group_name}'채널 사용이 일시중지 되었습니다.`
     } else {
       output.error = 3
-      output.message = `'${group_name}'팀에서 탈퇴되었습니다.`
+      output.message = `'${group_name}'채널에서 탈퇴되었습니다.`
     }
     return output
   }
@@ -659,7 +659,7 @@ const GroupServiceClass = class {
 
     const message_info = {
       title: '신규 회원 가입',
-      message: `'${member_info.user_name}'님이 '${group_invite_info.group_name}'팀에 가입하셨습니다.`
+      message: `'${member_info.user_name}'님이 '${group_invite_info.group_name}'채널에 가입하셨습니다.`
     }
     await this.noticeGroupAdmin(group_invite_info.group_seq, null, message_info)
 
@@ -674,9 +674,9 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database)
     await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_ADMIN)
 
-    const title = `'${group_member_info.group_name}'팀의 SurgStory 관리자가 되었습니다.`
+    const title = `'${group_member_info.group_name}'채널의 SurgStory 관리자가 되었습니다.`
     const message_info = {
-      title: '팀 관리자 권한 변경',
+      title: '채널 관리자 권한 변경',
       message: title
     }
     await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'enableGroupAdmin', null)
@@ -704,9 +704,9 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database)
     await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_NORMAL)
 
-    const title = `'${group_member_info.group_name}'팀의 SurgStory 관리자 권한이 해제되었습니다.`
+    const title = `'${group_member_info.group_name}'채널의 SurgStory 관리자 권한이 해제되었습니다.`
     const message_info = {
-      title: '팀 관리자 권한 변경',
+      title: '채널 관리자 권한 변경',
       message: title,
       notice_type: 'alert'
     }
@@ -729,9 +729,9 @@ const GroupServiceClass = class {
     await group_member_model.banMember(group_member_seq, group_member_info.member_seq, used_storage_size)
     await this.updateGroupUsedStorage(database, group_seq)
 
-    const title = `${group_member_info.group_name}의 SurgStory 팀원에서 제외되었습니다.`
+    const title = `${group_member_info.group_name}채널의 SurgStory 팀원에서 제외되었습니다.`
     const message_info = {
-      title: '팀 사용 불가',
+      title: '채널 사용 불가',
       message: title,
       notice_type: 'alert'
     }
@@ -754,10 +754,10 @@ const GroupServiceClass = class {
   unDeleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
     await this.restoreMemberState(database, group_member_info, group_member_seq)
 
-    const title = `${group_member_info.group_name}의 SurgStory 팀원으로 복원되었습니다.`
+    const title = `${group_member_info.group_name}채널의 SurgStory 팀원으로 복원되었습니다.`
     const message_info = {
       title: title,
-      message: '그룹을 선택하려면 클릭하세요.'
+      message: '채널을 선택하려면 클릭하세요.'
     }
     await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info)
 
@@ -783,12 +783,12 @@ const GroupServiceClass = class {
     }
     // const group_member_model = this.getGroupMemberModel(database)
     // await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
-    let title = `${group_member_info.group_name}의 SurgStory 사용 일시중단 되었습니다.`
+    let title = `${group_member_info.group_name}채널의 SurgStory 사용 일시중단 되었습니다.`
     if (message) {
-      title = `${group_member_info.group_name}의 SurgStory ${message}`
+      title = `${group_member_info.group_name}채널의 SurgStory ${message}`
     }
     const message_info = {
-      title: '팀 사용 불가',
+      title: '채널 사용 불가',
       message: title,
       notice_type: 'alert'
     }
@@ -811,10 +811,10 @@ const GroupServiceClass = class {
 
   unPauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
     await this.restoreMemberState(database, group_member_info, group_member_seq)
-    const title = `${group_member_info.group_name}의 SurgStory 사용 일시중단이 해제 되었습니다.`
+    const title = `${group_member_info.group_name}채널의 SurgStory 사용 일시중단이 해제 되었습니다.`
     const message_info = {
       title: title,
-      message: '그룹을 선택하려면 클릭하세요.'
+      message: '채널을 선택하려면 클릭하세요.'
     }
     await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info)
 
@@ -934,8 +934,8 @@ const GroupServiceClass = class {
 
     const sub_type = 'planChange'
     const message_info = {
-      title: '팀 플랜이 변경되었습니다.',
-      message: `'${group_info.group_name}'팀 플랜이 변경되었습니다.`
+      title: '채널이 변경되었습니다.',
+      message: `'${group_info.group_name}'채널이 변경되었습니다.`
     }
     await this.onGroupStateChange(group_info.seq, sub_type, null, null, message_info, false)
 
@@ -1209,7 +1209,7 @@ const GroupServiceClass = class {
       return true
     } catch (e) {
       log.error(this.log_prefix, '[changeGroupName]', e)
-      throw new StdObject(-2, '그룹명을 변경할 수 없습니다.', 400)
+      throw new StdObject(-2, '채널명을 변경할 수 없습니다.', 400)
     }
   }
 
