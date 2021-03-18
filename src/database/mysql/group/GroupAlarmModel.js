@@ -32,6 +32,11 @@ export default class GroupAlarmModel extends MySQLModel {
 
     const query = this.database.select(this.getAlarmFieldList(member_seq))
       .from(this.table_name)
+      .innerJoin('group_member', (query) => {
+        query.onVal('group_member.group_seq', group_seq)
+        query.andOnVal('group_member.member_seq', member_seq)
+        query.andOn('group_member.join_date', '<=', `${this.table_name}.reg_date`)
+      })
       .where('group_seq', group_seq)
       .where('grade', '<=', grade_number)
       .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_delete`, 0]))
