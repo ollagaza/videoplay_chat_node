@@ -734,12 +734,12 @@ const OperationServiceClass = class {
     if (result) {
       if (result.operation_file_list && result.operation_file_list.length > 0) {
         let thumbnail = result.operation_file_list[0].thumbnail_path
-        if (ServiceConfig.isVacs()) {
-          thumbnail = ServiceConfig.get('static_storage_prefix') + thumbnail
-        } else {
-          thumbnail = ServiceConfig.get('static_cloud_prefix') + thumbnail
+        if (thumbnail) {
+          if (!ServiceConfig.isVacs()) {
+            thumbnail = ServiceConfig.get('static_cloud_prefix') + thumbnail
+          }
+          await OperationDataService.setThumbnailAuto(operation_info.seq, thumbnail);
         }
-        await OperationDataService.setThumbnailAuto(operation_info.seq, thumbnail);
       }
     }
   }
