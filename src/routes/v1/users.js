@@ -72,6 +72,11 @@ routes.post('/', Util.common_path_upload.fields([{ name: 'profile_image' }, { na
     }
   })
 
+  if (params.user_info.delete_profile_image) {
+    params.user_info.profile_image_path = '';
+  }
+  delete params.user_info.delete_profile_image;
+
   const result = await MemberService.createMember(DBMySQL, params)
   output.add('info', result)
 
@@ -116,6 +121,11 @@ routes.put('/:member_seq(\\d+)', Util.common_path_upload.fields([{ name: 'profil
       params.user_sub_info.license_image_path = '/common/' + value[0].filename
     }
   })
+
+  if (params.user_info.delete_profile_image) {
+    params.user_info.profile_image_path = '';
+  }
+  delete params.user_info.delete_profile_image;
 
   const member_info = new MemberInfo(params.user_info)
   const member_sub_info = new MemberInfoSub(params.user_sub_info)
