@@ -17,8 +17,8 @@ export default class GroupAlarmModel extends MySQLModel {
   }
 
   getAlarmFieldList = (member_seq) => {
-    const field_list = ['seq', 'type', 'message', 'data', 'user_name', 'user_nickname', 'reg_date']
-    field_list.push(this.database.raw('IF(JSON_EXTRACT(member_state, ?) = \'Y\', \'Y\', \'N\') AS is_read', [`$.m_${member_seq}.is_read`]))
+    const field_list = [`${this.table_name}.seq`, `${this.table_name}.type`, `${this.table_name}.message`, `${this.table_name}.data`, `${this.table_name}.user_name`, `${this.table_name}.user_nickname`, `${this.table_name}.reg_date`]
+    field_list.push(this.database.raw(`IF(JSON_EXTRACT(${this.table_name}.member_state, ?) = 'Y', 'Y', 'N') AS is_read`, [`$.m_${member_seq}.is_read`]))
 
     return field_list
   }
@@ -37,28 +37,28 @@ export default class GroupAlarmModel extends MySQLModel {
         query.andOnVal('group_member.member_seq', member_seq)
         query.andOn('group_member.join_date', '<=', `${this.table_name}.reg_date`)
       })
-      .where('group_seq', group_seq)
-      .where('grade', '<=', grade_number)
-      .where(this.database.raw('(CASE JSON_CONTAINS(member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_delete`, 0]))
+      .where(`${this.table_name}.group_seq`, group_seq)
+      .where(`${this.table_name}.grade`, '<=', grade_number)
+      .where(this.database.raw(`(CASE JSON_CONTAINS(${this.table_name}.member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?`, ['Y', `$.m_${member_seq}.is_delete`, 0]))
     if (options) {
       if (options.interval) {
         query.where(this.database.raw('date_format(date_sub(group_alarm.reg_date, interval ? day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')', [options.interval]))
       }
       if (options.search) {
         query.where((builder) => {
-          builder.where('message', 'LIKE', `%${options.search}%`)
+          builder.where(`${this.table_name}.message`, 'LIKE', `%${options.search}%`)
           if (use_nickname) {
-            builder.orWhere('user_nickname', 'LIKE', `%${options.search}%`)
+            builder.orWhere(`${this.table_name}.user_nickname`, 'LIKE', `%${options.search}%`)
           } else {
-            builder.orWhere('user_name', 'LIKE', `%${options.search}%`)
+            builder.orWhere(`${this.table_name}.user_name`, 'LIKE', `%${options.search}%`)
           }
         });
       }
     }
     if (!order_id) {
-      query.orderBy([{ column: 'reg_date', order: 'desc' }])
+      query.orderBy([{ column: `${this.table_name}.reg_date`, order: 'desc' }])
     } else {
-      query.orderBy([{ column: `${order_id}`, order }])
+      query.orderBy([{ column: `${this.table_name}.${order_id}`, order }])
     }
 
     return this.queryPaginated(query, limit, page)
