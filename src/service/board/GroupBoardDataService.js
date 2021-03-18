@@ -285,6 +285,8 @@ const GroupBoardDataServiceClass = class {
 
   MoveBoardData = async (database, board_data_seq, board_seq, board_header_text) => {
     const model = this.getGroupBoardDataModel(database)
+    const comment_model = this.getGroupBoardCommentModel(database);
+    await comment_model.setBoardCommentMove(board_data_seq, board_seq);
     return await model.MoveBoardData(board_data_seq, board_seq, board_header_text)
   }
 

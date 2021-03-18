@@ -52,6 +52,35 @@ const GroupAlarmServiceClass = class {
     )(group_seq, type, message, operation_info, member_info, data, socket_message, socket_extra_data)
   }
 
+  createGroupAdminAlarm = (group_seq, type, message, member_info, data, socket_message = null, socket_extra_data = null) => {
+    (
+      async (group_seq, type, message, member_info, data, socket_message, socket_extra_data) => {
+        let alarm_data = null;
+        try {
+          data.type = type
+          alarm_data = {
+            message,
+            group_seq,
+            grade: 6,
+            type,
+            data: JSON.stringify(data),
+            member_state: JSON.stringify({})
+          }
+          if (member_info) {
+            alarm_data.user_name = member_info.user_name
+            alarm_data.user_nickname = member_info.user_nickname
+          }
+          await this.createGroupAlarm(group_seq, alarm_data)
+          if (socket_message) {
+            this.sendSocket(group_seq, alarm_data, socket_message, 'onChangeGroupAdminState', socket_extra_data, false)
+          }
+        } catch (error) {
+          logger.error(this.log_prefix, '[createGroupAdminAlarm]', alarm_data, data, error)
+        }
+      }
+    )(group_seq, type, message, member_info, data, socket_message, socket_extra_data)
+  }
+
   createGroupAlarm = async (group_seq, alarm_data) => {
     const group_alarm_model = this.getGroupAlarmModel()
     return group_alarm_model.createGroupAlarm(alarm_data)
@@ -88,6 +117,7 @@ const GroupAlarmServiceClass = class {
             data.change_storage_size = true
             data.storage_status = storage_status
           }
+          logger.debug(this.log_prefix, '[sendSocket] socket_data', socket_data)
           await SocketManager.sendToFrontGroup(group_seq, socket_data)
         } catch (error) {
           logger.error(this.log_prefix, '[sendSocket]', group_seq, alarm_data, message_info, action_type, extra_data, error)
