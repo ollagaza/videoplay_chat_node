@@ -201,7 +201,7 @@ const GroupServiceClass = class {
       start_date,
       expire_date,
       group_open: options.group_open ? options.group_open : 0,
-      group_join_way: options.group_join_way ? options.group_join_way : 0,
+      group_join_way: options.group_join_way ? options.group_join_way : 1,
       member_open: options.member_open ? options.member_open : 0,
       member_name_used: options.member_name_used ? options.member_name_used : 0,
       search_keyword: options.search_keyword ? JSON.stringify(options.search_keyword) : null,
