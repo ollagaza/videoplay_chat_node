@@ -18,6 +18,7 @@ routes.get('/', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
     return res.json(new StdObject(-1, '잘못된 요청입니다.', 403))
   }
   let user_list = null
+  // log.d(req, machine_id, ServiceConfig.isVacs(), ServiceConfig.isVacsUseMachineId())
   if (ServiceConfig.isVacs() && ServiceConfig.isVacsUseMachineId() !== true) {
     user_list = await GroupService.getGroupListForBox(DBMySQL)
   } else {

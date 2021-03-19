@@ -55,7 +55,7 @@ const ServiceConfigClass = class {
   }
 
   isVacsUseMachineId = () => {
-    const use_machine_id = this.service_config_map['is_vacs'] ? this.service_config_map['is_vacs'] : 'n'
+    const use_machine_id = this.service_config_map['vacs_use_machine_id'] ? this.service_config_map['vacs_use_machine_id'] : 'n'
     return use_machine_id.toLowerCase() === 'y'
   }
 
