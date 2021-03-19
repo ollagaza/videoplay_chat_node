@@ -54,6 +54,11 @@ const ServiceConfigClass = class {
     return is_vacs.toLowerCase() === 'y'
   }
 
+  isVacsUseMachineId = () => {
+    const use_machine_id = this.service_config_map['is_vacs'] ? this.service_config_map['is_vacs'] : 'n'
+    return use_machine_id.toLowerCase() === 'y'
+  }
+
   supporterEmailList = () => {
     return this.supporter_email_list
   }
