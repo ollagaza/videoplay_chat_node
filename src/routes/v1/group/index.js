@@ -465,7 +465,7 @@ routes.post('/bangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   req.accepts('application/json')
   const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const ban_info = req.body.ban_info;
-  const message = '탈퇴 되었습니다.';
+  const message = '해당 채널의 팀원이 아닙니다.';
   let ban_cnt = 0;
   for (let i = 0; i < ban_info.ban_list.length; i++) {
     await GroupService.pauseMember(DBMySQL, group_member_info, member_info, ban_info.ban_list[i], token_info.getServiceDomain(), message)

@@ -43,6 +43,8 @@ const GroupServiceClass = class {
     this.MEMBER_STATUS_BAN = 'B'
     this.MEMBER_STATUS_PAUSE = 'P'
     this.MEMBER_STATUS_JOIN = 'J'
+    this.MEMBER_STATUS_DISABLE_NO_VIEW = 'L'
+    this.MEMBER_STATUS_NORMAL = 'N'
     this.MEMBER_STATUS_DELETE = 'D'
     this.MEMBER_GRADE_OWNER = 'O'
     this.MEMBER_GRADE_ADMIN = 'A'
@@ -596,20 +598,29 @@ const GroupServiceClass = class {
     const group_seq = group_invite_info.group_seq
     const group_name = group_invite_info.group_name
     if (group_invite_info.join_member_seq) {
-      const output = new StdObject()
-      if (member_seq) {
-        if (group_invite_info.join_member_seq === member_seq) {
-          throw this.getInviteMemberStatusError(group_seq, group_name, group_invite_info.group_member_status)
-        } else {
+      if (group_invite_info.group_member_status === this.MEMBER_STATUS_DISABLE || group_invite_info.group_member_status === this.MEMBER_STATUS_DISABLE_NO_VIEW || group_invite_info.group_member_status === this.MEMBER_STATUS_NORMAL) {
+        if (member_seq && group_invite_info.join_member_seq !== member_seq) {
+          const output = new StdObject()
           output.error = 11
           output.message = '만료된 초대코드입니다.'
+          throw output
         }
-        output.httpStatusCode = 400
       } else {
-        output.error = -2
-        output.message = '만료된 초대코드입니다.'
+        const output = new StdObject()
+        if (member_seq) {
+          if (group_invite_info.join_member_seq === member_seq) {
+            throw this.getInviteMemberStatusError(group_seq, group_name, group_invite_info.group_member_status)
+          } else {
+            output.error = 11
+            output.message = '만료된 초대코드입니다.'
+          }
+          output.httpStatusCode = 400
+        } else {
+          output.error = -2
+          output.message = '만료된 초대코드입니다.'
+        }
+        throw output
       }
-      throw output
     }
     if (group_invite_info.invite_status !== 'Y') {
       throw new StdObject(-3, '만료된 초대코드입니다.', 400)
@@ -622,7 +633,11 @@ const GroupServiceClass = class {
       const group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
       log.debug(this.log_prefix, '[getInviteGroupInfo]', member_seq, group_member_info.toJSON())
       if (!group_member_info.isEmpty()) {
-        throw this.getInviteMemberStatusError(group_seq, group_name, group_member_info.group_member_status)
+        if (group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE || group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE_NO_VIEW || group_member_info.group_member_status === this.MEMBER_STATUS_NORMAL) {
+          // pass
+        } else {
+          throw this.getInviteMemberStatusError(group_seq, group_name, group_member_info.group_member_status)
+        }
       }
     }
 
@@ -639,6 +654,9 @@ const GroupServiceClass = class {
     } else if (member_status === this.MEMBER_STATUS_PAUSE) {
       output.error = 2
       output.message = `'${group_name}'채널 사용이 일시중지 되었습니다.`
+    } else if (member_status === this.MEMBER_STATUS_JOIN) {
+      output.error = 4
+      output.message = `'${group_name}'채널에 승인 대기중입니다.`
     } else {
       output.error = 3
       output.message = `'${group_name}'채널에서 탈퇴되었습니다.`
@@ -782,7 +800,7 @@ const GroupServiceClass = class {
     // await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
     let title = `${group_member_info.group_name}채널의 SurgStory 사용 일시중단 되었습니다.`
     if (message) {
-      title = `${group_member_info.group_name}채널의 SurgStory ${message}`
+      title = `${message}`
     }
     const message_info = {
       title: '채널 사용 불가',
