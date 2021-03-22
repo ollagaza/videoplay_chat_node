@@ -816,7 +816,7 @@ export default class GroupMemberModel extends MySQLModel {
     }
     const select_fields = []
     select_fields.push(this.database.raw('COUNT(*) AS total_count'))
-    select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade NOT IN (\'6\'), 1, 0)) AS mygroup_count'))
+    select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\', 1, 0)) AS mygroup_count'))
     select_fields.push(this.database.raw('SUM(IF((`status` = \'J\' OR `status` = \'C\') and grade NOT IN (\'O\', \'6\'), 1, 0)) AS join_wait_count'))
     select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade IN (\'O\', \'6\'), 1, 0)) AS manage_count'))
     select_fields.push(this.database.raw('SUM(IF((`status` = \'D\' OR `status` = \'B\'), 1, 0) AND `ban_hide` = \'N\') AS ban_count'))
