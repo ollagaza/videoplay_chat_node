@@ -782,7 +782,7 @@ const GroupServiceClass = class {
     // await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
     let title = `${group_member_info.group_name}채널의 SurgStory 사용 일시중단 되었습니다.`
     if (message) {
-      title = `${group_member_info.group_name}채널의 SurgStory ${message}`
+      title = `${message}`
     }
     const message_info = {
       title: '채널 사용 불가',
