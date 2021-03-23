@@ -2,7 +2,7 @@ import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import GroupChannelHomeService from "../service/group/GroupChannelHomeService";
 
-class GroupDataCountingScheduler {
+class GroupDataCountingSchedulerClass {
   constructor () {
     this.current_job = null
     this.log_prefix = '[GroupDataCountingScheduler]'
@@ -13,13 +13,13 @@ class GroupDataCountingScheduler {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.GroupDataCounting)
+        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.syncGroupDataCounting)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.GroupDataCounting()
+    this.syncGroupDataCounting()
   }
 
   stopSchedule = () => {
@@ -34,12 +34,21 @@ class GroupDataCountingScheduler {
     this.current_job = null
   }
 
-  GroupDataCounting = () => {
-    log.debug(this.log_prefix, '[GroupDataCountingScheduler]')
-    GroupChannelHomeService.GroupDataCounting()
+  syncGroupDataCounting = () => {
+    log.debug(this.log_prefix, '[syncGroupDataCounting]', 'start');
+    (
+      async () => {
+        try {
+          await GroupChannelHomeService.GroupDataCounting()
+          log.debug(this.log_prefix, '[syncGroupDataCounting]', 'end');
+        } catch (error) {
+          log.error(this.log_prefix, '[syncGroupDataCounting]', error)
+        }
+      }
+    )()
   }
 }
 
-const group_data_counting_scheduler = new GroupDataCountingScheduler()
+const GroupDataCountingScheduler = new GroupDataCountingSchedulerClass()
 
-export default group_data_counting_scheduler
+export default GroupDataCountingScheduler

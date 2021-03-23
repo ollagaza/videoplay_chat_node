@@ -4,6 +4,8 @@ import OperationStorageInfo from '../../../wrapper/operation/OperationStorageInf
 import VideoFileModel from '../file/VideoFileModel'
 import ReferFileModel from '../file/ReferFileModel'
 import OperationFileModel from './OperationFileModel'
+import * as util from 'util'
+import Util from '../../../utils/Util'
 
 export default class OperationStorageModel extends MySQLModel {
   constructor (database) {
@@ -113,5 +115,28 @@ export default class OperationStorageModel extends MySQLModel {
     params['index' + index_type + '_file_count'] = count
     params.modify_date = this.database.raw('NOW()')
     return await this.update({ 'seq': storage_seq }, params)
+  }
+
+  getFolderTotalSize = async (group_seq, folder_seq_list = null) => {
+    const query = this.database
+      .select(this.database.raw('SUM(operation_storage.total_file_size) AS total_file_size'))
+      .from((builder) => {
+        builder
+          .select(['seq'])
+          .from('operation')
+          .where('group_seq', group_seq)
+          .where('status', 'Y')
+        if (folder_seq_list) {
+          builder.whereIn('folder_seq', folder_seq_list)
+        }
+        builder.as('operation')
+      })
+      .innerJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
+      .first()
+    const query_result = await query
+    if (query_result && query_result.total_file_size) {
+      return Util.parseInt(query_result.total_file_size)
+    }
+    return 0
   }
 }

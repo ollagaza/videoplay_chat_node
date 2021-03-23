@@ -146,13 +146,13 @@ const SyncServiceClass = class {
       operation_storage_model = new OperationStorageModel(DBMySQL)
       await operation_storage_model.updateStorageInfo(storage_seq, update_storage_info)
       await operation_storage_model.updateStorageSummary(storage_seq)
-      await OperationFolderService.OperationFolderStorageSize(transaction, operation_info, operation_info.total_file_size, origin_video_size);
 
       analysis_status = ServiceConfig.isVacs() ? 'Y' : 'M'
       await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status)
       log.debug(this.log_prefix, log_info, `sync complete`)
 
       await GroupService.updateMemberUsedStorage(transaction, group_seq, member_seq)
+      await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
 
       is_complete = true
     })

@@ -2,10 +2,10 @@ import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import GroupService from '../service/group/GroupService'
 
-class GroupMemberPuaseResetScheduler {
+class GroupMemberPauseResetSchedulerClass {
   constructor () {
     this.current_job = null
-    this.log_prefix = '[GroupMemberPuaseResetScheduler]'
+    this.log_prefix = '[GroupMemberPauseResetScheduler]'
   }
 
   startSchedule = () => {
@@ -13,13 +13,13 @@ class GroupMemberPuaseResetScheduler {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('* 0 0,1 * * *', this.GroupDataCounting)
+        this.current_job = scheduler.scheduleJob('* 0 0,1 * * *', this.resetGroupMemberPause)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.GroupDataCounting()
+    this.resetGroupMemberPause()
   }
 
   stopSchedule = () => {
@@ -34,11 +34,21 @@ class GroupMemberPuaseResetScheduler {
     this.current_job = null
   }
 
-  GroupDataCounting = () => {
-    GroupService.setMemberPauseReset();
+  resetGroupMemberPause = () => {
+    log.debug(this.log_prefix, '[resetGroupMemberPause]', 'start');
+    (
+      async () => {
+        try {
+          await GroupService.setMemberPauseReset()
+          log.debug(this.log_prefix, '[resetGroupMemberPause]', 'end');
+        } catch (error) {
+          log.error(this.log_prefix, '[resetGroupMemberPause]', error)
+        }
+      }
+    )()
   }
 }
 
-const group_member_pause_reset_scheduler = new GroupMemberPuaseResetScheduler()
+const GroupMemberPauseResetScheduler = new GroupMemberPauseResetSchedulerClass()
 
-export default group_member_pause_reset_scheduler
+export default GroupMemberPauseResetScheduler

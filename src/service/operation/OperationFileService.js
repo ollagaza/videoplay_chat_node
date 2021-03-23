@@ -240,6 +240,11 @@ const OperationFileServiceClass = class {
     return true
   }
 
+  deleteOperationFileByOperationSeq = async (database, operation_seq) => {
+    const operation_file_model = this.getOperationFileModel(database)
+    return operation_file_model.deleteFileByOperationSeq(operation_seq)
+  }
+
   deleteOperationFileList = async (database, operation_info, request_body) => {
     const operation_file_model = this.getOperationFileModel(database)
     const operation_seq = operation_info.seq

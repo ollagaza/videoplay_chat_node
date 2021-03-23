@@ -3,7 +3,7 @@ import log from '../libs/logger'
 import GroupService from "../service/group/GroupService";
 import GroupChannelHomeService from "../service/group/GroupChannelHomeService";
 
-class GroupInfoMemberCountSyncScheduler {
+class GroupInfoMemberCountSyncSchedulerClass {
   constructor () {
     this.current_job = null
     this.log_prefix = '[GroupInfoMemberCountSyncScheduler]'
@@ -14,13 +14,13 @@ class GroupInfoMemberCountSyncScheduler {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.GroupMemberCountSync)
+        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.syncGroupMemberCount)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.GroupMemberCountSync()
+    this.syncGroupMemberCount()
   }
 
   stopSchedule = () => {
@@ -35,13 +35,28 @@ class GroupInfoMemberCountSyncScheduler {
     this.current_job = null
   }
 
-  GroupMemberCountSync = () => {
-    log.debug(this.log_prefix, '[GroupInfoMemberCountSyncScheduler]')
-    GroupService.GroupMemberCountSync()
-    GroupChannelHomeService.GroupMemberDataCounting()
+  syncGroupMemberCount = () => {
+    log.debug(this.log_prefix, '[GroupMemberCountSync]', 'start');
+    (
+      async () => {
+        try {
+          await GroupService.GroupMemberCountSync()
+          log.debug(this.log_prefix, '[syncGroupMemberCount]', '[GroupService.GroupMemberCountSync]', 'end');
+        } catch (error) {
+          log.error(this.log_prefix, '[syncGroupMemberCount]', '[GroupService.GroupMemberCountSync]', error)
+        }
+        try {
+          await GroupChannelHomeService.GroupMemberDataCounting()
+          log.debug(this.log_prefix, '[syncGroupMemberCount]', '[GroupChannelHomeService.GroupMemberDataCounting]', 'end');
+        } catch (error) {
+          log.error(this.log_prefix, '[syncGroupMemberCount]', '[GroupChannelHomeService.GroupMemberDataCounting]', error)
+        }
+        log.debug(this.log_prefix, '[syncGroupMemberCount]', 'end');
+      }
+    )()
   }
 }
 
-const group_info_member_count_scheduler = new GroupInfoMemberCountSyncScheduler()
+const GroupInfoMemberCountSyncScheduler = new GroupInfoMemberCountSyncSchedulerClass()
 
-export default group_info_member_count_scheduler
+export default GroupInfoMemberCountSyncScheduler

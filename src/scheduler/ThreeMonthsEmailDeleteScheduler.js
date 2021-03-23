@@ -2,7 +2,7 @@ import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import SendMailService from "../service/etc/SendMailService";
 
-class ThreeMonthsEmailDeleteScheduler {
+class ThreeMonthsEmailDeleteSchedulerClass {
   constructor () {
     this.current_job = null
     this.log_prefix = '[ThreeMonthsEmailDeleteScheduler]'
@@ -13,13 +13,13 @@ class ThreeMonthsEmailDeleteScheduler {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('0 0,10,20,30,40,50 * * * *', this.ThreeMonthsEmailDelete)
+        this.current_job = scheduler.scheduleJob('0 0,10,20,30,40,50 * * * *', this.deleteEmailBeforeThreeMonth)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.ThreeMonthsEmailDelete()
+    this.deleteEmailBeforeThreeMonth()
   }
 
   stopSchedule = () => {
@@ -34,12 +34,21 @@ class ThreeMonthsEmailDeleteScheduler {
     this.current_job = null
   }
 
-  ThreeMonthsEmailDelete = () => {
-    log.debug(this.log_prefix, '[ThreeMonthsEmailDeleteScheduler]')
-    SendMailService.ThreeMonthsEmailDelete()
+  deleteEmailBeforeThreeMonth = () => {
+    log.debug(this.log_prefix, '[deleteEmailBeforeThreeMonth]', 'start');
+    (
+      async () => {
+        try {
+          await SendMailService.ThreeMonthsEmailDelete()
+          log.debug(this.log_prefix, '[deleteEmailBeforeThreeMonth]', 'end');
+        } catch (error) {
+          log.error(this.log_prefix, '[deleteEmailBeforeThreeMonth]', error)
+        }
+      }
+    )()
   }
 }
 
-const threeMonths_email_delete_scheduler = new ThreeMonthsEmailDeleteScheduler()
+const ThreeMonthsEmailDeleteScheduler = new ThreeMonthsEmailDeleteSchedulerClass()
 
-export default threeMonths_email_delete_scheduler
+export default ThreeMonthsEmailDeleteScheduler

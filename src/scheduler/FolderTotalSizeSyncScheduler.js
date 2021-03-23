@@ -2,8 +2,9 @@ import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import OperationFolderService from "../service/operation/OperationFolderService";
 import DBMySQL from "../database/knex-mysql";
+import GroupModel from '../database/mysql/group/GroupModel'
 
-class FolderTotalSizeSyncScheduler {
+class FolderTotalSizeSyncSchedulerClass {
   constructor () {
     this.current_job = null
     this.log_prefix = '[FolderTotalSizeSyncScheduler]'
@@ -14,13 +15,13 @@ class FolderTotalSizeSyncScheduler {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.FolderTotalSizeSync)
+        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.syncFolderTotalSize)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    // this.FolderTotalSizeSync()
+    this.syncFolderTotalSize()
   }
 
   stopSchedule = () => {
@@ -35,12 +36,27 @@ class FolderTotalSizeSyncScheduler {
     this.current_job = null
   }
 
-  FolderTotalSizeSync = () => {
-    log.debug(this.log_prefix, '[FolderTotalSizeSyncScheduler]')
-    OperationFolderService.SyncFolderTotalSize(DBMySQL)
+  syncFolderTotalSize = () => {
+    log.debug(this.log_prefix, '[syncFolderTotalSize]', 'start');
+    (
+      async () => {
+        try {
+          const group_model = new GroupModel(DBMySQL)
+          const group_info_list = await group_model.getAllGroupInfo()
+          if (group_info_list && group_info_list.length > 0) {
+            for (let i = 0; i < group_info_list.length; i++) {
+              await OperationFolderService.syncFolderTotalSize(group_info_list[i].seq)
+            }
+          }
+          log.debug(this.log_prefix, '[syncFolderTotalSize]', 'end');
+        } catch (error) {
+          log.error(this.log_prefix, '[syncFolderTotalSize]', error)
+        }
+      }
+    )()
   }
 }
 
-const folder_total_size_sync_scheduler = new FolderTotalSizeSyncScheduler()
+const FolderTotalSizeSyncScheduler = new FolderTotalSizeSyncSchedulerClass()
 
-export default folder_total_size_sync_scheduler
+export default FolderTotalSizeSyncScheduler

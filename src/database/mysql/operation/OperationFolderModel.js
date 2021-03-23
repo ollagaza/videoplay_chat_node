@@ -9,7 +9,7 @@ export default class OperationFolderModel extends MySQLModel {
     this.table_name = 'operation_folder'
     this.log_prefix = '[OperationFolderModel]'
     this.selectable_fields = ['*']
-    this.selectable_fields_with_member = ['operation_folder.*', 'member.user_name']
+    this.selectable_fields_with_member = ['operation_folder.*', 'member.user_name', 'member.user_nickname']
   }
 
   createOperationFolder = async (folder_info) => {
@@ -24,7 +24,7 @@ export default class OperationFolderModel extends MySQLModel {
     create_params.reg_date = this.database.raw('NOW()')
     create_params.modify_date = this.database.raw('NOW()')
 
-    return await this.create(create_params, 'seq')
+    return this.create(create_params, 'seq')
   }
 
   isValidFolderName = async (group_seq, folder_name, parent_seq = null, folder_seq = null) => {
@@ -49,11 +49,15 @@ export default class OperationFolderModel extends MySQLModel {
   }
 
   deleteOperationFolder = async (group_seq, folder_seq) => {
-    return await this.delete({ group_seq, seq: folder_seq })
+    return this.delete({ group_seq, seq: folder_seq })
   }
 
   getFolderInfo = async (group_seq, folder_seq) => {
-    return await this.findOne({ group_seq, seq: folder_seq })
+    return this.findOne({ group_seq, seq: folder_seq })
+  }
+
+  getFolderInfoBySeq = async (folder_seq) => {
+    return this.findOne({ seq: folder_seq })
   }
 
   getParentFolders = async (group_seq, parent_folder_list) => {
@@ -63,8 +67,7 @@ export default class OperationFolderModel extends MySQLModel {
       .where(`${this.table_name}.group_seq`, group_seq)
       .whereIn(`${this.table_name}.seq`, parent_folder_list)
       .orderBy(`${this.table_name}.depth`, 'asc')
-    const result = await query
-    return result
+    return query
   }
 
   getGroupFolders = async (group_seq) => {
@@ -73,19 +76,18 @@ export default class OperationFolderModel extends MySQLModel {
       .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
       .where(`${this.table_name}.group_seq`, group_seq)
     query.orderBy([{ column: `${this.table_name}.depth`, order: 'asc' }, { column: `${this.table_name}.folder_name`, order: 'asc' }])
-    const result = await query
-    return result
+    return query
   }
 
   getGroupFolderLastUpdate = async (group_seq) => {
-    return await this.findOne({ group_seq: group_seq, status: 'Y' }, ['modify_date'], {
+    return this.findOne({ group_seq: group_seq, status: 'Y' }, ['modify_date'], {
       name: 'modify_date',
       direction: 'desc'
     })
   }
 
   getChildFolders = async (group_seq, folder_seq) => {
-    return await this.find({ group_seq, parent_seq: folder_seq, status: 'Y' }, null, {
+    return this.find({ group_seq, parent_seq: folder_seq, status: 'Y' }, null, {
       name: 'folder_name',
       direction: 'asc'
     })
@@ -118,15 +120,13 @@ export default class OperationFolderModel extends MySQLModel {
     if (update_params.access_users && typeof update_params.access_users === 'object') {
       update_params.access_users = JSON.stringify(update_params.access_users)
     }
-    return await this.update({ seq: folder_seq }, update_params)
+    return this.update({ seq: folder_seq }, update_params)
   }
 
   updateOperationFolderAccessType = async (folder_seq, access_type) => {
-    const oKnex = this.database.update({access_type})
+    return this.database.update({access_type})
       .from(this.table_name)
       .where(this.database.raw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}') = 1`))
-
-    return oKnex
   }
 
   moveFolder = async (folder_info, target_folder_info) => {
@@ -204,9 +204,38 @@ export default class OperationFolderModel extends MySQLModel {
       'modify_date': this.database.raw('NOW()')
     })
   }
+  addFolderStorageSizeBySeqList = async (folder_seq_list, file_size) => {
+    if (file_size === 0) return
+    log.debug(this.log_prefix, '[addFolderStorageSizeBySeqList]', folder_seq_list, file_size)
+    const update_params = {}
+    if (file_size < 0) {
+      update_params.total_folder_size = this.database.raw('IF(total_folder_size > ?, total_folder_size + ?, 0)', [file_size, file_size])
+    } else {
+      update_params.total_folder_size = this.database.raw('total_folder_size + ?', [file_size])
+    }
+    return this.database
+      .update(update_params)
+      .from(this.table_name)
+      .whereIn('seq', folder_seq_list)
+  }
+  setFolderStorageSize = async (folder_seq, file_size) => {
+    return this.update({ seq: folder_seq }, { total_folder_size: file_size })
+  }
 
-  getAllFolderList = async (filter) => {
-    return this.find(filter, null, { name: 'depth', direction: 'desc' })
+  getGroupFolderMaxDepth = async (group_seq) => {
+    const query = this.database
+      .select([this.database.raw('MAX(depth) AS max_depth')])
+      .from(this.table_name)
+      .where({ group_seq })
+      .first()
+    const query_result = await query
+    if (!query_result || !query_result.max_depth) return 0
+    return Util.parseInt(query_result.max_depth)
+  }
+  getAllGroupFolderList = async (group_seq, depth = null) => {
+    const filter = { group_seq }
+    if (depth !== null) filter.depth = depth
+    return this.find(filter)
   }
   updateStatusTrash = async (operation_seq_list, group_seq, status) => {
     let filters = null

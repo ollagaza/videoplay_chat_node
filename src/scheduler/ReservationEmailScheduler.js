@@ -2,7 +2,7 @@ import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import SendMailService from "../service/etc/SendMailService";
 
-class ReservationEmailScheduler {
+class ReservationEmailSchedulerClass {
   constructor () {
     this.current_job = null
     this.log_prefix = '[ReservationEmailScheduler]'
@@ -35,11 +35,20 @@ class ReservationEmailScheduler {
   }
 
   sendReservationEmail = () => {
-    log.debug(this.log_prefix, '[ReservationEmailScheduler]')
-    SendMailService.sendReservationEmail()
+    log.debug(this.log_prefix, '[sendReservationEmail]', 'start');
+    (
+      async () => {
+        try {
+          await SendMailService.sendReservationEmail()
+          log.debug(this.log_prefix, '[sendReservationEmail]', 'end');
+        } catch (error) {
+          log.error(this.log_prefix, '[sendReservationEmail]', error)
+        }
+      }
+    )()
   }
 }
 
-const reservation_Email_scheduler = new ReservationEmailScheduler()
+const ReservationEmailScheduler = new ReservationEmailSchedulerClass()
 
-export default reservation_Email_scheduler
+export default ReservationEmailScheduler
