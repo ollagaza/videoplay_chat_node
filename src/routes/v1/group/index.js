@@ -378,7 +378,7 @@ routes.post('/updategradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   res.json(output)
 }))
 
-routes.post('/pause/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/pause/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const output = new StdObject()
