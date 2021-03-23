@@ -6,7 +6,8 @@ import DBMySQL from "../../database/knex-mysql";
 import GroupBoardDataModel from '../../database/mysql/board/GroupBoardDataModel'
 import GroupBoardCommentModel from '../../database/mysql/board/GroupBoardCommentModel'
 import logger from "../../libs/logger";
-import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
+import GroupService from '../group/GroupService'
+import Constants from '../../constants/constants'
 
 const GroupBoardDataServiceClass = class {
   constructor() {
@@ -130,7 +131,7 @@ const GroupBoardDataServiceClass = class {
       })
       this.incrementBoardCommentCount(comment_data.board_data_seq)
 
-      this.updateGroupMemberCount(comment_data.group_seq, comment_data.member_seq, 'board_comment', 'up')
+      GroupService.onChangeGroupMemberContentCount(comment_data.group_seq, comment_data.member_seq, 'board_comment', Constants.UP)
     }
     return result;
   }
@@ -146,19 +147,6 @@ const GroupBoardDataServiceClass = class {
         }
       }
     )(board_data_seq)
-  }
-
-  updateGroupMemberCount = (group_seq, member_seq, update_column, updown_type, count = 1) => {
-    (
-      async (group_seq, member_seq, update_column, updown_type, count) => {
-        try {
-          const group_member_model = new GroupMemberModel(DBMySQL);
-          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_seq, member_seq, update_column, updown_type, count)
-        } catch (error) {
-          logger.error(this.log_prefix, '[updateGroupMemberCount]', group_seq, member_seq, update_column, updown_type, count, error)
-        }
-      }
-    )(group_seq, member_seq, update_column, updown_type, count)
   }
 
   CreateUpdateBoardData = async (database, board_data) => {
@@ -200,7 +188,7 @@ const GroupBoardDataServiceClass = class {
     }
 
     if (board_data.status !== 'T') {
-      this.updateGroupMemberCount(board_data.group_seq, board_data.member_seq, 'board_cnt', 'up')
+      GroupService.onChangeGroupMemberContentCount(board_data.group_seq, board_data.member_seq, 'board_cnt', Constants.UP)
     }
     return result
   }
@@ -239,7 +227,7 @@ const GroupBoardDataServiceClass = class {
 
     const result = await model.DeleteComment(delete_status, comment_seq)
 
-    this.updateGroupMemberCount(comment_info.group_seq, comment_info.member_seq, 'board_comment', 'down', 1)
+    GroupService.onChangeGroupMemberContentCount(comment_info.group_seq, comment_info.member_seq, 'board_comment', Constants.DOWN, 1)
 
     const board_model = this.getGroupBoardDataModel(database)
     await board_model.decrementBoardCommentCnt(board_data_seq, 1)
@@ -252,7 +240,7 @@ const GroupBoardDataServiceClass = class {
     const target_info = await model.getBoardDataDetail(board_seq)
 
     if (target_info.status === 'Y') {
-      this.updateGroupMemberCount(target_info.group_seq, target_info.member_seq, 'board_cnt', 'down')
+      GroupService.onChangeGroupMemberContentCount(target_info.group_seq, target_info.member_seq, 'board_cnt', Constants.DOWN)
       const comment_count_list = await board_comment_model.getBoardCommentCountList(board_seq)
       this.decreaseCommentCount(comment_count_list, target_info.group_seq)
       await model.DeleteBoardData(board_seq)
@@ -264,18 +252,13 @@ const GroupBoardDataServiceClass = class {
   }
 
   decreaseCommentCount = (comment_count_list, group_seq) => {
-    (
-      async (comment_count_list, group_seq) => {
-        const group_member_model = new GroupMemberModel(DBMySQL)
-        for (let i = 0; i < comment_count_list.length; i++) {
-          try {
-            await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_seq, comment_count_list[i].member_seq, 'board_comment', 'down', comment_count_list[i].cnt)
-          } catch (e) {
-            logger.error(this.log_prefix, 'decreaseCommentCount', comment_count_list, group_seq, e)
-          }
-        }
+    for (let i = 0; i < comment_count_list.length; i++) {
+      try {
+        GroupService.onChangeGroupMemberContentCount(group_seq, comment_count_list[i].member_seq, 'board_comment', Constants.DOWN, comment_count_list[i].cnt)
+      } catch (e) {
+        logger.error(this.log_prefix, 'decreaseCommentCount', comment_count_list, group_seq, e)
       }
-    )(comment_count_list, group_seq)
+    }
   }
 
   ChangeBoardToNotice = async (database, board_data_seq, notice_num) => {

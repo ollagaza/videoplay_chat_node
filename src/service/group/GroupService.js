@@ -671,7 +671,7 @@ const GroupServiceClass = class {
     await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
 
     const group_model = this.getGroupModel(database);
-    await group_model.group_member_count(group_invite_info.group_seq, 'up');
+    await group_model.group_member_count(group_invite_info.group_seq, Constants.UP);
 
     this.sendGroupJoinAlarm(group_invite_info.group_seq, member_info)
 
@@ -1292,7 +1292,7 @@ const GroupServiceClass = class {
             result_info.msg = '필수 정보가 누락되었습니다.'
           } else {
             if (group_info.group_join_way !== 1) {
-              await group_model.group_member_count(group_seq, 'up')
+              await group_model.group_member_count(group_seq, Constants.UP)
               this.sendGroupJoinAlarm(group_seq, member_info)
             } else {
               this.sendGroupJoinRequestAlarm(group_seq, member_info)
@@ -1319,7 +1319,7 @@ const GroupServiceClass = class {
         result_info.msg = '회원가입 신청에 실패하였습니다.'
       } else {
         if (group_info.group_join_way !== 1) {
-          await group_model.group_member_count(group_seq, 'up')
+          await group_model.group_member_count(group_seq, Constants.UP)
           this.sendGroupJoinAlarm(group_seq, member_info)
         } else {
           this.sendGroupJoinRequestAlarm(group_seq, member_info)
@@ -1483,7 +1483,7 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database);
     const status = join_info.join_type === 'join' ? 'Y' : 'C';
     if (status === 'Y') {
-      await group_model.group_member_count(group_seq, 'up');
+      await group_model.group_member_count(group_seq, Constants.UP);
     }
     return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
   }
@@ -1502,7 +1502,7 @@ const GroupServiceClass = class {
     const group_model = this.getGroupModel(database);
     let change_grade = '1';
     const update_cnt = await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
-    return await group_model.group_member_count(group_seq, 'up', update_cnt);
+    return await group_model.group_member_count(group_seq, Constants.UP, update_cnt);
   }
 
   changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
@@ -1532,7 +1532,7 @@ const GroupServiceClass = class {
         const operation_comment_list = await OperationCommentService.getCommentList(database, operation_data.seq, params)
         for (let k = 0; k < operation_comment_list.length; k++) {
           const del_count = await OperationCommentService.deleteAllComment(database, group_seq, operation_comment_list[k].member_seq);
-          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_seq, operation_comment_list[k].member_seq, 'vid_comment', 'down', del_count);
+          this.onChangeGroupMemberContentCount(group_seq, operation_comment_list[k].member_seq, 'vid_comment', Constants.DOWN, del_count);
         }
         const clip_list = await OperationClipService.findByOperationSeq(operation_list[j].seq);
         for (let k = 0; k < clip_list.length; k++) {
@@ -1554,8 +1554,7 @@ const GroupServiceClass = class {
 
   getMemberGroupAllCount = async (database, member_seq, option) => {
     const group_member_model = this.getGroupMemberModel(database)
-    const group_summary = await group_member_model.getMemberGroupAllCount(member_seq, option)
-    return group_summary;
+    return group_member_model.getMemberGroupAllCount(member_seq, option)
   }
   GroupMemberCountSync = async (database) => {
     const group_model = this.getGroupModel(database)
@@ -1590,10 +1589,10 @@ const GroupServiceClass = class {
   }
   setGroupMemberCount = async (databases, group_seq, type, count = 1) => {
     const group_model = this.getGroupModel(databases);
-    if (type === 'up') {
-      await group_model.group_member_count(group_seq, 'up', count);
-    } else if (type === 'down') {
-      await group_model.group_member_count(group_seq, 'down', count);
+    if (type === Constants.UP) {
+      await group_model.group_member_count(group_seq, Constants.UP, count);
+    } else if (type === Constants.DOWN) {
+      await group_model.group_member_count(group_seq, Constants.DOWN, count);
     }
   }
   setMemberPauseReset = async () => {
@@ -1619,6 +1618,19 @@ const GroupServiceClass = class {
       status.use_storage_size = Util.parseInt(group_info.used_storage_size)
     }
     return status
+  }
+
+  onChangeGroupMemberContentCount = (group_seq, member_seq, update_column, type, count = 1) => {
+    (
+      async (group_seq, member_seq, update_column, type, count) => {
+        try {
+          const group_member_model = this.getGroupMemberModel()
+          await group_member_model.updateGroupMemberContentCount(group_seq, member_seq, update_column, type, count)
+        } catch (error) {
+          log.error(this.log_prefix, '', `{ group_seq: ${group_seq}, member_seq: ${member_seq}, update_column: ${update_column}, type: ${type}, count: ${count} }`, error)
+        }
+      }
+    )(group_seq, member_seq, update_column, type, count)
   }
 }
 

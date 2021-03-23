@@ -14,6 +14,7 @@ import GroupBoardListService from "../../../service/board/GroupBoardListService"
 import OperationDataService from "../../../service/operation/OperationDataService";
 import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
 import OperationCommentService from "../../../service/operation/OperationCommentService";
+import Constants from '../../../constants/constants'
 
 const routes = Router()
 
@@ -472,7 +473,7 @@ routes.post('/bangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
     ban_cnt++;
   }
   if (ban_cnt > 0) {
-    await GroupService.setGroupMemberCount(DBMySQL, group_seq, 'down', ban_cnt);
+    await GroupService.setGroupMemberCount(DBMySQL, group_seq, Constants.DOWN, ban_cnt);
   }
   const output = new StdObject()
   const result = await GroupService.updateBanList(DBMySQL, group_seq, ban_info)
@@ -625,7 +626,7 @@ routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.DEFAULT), Wrap(asyn
   const result = await GroupService.GroupMemberStatusUpdate(DBMySQL, mem_info.group_seq, mem_info)
   if (mem_info.count) {
     if (mem_info.status === 'D') {
-      await GroupService.setGroupMemberCount(DBMySQL, mem_info.group_seq, 'down');
+      await GroupService.setGroupMemberCount(DBMySQL, mem_info.group_seq, Constants.DOWN);
     }
   }
   output.add('result', result)

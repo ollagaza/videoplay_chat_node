@@ -3,6 +3,7 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/Util'
 import GroupMemberInfo from '../../../wrapper/member/GroupMemberInfo'
 import log from '../../../libs/logger'
+import Constants from '../../../constants/constants'
 
 export default class GroupMemberModel extends MySQLModel {
   constructor (database) {
@@ -881,38 +882,10 @@ export default class GroupMemberModel extends MySQLModel {
     query.where(filter)
     query.first()
 
-    const query_result = await query
-    // log.debug(this.log_prefix, '[getMemberGroupAllCount]', query_result)
-    return query_result
+    return query
   }
 
-  setUpdateGroupMemberCounts = async (group_member_seq, update_column, updown_type, count = 1) => {
-    const set_count = count;
-    const filter = {
-      seq: group_member_seq
-    }
-    const update_params = {}
-    if (update_column === 'vid') {
-      update_params.vid_cnt = set_count;
-    } else if (update_column === 'anno') {
-      update_params.anno_cnt = set_count;
-    } else if (update_column === 'vid_comment') {
-      update_params.comment_cnt = set_count;
-    } else if (update_column === 'board_comment') {
-      update_params.board_comment_cnt = set_count;
-    } else if (update_column === 'board_cnt') {
-      update_params.board_cnt = set_count;
-    }
-    let update_result = null;
-    if (updown_type === 'up') {
-      update_result = await this.increment(filter, update_params)
-    } else if (updown_type === 'down') {
-      update_result = await this.decrement(filter, update_params)
-    }
-    log.debug(this.log_prefix, '[setUpdateGroupMemberCounts]', update_result)
-    return update_result
-  }
-  setUpdateGroupMemberCountsWithGroupSeqMemberSeq = async (group_seq, member_seq, update_column, updown_type, count = 1) => {
+  updateGroupMemberContentCount = async (group_seq, member_seq, update_column, type, count = 1) => {
     const set_count = count;
     const filter = {
       group_seq,
@@ -931,12 +904,11 @@ export default class GroupMemberModel extends MySQLModel {
       update_params.board_cnt = set_count;
     }
     let update_result = null;
-    if (updown_type === 'up') {
+    if (type === Constants.UP) {
       update_result = await this.increment(filter, update_params)
-    } else if (updown_type === 'down') {
+    } else if (type === Constants.DOWN) {
       update_result = await this.decrement(filter, update_params)
     }
-    log.debug(this.log_prefix, '[setUpdateGroupMemberCountsWithGroupSeqMemberSeq]', update_result)
     return update_result
   }
   getGroupMemberInfo = async (group_seq, member_seq) => {
@@ -980,7 +952,6 @@ export default class GroupMemberModel extends MySQLModel {
   }
 
   setPauseMemberReset = async () => {
-    const oKnex = this.database.raw('UPDATE group_member SET status = \'Y\', pause_edate = null WHERE status = \'p\' AND pause_edate <= now() AND pause_edate IS NOT NULL');
-    return oKnex
+    return this.database.raw('UPDATE group_member SET status = \'Y\', pause_edate = null WHERE status = \'p\' AND pause_edate <= now() AND pause_edate IS NOT NULL')
   }
 }

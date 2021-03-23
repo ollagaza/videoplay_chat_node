@@ -6,8 +6,9 @@ import ServiceConfig from '../../service/service-config'
 import striptags from 'striptags'
 import log from '../../libs/logger'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
-import GroupMemberModel from '../../database/mysql/group/GroupMemberModel'
 import GroupAlarmService from '../group/GroupAlarmService'
+import GroupService from '../group/GroupService'
+import Constants from '../../constants/constants'
 
 const OperationCommentServiceClass = class {
   constructor () {
@@ -59,8 +60,7 @@ const OperationCommentServiceClass = class {
 
     const comment_seq = await comment_model.createComment(operation_data_seq, create_params)
 
-    const group_member_model = new GroupMemberModel(database)
-    group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid_comment', 'up');
+    GroupService.onChangeGroupMemberContentCount(group_member_info.group_seq, member_info.seq, 'vid_comment', Constants.UP);
 
     if (is_reply && parent_seq) {
       await comment_model.updateReplyCount(operation_data_seq, parent_seq)
@@ -114,8 +114,7 @@ const OperationCommentServiceClass = class {
     const comment_info = await comment_model.getComment(operation_data_seq, comment_seq);
 
     if (comment_info) {
-      const group_member_model = new GroupMemberModel(database)
-      group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(comment_info.group_seq, comment_info.member_seq, 'vid_comment', 'down');
+      GroupService.onChangeGroupMemberContentCount(comment_info.group_seq, comment_info.member_seq, 'vid_comment', Constants.DOWN);
     }
     const parent_seq = request_body ? request_body.parent_seq : null
     const is_reply = request_body ? request_body.is_reply === true : false
@@ -174,13 +173,24 @@ const OperationCommentServiceClass = class {
     const origin_list = await comment_model.getOriginCommentList(origin_data_seq)
     if (origin_list && origin_list.length) {
       const change_seq_map = {}
+      const member_seq_map = {}
       for (let i = 0; i < origin_list.length; i++) {
         const comment_info = origin_list[i]
+        const member_seq = comment_info.member_seq
         if (comment_info.is_reply === 0) {
           await comment_model.copyParentComment(comment_info, operation_data_seq, group_seq, change_seq_map)
         } else {
           await comment_model.copyReplyComment(comment_info, operation_data_seq, group_seq, change_seq_map)
         }
+        if (!member_seq_map[member_seq]) {
+          member_seq_map[member_seq] = 0
+        }
+        member_seq_map[member_seq]++
+      }
+      const member_seq_list = Object.keys(member_seq_map)
+      for (let i = 0; i < member_seq_map.length; i++) {
+        const member_seq = member_seq_list[i]
+        GroupService.onChangeGroupMemberContentCount(group_seq, member_seq, 'vid_comment', Constants.DOWN)
       }
     }
   }

@@ -43,6 +43,9 @@ const ARCHIVE = 'archive'
 const OBJECT = 'object'
 const LOCAL = 'local'
 
+const UP = 'up'
+const DOWN = 'down'
+
 export default {
   'NONE': NONE,
   'NO_MEDIA': NO_MEDIA,
@@ -76,5 +79,7 @@ export default {
   'ARCHIVE': ARCHIVE,
   'OBJECT': OBJECT,
   'LOCAL': LOCAL,
-  'MAX_ARCHIVE_FILE_SIZE': MAX_ARCHIVE_FILE_SIZE
+  'MAX_ARCHIVE_FILE_SIZE': MAX_ARCHIVE_FILE_SIZE,
+  'UP': UP,
+  'DOWN': DOWN
 }
