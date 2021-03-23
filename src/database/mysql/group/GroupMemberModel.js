@@ -41,7 +41,7 @@ export default class GroupMemberModel extends MySQLModel {
 
     this.group_invite_select = [
       'group_member.invite_code', 'group_member.member_seq AS join_member_seq', 'group_member.seq AS invite_seq', 'group_member.grade',
-      'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.invite_status',
+      'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.invite_status', 'group_member.invite_email', 'group_member.invite_date',
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
       'group_info.group_name', 'group_info.expire_date AS group_expire_date',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
@@ -953,5 +953,24 @@ export default class GroupMemberModel extends MySQLModel {
 
   setPauseMemberReset = async () => {
     return this.database.raw('UPDATE group_member SET status = \'Y\', pause_edate = null WHERE status = \'p\' AND pause_edate <= now() AND pause_edate IS NOT NULL')
+  }
+
+  setInviteInfoMerge = async (invite_info, group_seq, member_seq) => {
+    const delete_filter = {
+      seq: invite_info.invite_seq
+    }
+    await this.delete(delete_filter)
+
+    const filter = {
+      group_seq,
+      member_seq
+    }
+    const update_params = {
+      invite_code: invite_info.invite_code,
+      invite_email: invite_info.invite_email,
+      invite_status: invite_info.invite_status,
+      invite_date: invite_info.invite_date,
+    }
+    return await this.update(filter, update_params)
   }
 }

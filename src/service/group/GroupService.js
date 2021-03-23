@@ -630,7 +630,11 @@ const GroupServiceClass = class {
       const group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
       log.debug(this.log_prefix, '[getInviteGroupInfo]', member_seq, group_member_info.toJSON())
       if (!group_member_info.isEmpty()) {
-        if (group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE || group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE_NO_VIEW || group_member_info.group_member_status === this.MEMBER_STATUS_NORMAL) {
+        if (group_invite_info.invite_seq !== group_member_info.group_member_seq) {
+          await group_member_model.setInviteInfoMerge(group_invite_info, group_seq, member_seq)
+          group_invite_info.invite_seq = group_member_info.group_member_seq;
+        }
+        if (group_member_info.group_member_status === this.MEMBER_STATUS_NORMAL || group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE || group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE_NO_VIEW) {
           // pass
         } else {
           throw this.getInviteMemberStatusError(group_seq, group_name, group_member_info.group_member_status)
