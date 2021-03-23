@@ -1628,10 +1628,11 @@ const GroupServiceClass = class {
     (
       async (group_seq, member_seq, update_column, type, count) => {
         try {
+          log.debug(this.log_prefix, '[onChangeGroupMemberContentCount]', `{ group_seq: ${group_seq}, member_seq: ${member_seq}, update_column: ${update_column}, type: ${type}, count: ${count} }`)
           const group_member_model = this.getGroupMemberModel()
           await group_member_model.updateGroupMemberContentCount(group_seq, member_seq, update_column, type, count)
         } catch (error) {
-          log.error(this.log_prefix, '', `{ group_seq: ${group_seq}, member_seq: ${member_seq}, update_column: ${update_column}, type: ${type}, count: ${count} }`, error)
+          log.error(this.log_prefix, '[onChangeGroupMemberContentCount]', `{ group_seq: ${group_seq}, member_seq: ${member_seq}, update_column: ${update_column}, type: ${type}, count: ${count} }`, error)
         }
       }
     )(group_seq, member_seq, update_column, type, count)

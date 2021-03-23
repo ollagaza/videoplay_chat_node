@@ -188,9 +188,9 @@ const OperationCommentServiceClass = class {
         member_seq_map[member_seq]++
       }
       const member_seq_list = Object.keys(member_seq_map)
-      for (let i = 0; i < member_seq_map.length; i++) {
+      for (let i = 0; i < member_seq_list.length; i++) {
         const member_seq = member_seq_list[i]
-        GroupService.onChangeGroupMemberContentCount(group_seq, member_seq, 'vid_comment', Constants.DOWN)
+        GroupService.onChangeGroupMemberContentCount(group_seq, member_seq, 'vid_comment', Constants.UP, member_seq_map[member_seq])
       }
     }
   }
