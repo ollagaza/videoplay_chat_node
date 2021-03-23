@@ -615,11 +615,8 @@ const GroupServiceClass = class {
             output.message = '만료된 초대코드입니다.'
           }
           output.httpStatusCode = 400
-        } else {
-          output.error = -2
-          output.message = '만료된 초대코드입니다.'
+          throw output
         }
-        throw output
       }
     }
     if (group_invite_info.invite_status !== 'Y') {

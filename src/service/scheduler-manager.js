@@ -5,7 +5,7 @@ import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler";
 import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDeleteScheduler";
 import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
 import GroupInfoMemberCountSyncScheduler from "../scheduler/GroupInfoMemberCountSyncScheduler";
-import GroupMemberPuaseResetScheduler from "../scheduler/GroupMemberPuaseResetScheduler";
+import GroupMemberPauseResetScheduler from "../scheduler/GroupMemberPauseResetScheduler";
 
 const SchedulerManagerClass = class {
   constructor() {
@@ -20,11 +20,11 @@ const SchedulerManagerClass = class {
       ThreeMonthsEmailDeleteScheduler.startSchedule()
       GroupDataCountingScheduler.startSchedule()
       GroupInfoMemberCountSyncScheduler.startSchedule()
-      GroupMemberPuaseResetScheduler.startSchedule()
+      GroupMemberPauseResetScheduler.startSchedule()
     }
   }
 }
 
-const scheduler_manager = new SchedulerManagerClass()
+const SchedulerManager = new SchedulerManagerClass()
 
-export default scheduler_manager
+export default SchedulerManager

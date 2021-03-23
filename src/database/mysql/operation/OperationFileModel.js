@@ -29,8 +29,12 @@ export default class OperationFileModel extends MySQLModel {
     return query
   }
 
+  deleteFileByOperationSeq = async (operation_seq) => {
+    return this.delete({ operation_seq })
+  }
+
   deleteFile = async (operation_seq, file_seq) => {
-    return this.delete({ seq: file_seq, operation_seq})
+    return this.delete({ seq: file_seq, operation_seq })
   }
 
   deleteFolder = async (operation_seq, directory) => {

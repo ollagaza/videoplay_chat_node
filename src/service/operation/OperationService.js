@@ -236,7 +236,6 @@ const OperationServiceClass = class {
       const operation_storage_info = await this.getOperationStorageModel(DBMySQL).copyOperationStorageInfo(operation_info, origin_operation_seq)
       const storage_seq = operation_storage_info.seq
       const origin_storage_seq = operation_storage_info.origin_storage_seq
-      await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_storage_info.total_file_size);
 
       result.operation_seq = operation_seq
       result.operation_media_seq = operation_media_seq
@@ -322,6 +321,7 @@ const OperationServiceClass = class {
         }
 
         result.success = true
+        await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
       }
     } catch (e) {
       log.error(this.log_prefix, '[copyOperationOne]', origin_operation_seq, e, result)
@@ -424,8 +424,7 @@ const OperationServiceClass = class {
     const operation_model = this.getOperationModel()
     await operation_model.setOperationStatusDelete(operation_info.seq)
     await OperationDataService.changeStatus(operation_info.seq, 'D')
-    await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, 0);
-    await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
+    await OperationFileService.deleteOperationFileByOperationSeq(null, operation_info.seq)
 
     await this.deleteMongoDBData(operation_info.seq)
     this.onOperationDeleteComplete(operation_info)
@@ -457,6 +456,8 @@ const OperationServiceClass = class {
             VacsService.updateStorageInfo()
             VacsService.increaseCount(0, 1)
           }
+          await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
+          await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
         } catch (e) {
           log.error(this.log_prefix, '[onOperationDeleteComplete]', e)
         }
@@ -794,9 +795,9 @@ const OperationServiceClass = class {
   }
 
   updateStorageSize = async (operation_info) => {
-    const storage_size = await new OperationStorageModel(DBMySQL).updateUploadFileSize(operation_info, OperationFileService.TYPE_ALL)
+    await new OperationStorageModel(DBMySQL).updateUploadFileSize(operation_info, OperationFileService.TYPE_ALL)
     await GroupService.updateMemberUsedStorage(null, operation_info.group_seq, operation_info.member_seq)
-    await OperationFolderService.OperationFolderStorageSize(null, operation_info, operation_info.total_file_size, storage_size);
+    await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
     if (ServiceConfig.isVacs()) {
       VacsService.updateStorageInfo()
     }
@@ -1031,25 +1032,26 @@ const OperationServiceClass = class {
     await model.updateStatusTrash(seq_list, status)
     await OperationDataService.updateOperationDataByOperationSeqList(seq_list, status)
 
-    for (let cnt = 0; cnt < seq_list.length; cnt++) {
-      const where = { 'operation.seq': seq_list[cnt] }
-      const operation_info = await model.getOperation(where);
+    try {
+      for (let cnt = 0; cnt < seq_list.length; cnt++) {
+        const where = { 'operation.seq': seq_list[cnt] }
+        const operation_info = await model.getOperation(where);
 
-      const group_member_model = this.getGroupMemberModel(database);
+        const group_member_model = this.getGroupMemberModel(database);
 
-      if (status === 'T') {
-        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'down');
-      } else if (status === 'Y') {
-        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'up');
-      }
+        if (status === 'T') {
+          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'down');
+        } else if (status === 'Y') {
+          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'up');
+        }
 
-      if (operation_info.folder_seq !== null) {
-        if (is_delete) {
-          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_info.total_file_size);
-        } else {
-          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, operation_info.total_file_size, 0);
+        if (operation_info.folder_seq !== null) {
+          await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
         }
       }
+    } catch (error) {
+      log.error(this.log_prefix, '[updateStatusTrash]', seq_list, member_seq, is_delete, error)
+      throw error
     }
 
     return true
@@ -1063,23 +1065,28 @@ const OperationServiceClass = class {
     return true
   }
 
-  moveOperationFolder = async (database, operation_seq_list, folder_info) => {
+  moveOperationFolder = async (database, group_seq, operation_seq_list, folder_info) => {
+    log.debug(this.log_prefix, '[moveOperationFolder]', 'group_seq', group_seq, 'operation_seq_list', operation_seq_list)
     try {
       const model = this.getOperationModel(database)
-
+      const old_folder_map = {}
       for (let cnt = 0; cnt < operation_seq_list.length; cnt++) {
         const where = { 'operation.seq': operation_seq_list[cnt] }
         const operation_info = await model.getOperation(where);
-        if (operation_info.folder_seq !== null) {
-          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, operation_info.total_file_size, 0);
-        }
-        if (folder_info) {
-          operation_info.folder_seq = folder_info.seq;
-          await OperationFolderService.OperationFolderStorageSize(DBMySQL, operation_info, 0, operation_info.total_file_size);
+        if (operation_info.folder_seq) {
+          old_folder_map[operation_info.folder_seq] = true
         }
       }
 
       await model.moveOperationFolder(operation_seq_list, folder_info ? folder_info.seq : null)
+      if (folder_info) {
+        await OperationFolderService.onChangeFolderSize(group_seq, folder_info.seq)
+      }
+      const old_folder_key_list = Object.keys(old_folder_map)
+      log.debug(this.log_prefix, '[moveOperationFolder]', 'old_folder_key_list', old_folder_key_list)
+      for (let i = 0; i < old_folder_key_list.length; i++) {
+        await OperationFolderService.onChangeFolderSize(group_seq, old_folder_key_list[i])
+      }
     } catch (e) {
       throw e
     }

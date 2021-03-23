@@ -23,10 +23,10 @@ export default {
     await initDirectories()
     await SocketManager.init()
     await MongoDataService.init()
+    SchedulerManager.init()
     if (ServiceConfig.isVacs() === false) {
       await NaverArchiveStorageService.init()
       await NaverObjectStorageService.init()
-      SchedulerManager.init()
     } else {
       VacsScheduler.startSchedule()
     }

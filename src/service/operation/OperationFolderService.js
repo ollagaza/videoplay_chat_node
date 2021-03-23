@@ -7,6 +7,8 @@ import OperationService from '../operation/OperationService'
 import OperationModel from "../../database/mysql/operation/OperationModel";
 import OperationFolderModel from '../../database/mysql/operation/OperationFolderModel'
 import OperationFolderInfo from '../../wrapper/operation/OperationFolderInfo'
+import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
+import Util from '../../utils/Util'
 
 const OperationFolderServiceClass = class {
   constructor () {
@@ -246,67 +248,46 @@ const OperationFolderServiceClass = class {
       return false
     }
   }
-  OperationFolderStorageSize = async (database, operation_info, old_storage_size, new_storage_size) => {
-    if (operation_info.folder_seq !== null) {
-      const model = this.getOperationFolderModel(database)
-      const folder_info = await this.getFolderInfo(database, operation_info.group_seq, operation_info.folder_seq)
-      let folder_seqs = null
 
-      if (folder_info.parent_folder_list !== null && folder_info.parent_folder_list.length !== 0) {
-        folder_seqs = _.concat(['in', operation_info.folder_seq], folder_info.parent_folder_list)
-      } else {
-        folder_seqs = ['in', operation_info.folder_seq]
-      }
-      let file_size = 0;
-
-      if (new_storage_size > old_storage_size) {
-        file_size = new_storage_size - (util.isEmpty(old_storage_size) ? 0 : old_storage_size)
-      } else {
-        file_size = (((util.isEmpty(old_storage_size) ? 0 : old_storage_size) - new_storage_size) * -1)
-      }
-
-      const filters = {
-        is_new: true,
-        query: [
-          {seq: folder_seqs}
-        ],
-      }
-
-      return await model.updateFolderStorageSize(filters, file_size)
+  onChangeFolderSize = async (group_seq, folder_seq, is_reset = false) => {
+    if (!folder_seq) return
+    const folder_model = this.getOperationFolderModel(DBMySQL)
+    const folder_info = await folder_model.getFolderInfoBySeq(folder_seq)
+    if (!folder_info) return
+    const child_folder_seq_list = []
+    if (is_reset) {
+      child_folder_seq_list.push(folder_seq)
     } else {
-      return true
+      const child_folder_list = await folder_model.getAllChildFolders(group_seq, folder_seq)
+      for (let i = 0; i < child_folder_list.length; i++) {
+        child_folder_seq_list.push(child_folder_list[i].seq)
+      }
+    }
+    const storage_model = new OperationStorageModel(DBMySQL)
+    const total_file_size = await storage_model.getFolderTotalSize(group_seq, child_folder_seq_list)
+    await folder_model.setFolderStorageSize(folder_seq, total_file_size)
+
+    const change_file_size = is_reset ? total_file_size : total_file_size - Util.parseInt(folder_info.total_folder_size)
+    const parent_folder_list = folder_info.parent_folder_list ? JSON.parse(folder_info.parent_folder_list) : []
+    if (parent_folder_list.length !== 0) {
+      await folder_model.addFolderStorageSizeBySeqList(parent_folder_list, change_file_size)
     }
   }
 
-  SyncFolderTotalSize = async (database, group_seq = null) => {
-    const output = new StdObject();
-    const model = this.getOperationFolderModel(database)
-    const operation_model = new OperationModel(database)
+  syncFolderTotalSize = async (group_seq) => {
+    const folder_model = this.getOperationFolderModel()
     const filter = {}
-    if (group_seq) {
-      filter.group_seq = group_seq
-    }
-    const folder_list = await model.getAllFolderList(filter);
-    output.add('folder_list', folder_list)
+    filter.group_seq = group_seq
 
-    for (let cnt = 0; cnt < folder_list.length; cnt++) {
-      const folder_info = new OperationFolderInfo(folder_list[cnt])
-      const total_size_filter = { group_seq: folder_info.group_seq, folder_seq: folder_info.seq }
-      const total_folder_file_size = await operation_model.getGroupUsedStorageSize(total_size_filter)
-
-      const folder_seq_list = folder_info.parent_folder_list
-      folder_seq_list.push(folder_info.seq)
-      folder_seq_list.unshift('in')
-      const update_folder_size_filter = {
-        is_new: true,
-        query: [
-          { seq: folder_seq_list }
-        ],
+    const max_depth = await folder_model.getGroupFolderMaxDepth(group_seq)
+    for (let depth  = 0; depth  <= max_depth; depth ++) {
+      const folder_list = await folder_model.getAllGroupFolderList(group_seq, depth)
+      for (let cnt = 0; cnt < folder_list.length; cnt++) {
+        const folder_info = new OperationFolderInfo(folder_list[cnt])
+        log.debug(this.log_prefix, '[syncFolderTotalSize]', group_seq, folder_info.seq)
+        await this.onChangeFolderSize(group_seq, folder_info.seq, true)
       }
-      await model.updateFolderStorageSize(update_folder_size_filter, total_folder_file_size)
     }
-
-    return output
   }
   updateStatusFavorite = async (database, folder_seq, is_delete) => {
     const model = this.getOperationFolderModel(database)
