@@ -123,14 +123,13 @@ export default class OperationCommentModel extends MySQLModel {
   }
 
   getComment = async (operation_data_seq, comment_seq) => {
-    const query = this.database.select(this.list_select_fileds)
+    return this.database.select(this.list_select_fileds)
       .from(this.table_name)
       .leftOuterJoin('group_info', 'group_info.seq', 'operation_comment.group_seq')
       .leftOuterJoin('member', 'member.seq', 'operation_comment.member_seq')
       .where('operation_comment.seq', comment_seq)
       .andWhere('operation_comment.operation_data_seq', operation_data_seq)
       .first()
-    return query
   }
 
   getCommentCount = async (operation_data_seq, parent_seq = null) => {
@@ -223,5 +222,13 @@ export default class OperationCommentModel extends MySQLModel {
 
   deleteAllCommentGroupSeqMemberSeq = async (group_seq, member_seq) => {
     return await this.delete({ group_seq: group_seq, member_seq: member_seq })
+  }
+
+  getChildCommentCountGroupByMemberSeq = async (comment_seq) => {
+    return this.database
+      .select(['member_seq', this.database.raw('COUNT(*) AS comment_count')])
+      .from(this.table_name)
+      .where('parent_seq', comment_seq)
+      .groupBy('member_seq')
   }
 }

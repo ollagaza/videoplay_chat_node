@@ -664,12 +664,10 @@ routes.delete('/delete/comments', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   const comment_data_seq = req.body
 
   for (let cnt = 0; cnt < comment_data_seq.operation.length; cnt++) {
-    await OperationCommentService.deleteComment(DBMySQL, comment_data_seq.operation[cnt].content_data_seq, comment_data_seq.operation[cnt].seq, req)
+    await OperationCommentService.deleteComment(comment_data_seq.operation[cnt].content_data_seq, comment_data_seq.operation[cnt].seq, req)
   }
   for (let cnt = 0; cnt < comment_data_seq.board.length; cnt++) {
-    await DBMySQL.transaction(async (transaction) => {
-      await GroupBoardDataService.DeleteComment(transaction, comment_data_seq.board[cnt].content_data_seq, comment_data_seq.board[cnt].seq);
-    })
+    await GroupBoardDataService.DeleteComment(DBMySQL, comment_data_seq.board[cnt].content_data_seq, comment_data_seq.board[cnt].seq);
   }
   res.json(output);
 }))
