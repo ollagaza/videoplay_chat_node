@@ -1428,7 +1428,7 @@ const GroupServiceClass = class {
           btn_link_url: `${service_domain}/`
         }
         const body = GroupMailTemplate.unPauseGroupMember(template_data)
-        await this.sendMessageBySeqList(admin_member_info.group_seq, group_member_seq_list, title, message_info, body, 'sendMemberUnPauseMessage')
+        await this.sendMessageBySeqList(null, group_member_seq_list, title, message_info, body, 'sendMemberUnPauseMessage')
       }
     )()
   }
@@ -1500,12 +1500,12 @@ const GroupServiceClass = class {
           btn_link_url: `${service_domain}/`
         }
         const body = GroupMailTemplate.unDeleteGroupMember(template_data)
-        await this.sendMessageBySeqList(admin_member_info.group_seq, group_member_seq_list, title, message_info, body, 'sendMemberUnBanMessage')
+        await this.sendMessageBySeqList(null, group_member_seq_list, title, message_info, body, 'sendMemberUnBanMessage')
       }
     )()
   }
 
-  sendMessageBySeqList = async (group_seq, group_member_seq_list, title, socket_message_info = null, email_body = null, method = null, socket_data_type = null) => {
+  sendMessageBySeqList = async (group_seq, group_member_seq_list, title, socket_message_info = null, email_body = null, method = null, socket_data_type = 'groupMemberStateChange') => {
     const email_map = {}
     const email_to_list = []
     for (let i = 0; i < group_member_seq_list.length; i++) {
