@@ -449,13 +449,12 @@ export default class GroupMemberModel extends MySQLModel {
     return user_seq_list
   }
 
-  getGroupMemberSeq = async (group_member_seq) => {
+  getMemberSeqByGroupMemberSeq = async (group_member_seq) => {
     const filter = {
       'group_member.seq': group_member_seq
     }
-    const query = this.database.select(this.group_member_seq_select)
+    const query = this.database.select(['member_seq'])
     query.from(this.table_name)
-    query.leftOuterJoin('member', { 'group_member.member_seq': 'member.seq' })
     query.where(filter)
     query.first()
     const query_result = await query
@@ -715,46 +714,38 @@ export default class GroupMemberModel extends MySQLModel {
     return await this.update(filter, update_params)
   }
 
-  updatePauseList = async (group_seq, pause_list, status) => {
-    const filter = {
-      group_seq: group_seq
-    }
+  updatePauseList = async (group_seq, seq_list, request_body, status) => {
     const update_params = {
       status: status,
-      pause_reason: pause_list.pause_reason,
-      pause_sdate: pause_list.pause_sdate,
-      pause_member_seq: pause_list.ban_member,
-      pause_edate: pause_list.pause_edate ? pause_list.pause_edate : null,
+      pause_reason: request_body.pause_reason,
+      pause_sdate: request_body.pause_sdate,
+      pause_member_seq: request_body.ban_member,
+      pause_edate: request_body.pause_edate ? request_body.pause_edate : null,
       pause_count: this.database.raw('pause_count + 1'),
       modify_date: this.database.raw('NOW()'),
     }
-    for (let cnt = 0; cnt < pause_list.pause_list.length; cnt++) {
-      filter.seq = pause_list.pause_list[cnt];
-      await this.update(filter, update_params);
-    }
-    return true;
+    return this.database
+      .update(update_params)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .whereIn('seq', seq_list)
   }
 
-  updateBanList = async (group_seq, ban_info, status, grade = 1) => {
-    const filter = {
-      group_seq: group_seq
-    }
+  updateBanList = async (group_seq, seq_list, request_body, status, grade = 1) => {
     const update_params = {
       status: status,
       grade: grade,
       ban_hide: 'N',
-      ban_reason: ban_info.ban_reason,
-      ban_member_seq: ban_info.ban_member,
+      ban_reason: request_body.ban_reason,
+      ban_member_seq: request_body.ban_member,
       ban_date: status === 'D' ? this.database.raw('NOW()') : null,
       modify_date: this.database.raw('NOW()'),
     }
-    let update_cnt = 0;
-    for (let cnt = 0; cnt < ban_info.ban_list.length; cnt++) {
-      filter.seq = ban_info.ban_list[cnt];
-      await this.update(filter, update_params);
-      update_cnt++;
-    }
-    return update_cnt;
+    return this.database
+      .update(update_params)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .whereIn('seq', seq_list)
   }
 
   groupJoinList = async (group_seq, join_list, status) => {

@@ -135,15 +135,15 @@ const group_grade_admin_form = `
 const group_pause_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>의 SurgStory 사용이 <span style="color: #2e6bb8;">일시 중단</span> 되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span>채널의 SurgStory 사용이 <span style="color: #2e6bb8;">일시 중단</span> 되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
       <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님의 채널 계정 접근을
       <span style="color: #2e6bb8; font-weight: bold;">일시 중단</span> 하였습니다.<br>
-      이제 채널 활동을 할 수 없으며, 계정에 있는 파일에 접근할 수 없습니다.<br>
-      ("{group_name}"의 SurgStory 외에 다른 플랜은 접근이 가능합니다.)
+      이제 채널 활동을 할 수 없으며, 채널에 있는 파일에 접근할 수 없습니다.<br>
+      ("{group_name}"의 SurgStory 외에 다른 채널은 접근이 가능합니다.)
     </td>
   </tr>
   <tr>
@@ -161,7 +161,7 @@ const group_pause_form = `
 const group_un_pause_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>의 SurgStory 일시 중단이 <span style="color: #2e6bb8;">해제</span>되어 다시 접근이 가능합니다
+      <span style="color: #ffa00f;">"{group_name}"</span>채널의 SurgStory 일시 중단이 <span style="color: #2e6bb8;">해제</span>되어 다시 접근이 가능합니다
     </td>
   </tr>
   <tr>
@@ -184,9 +184,9 @@ const group_delete_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 팀원에서 제외하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 팀원에서 제외하였습니다.<br>
       이제 채널 활동을 할 수 없으며, 계정에 있는 파일에 접근할 수 없습니다.<br>
-      ("{group_name}"의 SurgStory 외에 다른 플랜은 접근이 가능합니다.)
+      ("{group_name}"의 SurgStory 외에 다른 채널은 접근이 가능합니다.)
     </td>
   </tr>
   <tr>

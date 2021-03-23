@@ -99,11 +99,11 @@ const SocketManagerClass = class extends EventEmitter {
   }
 
   sendToFrontGroup = async (group_seq, data = null) => {
-    this.socket.emit('sendFrontGroup', group_seq, data)
+    this.socket.emit('sendMessageToGroup', group_seq, data)
   }
 
   sendToFrontGroupOne = async (group_seq, member_seq, data = null) => {
-    this.socket.emit('sendFrontGroupOne', group_seq, member_seq, data)
+    this.socket.emit('sendMessageToGroupOne', group_seq, member_seq, data)
   }
 }
 
