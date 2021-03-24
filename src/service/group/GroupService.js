@@ -199,6 +199,7 @@ const GroupServiceClass = class {
       group_name: options.group_name ? options.group_name.trim() : member_info.user_nickname.trim(),
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size: 0,
+      gnb_color: options.group_color,
       is_set_group_name,
       pay_code,
       start_date,

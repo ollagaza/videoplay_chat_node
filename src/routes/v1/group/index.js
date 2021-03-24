@@ -201,6 +201,7 @@ routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_
     start_date: (Util.getToDate()).concat(' 00:00:00'),
     expire_date: (Util.getDateYearAdd(Util.getToDate(), 1)).concat(' 23:59:59'),
     group_name: params.group_name.trim(),
+    group_color: params.group_color.trim(),
     group_open: params.group_open,
     is_channel: params.group_open,
     group_join_way: params.group_join_way,
