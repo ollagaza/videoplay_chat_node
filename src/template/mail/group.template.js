@@ -72,7 +72,7 @@ const invite_group_form = `
 
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">초대 수락</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">초대 수락</a>
     </td>
   </tr>
 `
@@ -105,7 +105,7 @@ const invite_group_form_no_comment = `
 
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">초대 수락</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">초대 수락</a>
     </td>
   </tr>
 `
@@ -128,7 +128,7 @@ const group_grade_admin_form = `
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="" target="_blank" style="text-decoration: none; width: 180px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">관리 콘솔 바로가기</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 180px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">관리 콘솔 바로가기</a>
     </td>
   </tr>
 `
@@ -183,7 +183,7 @@ const group_pause_unlimit_form = `
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
     </td>
   </tr>
 `
@@ -201,7 +201,7 @@ const group_un_pause_form = `
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
     </td>
   </tr>
 `
@@ -226,7 +226,7 @@ const group_delete_form = `
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
     </td>
   </tr>
 `
@@ -250,7 +250,7 @@ const group_un_delete_form = `
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
     </td>
   </tr>
 `
