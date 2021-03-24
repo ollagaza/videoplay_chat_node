@@ -432,13 +432,13 @@ routes.delete('/ban/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async 
   res.json(output)
 }))
 
-routes.post('/chagegrademember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/change/grade/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const change_member_info = req.body.change_member_info;
   const output = new StdObject()
 
-  const result = await GroupService.changeGradeMemberList(DBMySQL, group_seq, change_member_info, group_member_info)
+  const result = await GroupService.changeGradeMemberList(DBMySQL, group_seq, change_member_info, group_member_info, member_info, token_info.getServiceDomain())
   output.add('result', result)
 
   res.json(output)

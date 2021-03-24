@@ -682,15 +682,17 @@ const GroupServiceClass = class {
     return group_invite_info.group_seq
   }
 
-  changeGradeAdmin = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
+  changeGradeAdmin = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, update_grade = true) => {
     const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
     if (!is_group_admin) {
       throw new StdObject(-1, '권한이 없습니다.', 403)
     }
-    const group_member_model = this.getGroupMemberModel(database)
-    await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_ADMIN)
+    if (update_grade) {
+      const group_member_model = this.getGroupMemberModel(database)
+      await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_MANAGER)
+    }
 
-    const title = `'${group_member_info.group_name}'채널의 SurgStory 관리자가 되었습니다.`
+    const title = `'${group_member_info.group_name}'채널의 관리자가 되었습니다.`
     const message_info = {
       title: '채널 관리자 권한 변경',
       message: title
@@ -712,15 +714,17 @@ const GroupServiceClass = class {
     this.sendEmail(title, body, [target_member_info.invite_email], 'changeGradeAdmin')
   }
 
-  changeGradeNormal = async (database, group_member_info, group_member_seq) => {
+  changeGradeNormal = async (database, group_member_info, group_member_seq, update_grade = true) => {
     const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
     if (!is_group_admin) {
       throw new StdObject(-1, '권한이 없습니다.', 403)
     }
-    const group_member_model = this.getGroupMemberModel(database)
-    await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_NORMAL)
+    if (update_grade) {
+      const group_member_model = this.getGroupMemberModel(database)
+      await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_NORMAL)
+    }
 
-    const title = `'${group_member_info.group_name}'채널의 SurgStory 관리자 권한이 해제되었습니다.`
+    const title = `'${group_member_info.group_name}'채널의 관리자 권한이 해제되었습니다.`
     const message_info = {
       title: '채널 관리자 권한 변경',
       message: title,
@@ -1527,17 +1531,30 @@ const GroupServiceClass = class {
     }
   }
 
-  changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
+  changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info, admin_member, service_domain) => {
     const group_member_model = this.getGroupMemberModel(database);
+    const normal_change_list = [];
+    const upgrade_admin_list = [];
     for (let i = 0; i < change_member_info.change_list.length; i++) {
       const target_member_info = await group_member_model.getGroupMemberInfoBySeq(change_member_info.change_list[i]);
       if (target_member_info) {
-        if (target_member_info.grade === '6') {
-          await this.changeGradeNormal(database, group_member_info, change_member_info.change_list[i]);
+        if (target_member_info.grade === this.MEMBER_GRADE_MANAGER && change_member_info.grade !== this.MEMBER_GRADE_MANAGER) {
+          normal_change_list.push(change_member_info.change_list[i])
+        } else if (target_member_info.grade !== this.MEMBER_GRADE_MANAGER && change_member_info.grade === this.MEMBER_GRADE_MANAGER) {
+          upgrade_admin_list.push(change_member_info.change_list[i])
         }
       }
     }
-    return await group_member_model.updateGradeList(group_seq, change_member_info)
+    const result = await group_member_model.updateGradeList(group_seq, change_member_info)
+    if (result) {
+      for (let i = 0; i < normal_change_list.length; i++) {
+        await this.changeGradeNormal(database, group_member_info, normal_change_list[i], false);
+      }
+      for (let i = 0; i < upgrade_admin_list.length; i++) {
+        await this.changeGradeAdmin(database, group_member_info, admin_member, upgrade_admin_list[i], service_domain, false);
+      }
+    }
+    return result;
   }
 
   deleteGroupMemberContents = async (database, group_seq, target_info, token_info) => {
