@@ -321,6 +321,7 @@ const OperationServiceClass = class {
 
         result.success = true
         await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
+        GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, 'vid', Constants.UP, 1)
       }
     } catch (e) {
       log.error(this.log_prefix, '[copyOperationOne]', origin_operation_seq, e, result)
