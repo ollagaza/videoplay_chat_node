@@ -2,6 +2,7 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/Util'
 import GroupInfo from '../../../wrapper/member/GroupInfo'
 import log from '../../../libs/logger'
+import Constants from '../../../constants/constants'
 
 export default class GroupModel extends MySQLModel {
   constructor (database) {
@@ -144,8 +145,7 @@ export default class GroupModel extends MySQLModel {
       .where('group_info.seq', group_seq)
       .first()
 
-    const query_result = await query
-    return query_result
+    return query
   }
 
   getGroupInfoByMemberSeqAndGroupType = async (member_seq, group_type) => {
@@ -323,9 +323,9 @@ export default class GroupModel extends MySQLModel {
     const params = {
       member_count: count,
     }
-    if (type === 'up') {
+    if (type === Constants.UP) {
       await this.increment(filter, params);
-    } else if (type === 'down') {
+    } else if (type === Constants.DOWN) {
       await this.decrement(filter, params);
     }
   }

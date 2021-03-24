@@ -6,8 +6,9 @@ import ServiceConfig from '../../service/service-config'
 import striptags from 'striptags'
 import log from '../../libs/logger'
 import { OperationClipModel } from '../../database/mongodb/OperationClip'
-import GroupMemberModel from '../../database/mysql/group/GroupMemberModel'
 import GroupAlarmService from '../group/GroupAlarmService'
+import GroupService from '../group/GroupService'
+import Constants from '../../constants/constants'
 
 const OperationCommentServiceClass = class {
   constructor () {
@@ -59,8 +60,7 @@ const OperationCommentServiceClass = class {
 
     const comment_seq = await comment_model.createComment(operation_data_seq, create_params)
 
-    const group_member_model = new GroupMemberModel(database)
-    group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid_comment', 'up');
+    GroupService.onChangeGroupMemberContentCount(group_member_info.group_seq, member_info.seq, 'vid_comment', Constants.UP);
 
     if (is_reply && parent_seq) {
       await comment_model.updateReplyCount(operation_data_seq, parent_seq)
@@ -106,30 +106,56 @@ const OperationCommentServiceClass = class {
     return await comment_model.changeComment(operation_data_seq, comment_seq, comment)
   }
 
-  deleteComment = async (database, operation_data_seq, comment_seq, request_body) => {
+  deleteComment = async (operation_data_seq, comment_seq, request_body) => {
     if (!operation_data_seq || !comment_seq) {
       throw new StdObject(-1, '잘못된 요청입니다', 400)
     }
-    const comment_model = this.getOperationCommentModel(database)
-    const comment_info = await comment_model.getComment(operation_data_seq, comment_seq);
-
-    if (comment_info) {
-      const group_member_model = new GroupMemberModel(database)
-      group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(comment_info.group_seq, comment_info.member_seq, 'vid_comment', 'down');
+    const comment_model = this.getOperationCommentModel(DBMySQL)
+    const comment_info = await comment_model.getComment(operation_data_seq, comment_seq)
+    if (!comment_info) {
+      throw new StdObject(-2, '이미 삭제된 댓글입니다.', 400)
     }
+    const group_seq = comment_info.group_seq
+    const comment_count_map = {}
+    comment_count_map[comment_info.member_seq] = 1
+
     const parent_seq = request_body ? request_body.parent_seq : null
     const is_reply = request_body ? request_body.is_reply === true : false
-    const delete_result = await comment_model.deleteComment(operation_data_seq, comment_seq)
-
-    if (is_reply && parent_seq) {
-      await comment_model.updateReplyCount(operation_data_seq, parent_seq)
+    if (!is_reply) {
+      const child_comment_count = await comment_model.getChildCommentCountGroupByMemberSeq(comment_seq)
+      if (child_comment_count) {
+        for (let i = 0; i < child_comment_count.length; i++) {
+          const member_seq = child_comment_count[i].member_seq
+          const comment_count = child_comment_count[i].comment_count
+          if (comment_count_map[member_seq]) {
+            comment_count_map[member_seq] += comment_count
+          } else {
+            comment_count_map[member_seq] = comment_count
+          }
+        }
+      }
     }
+
+    let delete_result = null
+    let clip_comment_count = null;
+    await DBMySQL.transaction(async (transaction) => {
+      const comment_model = this.getOperationCommentModel(transaction)
+      delete_result = await comment_model.deleteComment(operation_data_seq, comment_seq)
+      if (is_reply && parent_seq) {
+        await comment_model.updateReplyCount(operation_data_seq, parent_seq)
+      }
+    })
 
     const comment_clip_id = request_body.comment_clip_id ? request_body.comment_clip_id : null
-    let clip_comment_count = null;
     if (comment_clip_id) {
-      clip_comment_count = await this.updateClipCommentCount(database, operation_data_seq, comment_clip_id)
+      clip_comment_count = await this.updateClipCommentCount(DBMySQL, operation_data_seq, comment_clip_id)
     }
+
+    Object.keys(comment_count_map).forEach((member_seq) => {
+      if (comment_count_map[member_seq] > 0) {
+        GroupService.onChangeGroupMemberContentCount(group_seq, member_seq, 'vid_comment', Constants.DOWN, comment_count_map[member_seq])
+      }
+    })
 
     return {
       delete_result,
@@ -174,13 +200,24 @@ const OperationCommentServiceClass = class {
     const origin_list = await comment_model.getOriginCommentList(origin_data_seq)
     if (origin_list && origin_list.length) {
       const change_seq_map = {}
+      const member_seq_map = {}
       for (let i = 0; i < origin_list.length; i++) {
         const comment_info = origin_list[i]
+        const member_seq = comment_info.member_seq
         if (comment_info.is_reply === 0) {
           await comment_model.copyParentComment(comment_info, operation_data_seq, group_seq, change_seq_map)
         } else {
           await comment_model.copyReplyComment(comment_info, operation_data_seq, group_seq, change_seq_map)
         }
+        if (!member_seq_map[member_seq]) {
+          member_seq_map[member_seq] = 0
+        }
+        member_seq_map[member_seq]++
+      }
+      const member_seq_list = Object.keys(member_seq_map)
+      for (let i = 0; i < member_seq_list.length; i++) {
+        const member_seq = member_seq_list[i]
+        GroupService.onChangeGroupMemberContentCount(group_seq, member_seq, 'vid_comment', Constants.UP, member_seq_map[member_seq])
       }
     }
   }
@@ -244,7 +281,6 @@ const OperationCommentServiceClass = class {
 
   updateClipCommentCount = async (database, operation_data_seq, clip_id) => {
     if (!clip_id) return 0
-    log.debug(this.log_prefix, '[updateClipCommentCount]', operation_data_seq, clip_id)
     const comment_model = this.getOperationCommentModel(database)
     const comment_count = await comment_model.getClipCommentCount(operation_data_seq, clip_id)
     await OperationClipModel.updateCommentCount(clip_id, comment_count)

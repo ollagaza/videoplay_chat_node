@@ -630,7 +630,11 @@ const GroupServiceClass = class {
       const group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
       log.debug(this.log_prefix, '[getInviteGroupInfo]', member_seq, group_member_info.toJSON())
       if (!group_member_info.isEmpty()) {
-        if (group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE || group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE_NO_VIEW || group_member_info.group_member_status === this.MEMBER_STATUS_NORMAL) {
+        if (group_invite_info.invite_seq !== group_member_info.group_member_seq) {
+          await group_member_model.setInviteInfoMerge(group_invite_info, group_seq, member_seq)
+          group_invite_info.invite_seq = group_member_info.group_member_seq;
+        }
+        if (group_member_info.group_member_status === this.MEMBER_STATUS_NORMAL || group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE || group_member_info.group_member_status === this.MEMBER_STATUS_DISABLE_NO_VIEW) {
           // pass
         } else {
           throw this.getInviteMemberStatusError(group_seq, group_name, group_member_info.group_member_status)
@@ -671,7 +675,7 @@ const GroupServiceClass = class {
     await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
 
     const group_model = this.getGroupModel(database);
-    await group_model.group_member_count(group_invite_info.group_seq, 'up');
+    await group_model.group_member_count(group_invite_info.group_seq, Constants.UP);
 
     this.sendGroupJoinAlarm(group_invite_info.group_seq, member_info)
 
@@ -691,7 +695,7 @@ const GroupServiceClass = class {
       title: '채널 관리자 권한 변경',
       message: title
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'enableGroupAdmin', null)
+    this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'enableGroupAdmin', null)
 
     if (!group_member_info.invite_email) {
       return
@@ -722,134 +726,18 @@ const GroupServiceClass = class {
       message: title,
       notice_type: 'alert'
     }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableGroupAdmin', null)
-  }
-
-  deleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, is_delete_operation = true) => {
-    const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
-    if (!is_group_admin) {
-      throw new StdObject(-1, '권한이 없습니다.', 403)
-    }
-    const group_seq = group_member_info.group_seq
-    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
-    const group_member_model = this.getGroupMemberModel(database)
-    let used_storage_size = null
-    if (is_delete_operation) {
-      await OperationService.deleteGroupMemberOperations(target_member_info.group_seq, target_member_info.member_seq)
-      used_storage_size = 0
-    }
-    await group_member_model.banMember(group_member_seq, group_member_info.member_seq, used_storage_size)
-    await this.updateGroupUsedStorage(database, group_seq)
-
-    const title = `${group_member_info.group_name}채널의 SurgStory 팀원에서 제외되었습니다.`
-    const message_info = {
-      title: '채널 사용 불가',
-      message: title,
-      notice_type: 'alert'
-    }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableUseGroup', null)
-
-    if (!group_member_info.invite_email) {
-      return
-    }
-
-    const template_data = {
-      service_domain,
-      group_name: group_member_info.group_name,
-      admin_name: admin_member_info.user_name,
-      btn_link_url: `${service_domain}/`
-    }
-    const body = GroupMailTemplate.deleteGroupMember(template_data)
-    this.sendEmail(title, body, [target_member_info.invite_email], 'deleteMember')
-  }
-
-  unDeleteMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
-    await this.restoreMemberState(database, group_member_info, group_member_seq)
-
-    const title = `${group_member_info.group_name}채널의 SurgStory 팀원으로 복원되었습니다.`
-    const message_info = {
-      title: title,
-      message: '채널을 선택하려면 클릭하세요.'
-    }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info)
-
-    if (!group_member_info.invite_email) {
-      return
-    }
-
-    const template_data = {
-      service_domain,
-      group_name: group_member_info.group_name,
-      admin_name: admin_member_info.user_name,
-      btn_link_url: `${service_domain}/`
-    }
-    const body = GroupMailTemplate.unDeleteGroupMember(template_data)
-    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
-    this.sendEmail(title, body, [target_member_info.invite_email], 'unDeleteMember')
-  }
-
-  pauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, message = null) => {
-    const is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
-    if (!is_group_admin) {
-      throw new StdObject(-1, '권한이 없습니다.', 400)
-    }
-    // const group_member_model = this.getGroupMemberModel(database)
-    // await group_member_model.changeMemberStatus(group_member_seq, this.MEMBER_STATUS_PAUSE)
-    let title = `${group_member_info.group_name}채널의 SurgStory 사용 일시중단 되었습니다.`
-    if (message) {
-      title = `${message}`
-    }
-    const message_info = {
-      title: '채널 사용 불가',
-      message: title,
-      notice_type: 'alert'
-    }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableUseGroup', null)
-
-    if (!group_member_info.invite_email) {
-      return
-    }
-
-    const template_data = {
-      service_domain,
-      group_name: group_member_info.group_name,
-      admin_name: admin_member_info.user_name,
-      btn_link_url: `${service_domain}/`
-    }
-    const body = GroupMailTemplate.pauseGroupMember(template_data)
-    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
-    this.sendEmail(title, body, [target_member_info.invite_email], 'pauseMember')
-  }
-
-  unPauseMember = async (database, group_member_info, admin_member_info, group_member_seq, service_domain) => {
-    await this.restoreMemberState(database, group_member_info, group_member_seq)
-    const title = `${group_member_info.group_name}채널의 SurgStory 사용 일시중단이 해제 되었습니다.`
-    const message_info = {
-      title: title,
-      message: '채널을 선택하려면 클릭하세요.'
-    }
-    await this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info)
-
-    if (!group_member_info.invite_email) {
-      return
-    }
-
-    const template_data = {
-      service_domain,
-      group_name: group_member_info.group_name,
-      admin_name: admin_member_info.user_name,
-      btn_link_url: `${service_domain}/`
-    }
-    const body = GroupMailTemplate.unPauseGroupMember(template_data)
-    const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
-    this.sendEmail(title, body, [target_member_info.invite_email], 'unDeleteMember')
+    this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableGroupAdmin', null)
   }
 
   sendEmail = (title, body, mail_to_list, method = '') => {
     (
       async () => {
-        const send_mail_result = await new SendMail().sendMailHtml(mail_to_list, title, body)
-        log.debug(this.log_prefix, '[sendEmail]', method, send_mail_result)
+        try {
+          const send_mail_result = await new SendMail().sendMailHtml(mail_to_list, title, body)
+          log.debug(this.log_prefix, '[sendEmail]', method, send_mail_result)
+        } catch (error) {
+          log.error(this.log_prefix, '[sendEmail]', method, title, mail_to_list, error)
+        }
       }
     )()
   }
@@ -949,7 +837,7 @@ const GroupServiceClass = class {
       title: '채널이 변경되었습니다.',
       message: `'${group_info.group_name}'채널이 변경되었습니다.`
     }
-    await this.onGroupStateChange(group_info.seq, sub_type, null, null, message_info, false)
+    await this.onGroupStateChange(group_info.seq, sub_type, null, message_info)
 
     return group_info
   }
@@ -975,38 +863,51 @@ const GroupServiceClass = class {
     await this.sendToFrontMulti(admin_id_list, data, message_info)
   }
 
-  onGroupMemberStateChange = async (group_seq, group_member_seq, message_info = null, type = 'groupMemberStateChange', action_type = 'groupSelect') => {
-    const group_member_model = this.getGroupMemberModel(DBMySQL)
-    const user_id = await group_member_model.getGroupMemberSeq(group_member_seq)
-    if (!user_id) {
-      return
-    }
-    const data = {
-      type,
-      group_seq,
-      action_type
-    }
-    await this.sendToFrontOne(user_id, data, message_info)
+  onGroupMemberStateChange = (group_seq, group_member_seq, message_info = null, type = 'groupMemberStateChange', action_type = 'groupSelect') => {
+    (
+      async () => {
+        try {
+          const group_member_model = this.getGroupMemberModel(DBMySQL)
+          const member_seq = await group_member_model.getMemberSeqByGroupMemberSeq(group_member_seq)
+          if (!member_seq) {
+            return
+          }
+          const data = {
+            type,
+            action_type
+          }
+          const socket_data = {
+            data
+          }
+          if (message_info) {
+            message_info.type = 'pushNotice'
+            socket_data.message_info = message_info
+          }
+          if (group_seq) {
+            data.group_seq = group_seq
+            await SocketManager.sendToFrontGroupOne(group_seq, member_seq, socket_data)
+          } else {
+            await SocketManager.sendToFrontOne(member_seq, socket_data)
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[onGroupMemberStateChange]', group_seq, group_member_seq, message_info, type, action_type, error)
+        }
+      }
+    )()
   }
 
-  onGroupStateChange = async (group_seq, sub_type = null, action_type = null, operation_seq_list = null, message_info = null, reload_operation_list = true) => {
-    const user_id_list = await this.getActiveGroupMemberSeqList(DBMySQL, group_seq)
-    if (!user_id_list || !user_id_list.length) return
+  onGroupStateChange = async (group_seq, sub_type = null, action_type = null, message_info = null) => {
     const data = {
       type: 'groupStorageInfoChange',
-      group_seq,
-      reload_operation_list
+      group_seq
     }
     if (sub_type) data.sub_type = sub_type
     if (action_type) data.action_type = action_type
-    if (operation_seq_list) data.operation_seq_list = operation_seq_list
 
-    await this.sendToFrontMulti(user_id_list, data, message_info)
+    await this.sendToFrontMulti(group_seq, data, message_info)
   }
 
   onGeneralGroupNotice = async (group_seq, type, action_type = null, sub_type = null, message_info = null, extra_data = null) => {
-    const user_id_list = await this.getActiveGroupMemberSeqList(DBMySQL, group_seq)
-    if (!user_id_list || !user_id_list.length) return
     const data = {
       type,
       group_seq,
@@ -1015,10 +916,10 @@ const GroupServiceClass = class {
     if (sub_type) data.sub_type = sub_type
     if (action_type) data.action_type = action_type
 
-    await this.sendToFrontMulti(user_id_list, data, message_info)
+    await this.sendToFrontMulti(group_seq, data, message_info)
   }
 
-  sendToFrontOne = async (user_id, data, message_info) => {
+  sendToFrontMulti = async (group_seq, data, message_info) => {
     const socket_data = {
       data
     }
@@ -1026,18 +927,7 @@ const GroupServiceClass = class {
       message_info.type = 'pushNotice'
       socket_data.message_info = message_info
     }
-    await SocketManager.sendToFrontOne(user_id, socket_data)
-  }
-
-  sendToFrontMulti = async (user_id_list, data, message_info) => {
-    const socket_data = {
-      data
-    }
-    if (message_info) {
-      message_info.type = 'pushNotice'
-      socket_data.message_info = message_info
-    }
-    await SocketManager.sendToFrontMulti(user_id_list, socket_data)
+    await SocketManager.sendToFrontGroup(group_seq, socket_data)
   }
 
   getUserGroupInfo = async (database, member_seq) => {
@@ -1292,7 +1182,7 @@ const GroupServiceClass = class {
             result_info.msg = '필수 정보가 누락되었습니다.'
           } else {
             if (group_info.group_join_way !== 1) {
-              await group_model.group_member_count(group_seq, 'up')
+              await group_model.group_member_count(group_seq, Constants.UP)
               this.sendGroupJoinAlarm(group_seq, member_info)
             } else {
               this.sendGroupJoinRequestAlarm(group_seq, member_info)
@@ -1319,7 +1209,7 @@ const GroupServiceClass = class {
         result_info.msg = '회원가입 신청에 실패하였습니다.'
       } else {
         if (group_info.group_join_way !== 1) {
-          await group_model.group_member_count(group_seq, 'up')
+          await group_model.group_member_count(group_seq, Constants.UP)
           this.sendGroupJoinAlarm(group_seq, member_info)
         } else {
           this.sendGroupJoinRequestAlarm(group_seq, member_info)
@@ -1468,41 +1358,173 @@ const GroupServiceClass = class {
     }
   }
 
-  updatePauseList = async (database, group_seq, pause_list) => {
-    const group_member_model = this.getGroupMemberModel(database);
-    return await group_member_model.updatePauseList(group_seq, pause_list, 'P')
-  }
-
-  nonupdatePauseList = async (database, group_seq, pause_list) => {
-    const group_member_model = this.getGroupMemberModel(database);
-    return await group_member_model.updatePauseList(group_seq, pause_list, 'Y')
-  }
-
   groupJoinList = async (database, group_seq, join_info) => {
     const group_member_model = this.getGroupMemberModel(database);
     const group_model = this.getGroupModel(database);
     const status = join_info.join_type === 'join' ? 'Y' : 'C';
     if (status === 'Y') {
-      await group_model.group_member_count(group_seq, 'up');
+      await group_model.group_member_count(group_seq, Constants.UP);
     }
     return await group_member_model.groupJoinList(group_seq, join_info.join_list, status);
   }
 
-  updateBanList = async (database, group_seq, ban_info) => {
-    const group_member_model = this.getGroupMemberModel(database);
-    let status = 'D';
-    if (ban_info.join_ban) {
-      status = 'B';
+  setMemberStatePause = async (database, group_seq, request_body, group_member_info, domain) => {
+    const group_member_seq_list = request_body.pause_list
+    if (!group_member_seq_list || !group_member_seq_list.length) {
+      throw new StdObject(-1, '잘못된 접근입니다.', 400)
     }
-    return await group_member_model.updateBanList(group_seq, ban_info, status)
+    const group_member_model = this.getGroupMemberModel(database)
+    const update_result = await group_member_model.updatePauseList(group_seq, group_member_seq_list, request_body, 'P')
+    this.sendMemberPauseMessage(group_member_info, group_member_seq_list, domain)
+    return update_result
+  }
+  sendMemberPauseMessage = (admin_member_info, group_member_seq_list, service_domain) => {
+    (
+      async () => {
+        const title = `SurgStory ${admin_member_info.group_name}채널이 사용 일시중단 되었습니다.`
+        const message_info = {
+          title: '채널 사용 불가',
+          message: title,
+          notice_type: 'alert'
+        }
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname
+        const template_data = {
+          service_domain,
+          group_name: admin_member_info.group_name,
+          admin_name: name,
+          btn_link_url: `${service_domain}/`
+        }
+        const body = GroupMailTemplate.pauseGroupMember(template_data)
+        await this.sendMessageBySeqList(admin_member_info.group_seq, group_member_seq_list, title, message_info, body, 'sendMemberPauseMessage', 'disableUseGroup')
+      }
+    )()
   }
 
-  nonupdateBanList = async (database, group_seq, ban_info) => {
+  unSetMemberStatePause = async (database, group_seq, request_body, admin_member_info, domain) => {
+    const group_member_seq_list = request_body.pause_list
+    if (!group_member_seq_list || !group_member_seq_list.length) {
+      throw new StdObject(-1, '잘못된 접근입니다.', 400)
+    }
+    const group_member_model = this.getGroupMemberModel(database);
+    const update_result = await group_member_model.updatePauseList(group_seq, group_member_seq_list, request_body, 'Y')
+
+    this.sendMemberUnPauseMessage(admin_member_info, group_member_seq_list, domain)
+
+    return update_result
+  }
+  sendMemberUnPauseMessage = (admin_member_info, group_member_seq_list, service_domain) => {
+    (
+      async () => {
+        const title = `SurgStory ${admin_member_info.group_name}채널이 사용 일시중단 해제 되었습니다.`
+        const message_info = {
+          title: title,
+          message: '채널을 선택하려면 클릭하세요.'
+        }
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname
+        const template_data = {
+          service_domain,
+          group_name: admin_member_info.group_name,
+          admin_name: name,
+          btn_link_url: `${service_domain}/`
+        }
+        const body = GroupMailTemplate.unPauseGroupMember(template_data)
+        await this.sendMessageBySeqList(null, group_member_seq_list, title, message_info, body, 'sendMemberUnPauseMessage')
+      }
+    )()
+  }
+
+  setGroupMemberStateBan = async (database, group_seq, request_body, admin_member_info, service_domain) => {
+    const group_member_seq_list = request_body.ban_list
+    if (!group_member_seq_list || !group_member_seq_list.length) {
+      throw new StdObject(-1, '잘못된 접근입니다.', 400)
+    }
+    const group_member_model = this.getGroupMemberModel(database);
+    let status = 'D';
+    if (request_body.join_ban) {
+      status = 'B';
+    }
+    const update_result = await group_member_model.updateBanList(group_seq, group_member_seq_list, request_body, status)
+    await this.setGroupMemberCount(DBMySQL, group_seq, Constants.DOWN, group_member_seq_list.length);
+    this.sendMemberBanMessage(admin_member_info, group_member_seq_list, service_domain)
+
+    return update_result
+  }
+  sendMemberBanMessage = (admin_member_info, group_member_seq_list, service_domain) => {
+    (
+      async () => {
+        const title = `${admin_member_info.group_name}채널의 SurgStory 팀원에서 제외되었습니다.`
+        const message_info = {
+          title: '채널 사용 불가',
+          message: title,
+          notice_type: 'alert'
+        }
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname
+        const template_data = {
+          service_domain,
+          group_name: admin_member_info.group_name,
+          admin_name: name,
+          btn_link_url: `${service_domain}/`
+        }
+        const body = GroupMailTemplate.deleteGroupMember(template_data)
+        await this.sendMessageBySeqList(admin_member_info.group_seq, group_member_seq_list, title, message_info, body, 'sendMemberBanMessage', 'disableUseGroup')
+      }
+    )()
+  }
+
+  unSetGroupMemberStateBan = async (database, group_seq, request_body, admin_member_info, service_domain) => {
+    const group_member_seq_list = request_body.ban_list
+    if (!group_member_seq_list || !group_member_seq_list.length) {
+      throw new StdObject(-1, '잘못된 접근입니다.', 400)
+    }
     const group_member_model = this.getGroupMemberModel(database);
     const group_model = this.getGroupModel(database);
     let change_grade = '1';
-    const update_cnt = await group_member_model.updateBanList(group_seq, ban_info, 'Y', change_grade)
-    return await group_model.group_member_count(group_seq, 'up', update_cnt);
+    const update_result = await group_member_model.updateBanList(group_seq, group_member_seq_list, request_body, 'Y', change_grade)
+    await group_model.group_member_count(group_seq, Constants.UP, group_member_seq_list.length);
+    this.sendMemberUnBanMessage(admin_member_info, group_member_seq_list, service_domain)
+    return update_result
+  }
+  sendMemberUnBanMessage = (admin_member_info, group_member_seq_list, service_domain) => {
+    (
+      async () => {
+        const title = `SurgStory ${admin_member_info.group_name}채널이 팀원으로 복원되었습니다.`
+        const message_info = {
+          title: title,
+          message: '채널을 선택하려면 클릭하세요.'
+        }
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname
+        const template_data = {
+          service_domain,
+          group_name: admin_member_info.group_name,
+          admin_name: name,
+          btn_link_url: `${service_domain}/`
+        }
+        const body = GroupMailTemplate.unDeleteGroupMember(template_data)
+        await this.sendMessageBySeqList(null, group_member_seq_list, title, message_info, body, 'sendMemberUnBanMessage')
+      }
+    )()
+  }
+
+  sendMessageBySeqList = async (group_seq, group_member_seq_list, title, socket_message_info = null, email_body = null, method = null, socket_data_type = 'groupMemberStateChange') => {
+    const email_map = {}
+    const email_to_list = []
+    for (let i = 0; i < group_member_seq_list.length; i++) {
+      const group_member_seq = group_member_seq_list[i]
+      if (socket_message_info) {
+        this.onGroupMemberStateChange(group_seq, group_member_seq, socket_message_info, socket_data_type)
+      }
+      if (email_body) {
+        const target_member_info = await this.getGroupMemberInfoBySeq(DBMySQL, group_member_seq)
+        if (target_member_info && target_member_info.invite_email) {
+          if (email_map[target_member_info.invite_email]) continue
+          email_to_list.push(target_member_info.invite_email)
+          email_map[target_member_info.invite_email] = true
+        }
+      }
+    }
+    if (email_to_list.length) {
+      this.sendEmail(title, email_body, email_to_list, method)
+    }
   }
 
   changeGradeMemberList = async (database, group_seq, change_member_info, group_member_info) => {
@@ -1522,7 +1544,7 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database);
     const operation_model = new OperationModel(database);
     for (let i = 0; i < target_info.target_list.length; i ++) {
-      const member_seq = await group_member_model.getGroupMemberSeq(target_info.target_list[i]);
+      const member_seq = await group_member_model.getMemberSeqByGroupMemberSeq(target_info.target_list[i]);
       const operation_list = await OperationService.getAllOperationGroupMemberList(database, group_seq, member_seq);
       for (let j = 0; j < operation_list.length; j++) {
         const operation_data = await OperationDataService.getOperationDataByOperationSeq(database, operation_list[j].seq);
@@ -1532,7 +1554,7 @@ const GroupServiceClass = class {
         const operation_comment_list = await OperationCommentService.getCommentList(database, operation_data.seq, params)
         for (let k = 0; k < operation_comment_list.length; k++) {
           const del_count = await OperationCommentService.deleteAllComment(database, group_seq, operation_comment_list[k].member_seq);
-          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_seq, operation_comment_list[k].member_seq, 'vid_comment', 'down', del_count);
+          this.onChangeGroupMemberContentCount(group_seq, operation_comment_list[k].member_seq, 'vid_comment', Constants.DOWN, del_count);
         }
         const clip_list = await OperationClipService.findByOperationSeq(operation_list[j].seq);
         for (let k = 0; k < clip_list.length; k++) {
@@ -1554,8 +1576,7 @@ const GroupServiceClass = class {
 
   getMemberGroupAllCount = async (database, member_seq, option) => {
     const group_member_model = this.getGroupMemberModel(database)
-    const group_summary = await group_member_model.getMemberGroupAllCount(member_seq, option)
-    return group_summary;
+    return group_member_model.getMemberGroupAllCount(member_seq, option)
   }
   GroupMemberCountSync = async (database) => {
     const group_model = this.getGroupModel(database)
@@ -1590,10 +1611,10 @@ const GroupServiceClass = class {
   }
   setGroupMemberCount = async (databases, group_seq, type, count = 1) => {
     const group_model = this.getGroupModel(databases);
-    if (type === 'up') {
-      await group_model.group_member_count(group_seq, 'up', count);
-    } else if (type === 'down') {
-      await group_model.group_member_count(group_seq, 'down', count);
+    if (type === Constants.UP) {
+      await group_model.group_member_count(group_seq, Constants.UP, count);
+    } else if (type === Constants.DOWN) {
+      await group_model.group_member_count(group_seq, Constants.DOWN, count);
     }
   }
   setMemberPauseReset = async () => {
@@ -1619,6 +1640,20 @@ const GroupServiceClass = class {
       status.use_storage_size = Util.parseInt(group_info.used_storage_size)
     }
     return status
+  }
+
+  onChangeGroupMemberContentCount = (group_seq, member_seq, update_column, type, count = 1) => {
+    (
+      async (group_seq, member_seq, update_column, type, count) => {
+        try {
+          log.debug(this.log_prefix, '[onChangeGroupMemberContentCount]', `{ group_seq: ${group_seq}, member_seq: ${member_seq}, update_column: ${update_column}, type: ${type}, count: ${count} }`)
+          const group_member_model = this.getGroupMemberModel()
+          await group_member_model.updateGroupMemberContentCount(group_seq, member_seq, update_column, type, count)
+        } catch (error) {
+          log.error(this.log_prefix, '[onChangeGroupMemberContentCount]', `{ group_seq: ${group_seq}, member_seq: ${member_seq}, update_column: ${update_column}, type: ${type}, count: ${count} }`, error)
+        }
+      }
+    )(group_seq, member_seq, update_column, type, count)
   }
 }
 

@@ -28,6 +28,15 @@ routes.get('/getboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Auth.is
   res.json(output);
 }))
 
+routes.get('/getboardcommentlist/:group_seq(\\d+)/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const output = new StdObject()
+  const token_info = req.token_info;
+  const member_seq = token_info.getId();
+  const board_data_seq = req.params.board_data_seq
+  output.add('board_comment_list', await GroupBoardDataService.getBoardCommentList(DBMySQL, board_data_seq, member_seq))
+  res.json(output);
+}))
+
 routes.get('/getopenboarddatadetail/:group_seq(\\d+)/:board_data_seq(\\d+)', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
   const output = new StdObject()
   const { member_seq, is_active_group_member } = await GroupService.checkGroupAuth(DBMySQL, req, false, true)

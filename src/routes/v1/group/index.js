@@ -14,6 +14,7 @@ import GroupBoardListService from "../../../service/board/GroupBoardListService"
 import OperationDataService from "../../../service/operation/OperationDataService";
 import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
 import OperationCommentService from "../../../service/operation/OperationCommentService";
+import Constants from '../../../constants/constants'
 
 const routes = Router()
 
@@ -82,29 +83,6 @@ routes.get('/:group_seq(\\d+)/member_count/:in_status', Auth.isAuthenticated(Rol
   res.json(output)
 }))
 
-routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/delete', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
-  const group_member_seq = getGroupMemberSeq(req)
-  const is_delete_operation = req.body.is_delete_operation === true
-  await GroupService.deleteMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain(), is_delete_operation)
-
-  const output = new StdObject()
-  output.add('result', true)
-  res.json(output)
-}))
-
-routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/delete', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
-  const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.unDeleteMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
-
-  const output = new StdObject()
-  output.add('result', true)
-  res.json(output)
-}))
-
 routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
@@ -121,28 +99,6 @@ routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/admin', Auth.isAuthenti
   const { group_member_info } = await checkGroupAuth(DBMySQL, req)
   const group_member_seq = getGroupMemberSeq(req)
   await GroupService.changeGradeNormal(DBMySQL, group_member_info, group_member_seq)
-
-  const output = new StdObject()
-  output.add('result', true)
-  res.json(output)
-}))
-
-routes.put('/:group_seq(\\d+)/:group_member_seq(\\d+)/pause', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
-  const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.pauseMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
-
-  const output = new StdObject()
-  output.add('result', true)
-  res.json(output)
-}))
-
-routes.delete('/:group_seq(\\d+)/:group_member_seq(\\d+)/pause', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const { group_member_info, member_info, token_info } = await checkGroupAuth(DBMySQL, req)
-  const group_member_seq = getGroupMemberSeq(req)
-  await GroupService.unPauseMember(DBMySQL, group_member_info, member_info, group_member_seq, token_info.getServiceDomain())
 
   const output = new StdObject()
   output.add('result', true)
@@ -422,28 +378,21 @@ routes.post('/updategradelist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   res.json(output)
 }))
 
-routes.post('/pausegroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/pause/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const pause_list = req.body.pause_list;
-  for (let i = 0; i < pause_list.pause_list.length; i++) {
-    await GroupService.pauseMember(DBMySQL, group_member_info, member_info, pause_list.pause_list[i], token_info.getServiceDomain())
-  }
+  const { group_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const output = new StdObject()
-
-  const result = await GroupService.updatePauseList(DBMySQL, group_seq, pause_list)
+  const result = await GroupService.setMemberStatePause(DBMySQL, group_seq, req.body, group_member_info, token_info.getServiceDomain())
   output.add('result', result)
 
   res.json(output)
 }))
 
-routes.post('/nonpausegroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/pause/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const pause_list = req.body.pause_list;
+  const { group_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const output = new StdObject()
-
-  const result = await GroupService.nonupdatePauseList(DBMySQL, group_seq, pause_list)
+  const result = await GroupService.unSetMemberStatePause(DBMySQL, group_seq, req.body, group_member_info, token_info.getServiceDomain())
   output.add('result', result)
 
   res.json(output)
@@ -461,33 +410,22 @@ routes.post('/joingrouplist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async 
   res.json(output)
 }))
 
-routes.post('/bangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/ban/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq, group_member_info, member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const ban_info = req.body.ban_info;
-  const message = '해당 채널의 팀원이 아닙니다.';
-  let ban_cnt = 0;
-  for (let i = 0; i < ban_info.ban_list.length; i++) {
-    await GroupService.pauseMember(DBMySQL, group_member_info, member_info, ban_info.ban_list[i], token_info.getServiceDomain(), message)
-    ban_cnt++;
-  }
-  if (ban_cnt > 0) {
-    await GroupService.setGroupMemberCount(DBMySQL, group_seq, 'down', ban_cnt);
-  }
+  const { group_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+
   const output = new StdObject()
-  const result = await GroupService.updateBanList(DBMySQL, group_seq, ban_info)
+  const result = await GroupService.setGroupMemberStateBan(DBMySQL, group_seq, req.body, group_member_info, token_info.getServiceDomain())
   output.add('result', result)
 
   res.json(output)
 }))
 
-routes.post('/nonbangroupmember', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/ban/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const ban_info = req.body.ban_info;
+  const { group_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const output = new StdObject()
-
-  const result = await GroupService.nonupdateBanList(DBMySQL, group_seq, ban_info)
+  const result = await GroupService.unSetGroupMemberStateBan(DBMySQL, group_seq, req.body, group_member_info, token_info)
   output.add('result', result)
 
   res.json(output)
@@ -625,7 +563,7 @@ routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.DEFAULT), Wrap(asyn
   const result = await GroupService.GroupMemberStatusUpdate(DBMySQL, mem_info.group_seq, mem_info)
   if (mem_info.count) {
     if (mem_info.status === 'D') {
-      await GroupService.setGroupMemberCount(DBMySQL, mem_info.group_seq, 'down');
+      await GroupService.setGroupMemberCount(DBMySQL, mem_info.group_seq, Constants.DOWN);
     }
   }
   output.add('result', result)
@@ -663,12 +601,10 @@ routes.delete('/delete/comments', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   const comment_data_seq = req.body
 
   for (let cnt = 0; cnt < comment_data_seq.operation.length; cnt++) {
-    await OperationCommentService.deleteComment(DBMySQL, comment_data_seq.operation[cnt].content_data_seq, comment_data_seq.operation[cnt].seq, req)
+    await OperationCommentService.deleteComment(comment_data_seq.operation[cnt].content_data_seq, comment_data_seq.operation[cnt].seq, req)
   }
   for (let cnt = 0; cnt < comment_data_seq.board.length; cnt++) {
-    await DBMySQL.transaction(async (transaction) => {
-      await GroupBoardDataService.DeleteComment(transaction, comment_data_seq.board[cnt].content_data_seq, comment_data_seq.board[cnt].seq);
-    })
+    await GroupBoardDataService.DeleteComment(DBMySQL, comment_data_seq.board[cnt].content_data_seq, comment_data_seq.board[cnt].seq);
   }
   res.json(output);
 }))
