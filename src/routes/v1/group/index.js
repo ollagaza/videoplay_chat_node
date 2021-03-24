@@ -200,7 +200,7 @@ routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_
     pay_code: 'f_12TB',
     start_date: (Util.getToDate()).concat(' 00:00:00'),
     expire_date: (Util.getDateYearAdd(Util.getToDate(), 1)).concat(' 23:59:59'),
-    group_name: params.group_name,
+    group_name: params.group_name.trim(),
     group_open: params.group_open,
     is_channel: params.group_open,
     group_join_way: params.group_join_way,
@@ -227,7 +227,7 @@ routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_prof
   })
   const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const options = {
-    group_name: params.group_name,
+    group_name: params.group_name.trim(),
     gnb_color: params.group_color,
     group_open: params.group_open,
     group_join_way: params.group_join_way,

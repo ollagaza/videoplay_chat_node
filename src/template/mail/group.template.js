@@ -9,7 +9,7 @@ const group_mail_common_top = `
                 <tbody>
                     <tr>
                         <td style="width: 100%; height: 150px; background-color: #1c3048; text-align: center;">
-                            <a href="{service_domain}" target="_blank"><img src="{service_domain}/img/mail_logo.png"></a>
+                            <a href="{service_domain}" target="_blank"><img src="{service_domain}/img/renewal/mail_logo.png"></a>
                         </td>
                     </tr>
                     <tr>
