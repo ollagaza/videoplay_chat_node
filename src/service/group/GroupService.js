@@ -510,8 +510,7 @@ const GroupServiceClass = class {
     }
 
     const group_info_json = group_member_info.toJSON()
-    const active_user_count = await this.getGroupMemberCount(database, group_seq)
-    group_info_json.active_user_count = active_user_count
+    group_info_json.active_user_count = group_member_info.member_count
 
     for (let i = 0; i < invite_email_list.length; i++) {
       this.inviteGroupMember(member_info, group_info_json, invite_email_list[i], invite_message, service_domain)
