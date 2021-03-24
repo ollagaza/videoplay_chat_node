@@ -81,7 +81,7 @@ const reject_member_form = `
 <tr>
   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
   안녕하세요.<br>
-  {user_name}님 SurgStory 고객지원팀 입니다.
+  {user_name}님 SurgStory 고객 지원팀입니다.
   </td>
 </tr>
 <tr>
@@ -108,7 +108,7 @@ const forced_leave_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객지원팀 입니다.
+                  {user_name}님 SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -134,7 +134,7 @@ const leave_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객지원팀 입니다.
+                  {user_name}님 SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -153,7 +153,7 @@ const dormant_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객지원팀 입니다.
+                  {user_name}님 SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -172,7 +172,7 @@ const stop_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객지원팀 입니다.
+                  {user_name}님 SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -198,7 +198,7 @@ const stopclear_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객지원팀 입니다.
+                  {user_name}님 SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>

@@ -1151,6 +1151,13 @@ export default {
 
     return toDay.diff(diffDate, 'days')
   },
+  'dayGap': (sdate, edate) => {
+    const s_moment = moment(sdate, 'YYYYMMDD')
+    const e_moment = moment(edate, 'YYYYMMDD')
+    let days = s_moment.diff(e_moment, 'days');
+    if (days < 0) { days *= -1 }
+    return days + 1
+  },
   'hourDifference': (target_date) => {
     const time_diff = Math.abs(target_date.getTime() - Date.now())
     return Math.ceil(time_diff / (1000 * 3600))

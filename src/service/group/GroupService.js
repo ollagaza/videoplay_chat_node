@@ -1379,10 +1379,10 @@ const GroupServiceClass = class {
     }
     const group_member_model = this.getGroupMemberModel(database)
     const update_result = await group_member_model.updatePauseList(group_seq, group_member_seq_list, request_body, 'P')
-    this.sendMemberPauseMessage(group_member_info, group_member_seq_list, domain)
+    this.sendMemberPauseMessage(group_member_info, group_member_seq_list, domain, request_body)
     return update_result
   }
-  sendMemberPauseMessage = (admin_member_info, group_member_seq_list, service_domain) => {
+  sendMemberPauseMessage = (admin_member_info, group_member_seq_list, service_domain, request_body) => {
     (
       async () => {
         const title = `SurgStory ${admin_member_info.group_name}채널이 사용 일시중단 되었습니다.`
@@ -1392,13 +1392,22 @@ const GroupServiceClass = class {
           notice_type: 'alert'
         }
         const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname
+        Util.dayGap(request_body.pause_sdate, request_body.pause_edate)
         const template_data = {
           service_domain,
           group_name: admin_member_info.group_name,
           admin_name: name,
-          btn_link_url: `${service_domain}/`
+          btn_link_url: `${service_domain}/`,
+          pause_sdate: Util.dateFormatter(request_body.pause_sdate, 'yyyy년 mm월 dd일'),
+          pause_edate: request_body.pause_edate ? Util.dateFormatter(request_body.pause_edate, 'yyyy년 mm월 dd일') : null,
+          pause_day: request_body.pause_edate ? Util.dayGap(request_body.pause_sdate, request_body.pause_edate) : 0,
         }
-        const body = GroupMailTemplate.pauseGroupMember(template_data)
+        let body = null;
+        if (template_data.pause_day === 0) {
+          body = GroupMailTemplate.pauseUnLimitGroupMember(template_data)
+        } else {
+          body = GroupMailTemplate.pauseGroupMember(template_data)
+        }
         await this.sendMessageBySeqList(admin_member_info.group_seq, group_member_seq_list, title, message_info, body, 'sendMemberPauseMessage', 'disableUseGroup')
       }
     )()

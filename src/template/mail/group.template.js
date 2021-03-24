@@ -46,7 +46,7 @@ const invite_group_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 초대하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 채널 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 초대하였습니다.<br>
       초대를 수락하여 수술동영상을 보관하고 팀원들과 공유해 보세요.
     </td>
   </tr>
@@ -84,7 +84,7 @@ const invite_group_form_no_comment = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 초대하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 채널 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 초대하였습니다.<br>
       초대를 수락하여 수술동영상을 보관하고 팀원들과 공유해 보세요.
     </td>
   </tr>
@@ -112,13 +112,13 @@ const invite_group_form_no_comment = `
 const group_grade_admin_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #2e6bb8;">병원 관리자</span>가 되었습니다.
+      <span style="color: #2e6bb8;">채널 매니저</span>가 되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 채널 관리자로 지정하였습니다.<br>
-      채널 관리자는 팀원과 관련된 모든 부분을 관리할 수 있습니다.
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 채널 매니저로 지정하였습니다.<br>
+      채널 매니저는 채널과 관련된 모든 부분을 관리할 수 있습니다.
     </td>
   </tr>
   <tr>
@@ -135,20 +135,49 @@ const group_grade_admin_form = `
 const group_pause_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>채널의 SurgStory 사용이 <span style="color: #2e6bb8;">일시 중단</span> 되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span>채널 사용이 <span style="color: #2e6bb8;">제한</span>되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님의 채널 계정 접근을
-      <span style="color: #2e6bb8; font-weight: bold;">일시 중단</span> 하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님의 채널 활동을
+      <span style="color: #2e6bb8; font-weight: bold;">정지</span>하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">{pause_sdate}</span>부터 <span style="color: #ffa00f; font-weight: bold;">{pause_edate}</span>까지
+      <span style="color: #ffa00f; font-weight: bold;">({pause_day}일간)</span> 해당 채널 활동이 정지 됩니다.<br>
       이제 채널 활동을 할 수 없으며, 채널에 있는 파일에 접근할 수 없습니다.<br>
-      ("{group_name}"의 SurgStory 외에 다른 채널은 접근이 가능합니다.)
+      ("{group_name}" 외에 다른 채널은 접근이 가능합니다.)
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 SurgStory 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"의 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      SurgStory팀 드림
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding-top: 30px;">
+      <a href="" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
+    </td>
+  </tr>
+`
+const group_pause_unlimit_form = `
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
+      <span style="color: #ffa00f;">"{group_name}"</span>채널 사용이 <span style="color: #2e6bb8;">제한</span>되었습니다.
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님의 채널 활동을
+      <span style="color: #2e6bb8; font-weight: bold;">정지</span>하였습니다.<br>
+      <span style="color: #2e6bb8; font-weight: bold;">{pause_sdate}</span>부터 해당 채널 활동이 정지 됩니다.<br>
+      이제 채널 활동을 할 수 없으며, 채널에 있는 파일에 접근할 수 없습니다.<br>
+      ("{group_name}" 외에 다른 채널은 접근이 가능합니다.)
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
+      궁금한 점은 "{group_name}"의 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
@@ -242,6 +271,10 @@ export default {
   },
   'pauseGroupMember': (template_data = {}) => {
     const template_html = group_mail_common_top + group_pause_form + group_mail_common_bottom
+    return formatter(template_html, template_data)
+  },
+  'pauseUnLimitGroupMember': (template_data = {}) => {
+    const template_html = group_mail_common_top + group_pause_unlimit_form + group_mail_common_bottom
     return formatter(template_html, template_data)
   },
   'unPauseGroupMember': (template_data = {}) => {
