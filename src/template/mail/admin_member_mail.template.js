@@ -177,13 +177,13 @@ const stop_member_form = `
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										{user_name}님은 {stop_start_date}부터 {stop_end_date}까지 서지스토리 회원 자격이 정지 되며,<br/>
+										{user_name}님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span> 서지스토리 회원 자격이 정지 되며,<br/>
 										사유는 아래와 같습니다.
 									</td>
 								</tr>
 								<tr>
-									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-										{admin_text}
+									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px; padding-top: 16px;">
+										<span style="font-weight: bold; font-size: 18px; color: #2e6bb8; letter-spacing: -0.5px; line-height: 1.4;">{admin_text}</span>
 									</td>
 								</tr>
 								<tr>
