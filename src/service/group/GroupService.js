@@ -1471,7 +1471,7 @@ const GroupServiceClass = class {
   sendMemberBanMessage = (admin_member_info, group_member_seq_list, service_domain) => {
     (
       async () => {
-        const title = `${admin_member_info.group_name}채널에서 강제 탈퇴되었습니다.`
+        const title = `${admin_member_info.group_name}채널의 팀원에서 제외되었습니다.`
         const message_info = {
           title: '채널 사용 불가',
           message: title,
