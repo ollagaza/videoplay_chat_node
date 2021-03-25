@@ -233,18 +233,18 @@ const group_delete_form = `
 const group_un_delete_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>의 SurgStory 팀원으로 <span style="color: #2e6bb8;">복원</span>되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span>채널의 팀원으로 <span style="color: #2e6bb8;">복원</span>되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 팀원에서 복원하였습니다.<br>
-      이제 다시 채널에 접근하여 사용할 수 있습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님을 팀원으로 복원하였습니다.<br>
+      이제 다시 채널 활동을 할 수 있습니다.<br>
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 SurgStory 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"채널 관리자에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
