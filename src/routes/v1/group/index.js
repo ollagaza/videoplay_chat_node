@@ -426,7 +426,7 @@ routes.delete('/ban/members', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async 
   req.accepts('application/json')
   const { group_seq, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const output = new StdObject()
-  const result = await GroupService.unSetGroupMemberStateBan(DBMySQL, group_seq, req.body, group_member_info, token_info)
+  const result = await GroupService.unSetGroupMemberStateBan(DBMySQL, group_seq, req.body, group_member_info, token_info.getServiceDomain())
   output.add('result', result)
 
   res.json(output)
