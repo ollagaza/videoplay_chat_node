@@ -149,7 +149,8 @@ const OperationLinkServiceClass = class {
       user_name: member_info.user_name,
       operation_name: operation_info.operation_name,
       message: Util.nlToBr(send_message),
-      btn_link_url: `${service_domain}/v2/link/operation/${link_info.link_code}`
+      btn_link_url: `${service_domain}/v2/link/operation/${link_info.link_code}`,
+      expire_date: link_info.expire_date ? link_info.expire_date : null
     }
     const body = OperationMailTemplate.linkEmail(template_data)
     const send_mail_result = await new SendMail().sendMailHtml([link_info.share_email], title, body)

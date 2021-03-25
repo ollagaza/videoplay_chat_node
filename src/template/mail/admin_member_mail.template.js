@@ -81,23 +81,23 @@ const reject_member_form = `
 <tr>
   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
   안녕하세요.<br>
-  {user_name}님 SurgStory 고객 지원팀입니다.
-  </td>
-</tr>
-<tr>
-  <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-  {user_name}님은 {regist_date}에 회원가입 신청을 해 주셨습니다.<br>
-  현재 아래의 사유로 가입 승인이 완료되지 않고 있사오니 <br/>
-  조치하여 주시면 확인 후 승인진행 하여 드리겠습니다.<br/>
-  </td>
-</tr>
-<tr>
-  <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-    {admin_text}
+  {user_name}님, SurgStory 고객 지원팀입니다.
   </td>
 </tr>
 <tr>
   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
+  {user_name}님은 {regist_date}에 회원가입 신청을 해 주셨습니다.<br>
+  현재 아래의 사유로 가입 승인이 완료되지 않고 있습니다. <br/>
+  </td>
+</tr>
+<tr>
+  <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;padding-top: 16px;">
+    <span style="font-weight: bold; font-size: 18px; color: #2e6bb8; letter-spacing: -0.5px; line-height: 1.4;">{admin_text}</span>
+  </td>
+</tr>
+<tr>
+  <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
+  support@mteg.co.kr 로 해당 사유에 대한 관련 자료를 보내주시면 확인 후 승인 절차가 진행됩니다.<br>
   감사합니다.<br>
   SurgStory팀 드림
   </td>
@@ -108,7 +108,7 @@ const forced_leave_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객 지원팀입니다.
+                  {user_name}님, SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -134,7 +134,7 @@ const leave_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객 지원팀입니다.
+                  {user_name}님, SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -153,7 +153,7 @@ const dormant_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객 지원팀입니다.
+                  {user_name}님, SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -172,7 +172,7 @@ const stop_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객 지원팀입니다.
+                  {user_name}님, SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
@@ -198,7 +198,7 @@ const stopclear_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님 SurgStory 고객 지원팀입니다.
+                  {user_name}님, SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
