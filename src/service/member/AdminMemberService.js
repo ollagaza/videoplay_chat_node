@@ -200,6 +200,8 @@ const AdminMemberServiceClass = class {
       if (key === 'used') {
         appr_code = value
         setData[key] = value === '5-1' ? '1' : value
+      } else if (key === 'admin_code') {
+        setData[key] = value === '5-1' ? '1' : value
       } else if (value === null) {
         setData[key] = database.raw('null')
       } else if (value === 'now') {
@@ -237,6 +239,7 @@ const AdminMemberServiceClass = class {
       value.regist_date = value.regist_date ? Util.dateFormatter(value.regist_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_start_date = value.stop_start_date ? Util.dateFormatter(value.stop_start_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_end_date = value.stop_end_date ? Util.dateFormatter(value.stop_end_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
+      value.stop_days = value.stop_end_date ? Util.dayGap(value.stop_start_date, value.stop_end_date) - 1 : null
       const sender_name = 'SurgStory'
       const sender_mail = 'no_reply@surgstory.com'
       switch (appr_code) {
