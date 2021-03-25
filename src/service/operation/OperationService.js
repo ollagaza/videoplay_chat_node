@@ -28,9 +28,9 @@ import iconv from 'iconv-lite'
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import GroupMemberModel from "../../database/mysql/group/GroupMemberModel";
 import OperationCommentService from "./OperationCommentService";
-import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import GroupAlarmService from '../group/GroupAlarmService'
 import SyncService from '../sync/SyncService'
+import Constants from '../../constants/constants'
 
 const OperationServiceClass = class {
   constructor () {
@@ -123,8 +123,7 @@ const OperationServiceClass = class {
       }
 
       if (group_member_info) {
-        const group_member_model = this.getGroupMemberModel(database)
-        group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(group_member_info.group_seq, member_info.seq, 'vid', 'up');
+        GroupService.onChangeGroupMemberContentCount(group_member_info.group_seq, member_info.seq, 'vid', Constants.UP);
       }
     }
 
@@ -322,15 +321,16 @@ const OperationServiceClass = class {
 
         result.success = true
         await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
+        GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, 'vid', Constants.UP, 1)
       }
     } catch (e) {
       log.error(this.log_prefix, '[copyOperationOne]', origin_operation_seq, e, result)
       if (operation_seq) {
-        await operation_model.deleteOperation(operation_seq)
-        await this.deleteMongoDBData(operation_seq)
-      }
-      if (directory) {
-        await Util.deleteDirectory(directory)
+        try {
+          await this.deleteOperation(null, null, operation_seq, false)
+        } catch (error) {
+          log.error(this.log_prefix, '[copyOperationOne]', '[Delete Copy Operation]', origin_operation_seq, operation_seq, error)
+        }
       }
     }
 
@@ -414,8 +414,8 @@ const OperationServiceClass = class {
     )(group_seq, request_data)
   }
 
-  deleteOperation = async (database, token_info, operation_seq) => {
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, true, false)
+  deleteOperation = async (database, token_info, operation_seq, check_owner = true) => {
+    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, check_owner, false)
     await this.deleteOperationAndUpdateStorage(operation_info)
     return true
   }
@@ -1037,12 +1037,8 @@ const OperationServiceClass = class {
         const where = { 'operation.seq': seq_list[cnt] }
         const operation_info = await model.getOperation(where);
 
-        const group_member_model = this.getGroupMemberModel(database);
-
-        if (status === 'T') {
-          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'down');
-        } else if (status === 'Y') {
-          await group_member_model.setUpdateGroupMemberCountsWithGroupSeqMemberSeq(operation_info.group_seq, operation_info.member_seq, 'vid', 'up');
+        if (status === 'T' || status === 'Y') {
+          GroupService.onChangeGroupMemberContentCount(operation_info.group_seq, operation_info.member_seq, 'vid', status === 'T' ? Constants.DOWN : Constants.UP)
         }
 
         if (operation_info.folder_seq !== null) {

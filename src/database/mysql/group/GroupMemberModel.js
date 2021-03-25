@@ -3,6 +3,7 @@ import MySQLModel from '../../mysql-model'
 import Util from '../../../utils/Util'
 import GroupMemberInfo from '../../../wrapper/member/GroupMemberInfo'
 import log from '../../../libs/logger'
+import Constants from '../../../constants/constants'
 
 export default class GroupMemberModel extends MySQLModel {
   constructor (database) {
@@ -40,7 +41,7 @@ export default class GroupMemberModel extends MySQLModel {
 
     this.group_invite_select = [
       'group_member.invite_code', 'group_member.member_seq AS join_member_seq', 'group_member.seq AS invite_seq', 'group_member.grade',
-      'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.invite_status',
+      'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.invite_status', 'group_member.invite_email', 'group_member.invite_date',
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
       'group_info.group_name', 'group_info.expire_date AS group_expire_date',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
@@ -448,13 +449,12 @@ export default class GroupMemberModel extends MySQLModel {
     return user_seq_list
   }
 
-  getGroupMemberSeq = async (group_member_seq) => {
+  getMemberSeqByGroupMemberSeq = async (group_member_seq) => {
     const filter = {
       'group_member.seq': group_member_seq
     }
-    const query = this.database.select(this.group_member_seq_select)
+    const query = this.database.select(['member_seq'])
     query.from(this.table_name)
-    query.leftOuterJoin('member', { 'group_member.member_seq': 'member.seq' })
     query.where(filter)
     query.first()
     const query_result = await query
@@ -714,46 +714,38 @@ export default class GroupMemberModel extends MySQLModel {
     return await this.update(filter, update_params)
   }
 
-  updatePauseList = async (group_seq, pause_list, status) => {
-    const filter = {
-      group_seq: group_seq
-    }
+  updatePauseList = async (group_seq, seq_list, request_body, status) => {
     const update_params = {
       status: status,
-      pause_reason: pause_list.pause_reason,
-      pause_sdate: pause_list.pause_sdate,
-      pause_member_seq: pause_list.ban_member,
-      pause_edate: pause_list.pause_edate ? pause_list.pause_edate : null,
+      pause_reason: request_body.pause_reason,
+      pause_sdate: request_body.pause_sdate,
+      pause_member_seq: request_body.ban_member,
+      pause_edate: request_body.pause_edate ? request_body.pause_edate : null,
       pause_count: this.database.raw('pause_count + 1'),
       modify_date: this.database.raw('NOW()'),
     }
-    for (let cnt = 0; cnt < pause_list.pause_list.length; cnt++) {
-      filter.seq = pause_list.pause_list[cnt];
-      await this.update(filter, update_params);
-    }
-    return true;
+    return this.database
+      .update(update_params)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .whereIn('seq', seq_list)
   }
 
-  updateBanList = async (group_seq, ban_info, status, grade = 1) => {
-    const filter = {
-      group_seq: group_seq
-    }
+  updateBanList = async (group_seq, seq_list, request_body, status, grade = 1) => {
     const update_params = {
       status: status,
       grade: grade,
       ban_hide: 'N',
-      ban_reason: ban_info.ban_reason,
-      ban_member_seq: ban_info.ban_member,
+      ban_reason: request_body.ban_reason,
+      ban_member_seq: request_body.ban_member,
       ban_date: status === 'D' ? this.database.raw('NOW()') : null,
       modify_date: this.database.raw('NOW()'),
     }
-    let update_cnt = 0;
-    for (let cnt = 0; cnt < ban_info.ban_list.length; cnt++) {
-      filter.seq = ban_info.ban_list[cnt];
-      await this.update(filter, update_params);
-      update_cnt++;
-    }
-    return update_cnt;
+    return this.database
+      .update(update_params)
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .whereIn('seq', seq_list)
   }
 
   groupJoinList = async (group_seq, join_list, status) => {
@@ -816,7 +808,7 @@ export default class GroupMemberModel extends MySQLModel {
     }
     const select_fields = []
     select_fields.push(this.database.raw('COUNT(*) AS total_count'))
-    select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\', 1, 0)) AS mygroup_count'))
+    select_fields.push(this.database.raw('SUM(IF(`status` IN (\'Y\', \'P\'), 1, 0)) AS mygroup_count'))
     select_fields.push(this.database.raw('SUM(IF((`status` = \'J\' OR `status` = \'C\') and grade NOT IN (\'O\', \'6\'), 1, 0)) AS join_wait_count'))
     select_fields.push(this.database.raw('SUM(IF(`status` = \'Y\' and grade IN (\'O\', \'6\'), 1, 0)) AS manage_count'))
     select_fields.push(this.database.raw('SUM(IF((`status` = \'D\' OR `status` = \'B\'), 1, 0) AND `ban_hide` = \'N\') AS ban_count'))
@@ -881,38 +873,10 @@ export default class GroupMemberModel extends MySQLModel {
     query.where(filter)
     query.first()
 
-    const query_result = await query
-    // log.debug(this.log_prefix, '[getMemberGroupAllCount]', query_result)
-    return query_result
+    return query
   }
 
-  setUpdateGroupMemberCounts = async (group_member_seq, update_column, updown_type, count = 1) => {
-    const set_count = count;
-    const filter = {
-      seq: group_member_seq
-    }
-    const update_params = {}
-    if (update_column === 'vid') {
-      update_params.vid_cnt = set_count;
-    } else if (update_column === 'anno') {
-      update_params.anno_cnt = set_count;
-    } else if (update_column === 'vid_comment') {
-      update_params.comment_cnt = set_count;
-    } else if (update_column === 'board_comment') {
-      update_params.board_comment_cnt = set_count;
-    } else if (update_column === 'board_cnt') {
-      update_params.board_cnt = set_count;
-    }
-    let update_result = null;
-    if (updown_type === 'up') {
-      update_result = await this.increment(filter, update_params)
-    } else if (updown_type === 'down') {
-      update_result = await this.decrement(filter, update_params)
-    }
-    log.debug(this.log_prefix, '[setUpdateGroupMemberCounts]', update_result)
-    return update_result
-  }
-  setUpdateGroupMemberCountsWithGroupSeqMemberSeq = async (group_seq, member_seq, update_column, updown_type, count = 1) => {
+  updateGroupMemberContentCount = async (group_seq, member_seq, update_column, type, count = 1) => {
     const set_count = count;
     const filter = {
       group_seq,
@@ -931,12 +895,11 @@ export default class GroupMemberModel extends MySQLModel {
       update_params.board_cnt = set_count;
     }
     let update_result = null;
-    if (updown_type === 'up') {
+    if (type === Constants.UP) {
       update_result = await this.increment(filter, update_params)
-    } else if (updown_type === 'down') {
+    } else if (type === Constants.DOWN) {
       update_result = await this.decrement(filter, update_params)
     }
-    log.debug(this.log_prefix, '[setUpdateGroupMemberCountsWithGroupSeqMemberSeq]', update_result)
     return update_result
   }
   getGroupMemberInfo = async (group_seq, member_seq) => {
@@ -980,7 +943,25 @@ export default class GroupMemberModel extends MySQLModel {
   }
 
   setPauseMemberReset = async () => {
-    const oKnex = this.database.raw('UPDATE group_member SET status = \'Y\', pause_edate = null WHERE status = \'p\' AND pause_edate <= now() AND pause_edate IS NOT NULL');
-    return oKnex
+    return this.database.raw('UPDATE group_member SET status = \'Y\', pause_edate = null WHERE status = \'p\' AND pause_edate <= now() AND pause_edate IS NOT NULL')
+  }
+
+  setInviteInfoMerge = async (invite_info, group_seq, member_seq) => {
+    const delete_filter = {
+      seq: invite_info.invite_seq
+    }
+    await this.delete(delete_filter)
+
+    const filter = {
+      group_seq,
+      member_seq
+    }
+    const update_params = {
+      invite_code: invite_info.invite_code,
+      invite_email: invite_info.invite_email,
+      invite_status: invite_info.invite_status,
+      invite_date: invite_info.invite_date,
+    }
+    return await this.update(filter, update_params)
   }
 }

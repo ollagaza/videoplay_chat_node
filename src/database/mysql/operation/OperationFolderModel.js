@@ -198,12 +198,6 @@ export default class OperationFolderModel extends MySQLModel {
       'modify_date': this.database.raw('NOW()')
     })
   }
-  updateFolderStorageSize = async (filters, file_size) => {
-    return await this.update(filters, {
-      total_folder_size: this.database.raw(`if(cast(total_folder_size as SIGNED) + ${file_size} > 0, total_folder_size + ${file_size}, 0)`),
-      'modify_date': this.database.raw('NOW()')
-    })
-  }
   addFolderStorageSizeBySeqList = async (folder_seq_list, file_size) => {
     if (file_size === 0) return
     log.debug(this.log_prefix, '[addFolderStorageSizeBySeqList]', folder_seq_list, file_size)
