@@ -190,12 +190,12 @@ const group_pause_unlimit_form = `
 const group_un_pause_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>채널의 SurgStory 일시 중단이 <span style="color: #2e6bb8;">해제</span>되어 다시 접근이 가능합니다
+      <span style="color: #ffa00f;">"{group_name}"</span>채널의 활동 정지가 <span style="color: #2e6bb8;">해제</span>되어 다시 활동이 가능합니다
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 SurgStory 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"의 채널의 관리자인 {admin_name}님에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
@@ -208,19 +208,19 @@ const group_un_pause_form = `
 const group_delete_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>의 SurgStory 팀원에서 제외되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span>채널에서 강제 탈퇴가 되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 팀원에서 제외하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님을 강제 탈퇴하였습니다.<br>
       이제 채널 활동을 할 수 없으며, 계정에 있는 파일에 접근할 수 없습니다.<br>
-      ("{group_name}"의 SurgStory 외에 다른 채널은 접근이 가능합니다.)
+      ("{group_name}" 외에 다른 채널은 접근이 가능합니다.)
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 SurgStory 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"의 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>

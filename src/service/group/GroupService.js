@@ -692,7 +692,7 @@ const GroupServiceClass = class {
       await group_member_model.changeMemberGrade(group_member_seq, this.MEMBER_GRADE_MANAGER)
     }
 
-    const title = `'${group_member_info.group_name}'채널의 관리자가 되었습니다.`
+    const title = `'${group_member_info.group_name}'채널의 매니저가 되었습니다.`
     const message_info = {
       title: '채널 관리자 권한 변경',
       message: title
@@ -1419,8 +1419,9 @@ const GroupServiceClass = class {
       throw new StdObject(-1, '잘못된 접근입니다.', 400)
     }
     const group_member_model = this.getGroupMemberModel(database);
+    const admin_member = await MemberService.getMemberInfo(database, admin_member_info.member_seq)
+    admin_member_info.user_name = admin_member.user_name;
     const update_result = await group_member_model.updatePauseList(group_seq, group_member_seq_list, request_body, 'Y')
-
     this.sendMemberUnPauseMessage(admin_member_info, group_member_seq_list, domain)
 
     return update_result
@@ -1458,6 +1459,10 @@ const GroupServiceClass = class {
     }
     const update_result = await group_member_model.updateBanList(group_seq, group_member_seq_list, request_body, status)
     await this.setGroupMemberCount(DBMySQL, group_seq, Constants.DOWN, group_member_seq_list.length);
+
+    const admin_member = await MemberService.getMemberInfo(database, admin_member_info.member_seq)
+    admin_member_info.user_name = admin_member.user_name;
+
     this.sendMemberBanMessage(admin_member_info, group_member_seq_list, service_domain)
 
     return update_result
