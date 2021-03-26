@@ -34,9 +34,8 @@ const MemberLogServiceClass = class {
 
   memberJoinLog = async (database, member_seq) => {
     try {
-      await this.createMemberLog(database, null, member_seq, null, '1000', '', null, 1)
-      await this.createMemberLog(database, null, member_seq, null, '1001', 300, null, 1)
       await this.createMemberLog(database, null, member_seq, null, '8000', '', null, 1)
+      await this.createMemberLog(database, null, member_seq, null, '1000', '', null, 1)
     } catch (error) {
       log.error(this.log_prefix, '[memberJoinLog]', error)
     }
