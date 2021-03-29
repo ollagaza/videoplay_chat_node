@@ -711,7 +711,8 @@ const GroupServiceClass = class {
     }
     const body = GroupMailTemplate.groupAdmin(template_data)
     const target_member_info = await this.getGroupMemberInfoBySeq(database, group_member_seq)
-    this.sendEmail(title, body, [target_member_info.invite_email], 'changeGradeAdmin')
+    const member_info = await MemberService.getMemberInfo(DBMySQL, target_member_info.member_seq)
+    this.sendEmail(title, body, [member_info.email_address], 'changeGradeAdmin')
   }
 
   changeGradeNormal = async (database, group_member_info, group_member_seq, update_grade = true) => {
@@ -1385,7 +1386,7 @@ const GroupServiceClass = class {
   sendMemberPauseMessage = (admin_member_info, group_member_seq_list, service_domain, request_body) => {
     (
       async () => {
-        const title = `${admin_member_info.group_name}채널 활동이 정지되었습니다.`
+        const title = `'${admin_member_info.group_name}'채널 활동이 정지되었습니다.`
         const message_info = {
           title: '채널 사용 불가',
           message: title,
@@ -1470,7 +1471,7 @@ const GroupServiceClass = class {
   sendMemberBanMessage = (admin_member_info, group_member_seq_list, service_domain) => {
     (
       async () => {
-        const title = `${admin_member_info.group_name}채널의 SurgStory 팀원에서 제외되었습니다.`
+        const title = `${admin_member_info.group_name}채널의 팀원에서 제외되었습니다.`
         const message_info = {
           title: '채널 사용 불가',
           message: title,
@@ -1533,10 +1534,11 @@ const GroupServiceClass = class {
       }
       if (email_body) {
         const target_member_info = await this.getGroupMemberInfoBySeq(DBMySQL, group_member_seq)
-        if (target_member_info && target_member_info.invite_email) {
-          if (email_map[target_member_info.invite_email]) continue
-          email_to_list.push(target_member_info.invite_email)
-          email_map[target_member_info.invite_email] = true
+        const member_info = await MemberService.getMemberInfo(DBMySQL, target_member_info.member_seq)
+        if (member_info && member_info.email_address) {
+          if (email_map[member_info.email_address]) continue
+          email_to_list.push(member_info.email_address)
+          email_map[member_info.email_address] = true
         }
       }
     }

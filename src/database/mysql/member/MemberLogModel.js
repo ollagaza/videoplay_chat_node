@@ -48,7 +48,7 @@ export default class MemberLogModel extends MySQLModel {
     const resultContent = {}
     const logCodes = await LogCodeModel.findAll()
     const langLogCodes = logCodes[0].codes[lang]
-    const result = await this.find(filters, fieldSet, { name: 'regist_date', direction: 'desc' }, null)
+    const result = await this.find(filters, fieldSet, [{ name: 'regist_date', direction: 'desc' }, { name: 'log_code', direction: 'asc' }], null)
 
     Object.keys(result).forEach((key) => {
       if (langLogCodes[result[key].log_code] !== undefined) {
