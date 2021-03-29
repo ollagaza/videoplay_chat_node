@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import striptags from "striptags";
 import StdObject from '../../wrapper/std-object'
 import Util from '../../utils/Util'
 import ServiceConfig from '../service-config'
@@ -33,8 +34,11 @@ const GroupBoardDataServiceClass = class {
     const page = request_body.page ? request_body.page : null
     const group_seq = request_body.group_seq ? request_body.group_seq : _group_seq
     const board_seq = request_body.board_seq ? request_body.board_seq : null
+    const use_nickname = request_body.use_nickname ? request_body.use_nickname : 0
     const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
     const request_order = request_body.order ? JSON.parse(request_body.order) : null
+    const search_option = request_body.search_option ? request_body.search_option : null
+    const search_keyword = request_body.search_keyword ? request_body.search_keyword : null
 
     const paging = {}
     paging.list_count = request_paging.list_count ? request_paging.list_count : 10
@@ -55,7 +59,7 @@ const GroupBoardDataServiceClass = class {
     if (page === 'main') {
       board_list = await model.getBoardDataMainList(group_seq, group_grade_number)
     } else {
-      board_list = await model.getBoardDataPagingList(group_seq, board_seq, paging, request_order, group_grade_number)
+      board_list = await model.getBoardDataPagingList(group_seq, board_seq, use_nickname, paging, request_order, group_grade_number, search_option, search_keyword)
 
       for (let cnt = 0; cnt < board_list.length; cnt++) {
         board_list[cnt].member_profile_image = ServiceConfig.get('static_storage_prefix') + board_list[cnt].member_profile_image
@@ -116,6 +120,7 @@ const GroupBoardDataServiceClass = class {
 
   CreateUpdateBoardComment = async (comment_data) => {
     let result = null
+    comment_data.content_text = striptags(comment_data.content)
 
     if (comment_data.seq) {
       const seq = comment_data.seq;

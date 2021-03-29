@@ -1,3 +1,5 @@
+import _ from 'lodash'
+import log from '../../../libs/logger'
 import MySQLModel from '../../mysql-model'
 import Util from "../../../utils/Util";
 
@@ -71,38 +73,88 @@ export default class GroupBoardDataModel extends MySQLModel {
     return { data: data[0] } ;
   }
 
-  getBoardDataPagingList = async (group_seq, board_seq, paging, order, group_grade_number = null) => {
+  getBoardDataPagingList = async (group_seq, board_seq, use_nickname, paging, order, group_grade_number = null, search_option = null, search_keyword = '') => {
     let oKnex = null;
-    if (Util.parseInt(paging.cur_page) === 1) {
+    if (Util.parseInt(paging.cur_page) === 1 && !search_keyword) {
       oKnex = this.database.select('*')
         .from(this.table_name)
-        .where('group_seq', group_seq)
-        .andWhere('is_notice', '1')
-        .andWhere('status', 'Y')
+        .where('board_data.group_seq', group_seq)
+        .andWhere('board_data.is_notice', '1')
+        .andWhere('board_data.status', 'Y')
         .unionAll([
           this.database.select('*')
             .from(this.table_name)
-            .where('group_seq', group_seq)
-            .andWhere('is_notice', '2')
-            .andWhere('board_seq', board_seq)
-            .andWhere('status', 'Y')
+            .where('board_data.group_seq', group_seq)
+            .andWhere('board_data.is_notice', '2')
+            .andWhere('board_data.board_seq', board_seq)
+            .andWhere('board_data.status', 'Y')
           ,
           this.database.select('*')
             .from(this.table_name)
-            .where('group_seq', group_seq)
-            .andWhere('is_notice', '3')
-            .andWhere('board_seq', board_seq)
-            .andWhere('status', 'Y')
+            .where('board_data.group_seq', group_seq)
+            .andWhere('board_data.is_notice', '3')
+            .andWhere('board_data.board_seq', board_seq)
+            .andWhere('board_data.status', 'Y')
         ])
+      oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, {column: 'sort_num', order: 'asc'}, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
     } else {
-      oKnex = this.database.select('*')
+      oKnex = this.database.select(`${this.table_name}.*`)
         .from(this.table_name)
-        .where('group_seq', group_seq)
-        .andWhere('is_notice', '3')
-        .andWhere('board_seq', board_seq)
-        .andWhere('status', 'Y')
+        .where('board_data.group_seq', group_seq)
+        .andWhere('board_data.is_notice', '3')
+        .andWhere('board_data.board_seq', board_seq)
+        .andWhere('board_data.status', 'Y')
+
+      if (search_keyword) {
+        switch (search_option) {
+          case 'title_desc':
+            oKnex.andWhere((query) => {
+              query.orWhere('subject', 'like', `%${search_keyword}%`)
+              query.orWhere('content_text', 'like', `%${search_keyword}%`)
+            })
+            break;
+          case 'title':
+            oKnex.andWhere((query) => {
+              query.orWhere('subject', 'like', `%${search_keyword}%`)
+            })
+            break;
+          case 'write':
+            oKnex.whereIn((query) => {
+              if (use_nickname) {
+                query.orWhere('board_data.user_nickname', 'like', `%${search_keyword}%`)
+              } else {
+                query.orWhere('board_data.user_name', 'like', `%${search_keyword}%`)
+              }
+            })
+            break;
+          case 'comment_desc':
+            oKnex.andWhere('seq', (query) => {
+              query.select('board_data_seq')
+              query.from('board_comment')
+              query.where('status', 'Y')
+              query.andWhere('board_comment.content_text', 'like', `%${search_keyword}%`)
+            })
+            break;
+          case 'comment_write':
+            oKnex.whereIn('seq', (query) => {
+              query.select('board_data_seq')
+              query.from('board_comment')
+              query.where('status', 'Y')
+              query.andWhere((sub_query) => {
+                if (use_nickname) {
+                  sub_query.orWhere('board_comment.user_nickname', 'like', `%${search_keyword}%`)
+                } else {
+                  sub_query.orWhere('board_comment.user_name', 'like', `%${search_keyword}%`)
+                }
+              })
+            })
+            break;
+          default:
+            break;
+        }
+      }
+      oKnex.orderBy([{column: 'board_data.is_notice', order: 'asc'}, {column: 'board_data.origin_seq', order: 'desc'}, {column: 'board_data.sort_num', order: 'asc'}, {column: 'board_data.parent_seq', order: 'asc'}, {column: 'board_data.depth', order: 'asc'}])
     }
-    oKnex.orderBy([{column: 'is_notice', order: 'asc'}, {column: 'origin_seq', order: 'desc'}, {column: 'sort_num', order: 'asc'}, {column: 'parent_seq', order: 'asc'}, {column: 'depth', order: 'asc'}])
     return await this.queryPaginated(oKnex, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging, paging.start_count)
   }
 
