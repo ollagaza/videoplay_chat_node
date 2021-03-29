@@ -447,11 +447,11 @@ const GroupServiceClass = class {
   }
 
   isGroupAdminByMemberInfo = (group_member_info) => {
-    return group_member_info.grade === this.MEMBER_GRADE_ADMIN || group_member_info.grade === this.MEMBER_GRADE_OWNER || group_member_info.grade === this.MEMBER_GRADE_MANAGER
+    return group_member_info.grade === this.MEMBER_GRADE_ADMIN || group_member_info.grade === this.MEMBER_GRADE_OWNER || `${group_member_info.grade}` === this.MEMBER_GRADE_MANAGER
   }
 
   isGroupManagerByMemberInfo = (group_member_info) => {
-    return group_member_info.grade === this.MEMBER_GRADE_MANAGER
+    return `${group_member_info.grade}` === this.MEMBER_GRADE_MANAGER
   }
 
   isActiveGroupMember = async (database, group_seq, member_seq) => {

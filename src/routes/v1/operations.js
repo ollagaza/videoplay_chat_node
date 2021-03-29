@@ -18,8 +18,8 @@ import OperationFolderService from "../../service/operation/OperationFolderServi
 const routes = Router()
 
 routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const { group_seq, group_grade_number, group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, group_seq, group_member_info, group_grade_number, req)
+  const { group_seq, group_grade_number, group_member_info, is_group_admin, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_info_page = await OperationService.getOperationListByRequest(DBMySQL, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, req)
 
   const output = new StdObject()
   output.adds(operation_info_page)
@@ -221,12 +221,12 @@ routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(Role.
 }))
 
 routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq, member_seq, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   req.accepts('application/json')
-  const token_info = req.token_info
-  const member_seq = token_info.getId()
   const seq_list = req.body.seq_list
 
-  const result = await OperationService.updateStatusTrash(DBMySQL, seq_list, member_seq, false)
+  // updateStatusTrash = async (database, group_seq, operation_seq_list, is_delete = false, is_delete_by_admin, delete_member_seq)
+  const result = await OperationService.updateStatusTrash(DBMySQL, group_seq, req.body, false, is_group_admin, member_seq)
 
   const output = new StdObject()
   output.add('result', result)
@@ -235,13 +235,12 @@ routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res
 }))
 
 routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq, member_seq, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   req.accepts('application/json')
-  const token_info = req.token_info
-  const member_seq = token_info.getId()
   const seq_list = req.body.seq_list
   log.d(req, seq_list)
 
-  const result = await OperationService.updateStatusTrash(DBMySQL, seq_list, member_seq, true)
+  const result = await OperationService.updateStatusTrash(DBMySQL, group_seq, req.body, true, is_group_admin, member_seq)
 
   const output = new StdObject()
   output.add('result', result)
@@ -411,6 +410,17 @@ routes.get('/:operation_seq(\\d+)/active', Auth.isAuthenticated(Role.DEFAULT), W
 
   const output = new StdObject()
   output.add('is_active', is_active)
+  res.json(output)
+}))
+
+routes.get('/:operation_seq(\\d+)/able/restore', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq, group_grade_number, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const operation_seq = req.params.operation_seq
+
+  const is_able = await OperationService.isOperationAbleRestore(operation_seq, group_seq, group_grade_number, is_group_admin)
+  const output = new StdObject()
+  output.add('is_able', is_able)
+
   res.json(output)
 }))
 

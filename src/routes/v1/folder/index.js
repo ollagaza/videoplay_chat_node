@@ -54,41 +54,21 @@ routes.post('/rename(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT), 
   res.json(output)
 }))
 
-routes.get('/relation(/:folder_seq(\\d+))?', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const folder_seq = Util.parseInt(req.params.folder_seq, null)
-  let folder_info = null
-  let parent_list = null
-  if (folder_seq) {
-    folder_info = await OperationFolderService.getFolderInfo(DBMySQL, group_seq, folder_seq)
-    parent_list = await OperationFolderService.getParentFolderList(DBMySQL, group_seq, folder_info.parent_folder_list)
-  }
-  const child_folder_list = await OperationFolderService.getChildFolderList(DBMySQL, group_seq, folder_seq)
-  const output = new StdObject()
-  output.add('folder_info', folder_info)
-  output.add('parent_list', parent_list)
-  output.add('child_folder_list', child_folder_list)
-  res.json(output)
-}))
-
 routes.delete('/deletefolder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  try {
-    const folder_info = req.body.folder_info
-    log.debug('[Router Folder -> index]', '[/deletefolder]', folder_info)
-
-    const folder_chk = await OperationFolderService.isFolderFileCheck(DBMySQL, folder_info.group_seq, folder_info.seq)
-
-    await DBMySQL.transaction(async (transaction) => {
-      if (!folder_chk) {
-        await OperationFolderService.deleteOperationFolder(transaction, folder_info.group_seq, folder_info.seq)
-        res.json(new StdObject(0, '폴더 삭제가 완료 되었습니다.', '200'))
-      } else {
-        res.json(new StdObject(1, '해당 폴더 또는 하위 폴더에 파일이 존재 합니다.<br/>파일 삭제 또는 이동 후 다시 시도 하여 주세요', '200'))
-      }
-    })
-  } catch (e) {
-    throw new StdObject(-1, '폴더 삭제 중 오류가 발생 하였습니다.', '400')
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true, true)
+  const folder_info = req.body.folder_info
+  if (folder_info.group_seq !== group_seq) {
+    throw new StdObject(-1, '권한이 없습니다.', 400)
   }
+  const is_empty = await OperationFolderService.isFolderEmpty(DBMySQL, folder_info.group_seq, folder_info.seq)
+  let output = null
+  if (!is_empty) {
+    output = new StdObject(1, '해당 폴더 또는 하위 폴더에 파일이 존재 합니다.<br/>파일 삭제 또는 이동 후 다시 시도 하여 주세요', 400)
+  } else {
+    await OperationFolderService.deleteOperationFolder(DBMySQL, group_seq, folder_info.seq)
+    output = new StdObject(0, '폴더 삭제가 완료 되었습니다.', 200)
+  }
+  res.json(output)
 }))
 
 routes.put('/move', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
@@ -96,7 +76,7 @@ routes.put('/move', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) =>
     const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
     const request_data = req.body.request_data
 
-    log.debug('[Router Folder -> index]', '[/moveoperation]', request_data)
+    log.d(req, request_data)
 
     if (request_data.operation_folder_list.length > 0) {
       for (let cnt = 0; cnt < request_data.operation_folder_list.length; cnt++) {
@@ -142,12 +122,9 @@ routes.delete('/:folder_seq(\\d+)/favorite', Auth.isAuthenticated(Role.LOGIN_USE
 }))
 
 routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq, is_group_admin, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
   req.accepts('application/json')
-  const token_info = req.token_info
-  const group_seq = token_info.getGroupSeq()
-  const seq_list = req.body.seq_list
-
-  const result = await OperationFolderService.updateStatusTrash(DBMySQL, seq_list, group_seq, false)
+  const result = await OperationFolderService.updateStatusTrash(DBMySQL, req.body, group_seq, false, is_group_admin, member_seq)
 
   const output = new StdObject()
   output.add('result', result)
@@ -156,12 +133,9 @@ routes.put('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res
 }))
 
 routes.delete('/trash', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
   req.accepts('application/json')
-  const token_info = req.token_info
-  const group_seq = token_info.getGroupSeq()
-  const seq_list = req.body.seq_list
-
-  const result = await OperationFolderService.updateStatusTrash(DBMySQL, seq_list, group_seq, true)
+  const result = await OperationFolderService.updateStatusTrash(DBMySQL, req.body, group_seq, true, false, null)
 
   const output = new StdObject()
   output.add('result', result)
@@ -177,6 +151,26 @@ routes.get('/folder_size_sync', Wrap(async (req, res) => {
 routes.get('/folder_size_sync/:group_seq(\\d+)', Wrap(async (req, res) => {
   const group_seq = req.params.group_seq
   const output = await OperationFolderService.syncFolderTotalSize(DBMySQL, group_seq)
+  res.json(output)
+}))
+
+routes.get('/:folder_seq(\\d+)/empty', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const folder_seq = req.params.folder_seq
+  const is_empty = await OperationFolderService.isFolderEmpty(DBMySQL, group_seq, folder_seq, true)
+  const output = new StdObject()
+  output.add('is_empty', is_empty)
+  res.json(output)
+}))
+
+routes.get('/:folder_seq(\\d+)/able/restore', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { group_seq, group_grade_number, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const folder_seq = req.params.folder_seq
+
+  const is_able = await OperationFolderService.isFolderAbleRestore(folder_seq, group_seq, group_grade_number, is_group_admin)
+  const output = new StdObject()
+  output.add('is_able', is_able)
+
   res.json(output)
 }))
 

@@ -34,19 +34,19 @@ export default class OperationDataModel extends MySQLModel {
     if (!create_params.category_list) {
       create_params.category_list = JSON.stringify([])
     }
-    return await this.create(create_params, 'seq')
+    return this.create(create_params, 'seq')
   }
 
   updateOperationData = async (operation_seq, operation_data) => {
-    return await this.update({ operation_seq }, this.getOperationDataPrams(operation_data))
+    return this.update({ operation_seq }, this.getOperationDataPrams(operation_data))
   }
 
   updateOperationDataByGroupSeq = async (group_seq, operation_data) => {
-    return await this.update({ group_seq }, this.getOperationDataPrams(operation_data))
+    return this.update({ group_seq }, this.getOperationDataPrams(operation_data))
   }
 
   updateOperationDataByOperationSeqList = async (operation_seq_list, operation_data) => {
-    return await this.updateIn('operation_seq', operation_seq_list, this.getOperationDataPrams(operation_data))
+    return this.updateIn('operation_seq', operation_seq_list, this.getOperationDataPrams(operation_data))
   }
 
   getOperationData = async (operation_data_seq) => {
@@ -67,7 +67,7 @@ export default class OperationDataModel extends MySQLModel {
       thumbnail: thumbnail_path,
       modify_date: this.database.raw('NOW()')
     }
-    return await this.update(filter, update_params)
+    return this.update(filter, update_params)
   }
 
   updateThumbnailImageNotExists = async (operation_data_seq, thumbnail_path) => {
@@ -78,7 +78,7 @@ export default class OperationDataModel extends MySQLModel {
       thumbnail: this.database.raw(`IF(\`thumbnail\` IS NULL, '${thumbnail_path}', \`thumbnail\`)`),
       modify_date: this.database.raw('NOW()')
     }
-    return await this.update(filter, update_params)
+    return this.update(filter, update_params)
   }
 
   updateComplete = async (operation_data_seq, total_time = null) => {
@@ -92,7 +92,7 @@ export default class OperationDataModel extends MySQLModel {
     if (total_time) {
       update_params.total_time = total_time
     }
-    return await this.update(filter, update_params)
+    return this.update(filter, update_params)
   }
 
   setRejectMentoring = async (operation_data_seq) => {
@@ -103,7 +103,7 @@ export default class OperationDataModel extends MySQLModel {
       const update_params = {
         is_mento_complete: 'R'
       }
-      return await this.update(filter, update_params)
+      return this.update(filter, update_params)
     } catch (e) {
       throw e
     }
@@ -118,7 +118,7 @@ export default class OperationDataModel extends MySQLModel {
       doc_text,
       modify_date: this.database.raw('NOW()')
     }
-    return await this.update(filter, update_params)
+    return this.update(filter, update_params)
   }
 
   updateOpenVideo = async (operation_data_seq, is_open_video) => {
@@ -129,7 +129,7 @@ export default class OperationDataModel extends MySQLModel {
       is_open_video,
       modify_date: this.database.raw('NOW()')
     }
-    return await this.update(filter, update_params)
+    return this.update(filter, update_params)
   }
 
   getCompleteIsOpenVideoDataLists = async (group_seq, limit = null) => {
