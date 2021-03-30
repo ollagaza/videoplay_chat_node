@@ -271,8 +271,9 @@ const OperationFolderServiceClass = class {
 
     for (let i = 0; i < folder_seq_list.length; i++) {
       const folder_info = await folder_model.getFolderInfoBySeq(folder_seq_list[i])
+      log.debug(this.log_prefix, 'updateStatusTrash', folder_info);
       if (move_folder_info) {
-        await folder_model.moveFolder(folder_info, move_folder_info)
+        await folder_model.moveFolder(move_folder_info, folder_info)
       }
       if (is_restore) {
         await this.onChangeFolderSize(group_seq, folder_seq_list[i])
