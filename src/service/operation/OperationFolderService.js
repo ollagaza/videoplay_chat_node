@@ -90,45 +90,16 @@ const OperationFolderServiceClass = class {
     return new OperationFolderInfo(await model.getFolderInfo(group_seq, folder_seq))
   }
 
-  getParentFolderList = async (database, group_seq, parent_folder_list) => {
-    if (!parent_folder_list) {
-      return null
-    }
+  getChildAllFolderList = async (database, group_seq, folder_seq, include_current_folder = true, status = null) => {
     const model = this.getOperationFolderModel(database)
-    const parent_list = await model.getParentFolders(group_seq, parent_folder_list)
-    const result_list = []
-    if (parent_list) {
-      parent_list.forEach((parent_info) => {
-        result_list.push(new OperationFolderInfo(parent_info))
-      })
-    }
-    return result_list
+    return model.getAllChildFolders(group_seq, folder_seq, include_current_folder, status)
   }
 
-  getChildFolderList = async (database, group_seq, folder_seq) => {
-    const model = this.getOperationFolderModel(database)
-    const child_list = await model.getChildFolders(group_seq, folder_seq)
-    const result_list = []
-    if (child_list) {
-      child_list.forEach((child_info) => {
-        result_list.push(new OperationFolderInfo(child_info))
-      })
-    }
-    return result_list
-  }
-
-  getChildAllFolderList = async (database, group_seq, folder_seq) => {
-    const model = this.getOperationFolderModel(database)
-    const allChildFolders = await model.getAllChildFolders(group_seq, folder_seq, true)
-
-    return allChildFolders;
-  }
-
-  getAllChildFolderSeqListBySeqList = async (database, group_seq, folder_seq_list) => {
+  getAllChildFolderSeqListBySeqList = async (database, group_seq, folder_seq_list, include_current_folder = true, status = null) => {
     let child_folder_list;
     const child_folder_seq_list = [];
     for (let i = 0; i < folder_seq_list.length; i++) {
-      child_folder_list = await this.getChildAllFolderList(database, group_seq, folder_seq_list[i])
+      child_folder_list = await this.getChildAllFolderList(database, group_seq, folder_seq_list[i], include_current_folder, status)
       for (let cnt = 0; cnt < child_folder_list.length; cnt++) {
         child_folder_seq_list.push(child_folder_list[cnt].seq);
       }
@@ -214,37 +185,30 @@ const OperationFolderServiceClass = class {
 
   deleteOperationFolder = async (database, group_seq, folder_seq) => {
     const model = this.getOperationFolderModel(database)
-    const allChildFolders = await model.getAllChildFolders(group_seq, folder_seq, true)
-    for (let cnt = 0; cnt < allChildFolders.length; cnt++) {
-      const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq)
-      if (operation_result.length === 0) {
-        await model.deleteOperationFolder(group_seq, allChildFolders[cnt].seq)
-      }
-    }
+    return model.deleteOperationFolder(group_seq, folder_seq)
   }
 
   deleteOperationFolders = async (database, group_seq, folder_seq_list) => {
     const model = this.getOperationFolderModel(database)
-    for (let cnt = 0; cnt < folder_seq_list.length; cnt++) {
-      await model.deleteOperationFolder(group_seq, folder_seq_list[cnt])
-    }
+    return model.deleteOperationFolderBySeqList(group_seq, folder_seq_list)
   }
 
-  isFolderFileCheck = async (database, group_seq, folder_seq) => {
+  isFolderEmpty = async (database, group_seq, folder_seq, check_child_folder = false) => {
     try {
-      let file_chk = false
       const model = this.getOperationFolderModel(database)
-      const allChildFolders = await model.getAllChildFolders(group_seq, folder_seq, true)
-      log.debug(this.log_prefix, '[isFolderFileCheck]', allChildFolders)
-      for (let cnt = 0; cnt < allChildFolders.length; cnt++) {
-        const operation_result = await OperationService.getOperationByFolderSeq(DBMySQL, group_seq, allChildFolders[cnt].seq)
-        if (operation_result.length > 0) {
-          file_chk = true
+      const folder_seq_list = []
+      folder_seq_list.push(folder_seq)
+      const child_folder_list = await model.getAllChildFolders(group_seq, folder_seq, false, 'Y')
+      if (child_folder_list && child_folder_list.length > 0) {
+        if (check_child_folder) return false
+        for (let i = 0; i < child_folder_list.length; i++) {
+          folder_seq_list.push(child_folder_list[i].seq)
         }
       }
-      return file_chk
+      const operation_list = await OperationService.getOperationListInFolderSeqList(database, group_seq, folder_seq_list, 'Y', false)
+      return !operation_list || operation_list.length === 0
     } catch (e) {
-      log.debug(this.log_prefix, '[isFolderFileCheck]', e)
+      log.error(this.log_prefix, '[isFolderEmpty]', group_seq, folder_seq, e)
       return false
     }
   }
@@ -284,7 +248,6 @@ const OperationFolderServiceClass = class {
       const folder_list = await folder_model.getAllGroupFolderList(group_seq, depth)
       for (let cnt = 0; cnt < folder_list.length; cnt++) {
         const folder_info = new OperationFolderInfo(folder_list[cnt])
-        log.debug(this.log_prefix, '[syncFolderTotalSize]', group_seq, folder_info.seq)
         await this.onChangeFolderSize(group_seq, folder_info.seq, true)
       }
     }
@@ -293,10 +256,33 @@ const OperationFolderServiceClass = class {
     const model = this.getOperationFolderModel(database)
     return await model.updateStatusFavorite(folder_seq, is_delete)
   }
-  updateStatusTrash = async (database, seq_list, group_seq, is_delete) => {
-    const model = this.getOperationFolderModel(database)
-    const status = is_delete ? 'Y' : 'T'
-    await model.updateStatusTrash(seq_list, group_seq, status)
+  updateStatusTrash = async (database, request_body, group_seq, is_restore, is_delete_by_admin, delete_member_seq) => {
+    const folder_seq_list = request_body.seq_list
+    const move_folder_info = is_restore && request_body.folder_info ? request_body.folder_info : null
+    if (!folder_seq_list || !folder_seq_list.length) return true
+    const folder_model = this.getOperationFolderModel(database)
+    let status = is_restore ? 'Y' : 'T'
+    await folder_model.updateStatusTrash(folder_seq_list, group_seq, status, null, is_delete_by_admin, delete_member_seq)
+
+    status = is_restore ? 'Y' : 'F'
+    const prev_status = is_restore ? null : 'Y'
+    const child_seq_list = await this.getAllChildFolderSeqListBySeqList(database, group_seq, folder_seq_list, false, prev_status)
+    await folder_model.updateStatusTrash(child_seq_list, group_seq, status, null, is_delete_by_admin, delete_member_seq)
+
+    for (let i = 0; i < folder_seq_list.length; i++) {
+      const folder_info = await folder_model.getFolderInfoBySeq(folder_seq_list[i])
+      log.debug(this.log_prefix, 'updateStatusTrash', folder_info);
+      if (move_folder_info) {
+        await folder_model.moveFolder(move_folder_info, folder_info)
+      }
+      if (is_restore) {
+        await this.onChangeFolderSize(group_seq, folder_seq_list[i])
+      } else {
+        const change_file_size = -Util.parseInt(folder_info.total_folder_size)
+        const parent_folder_list = folder_info.parent_folder_list ? JSON.parse(folder_info.parent_folder_list) : []
+        await folder_model.addFolderStorageSizeBySeqList(parent_folder_list, change_file_size)
+      }
+    }
 
     return true
   }
@@ -304,6 +290,34 @@ const OperationFolderServiceClass = class {
   getGroupFolderByDepthZero = async (database, group_seq) => {
     const model = this.getOperationFolderModel(database)
     return await model.getGroupFolderByDepthZero(group_seq)
+  }
+
+  isFolderAbleRestore = async (folder_seq, group_seq, group_grade_number, is_group_admin) => {
+    const folder_info = await this.getFolderInfo(DBMySQL, group_seq, folder_seq)
+    if (!folder_info || folder_info.isEmpty()) {
+      throw new StdObject(1, '폴더정보가 존재하지 않습니다.', 400)
+    }
+    const parent_seq = folder_info.parent_seq
+    if (!parent_seq) {
+      return true
+    }
+    const parent_folder_info = await this.getFolderInfo(DBMySQL, group_seq, parent_seq)
+    if (!parent_folder_info || parent_folder_info.status !== 'Y') {
+      throw new StdObject(2, '상위폴더가 삭제되었습니다.', 400)
+    }
+    if (is_group_admin) return true
+    const folder_grade_number = this.getFolderGradeNumber(folder_info.access_type)
+    if (folder_grade_number > group_grade_number) {
+      throw new StdObject(3, '상위폴더에 접근 권한이 없습니다.', 400)
+    }
+    return true
+  }
+
+  getFolderGradeNumber = (access_type) => {
+    if (access_type === 'O' || access_type === 'A') {
+      return 99
+    }
+    return Util.parseInt(access_type, 99)
   }
 }
 

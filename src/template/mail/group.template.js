@@ -146,7 +146,7 @@ const group_pause_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님의 채널 활동을
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님의 채널 활동을
       <span style="color: #2e6bb8; font-weight: bold;">정지</span>하였습니다.<br>
       <span style="color: #ffa00f; font-weight: bold;">{pause_sdate}</span>부터 <span style="color: #ffa00f; font-weight: bold;">{pause_edate}</span>까지
       <span style="color: #ffa00f; font-weight: bold;">({pause_day}일간)</span> 해당 채널 활동이 정지 됩니다.<br>
@@ -156,7 +156,7 @@ const group_pause_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"의 채널 관리자에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
@@ -176,7 +176,7 @@ const group_pause_unlimit_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님의 채널 활동을
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님의 채널 활동을
       <span style="color: #2e6bb8; font-weight: bold;">정지</span>하였습니다.<br>
       <span style="color: #2e6bb8; font-weight: bold;">{pause_sdate}</span>부터 해당 채널 활동이 정지 됩니다.<br>
       이제 채널 활동을 할 수 없으며, 채널에 있는 파일에 접근할 수 없습니다.<br>
@@ -185,7 +185,7 @@ const group_pause_unlimit_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"의 채널 관리자에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>

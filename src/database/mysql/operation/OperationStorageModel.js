@@ -122,7 +122,7 @@ export default class OperationStorageModel extends MySQLModel {
       .select(this.database.raw('SUM(operation_storage.total_file_size) AS total_file_size'))
       .from((builder) => {
         builder
-          .select(['seq'])
+          .select(['seq', 'folder_seq'])
           .from('operation')
           .where('group_seq', group_seq)
           .where('status', 'Y')
@@ -131,6 +131,7 @@ export default class OperationStorageModel extends MySQLModel {
         }
         builder.as('operation')
       })
+      .joinRaw('INNER JOIN operation_folder ON operation_folder.seq = operation.folder_seq AND operation_folder.status = \'Y\'')
       .innerJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
       .first()
     const query_result = await query

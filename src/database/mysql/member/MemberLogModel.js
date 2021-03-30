@@ -44,14 +44,14 @@ export default class MemberLogModel extends MySQLModel {
         { notice_list: 0 },
       ]
     }
-    const fieldSet = ['log_code', 'log_text', 'date_format(regist_date, \'%Y%m%d\') keydate', 'date_format(regist_date, \'%Y%m%d%H%i\') regist_date']
+    const fieldSet = ['log_code', 'log_text', 'date_format(regist_date, \'%Y%m%d\') AS keydate', 'date_format(regist_date, \'%Y%m%d%H%i\') AS regist_date']
     const resultContent = {}
     const logCodes = await LogCodeModel.findAll()
     const langLogCodes = logCodes[0].codes[lang]
-    const result = await this.find(filters, fieldSet, [{ name: 'regist_date', direction: 'desc' }, { name: 'log_code', direction: 'asc' }], null)
+    const result = await this.find(filters, fieldSet, [{ column: 'regist_date', order: 'desc' }, { column: 'log_code', order: 'asc' }], null)
 
     Object.keys(result).forEach((key) => {
-      if (langLogCodes[result[key].log_code] !== undefined) {
+      if (result[key].log_code !== '0000' && langLogCodes[result[key].log_code] !== undefined) {
         if (langLogCodes[result[key].log_code].indexOf('#') !== -1) {
           result[key].log_text = langLogCodes[result[key].log_code].replace(/#.+#/g, result[key].log_text)
         } else {

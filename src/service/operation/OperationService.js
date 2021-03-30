@@ -495,7 +495,7 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListByRequest = async (database, group_seq, group_member_info, group_grade_number, request) => {
+  getOperationListByRequest = async (database, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request) => {
     const request_query = request.query ? request.query : {}
     const page_params = {}
     page_params.page = request_query.page
@@ -531,7 +531,7 @@ const OperationServiceClass = class {
     log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params, order_params)
 
     const operation_model = this.getOperationModel(database)
-    return operation_model.getOperationInfoListPage(group_seq, group_grade_number, page_params, filter_params, null, order_params)
+    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params)
   }
 
   setMediaInfo = async (database, operation_info) => {
@@ -1026,27 +1026,33 @@ const OperationServiceClass = class {
     return await model.updateStatusFavorite(operation_seq, is_delete)
   }
 
-  updateStatusTrash = async (database, seq_list, member_seq, is_delete = false) => {
+  updateStatusTrash = async (database, group_seq, request_body, is_restore = false, is_delete_by_admin, delete_member_seq) => {
+    const operation_seq_list = request_body.seq_list
+    const restore_folder_info = is_restore && request_body.folder_info ? request_body.folder_info : null
     const model = this.getOperationModel(database)
-    const status = is_delete ? 'Y' : 'T'
-    await model.updateStatusTrash(seq_list, status)
-    await OperationDataService.updateOperationDataByOperationSeqList(seq_list, status)
+    const status = is_restore ? 'Y' : 'T'
+    await model.updateStatusTrash(operation_seq_list, status, is_delete_by_admin, delete_member_seq, restore_folder_info)
+    await OperationDataService.updateOperationDataByOperationSeqList(operation_seq_list, status)
 
     try {
-      for (let cnt = 0; cnt < seq_list.length; cnt++) {
-        const where = { 'operation.seq': seq_list[cnt] }
+      for (let cnt = 0; cnt < operation_seq_list.length; cnt++) {
+        const where = { 'operation.seq': operation_seq_list[cnt] }
         const operation_info = await model.getOperation(where);
 
-        if (status === 'T' || status === 'Y') {
-          GroupService.onChangeGroupMemberContentCount(operation_info.group_seq, operation_info.member_seq, 'vid', status === 'T' ? Constants.DOWN : Constants.UP)
+        if (is_restore) {
+          GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, 'vid', Constants.UP)
+        } else {
+          GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, 'vid', Constants.DOWN)
         }
 
-        if (operation_info.folder_seq !== null) {
-          await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
+        if (is_restore && restore_folder_info && restore_folder_info.seq) {
+          await OperationFolderService.onChangeFolderSize(group_seq, restore_folder_info.seq)
+        } else if (operation_info.folder_seq !== null) {
+          await OperationFolderService.onChangeFolderSize(group_seq, operation_info.folder_seq)
         }
       }
     } catch (error) {
-      log.error(this.log_prefix, '[updateStatusTrash]', seq_list, member_seq, is_delete, error)
+      log.error(this.log_prefix, '[updateStatusTrash]', group_seq, operation_seq_list, is_restore, error)
       throw error
     }
 
@@ -1079,7 +1085,6 @@ const OperationServiceClass = class {
         await OperationFolderService.onChangeFolderSize(group_seq, folder_info.seq)
       }
       const old_folder_key_list = Object.keys(old_folder_map)
-      log.debug(this.log_prefix, '[moveOperationFolder]', 'old_folder_key_list', old_folder_key_list)
       for (let i = 0; i < old_folder_key_list.length; i++) {
         await OperationFolderService.onChangeFolderSize(group_seq, old_folder_key_list[i])
       }
@@ -1088,12 +1093,14 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListInFolderSeqList = async (database, group_seq, folder_seq_list) => {
+  getOperationListInFolderSeqList = async (database, group_seq, folder_seq_list, status = null, wrap_result = true) => {
     const model = this.getOperationModel(database)
-    const operation_info_list = await model.getOperationListInFolderSeqList(group_seq, folder_seq_list)
+    const operation_info_list = await model.getOperationListInFolderSeqList(group_seq, folder_seq_list, status)
 
-    for (let cnt = 0; cnt < operation_info_list.length; cnt++) {
-      operation_info_list[cnt] = new OperationInfo(operation_info_list[cnt], null);
+    if (wrap_result) {
+      for (let cnt = 0; cnt < operation_info_list.length; cnt++) {
+        operation_info_list[cnt] = new OperationInfo(operation_info_list[cnt], null);
+      }
     }
 
     return operation_info_list
@@ -1206,16 +1213,32 @@ const OperationServiceClass = class {
     const query_result = await model.getOperationFolderGrade(operation_seq)
     if (!query_result || !query_result.seq) return 100
     if (query_result.folder_seq === null) return 1
-    const folder_grade = query_result.access_type
-    if (folder_grade === 'O' || folder_grade === 'A') {
-      return 99
-    }
-    return Util.parseInt(folder_grade, 99)
+    return OperationFolderService.getFolderGradeNumber(query_result.access_type)
   }
 
   isOperationActive = async (operation_seq) => {
     const operation_info = await this.getOperationInfoNoJoin(null, operation_seq, true)
     return operation_info && Util.parseInt(operation_info.seq, 0) === Util.parseInt(operation_seq, 0) && operation_info.status === 'Y'
+  }
+
+  isOperationAbleRestore = async (operation_seq, group_seq, group_grade_number, is_group_admin) => {
+    const operation_info = await this.getOperationInfoNoJoin(DBMySQL, operation_seq, true)
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
+    }
+    if (!operation_info.folder_seq) {
+      return true
+    }
+    const folder_info = await OperationFolderService.getFolderInfo(DBMySQL, group_seq, operation_info.folder_seq)
+    if (!folder_info || folder_info.status !== 'Y') {
+      throw new StdObject(2, '상위폴더가 삭제되었습니다.', 400)
+    }
+    if (is_group_admin) return true
+    const folder_grade_number = OperationFolderService.getFolderGradeNumber(folder_info.access_type)
+    if (folder_grade_number > group_grade_number) {
+      throw new StdObject(3, '상위폴더에 접근 권한이 없습니다.', 400)
+    }
+    return true
   }
 }
 
