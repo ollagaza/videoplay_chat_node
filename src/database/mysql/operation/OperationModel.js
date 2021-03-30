@@ -13,6 +13,7 @@ const join_select = [
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
 ]
+const join_trash_select = _.concat(join_select, ['delete_member.user_name as delete_user_name', 'delete_member.user_nickname as delete_user_nickname'])
 const join_search_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
@@ -56,24 +57,26 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperation(where, import_media_info)
   }
 
-  getOperationInfoListPage = async (group_seq, group_grade_number = null, page_params = {}, filter_params = {}, asc = false, order_params = {}) => {
+  getOperationInfoListPage = async (group_seq, member_seq, group_grade_number = null, is_group_admin = false, page_params = {}, filter_params = {}, order_params = {}) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
 
-    const query = this.database.select(join_select)
+    const is_trash = filter_params.menu === 'trash'
+    const query = this.database.select(is_trash ? join_trash_select : join_select)
     query.column(['operation_data.total_time', 'operation_data.thumbnail'])
     query.from('operation')
     query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
     query.innerJoin('member', 'member.seq', 'operation.member_seq')
     query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
     query.leftOuterJoin('operation_folder', 'operation.folder_seq', 'operation_folder.seq')
+    if (is_trash) {
+      query.joinRaw('LEFT OUTER JOIN `member` AS delete_member ON delete_member.seq = operation.delete_member_seq')
+    }
     query.where('operation.group_seq', group_seq)
-    query.where(this.database.raw('(CASE WHEN operation_folder.access_type IS NULL THEN 1 WHEN operation_folder.access_type = \'A\' THEN 99 WHEN operation_folder.access_type = \'O\' THEN 99 ELSE operation_folder.access_type END) <= ?', [group_grade_number]))
-    log.debug(this.log_prefix, '[getOperationInfoListPage]', 'filter_params', filter_params)
-    // if (filter_params.analysis_complete) {
-    //   query.andWhere('is_analysis_complete', Util.isTrue(filter_params.analysis_complete) ? 1 : 0);
-    // }
+    if (!is_trash) {
+      query.where(this.database.raw('(CASE WHEN operation_folder.access_type IS NULL THEN 1 WHEN operation_folder.access_type = \'A\' THEN 99 WHEN operation_folder.access_type = \'O\' THEN 99 ELSE operation_folder.access_type END) <= ?', [group_grade_number]))
+    }
     if (filter_params.status) {
       query.andWhere('operation.status', filter_params.status.toUpperCase())
     }
@@ -114,6 +117,14 @@ export default class OperationModel extends MySQLModel {
         query.andWhere('operation.status', 'Y')
         check_folder = false
         break
+    }
+    if (!is_trash) {
+      query.andWhere((builder) => {
+        builder.whereNull('operation.folder_seq')
+        builder.orWhere('operation_folder.status', 'Y')
+      })
+    } else if (!is_group_admin) {
+      query.andWhere('operation.member_seq', member_seq)
     }
 
     if (filter_params.search_keyword || filter_params.member_seq) {
@@ -179,10 +190,6 @@ export default class OperationModel extends MySQLModel {
         default :
           break;
       }
-    } else {
-      if (asc) {
-        order_by.direction = 'ASC'
-      }
     }
     query.orderBy(order_by.name, order_by.direction)
 
@@ -245,12 +252,18 @@ export default class OperationModel extends MySQLModel {
     await this.delete({ 'seq': operation_seq })
   }
 
-  updateStatusTrash = async (operation_seq_list, status) => {
-    let filters = null
-    return this.updateIn('seq', operation_seq_list, {
+  updateStatusTrash = async (operation_seq_list, status, is_delete_by_admin, delete_member_seq, folder_info = null) => {
+    const update_params = {
       status,
+      is_delete_by_admin: is_delete_by_admin ? 1 : 0,
+      delete_member_seq,
       'modify_date': this.database.raw('NOW()')
-    }, filters)
+    }
+    if (folder_info) {
+      update_params.folder_seq = folder_info.seq
+    }
+    let filters = null
+    return this.updateIn('seq', operation_seq_list, update_params, filters)
   }
 
   updateStatus = async (operation_seq_list, status) => {
@@ -410,7 +423,7 @@ export default class OperationModel extends MySQLModel {
     const result = await query
     return result && result.total_count > 0
   }
-  getOperationListInFolderSeqList = async (group_seq, folder_seq_list) => {
+  getOperationListInFolderSeqList = async (group_seq, folder_seq_list, status = null) => {
     const params = {
       is_new: true,
       query: [
@@ -418,6 +431,14 @@ export default class OperationModel extends MySQLModel {
         { folder_seq: _.concat(['in'], folder_seq_list) }
       ]
     }
+    if (status) {
+      if (typeof status === 'object') {
+        params.query.push( { status: _.concat(['in'], status) } )
+      } else {
+        params.query.push( { status } )
+      }
+    }
+    log.debug(this.log_prefix, '[getOperationListInFolderSeqList]', group_seq, folder_seq_list, status, params)
     return this.find(params)
   }
   getOperationListInSeqList = async (group_seq, seq_list) => {

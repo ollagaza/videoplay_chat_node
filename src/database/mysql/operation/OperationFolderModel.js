@@ -1,6 +1,7 @@
 import MySQLModel from '../../mysql-model'
 import log from '../../../libs/logger'
-import Util from "../../../utils/Util";
+import Util from "../../../utils/Util"
+import _ from 'lodash'
 
 export default class OperationFolderModel extends MySQLModel {
   constructor (...args) {
@@ -9,7 +10,8 @@ export default class OperationFolderModel extends MySQLModel {
     this.table_name = 'operation_folder'
     this.log_prefix = '[OperationFolderModel]'
     this.selectable_fields = ['*']
-    this.selectable_fields_with_member = ['operation_folder.*', 'member.user_name', 'member.user_nickname']
+    // this.selectable_fields_with_member = ['operation_folder.*', 'member.user_name', 'member.user_nickname']
+    this.selectable_fields_with_member = ['operation_folder.*', 'member.user_name', 'member.user_nickname', 'delete_member.user_name AS delete_user_name', 'delete_member.user_nickname AS delete_user_nickname']
   }
 
   createOperationFolder = async (folder_info) => {
@@ -52,6 +54,15 @@ export default class OperationFolderModel extends MySQLModel {
     return this.delete({ group_seq, seq: folder_seq })
   }
 
+  deleteOperationFolderBySeqList = async (group_seq, folder_seq_list) => {
+    log.debug(this.log_prefix, '[deleteOperationFolderBySeqList]', this.database)
+    return this.database
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .whereIn('seq', folder_seq_list)
+      .del()
+  }
+
   getFolderInfo = async (group_seq, folder_seq) => {
     return this.findOne({ group_seq, seq: folder_seq })
   }
@@ -60,20 +71,11 @@ export default class OperationFolderModel extends MySQLModel {
     return this.findOne({ seq: folder_seq })
   }
 
-  getParentFolders = async (group_seq, parent_folder_list) => {
-    const query = this.database.select(this.selectable_fields_with_member)
-      .from(this.table_name)
-      .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
-      .where(`${this.table_name}.group_seq`, group_seq)
-      .whereIn(`${this.table_name}.seq`, parent_folder_list)
-      .orderBy(`${this.table_name}.depth`, 'asc')
-    return query
-  }
-
   getGroupFolders = async (group_seq) => {
     const query = this.database.select(this.selectable_fields_with_member)
       .from(this.table_name)
       .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
+      .joinRaw('LEFT OUTER JOIN `member` AS delete_member ON delete_member.seq = operation_folder.delete_member_seq')
       .where(`${this.table_name}.group_seq`, group_seq)
     query.orderBy([{ column: `${this.table_name}.depth`, order: 'asc' }, { column: `${this.table_name}.folder_name`, order: 'asc' }])
     return query
@@ -86,18 +88,10 @@ export default class OperationFolderModel extends MySQLModel {
     })
   }
 
-  getChildFolders = async (group_seq, folder_seq) => {
-    return this.find({ group_seq, parent_seq: folder_seq, status: 'Y' }, null, {
-      name: 'folder_name',
-      direction: 'asc'
-    })
-  }
-
-  getAllChildFolders = async (group_seq, folder_seq, include_current_folder = true) => {
+  getAllChildFolders = async (group_seq, folder_seq, include_current_folder = true, status = null) => {
     const query = this.database
-      .select(this.selectable_fields_with_member)
+      .select(this.selectable_fields)
       .from(this.table_name)
-      .innerJoin('member', 'member.seq', `operation_folder.member_seq`)
       .where(`operation_folder.group_seq`, group_seq)
     if (include_current_folder) {
       query.andWhere(function () {
@@ -105,7 +99,16 @@ export default class OperationFolderModel extends MySQLModel {
         this.orWhereRaw(`JSON_CONTAINS(operation_folder.parent_folder_list, '${folder_seq}', '$')`)
       })
     } else {
-      query.orWhereRaw(`JSON_CONTAINS(operation_folder.parent_folder_list, '${folder_seq}', '$')`)
+      query.whereRaw(`JSON_CONTAINS(operation_folder.parent_folder_list, '${folder_seq}', '$')`)
+    }
+    if (status) {
+      if (typeof status === 'object') {
+        if (status.length) {
+          query.whereIn('status', status)
+        }
+      } else {
+        query.where('status', status)
+      }
     }
     return query
   }
@@ -199,7 +202,7 @@ export default class OperationFolderModel extends MySQLModel {
     })
   }
   addFolderStorageSizeBySeqList = async (folder_seq_list, file_size) => {
-    if (file_size === 0) return
+    if (file_size === 0 || !folder_seq_list) return
     log.debug(this.log_prefix, '[addFolderStorageSizeBySeqList]', folder_seq_list, file_size)
     const update_params = {}
     if (file_size < 0) {
@@ -231,15 +234,27 @@ export default class OperationFolderModel extends MySQLModel {
     if (depth !== null) filter.depth = depth
     return this.find(filter)
   }
-  updateStatusTrash = async (operation_seq_list, group_seq, status) => {
-    let filters = null
-    if (group_seq) {
-      filters = { group_seq }
-    }
-    return await this.updateIn('seq', operation_seq_list, {
+  updateStatusTrash = async (folder_seq_list, group_seq, status, prev_status, is_delete_by_admin, delete_member_seq) => {
+    const update_params = {
       status,
-      'modify_date': this.database.raw('NOW()')
-    }, filters)
+      is_delete_by_admin: is_delete_by_admin ? 1 : 0,
+      delete_member_seq,
+      modify_date: this.database.raw('NOW()')
+
+    }
+    const query = this.database
+      .update(update_params)
+      .from(this.table_name)
+      .whereIn('seq', folder_seq_list)
+      .where('group_seq', group_seq)
+    if (prev_status) {
+      if (typeof prev_status === 'object') {
+        query.whereIn('status', prev_status)
+      } else {
+        query.where('status', prev_status)
+      }
+    }
+    return query
   }
   getGroupFolderByDepthZero = async (group_seq) => {
     return await this.find({ group_seq, status: 'Y', depth: 0 }, this.selectable_fields, { name: 'sort', direction: 'asc' })

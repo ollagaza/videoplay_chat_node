@@ -10,6 +10,7 @@ const default_key_list = [
   , 'total_file_size', 'total_file_count', 'clip_count', 'index2_file_count', 'origin_video_count', 'trans_video_count', 'modify_date'
   , 'group_name', 'hospital', 'title', 'view_count', 'total_time', 'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html'
   , 'type', 'is_complete', 'mento_group_seq', 'is_mento_complete', 'is_open_refer_file', 'is_open_video'
+  , 'is_delete_by_admin', 'delete_member_seq', 'delete_user_name', 'delete_user_nickname'
 ]
 
 export default class OperationInfoAndData extends JsonWrapper {
@@ -34,7 +35,6 @@ export default class OperationInfoAndData extends JsonWrapper {
 
       if (data.hashtag_list && typeof data.hashtag_list === 'string') {
         this.hashtag_list = JSON.parse(data.hashtag_list)
-        log.debug('[OperationDataInfo]', data.hashtag_list, this.hashtag_list)
       }
       if (data.category_list && typeof data.category_list === 'string') {
         this.category_list = JSON.parse(data.category_list)
@@ -45,6 +45,7 @@ export default class OperationInfoAndData extends JsonWrapper {
       this.is_complete = Util.isTrue(data.is_complete)
       this.is_open_refer_file = Util.isTrue(data.is_open_refer_file)
       this.is_open_video = Util.isTrue(data.is_open_video)
+      this.is_delete_by_admin = Util.isTrue(data.is_delete_by_admin)
       this.setUrl();
 
       if (this.reg_date) {
