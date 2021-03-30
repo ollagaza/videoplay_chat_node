@@ -90,7 +90,15 @@ routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   const output = new StdObject()
   const { group_seq, group_grade_number } = await GroupService.checkGroupAuth(DBMySQL, req, true, true)
   const result = await GroupBoardDataService.getBoardDataPagingList(DBMySQL, group_seq, req, group_grade_number)
-  output.adds(result)
+  if (result && result.data.length > 0) {
+    output.adds(result)
+  } else if (result && result.data.length === 0 && req.query.search_keyword) {
+    output.error = 1;
+    output.message = '검색 결과가 없습니다.'
+  } else {
+    output.error = 2;
+    output.message = '등록된 게시글이 없습니다.'
+  }
   res.json(output);
 }))
 
