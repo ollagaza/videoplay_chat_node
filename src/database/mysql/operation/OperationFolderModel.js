@@ -75,7 +75,7 @@ export default class OperationFolderModel extends MySQLModel {
     const query = this.database.select(this.selectable_fields_with_member)
       .from(this.table_name)
       .innerJoin('member', 'member.seq', `${this.table_name}.member_seq`)
-      .joinRaw('LEFT OUTER JOIN member AS delete_member ON delete_member.seq = operation_folder.delete_member_seq')
+      .joinRaw('LEFT OUTER JOIN `member` AS delete_member ON delete_member.seq = operation_folder.delete_member_seq')
       .where(`${this.table_name}.group_seq`, group_seq)
     query.orderBy([{ column: `${this.table_name}.depth`, order: 'asc' }, { column: `${this.table_name}.folder_name`, order: 'asc' }])
     return query

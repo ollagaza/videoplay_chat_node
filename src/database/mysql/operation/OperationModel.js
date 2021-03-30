@@ -71,7 +71,7 @@ export default class OperationModel extends MySQLModel {
     query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
     query.leftOuterJoin('operation_folder', 'operation.folder_seq', 'operation_folder.seq')
     if (is_trash) {
-      query.joinRaw('LEFT OUTER JOIN member AS delete_member ON delete_member.seq = operation.delete_member_seq')
+      query.joinRaw('LEFT OUTER JOIN `member` AS delete_member ON delete_member.seq = operation.delete_member_seq')
     }
     query.where('operation.group_seq', group_seq)
     if (!is_trash) {
