@@ -1422,6 +1422,8 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database);
     const admin_member = await MemberService.getMemberInfo(database, admin_member_info.member_seq)
     admin_member_info.user_name = admin_member.user_name;
+    admin_member_info.user_nickname = admin_member.user_nickname;
+
     const update_result = await group_member_model.updatePauseList(group_seq, group_member_seq_list, request_body, 'Y')
     this.sendMemberUnPauseMessage(admin_member_info, group_member_seq_list, domain)
 
@@ -1463,6 +1465,7 @@ const GroupServiceClass = class {
 
     const admin_member = await MemberService.getMemberInfo(database, admin_member_info.member_seq)
     admin_member_info.user_name = admin_member.user_name;
+    admin_member_info.user_nickname = admin_member.user_nickname;
 
     this.sendMemberBanMessage(admin_member_info, group_member_seq_list, service_domain)
 

@@ -26,6 +26,7 @@ routes.get('/medical_subject', Wrap(async (req, res) => {
 routes.get('/socket_url', Wrap(async (req, res) => {
   const output = new StdObject()
   output.add('url', ServiceConfig.get('socket_front_server_ip'))
+  output.add('port', ServiceConfig.get('socket_front_server_port'))
   res.json(output)
 }))
 
