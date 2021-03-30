@@ -51,7 +51,7 @@ export default class MemberLogModel extends MySQLModel {
     const result = await this.find(filters, fieldSet, [{ column: 'regist_date', order: 'desc' }, { column: 'log_code', order: 'asc' }], null)
 
     Object.keys(result).forEach((key) => {
-      if (langLogCodes[result[key].log_code] !== undefined) {
+      if (result[key].log_code !== '0000' && langLogCodes[result[key].log_code] !== undefined) {
         if (langLogCodes[result[key].log_code].indexOf('#') !== -1) {
           result[key].log_text = langLogCodes[result[key].log_code].replace(/#.+#/g, result[key].log_text)
         } else {

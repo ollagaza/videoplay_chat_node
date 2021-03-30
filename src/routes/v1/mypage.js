@@ -16,7 +16,7 @@ import MessageService from '../../service/mypage/MessageService';
 
 const routes = Router()
 
-routes.post('/notice', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/notice', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const token_info = req.token_info
   const group_seq = token_info.getGroupSeq()
