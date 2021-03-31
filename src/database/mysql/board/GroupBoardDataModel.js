@@ -114,18 +114,14 @@ export default class GroupBoardDataModel extends MySQLModel {
             })
             break;
           case 'title':
-            oKnex.andWhere((query) => {
-              query.orWhere('subject', 'like', `%${search_keyword}%`)
-            })
+            oKnex.andWhere('subject', 'like', `%${search_keyword}%`)
             break;
           case 'write':
-            oKnex.whereIn((query) => {
-              if (use_nickname) {
-                query.orWhere('board_data.user_nickname', 'like', `%${search_keyword}%`)
-              } else {
-                query.orWhere('board_data.user_name', 'like', `%${search_keyword}%`)
-              }
-            })
+            if (use_nickname) {
+              oKnex.andWhere('board_data.user_nickname', 'like', `%${search_keyword}%`)
+            } else {
+              oKnex.andWhere('board_data.user_name', 'like', `%${search_keyword}%`)
+            }
             break;
           case 'comment_desc':
             oKnex.andWhere('seq', (query) => {

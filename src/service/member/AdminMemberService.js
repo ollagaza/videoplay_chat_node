@@ -188,13 +188,14 @@ const AdminMemberServiceClass = class {
     return find_users
   }
 
-  updateMemberUsedforSendMail = async (database, setData, search_option = null) => {
+  updateMemberUsedforSendMail = async (database, updateData, search_option = null) => {
     const output = new StdObject()
     const searchObj = {
       is_new: true,
       query: [],
     }
     let appr_code = ''
+    const setData = JSON.parse(JSON.stringify(updateData))
 
     _.forEach(setData, (value, key) => {
       if (key === 'used') {
@@ -244,25 +245,25 @@ const AdminMemberServiceClass = class {
       const sender_mail = 'no_reply@surgstory.com'
       switch (appr_code) {
         case '1':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 가입승인이 완료 되었습니다.', Admin_MemberTemplate.joinconfrim_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 회원이 되신 걸 환영합니다! 회원가입이 승인되었습니다.', Admin_MemberTemplate.joinconfrim_member(value), sender_name, sender_mail)
           break
         case '2':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원탈퇴 안내', Admin_MemberTemplate.forced_leave_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 회원탈퇴 안내', Admin_MemberTemplate.forced_leave_member(value), sender_name, sender_mail)
           break
         case '3':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 탈퇴 되었습니다.', Admin_MemberTemplate.leave_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 탈퇴 되었습니다.', Admin_MemberTemplate.leave_member(value), sender_name, sender_mail)
           break
         case '4':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 장기간 사용하지 않아 휴면계정 처리 되었습니다.', Admin_MemberTemplate.dormant_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 장기간 사용하지 않아 휴면계정 처리 되었습니다.', Admin_MemberTemplate.dormant_member(value), sender_name, sender_mail)
           break
         case '5':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원활동이 정지 되었습니다.', Admin_MemberTemplate.stop_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 회원 자격이 정지되었습니다.', Admin_MemberTemplate.stop_member(value), sender_name, sender_mail)
           break
         case '5-1':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 회원활동 정지가 해제 되었습니다.', Admin_MemberTemplate.stopclear_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 회원 자격 정지가 해제 되었습니다.', Admin_MemberTemplate.stopclear_member(value), sender_name, sender_mail)
           break
         case '6':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, '서지스토리 가입승인이 거절 되었습니다.', Admin_MemberTemplate.reject_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 가입 승인이 거절되었습니다.', Admin_MemberTemplate.reject_member(value), sender_name, sender_mail)
           break
         default:
           break
