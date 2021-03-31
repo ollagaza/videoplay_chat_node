@@ -99,7 +99,7 @@ routes.put('/memberUsedUpdate', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   });
 
   try {
-    await AdminMemberService.sendMailforMemberChangeUsed(DBMySQL, output, output.variables.appr_code, updateData, service_config.get('service_url'), output.variables.search_option)
+    await AdminMemberService.sendMailforMemberChangeUsed(DBMySQL, output, updateData.admin_code, updateData, service_config.get('service_url'), output.variables.search_option)
   } catch (e) {
     log.e(req, e)
   }
