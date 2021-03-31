@@ -52,7 +52,7 @@ const mail_visit_button = `
 const mail_recall_button = `
 <tr>
   <td align="center" style="padding-top: 30px;">
-    <a href="{service_domain}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #ffa00f; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">재승인 요청</a>
+    <a href="{service_domain}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
   </td>
 </tr>
 `
@@ -60,7 +60,7 @@ const mail_recall_button = `
 const joinconfrim_member_form = `
 <tr>
   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 22px; color: #2e6bb8; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-    SurgStory 회원이 되신걸 환영합니다!
+    SurgStory 회원이 되신 걸 환영합니다!
   </td>
 </tr>
   <tr>
@@ -177,8 +177,8 @@ const stop_member_form = `
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										{user_name}님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span> 서지스토리 회원 자격이 정지 되며,<br/>
-										사유는 아래와 같습니다.
+										{user_name}님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span><br/>
+										서지스토리 회원 자격이 정지되며, 사유는 아래와 같습니다.
 									</td>
 								</tr>
 								<tr>
