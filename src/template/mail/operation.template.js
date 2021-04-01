@@ -19,8 +19,8 @@ const operation_link_email_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                     안녕하세요.<br>
-                    <span style="color: #ffa00f; font-weight: bold;">{user_name}</span> 님이 <span style="color: #2e6bb8; font-weight: bold;">"{operation_name}"</span> 수술/시술을 공유하였습니다.<br>
-                    다음은 {user_name} 님이 보낸 메세지 입니다.
+                    <span style="color: #ffa00f; font-weight: bold;">{user_name}</span>님이 <span style="color: #2e6bb8; font-weight: bold;">"{operation_name}"</span> 수술/시술을 공유하였습니다.<br>
+                    다음은 {user_name}님이 보낸 메세지 입니다.
                   </td>
                 </tr>
                 <tr>

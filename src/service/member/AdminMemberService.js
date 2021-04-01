@@ -241,6 +241,7 @@ const AdminMemberServiceClass = class {
       value.stop_start_date = value.stop_start_date ? Util.dateFormatter(value.stop_start_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_end_date = value.stop_end_date ? Util.dateFormatter(value.stop_end_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_days = value.stop_end_date ? Util.dayGap(value.stop_start_date, value.stop_end_date) - 1 : null
+      value.now_datetime = Util.today('yyyy-mm-dd HH:MM:ss')
       const sender_name = 'SurgStory'
       const sender_mail = 'no_reply@surgstory.com'
       switch (appr_code) {
@@ -248,7 +249,7 @@ const AdminMemberServiceClass = class {
           send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 회원이 되신 걸 환영합니다! 회원가입이 승인되었습니다.', Admin_MemberTemplate.joinconfrim_member(value), sender_name, sender_mail)
           break
         case '2':
-          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 회원탈퇴 안내', Admin_MemberTemplate.forced_leave_member(value), sender_name, sender_mail)
+          send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 회원 자격 상실 안내', Admin_MemberTemplate.forced_leave_member(value), sender_name, sender_mail)
           break
         case '3':
           send_mail_result = await new SendMail().sendMailHtml(value.email_address, 'SurgStory 탈퇴 되었습니다.', Admin_MemberTemplate.leave_member(value), sender_name, sender_mail)
