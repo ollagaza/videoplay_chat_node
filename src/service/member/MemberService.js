@@ -440,23 +440,19 @@ const MemberServiceClass = class {
     })
 
     if (ServiceConfig.isVacs() === false && ServiceConfig.supporterEmailList()) {
-      (
-        async () => {
-          let body = ''
-          body += `병원명: ${create_member_info.hospname}\n`
-          body += `이름: ${create_member_info.user_name}\n`
-          body += `아이디: ${create_member_info.user_id}\n`
-          body += `닉네임: ${create_member_info.user_nickname}\n`
-          body += `이메일: ${create_member_info.email_address}\n`
-          body += `연락처: ${create_member_info.cellphone}\n`
-          body += `가입일자: ${Util.currentFormattedDate()}\n`
-          try {
-            await new SendMail().sendMailText(ServiceConfig.supporterEmailList(), 'Surgstory.com 회원가입.', body)
-          } catch (e) {
-            log.error(this.log_prefix, '', e)
-          }
-        }
-      )()
+      let body = ''
+      body += `병원명: ${create_member_info.hospname}\n`
+      body += `이름: ${create_member_info.user_name}\n`
+      body += `아이디: ${create_member_info.user_id}\n`
+      body += `닉네임: ${create_member_info.user_nickname}\n`
+      body += `이메일: ${create_member_info.email_address}\n`
+      body += `연락처: ${create_member_info.cellphone}\n`
+      body += `가입일자: ${Util.currentFormattedDate()}\n`
+      try {
+        await new SendMail().sendMailText(ServiceConfig.supporterEmailList(), 'Surgstory.com 회원가입.', body)
+      } catch (e) {
+        log.error(this.log_prefix, '', e)
+      }
     }
 
     return member_info
@@ -478,6 +474,11 @@ const MemberServiceClass = class {
     await GroupService.createPersonalGroup(database, create_member_info)
 
     return member_info
+  }
+
+  setMemberUnPause = async (database) => {
+    const member_model = this.getMemberModel(database)
+    return member_model.setPauseMemberReset()
   }
 }
 
