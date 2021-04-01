@@ -168,7 +168,7 @@ export default class MemberModel extends MySQLModel {
 
   leaveMember = async (member_seq) => {
     const update_info = {
-      'used': '2',
+      'used': '3',
       'modify_date': this.database.raw('NOW()')
     }
     const result = await this.update({ seq: member_seq }, update_info)
