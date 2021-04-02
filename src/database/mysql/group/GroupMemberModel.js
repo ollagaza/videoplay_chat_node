@@ -859,16 +859,21 @@ export default class GroupMemberModel extends MySQLModel {
     return true;
   }
 
-  getGroupMemberDetailQuery = async (group_seq, group_member_seq) => {
+  getGroupMemberDetailQuery = async (group_seq, group_member_seq, member_seq) => {
     const filter = {
-      'group_member.seq': group_member_seq,
       group_seq: group_seq,
+    }
+    if (group_member_seq) {
+      filter['group_member.seq'] = group_member_seq;
+    }
+    if (member_seq) {
+      filter['group_member.member_seq'] = member_seq;
     }
     this.group_member_select.push('member.profile_image_path');
     const query = this.database.select(this.group_member_select)
     query.from(this.table_name)
-    query.innerJoin('member', function () {
-      this.on('member.seq', 'group_member.member_seq')
+    query.innerJoin('member', (query) => {
+      query.on('member.seq', 'group_member.member_seq')
     });
     query.where(filter)
     query.first()
