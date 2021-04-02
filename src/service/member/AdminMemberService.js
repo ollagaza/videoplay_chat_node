@@ -209,7 +209,8 @@ const AdminMemberServiceClass = class {
         setData[key] = database.raw('NOW()')
       } else if (typeof value === 'object') {
         if (Object.keys(value)[0] === 'dateadd') {
-          setData[key] = database.raw(`date_add(NOW(), interval ${value['dateadd']} day)`)
+          // setData[key] = database.raw(`date_add(NOW(), interval ${value['dateadd']} day)`)
+          setData[key] = database.raw(`date_format(date_add(now(), interval ${value['dateadd']}-1 day), '%Y-%m-%d 23:59:59')`)
         } else if (Object.keys(value)[0] === 'datesub') {
           setData[key] = database.raw(`date_sub(NOW(), interval ${value['datesub']} day)`)
         }
@@ -240,7 +241,7 @@ const AdminMemberServiceClass = class {
       value.regist_date = value.regist_date ? Util.dateFormatter(value.regist_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_start_date = value.stop_start_date ? Util.dateFormatter(value.stop_start_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
       value.stop_end_date = value.stop_end_date ? Util.dateFormatter(value.stop_end_date, 'yyyy년 mm월 dd일 HH:MM:ss') : null
-      value.stop_days = value.stop_end_date ? Util.dayGap(value.stop_start_date, value.stop_end_date) - 1 : null
+      value.stop_days = value.stop_end_date ? Util.dayGap(value.stop_start_date, value.stop_end_date) : null
       value.now_datetime = Util.today('yyyy-mm-dd HH:MM:ss')
       const sender_name = 'SurgStory'
       const sender_mail = 'no_reply@surgstory.com'

@@ -559,14 +559,16 @@ const GroupServiceClass = class {
           group_member_seq = group_member_info.seq
         }
 
-        const title = `${member_info.user_name}/${member_info.user_nickname}님이 "${group_info.group_name}" 채널에 초대하였습니다.`
+        const name = group_info.member_name_used ? member_info.user_name : member_info.user_nickname;
+
+        const title = `${name}님이 "${group_info.group_name}" 채널에 초대하였습니다.`
         const encrypt_invite_code = this.encryptInviteCode(invite_code)
+
         const template_data = {
           service_domain,
           group_name: group_info.group_name,
           active_count: group_info.active_user_count,
-          admin_name: member_info.user_name,
-          admin_nickname: member_info.user_nickname,
+          admin_name: name,
           invite_code,
           message: Util.nlToBr(invite_message),
           btn_link_url: `${service_domain}/v2/invite/channel/${encrypt_invite_code}`
@@ -704,11 +706,12 @@ const GroupServiceClass = class {
       return
     }
 
+    const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname;
+
     const template_data = {
       service_domain,
       group_name: group_member_info.group_name,
-      admin_name: admin_member_info.user_name,
-      admin_nickname: admin_member_info.user_nickname,
+      admin_name: name,
       btn_link_url: `${service_domain}/`
     }
     const body = GroupMailTemplate.groupAdmin(template_data)
@@ -1398,14 +1401,12 @@ const GroupServiceClass = class {
         admin_member_info.user_name = admin_member.user_name;
         admin_member_info.user_nickname = admin_member.user_nickname;
 
-        const name = admin_member_info.user_name;
-        const nick_name = admin_member_info.user_nickname;
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname;
         Util.dayGap(request_body.pause_sdate, request_body.pause_edate)
         const template_data = {
           service_domain,
           group_name: admin_member_info.group_name,
           admin_name: name,
-          admin_nickname: nick_name,
           btn_link_url: `${service_domain}/`,
           pause_sdate: Util.dateFormatter(request_body.pause_sdate, 'yyyy년 mm월 dd일'),
           pause_edate: request_body.pause_edate ? Util.dateFormatter(request_body.pause_edate, 'yyyy년 mm월 dd일') : null,
@@ -1445,13 +1446,11 @@ const GroupServiceClass = class {
           title: title,
           message: '채널을 선택하려면 클릭하세요.'
         }
-        const name = admin_member_info.user_name;
-        const nick_name = admin_member_info.user_nickname;
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname;
         const template_data = {
           service_domain,
           group_name: admin_member_info.group_name,
           admin_name: name,
-          admin_nickname: nick_name,
           btn_link_url: `${service_domain}/`
         }
         const body = GroupMailTemplate.unPauseGroupMember(template_data)
@@ -1490,13 +1489,11 @@ const GroupServiceClass = class {
           message: title,
           notice_type: 'alert'
         }
-        const name = admin_member_info.user_name;
-        const nick_name = admin_member_info.user_nickname;
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname;
         const template_data = {
           service_domain,
           group_name: admin_member_info.group_name,
           admin_name: name,
-          admin_nickname: nick_name,
           btn_link_url: `${service_domain}/`
         }
         const body = GroupMailTemplate.deleteGroupMember(template_data)
@@ -1530,13 +1527,11 @@ const GroupServiceClass = class {
         admin_member_info.user_name = admin_member.user_name;
         admin_member_info.user_nickname = admin_member.user_nickname;
 
-        const name = admin_member_info.user_name;
-        const nick_name = admin_member_info.user_nickname;
+        const name = admin_member_info.member_name_used ? admin_member_info.user_name : admin_member_info.user_nickname;
         const template_data = {
           service_domain,
           group_name: admin_member_info.group_name,
           admin_name: name,
-          admin_nickname: nick_name,
           btn_link_url: `${service_domain}/`
         }
         const body = GroupMailTemplate.unDeleteGroupMember(template_data)

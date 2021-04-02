@@ -144,7 +144,7 @@ const leave_member_form = `
 								</tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										그 동안 저희 서지스토리를 이용해 주셔서 감사합니다.
+										그 동안 저희 SurgStory를 이용해 주셔서 감사합니다.
 									</td>
 								</tr>
 `
@@ -178,7 +178,7 @@ const stop_member_form = `
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
 										<span style="color: #ffa00f">{user_name}</span>님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span><br/>
-										서지스토리 회원 자격이 정지되며, 사유는 아래와 같습니다.
+										SurgStory 회원 자격이 정지되며, 사유는 아래와 같습니다.
 									</td>
 								</tr>
 								<tr>
@@ -198,12 +198,12 @@ const stopclear_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  <span style="color: #ffa00f">{user_name}</span>님, SurgStory 고객 지원팀입니다.
+                  SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										<span style="color: #ffa00f">{user_name}</span>님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}</span>에 시행되었던 회원 자격 정지가<br />
+										<span style="color: #ffa00f">{user_name}</span>님, <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}</span>에 시행되었던 회원 자격 정지가<br />
 										<span style="color: #ffa00f; font-weight: bold;">{now_datetime}</span>시간 부로 해제되었습니다. 사유는 아래와 같습니다.
 									</td>
 								</tr>
@@ -214,7 +214,7 @@ const stopclear_member_form = `
 								</tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										앞으로 저희 서지스토리를 정상적으로 이용하실 수 있습니다.
+										앞으로 저희 SurgStory를 정상적으로 이용하실 수 있습니다.
 										감사합니다.
 									</td>
 								</tr>
