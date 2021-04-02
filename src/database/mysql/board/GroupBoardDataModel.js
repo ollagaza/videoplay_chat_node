@@ -101,7 +101,6 @@ export default class GroupBoardDataModel extends MySQLModel {
       oKnex = this.database.select(`${this.table_name}.*`)
         .from(this.table_name)
         .where('board_data.group_seq', group_seq)
-        .andWhere('board_data.is_notice', '3')
         .andWhere('board_data.board_seq', board_seq)
         .andWhere('board_data.status', 'Y')
 
@@ -148,6 +147,8 @@ export default class GroupBoardDataModel extends MySQLModel {
           default:
             break;
         }
+      } else {
+        oKnex.andWhere('board_data.is_notice', '3')
       }
       oKnex.orderBy([{column: 'board_data.is_notice', order: 'asc'}, {column: 'board_data.origin_seq', order: 'desc'}, {column: 'board_data.sort_num', order: 'asc'}, {column: 'board_data.parent_seq', order: 'asc'}, {column: 'board_data.depth', order: 'asc'}])
     }
