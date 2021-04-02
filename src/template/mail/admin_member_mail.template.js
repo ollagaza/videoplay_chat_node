@@ -114,7 +114,7 @@ const forced_leave_member_form = `
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
 										<span style="color: #ffa00f; font-weight: bold;">{user_name}</span>님 께서는 <span style="color: #ffa00f; font-weight: bold;">{now_datetime}</span>시각부로 SurgStory 회원자격이 상실되었으며,<br/>
-										사유는 아래와 같습니다.널에 참여하세
+										사유는 아래와 같습니다.
 									</td>
 								</tr>
 								<tr>
