@@ -186,7 +186,12 @@ export default class MemberModel extends MySQLModel {
     return total_count > 0
   }
 
-  setPauseMemberReset = async () => {
-    return this.database.raw('UPDATE member SET used = 1, stop_end_date = null, admin_code = 1 WHERE used = 5 AND date_format(stop_end_date, \'%Y-%m-%d\') <= now()')
+  setPauseMemberResetList = async () => {
+    const query = this.database.select(['*'])
+    query.from(this.table_name)
+    query.where('used', 5)
+    query.andWhere(this.database.raw(`date_format(stop_end_date, \'%Y-%m-%d\') <= NOW()`))
+    return await query;
+    // return this.database.raw('UPDATE member SET used = 1, stop_end_date = null, admin_code = 1 WHERE used = 5 AND date_format(stop_end_date, \'%Y-%m-%d\') <= now()')
   }
 }

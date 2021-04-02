@@ -15,6 +15,8 @@ import {UserDataModel} from '../../database/mongodb/UserData'
 import MemberInfo from '../../wrapper/member/MemberInfo'
 import MemberTemplate from '../../template/mail/member.template'
 import SendMail from '../../libs/send-mail'
+import AdminMemberService from "./AdminMemberService";
+import service_config from "../service-config";
 
 const MemberServiceClass = class {
   constructor() {
@@ -478,7 +480,22 @@ const MemberServiceClass = class {
 
   setMemberUnPause = async (database) => {
     const member_model = this.getMemberModel(database)
-    return member_model.setPauseMemberReset()
+    const pause_reset_list = await member_model.setPauseMemberResetList()
+    const search_option = [{ seq: ['in'] }];
+    const updateData = {
+      admin_code: "5-1",
+      admin_text: "정지기간 만료",
+      stop_end_date: "now",
+      used: "1"
+    }
+    if (pause_reset_list.length > 0) {
+      for (let i = 0; i < pause_reset_list.length; i++) {
+        search_option[0].seq.push(pause_reset_list[i].seq);
+      }
+      const output = await AdminMemberService.updateMemberUsedforSendMail(DBMySQL, updateData, search_option)
+      await AdminMemberService.sendMailforMemberChangeUsed(DBMySQL, output, updateData.admin_code, updateData, service_config.get('service_url'), output.variables.search_option)
+    }
+    return true;
   }
 }
 

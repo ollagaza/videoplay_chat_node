@@ -198,7 +198,7 @@ routes.get('/:api_type/:api_key/mode', Auth.isAuthenticated(Role.LOGIN_USER), Wr
 routes.delete('/:api_type/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const base_info = await getBaseInfo(req, true)
-  const result = await OperationService.updateStatusTrash(null, [base_info.operation_seq], base_info.member_seq)
+  const result =await OperationService.updateStatusTrash(DBMySQL, base_info.group_seq,{ seq_list: [base_info.operation_seq] }, false, base_info.is_group_admin, base_info.member_seq)
 
   const output = new StdObject()
   output.add('result', result)
