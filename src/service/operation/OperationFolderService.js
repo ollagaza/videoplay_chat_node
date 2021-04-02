@@ -265,7 +265,7 @@ const OperationFolderServiceClass = class {
     await folder_model.updateStatusTrash(folder_seq_list, group_seq, status, null, is_delete_by_admin, delete_member_seq)
 
     status = is_restore ? 'Y' : 'F'
-    const prev_status = is_restore ? null : 'Y'
+    const prev_status = is_restore ? 'F' : 'Y'
     const child_seq_list = await this.getAllChildFolderSeqListBySeqList(database, group_seq, folder_seq_list, false, prev_status)
     await folder_model.updateStatusTrash(child_seq_list, group_seq, status, null, is_delete_by_admin, delete_member_seq)
 

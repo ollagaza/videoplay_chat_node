@@ -171,7 +171,7 @@ export default class OperationFolderModel extends MySQLModel {
       await target_folder_parent_list_update
     } else {
       const target_folder_parent_list_update = this.database
-        .update('target.parent_folder_list', '[]')
+        .update({'target.parent_folder_list': '[]', 'target.depth': 0})
         .from({'target': this.table_name})
         .where('target.seq', target_folder_info.seq)
       await target_folder_parent_list_update
