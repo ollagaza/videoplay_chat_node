@@ -41,7 +41,7 @@ const group_mail_common_bottom = `
 const invite_group_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-        {group_name}의 SurgStory에 참여하세요. <span style="font-size: 14px; color: #2e6bb8;">현재 {active_count}명 활동</span>
+        <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 채널에 참여하세요. <span style="font-size: 14px; color: #2e6bb8;">현재 {active_count}명 활동</span>
     </td>
   </tr>
   <tr>
@@ -81,7 +81,7 @@ const invite_group_form = `
 const invite_group_form_no_comment = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-        {group_name}의 SurgStory에 참여하세요. <span style="font-size: 14px; color: #2e6bb8;">현재 {active_count}명 활동</span>
+        <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 채널에 참여하세요. <span style="font-size: 14px; color: #2e6bb8;">현재 {active_count}명 활동</span>
     </td>
   </tr>
   <tr>
@@ -121,7 +121,7 @@ const group_grade_admin_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 SurgStory 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 채널 매니저로 지정하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>의 채널 관리자인 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님이 회원님을 채널 매니저로 지정하였습니다.<br>
       채널 매니저는 채널과 관련된 모든 부분을 관리할 수 있습니다.
     </td>
   </tr>
@@ -141,29 +141,29 @@ const group_grade_admin_form = `
 const group_pause_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>채널 사용이 <span style="color: #2e6bb8;">제한</span>되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span> 채널 사용이 <span style="color: #2e6bb8;">제한</span>되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님의 채널 활동을
-      <span style="color: #2e6bb8; font-weight: bold;">정지</span>하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널 관리자인 <span style="color: #ffa00f;">{admin_name}</span>님이 회원님의 채널 활동을
+      <span style="color: #2e6bb8; font-weight: bold;">제한</span>하였습니다.<br>
       <span style="color: #ffa00f; font-weight: bold;">{pause_sdate}</span>부터 <span style="color: #ffa00f; font-weight: bold;">{pause_edate}</span>까지
-      <span style="color: #ffa00f; font-weight: bold;">({pause_day}일간)</span> 해당 채널 활동이 정지 됩니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">({pause_day}일간)</span> 해당 채널 활동이 제한됩니다.<br>
       이제 채널 활동을 할 수 없으며, 채널에 있는 파일에 접근할 수 없습니다.<br>
       ("{group_name}" 외에 다른 채널은 접근이 가능합니다.)
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 채널 관리자에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"의 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
       <a href="{btn_link_url}" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">
-        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">서지스토리</div>
+        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">SurgStory</div>
       </a>
     </td>
   </tr>
@@ -171,12 +171,12 @@ const group_pause_form = `
 const group_pause_unlimit_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>채널 사용이 <span style="color: #2e6bb8;">제한</span>되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span> 채널 사용이 <span style="color: #2e6bb8;">제한</span>되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님의 채널 활동을
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널 관리자인 <span style="color: #ffa00f;">{admin_name}</span>님이 회원님의 채널 활동을
       <span style="color: #2e6bb8; font-weight: bold;">정지</span>하였습니다.<br>
       <span style="color: #2e6bb8; font-weight: bold;">{pause_sdate}</span>부터 해당 채널 활동이 정지 됩니다.<br>
       이제 채널 활동을 할 수 없으며, 채널에 있는 파일에 접근할 수 없습니다.<br>
@@ -185,14 +185,14 @@ const group_pause_unlimit_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 채널 관리자에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}"의 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
       <a href="{btn_link_url}" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">
-        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">서지스토리</div>
+        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">SurgStory</div>
       </a>
     </td>
   </tr>
@@ -200,30 +200,30 @@ const group_pause_unlimit_form = `
 const group_un_pause_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>채널의 활동 정지가 <span style="color: #2e6bb8;">해제</span>되어 다시 활동이 가능합니다
+      <span style="color: #ffa00f;">"{group_name}"</span> 채널의 활동 제한이 <span style="color: #2e6bb8;">해제</span>되어 다시 활동이 가능합니다
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"의 채널의 관리자인 {admin_name}님에게 문의해 주세요.<br>
+      궁금한 점은 <span style="color: #ffa00f;">"{group_name}"</span>의 채널의 관리자인 <span style="color: #ffa00f;">{admin_name}</span>님에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
-      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;" rel="noopener noreferrer">서지스토리</a>
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;" rel="noopener noreferrer">SurgStory</a>
     </td>
   </tr>
 `
 const group_delete_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>채널에서 강제 탈퇴가 되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span> 채널의 팀원에서 제외되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님을 강제 탈퇴하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널 관리자인 <span style="color: #ffa00f;">{admin_name}</span>님이 회원님을 팀원에서 제외하였습니다.<br>
       이제 채널 활동을 할 수 없으며, 계정에 있는 파일에 접근할 수 없습니다.<br>
       ("{group_name}" 외에 다른 채널은 접근이 가능합니다.)
     </td>
@@ -237,7 +237,7 @@ const group_delete_form = `
   <tr>
     <td align="center" style="padding-top: 30px;">
       <a href="{btn_link_url}" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">
-        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">서지스토리</div>
+        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">SurgStory</div>
       </a>
     </td>
   </tr>
@@ -245,25 +245,25 @@ const group_delete_form = `
 const group_un_delete_form = `
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
-      <span style="color: #ffa00f;">"{group_name}"</span>채널의 팀원으로 <span style="color: #2e6bb8;">복원</span>되었습니다.
+      <span style="color: #ffa00f;">"{group_name}"</span> 채널의 팀원으로 <span style="color: #2e6bb8;">복원</span>되었습니다.
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널 관리자가 회원님을 팀원으로 복원하였습니다.<br>
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널 관리자인 <span style="color: #ffa00f;">{admin_name}</span>님이 회원님을 팀원으로 복원하였습니다.<br>
       이제 다시 채널 활동을 할 수 있습니다.<br>
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-      궁금한 점은 "{group_name}"채널 관리자에게 문의해 주세요.<br>
+      궁금한 점은 "{group_name}" 채널 관리자인 {admin_name}님에게 문의해 주세요.<br>
       SurgStory팀 드림
     </td>
   </tr>
   <tr>
     <td align="center" style="padding-top: 30px;">
       <a href="{btn_link_url}" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">
-        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">서지스토리</div>
+        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">SurgStory</div>
       </a>
     </td>
   </tr>

@@ -44,7 +44,7 @@ const mail_bottom = `
 const mail_visit_button = `
 <tr>
   <td align="center" style="padding-top: 30px;">
-    <a href="{service_domain}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">서지스토리</a>
+    <a href="{service_domain}" target="_blank" style="text-decoration: none; width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; vertical-align: middle;" rel="noopener noreferrer">SurgStory</a>
   </td>
 </tr>
 `
@@ -81,12 +81,12 @@ const reject_member_form = `
 <tr>
   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
   안녕하세요.<br>
-  {user_name}님, SurgStory 고객 지원팀입니다.
+  SurgStory 고객 지원팀입니다.
   </td>
 </tr>
 <tr>
   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-  {user_name}님은 {regist_date}에 회원가입 신청을 해 주셨습니다.<br>
+  <span style="color: #ffa00f">{user_name}</span>님은 {regist_date}에 회원가입 신청을 해 주셨습니다.<br>
   현재 아래의 사유로 가입 승인이 완료되지 않고 있습니다. <br/>
   </td>
 </tr>
@@ -108,18 +108,18 @@ const forced_leave_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님, SurgStory 고객 지원팀입니다.
+                  SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-										{user_name}님 께서는 {stop_start_date}부로 서지스토리 회원자격이 상실되었으며,<br/>
-										사유는 아래와 같습니다.
+										<span style="color: #ffa00f">{user_name}</span>님 께서는 <span style="color: #ffa00f">{now_datetime}</span>시각부로 SurgStory 회원자격이 상실되었으며,<br/>
+										사유는 아래와 같습니다.널에 참여하세
 									</td>
 								</tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-										{admin_text}
+										<span style="font-weight: bold; font-size: 18px; color: #2e6bb8; letter-spacing: -0.5px; line-height: 1.4;">{admin_text}</span>
 									</td>
 								</tr>
 								<tr>
@@ -144,7 +144,7 @@ const leave_member_form = `
 								</tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										그 동안 저희 서지스토리를 이용해 주셔서 감사합니다.
+										그 동안 저희 SurgStory를 이용해 주셔서 감사합니다.
 									</td>
 								</tr>
 `
@@ -172,13 +172,13 @@ const stop_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님, SurgStory 고객 지원팀입니다.
+                  SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										{user_name}님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span><br/>
-										서지스토리 회원 자격이 정지되며, 사유는 아래와 같습니다.
+										<span style="color: #ffa00f">{user_name}</span>님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span><br/>
+										SurgStory 회원 자격이 정지되며, 사유는 아래와 같습니다.
 									</td>
 								</tr>
 								<tr>
@@ -198,23 +198,23 @@ const stopclear_member_form = `
                 <tr>
                   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
                   안녕하세요.<br>
-                  {user_name}님, SurgStory 고객 지원팀입니다.
+                  SurgStory 고객 지원팀입니다.
                   </td>
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										{stop_start_date}부터 {stop_end_date}까지 시행되었던 서지스토리 회원 자격 정지가 해제되었습니다.<br/>
-										사유는 아래와 같습니다.
+										<span style="color: #ffa00f">{user_name}</span>님, <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}</span>에 시행되었던 회원 자격 정지가<br />
+										<span style="color: #ffa00f; font-weight: bold;">{now_datetime}</span>시간 부로 해제되었습니다. 사유는 아래와 같습니다.
 									</td>
 								</tr>
 								<tr>
-									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-										{admin_text}
+									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px; padding-top: 16px;">
+										<span style="font-weight: bold; font-size: 18px; color: #2e6bb8; letter-spacing: -0.5px; line-height: 1.4;">{admin_text}</span>
 									</td>
 								</tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										앞으로 저희 서지스토리를 정상적으로 이용하실 수 있습니다.
+										앞으로 저희 SurgStory를 정상적으로 이용하실 수 있습니다.
 										감사합니다.
 									</td>
 								</tr>
@@ -226,7 +226,7 @@ const getServiceInfo = () => {
 
 export default {
   'reject_member': (template_data = {}) => {
-    const template_html = mail_top + reject_member_form + mail_recall_button + mail_bottom
+    const template_html = mail_top + reject_member_form + mail_visit_button + mail_bottom
     return formatter(template_html, _.merge(template_data, getServiceInfo()))
   },
   'joinconfrim_member': (template_data = {}) => {

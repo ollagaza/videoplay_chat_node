@@ -168,7 +168,7 @@ export default class MemberModel extends MySQLModel {
 
   leaveMember = async (member_seq) => {
     const update_info = {
-      'used': '2',
+      'used': '3',
       'modify_date': this.database.raw('NOW()')
     }
     const result = await this.update({ seq: member_seq }, update_info)
@@ -180,5 +180,9 @@ export default class MemberModel extends MySQLModel {
     const total_count = await this.getTotalCount(where)
 
     return total_count > 0
+  }
+
+  setPauseMemberReset = async () => {
+    return this.database.raw('UPDATE member SET used = 1, stop_end_date = null, admin_code = 1 WHERE used = 5 AND date_format(stop_end_date, \'%Y-%m-%d\') <= now()')
   }
 }

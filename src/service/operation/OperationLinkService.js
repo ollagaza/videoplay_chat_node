@@ -143,10 +143,15 @@ const OperationLinkServiceClass = class {
     }
   }
   sendEmail = async (link_info, operation_info, member_info, send_message, service_domain) => {
-    const title = `${member_info.user_name}님이 Surgstory에서 "${operation_info.operation_name}"수술/시술을 공유하였습니다.`
+    const group_info = await GroupService.getGroupInfo(DBMySQL, operation_info.group_seq);
+    let user_name = member_info.user_name;
+    if (group_info.member_name_used !== 1) {
+      user_name = member_info.user_nickname;
+    }
+    const title = `${user_name}님이 Surgstory에서 "${operation_info.operation_name}" 수술/시술을 공유하였습니다.`
     const template_data = {
       service_domain,
-      user_name: member_info.user_name,
+      user_name: user_name,
       operation_name: operation_info.operation_name,
       message: Util.nlToBr(send_message),
       btn_link_url: `${service_domain}/v2/link/operation/${link_info.link_code}`,

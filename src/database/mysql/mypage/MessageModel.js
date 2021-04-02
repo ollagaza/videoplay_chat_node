@@ -22,6 +22,7 @@ export default class MessageModel extends MySQLModel {
       'member.user_nickname',
       'member.user_id',
       'member.hospname',
+      'member.used',
     ]
     const oKnex = this.database.select(select_fields)
     oKnex.from(this.table_name)

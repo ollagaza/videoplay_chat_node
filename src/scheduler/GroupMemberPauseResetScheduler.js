@@ -1,6 +1,7 @@
 import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import GroupService from '../service/group/GroupService'
+import member_service from "../service/member/MemberService";
 
 class GroupMemberPauseResetSchedulerClass {
   constructor () {
@@ -39,6 +40,7 @@ class GroupMemberPauseResetSchedulerClass {
     (
       async () => {
         try {
+          await member_service.setMemberUnPause()
           await GroupService.setMemberPauseReset()
           log.debug(this.log_prefix, '[resetGroupMemberPause]', 'end');
         } catch (error) {

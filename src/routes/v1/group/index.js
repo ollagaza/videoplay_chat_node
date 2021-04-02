@@ -72,6 +72,19 @@ routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wra
   res.json(output)
 }))
 
+routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/:member_seq(\\d+)/member_detail', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req)
+  const group_member_seq = getGroupMemberSeq(req)
+  const member_seq = getMemberSeq(req)
+
+  const group_member_info = await GroupService.getGroupMemberInfoDetail(DBMySQL, group_seq, group_member_seq, member_seq)
+
+  const output = new StdObject()
+  output.add('group_member_info', group_member_info)
+  res.json(output)
+}))
+
 routes.get('/:group_seq(\\d+)/member_count/:in_status', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   req.accepts('application/json')
   const { group_seq } = await checkGroupAuth(DBMySQL, req)
@@ -569,18 +582,6 @@ routes.post('/memberstatusupdate', Auth.isAuthenticated(Role.DEFAULT), Wrap(asyn
   }
   output.add('result', result)
 
-  res.json(output)
-}))
-
-routes.get('/:group_seq(\\d+)/:group_member_seq(\\d+)/member_detail', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const { group_seq } = await checkGroupAuth(DBMySQL, req)
-  const group_member_seq = getGroupMemberSeq(req)
-
-  const group_member_info = await GroupService.getGroupMemberInfoDetail(DBMySQL, group_seq, group_member_seq)
-
-  const output = new StdObject()
-  output.add('group_member_info', group_member_info)
   res.json(output)
 }))
 
