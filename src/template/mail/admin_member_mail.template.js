@@ -86,7 +86,7 @@ const reject_member_form = `
 </tr>
 <tr>
   <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-  <span style="color: #ffa00f">{user_name}</span>님은 {regist_date}에 회원가입 신청을 해 주셨습니다.<br>
+  <span style="color: #ffa00f; font-weight: bold;">{user_name}</span>님은 {regist_date}에 회원가입 신청을 해 주셨습니다.<br>
   현재 아래의 사유로 가입 승인이 완료되지 않고 있습니다. <br/>
   </td>
 </tr>
@@ -113,7 +113,7 @@ const forced_leave_member_form = `
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-										<span style="color: #ffa00f">{user_name}</span>님 께서는 <span style="color: #ffa00f">{now_datetime}</span>시각부로 SurgStory 회원자격이 상실되었으며,<br/>
+										<span style="color: #ffa00f; font-weight: bold;">{user_name}</span>님 께서는 <span style="color: #ffa00f; font-weight: bold;">{now_datetime}</span>시각부로 SurgStory 회원자격이 상실되었으며,<br/>
 										사유는 아래와 같습니다.널에 참여하세
 									</td>
 								</tr>
@@ -177,7 +177,7 @@ const stop_member_form = `
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										<span style="color: #ffa00f">{user_name}</span>님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span><br/>
+										<span style="color: #ffa00f; font-weight: bold;">{user_name}</span>님은 <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}부터 {stop_end_date}까지 ({stop_days}일간)</span><br/>
 										SurgStory 회원 자격이 정지되며, 사유는 아래와 같습니다.
 									</td>
 								</tr>
@@ -203,7 +203,7 @@ const stopclear_member_form = `
                 </tr>
 								<tr>
 									<td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
-										<span style="color: #ffa00f">{user_name}</span>님, <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}</span>에 시행되었던 회원 자격 정지가<br />
+										<span style="color: #ffa00f; font-weight: bold;">{user_name}</span>님, <span style="color: #ffa00f; font-weight: bold;">{stop_start_date}</span>에 시행되었던 회원 자격 정지가<br />
 										<span style="color: #ffa00f; font-weight: bold;">{now_datetime}</span>시간 부로 해제되었습니다. 사유는 아래와 같습니다.
 									</td>
 								</tr>

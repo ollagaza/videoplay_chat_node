@@ -160,16 +160,20 @@ export default class MemberModel extends MySQLModel {
   }
 
   isDuplicateEmail = async (email_address) => {
-    const where = { 'email_address': email_address }
-    const total_count = await this.getTotalCount(where)
-
-    return total_count > 0
+    const query = this.database.select([ this.database.raw('COUNT(*) AS total_count') ])
+    query.from(this.table_name)
+    query.where('email_address', email_address)
+    query.andWhere('used', '!=', 3)
+    query.first()
+    const result = await query
+    return result && result.total_count > 0
   }
 
   leaveMember = async (member_seq) => {
     const update_info = {
       'used': '3',
-      'modify_date': this.database.raw('NOW()')
+      'modify_date': this.database.raw('NOW()'),
+      'admin_code': this.database.raw('NULL'),
     }
     const result = await this.update({ seq: member_seq }, update_info)
     return result
