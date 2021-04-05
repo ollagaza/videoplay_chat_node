@@ -6,6 +6,7 @@ import socketManager from '../socket-manager'
 import MemberLogService from '../member/MemberLogService'
 import NotifyService from '../etc/NotifyService'
 import data from "../../routes/v1/data";
+import message from "../../routes/v1/message";
 
 const MessageServiceClass = class {
   constructor () {
@@ -128,6 +129,8 @@ const MessageServiceClass = class {
     try {
       const msgModel = this.getMessageModel(database)
       const result = await msgModel.sendMessage(message_info)
+      message_info.title = '쪽지가 도착했습니다.';
+      message_info.info = message_info;
       const notifyinfo = await NotifyService.rtnSendMessage(database, message_info, null)
       const send_socket_message_info = {
         message_info: {
@@ -144,6 +147,7 @@ const MessageServiceClass = class {
       }
       await socketManager.sendToFrontOne(message_info.receive_seq, send_socket_message_info)
       send_socket_message_info.message_info.title = '쪽지가 발송되었습니다.'
+      delete send_socket_message_info.notifyinfo;
       await socketManager.sendToFrontOne(message_info.send_seq, send_socket_message_info)
       await MemberLogService.createMemberLog(DBMySQL, group_seq, null, null, '1003', null, '', 0, 0, 1)
 
