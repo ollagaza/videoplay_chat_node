@@ -553,7 +553,7 @@ const GroupServiceClass = class {
         const group_member_model = this.getGroupMemberModel(null)
         if (!group_member_info.isEmpty() && group_member_info.seq) {
           group_member_seq = group_member_info.seq
-          await group_member_model.resetInviteInfo(group_member_seq, invite_code)
+          await group_member_model.resetInviteInfo(group_member_seq, invite_code, member_info)
         } else {
           group_member_info = await group_member_model.createGroupInvite(group_seq, member_info.seq, invite_code, email_address)
           group_member_seq = group_member_info.seq
