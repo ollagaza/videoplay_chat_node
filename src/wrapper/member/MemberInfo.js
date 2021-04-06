@@ -1,9 +1,20 @@
 import JsonWrapper from '../json-wrapper'
 import Util from '../../utils/Util'
+import ServiceConfig from "../../service/service-config";
 
 export default class MemberInfo extends JsonWrapper {
   constructor (data = null, private_keys = []) {
     super(data, private_keys)
+
+    this.setUrl()
+  }
+
+  setUrl = () => {
+    if (this.profile_image_path) {
+      this.profile_image_url = ServiceConfig.get('static_storage_prefix') + this.profile_image_path
+    } else {
+      this.profile_image_url = null;
+    }
   }
 
   checkEmpty = () => {

@@ -132,6 +132,7 @@ const MessageServiceClass = class {
       message_info.title = '쪽지가 도착했습니다.';
       message_info.info = message_info;
       const notifyinfo = await NotifyService.rtnSendMessage(database, message_info, null)
+
       const send_socket_message_info = {
         message_info: {
           title: '쪽지가 도착하였습니다.',
