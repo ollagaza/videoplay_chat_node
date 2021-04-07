@@ -19,7 +19,10 @@ const MemberListClass = class {
       'graduation_year', 'interrest_code', 'interrest_text', 'member_seq'
     ]
     const member_model = new MemberModel(DBMySQL)
-    const db_member_list = await member_model.find()
+    const filters = {
+      used: 1,
+    }
+    const db_member_list = await member_model.find(filters)
 
     this.member_list = []
 
