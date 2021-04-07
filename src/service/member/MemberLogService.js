@@ -57,6 +57,11 @@ const MemberLogServiceClass = class {
     }
   }
 
+  updateNoticePageMemberLog = async (database, member_seq) => {
+    const member_log_model = this.getMemberLogModel(database)
+    return await member_log_model.updateMemberLogView(member_seq)
+  }
+
   getNoticePageMemberLog = async (database, group_seq, member_seq, lang = 'kor') => {
     const member_log_model = this.getMemberLogModel(database)
     return await member_log_model.getNoticePageMemberLog(lang, group_seq, member_seq)

@@ -30,6 +30,10 @@ export default class MemberLogModel extends MySQLModel {
     return await this.create(memberLog, 'seq')
   }
 
+  updateMemberLogView = async (member_seq) => {
+    return await this.update({ member_seq }, { is_view: 1 })
+  }
+
   getNoticePageMemberLog = async (lang, group_seq, member_seq) => {
     const filters = {
       is_new: true,
