@@ -405,6 +405,8 @@ const GroupServiceClass = class {
     const group_member_list = await group_member_model.getGroupMemberList(group_seq, member_type, paging, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin);
     for(let i = 0; i < group_member_list.data.length; i++) {
       if (group_member_list.data[i].profile_image_path) {
+        group_member_list.data[i].json_keys.push('profile_image_url')
+        group_member_list.data[i].profile_image_url = ServiceConfig.get('static_storage_prefix') + group_member_list.data[i].profile_image_path
         group_member_list.data[i].profile_image_path = ServiceConfig.get('static_storage_prefix') + group_member_list.data[i].profile_image_path
       }
     }
