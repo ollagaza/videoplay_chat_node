@@ -75,10 +75,17 @@ routes.post('/sendMessage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
     const output = new StdObject()
     const message_info = req.body.message_info
 
-    await DBMySQL.transaction(async (transaction) => {
-      const result = await MessageService.sendMessage(transaction, group_seq, message_info)
-      output.add('result', result)
-    })
+    for (let cnt = 0; cnt < message_info.receive_seq.length; cnt++) {
+      const param = {
+        send_seq: message_info.send_seq,
+        receive_seq: message_info.receive_seq[cnt],
+        desc: message_info.desc,
+      }
+      await DBMySQL.transaction(async (transaction) => {
+        const result = await MessageService.sendMessage(transaction, group_seq, param)
+        output.add('result', result)
+      })
+    }
 
     res.json(output)
   } catch (e) {

@@ -133,7 +133,7 @@ const group_grade_admin_form = `
   <tr>
     <td align="center" style="padding-top: 30px;">
       <a href="{btn_link_url}" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">
-        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">관리 콘솔 바로가기</div>
+        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">SurgStory</div>
       </a>
     </td>
   </tr>

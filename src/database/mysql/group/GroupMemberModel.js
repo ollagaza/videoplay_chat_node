@@ -597,14 +597,15 @@ export default class GroupMemberModel extends MySQLModel {
     return new GroupMemberInfo(create_params, ['invite_date'])
   }
 
-  resetInviteInfo = async (group_member_seq, invite_code) => {
+  resetInviteInfo = async (group_member_seq, invite_code, member_info) => {
     const filter = {
       seq: group_member_seq
     }
     const update_params = {
       invite_code,
       invite_status: 'S',
-      invite_date: this.database.raw('NOW()')
+      invite_date: this.database.raw('NOW()'),
+      invite_member_seq: member_info.seq,
     }
     const query_result = await this.update(filter, update_params)
     log.debug(this.log_prefix, '[resetInviteInfo]', query_result)

@@ -12,7 +12,7 @@ import MemberInfoSub from '../../wrapper/member/MemberInfoSub'
 import log from '../../libs/logger'
 import _ from 'lodash'
 import GroupService from '../../service/group/GroupService'
-import OperationDataService from '../../service/operation/OperationDataService'
+import Member_List from "../../service/member_list";
 
 const routes = Router()
 
@@ -314,6 +314,15 @@ routes.post('/userProfileInfo', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
   } catch (e) {
     throw new StdObject(-1, e, 400)
   }
+}))
+
+routes.get('/getmemberinfowithcache', Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+
+  output.adds(Member_List.getAllMemberInfo())
+  output.add('member_10', Member_List.getSeq(10))
+  res.json(output)
 }))
 
 export default routes
