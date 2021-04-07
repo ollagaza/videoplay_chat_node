@@ -12,7 +12,7 @@ const MemberListClass = class {
 
   load_member = async () => {
     const private_fields = [
-      'password', 'user_media_path', 'profile_image_path', 'certkey',
+      'password', 'user_media_path', 'certkey',
       'license_no', 'license_image_path', 'special_no',
       'major', 'major_sub', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
