@@ -24,6 +24,7 @@ routes.get('/notice', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, re
   const output = new StdObject()
 
   const lang = Auth.getLanguage(req)
+  await MemberLogService.updateNoticePageMemberLog(DBMySQL, member_seq)
   const result = await MemberLogService.getNoticePageMemberLog(DBMySQL, group_seq, member_seq, lang)
   output.add('notices', result)
   res.json(output)
