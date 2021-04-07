@@ -100,6 +100,18 @@ const GroupServiceClass = class {
   }
 
   checkGroupAuth = async (database, req, group_seq_from_token = true, check_group_auth = true, throw_exception = false, only_admin = false) => {
+    const group_auth_result = {
+      token_info: null,
+      member_seq: null,
+      group_seq: null,
+      member_info: null,
+      group_member_info: null,
+      is_active_group_member: null,
+      is_group_admin: null,
+      is_group_manager: null,
+      group_grade: null,
+      group_grade_number: null
+    }
     const { token_info, member_seq, group_seq } = this.getBaseInfo(req, group_seq_from_token)
     const member_info = await MemberService.getMemberInfo(database, member_seq)
     if (!MemberService.isActiveMember(member_info)) {
@@ -149,18 +161,17 @@ const GroupServiceClass = class {
     if (only_admin && !is_group_admin) {
       throw new StdObject(10000, '권한이 없습니다', 403)
     }
-    return {
-      token_info: token_info,
-      member_seq: member_seq,
-      group_seq: group_seq,
-      member_info: member_info,
-      group_member_info: group_member_info,
-      is_active_group_member: is_active_group_member,
-      is_group_admin: is_group_admin,
-      is_group_manager: is_group_manager,
-      group_grade: group_grade,
-      group_grade_number: group_grade_number
-    }
+    group_auth_result.token_info = token_info
+    group_auth_result.member_seq = member_seq
+    group_auth_result.group_seq = group_seq
+    group_auth_result.member_info = member_info
+    group_auth_result.group_member_info = group_member_info
+    group_auth_result.is_active_group_member = is_active_group_member
+    group_auth_result.is_group_admin = is_group_admin
+    group_auth_result.is_group_manager = is_group_manager
+    group_auth_result.group_grade = group_grade
+    group_auth_result.group_grade_number = group_grade_number
+    return group_auth_result
   }
 
   createPersonalGroup = async (database, member_info, options = {}) => {

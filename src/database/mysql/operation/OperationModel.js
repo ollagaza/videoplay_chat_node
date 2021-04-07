@@ -14,6 +14,7 @@ const join_select = [
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
 ]
 const join_trash_select = _.concat(join_select, ['delete_member.user_name as delete_user_name', 'delete_member.user_nickname as delete_user_nickname'])
+const join_admin_select = _.concat(join_select, ['group_info.group_name'])
 const join_search_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
@@ -57,25 +58,31 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperation(where, import_media_info)
   }
 
-  getOperationInfoListPage = async (group_seq, member_seq, group_grade_number = null, is_group_admin = false, page_params = {}, filter_params = {}, order_params = {}) => {
+  getOperationInfoListPage = async (group_seq, member_seq, group_grade_number = null, is_group_admin = false, page_params = {}, filter_params = {}, order_params = {}, is_admin = false) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
 
     const is_trash = filter_params.menu === 'trash'
-    const query = this.database.select(is_trash ? join_trash_select : join_select)
+    const select_fields = is_admin ? join_admin_select : (is_trash ? join_trash_select : join_select)
+    const query = this.database.select(select_fields)
     query.column(['operation_data.total_time', 'operation_data.thumbnail'])
     query.from('operation')
     query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
     query.innerJoin('member', 'member.seq', 'operation.member_seq')
+    if (is_admin) {
+      query.innerJoin('group_info', 'group_info.seq', 'operation.group_seq')
+    }
     query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
     query.leftOuterJoin('operation_folder', 'operation.folder_seq', 'operation_folder.seq')
-    if (is_trash) {
-      query.joinRaw('LEFT OUTER JOIN `member` AS delete_member ON delete_member.seq = operation.delete_member_seq')
-    }
-    query.where('operation.group_seq', group_seq)
-    if (!is_trash) {
-      query.where(this.database.raw('(CASE WHEN operation_folder.access_type IS NULL THEN 1 WHEN operation_folder.access_type = \'A\' THEN 99 WHEN operation_folder.access_type = \'O\' THEN 99 ELSE operation_folder.access_type END) <= ?', [group_grade_number]))
+    if (!is_admin) {
+      if (is_trash) {
+        query.joinRaw('LEFT OUTER JOIN `member` AS delete_member ON delete_member.seq = operation.delete_member_seq')
+      }
+      query.where('operation.group_seq', group_seq)
+      if (!is_trash) {
+        query.where(this.database.raw('(CASE WHEN operation_folder.access_type IS NULL THEN 1 WHEN operation_folder.access_type = \'A\' THEN 99 WHEN operation_folder.access_type = \'O\' THEN 99 ELSE operation_folder.access_type END) <= ?', [group_grade_number]))
+      }
     }
     if (filter_params.status) {
       query.andWhere('operation.status', filter_params.status.toUpperCase())
@@ -118,13 +125,15 @@ export default class OperationModel extends MySQLModel {
         check_folder = false
         break
     }
-    if (!is_trash) {
-      query.andWhere((builder) => {
-        builder.whereNull('operation.folder_seq')
-        builder.orWhere('operation_folder.status', 'Y')
-      })
-    } else if (!is_group_admin) {
-      query.andWhere('operation.member_seq', member_seq)
+    if (!is_admin) {
+      if (!is_trash) {
+        query.andWhere((builder) => {
+          builder.whereNull('operation.folder_seq')
+          builder.orWhere('operation_folder.status', 'Y')
+        })
+      } else if (!is_group_admin) {
+        query.andWhere('operation.member_seq', member_seq)
+      }
     }
 
     if (filter_params.search_keyword || filter_params.member_seq) {
@@ -135,10 +144,16 @@ export default class OperationModel extends MySQLModel {
         query.where((builder) => {
           builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)
           builder.orWhere('operation.operation_date', 'like', `%${filter_params.search_keyword}%`)
-          if (filter_params.use_user_name) {
+          if (is_admin) {
             builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
+            builder.orWhere('member.user_id', 'like', `%${filter_params.search_keyword}%`)
+            builder.orWhere('group_info.group_name', 'like', `%${filter_params.search_keyword}%`)
           } else {
-            builder.orWhere('member.user_nickname', 'like', `%${filter_params.search_keyword}%`)
+            if (filter_params.use_user_name) {
+              builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
+            } else {
+              builder.orWhere('member.user_nickname', 'like', `%${filter_params.search_keyword}%`)
+            }
           }
         })
       }
@@ -176,16 +191,22 @@ export default class OperationModel extends MySQLModel {
           order_by.direction = order_params.type
           break;
         case 'patient_age':
-          order_by.name = 'member.birth_day'
+          order_by.name = 'operation.patient_age'
           order_by.direction = order_params.type
           break;
         case 'patient_sex':
-          order_by.name = 'member.gender'
+          order_by.name = 'operation.patient_sex'
           order_by.direction = order_params.type
           break;
         case 'total_file_size':
           order_by.name = 'operation_storage.total_file_size'
           order_by.direction = order_params.type
+          break;
+        case 'group_name':
+          if (is_admin) {
+            order_by.name = 'group_info.group_name'
+            order_by.direction = order_params.type
+          }
           break;
         default :
           break;

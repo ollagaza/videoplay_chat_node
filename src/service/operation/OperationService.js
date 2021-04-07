@@ -495,7 +495,7 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListByRequest = async (database, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request) => {
+  getOperationListByRequest = async (database, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request, is_admin = false) => {
     const request_query = request.query ? request.query : {}
     const page_params = {}
     page_params.page = request_query.page
@@ -523,7 +523,7 @@ const OperationServiceClass = class {
     if (request_query.limit) {
       filter_params.limit = request_query.limit
     }
-    filter_params.use_user_name = group_member_info.member_name_used === 1
+    filter_params.use_user_name = !group_member_info || group_member_info.member_name_used === 1
     const order_params = {}
     order_params.field = request_query.order_fields
     order_params.type = request_query.order_type
@@ -531,7 +531,7 @@ const OperationServiceClass = class {
     log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params, order_params)
 
     const operation_model = this.getOperationModel(database)
-    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params)
+    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params, is_admin)
   }
 
   setMediaInfo = async (database, operation_info) => {
