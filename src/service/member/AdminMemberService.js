@@ -178,12 +178,12 @@ const AdminMemberServiceClass = class {
         if (_.find(find_sub_users, { member_seq: data.seq })) {
           const sub_user = _.find(find_sub_users, { member_seq: data.seq })
           delete sub_user.seq
-          res.push(_.merge(data, sub_user))
+          res.push(new MemberInfo(_.merge(data, sub_user)))
         } else {
-          res.push(data)
+          res.push(new MemberInfo(data))
         }
       })
-      find_users.data = new MemberInfo(res)
+      find_users.data = res
     }
     return find_users
   }
