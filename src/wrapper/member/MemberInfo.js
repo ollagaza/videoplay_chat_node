@@ -10,6 +10,7 @@ export default class MemberInfo extends JsonWrapper {
   }
 
   setUrl = () => {
+    this.json_keys.push('profile_image_url');
     if (this.profile_image_path) {
       this.profile_image_url = ServiceConfig.get('static_storage_prefix') + this.profile_image_path
     } else {

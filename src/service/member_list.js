@@ -12,14 +12,17 @@ const MemberListClass = class {
 
   load_member = async () => {
     const private_fields = [
-      'password', 'user_media_path', 'profile_image_path', 'certkey',
+      'password', 'user_media_path', 'certkey',
       'license_no', 'license_image_path', 'special_no',
       'major', 'major_sub', 'worktype',
       'trainingcode', 'trainingname', 'universitycode', 'universityname',
       'graduation_year', 'interrest_code', 'interrest_text', 'member_seq'
     ]
     const member_model = new MemberModel(DBMySQL)
-    const db_member_list = await member_model.find()
+    const filters = {
+      used: 1,
+    }
+    const db_member_list = await member_model.find(filters)
 
     this.member_list = []
 
