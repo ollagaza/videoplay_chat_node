@@ -26,7 +26,7 @@ export default class MessageModel extends MySQLModel {
     ]
     const oKnex = this.database.select(select_fields)
     oKnex.from(this.table_name)
-    oKnex.leftOuterJoin('group_info', `${this.table_name}.send_seq`, 'group_info.seq')
+    oKnex.leftOuterJoin('group_info', `${this.table_name}.group_seq`, 'group_info.seq')
     oKnex.leftOuterJoin('member', `${this.table_name}.send_seq`, 'member.seq')
     if (filters.query !== undefined) {
       await this.queryWhere(oKnex, filters.query)
