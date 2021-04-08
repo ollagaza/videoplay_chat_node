@@ -97,7 +97,7 @@ routes.get('/getboarddatalist', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asyn
     output.message = '검색 결과가 없습니다.'
   } else {
     output.error = 2;
-    output.message = '등록된 게시글이 없습니다.'
+    output.message = '등록된 노트글이 없습니다.'
   }
   res.json(output);
 }))
