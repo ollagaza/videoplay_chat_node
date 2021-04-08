@@ -176,7 +176,8 @@ const OperationServiceClass = class {
     const modify_operation_data = request_body.operation_data ? request_body.operation_data : null
     const folder_info = request_body.folder_info ? request_body.folder_info : null
     const mento_group_seq = request_body.mento_group_seq ? request_body.mento_group_seq : null
-    const group_info = await GroupService.getGroupInfo(null, group_seq)
+    const group_private_fields = ['start_date', 'reg_date', 'modify_date']
+    const group_info = await GroupService.getGroupInfo(null, group_seq, group_private_fields)
 
     let is_success = false
     const result = {
@@ -208,7 +209,7 @@ const OperationServiceClass = class {
         operation_info.origin_media_path = origin_operation_info.media_path
         operation_info.origin_content_id = origin_content_id
       }
-      operation_info.media_path = `${group_media_path}/operation/${content_id}/`
+      operation_info.media_path = `${group_info.media_path}/operation/${content_id}/`
       operation_info.content_id = content_id
       operation_info.folder_seq = folder_info !== null ? folder_info.seq : null
       operation_info.status = 'C'
