@@ -93,7 +93,7 @@ routes.post('/sendMessage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (r
   }
 }))
 
-routes.post('/delMessage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/delMessage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
     const output = new StdObject()
