@@ -127,6 +127,7 @@ const OperationFolderServiceClass = class {
   createOperationFolder = async (database, request_body, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo(request_body.folder_info)
+    const is_valid_folder_name = request_body.is_valid_folder_name ? JSON.parse(request_body.is_valid_folder_name) : false
     const parent_folder_info = request_body.parent_folder_info
     if (parent_folder_info) {
       folder_info.depth = parent_folder_info.depth + 1
@@ -141,9 +142,11 @@ const OperationFolderServiceClass = class {
     folder_info.group_seq = group_seq
     folder_info.member_seq = member_seq
 
-    const is_valid_name = await model.isValidFolderName(group_seq, folder_info.folder_name, parent_folder_info ? parent_folder_info.seq : null)
-    if (!is_valid_name) {
-      throw new StdObject(-1, '이미 사용중인 폴더명입니다.', 400)
+    if (is_valid_folder_name) {
+      const is_valid_name = await model.isValidFolderName(group_seq, folder_info.folder_name, parent_folder_info ? parent_folder_info.seq : null)
+      if (!is_valid_name) {
+        throw new StdObject(-1, '이미 사용중인 폴더명입니다.', 400)
+      }
     }
 
     const folder_seq = await model.createOperationFolder(folder_info)
