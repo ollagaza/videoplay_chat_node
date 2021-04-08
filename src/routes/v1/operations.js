@@ -13,7 +13,6 @@ import OperationMediaService from '../../service/operation/OperationMediaService
 import OperationFileService from '../../service/operation/OperationFileService'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import { OperationMetadataModel } from '../../database/mongodb/OperationMetadata'
-import OperationFolderService from "../../service/operation/OperationFolderService";
 
 const routes = Router()
 
