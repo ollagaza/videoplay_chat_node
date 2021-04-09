@@ -60,6 +60,7 @@ export default class MemberModel extends MySQLModel {
   createMember = async (member_info, is_confirm = false) => {
     member_info.setAutoTrim(true)
     const member = member_info.toJSON()
+    delete member.profile_image_url
 
     if (is_confirm) {
       member.used = 1
@@ -87,7 +88,7 @@ export default class MemberModel extends MySQLModel {
       member_info.password = this.encryptPassword(member_info.password)
     }
     const member = member_info.toJSON()
-    log.debug(this.log_prefix, member)
+    delete member.profile_image_url
     const result = await this.update({ seq: member_seq }, member)
 
     return result
