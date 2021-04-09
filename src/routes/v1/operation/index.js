@@ -81,11 +81,11 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
   return result
 }
 
-const getAdminInfo = async (result, operation_seq, import_operation_info = false) => {
+const getAdminInfo = async (result, operation_seq) => {
   if (!result.token_info.isAdmin()) {
     throw new StdObject(-100, '접근 권한이 없습니다.', 400)
   }
-  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, import_operation_info)
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, true)
   if (!operation_info || operation_info.isEmpty()) {
     throw new StdObject(100, '등록된 정보가 없습니다.', 400)
   }
@@ -101,9 +101,9 @@ const getAdminInfo = async (result, operation_seq, import_operation_info = false
   }
 }
 
-const getDriveInfo = async (result, operation_seq, check_folder_auth = false, import_operation_info = false) => {
+const getDriveInfo = async (result, operation_seq, check_folder_auth = false) => {
   const group_seq = result.group_seq
-  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, import_operation_info)
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, true)
   if (!operation_info || operation_info.isEmpty()) {
     throw new StdObject(100, '등록된 정보가 없습니다.', 400)
   }
