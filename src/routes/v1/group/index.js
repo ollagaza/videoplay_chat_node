@@ -66,9 +66,14 @@ routes.post('/:group_seq(\\d+)/members', Auth.isAuthenticated(Role.DEFAULT), Wra
   req.accepts('application/json')
   const { group_seq } = await checkGroupAuth(DBMySQL, req)
   const group_member_list = await GroupService.getGroupMemberList(DBMySQL, group_seq, req)
-
   const output = new StdObject()
   output.adds(group_member_list)
+
+  if (req.body.grade_list) {
+    const grade_list = await GroupService.getGradeList(DBMySQL, group_seq)
+    output.add('grade_list', grade_list)
+  }
+
   res.json(output)
 }))
 

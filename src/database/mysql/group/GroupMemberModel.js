@@ -259,7 +259,7 @@ export default class GroupMemberModel extends MySQLModel {
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
-  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null, detail_search = null, member_grade = null, non_admin = null) => {
+  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_field = null, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null, detail_search = null, member_grade = null, non_admin = null) => {
     const filter = {
       group_seq
     }
@@ -313,13 +313,17 @@ export default class GroupMemberModel extends MySQLModel {
       })
     }
     if (search_text) {
-      query.andWhere(function () {
-        this
-          .where('member.user_name', 'like', `%${search_text}%`)
-          .orWhere('group_member.invite_email', 'like', `%${search_text}%`)
-          .orWhere('member.email_address', 'like', `%${search_text}%`)
-          .orWhere('member.treatcode', 'like', `%${search_text}%`)
-      })
+      if (search_field) {
+        query.andWhere(search_field, 'like', `%${search_text}%`)
+      } else {
+        query.andWhere(function () {
+          this
+            .where('member.user_name', 'like', `%${search_text}%`)
+            .orWhere('group_member.invite_email', 'like', `%${search_text}%`)
+            .orWhere('member.email_address', 'like', `%${search_text}%`)
+            .orWhere('member.treatcode', 'like', `%${search_text}%`)
+        })
+      }
     }
     if (detail_search) {
       // detail_search
