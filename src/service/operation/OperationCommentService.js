@@ -72,6 +72,7 @@ const OperationCommentServiceClass = class {
     const alarm_data = {
       operation_seq: operation_info.seq,
       comment_seq,
+      member_seq: member_info.seq,
     }
     const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술에 댓글을 작성하였습니다.`
     const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
