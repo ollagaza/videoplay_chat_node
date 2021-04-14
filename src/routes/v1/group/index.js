@@ -15,6 +15,7 @@ import OperationDataService from "../../../service/operation/OperationDataServic
 import GroupBoardDataService from "../../../service/board/GroupBoardDataService";
 import OperationCommentService from "../../../service/operation/OperationCommentService";
 import Constants from '../../../constants/constants'
+import MemberService from "../../../service/member/MemberService";
 
 const routes = Router()
 
@@ -679,4 +680,18 @@ routes.post('/closure', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, 
   res.json(output)
 }))
 
+routes.post('/entrust', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const output = new StdObject()
+  // const mem_info = req.body.mem_info;
+  const member_seq = req.body.params.member_seq;
+  const target_list = req.body.params.target_member_list;
+  const is_leave = req.body.params.is_leave;
+  const result = await GroupService.setEntrust(DBMySQL, member_seq, target_list, is_leave);
+  if (is_leave) {
+    const leave_text = req.body.leaveText
+    await MemberService.leaveMember(DBMySQL, member_seq, leave_text)
+  }
+  output.add('result', result);
+  res.json(output)
+}))
 export default routes

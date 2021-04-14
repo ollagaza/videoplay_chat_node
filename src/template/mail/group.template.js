@@ -269,6 +269,38 @@ const group_un_delete_form = `
   </tr>
 `
 
+const group_entrust_form = `
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널의 관리자로 위임되었습니다.
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
+      <span style="color: #ffa00f; font-weight: bold;">"{name}"</span>님,
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널 관리자였던 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님께서 회원님께<br>
+      <span style="color: #ffa00f; font-weight: bold;">채널 관리자를 위임</span>하였습니다.
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
+      현시각부터 <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널의 관리자로서 채널과 관련된 모든 사항을 관리할 수 있습니다.<br>
+      감사합니다.
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding-top: 30px;">
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">
+        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">SurgStory</div>
+      </a>
+    </td>
+  </tr>
+`
+
 
 export default {
   'inviteGroupMember': (template_data = {}, no_comment = false) => {
@@ -301,6 +333,10 @@ export default {
   },
   'unDeleteGroupMember': (template_data = {}) => {
     const template_html = group_mail_common_top + group_un_delete_form + group_mail_common_bottom
+    return formatter(template_html, template_data)
+  },
+  'groupEntrustMember': (template_data = {}) => {
+    const template_html = group_mail_common_top + group_entrust_form + group_mail_common_bottom
     return formatter(template_html, template_data)
   }
 }

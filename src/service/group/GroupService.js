@@ -46,6 +46,7 @@ const GroupServiceClass = class {
     this.MEMBER_STATUS_DISABLE_NO_VIEW = 'L'
     this.MEMBER_STATUS_NORMAL = 'N'
     this.MEMBER_STATUS_DELETE = 'D'
+    this.MEMBER_GRADE_DEFAULT = '1'
     this.MEMBER_GRADE_OWNER = 'O'
     this.MEMBER_GRADE_ADMIN = 'A'
     this.MEMBER_GRADE_MANAGER = '6'
@@ -1717,6 +1718,27 @@ const GroupServiceClass = class {
         }
       }
     )(group_seq, member_seq, update_column, type, count)
+  }
+
+  setEntrust = async (databases, member_seq, target_list, is_leave = false) => {
+    const group_member_model = this.getGroupMemberModel(databases)
+    const group_model = this.getGroupModel(databases);
+    for (let i = 0; i < target_list.length; i++) {
+      const result_obj = {
+        group_seq: target_list[i].group_seq,
+      };
+      if (target_list[i].is_entrust) {
+        await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, target_list[i].member_seq, this.MEMBER_GRADE_OWNER)
+        if (is_leave) {
+          await group_member_model.changeMemberStatusByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, 'D')
+        } else {
+          await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, this.MEMBER_GRADE_DEFAULT)
+        }
+      } else {
+        await group_model.set_group_closure(target_list[i].group_seq);
+      }
+    }
+    return true;
   }
 }
 
