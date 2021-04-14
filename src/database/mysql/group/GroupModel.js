@@ -339,4 +339,14 @@ export default class GroupModel extends MySQLModel {
     }
     return await this.update(filter, update_params);
   }
+
+  set_group_change_owner = async (group_seq, member_seq) => {
+    const filter = {
+      seq: group_seq,
+    }
+    const update_params = {
+      member_seq
+    }
+    return await this.update(filter, update_params);
+  }
 }

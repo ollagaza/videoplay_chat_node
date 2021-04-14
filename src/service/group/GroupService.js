@@ -28,6 +28,7 @@ import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
 import striptags from "striptags";
 import GroupAlarmService from './GroupAlarmService'
+import MemberModel from '../../database/mysql/member/MemberModel';
 
 const GroupServiceClass = class {
   constructor () {
@@ -51,6 +52,13 @@ const GroupServiceClass = class {
     this.MEMBER_GRADE_ADMIN = 'A'
     this.MEMBER_GRADE_MANAGER = '6'
     this.MEMBER_GRADE_NORMAL = 'N'
+  }
+
+  getMemberModel = (database) => {
+    if (database) {
+      return new MemberModel(database)
+    }
+    return new MemberModel(DBMySQL)
   }
 
   getGroupModel = (database) => {
@@ -1724,15 +1732,12 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(databases)
     const group_model = this.getGroupModel(databases);
     for (let i = 0; i < target_list.length; i++) {
-      const result_obj = {
-        group_seq: target_list[i].group_seq,
-      };
       if (target_list[i].is_entrust) {
         await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, target_list[i].member_seq, this.MEMBER_GRADE_OWNER)
+        await group_model.set_group_change_owner(target_list[i].group_seq, target_list[i].member_seq);
+        await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, this.MEMBER_GRADE_DEFAULT)
         if (is_leave) {
           await group_member_model.changeMemberStatusByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, 'D')
-        } else {
-          await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, this.MEMBER_GRADE_DEFAULT)
         }
       } else {
         await group_model.set_group_closure(target_list[i].group_seq);
