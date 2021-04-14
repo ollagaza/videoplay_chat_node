@@ -1728,7 +1728,8 @@ const GroupServiceClass = class {
     )(group_seq, member_seq, update_column, type, count)
   }
 
-  setEntrust = async (databases, member_seq, target_list, is_leave = false) => {
+  setEntrust = async (databases, member_seq, target_list, service_domain, is_leave = false) => {
+    const member_model = this.getMemberModel(databases)
     const group_member_model = this.getGroupMemberModel(databases)
     const group_model = this.getGroupModel(databases);
     for (let i = 0; i < target_list.length; i++) {
@@ -1739,6 +1740,21 @@ const GroupServiceClass = class {
         if (is_leave) {
           await group_member_model.changeMemberStatusByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, 'D')
         }
+        const group_info = await group_model.getGroupInfo(target_list[i].group_seq);
+        const member_info = await member_model.getMemberInfo(target_list[i].member_seq);
+        const old_admin_info = await member_model.getMemberInfo(member_seq);
+        const admin_name = group_info.member_name_used ? old_admin_info.user_name : old_admin_info.user_nickname;
+        const member_name = group_info.member_name_used ? member_info.user_name : member_info.user_nickname;
+        const title = `"${group_info.group_name}"채널의 관리자로 임명되었습니다.`;
+        const template_data = {
+          service_domain,
+          group_name: group_info.group_name,
+          admin_name: admin_name,
+          member_name: member_name,
+          btn_link_url: `${service_domain}/`
+        }
+        const body = GroupMailTemplate.groupEntrustMember(template_data)
+        this.sendEmail(title, body, [member_info.email_address], 'setEntrust')
       } else {
         await group_model.set_group_closure(target_list[i].group_seq);
       }

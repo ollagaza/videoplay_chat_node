@@ -277,13 +277,13 @@ const group_entrust_form = `
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
-      <span style="color: #ffa00f; font-weight: bold;">"{name}"</span>님,
+      <span style="color: #ffa00f; font-weight: bold;">{member_name}</span>님,
     </td>
   </tr>
   <tr>
     <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
       <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널 관리자였던 <span style="color: #ffa00f; font-weight: bold;">{admin_name}</span>님께서 회원님께<br>
-      <span style="color: #ffa00f; font-weight: bold;">채널 관리자를 위임</span>하였습니다.
+      <span style="color: #2e6bb8; font-weight: bold;">채널 관리자를 위임</span>하였습니다.
     </td>
   </tr>
   <tr>

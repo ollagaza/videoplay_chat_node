@@ -682,11 +682,11 @@ routes.post('/closure', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, 
 
 routes.post('/entrust', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
-  // const mem_info = req.body.mem_info;
+  const { token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const member_seq = req.body.params.member_seq;
   const target_list = req.body.params.target_member_list;
   const is_leave = req.body.params.is_leave;
-  const result = await GroupService.setEntrust(DBMySQL, member_seq, target_list, is_leave);
+  const result = await GroupService.setEntrust(DBMySQL, member_seq, target_list, token_info.getServiceDomain(), is_leave);
   if (is_leave) {
     const leave_text = req.body.leaveText
     await MemberService.leaveMember(DBMySQL, member_seq, leave_text)
