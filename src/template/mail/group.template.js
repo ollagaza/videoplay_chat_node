@@ -301,6 +301,44 @@ const group_entrust_form = `
   </tr>
 `
 
+const group_closure_other_member_form = `
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-weight: bold; font-size: 18px; color: #333; letter-spacing:-0.5px;line-height: 1.4;padding-bottom: 14px;">
+      <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널 폐쇄 안내 메일.
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
+      안녕하세요.<br />SurgStory 고객 지원팀입니다.
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7; padding-bottom: 16px;">
+      회원님께서 가입하신 <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span>채널이 채널 관리자에 의해<br />
+      <span style="color: #ffa00f; font-weight: bold;">"{today}"</span>에 폐쇄되었습니다.
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
+      그동안 <span style="color: #ffa00f; font-weight: bold;">"{group_name}"</span> 채널의 팀원으로서 많은 활동 진심으로 감사드립니다.<br />
+      이후 해당 채널에 접속이 불가하며, 채널 내 작성한 게시물은 채널 폐쇄와 동시에 삭제되었습니다.
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family: 맑은고딕, Malgun Gothic, 돋움, dotum, Arial, sans-serif; font-size: 14px; color: #555; letter-spacing:-0.5px; line-height: 1.7;">
+      기타 문의 사항은 SurgStory 고객센터로 문의해 주세요.<br />
+      감사합니다.
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding-top: 30px;">
+      <a href="{btn_link_url}" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">
+        <div style="width: 140px; height: 40px; font-size: 14px; background: #2e6bb8; border-radius: 20px; color: #fff; display: table-cell; line-height: 40px;">SurgStory</div>
+      </a>
+    </td>
+  </tr>
+`
+
 
 export default {
   'inviteGroupMember': (template_data = {}, no_comment = false) => {
@@ -337,6 +375,10 @@ export default {
   },
   'groupEntrustMember': (template_data = {}) => {
     const template_html = group_mail_common_top + group_entrust_form + group_mail_common_bottom
+    return formatter(template_html, template_data)
+  },
+  'groupClosureOtherMember': (template_data = {}) => {
+    const template_html = group_mail_common_top + group_closure_other_member_form + group_mail_common_bottom
     return formatter(template_html, template_data)
   }
 }

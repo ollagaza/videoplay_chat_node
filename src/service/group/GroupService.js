@@ -1757,6 +1757,23 @@ const GroupServiceClass = class {
         this.sendEmail(title, body, [member_info.email_address], 'setEntrust')
       } else {
         await group_model.set_group_closure(target_list[i].group_seq);
+        const group_info = await group_model.getGroupInfo(target_list[i].group_seq);
+        const group_member_list = await group_member_model.getGroupMemberList(target_list[i].group_seq, 'active', { list_count: 0, cur_page: 1, page_count: 1, no_paging: 'y' }, null, null, null, null, null, null, null, null, 'Y')
+        const send_mail_list = [];
+        for (let j = 0; j < group_member_list.data.length; j++) {
+          send_mail_list.push(group_member_list.data[j].email_address);
+        }
+        if (send_mail_list.length > 0) {
+          const title = `"${group_info.group_name}" 채널 폐쇄 안내 메일.`;
+          const template_data = {
+            service_domain,
+            group_name: group_info.group_name,
+            today: Util.today('yyyy-mm-dd HH:MM:ss'),
+            btn_link_url: `${service_domain}/`
+          }
+          const body = GroupMailTemplate.groupClosureOtherMember(template_data)
+          this.sendEmail(title, body, send_mail_list, 'setEntrust')
+        }
       }
     }
     return true;
