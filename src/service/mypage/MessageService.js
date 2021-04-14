@@ -2,11 +2,13 @@ import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import GroupMessageModel from "../../database/mysql/mypage/GroupMessageModel";
 import MessageModel from '../../database/mysql/mypage/MessageModel'
+import InstantMessageModel from '../../database/mysql/mypage/InstantMessageModel'
 import socketManager from '../socket-manager'
 import MemberLogService from '../member/MemberLogService'
 import NotifyService from '../etc/NotifyService'
 import data from "../../routes/v1/data";
 import message from "../../routes/v1/message";
+import group from "../../routes/admin/group";
 
 const MessageServiceClass = class {
   constructor () {
@@ -18,6 +20,14 @@ const MessageServiceClass = class {
       return new MessageModel(database)
     } else {
       return new MessageModel(DBMySQL)
+    }
+  }
+
+  getInstantMessageModel = (database = null) => {
+    if (database) {
+      return new InstantMessageModel(database)
+    } else {
+      return new InstantMessageModel(DBMySQL)
     }
   }
 
@@ -246,6 +256,27 @@ const MessageServiceClass = class {
     } catch (e) {
       throw e
     }
+  }
+
+  createInstantMessage = async (database, member_seq, group_seq = null, message) => {
+    const instantMessageModel = this.getInstantMessageModel(database);
+    const message_info = {
+      member_seq: member_seq,
+      group_seq: group_seq,
+      message: message,
+      type: 'OneMessage'
+    }
+    return await instantMessageModel.createInstantMessage(message_info);
+  }
+
+  getInstantMessageList = async (database, member_seq, group_seq = null) => {
+    const instantMessageModel = this.getInstantMessageModel(database);
+    return await instantMessageModel.getInstantMessage(member_seq, group_seq);
+  }
+
+  deleteInstantMessageList = async (database, message_seq_list) => {
+    const instantMessageModel = this.getInstantMessageModel(database);
+    return await instantMessageModel.deleteInstantMessageListBySeq(message_seq_list);
   }
 }
 

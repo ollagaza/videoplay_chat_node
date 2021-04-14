@@ -26,6 +26,7 @@ import GroupBoardDataService from "../board/GroupBoardDataService";
 import OperationClipService from "../operation/OperationClipService";
 import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
+import MessageService from "../mypage/MessageService";
 import striptags from "striptags";
 import GroupAlarmService from './GroupAlarmService'
 import MemberModel from '../../database/mysql/member/MemberModel';
@@ -1732,6 +1733,7 @@ const GroupServiceClass = class {
     const member_model = this.getMemberModel(databases)
     const group_member_model = this.getGroupMemberModel(databases)
     const group_model = this.getGroupModel(databases);
+
     for (let i = 0; i < target_list.length; i++) {
       if (target_list[i].is_entrust) {
         await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, target_list[i].member_seq, this.MEMBER_GRADE_OWNER)
@@ -1755,6 +1757,9 @@ const GroupServiceClass = class {
         }
         const body = GroupMailTemplate.groupEntrustMember(template_data)
         this.sendEmail(title, body, [member_info.email_address], 'setEntrust')
+
+        const instant_message = `<span style="color: #ffa00f; font-weight: bold;">"${group_info.group_name}"</span> 채널의<br />관리자 권한이 위임되었습니다.<br />채널과 관련된 모든 사항을 관리할 수 있습니다.`;
+        await MessageService.createInstantMessage(databases, target_list[i].member_seq, target_list[i].group_seq, instant_message);
       } else {
         await group_model.set_group_closure(target_list[i].group_seq);
         const group_info = await group_model.getGroupInfo(target_list[i].group_seq);

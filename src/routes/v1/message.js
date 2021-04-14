@@ -175,4 +175,33 @@ routes.delete('/delgroupmessage', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   }
 }))
 
+routes.get('/instant/:member_seq(\\d+)/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  try {
+    const member_seq = req.params.member_seq
+    const group_seq = req.params.group_seq
+    const output = new StdObject()
+
+    output.add('list', await MessageService.getInstantMessageList(DBMySQL, member_seq, group_seq))
+
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
+routes.delete('/instant', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  try {
+    const message_list = req.body
+    const output = new StdObject()
+
+    output.add('res', await MessageService.deleteInstantMessageList(DBMySQL, message_list));
+
+    res.json(output)
+  } catch (e) {
+    throw new StdObject(-1, e, 400)
+  }
+}))
+
 export default routes
