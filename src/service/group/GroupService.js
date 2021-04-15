@@ -1737,9 +1737,9 @@ const GroupServiceClass = class {
 
     for (let i = 0; i < target_list.length; i++) {
       if (target_list[i].is_entrust) {
+        await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, this.MEMBER_GRADE_DEFAULT)
         await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, target_list[i].member_seq, this.MEMBER_GRADE_OWNER)
         await group_model.set_group_change_owner(target_list[i].group_seq, target_list[i].member_seq);
-        await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, this.MEMBER_GRADE_DEFAULT)
         if (is_leave) {
           await group_member_model.changeMemberStatusByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, 'D')
         }
