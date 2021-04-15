@@ -5,6 +5,7 @@ import DBMySQL from '../../database/knex-mysql'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import MessageService from '../../service/mypage/MessageService'
+import InstantMessageService from "../../service/mypage/InstantMessageService";
 import GroupService from "../../service/group/GroupService";
 
 const routes = Router()
@@ -182,7 +183,7 @@ routes.get('/instant/:member_seq(\\d+)/:group_seq(\\d+)', Auth.isAuthenticated(R
     const group_seq = req.params.group_seq
     const output = new StdObject()
 
-    output.add('list', await MessageService.getInstantMessageList(DBMySQL, member_seq, group_seq))
+    output.add('list', await InstantMessageService.getInstantMessageList(DBMySQL, member_seq, group_seq))
 
     res.json(output)
   } catch (e) {
@@ -196,7 +197,7 @@ routes.delete('/instant', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req
     const message_list = req.body
     const output = new StdObject()
 
-    output.add('res', await MessageService.deleteInstantMessageList(DBMySQL, message_list));
+    output.add('res', await InstantMessageService.deleteInstantMessageList(DBMySQL, message_list));
 
     res.json(output)
   } catch (e) {
