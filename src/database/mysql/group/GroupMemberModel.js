@@ -259,7 +259,7 @@ export default class GroupMemberModel extends MySQLModel {
     return new GroupMemberInfo(query_result, private_keys ? private_keys : this.group_member_private_fields)
   }
 
-  getGroupMemberList = async (group_seq, member_type = null, paging = {}, search_field = null, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null, detail_search = null, member_grade = null, non_admin = null) => {
+  getGroupMemberList = async (group_seq, member_seq, member_type = null, paging = {}, search_field = null, search_text = null, order = null, videos_count = null, get_pause_name = null, get_delete_name = null, detail_search = null, member_grade = null, non_admin = null, is_me_include = true) => {
     const filter = {
       group_seq
     }
@@ -311,6 +311,9 @@ export default class GroupMemberModel extends MySQLModel {
           .where('group_member.grade', '=', 'O')
           .orWhere('group_member.grade', '=', '6')
       })
+    }
+    if (!is_me_include) {
+      query.andWhere('group_member.member_seq', '!=', member_seq)
     }
     if (search_text) {
       if (search_field) {
