@@ -364,9 +364,8 @@ const OperationServiceClass = class {
     await DBMySQL.transaction(async (transaction) => {
       const result = await this.getOperationModel(transaction).updateOperationInfo(operation_seq, update_operation_info)
       await OperationDataService.updateOperationDataByRequest(transaction, operation_seq, request_body)
-      const metadata_result = await OperationMetadataModel.updateByOperationInfo(operation_info, update_operation_info.operation_type, request_body.meta_data)
-      if (!metadata_result || !metadata_result._id) {
-        throw new StdObject(-1, '수술정보 변경에 실패하였습니다.', 400)
+      if (request_body.meta_data) {
+        await OperationMetadataModel.updateByOperationInfo(operation_info, update_operation_info.operation_type, request_body.meta_data)
       }
       output.add('result', result)
     })
