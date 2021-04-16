@@ -1760,7 +1760,7 @@ const GroupServiceClass = class {
         const body = GroupMailTemplate.groupEntrustMember(template_data)
         this.sendEmail(title, body, [member_info.email_address], 'setEntrust')
 
-        const instant_message = `<span style="color: #ffa00f; font-weight: bold;">"${group_info.group_name}"</span> 채널의<br />관리자 권한이 위임되었습니다.<br />채널과 관련된 모든 사항을 관리할 수 있습니다.`;
+        const instant_message = `<p style="line-height: 1.6; padding: 0; margin: 0;"><span style="color: #ffa00f; font-weight: bold;">"${group_info.group_name}"</span> 채널의<br />관리자 권한이 위임되었습니다.<br />채널과 관련된 모든 사항을 관리할 수 있습니다.</p>`;
         await InstantMessageService.createInstantMessage(databases, target_list[i].member_seq, target_list[i].group_seq, instant_message);
       } else {
         await group_model.set_group_closure(target_list[i].group_seq);
