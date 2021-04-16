@@ -987,4 +987,17 @@ export default class GroupMemberModel extends MySQLModel {
     }
     return await this.update(filter, update_params)
   }
+
+  getGroupMemberGradeCount = async (group_seq, grade) => {
+    const select = ['COUNT(*) AS total_count']
+    const filter = {
+      group_seq,
+      grade,
+    }
+    const find_result = await this.findOne(filter, select)
+    if (!find_result) {
+      return 0
+    }
+    return Util.parseInt(find_result.total_count, 0)
+  }
 }

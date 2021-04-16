@@ -1785,6 +1785,11 @@ const GroupServiceClass = class {
     }
     return true;
   }
+
+  getGroupMemberGradeCount = async (database, group_seq, grade) => {
+    const group_member_model = this.getGroupMemberModel(database)
+    return await group_member_model.getGroupMemberGradeCount(group_seq, grade)
+  }
 }
 
 const group_service = new GroupServiceClass()

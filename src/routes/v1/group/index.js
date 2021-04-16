@@ -694,4 +694,16 @@ routes.post('/entrust', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, 
   output.add('result', result);
   res.json(output)
 }))
+
+routes.get('/:group_seq(\\d+)/member/grade/count/:grade', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_seq } = await checkGroupAuth(DBMySQL, req)
+  const grade = req.params.grade
+  const member_count = await GroupService.getGroupMemberGradeCount(DBMySQL, group_seq, grade)
+
+  const output = new StdObject()
+  output.add('member_count', member_count)
+  res.json(output)
+}))
+
 export default routes
