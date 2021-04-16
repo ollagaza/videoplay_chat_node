@@ -63,7 +63,7 @@ routes.delete('/deletefolder', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (r
   const is_empty = await OperationFolderService.isFolderEmpty(DBMySQL, folder_info.group_seq, folder_info.seq)
   let output = null
   if (!is_empty) {
-    output = new StdObject(1, '해당 폴더 또는 하위 폴더에 파일이 존재 합니다.<br/>파일 삭제 또는 이동 후 다시 시도 하여 주세요', 400)
+    output = new StdObject(1, '해당 폴더 또는 하위 폴더에 파일이 존재합니다.<br/>파일 삭제 또는 이동 후 다시 시도하여 주세요.', 400)
   } else {
     await OperationFolderService.deleteOperationFolder(DBMySQL, group_seq, folder_info.seq)
     output = new StdObject(0, '폴더 삭제가 완료 되었습니다.', 200)

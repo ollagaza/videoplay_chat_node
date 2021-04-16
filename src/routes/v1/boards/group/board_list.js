@@ -64,7 +64,7 @@ routes.delete('/delmenulist/:group_seq(\\d+)/:menu_seq(\\d+)', Auth.isAuthentica
           await GroupBoardListService.delGroupBoardList(transaction, group_seq, menu_seq)
           res.json(new StdObject(0, '성공적으로 반영되었습니다.', '200'))
         } else {
-          res.json(new StdObject(1, '이 노트의 게시글을 모두 삭제한 후에<br/>노트을 삭제하실 수 있습니다.', '200'))
+          res.json(new StdObject(1, '이 노트의 게시글을 모두 삭제한 후에<br/>노트를 삭제할 수 있습니다.', '200'))
         }
       })
     } else {
