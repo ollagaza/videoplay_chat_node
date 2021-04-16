@@ -483,9 +483,14 @@ export default class GroupMemberModel extends MySQLModel {
     return Util.parseInt(find_result.total_count, 0)
   }
 
-  changeMemberGrade = async (group_member_seq, grade) => {
-    const filter = {
-      seq: group_member_seq
+  changeMemberGrade = async (group_member_seq = null, grade, member_seq = null, group_seq = null) => {
+    const filter = {}
+    if (group_member_seq) {
+      filter.seq = group_member_seq;
+    }
+    if (member_seq && group_seq) {
+      filter.member_seq = member_seq;
+      filter.group_seq = group_seq;
     }
     const update_params = {
       grade,
@@ -496,9 +501,14 @@ export default class GroupMemberModel extends MySQLModel {
     return update_result
   }
 
-  changeMemberStatus = async (group_member_seq, status) => {
-    const filter = {
-      seq: group_member_seq
+  changeMemberStatus = async (group_member_seq = null, status, member_seq = null, group_seq = null) => {
+    const filter = {}
+    if (group_member_seq) {
+      filter.seq = group_member_seq;
+    }
+    if (member_seq && group_seq) {
+      filter.member_seq = member_seq;
+      filter.group_seq = group_seq;
     }
     const update_params = {
       status,
@@ -976,33 +986,5 @@ export default class GroupMemberModel extends MySQLModel {
       invite_date: invite_info.invite_date,
     }
     return await this.update(filter, update_params)
-  }
-
-  changeMemberGradeByGroupSeqMemberSeq = async (group_seq, member_seq, grade) => {
-    const filter = {
-      group_seq,
-      member_seq,
-    }
-    const update_params = {
-      grade,
-      modify_date: this.database.raw('NOW()')
-    }
-    const update_result = await this.update(filter, update_params)
-    log.debug(this.log_prefix, '[changeMemberGradeByGroupSeqMemberSeq]', update_result)
-    return update_result
-  }
-
-  changeMemberStatusByGroupSeqMemberSeq = async (group_seq, member_seq, status) => {
-    const filter = {
-      group_seq,
-      member_seq,
-    }
-    const update_params = {
-      status,
-      modify_date: this.database.raw('NOW()')
-    }
-    const update_result = await this.update(filter, update_params)
-    log.debug(this.log_prefix, '[changeMemberStatusByGroupSeqMemberSeq]', update_result)
-    return update_result
   }
 }

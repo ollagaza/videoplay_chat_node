@@ -1738,11 +1738,11 @@ const GroupServiceClass = class {
 
     for (let i = 0; i < target_list.length; i++) {
       if (target_list[i].is_entrust) {
-        await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, this.MEMBER_GRADE_DEFAULT)
-        await group_member_model.changeMemberGradeByGroupSeqMemberSeq(target_list[i].group_seq, target_list[i].member_seq, this.MEMBER_GRADE_OWNER)
+        await group_member_model.changeMemberGrade(null, this.MEMBER_GRADE_DEFAULT, member_seq, target_list[i].group_seq)
+        await group_member_model.changeMemberGrade(null, this.MEMBER_GRADE_OWNER, target_list[i].member_seq, target_list[i].group_seq)
         await group_model.set_group_change_owner(target_list[i].group_seq, target_list[i].member_seq);
         if (is_leave) {
-          await group_member_model.changeMemberStatusByGroupSeqMemberSeq(target_list[i].group_seq, member_seq, 'D')
+          await group_member_model.changeMemberStatus(null, 'D', member_seq, target_list[i].group_seq)
         }
         const group_info = await group_model.getGroupInfo(target_list[i].group_seq);
         const member_info = await member_model.getMemberInfo(target_list[i].member_seq);
@@ -1765,7 +1765,7 @@ const GroupServiceClass = class {
       } else {
         await group_model.set_group_closure(target_list[i].group_seq);
         const group_info = await group_model.getGroupInfo(target_list[i].group_seq);
-        const group_member_list = await group_member_model.getGroupMemberList(target_list[i].group_seq, 'active', { list_count: 0, cur_page: 1, page_count: 1, no_paging: 'y' }, null, null, null, null, null, null, null, null, 'Y')
+        const group_member_list = await group_member_model.getGroupMemberList(target_list[i].group_seq, member_seq, 'active', { list_count: 0, cur_page: 1, page_count: 1, no_paging: 'y' }, null, null, null, null, null, null, null, null, 'Y')
         const send_mail_list = [];
         for (let j = 0; j < group_member_list.data.length; j++) {
           send_mail_list.push(group_member_list.data[j].email_address);
