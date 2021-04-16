@@ -1743,6 +1743,7 @@ const GroupServiceClass = class {
         await group_model.set_group_change_owner(target_list[i].group_seq, target_list[i].member_seq);
         if (is_leave) {
           await group_member_model.changeMemberStatus(null, 'D', member_seq, target_list[i].group_seq)
+          await group_model.group_member_count(target_list[i].group_seq, Constants.DOWN, 1);
         }
         const group_info = await group_model.getGroupInfo(target_list[i].group_seq);
         const member_info = await member_model.getMemberInfo(target_list[i].member_seq);
