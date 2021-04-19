@@ -398,7 +398,7 @@ const GroupServiceClass = class {
     const search_field = request_body.search_field ? request_body.search_field : null
     const search_text = request_body.search_text ? request_body.search_text : null
     const member_type = request_body.member_type ? request_body.member_type : null
-    const is_me_include = request_body.is_me_include ? true : false
+    const is_me_noninclude = request_body.is_me_noninclude ? true : false
     const videos_count = request_body.video_count ? true : false
     const pause_member = request_body.get_pause_name ? true : false
     const delete_member = request_body.get_delete_name ? true : false
@@ -415,7 +415,7 @@ const GroupServiceClass = class {
     log.debug(this.log_prefix, '[getGroupMemberList]', request_body, member_type, search_text, paging)
 
     const group_member_model = this.getGroupMemberModel(database)
-    const group_member_list = await group_member_model.getGroupMemberList(group_seq, member_seq, member_type, paging, search_field, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin, is_me_include);
+    const group_member_list = await group_member_model.getGroupMemberList(group_seq, member_seq, member_type, paging, search_field, search_text, request_order, videos_count, pause_member, delete_member, detail_search, member_grade, non_admin, is_me_noninclude);
     for(let i = 0; i < group_member_list.data.length; i++) {
       if (group_member_list.data[i].profile_image_path) {
         group_member_list.data[i].json_keys.push('profile_image_url')
