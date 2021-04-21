@@ -698,17 +698,26 @@ const GroupServiceClass = class {
     const member_seq = member_info.seq
     invite_code = `${invite_code}`.toUpperCase()
     const group_member_model = this.getGroupMemberModel(database)
-    const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
-    let change_grade = '1';
-
-    await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade)
-
     const group_model = this.getGroupModel(database);
-    await group_model.group_member_count(group_invite_info.group_seq, Constants.UP);
 
-    this.sendGroupJoinAlarm(group_invite_info.group_seq, member_info)
+    const group_invite_info = await this.getInviteGroupInfo(database, invite_code, invite_seq, member_seq, false, true)
+    const group_info = await group_model.getGroupInfo(group_invite_info.group_seq)
+    let status = 'Y'
+    if (group_info.group_join_way === 1) {
+      status = 'J'
+    }
+    let change_grade = '1';
+    await group_member_model.inviteConfirm(invite_seq, member_seq, group_invite_info.group_max_storage_size, change_grade, status)
 
-    return group_invite_info.group_seq
+    if (group_info.group_join_way !== 1) {
+      await group_model.group_member_count(group_invite_info.group_seq, Constants.UP);
+      this.sendGroupJoinAlarm(group_invite_info.group_seq, member_info)
+    }
+    const output = {
+      group_seq: group_invite_info.group_seq,
+      join_status: status,
+    }
+    return output
   }
 
   changeGradeAdmin = async (database, group_member_info, admin_member_info, group_member_seq, service_domain, update_grade = true) => {

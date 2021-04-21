@@ -164,10 +164,10 @@ routes.post('/join/:invite_seq(\\d+)', Auth.isAuthenticated(Role.DEFAULT), Wrap(
   const { member_info } = await checkGroupAuth(DBMySQL, req, false)
   const invite_seq = Util.parseInt(req.params.invite_seq, 0)
   const invite_code = req.body.invite_code
-  const group_seq = await GroupService.joinGroup(DBMySQL, invite_seq, member_info, invite_code)
+  const join_ouput = await GroupService.joinGroup(DBMySQL, invite_seq, member_info, invite_code)
 
   const output = new StdObject()
-  output.add('group_seq', group_seq)
+  output.add('data', join_ouput)
   res.json(output)
 }))
 

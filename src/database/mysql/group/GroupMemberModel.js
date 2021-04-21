@@ -669,13 +669,13 @@ export default class GroupMemberModel extends MySQLModel {
     return update_result
   }
 
-  inviteConfirm = async (group_member_seq, member_seq, max_storage_size = 0, change_grade = null) => {
+  inviteConfirm = async (group_member_seq, member_seq, max_storage_size = 0, change_grade = null, status = 'Y') => {
     const filter = {
       seq: group_member_seq
     }
     const update_params = {
       member_seq,
-      status: 'Y',
+      status: status,
       invite_code: null,
       invite_status: 'Y',
       max_storage_size: max_storage_size,
