@@ -63,6 +63,16 @@ const OperationServiceClass = class {
   createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
     const output = new StdObject()
     let is_success = false
+    if (!request_body || !request_body.operation_info) {
+      throw new StdObject(-2, '수술 정보가 없습니다.', 500)
+    }
+    const operation_code = Util.trim(request_body.operation_info.operation_code)
+    const age = Util.parseInt(request_body.operation_info.patient_age, null)
+    const sex = Util.trim(request_body.operation_info.patient_sex)
+
+    request_body.operation_info.operation_code = operation_code ? operation_code : request_body.operation_info.operation_name
+    request_body.operation_info.patient_age = age ? age : null
+    request_body.operation_info.patient_sex = sex ? sex : null
 
     const input_operation_data = new OperationInfo().getByRequestBody(request_body.operation_info)
     if (input_operation_data.isEmpty()) {
@@ -355,6 +365,13 @@ const OperationServiceClass = class {
 
   updateOperation = async (member_seq, operation_info, request_body) => {
     const operation_seq = operation_info.seq
+
+    const age = Util.parseInt(request_body.operation_info.patient_age, null)
+    const sex = Util.trim(request_body.operation_info.patient_sex)
+
+    request_body.operation_info.patient_age = age ? age : null
+    request_body.operation_info.patient_sex = sex ? sex : null
+
     const update_operation_info = new OperationInfo().getByRequestBody(request_body.operation_info)
     if (operation_info.isEmpty()) {
       throw new StdObject(-1, '잘못된 요청입니다.', 400)
