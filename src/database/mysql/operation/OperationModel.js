@@ -58,7 +58,7 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperation(where, import_media_info)
   }
 
-  getOperationInfoListPage = async (group_seq, member_seq, group_grade_number = null, is_group_admin = false, page_params = {}, filter_params = {}, order_params = {}, is_admin = false) => {
+  getOperationInfoListPage = async (group_seq, member_seq, group_grade_number = null, is_group_admin = false, page_params = {}, filter_params = {}, order_params = {}, is_admin = false, operation_data_seq_list = []) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
@@ -136,27 +136,28 @@ export default class OperationModel extends MySQLModel {
       }
     }
 
-    if (filter_params.search_keyword || filter_params.member_seq) {
-      if (filter_params.member_seq) {
-        query.andWhere('operation.member_seq', filter_params.member_seq)
-      }
-      if (filter_params.search_keyword) {
-        query.where((builder) => {
-          builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)
-          builder.orWhere('operation.operation_date', 'like', `%${filter_params.search_keyword}%`)
-          if (is_admin) {
+    if (filter_params.member_seq) {
+      query.andWhere('operation.member_seq', filter_params.member_seq)
+    }
+    if (filter_params.search_keyword) {
+      query.where((builder) => {
+        builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)
+        builder.orWhere('operation.operation_date', 'like', `%${filter_params.search_keyword}%`)
+        if (is_admin) {
+          builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
+          builder.orWhere('member.user_id', 'like', `%${filter_params.search_keyword}%`)
+          builder.orWhere('group_info.group_name', 'like', `%${filter_params.search_keyword}%`)
+        } else {
+          if (filter_params.use_user_name) {
             builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
-            builder.orWhere('member.user_id', 'like', `%${filter_params.search_keyword}%`)
-            builder.orWhere('group_info.group_name', 'like', `%${filter_params.search_keyword}%`)
           } else {
-            if (filter_params.use_user_name) {
-              builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
-            } else {
-              builder.orWhere('member.user_nickname', 'like', `%${filter_params.search_keyword}%`)
-            }
+            builder.orWhere('member.user_nickname', 'like', `%${filter_params.search_keyword}%`)
           }
-        })
-      }
+        }
+        if (operation_data_seq_list && operation_data_seq_list.length) {
+          builder.orWhereIn('operation_data.seq', operation_data_seq_list)
+        }
+      })
     } else if (check_folder) {
       if (filter_params.folder_seq) {
         if (filter_params.folder_seq !== 'all') {

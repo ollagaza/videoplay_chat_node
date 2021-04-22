@@ -31,6 +31,7 @@ import OperationCommentService from "./OperationCommentService";
 import GroupAlarmService from '../group/GroupAlarmService'
 import SyncService from '../sync/SyncService'
 import Constants from '../../constants/constants'
+import HashtagService from './HashtagService'
 
 const OperationServiceClass = class {
   constructor () {
@@ -529,10 +530,10 @@ const OperationServiceClass = class {
       filter_params.folder_seq = request_query.folder_seq
     }
     if (request_query.search_keyword) {
-      filter_params.search_keyword = request_query.search_keyword;
+      filter_params.search_keyword = Util.trim(request_query.search_keyword)
     }
     if (request_query.member_grade) {
-      filter_params.member_grade = request_query.member_grade;
+      filter_params.member_grade = request_query.member_grade
     }
     if (request_query.day) {
       filter_params.day = request_query.day
@@ -547,8 +548,18 @@ const OperationServiceClass = class {
 
     log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params, order_params)
 
+    let operation_data_seq_list = []
+    if (filter_params.search_keyword) {
+      const hashtag_use = await HashtagService.searchHashtagUse(database, group_seq, filter_params.search_keyword, HashtagService.TAG_TARGET_OPERATION)
+      if (hashtag_use && hashtag_use.length) {
+        for (let i = 0; i < hashtag_use.length; i++) {
+          operation_data_seq_list.push(hashtag_use[i].target_seq)
+        }
+      }
+    }
+
     const operation_model = this.getOperationModel(database)
-    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params, is_admin)
+    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params, is_admin, operation_data_seq_list)
   }
 
   setMediaInfo = async (database, operation_info) => {

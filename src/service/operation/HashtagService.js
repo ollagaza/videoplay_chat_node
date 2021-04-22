@@ -9,6 +9,7 @@ import HashtagUseModel from '../../database/mysql/operation/HashtagUseModel'
 const HashtagServiceClass = class {
   constructor () {
     this.log_prefix = '[HashtagService]'
+    this.TAG_TARGET_OPERATION = 'O'
   }
 
   getHashtagModel = (database = null) => {
@@ -61,6 +62,14 @@ const HashtagServiceClass = class {
       return hashtag_search_result
     } catch (error) {
       log.error(this.log_prefix, '[getSearchHashtag]', error)
+    }
+  }
+  searchHashtagUse = async (database, group_seq = null, search_keyword = null, target_type = null) => {
+    try {
+      const hashtag_model = this.getHashtagModel(database)
+      return await hashtag_model.searchHashtagUse(group_seq, search_keyword, target_type)
+    } catch (error) {
+      log.error(this.log_prefix, '[searchHashtagUse]', group_seq, search_keyword, target_type, error)
     }
   }
 }

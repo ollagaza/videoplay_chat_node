@@ -44,4 +44,26 @@ export default class HashtagModel extends MySQLModel {
       throw e
     }
   }
+
+  searchHashtagUse = async (group_seq = null, search_keyword = null, target_type = null) => {
+    try {
+      const query = this.database
+        .select(['hashtag.hashtag', 'hashtag.use_count', 'hashtag_use.target_seq', 'hashtag_use.target_type', 'hashtag_use.group_seq'])
+        .from('hashtag')
+        .innerJoin('hashtag_use', 'hashtag_use.hashtag_seq', 'hashtag.seq')
+      if (group_seq) {
+        query.where('hashtag_use.group_seq', group_seq)
+      }
+      if (search_keyword) {
+        query.where('hashtag.hashtag', 'like', `%${search_keyword}%`)
+      }
+      if (target_type) {
+        query.where('hashtag_use.target_type', target_type)
+      }
+
+      return query
+    } catch (e) {
+      throw e
+    }
+  }
 }
