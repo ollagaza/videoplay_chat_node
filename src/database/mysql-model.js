@@ -145,7 +145,7 @@ const arrayToSafeQuery = (database, columns) => {
   return select
 }
 
-export default class MysqlModel {
+export default class DBMySQL {
   constructor (database) {
     this.database = database
     this.table_name = ''

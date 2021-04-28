@@ -410,14 +410,14 @@ const MemberServiceClass = class {
 
     await DBMySQL.transaction(async (transaction) => {
 
-      const member_model = this.getMemberModel(database)
+      const member_model = this.getMemberModel(transaction)
       create_member_info = await member_model.createMember(member_info, is_confirm)
       if (!create_member_info.seq) {
         throw new StdObject(-1, '회원정보 생성 실패', 500)
       }
 
-      await this.modifyMemberSubInfo(database, create_member_info.seq, member_sub_info)
-      await MemberLogService.memberJoinLog(database, create_member_info.seq)
+      await this.modifyMemberSubInfo(transaction, create_member_info.seq, member_sub_info)
+      await MemberLogService.memberJoinLog(transaction, create_member_info.seq)
 
       const search_keyword = {}
       const group_explain = member_info.foreigner === 'Y' ? `Welcome! This is ${member_info.user_nickname}'s channel.` : `안녕하세요. ${member_info.user_nickname} 채널입니다.`
@@ -437,8 +437,8 @@ const MemberServiceClass = class {
         group_explain,
       };
       // group_info = await GroupService.createPersonalGroup(database, create_member_info)
-      group_info = await GroupService.createEnterpriseGroup(database, create_member_info, options)
-      await PaymentService.createDefaultPaymentResult(database, params.payData, create_member_info.seq, group_info)
+      group_info = await GroupService.createEnterpriseGroup(transaction, create_member_info, options)
+      await PaymentService.createDefaultPaymentResult(transaction, params.payData, create_member_info.seq, group_info)
     })
 
     if (ServiceConfig.isVacs() === false && ServiceConfig.supporterEmailList()) {
