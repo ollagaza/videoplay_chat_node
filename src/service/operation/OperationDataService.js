@@ -12,6 +12,7 @@ import OperationMediaService from './OperationMediaService'
 import striptags from 'striptags'
 import HashtagService from './HashtagService'
 import ServiceConfig from '../service-config'
+import logger from "../../libs/logger";
 
 const OperationDataServiceClass = class {
   constructor () {
@@ -126,9 +127,11 @@ const OperationDataServiceClass = class {
     const operation_data_info = new OperationDataInfo(request_body.operation_data).setIgnoreEmpty(true).toJSON()
     await this.setOperationDataInfo(operation_data_info, operation_info)
     const operation_data_model = this.getOperationDataModel(database)
-    const operation_data_seq = await operation_data_model.updateOperationData(operation_seq, operation_data_info)
+    await operation_data_model.updateOperationData(operation_seq, operation_data_info)
 
-    this.updateHashtag(operation_data_info.seq, operation_info.group_seq, hashtag)
+    const operation_data_seq = (await operation_data_model.getOperationDataByOperationSeq(operation_seq)).seq
+
+    this.updateHashtag(operation_data_seq, operation_info.group_seq, hashtag)
 
     return operation_data_seq
   }
@@ -138,9 +141,10 @@ const OperationDataServiceClass = class {
       (
         async () => {
           try {
+            logger.debug(this.log_prefix, '[updateHashtag]', operation_data_seq, hashtag)
             await HashtagService.updateOperationHashtag(group_seq, hashtag, operation_data_seq)
           } catch (error) {
-            log.error(this.log_prefix, '[updateOperationDataByRequest]', error)
+            log.error(this.log_prefix, '[updateHashtag]', operation_data_seq, hashtag, error)
           }
         }
       )()
