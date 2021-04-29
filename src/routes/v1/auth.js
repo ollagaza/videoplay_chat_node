@@ -13,26 +13,21 @@ const routes = Router()
 
 routes.post('/', Wrap(async (req, res) => {
   req.accepts('application/json')
-  try {
-    const member_info = await AuthService.login(DBMySQL, req)
-    const output = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
-    let ip = ''
-    if (req.headers['x-forwarded-for']) {
-      if (req.headers['x-forwarded-for'].indexOf(',') !== -1) {
-        ip = req.headers['x-forwarded-for'].split(',')[0]
-      } else {
-        ip = req.headers['x-forwarded-for']
-      }
+  const member_info = await AuthService.login(DBMySQL, req)
+  const output = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
+  let ip = ''
+  if (req.headers['x-forwarded-for']) {
+    if (req.headers['x-forwarded-for'].indexOf(',') !== -1) {
+      ip = req.headers['x-forwarded-for'].split(',')[0]
     } else {
-      ip = req.connection.remoteAddress
+      ip = req.headers['x-forwarded-for']
     }
-    await MemberLogService.createMemberLog(DBMySQL, null, member_info.seq, null, '0000', 'login', ip)
-    output.add('notify', await MemberLogService.getNoticeListMemberLog(DBMySQL, member_info.seq))
-    return res.json(output)
-  } catch (e) {
-    log.e(req, e)
-    throw new StdObject(-1, '아이디 혹은 비밀번호가 일치하지 않습니다.<br/>입력한 내용을 다시 확인해 주세요.', 400)
+  } else {
+    ip = req.connection.remoteAddress
   }
+  await MemberLogService.createMemberLog(DBMySQL, null, member_info.seq, null, '0000', 'login', ip)
+  output.add('notify', await MemberLogService.getNoticeListMemberLog(DBMySQL, member_info.seq))
+  return res.json(output)
 }))
 
 routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
