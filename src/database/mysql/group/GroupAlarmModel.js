@@ -87,7 +87,7 @@ export default class GroupAlarmModel extends MySQLModel {
       .whereRaw('group_alarm.reg_date >= group_member.join_date')
       .where(this.database.raw('(CASE JSON_CONTAINS(group_alarm.member_state, json_quote(?), ?) WHEN 1 THEN 1 ELSE 0 END) = ?', ['Y', `$.m_${member_seq}.is_read`, 0]))
     if (options.interval) {
-      const recent_timestamp = Util.addDay(-(Util.parseInt(options.interval, 1)), Constants.TIMESTAMP)
+      const recent_timestamp = Util.addDay(-(Util.parseInt(options.interval, 1)));
       query.where(this.database.raw('group_alarm.reg_date >= ?', [recent_timestamp]))
     }
 
