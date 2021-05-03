@@ -573,6 +573,30 @@ if (IS_DEV) {
     res.send('aa')
   }))
 
+  routes.get('/exec', Wrap(async (req, res) => {
+    const args = ['-y', '-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda', '-report', '-i', 'd:/ss aa/001.mp4', '-c:v', 'h264_nvenc', '-profile:v', 'high', '-level:v', '4.0', '-r', '30', '-b:v', '4500', 'd:/ss aa/__1.mp4']
+    // const spawn = Util.executeSpawn('ffmpeg', args, { env: { "FFREPORT": `file=logs/ffmpeg/${Util.getRandomString(10)}.log` } })
+    const spawn = Util.executeSpawn('ffmpeg')
+    spawn.on('onStart', (cmd) => {
+      log.d(req, 'onStart', cmd)
+    })
+    spawn.on('onData', (data) => {
+      log.d(req, 'onData', data)
+    })
+    spawn.on('onEnd', (data) => {
+      log.d(req, 'onEnd', data)
+    })
+    spawn.on('onError', (data) => {
+      log.d(req, 'onError', data)
+    })
+    spawn.on('onExit', (code) => {
+      log.d(req, 'onExit', code)
+      spawn.emit('finish')
+
+      res.send('aa')
+    })
+  }))
+
 }
 
 export default routes

@@ -187,6 +187,7 @@ const StudioServiceClass = class {
     const response_data = {
       project_seq: video_project_info._id
     }
+    
     await CloudFileService.requestDownloadObjectByList(download_path, group_path, download_file_info_list, false, video_project_info.content_id, response_url, response_data)
   }
 

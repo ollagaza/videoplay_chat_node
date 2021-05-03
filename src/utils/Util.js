@@ -2,7 +2,7 @@ import Promise from 'promise'
 import fs from 'fs'
 import dateFormat from 'dateformat'
 import { promisify } from 'util'
-import { exec } from 'child_process'
+import { exec, spawn } from 'child_process'
 import _ from 'lodash'
 import xml2js from 'xml2js'
 import aes256 from 'nodejs-aes256'
@@ -26,6 +26,7 @@ import StdObject from '../wrapper/std-object'
 import Constants from '../constants/constants'
 import numeral from 'numeral';
 import ExifReader from 'exifreader'
+import EventEmitter from 'events'
 
 const XML_PARSER = new xml2js.Parser({ trim: true })
 const XML_BUILDER = new xml2js.Builder({ trim: true, cdata: true })
@@ -35,12 +36,7 @@ const RANDOM_KEY_SPACE = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
 const TIMEZONE_OFFSET = new Date().getTimezoneOffset() * 60000
 const NEW_LINE_REGEXP = /\r?\n/g
 
-let PATH_EXP
-if ('/' === '/') {
-  PATH_EXP = new RegExp(/\//, 'g')
-} else {
-  PATH_EXP = new RegExp(/\\/, 'g')
-}
+const PATH_EXP = new RegExp(/\//, 'g')
 
 const log_prefix = '[Util]'
 
@@ -480,6 +476,40 @@ const execute = async (command) => {
   return result
 }
 
+const executeSpawn = (command, args = [], spawn_options = {}, out_encoding = 'utf8', err_encoding = 'utf8') => {
+  const event_emitter = new EventEmitter()
+  const execute_command = `${command} ${args ? args.join(' ') : ''}`
+  log.debug(log_prefix, '[execute]', `[command = ${execute_command}]`, spawn_options)
+  event_emitter.emit('onStart', execute_command)
+  const process = spawn(command, args, spawn_options)
+  if (out_encoding) {
+    process.stdout.setEncoding(out_encoding)
+  }
+  process.stdout.on('data', data => {
+    event_emitter.emit('onData', data)
+  })
+  process.stdout.on('end', data => {
+    event_emitter.emit('onEnd', data)
+  })
+  if (err_encoding) {
+    process.stderr.setEncoding(err_encoding)
+  }
+  process.stderr.on('data', data => {
+    event_emitter.emit('onError', data)
+  })
+  process.on('exit', code => {
+    event_emitter.emit('onExit', code)
+  })
+  event_emitter.on('kill', (signal = null) => {
+    process.kill(signal || 'SIGKILL')
+  })
+  event_emitter.on('finish', () => {
+    event_emitter.removeAllListeners()
+  })
+
+  return event_emitter
+}
+
 const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpaxldlwl_!') => {
   return new Promise(async resolve => {
     SSH(cmd, {
@@ -605,15 +635,73 @@ const getVideoDuration = async (video_path) => {
   return result
 }
 
+const executeFFmpeg = (args = [], spawn_option = {}, progress_callback = null) => {
+  return new Promise(resolve => {
+    const result = {
+      success: false,
+      message: '',
+      out: null,
+      command: null
+    }
+
+    const spawn = executeSpawn('ffmpeg', args, spawn_option)
+    spawn.on('onStart', (cmd) => {
+      result.command = cmd
+    })
+
+    let error_data = ''
+    spawn.on('onError', (data) => {
+      if (progress_callback) {
+        progress_callback(data)
+      }
+      error_data += data + '\n'
+    })
+    spawn.on('onExit', (code) => {
+      result.success = code === 0
+      if (!result.success) {
+        result.message = error_data
+        spawn.emit('kill')
+      } else {
+        result.out = error_data
+      }
+      spawn.emit('finish')
+      resolve(result)
+    })
+  })
+}
+
 const getImageScaling = async (origin_path, scaling_path = null, scaling_type = 'width', scaling_size = 1380, overwrite = true) => {
-  const scaling_str = scaling_type === 'width' ? `${scaling_size}:-1` : '-1:${scaling_size}'
-  const command = `ffmpeg ${overwrite ? '-y' : null} -i "${origin_path}" -vf scale=${scaling_type}=${scaling_str} -an "${overwrite ? origin_path : scaling_path}"`
-  return await execute(command)
+  const args = []
+  if (overwrite) {
+    args.push('-y')
+  }
+  args.push('-i')
+  args.push(origin_path)
+
+  const scaling_str = scaling_type === 'width' ? `${scaling_size}:-1` : `-1:${scaling_size}`
+  args.push('-vf')
+  args.push(`scale=${scaling_type}=${scaling_str} `)
+
+  args.push('-an')
+
+  args.push(overwrite ? origin_path : scaling_path)
+
+  return executeFFmpeg(args)
 }
 
 const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1, media_info = null) => {
-  let filter = ''
-  let time_option = ''
+  const args = []
+  args.push('-y')
+  if (second > 0) {
+    const time_str = secondToTimeStr(second, 'HH:MM:ss', true)
+    // time_option = `-ss ${time_str}`
+    args.push('-ss')
+    args.push(time_str)
+  }
+  args.push('-i')
+  args.push(origin_path)
+  args.push('-vframes')
+  args.push(1)
   if (width > 0 && height > 0) {
     let dimension = null
     if (media_info) {
@@ -637,14 +725,14 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
       crop_option = `crop=in_w:in_w*${height}/${width}`
     }
     const scale_option = `scale=${width}:${height}`
-    filter = `-filter:v "${crop_option},${scale_option}"`
+    // filter = `-filter:v "${crop_option},${scale_option}"`
+    args.push('-filter:v')
+    args.push(`${crop_option},${scale_option}`)
   }
-  if (second > 0) {
-    const time_str = secondToTimeStr(second, 'HH:MM:ss', true)
-    time_option = `-ss ${time_str}`
-  }
-  const command = `ffmpeg ${time_option} -i "${origin_path}" -y -vframes 1 ${filter} -an "${resize_path}"`
-  return await execute(command)
+  args.push('-an')
+  args.push(resize_path)
+
+  return executeFFmpeg(args)
 }
 
 const secondToTimeStr = (second, format = 'HH:MM:ss', use_decimal_point = false) => {
@@ -970,17 +1058,6 @@ const trim = (value) => {
   return _.trim(value)
 }
 
-const duplicateObject = async (originObject) => {
-  const returnObject = []
-  _.forEach(originObject, (item) => {
-    const keyCheck = _.find(returnObject, item)
-    if (!keyCheck) {
-      returnObject.push(item)
-    }
-  })
-  return returnObject
-}
-
 const fileSizeText = (size, zero = '-') => {
   size = getFloat(size, 0);
   if (getFloat(size, 0) === 0) {
@@ -1058,7 +1135,6 @@ export default {
   isImageRotate,
   removePathSlash,
   removePathLastSlash,
-  duplicateObject,
   'common_path_upload': multer({ storage: storate }),
   'removePathSEQ': removePathSEQ,
   'getMediaDirectory': getMediaDirectory,
@@ -1356,6 +1432,7 @@ export default {
   'uploadByRequest': uploadByRequest,
 
   'execute': execute,
+  'executeSpawn': executeSpawn,
   'getMediaInfo': getMediaInfo,
   'getVideoDimension': getVideoDimension,
   'getVideoDuration': getVideoDuration,
