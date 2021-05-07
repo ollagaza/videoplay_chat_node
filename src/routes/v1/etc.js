@@ -40,7 +40,7 @@ routes.get('/getsendmail/:mail_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER)
 
 routes.delete('/sendmail', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   try {
-    const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
+    await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
     const mail_seq = req.body
     const output = new StdObject();
     for (let cnt = 0; cnt < Object.keys(mail_seq).length; cnt++) {

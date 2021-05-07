@@ -42,8 +42,8 @@ const SendMailServiceClass = class {
   ThreeMonthsEmailDelete = async () => {
     const sendmail_model = this.getSendMailModel(DBMySQL)
     const mail_info_list = await sendmail_model.getSendMailThreeMonths()
-    for (let cnt = 0; cnt < Object.keys(mail_info_list).length; cnt++) {
-      await this.deleteMail(DBMySQL, mail_info_list[cnt])
+    for (let cnt = 0; cnt < mail_info_list.length; cnt++) {
+      await this.deleteMail(DBMySQL, mail_info_list[cnt].seq)
     }
   }
 
