@@ -559,7 +559,7 @@ const getMediaInfo = (media_path) => {
             try {
               media_info_xml = await loadXmlString(mediainfo_data)
             } catch (error) {
-              log.error(log_prefix, 'getMediaInfo', error)
+              log.error(log_prefix, 'getMediaInfo - loadXmlString', error)
               resolve(media_result)
               return
             }
