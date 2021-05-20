@@ -13,7 +13,7 @@ class ReservationEmailSchedulerClass {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('0 0,10,20,30,40,50 * * * *', this.sendReservationEmail)
+        this.current_job = scheduler.scheduleJob('0 7,17,27,37,47,57 * * * *', this.sendReservationEmail)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {

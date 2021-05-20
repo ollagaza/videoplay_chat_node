@@ -15,7 +15,7 @@ class FolderTotalSizeSyncSchedulerClass {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.syncFolderTotalSize)
+        this.current_job = scheduler.scheduleJob('0 20 0 * * *', this.syncFolderTotalSize)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {

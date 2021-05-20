@@ -14,7 +14,7 @@ class GroupInfoMemberCountSyncSchedulerClass {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('* 0 0 * * *', this.syncGroupMemberCount)
+        this.current_job = scheduler.scheduleJob('0 10 0 * * *', this.syncGroupMemberCount)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {

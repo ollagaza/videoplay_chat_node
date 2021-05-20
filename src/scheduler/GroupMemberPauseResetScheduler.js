@@ -14,7 +14,7 @@ class GroupMemberPauseResetSchedulerClass {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('* 0 0,1 * * *', this.resetGroupMemberPause)
+        this.current_job = scheduler.scheduleJob('0 0 0 * * *', this.resetGroupMemberPause)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
