@@ -157,4 +157,14 @@ routes.post('/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req
   res.json(output)
 }))
 
+routes.get('/admin_project_list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const page_navigation = req.query ? req.query : { cur_page: 1, list_count: 10, page_count: 10 }
+  const video_project_list = await StudioService.getProjectList(page_navigation)
+
+  const output = new StdObject()
+  output.adds(video_project_list)
+  res.json(output)
+}))
+
 export default routes

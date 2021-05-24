@@ -166,6 +166,16 @@ video_project_schema.statics.updateUserInfo = function (member_seq, user_name, u
   }
   return this.updateMany({ member_seq: member_seq }, update, { 'multi': true })
 }
+video_project_schema.statics.getProjectTotalCount = function () {
+  return this.count()
+}
+
+video_project_schema.statics.getAdmin_projectList = function (page_navigation, sort_field = { _id: -1 }) {
+  return this.find()
+    .sort(sort_field)
+    .skip(page_navigation.list_count * (page_navigation.cur_page - 1))
+    .limit(page_navigation.list_count)
+}
 
 const video_project_model = mongoose.model('VideoProject', video_project_schema)
 export const VideoProjectModel = video_project_model

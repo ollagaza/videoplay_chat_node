@@ -11,6 +11,7 @@ import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import GroupService from '../group/GroupService'
 import DBMySQL from '../../database/knex-mysql'
 import VacsService from '../vacs/VacsService'
+import MemberService from "../member/MemberService";
 
 const StudioServiceClass = class {
   constructor () {
@@ -269,10 +270,21 @@ const StudioServiceClass = class {
           const file_name = 'video_project.xml'
           await Util.writeXmlFile(directory, file_name, video_xml_json)
 
+          const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
+          const member_info = await MemberService.getMemberInfo(DBMySQL, video_project_info.member_seq)
+
           const query_data = {
-            'DirPath': editor_server_directory,
+            project_seq: video_project_info._id,
             'ContentID': video_project_info.content_id,
-            'XmlFilePath': editor_server_directory + file_name
+            project_name: video_project_info.project_name,
+            group_seq: video_project_info.group_seq,
+            group_name: group_info.group_name,
+            member_seq: video_project_info.member_seq,
+            user_name: video_project_info.user_name,
+            user_id: member_info.user_id,
+            create_date: Util.dateFormat(video_project_info.created_date),
+            'DirPath': editor_server_directory,
+            'XmlFilePath': editor_server_directory + file_name,
           }
           const query_str = querystring.stringify(query_data)
 
@@ -310,32 +322,55 @@ const StudioServiceClass = class {
     if (!query) {
       throw new StdObject(-1, '잘못된 접근입니다', 400)
     }
+    log.debug('updateMakeProcess', query.Status)
     const content_id = query.ContentID
     const process_info = {
       status: query.Status,
       video_file_name: query.VideoFileName,
       smil_file_name: query.SmilFileName,
+      progress: query.Progress,
     }
     if (Util.isEmpty(process_info.status)) {
       throw new StdObject(1, '잘못된 파라미터', 400)
     }
     let video_project = null
     let is_success = false
+
+    video_project = await VideoProjectModel.findOneByContentId(content_id)
+    if (Util.isEmpty(video_project)) {
+      throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400)
+    }
+
     if (process_info.status === 'start') {
+      log.debug('project start')
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'S', 0)
       if (result && result.ok === 1) {
-        is_success = true
+        const message_info = {
+          message: `'${video_project.project_name}'비디오 제작이 시작되었습니다.`
+        }
+        const extra_data = {
+          project_seq: video_project._id,
+          reload_studio_page: true,
+        }
+        await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
       } else {
         log.error(this.log_prefix, '[updateMakeProcess]', 'update status', `status: ${process_info.status}`, result)
       }
+    } else if (process_info.status === 'process') {
+      log.debug('project process')
+      // const message_info = {
+      //   message: `'${video_project.project_name}'비디오 제작이 ${process_info.progress}% 완료되었습니다.`
+      // }
+      const extra_data = {
+        project_seq: video_project._id,
+        reload_studio_page: false,
+        progress: process_info.progress
+      }
+      await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeProcess', null, extra_data)
     } else if (process_info.status === 'complete') {
+      log.debug('project complete')
       if (Util.isEmpty(process_info.video_file_name) || Util.isEmpty(process_info.smil_file_name)) {
         throw new StdObject(2, '결과파일 이름 누락', 400)
-      }
-
-      video_project = await VideoProjectModel.findOneByContentId(content_id)
-      if (Util.isEmpty(video_project)) {
-        throw new StdObject(4, '프로젝트 정보를 찾을 수 없습니다.', 400)
       }
       const project_seq = video_project._id
       const project_path = video_project.project_path + '/'
@@ -398,6 +433,32 @@ const StudioServiceClass = class {
 
   migrationGroupSeq = async (member_seq, group_seq) => {
     await VideoProjectModel.migrationGroupSeq(member_seq, group_seq)
+  }
+
+  getProjectList = async (page_navigation) => {
+    const video_project_count = await VideoProjectModel.getProjectTotalCount()
+    page_navigation.list_count = Util.parseInt(page_navigation.list_count)
+    page_navigation.cur_page = Util.parseInt(page_navigation.cur_page)
+    page_navigation.total_count = video_project_count;
+    const video_project_list = await VideoProjectModel.getAdmin_projectList(page_navigation)
+
+    for (let cnt = 0; cnt < video_project_list.length; cnt++) {
+      try {
+        const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_list[cnt].group_seq)
+        video_project_list[cnt]._doc.group_name = group_info.group_name
+      } catch (e) {
+        video_project_list[cnt]._doc.group_name = '알수없는 그룹'
+      }
+
+      try {
+        const member_info = await MemberService.getMemberInfo(DBMySQL, video_project_list[cnt].member_seq)
+        video_project_list[cnt]._doc.user_id = member_info.user_id
+      } catch (e) {
+        video_project_list[cnt]._doc.user_id = '알수없는 멤버'
+      }
+    }
+
+    return { video_project_list, page_navigation }
   }
 }
 
