@@ -134,7 +134,7 @@ routes.post('/make/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), W
   res.json(output)
 }))
 
-routes.get('/make/process', Wrap(async (req, res) => {
+routes.post('/make/process', Wrap(async (req, res) => {
   const is_success = await StudioService.updateMakeProcess(req)
   res.send(is_success ? 'ok' : 'fail')
 }))

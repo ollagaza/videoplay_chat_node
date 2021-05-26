@@ -286,26 +286,31 @@ const StudioServiceClass = class {
             user_name: video_project_info.user_name,
             user_id: member_info.user_id,
             create_date: Util.dateFormat(video_project_info.created_date),
-            'DirPath': editor_server_directory,
+            'OutputPath': editor_server_directory,
             'XmlFilePath': editor_server_directory + file_name,
-            return_url: `${ServiceConfig.get('http_protocol')}://${ServiceConfig.get('api_server_domain')}/${ServiceConfig.get('api_server_port')}/api/v1/project/video/make/process?`,
+            return_host: ServiceConfig.get('api_server_domain'),
+            return_port : ServiceConfig.get('api_server_port'),
+            return_path: '/api/v1/project/video/make/process',
           }
           const query_str = querystring.stringify(query_data)
 
           const request_options = {
             hostname: ServiceConfig.get('auto_editor_server_domain'),
             port: ServiceConfig.get('auto_editor_server_port'),
-            path: ServiceConfig.get('auto_editor_merge_api') + '?' + query_str,
-            method: 'GET'
+            path: ServiceConfig.get('auto_editor_merge_api'),
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
           }
 
-          const api_url = 'http://' + ServiceConfig.get('auto_editor_server_domain') + ':' + ServiceConfig.get('auto_editor_server_port') + ServiceConfig.get('auto_editor_merge_api') + '?' + query_str
+          const api_url = 'http://' + ServiceConfig.get('auto_editor_server_domain') + ':' + ServiceConfig.get('auto_editor_server_port') + ServiceConfig.get('auto_editor_merge_api')
           log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url)
 
           let api_request_result = null
           let is_request_success = false
           try {
-            api_request_result = await Util.httpRequest(request_options, false)
+            api_request_result = await Util.httpRequest(request_options, JSON.stringify(query_data), false)
             is_request_success = api_request_result && api_request_result.toLowerCase() === 'done'
           } catch (error) {
             log.error(this.log_prefix, '[requestMakeProject]', 'request error', error)
@@ -322,7 +327,7 @@ const StudioServiceClass = class {
   }
 
   updateMakeProcess = async (request) => {
-    const query = request ? request.query : null
+    const query = request ? request.body : null
     if (!query) {
       throw new StdObject(-1, '잘못된 접근입니다', 400)
     }
@@ -415,6 +420,18 @@ const StudioServiceClass = class {
         is_success = true
       } else {
         log.error(this.log_prefix, '[updateMakeProcess]', 'update final', process_info, result)
+      }
+    } else if (process_info.status === 'error') {
+      const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'E', 0)
+      if (result && result.ok === 1) {
+        const message_info = {
+          message: `'${video_project.project_name}'비디오 제작중 오류가 발생하였습니다.`
+        }
+        const extra_data = {
+          project_seq: video_project._id,
+          reload_studio_page: true,
+        }
+        await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
       }
     } else {
       throw new StdObject(3, '잘못된 상태 값', 400)
