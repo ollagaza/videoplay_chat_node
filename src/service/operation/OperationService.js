@@ -61,7 +61,7 @@ const OperationServiceClass = class {
     return new GroupMemberModel(DBMySQL)
   }
 
-  createOperation = async (database, member_info, group_member_info, request_body, status = null) => {
+  createOperation = async (database, member_info, group_member_info, request_body, status = null, export_from_project = false) => {
     const output = new StdObject()
     let is_success = false
     if (!request_body || !request_body.operation_info) {
@@ -87,6 +87,7 @@ const OperationServiceClass = class {
     operation_info.media_path = `${group_media_path}/operation/${content_id}/`
     operation_info.created_by_user = 1
     operation_info.content_id = content_id
+    operation_info.export_from_project = export_from_project
     if (status) {
       operation_info.status = status
     }

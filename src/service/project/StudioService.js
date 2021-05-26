@@ -12,7 +12,9 @@ import GroupService from '../group/GroupService'
 import DBMySQL from '../../database/knex-mysql'
 import VacsService from '../vacs/VacsService'
 import MemberService from "../member/MemberService";
-import {Service} from "aws-sdk";
+import OperationService from '../operation/OperationService'
+import OperationFileService from '../operation/OperationFileService'
+import TranscoderSyncService from '../sync/TranscoderSyncService'
 
 const StudioServiceClass = class {
   constructor () {
@@ -155,8 +157,8 @@ const StudioServiceClass = class {
 
   requestDownloadVideoFiles = async (group_member_info, video_project_info) => {
     const media_root = ServiceConfig.get('media_root')
-    const download_path = video_project_info.project_path + '/' + this.DOWNLOAD_SUFFIX
-    const download_directory = media_root + download_path
+    const operation_origin_path = video_project_info.project_path + '/' + this.DOWNLOAD_SUFFIX
+    const download_directory = media_root + operation_origin_path
     if (!(await Util.fileExists(download_directory))) {
       await Util.createDirectory(download_directory)
     }
@@ -190,7 +192,7 @@ const StudioServiceClass = class {
       project_seq: video_project_info._id
     }
     if (download_file_info_list.length > 0) {
-      await CloudFileService.requestDownloadObjectByList(download_path, group_path, download_file_info_list, false, video_project_info.content_id, response_url, response_data)
+      await CloudFileService.requestDownloadObjectByList(operation_origin_path, group_path, download_file_info_list, false, video_project_info.content_id, response_url, response_data)
     } else {
       response_data.is_success = true
       await this.onDownloadComplete(response_data)
@@ -387,7 +389,7 @@ const StudioServiceClass = class {
       const video_file_size = await Util.getFileSize(video_file_path)
 
       if (ServiceConfig.isVacs() === false) {
-        await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name, ServiceConfig.get('naver_object_storage_bucket_name'))
+        await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name)
       }
 
       await Util.deleteFile(video_directory + process_info.smil_file_name)
@@ -462,6 +464,97 @@ const StudioServiceClass = class {
     }
 
     return { video_project_list, page_navigation }
+  }
+
+  exportToDrive = async (project_seq, member_info, group_member_info) => {
+    const video_project_info = await this.getVideoProjectInfo(project_seq)
+    if (!video_project_info) {
+      throw new StdObject(501, '프로젝트 정보를 찾을 수 없습니다.', 400)
+    }
+    if (video_project_info.request_status !== 'Y') {
+      throw new StdObject(502, '제작이 완료된 동영상만 내보낼 수 있습니다.', 400)
+    }
+    const current_date = Util.currentFormattedDate('yyyy-mm-dd HH:MM:ss')
+    const operation_name = video_project_info.project_name
+
+    const operation_code = `${operation_name}_${current_date}`
+    const operation_date = current_date.substr(0, 10)
+    const hour = current_date.substr(11, 2)
+    const minute = current_date.substr(14, 2)
+    const create_operation_info = {
+      'operation_code': operation_code,
+      'operation_name': operation_name,
+      'operation_date': operation_date,
+      'hour': hour,
+      'minute': minute,
+    }
+
+    const operation_body = {
+      operation_info: create_operation_info,
+      meta_data: {}
+    }
+
+    let operation_info = null
+    let operation_seq = null
+    try {
+      const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, operation_body, 'D', true)
+      const operation_seq = create_operation_result.get('operation_seq')
+      operation_info = (await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq, false)).operation_info
+    } catch (error) {
+      log.error(this.log_prefix, '[exportToDrive]', 'create operation error', operation_body, error)
+      throw new StdObject(503, '수술정보를 생성할 수 없습니다.', 400)
+    }
+
+    const operation_origin_path = OperationService.getOperationDirectoryInfo(operation_info).origin
+    const video_file_name = 'Trans_studio.mp4'
+
+    log.debug(this.log_prefix, '[exportToDrive]', 'operation_seq:', operation_seq, 'operation_info:', operation_info.toJSON())
+
+    if (ServiceConfig.isVacs()) {
+      this.exportVideoLocal(video_project_info, operation_info, operation_origin_path, video_file_name)
+    } else {
+      this.exportVideoCloud(video_project_info, operation_info, operation_origin_path, video_file_name)
+    }
+  }
+
+  exportVideoLocal = (video_project_info, operation_info, operation_origin_path, video_file_name) => {
+    (async (video_project_info, operation_info, operation_origin_path, video_file_name) => {
+      try {
+        const project_path = video_project_info.project_path + '/'
+        const video_directory = ServiceConfig.get('media_root') + project_path
+        const video_file_path = video_directory + video_project_info.video_file_name
+        const down_video_file_path = operation_origin_path + video_file_name
+        await Util.copyFile(video_file_path, down_video_file_path)
+        await this.onExportVideoDownloadComplete(operation_info, down_video_file_path, operation_origin_path, video_file_name)
+      } catch (error) {
+        log.error(this.log_prefix, '[exportVideoLocal]', 'copy video file error', video_project_info._id, operation_info.seq, operation_origin_path, error)
+      }
+    })(video_project_info, operation_info, operation_origin_path, video_file_name)
+  }
+
+  exportVideoCloud = (video_project_info, operation_info, operation_origin_path, video_file_name) => {
+    (async (video_project_info, operation_seq, operation_origin_path, video_file_name) => {
+      try {
+        const project_path = video_project_info.project_path
+        const down_video_file_path = operation_origin_path + video_file_name
+        await NaverObjectStorageService.downloadFile(project_path, video_project_info.video_file_name, operation_origin_path, video_file_name)
+        await this.onExportVideoDownloadComplete(operation_info, down_video_file_path, operation_origin_path, video_file_name)
+      } catch (error) {
+        log.error(this.log_prefix, '[exportVideoCloud]', 'download video file error', video_project_info._id, operation_info.seq, operation_origin_path, error)
+      }
+    })(video_project_info, operation_info, operation_origin_path, video_file_name)
+  }
+
+  onExportVideoDownloadComplete = async (operation_info, down_video_file_path, operation_origin_path, file_name) => {
+    const video_file_stat = await Util.getFileStat(down_video_file_path)
+    const video_file_info = {
+      size: video_file_stat.size,
+      new_file_name: file_name,
+      originalname: file_name,
+      path: down_video_file_path
+    }
+    await OperationFileService.createVideoFileInfo(DBMySQL, operation_info, video_file_info)
+    await TranscoderSyncService.updateTranscodingComplete(operation_info, file_name, null, null)
   }
 }
 

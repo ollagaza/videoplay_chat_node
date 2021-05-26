@@ -282,7 +282,7 @@ const NaverObjectStorageClass = class {
   copyFolder = async (remote_path, copy_path, bucket_name = null, client = null, acl = null, is_first = true) => {
     const storage_client = await this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
-    const folder_object = await this.getFolderObjectList(object_path, target_bucket_name, storage_client)
+    const folder_object = await this.getFolderObjectList(copy_path, target_bucket_name, storage_client)
     copy_path = Util.removePathLastSlash(copy_path)
     log.debug(this.log_prefix, '[copyFolder]', '[start]', `remote_path: ${remote_path}, copy_path: ${copy_path}, bucket_name: ${bucket_name}`, folder_object)
     let folder_file_list = []

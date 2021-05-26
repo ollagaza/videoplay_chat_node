@@ -159,7 +159,7 @@ const OperationFileServiceClass = class {
     file_info.thumbnail = thumbnail_path
 
     const video_file_model = this.getVideoFileModel(database)
-    return await video_file_model.createVideoFile(file_info)
+    return video_file_model.createVideoFile(file_info)
   }
 
   createOperationFileInfo = async (database, operation_info, upload_file_info, request_body) => {

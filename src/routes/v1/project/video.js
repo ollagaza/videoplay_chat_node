@@ -170,4 +170,12 @@ routes.get('/admin_project_list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   res.json(output)
 }))
 
+routes.post('/export/drive/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const { group_member_info, member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const project_seq = getProjectSeq(req)
+  await StudioService.exportToDrive(project_seq, member_info, group_member_info)
+  res.json(new StdObject())
+}))
+
 export default routes

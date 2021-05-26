@@ -273,145 +273,6 @@ if (IS_DEV) {
     })
   }))
 
-  const getHawkeyeMediaInfo = async (req, log_prefix, media_id) => {
-    const media_info_data = {
-      'MediaID': media_id
-    }
-    const media_info_api_params = querystring.stringify(media_info_data)
-    const media_info_api_options = {
-      hostname: '192.168.0.58',
-      port: 8080,
-      path: '/VCSAdminServer/ErrorReportMediaInfo.jsp?' + media_info_api_params,
-      method: 'GET'
-    }
-    const media_info_api_url = 'http://192.168.0.58:8080/VCSAdminServer/ErrorReportMediaInfo.jsp?' + media_info_api_params
-    log.d(req, `${log_prefix} hawkeye media info api url: ${media_info_api_url}`)
-
-    const media_info_request_result = await Util.httpRequest(media_info_api_options, false)
-    return new VideoInfo().getFromHawkEyeXML(await Util.loadXmlString(media_info_request_result))
-  }
-
-  const getHawkeyeIndexInfo = async (req, log_prefix, media_id, media_info) => {
-    const total_frame = media_info.total_frame
-    const total_time = media_info.total_time
-    const fps = media_info.fps
-    log.d(req, media_info.toJSON())
-    const fps_sec = 1 / fps
-    const index_list_data = {
-      'MediaID': media_id,
-      'CountOfPage': 2000
-    }
-    const index_list_api_params = querystring.stringify(index_list_data)
-    const index_list_api_options = {
-      hostname: '192.168.0.58',
-      port: 8080,
-      path: '/VCSAdminServer/ErrorReportImage.jsp?' + index_list_api_params,
-      method: 'GET'
-    }
-    const index_list_api_url = 'http://192.168.0.58:8080/VCSAdminServer/ErrorReportImage.jsp?' + index_list_api_params
-    log.d(req, `${log_prefix} hawkeye index list api url: ${index_list_api_url}`)
-
-    const index_list_request_result = await Util.httpRequest(index_list_api_options, false)
-    const index_list_xml_info = await Util.loadXmlString(index_list_request_result)
-    if (!index_list_xml_info || index_list_xml_info.errorcode || Util.isEmpty(index_list_xml_info.errorreport) || Util.isEmpty(index_list_xml_info.errorreport.frameinfo)) {
-      if (index_list_xml_info && index_list_xml_info.errorcode && index_list_xml_info.errorcode.state) {
-        throw new StdObject(3, Util.getXmlText(index_list_xml_info.errorcode.state), 500)
-      } else {
-        throw new StdObject(3, 'XML 파싱 오류', 500)
-      }
-    }
-
-    let index_info_list = []
-    const index_info_map = {}
-    const range_index_list = []
-    const tag_map = {}
-    const type_analysis_map = {}
-    let total_action_count = 0
-    let frame_info = index_list_xml_info.errorreport.frameinfo
-    if (frame_info) {
-      if (_.isArray(frame_info)) {
-        frame_info = frame_info[0]
-      }
-      const index_xml_list = frame_info.item
-      if (index_xml_list) {
-        for (let i = 0; i < index_xml_list.length; i++) {
-          const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i], false)
-          if (!index_info.isEmpty()) {
-            const type_code = index_info.code
-            if (index_info.start_frame > 1 && index_info.start_time <= 0) {
-              index_info.start_time = index_info.start_frame * fps_sec
-            }
-            if (index_info.is_range) {
-              range_index_list.push(index_info)
-            } else {
-              const saved_index_info = index_info_map[index_info.start_frame]
-              if (saved_index_info) {
-                saved_index_info.tag_map[type_code] = true
-              } else {
-                index_info_map[index_info.start_frame] = index_info
-              }
-            }
-            if (!type_analysis_map[type_code]) {
-              type_analysis_map[type_code] = {
-                code: type_code,
-                name: index_info.state,
-                total_frame: 0,
-                last_end_frame: 0,
-                uptime: 0,
-                uptime_rate: 0,
-                action_count: 0,
-                timeline: [],
-              }
-            }
-          }
-        }
-      }
-      index_info_list = _.orderBy(index_info_map, ['start_frame'], ['asc'])
-      let prev_info = index_info_list[0]
-      for (let i = 1; i < index_info_list.length; i++) {
-        const current_info = index_info_list[i]
-        prev_info.end_frame = current_info.start_frame - 1
-        prev_info.end_time = current_info.start_time
-        set_range_tags(range_index_list, current_info)
-        current_info.tags = _.keys(current_info.tag_map)
-        prev_info = current_info
-      }
-      prev_info.end_frame = total_frame
-      prev_info.end_time = total_time
-      for (let i = 1; i < index_info_list.length; i++) {
-        const index_info = index_info_list[i]
-        if (index_info.end_frame <= 0) break
-        for (let j = 0; j < index_info.tags.length; j++) {
-          const tag_info = type_analysis_map[index_info.tags[j]]
-          tag_info.total_frame += index_info.end_frame - index_info.start_frame
-          tag_info.uptime += index_info.end_time - index_info.start_time
-          tag_info.uptime_rate = tag_info.uptime / total_time
-          if (tag_info.last_end_frame !== index_info.start_frame) {
-            tag_info.timeline.push({ start_time: index_info.start_time, end_time: index_info.end_time })
-            tag_info.action_count++
-            tag_map[tag_info.code] = tag_info.action_count
-            total_action_count++
-          } else {
-            tag_info.timeline[tag_info.timeline.length - 1].end_time = index_info.end_time
-          }
-          tag_info.last_end_frame = index_info.end_frame + 1
-        }
-      }
-    }
-    const result = {}
-    result.summary = {}
-    result.summary.tag_list = _.keys(tag_map)
-    result.summary.tag_count_map = tag_map
-    result.summary.total_time = total_time
-    result.summary.total_frame = total_frame
-    result.summary.total_action_count = total_action_count
-    result.summary.total_index_count = index_info_list.length
-    result.summary.fps = fps
-    result.index_info_list = index_info_list
-    result.analysis_data = type_analysis_map
-    return result
-  }
-
   const set_range_tags = (range_index_list, index_info) => {
     const start_frame = index_info.start_frame
     range_index_list.forEach((range_info) => {
@@ -575,8 +436,8 @@ if (IS_DEV) {
 
   routes.get('/exec', Wrap(async (req, res) => {
     const args = ['-y', '-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda', '-report', '-i', 'd:/ss aa/001.mp4', '-c:v', 'h264_nvenc', '-profile:v', 'high', '-level:v', '4.0', '-r', '30', '-b:v', '4500', 'd:/ss aa/__1.mp4']
-    // const spawn = Util.executeSpawn('ffmpeg', args, { env: { "FFREPORT": `file=logs/ffmpeg/${Util.getRandomString(10)}.log` } })
-    const spawn = Util.executeSpawn('ffmpeg')
+    const spawn = Util.executeSpawn('ffmpeg', args, { env: { "FFREPORT": `file=logs/ffmpeg/${Util.getRandomString(10)}.log` } })
+    // const spawn = Util.executeSpawn('ffmpeg')
     spawn.on('onStart', (cmd) => {
       log.d(req, 'onStart', cmd)
     })

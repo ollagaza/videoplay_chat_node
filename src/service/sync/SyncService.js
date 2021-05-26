@@ -29,12 +29,12 @@ const SyncServiceClass = class {
     return operation_info
   }
 
-  onAnalysisCompleteBySeq = async (operation_seq, is_sync_hwakeye = false) => {
+  onAnalysisCompleteBySeq = async (operation_seq) => {
     const operation_info = this.getOperationInfoBySeq(operation_seq)
-    await this.onAnalysisComplete(operation_info, is_sync_hwakeye)
+    await this.onAnalysisComplete(operation_info)
   }
 
-  onAnalysisComplete = async (operation_info, is_sync_hwakeye = false) => {
+  onAnalysisComplete = async (operation_info) => {
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
     }
@@ -42,11 +42,11 @@ const SyncServiceClass = class {
     const group_seq = operation_info.group_seq
     const member_seq = operation_info.member_seq
     const content_id = operation_info.content_id
-    const log_info = `[onAnalysisComplete] [operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}, is_sync_hwakeye: ${is_sync_hwakeye}]`
+    const log_info = `[onAnalysisComplete] [operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
     log.debug(this.log_prefix, log_info, `start`)
 
     const operation_media_info = await OperationMediaService.getOperationMediaInfo(DBMySQL, operation_info)
-    const is_sync_complete = is_sync_hwakeye ? operation_info.is_analysis_complete && operation_media_info.is_trans_complete : operation_media_info.is_trans_complete
+    const is_sync_complete = operation_media_info.is_trans_complete
 
     if (!is_sync_complete) {
       log.debug(this.log_prefix, log_info, `sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_media_info.is_trans_complete}]. process end`)
@@ -62,13 +62,8 @@ const SyncServiceClass = class {
     }
     const media_info = media_result.media_info
     let index_info_list = []
-    if (is_sync_hwakeye) {
-      index_info_list = await this.getIndexInfoByHawkeye(content_id, media_info, log_info)
-      log.debug(this.log_prefix, log_info, 'getIndexInfoByHawkeye complete', index_info_list.length)
-    } else {
-      index_info_list = await this.getIndexInfoByMedia(trans_video_file_path, operation_info, media_info, log_info)
-      log.debug(this.log_prefix, log_info, 'getIndexInfoByMedia complete', index_info_list.length)
-    }
+    index_info_list = await this.getIndexInfoByMedia(trans_video_file_path, operation_info, media_info, log_info)
+    log.debug(this.log_prefix, log_info, 'getIndexInfoByMedia complete', index_info_list.length)
 
     const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq)
     if (video_index_info) {
@@ -197,6 +192,7 @@ const SyncServiceClass = class {
       log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', response_data)
     }
     await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status)
+    await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
 
     if (status === 'Y') {
       await OperationService.updateOperationDataFileThumbnail(operation_info)
@@ -240,9 +236,15 @@ const SyncServiceClass = class {
       socket_message.title = '이미지 업로드가 완료되었습니다.';
       socket_message.message = `'${operation_info.operation_name}' 이미지 업로드가 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
     } else {
-      alarm_message = `'${operation_info.operation_name}'수술 동영상 인코딩이 완료되었습니다.`;
-      socket_message.title = '동영상 인코딩이 완료되었습니다.';
-      socket_message.message = `'${operation_info.operation_name}' 동영상 인코딩이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
+      if (operation_info.export_from_project) {
+        alarm_message = `'${operation_info.operation_name}' 동영상 내보내기가 완료되었습니다.`;
+        socket_message.title = '동영상 내보내기가 완료되었습니다..';
+        socket_message.message = `'${operation_info.operation_name}' 동영상 내보내기가 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
+      } else {
+        alarm_message = `'${operation_info.operation_name}'수술 동영상 인코딩이 완료되었습니다.`;
+        socket_message.title = '동영상 인코딩이 완료되었습니다.';
+        socket_message.message = `'${operation_info.operation_name}' 동영상 인코딩이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
+      }
     }
     const alarm_data = {
       operation_seq: operation_info.seq
@@ -292,71 +294,6 @@ const SyncServiceClass = class {
       }
     }
 
-    return index_file_list
-  }
-
-  getIndexInfoByHawkeye = async (content_id, media_info, log_info) => {
-    const service_info = ServiceConfig.getServiceInfo()
-
-    const index_list_data = {
-      'ContentID': content_id
-    }
-    const index_list_api_params = querystring.stringify(index_list_data)
-
-    const index_list_api_options = {
-      hostname: service_info.hawkeye_server_domain,
-      port: service_info.hawkeye_server_port,
-      path: ServiceConfig.get('hawkeye_index2_list_api') + '?' + index_list_api_params,
-      method: 'GET'
-    }
-    const index_list_api_url = 'http://' + service_info.hawkeye_server_domain + ':' + service_info.hawkeye_server_port + ServiceConfig.get('hawkeye_index2_list_api') + '?' + index_list_api_params
-    log.debug(this.log_prefix, log_info, `hawkeye index list api url: ${index_list_api_url}`)
-
-    const index_list_request_result = await Util.httpRequest(index_list_api_options, false)
-    const index_list_xml_info = await Util.loadXmlString(index_list_request_result)
-    if (!index_list_xml_info || index_list_xml_info.errorcode || Util.isEmpty(index_list_xml_info.errorreport) || Util.isEmpty(index_list_xml_info.errorreport.frameinfo)) {
-      if (index_list_xml_info && index_list_xml_info.errorcode && index_list_xml_info.errorcode.state) {
-        throw new StdObject(3, Util.getXmlText(index_list_xml_info.errorcode.state), 500)
-      } else {
-        throw new StdObject(3, 'XML 파싱 오류', 500)
-      }
-    }
-
-    let index_file_list = []
-    let frame_info = index_list_xml_info.errorreport.frameinfo
-    if (frame_info) {
-      if (_.isArray(frame_info)) {
-        frame_info = frame_info[0]
-      }
-      const index_xml_list = frame_info.item
-      let last_index_info = null
-      if (index_xml_list) {
-        for (let i = 0; i < index_xml_list.length; i++) {
-          const index_info = await new IndexInfo().getFromHawkeyeXML(index_xml_list[i])
-          if (!index_info.isEmpty()) {
-            // index_file_list.push(index_info.getXmlJson());
-            last_index_info = index_info
-            index_file_list.push(last_index_info)
-          }
-        }
-      }
-      if (index_file_list.length > 2) {
-        _.sortBy(index_file_list, index_info => Util.parseInt(index_info.frame))
-
-        last_index_info = index_file_list[0]
-        for (let i = 1; i < index_file_list.length; i++) {
-          const current_info = index_file_list[i]
-          last_index_info.end_frame = current_info.start_frame - 1
-          last_index_info.end_time = current_info.start_time
-          last_index_info = current_info
-        }
-      }
-
-      if (last_index_info) {
-        last_index_info.end_frame = media_info.frame_count
-        last_index_info.end_time = media_info.duration
-      }
-    }
     return index_file_list
   }
 }

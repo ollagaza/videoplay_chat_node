@@ -24,7 +24,10 @@ const TranscoderSyncServiceClass = class {
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400)
     }
+    await this.updateTranscodingComplete(operation_info, video_file_name, smil_file_name, request)
+  }
 
+  updateTranscodingComplete = async (operation_info, video_file_name, smil_file_name, request) => {
     try {
       await OperationMediaService.updateTranscodingComplete(DBMySQL, operation_info, video_file_name, smil_file_name)
       await SyncService.onAnalysisComplete(operation_info)
@@ -40,7 +43,7 @@ const TranscoderSyncServiceClass = class {
       } else {
         error_str = error.toString()
       }
-      await this.onTranscodingError(content_id, error_str, request)
+      await this.onTranscodingError(operation_info.content_id, error_str, request)
     }
   }
 
