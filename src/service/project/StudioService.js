@@ -12,6 +12,7 @@ import GroupService from '../group/GroupService'
 import DBMySQL from '../../database/knex-mysql'
 import VacsService from '../vacs/VacsService'
 import MemberService from "../member/MemberService";
+import {Service} from "aws-sdk";
 
 const StudioServiceClass = class {
   constructor () {
@@ -285,6 +286,7 @@ const StudioServiceClass = class {
             create_date: Util.dateFormat(video_project_info.created_date),
             'DirPath': editor_server_directory,
             'XmlFilePath': editor_server_directory + file_name,
+            return_url: `${ServiceConfig.get('http_protocol')}://${ServiceConfig.get('api_server_domain')}/${ServiceConfig.get('api_server_port')}/api/v1/project/video/make/process?`,
           }
           const query_str = querystring.stringify(query_data)
 
@@ -435,12 +437,13 @@ const StudioServiceClass = class {
     await VideoProjectModel.migrationGroupSeq(member_seq, group_seq)
   }
 
-  getProjectList = async (page_navigation) => {
-    const video_project_count = await VideoProjectModel.getProjectTotalCount()
+  getProjectList = async (page_navigation, field_order, search_keyword, search_option) => {
+    const video_project_count = await VideoProjectModel.getProjectTotalCount(search_keyword, search_option)
     page_navigation.list_count = Util.parseInt(page_navigation.list_count)
     page_navigation.cur_page = Util.parseInt(page_navigation.cur_page)
     page_navigation.total_count = video_project_count;
-    const video_project_list = await VideoProjectModel.getAdmin_projectList(page_navigation)
+    const sort = JSON.parse(`{ "${field_order.name}": ${field_order.direction === 'desc' ? -1 : 1} }`)
+    const video_project_list = await VideoProjectModel.getAdmin_projectList(page_navigation, sort, search_keyword, search_option)
 
     for (let cnt = 0; cnt < video_project_list.length; cnt++) {
       try {

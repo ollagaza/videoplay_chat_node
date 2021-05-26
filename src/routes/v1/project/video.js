@@ -159,8 +159,11 @@ routes.post('/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req
 
 routes.get('/admin_project_list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const page_navigation = req.query ? req.query : { cur_page: 1, list_count: 10, page_count: 10 }
-  const video_project_list = await StudioService.getProjectList(page_navigation)
+  const page_navigation = req.query.navigation ? JSON.parse(req.query.navigation) : { cur_page: 1, list_count: 10, page_count: 10 }
+  const field_order = req.query.field_order ? JSON.parse(req.query.field_order) : { field: '_id', direction: 'desc' }
+  const search_option = req.query.search_option ? JSON.parse(req.query.search_option) : null
+  const search_keyword = req.query.search_keyword ? req.query.search_keyword : null
+  const video_project_list = await StudioService.getProjectList(page_navigation, field_order, search_keyword, search_option)
 
   const output = new StdObject()
   output.adds(video_project_list)

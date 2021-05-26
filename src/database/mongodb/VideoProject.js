@@ -166,12 +166,27 @@ video_project_schema.statics.updateUserInfo = function (member_seq, user_name, u
   }
   return this.updateMany({ member_seq: member_seq }, update, { 'multi': true })
 }
-video_project_schema.statics.getProjectTotalCount = function () {
-  return this.count()
+video_project_schema.statics.getProjectTotalCount = function (search_keyword = null, search_option = null) {
+  const filter = {}
+  if (search_option && search_option.request_status) {
+    filter.request_status = search_option.request_status
+  }
+  if (search_keyword) {
+    filter.project_name = new RegExp(search_keyword)
+  }
+  return this.count(filter)
 }
 
-video_project_schema.statics.getAdmin_projectList = function (page_navigation, sort_field = { _id: -1 }) {
-  return this.find()
+video_project_schema.statics.getAdmin_projectList = function (page_navigation, sort_field = { _id: -1 }, search_keyword = null, search_option = null) {
+  const filter = {}
+  if (search_option && search_option.request_status && search_option.request_status !== '0') {
+    filter.request_status = search_option.request_status
+  }
+  if (search_keyword) {
+    filter.project_name = new RegExp(search_keyword)
+  }
+  const find_result = filter ? this.find(filter) : this.find()
+  return find_result
     .sort(sort_field)
     .skip(page_navigation.list_count * (page_navigation.cur_page - 1))
     .limit(page_navigation.list_count)
