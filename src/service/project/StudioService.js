@@ -422,16 +422,18 @@ const StudioServiceClass = class {
         log.error(this.log_prefix, '[updateMakeProcess]', 'update final', process_info, result)
       }
     } else if (process_info.status === 'error') {
+      log.debug('project error')
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'E', 0)
+      is_success = false
       if (result && result.ok === 1) {
         const message_info = {
-          message: `'${video_project.project_name}'비디오 제작중 오류가 발생하였습니다.`
+          message: `'${video_project.project_name}' 비디오 제작중 오류가 발생하였습니다.`
         }
         const extra_data = {
           project_seq: video_project._id,
           reload_studio_page: true,
         }
-        await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
+        await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeError', message_info, extra_data)
       }
     } else {
       throw new StdObject(3, '잘못된 상태 값', 400)
