@@ -216,114 +216,110 @@ const StudioServiceClass = class {
     return true
   }
 
-  requestMakeProject = (video_project_info) => {
-    (
-      async (video_project_info) => {
-        try {
+  requestMakeProject = async (video_project_info) => {
+    try {
 
-          if (!video_project_info || !video_project_info._id) {
-            log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info is empty', video_project_info)
-            return false
-          }
-          const project_path = video_project_info.project_path + '/'
-          const directory = ServiceConfig.get('media_root') + project_path
-          const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
-          const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
-          let editor_server_group_video_directory = null
-          if (ServiceConfig.isVacs()) {
-            const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
-            editor_server_group_video_directory = ServiceConfig.get('auto_editor_file_root') + group_info.media_path + '/operation/'
-          }
-          const temp_directory = directory + this.TEMP_SUFFIX
-          await Util.deleteDirectory(temp_directory)
-          await Util.createDirectory(temp_directory)
-          log.debug(this.log_prefix, '[requestMakeProject]', `directory: ${directory}, editor_server_directory: ${editor_server_directory}, editor_server_download_directory: ${editor_server_download_directory}`)
+      if (!video_project_info || !video_project_info._id) {
+        log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info is empty', video_project_info)
+        return false
+      }
+      const project_path = video_project_info.project_path + '/'
+      const directory = ServiceConfig.get('media_root') + project_path
+      const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
+      const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
+      let editor_server_group_video_directory = null
+      if (ServiceConfig.isVacs()) {
+        const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
+        editor_server_group_video_directory = ServiceConfig.get('auto_editor_file_root') + group_info.media_path + '/operation/'
+      }
+      const temp_directory = directory + this.TEMP_SUFFIX
+      await Util.deleteDirectory(temp_directory)
+      await Util.createDirectory(temp_directory)
+      log.debug(this.log_prefix, '[requestMakeProject]', `directory: ${directory}, editor_server_directory: ${editor_server_directory}, editor_server_download_directory: ${editor_server_download_directory}`)
 
-          const scale = 1
-          const sequence_list = video_project_info.sequence_list
-          const sequence_model_list = []
-          const options = {
-            file_path: directory,
-            editor_server_directory: editor_server_directory,
-            editor_server_download_directory: editor_server_download_directory,
-            editor_server_group_video_directory: editor_server_group_video_directory,
-            temp_suffix: this.TEMP_SUFFIX,
-            is_vacs: ServiceConfig.isVacs()
-          }
-          for (let i = 0; i < sequence_list.length; i++) {
-            const sequence_model = new SequenceModel().init(sequence_list[i])
-            if (sequence_model.type) {
-              sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
-            }
-          }
-
-          const video_xml_json = {
-            'VideoInfo': {
-              'MediaInfo': {
-                'ContentId': video_project_info.content_id,
-                'Width': 1920 * scale,
-                'Height': 1080 * scale,
-              },
-              'SequenceList': {
-                'Sequence': sequence_model_list
-              }
-            }
-          }
-
-          const file_name = 'video_project.xml'
-          await Util.writeXmlFile(directory, file_name, video_xml_json)
-
-          const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
-          const member_info = await MemberService.getMemberInfo(DBMySQL, video_project_info.member_seq)
-
-          const query_data = {
-            project_seq: video_project_info._id,
-            'ContentID': video_project_info.content_id,
-            project_name: video_project_info.project_name,
-            group_seq: video_project_info.group_seq,
-            group_name: group_info.group_name,
-            member_seq: video_project_info.member_seq,
-            user_name: video_project_info.user_name,
-            user_id: member_info.user_id,
-            create_date: Util.dateFormat(video_project_info.created_date),
-            'OutputPath': editor_server_directory,
-            'XmlFilePath': editor_server_directory + file_name,
-            return_host: ServiceConfig.get('api_server_domain'),
-            return_port : ServiceConfig.get('api_server_port'),
-            return_path: '/api/v1/project/video/make/process',
-          }
-          const query_str = querystring.stringify(query_data)
-
-          const request_options = {
-            hostname: ServiceConfig.get('auto_editor_server_domain'),
-            port: ServiceConfig.get('auto_editor_server_port'),
-            path: ServiceConfig.get('auto_editor_merge_api'),
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          }
-
-          const api_url = 'http://' + ServiceConfig.get('auto_editor_server_domain') + ':' + ServiceConfig.get('auto_editor_server_port') + ServiceConfig.get('auto_editor_merge_api')
-          log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url)
-
-          let api_request_result = null
-          let is_request_success = false
-          try {
-            api_request_result = await Util.httpRequest(request_options, JSON.stringify(query_data), false)
-            is_request_success = api_request_result && api_request_result.toLowerCase() === 'done'
-          } catch (error) {
-            log.error(this.log_prefix, '[requestMakeProject]', 'request error', error)
-            api_request_result = error.message
-          }
-          log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_request_success, api_url, api_request_result)
-          return is_request_success
-        } catch (error) {
-          log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info', video_project_info)
-          return false
+      const scale = 1
+      const sequence_list = video_project_info.sequence_list
+      const sequence_model_list = []
+      const options = {
+        file_path: directory,
+        editor_server_directory: editor_server_directory,
+        editor_server_download_directory: editor_server_download_directory,
+        editor_server_group_video_directory: editor_server_group_video_directory,
+        temp_suffix: this.TEMP_SUFFIX,
+        is_vacs: ServiceConfig.isVacs()
+      }
+      for (let i = 0; i < sequence_list.length; i++) {
+        const sequence_model = new SequenceModel().init(sequence_list[i])
+        if (sequence_model.type) {
+          sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
         }
       }
-    )(video_project_info)
+
+      const video_xml_json = {
+        'VideoInfo': {
+          'MediaInfo': {
+            'ContentId': video_project_info.content_id,
+            'Width': 1920 * scale,
+            'Height': 1080 * scale,
+          },
+          'SequenceList': {
+            'Sequence': sequence_model_list
+          }
+        }
+      }
+
+      const file_name = 'video_project.xml'
+      await Util.writeXmlFile(directory, file_name, video_xml_json)
+
+      const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
+      const member_info = await MemberService.getMemberInfo(DBMySQL, video_project_info.member_seq)
+
+      const query_data = {
+        project_seq: video_project_info._id,
+        'ContentID': video_project_info.content_id,
+        project_name: video_project_info.project_name,
+        group_seq: video_project_info.group_seq,
+        group_name: group_info.group_name,
+        member_seq: video_project_info.member_seq,
+        user_name: video_project_info.user_name,
+        user_id: member_info.user_id,
+        create_date: Util.dateFormat(video_project_info.created_date),
+        'OutputPath': editor_server_directory,
+        'XmlFilePath': editor_server_directory + file_name,
+        return_host: ServiceConfig.get('api_server_domain'),
+        return_port: ServiceConfig.get('api_server_port'),
+        return_path: '/api/v1/project/video/make/process',
+      }
+      const query_str = querystring.stringify(query_data)
+
+      const request_options = {
+        hostname: ServiceConfig.get('auto_editor_server_domain'),
+        port: ServiceConfig.get('auto_editor_server_port'),
+        path: ServiceConfig.get('auto_editor_merge_api'),
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+
+      const api_url = 'http://' + ServiceConfig.get('auto_editor_server_domain') + ':' + ServiceConfig.get('auto_editor_server_port') + ServiceConfig.get('auto_editor_merge_api')
+      log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url)
+
+      let api_request_result = null
+      let is_request_success = false
+      try {
+        api_request_result = JSON.parse(await Util.httpRequest(request_options, JSON.stringify(query_data), false))
+        is_request_success = api_request_result && api_request_result.error === 0
+      } catch (error) {
+        log.error(this.log_prefix, '[requestMakeProject]', 'request error', error)
+        api_request_result = error.message
+      }
+      log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_request_success, api_url, api_request_result)
+      return is_request_success
+    } catch (error) {
+      log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info', video_project_info)
+      return false
+    }
   }
 
   updateMakeProcess = async (request) => {
