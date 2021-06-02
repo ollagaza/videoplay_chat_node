@@ -151,13 +151,13 @@ const StudioServiceClass = class {
         throw new StdObject(-2, '동영상 제작요청에 실패하였습니다.', 400)
       }
     } else {
-      await this.requestDownloadVideoFiles(group_member_info, video_project_info)
+      await this.requestDownloadVideoFiles(group_member_info, video_project_info, admin_page)
     }
     const update_result = await VideoProjectModel.updateRequestStatus(project_seq, 'R')
     return update_result && update_result._id && update_result._id > 0
   }
 
-  requestDownloadVideoFiles = async (group_member_info, video_project_info) => {
+  requestDownloadVideoFiles = async (group_member_info, video_project_info, admin_page = false) => {
     const media_root = ServiceConfig.get('media_root')
     const operation_origin_path = video_project_info.project_path + '/' + this.DOWNLOAD_SUFFIX
     const download_directory = media_root + operation_origin_path
@@ -197,11 +197,11 @@ const StudioServiceClass = class {
       await CloudFileService.requestDownloadObjectByList(operation_origin_path, group_path, download_file_info_list, false, video_project_info.content_id, response_url, response_data)
     } else {
       response_data.is_success = true
-      await this.onDownloadComplete(response_data)
+      await this.onDownloadComplete(response_data, admin_page)
     }
   }
 
-  onDownloadComplete = async (response_data) => {
+  onDownloadComplete = async (response_data, admin_page = false) => {
     log.debug(this.log_prefix, '[onDownloadComplete]', response_data)
     if (!response_data || !response_data.project_seq) {
       throw new StdObject(-1, '잘못된 요청입니다.', 400, { response_data })
@@ -214,7 +214,7 @@ const StudioServiceClass = class {
     if (!video_project_info || !video_project_info.sequence_list || video_project_info.sequence_list.length <= 0) {
       throw new StdObject(-3, '등록된 동영상 정보가 없습니다.', 400)
     }
-    this.requestMakeProject(video_project_info)
+    this.requestMakeProject(video_project_info, admin_page)
     return true
   }
 
