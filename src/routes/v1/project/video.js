@@ -8,6 +8,7 @@ import DBMySQL from '../../../database/knex-mysql'
 import GroupService from '../../../service/group/GroupService'
 import StudioService from '../../../service/project/StudioService'
 import { VideoProjectModel } from '../../../database/mongodb/VideoProject'
+import logger from "../../../libs/logger";
 
 const routes = Router()
 

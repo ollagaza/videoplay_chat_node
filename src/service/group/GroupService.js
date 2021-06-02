@@ -26,7 +26,7 @@ import GroupBoardDataService from "../board/GroupBoardDataService";
 import OperationClipService from "../operation/OperationClipService";
 import OperationFolderService from "../operation/OperationFolderService";
 import GroupBoardListService from "../board/GroupBoardListService";
-import MessageService from "../mypage/MessageService";
+import GroupSocketService from "../socket/GroupSocketService";
 import InstantMessageService from "../mypage/InstantMessageService";
 import striptags from "striptags";
 import GroupAlarmService from './GroupAlarmService'
@@ -735,7 +735,7 @@ const GroupServiceClass = class {
       title: '채널 관리자 권한 변경',
       message: title
     }
-    this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'enableGroupAdmin', null)
+    GroupSocketService.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'enableGroupAdmin', null)
 
     if (!group_member_info.invite_email) {
       return
@@ -771,7 +771,7 @@ const GroupServiceClass = class {
       message: title,
       notice_type: 'alert'
     }
-    this.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableGroupAdmin', null)
+    GroupSocketService.onGroupMemberStateChange(group_member_info.group_seq, group_member_seq, message_info, 'disableGroupAdmin', null)
   }
 
   sendEmail = (title, body, mail_to_list, method = '') => {
@@ -882,7 +882,7 @@ const GroupServiceClass = class {
       title: '채널이 변경되었습니다.',
       message: `'${group_info.group_name}'채널이 변경되었습니다.`
     }
-    await this.onGroupStateChange(group_info.seq, sub_type, null, message_info)
+    await GroupSocketService.onGroupStateChange(group_info.seq, sub_type, null, message_info)
 
     return group_info
   }
@@ -892,87 +892,6 @@ const GroupServiceClass = class {
       return Util.addYear(1, Constants.TIMESTAMP)
     }
     return Util.addMonth(1, Constants.TIMESTAMP)
-  }
-
-  noticeGroupAdmin = async (group_seq, action_type = null, message_info = null) => {
-    const admin_id_list = await this.getAdminGroupMemberSeqList(DBMySQL, group_seq)
-    if (!admin_id_list || !admin_id_list.length) {
-      return
-    }
-    const data = {
-      type: 'groupMemberStateChange',
-      group_seq
-    }
-    if (action_type) data.action_type = action_type
-
-    await this.sendToFrontMulti(admin_id_list, data, message_info)
-  }
-
-  onGroupMemberStateChange = (group_seq, group_member_seq, message_info = null, type = 'groupMemberStateChange', action_type = 'groupSelect') => {
-    (
-      async () => {
-        try {
-          const group_member_model = this.getGroupMemberModel(DBMySQL)
-          const member_seq = await group_member_model.getMemberSeqByGroupMemberSeq(group_member_seq)
-          if (!member_seq) {
-            return
-          }
-          const data = {
-            type,
-            action_type
-          }
-          const socket_data = {
-            data
-          }
-          if (message_info) {
-            message_info.type = 'pushNotice'
-            socket_data.message_info = message_info
-          }
-          if (group_seq) {
-            data.group_seq = group_seq
-            await SocketManager.sendToFrontGroupOne(group_seq, member_seq, socket_data)
-          } else {
-            await SocketManager.sendToFrontOne(member_seq, socket_data)
-          }
-        } catch (error) {
-          log.error(this.log_prefix, '[onGroupMemberStateChange]', group_seq, group_member_seq, message_info, type, action_type, error)
-        }
-      }
-    )()
-  }
-
-  onGroupStateChange = async (group_seq, sub_type = null, action_type = null, message_info = null) => {
-    const data = {
-      type: 'groupStorageInfoChange',
-      group_seq
-    }
-    if (sub_type) data.sub_type = sub_type
-    if (action_type) data.action_type = action_type
-
-    await this.sendToFrontMulti(group_seq, data, message_info)
-  }
-
-  onGeneralGroupNotice = async (group_seq, type, action_type = null, sub_type = null, message_info = null, extra_data = null) => {
-    const data = {
-      type,
-      group_seq,
-      ...extra_data
-    }
-    if (sub_type) data.sub_type = sub_type
-    if (action_type) data.action_type = action_type
-
-    await this.sendToFrontMulti(group_seq, data, message_info)
-  }
-
-  sendToFrontMulti = async (group_seq, data, message_info) => {
-    const socket_data = {
-      data
-    }
-    if (message_info) {
-      message_info.type = 'pushNotice'
-      socket_data.message_info = message_info
-    }
-    await SocketManager.sendToFrontGroup(group_seq, socket_data)
   }
 
   getUserGroupInfo = async (database, member_seq) => {
@@ -1581,7 +1500,7 @@ const GroupServiceClass = class {
     for (let i = 0; i < group_member_seq_list.length; i++) {
       const group_member_seq = group_member_seq_list[i]
       if (socket_message_info) {
-        this.onGroupMemberStateChange(group_seq, group_member_seq, socket_message_info, socket_data_type)
+        GroupSocketService.onGroupMemberStateChange(group_seq, group_member_seq, socket_message_info, socket_data_type)
       }
       if (email_body) {
         const target_member_info = await this.getGroupMemberInfoBySeq(DBMySQL, group_member_seq)

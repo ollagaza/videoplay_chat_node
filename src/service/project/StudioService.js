@@ -15,6 +15,8 @@ import MemberService from "../member/MemberService";
 import OperationService from '../operation/OperationService'
 import OperationFileService from '../operation/OperationFileService'
 import TranscoderSyncService from '../sync/TranscoderSyncService'
+import GroupSocketService from "../socket/GroupSocketService";
+import AdminSocketService from "../socket/AdminSocketService";
 
 const StudioServiceClass = class {
   constructor () {
@@ -286,11 +288,12 @@ const StudioServiceClass = class {
         create_date: Util.dateFormat(video_project_info.created_date),
         'OutputPath': editor_server_directory,
         'XmlFilePath': editor_server_directory + file_name,
-        return_host: ServiceConfig.get('api_server_domain'),
-        return_port: ServiceConfig.get('api_server_port'),
-        return_path: '/api/v1/project/video/make/process',
+        host_data: {
+          host: ServiceConfig.get('api_server_domain'),
+          port: ServiceConfig.get('api_server_port'),
+          path: '/api/v1/project/video/make/process',
+        },
       }
-      const query_str = querystring.stringify(query_data)
 
       const request_options = {
         hostname: ServiceConfig.get('auto_editor_server_domain'),
@@ -351,13 +354,14 @@ const StudioServiceClass = class {
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'S', 0)
       if (result && result.ok === 1) {
         const message_info = {
-          message: `'${video_project.project_name}'비디오 제작이 시작되었습니다.`
+          message: `'${video_project.project_name}'비디오 제작이 시작되었습니다.`,
         }
         const extra_data = {
           project_seq: video_project._id,
           reload_studio_page: true,
         }
-        await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
+        await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
+        await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
       } else {
         log.error(this.log_prefix, '[updateMakeProcess]', 'update status', `status: ${process_info.status}`, result)
       }
@@ -371,7 +375,8 @@ const StudioServiceClass = class {
         reload_studio_page: false,
         progress: process_info.progress
       }
-      await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeProcess', null, extra_data)
+      await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeProcess', null, extra_data)
+      await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeProcess', null, extra_data)
     } else if (process_info.status === 'complete') {
       log.debug('project complete')
       if (Util.isEmpty(process_info.video_file_name) || Util.isEmpty(process_info.smil_file_name)) {
@@ -431,7 +436,8 @@ const StudioServiceClass = class {
           reload_studio_page: true,
         }
         log.debug('project error', message_info, extra_data)
-        await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeError', message_info, extra_data)
+        await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeError', message_info, extra_data)
+        await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeError', message_info, extra_data)
       }
       is_success = false
     } else {
@@ -445,7 +451,8 @@ const StudioServiceClass = class {
         project_seq: video_project._id,
         reload_studio_page: true
       }
-      await GroupService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+      await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+      await AdminSocketService.onGeneralAdminNotice('studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
       if (ServiceConfig.isVacs()) {
         VacsService.updateStorageInfo()
       }
