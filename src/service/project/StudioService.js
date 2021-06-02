@@ -141,13 +141,13 @@ const StudioServiceClass = class {
     return ServiceConfig.get('static_storage_prefix') + upload_path + image_file_name
   }
 
-  makeProjectVideo = async (group_member_info, project_seq) => {
+  makeProjectVideo = async (group_member_info, project_seq, admin_page = false) => {
     const video_project_info = await this.getVideoProjectInfo(project_seq)
     if (!video_project_info || !video_project_info.sequence_list || video_project_info.sequence_list.length <= 0) {
       throw new StdObject(-1, '등록된 동영상 정보가 없습니다.', 400)
     }
     if (ServiceConfig.isVacs()) {
-      if (!await this.requestMakeProject(video_project_info)) {
+      if (!await this.requestMakeProject(video_project_info, admin_page)) {
         throw new StdObject(-2, '동영상 제작요청에 실패하였습니다.', 400)
       }
     } else {
@@ -218,7 +218,7 @@ const StudioServiceClass = class {
     return true
   }
 
-  requestMakeProject = async (video_project_info) => {
+  requestMakeProject = async (video_project_info, admin_page = false) => {
     try {
 
       if (!video_project_info || !video_project_info._id) {
@@ -292,6 +292,7 @@ const StudioServiceClass = class {
           host: ServiceConfig.get('api_server_domain'),
           port: ServiceConfig.get('api_server_port'),
           path: '/api/v1/project/video/make/process',
+          is_admin_page: admin_page,
         },
       }
 
@@ -360,8 +361,11 @@ const StudioServiceClass = class {
           project_seq: video_project._id,
           reload_studio_page: true,
         }
-        await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
-        await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
+        if (!query.is_admin_page) {
+          await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
+        } else {
+          await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeStart', message_info, extra_data)
+        }
       } else {
         log.error(this.log_prefix, '[updateMakeProcess]', 'update status', `status: ${process_info.status}`, result)
       }
@@ -375,8 +379,11 @@ const StudioServiceClass = class {
         reload_studio_page: false,
         progress: process_info.progress
       }
-      await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeProcess', null, extra_data)
-      await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeProcess', null, extra_data)
+      if (!query.is_admin_page) {
+        await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeProcess', null, extra_data)
+      } else {
+        await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeProcess', null, extra_data)
+      }
     } else if (process_info.status === 'complete') {
       log.debug('project complete')
       if (Util.isEmpty(process_info.video_file_name) || Util.isEmpty(process_info.smil_file_name)) {
@@ -435,9 +442,11 @@ const StudioServiceClass = class {
           project_seq: video_project._id,
           reload_studio_page: true,
         }
-        log.debug('project error', message_info, extra_data)
-        await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeError', message_info, extra_data)
-        await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeError', message_info, extra_data)
+        if (!query.is_admin_page) {
+          await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', null, 'videoMakeError', message_info, extra_data)
+        } else {
+          await AdminSocketService.onGeneralAdminNotice('studioInfoChange', null, 'videoMakeError', message_info, extra_data)
+        }
       }
       is_success = false
     } else {
@@ -451,8 +460,11 @@ const StudioServiceClass = class {
         project_seq: video_project._id,
         reload_studio_page: true
       }
-      await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
-      await AdminSocketService.onGeneralAdminNotice('studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+      if (!query.is_admin_page) {
+        await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+      } else {
+        await AdminSocketService.onGeneralAdminNotice('studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+      }
       if (ServiceConfig.isVacs()) {
         VacsService.updateStorageInfo()
       }

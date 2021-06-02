@@ -128,7 +128,11 @@ routes.post('/make/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), W
   req.accepts('application/json')
   const { group_member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const project_seq = getProjectSeq(req)
-  const result = await StudioService.makeProjectVideo(group_member_info, project_seq)
+  let admin_page = false
+  if (req.headers.referer.indexOf('admin') !== -1) {
+    admin_page = true
+  }
+  const result = await StudioService.makeProjectVideo(group_member_info, project_seq, admin_page)
   const output = new StdObject()
   output.add('result', result)
   output.add('status', 'R')
