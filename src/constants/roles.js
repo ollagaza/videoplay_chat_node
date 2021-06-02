@@ -1,7 +1,8 @@
 const NONE = -1
 const ALL = 0
 const BOX = 1
-const API = 2
+const AGENT = 2
+const API = 3
 const MEMBER = 5
 const MANAGER = 6
 const ADMIN = 99
@@ -11,6 +12,7 @@ export default {
   'ALL': ALL,
   'API': API,
   'BOX': BOX,
+  'AGENT': AGENT,
   'MEMBER': MEMBER,
   'MANAGER': MANAGER,
   'ADMIN': ADMIN,

@@ -237,9 +237,9 @@ const SyncServiceClass = class {
       socket_message.message = `'${operation_info.operation_name}' 이미지 업로드가 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
     } else {
       if (operation_info.export_from_project) {
-        alarm_message = `'${operation_info.operation_name}' 동영상 내보내기가 완료되었습니다.`;
-        socket_message.title = '동영상 내보내기가 완료되었습니다..';
-        socket_message.message = `'${operation_info.operation_name}' 동영상 내보내기가 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
+        alarm_message = `'${operation_info.operation_name}' 드라이브로 내보내기가 완료되었습니다.`;
+        socket_message.title = '드라이브로 내보내기가 완료되었습니다.';
+        socket_message.message = `'${operation_info.operation_name}' 드라이브로 내보내기가 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`;
       } else {
         alarm_message = `'${operation_info.operation_name}'수술 동영상 인코딩이 완료되었습니다.`;
         socket_message.title = '동영상 인코딩이 완료되었습니다.';
