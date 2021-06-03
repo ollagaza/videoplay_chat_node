@@ -411,7 +411,7 @@ const StudioServiceClass = class {
           message: `'${video_name}'비디오 제작이 시작되었습니다.`,
         }
         if (export_to_drive) {
-          message_info.message = `드라이브로 내보내기가 시작되었습니다.<br/>제목: '${video_name}'`;
+          message_info.message = `드라이브로 내보내기가 시작되었습니다.<br/>제목: '${video_name}'`
         }
         const socket_extra_data = {
           project_seq: video_project._id,
@@ -492,19 +492,29 @@ const StudioServiceClass = class {
     await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
     await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
 
-    const directory_file_size = await Util.getDirectoryFileSize(video_directory)
-    if (ServiceConfig.isVacs()) {
-      process_info.download_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
-      process_info.stream_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
-      process_info.total_size = directory_file_size
+    let request_status = 'Y'
+    if (export_to_drive) {
+      await Util.deleteFile(video_directory + process_info.video_file_name)
+      process_info.download_url = null
+      process_info.stream_url = null
+      process_info.total_size = 0
+      process_info.video_file_size = 0
+      request_status = 'N'
     } else {
-      process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name
-      process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8'
-      process_info.total_size = directory_file_size + video_file_size
+      const directory_file_size = await Util.getDirectoryFileSize(video_directory)
+      if (ServiceConfig.isVacs()) {
+        process_info.download_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
+        process_info.stream_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
+        process_info.total_size = directory_file_size
+      } else {
+        process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name
+        process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8'
+        process_info.total_size = directory_file_size + video_file_size
+      }
+      process_info.video_file_size = video_file_size
     }
-    process_info.video_file_size = video_file_size
 
-    const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'Y', 100, process_info)
+    const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, request_status, 100, process_info)
     if (result && result.ok === 1) {
       update_result = true
     } else {
@@ -567,10 +577,10 @@ const StudioServiceClass = class {
   exportToDrive = async (project_seq, member_info, group_member_info) => {
     const video_project_info = await this.getVideoProjectInfo(project_seq)
     if (!video_project_info) {
-      throw new StdObject(501, '프로젝트 정보를 찾을 수 없습니다.', 400)
+      throw new StdObject(941, '프로젝트 정보를 찾을 수 없습니다.', 400)
     }
     if (video_project_info.request_status !== 'Y') {
-      throw new StdObject(502, '제작이 완료된 동영상만 내보낼 수 있습니다.', 400)
+      throw new StdObject(942, '제작이 완료된 동영상만 내보낼 수 있습니다.', 400)
     }
 
     const operation_info = await this.createOperationInfo(video_project_info, member_info, group_member_info)
@@ -634,7 +644,7 @@ const StudioServiceClass = class {
       operation_info = (await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq, false)).operation_info
     } catch (error) {
       log.error(this.log_prefix, '[exportToDrive]', 'create operation error', operation_body, error)
-      throw new StdObject(503, '수술정보를 생성할 수 없습니다.', 400)
+      throw new StdObject(943, '수술정보를 생성할 수 없습니다.', 400)
     }
     return operation_info
   }
