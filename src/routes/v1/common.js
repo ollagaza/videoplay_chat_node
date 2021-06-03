@@ -19,6 +19,11 @@ routes.post('/newcontentid', Wrap(async (req, res) => {
   output.add('contentid', Util.getContentId())
   res.json(output)
 }))
+routes.get('/newcontentid', Wrap(async (req, res) => {
+  const output = new StdObject()
+  output.add('contentid', Util.getContentId())
+  res.json(output)
+}))
 
 routes.get('/last_update', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { group_seq } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
