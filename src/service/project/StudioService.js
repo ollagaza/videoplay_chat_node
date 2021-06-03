@@ -473,6 +473,7 @@ const StudioServiceClass = class {
       await VideoProjectModel.updateRequestStatus(project_seq, 'E', 100)
       throw new StdObject(932, '동영상 파일이 없습니다.', 400)
     }
+    video_project.video_file_name = process_info.video_file_name
 
     const video_file_size = await Util.getFileSize(video_file_path)
     if (export_to_drive) {
