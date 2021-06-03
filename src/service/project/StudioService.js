@@ -622,7 +622,8 @@ const StudioServiceClass = class {
       operation_date: operation_date,
       hour: hour,
       minute: minute,
-      folder_seq: null
+      folder_seq: null,
+      analysis_status: 'R'
     }
     if (extra_data) {
       if (Util.trim(extra_data.operation_name)) {
@@ -640,7 +641,7 @@ const StudioServiceClass = class {
 
     let operation_info = null
     try {
-      const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, operation_body, 'R', true)
+      const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, operation_body, 'Y', true)
       const operation_seq = create_operation_result.get('operation_seq')
       operation_info = (await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq, false)).operation_info
     } catch (error) {

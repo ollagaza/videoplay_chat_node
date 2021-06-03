@@ -39,7 +39,7 @@ export default class OperationInfo extends JsonWrapper {
   getByRequestBody = (body) => {
     this.setKeys([
       'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq'
-      , 'patient_age', 'patient_sex', 'hour', 'minute', 'media_path', 'mode'
+      , 'patient_age', 'patient_sex', 'hour', 'minute', 'media_path', 'mode', 'analysis_status'
     ])
 
     this.setIgnoreEmpty(true)
