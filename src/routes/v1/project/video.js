@@ -140,12 +140,6 @@ routes.post('/make/process', Wrap(async (req, res) => {
   res.send(is_success ? 'ok' : 'fail')
 }))
 
-routes.get('/test/:project_seq(\\d+)', Wrap(async (req, res) => {
-  const project_seq = getProjectSeq(req)
-  const is_success = await StudioService.requestMakeProject(project_seq)
-  res.send(is_success ? 'ok' : 'fail')
-}))
-
 routes.post('/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const operation_seq_list = req.body.operation_seq_list
