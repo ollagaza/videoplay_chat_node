@@ -1,5 +1,5 @@
 {
-  "version": 0.4,
+  "version": 0.6,
   "kor": [
     {
       "code": "00",
@@ -13,6 +13,12 @@
       "text": "내과 통합",
       "icon": "/img/renewal/memuicon/internal.png",
       "sub": [
+        {
+          "code": "01",
+          "pCode": "00",
+          "text": "내과",
+          "icon": "/img/renewal/memuicon/internal.png"
+        },
         {
           "code": "01",
           "pCode": "01",
@@ -80,6 +86,12 @@
       "sub": [
         {
           "code": "04",
+          "pCode": "00",
+          "text": "외과",
+          "icon": "/img/renewal/memuicon/operation.png"
+        },
+        {
+          "code": "04",
           "pCode": "01",
           "text": "간담도췌외과"
         },
@@ -135,6 +147,12 @@
       "sub": [
         {
           "code": "07",
+          "pCode": "00",
+          "text": "흉부외과",
+          "icon": "/img/renewal/memuicon/thoracic.png"
+        },
+        {
+          "code": "07",
           "pCode": "01",
           "text": "성인심혈관외과"
         },
@@ -169,6 +187,12 @@
       "text": "소아청소년과",
       "icon": "/img/renewal/memuicon/pediatric.png",
       "sub": [
+        {
+          "code": "11",
+          "pCode": "00",
+          "text": "소아청소년과",
+          "icon": "/img/renewal/memuicon/pediatric.png"
+        },
         {
           "code": "11",
           "pCode": "01",
@@ -405,6 +429,12 @@
       "sub": [
         {
           "code": "01",
+          "pCode": "00",
+          "text": "Internal medicine",
+          "icon": "/img/renewal/memuicon/internal.png"
+        },
+        {
+          "code": "01",
           "pCode": "01",
           "text": "소화기내과"
         },
@@ -470,6 +500,12 @@
       "sub": [
         {
           "code": "04",
+          "pCode": "00",
+          "text": "General surgery",
+          "icon": "/img/renewal/memuicon/operation.png"
+        },
+        {
+          "code": "04",
           "pCode": "01",
           "text": "간담도췌외과"
         },
@@ -525,6 +561,12 @@
       "sub": [
         {
           "code": "07",
+          "pCode": "00",
+          "text": "Cardiothoracic surgery",
+          "icon": "/img/renewal/memuicon/thoracic.png"
+        },
+        {
+          "code": "07",
           "pCode": "01",
           "text": "성인심혈관외과"
         },
@@ -559,6 +601,12 @@
       "text": "Pediatrics",
       "icon": "/img/renewal/memuicon/pediatric.png",
       "sub": [
+        {
+          "code": "11",
+          "pCode": "00",
+          "text": "Pediatrics",
+          "icon": "/img/renewal/memuicon/pediatric.png"
+        },
         {
           "code": "11",
           "pCode": "01",
