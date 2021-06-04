@@ -2,30 +2,24 @@ import { Router } from 'express'
 import Wrap from '../../utils/express-async'
 import Auth from '../../middlewares/auth.middleware'
 import StdObject from '../../wrapper/std-object'
+import Util from '../../utils/Util'
+import AuthService from '../../service/member/AuthService'
 
 const routes = Router()
 
 routes.post('/', Wrap(async (req, res) => {
   req.accepts('application/json')
 
-  const machine_id = req.headers['machine-id']
-  if (!machine_id) {
-    const output = new StdObject(-1, '잘못된 요청입니다.', 400)
+  const request_body = req.body
+  const agent_id = req.headers['agent-id']
+  if (!agent_id || Util.isEmpty(request_body)) {
+    const output = new StdObject(2001, '잘못된 요청입니다.', 400)
     return res.json(output)
   }
+  const member_info = AuthService.login(null, req)
+  member_info.agent_id = agent_id
 
-  // const member_model = new MemberModel({ database });
-  // const member_info = await member_model.findOne({"user_id": user_id});
-  //
-  // if (member_info == null || member_info.user_id !== user_id) {
-  //   throw new StdObject(-1, "등록된 회원 정보가 없습니다.", 400);
-  // }
-  const machine_info = {}
-  machine_info.seq = 1
-  machine_info.group_seq = 0
-  machine_info.machine_id = machine_id
-
-  const output = await Auth.getMachineTokenResult(machine_info)
+  const output = await Auth.getAgentTokenResult(member_info)
   return res.json(output)
 }))
 
