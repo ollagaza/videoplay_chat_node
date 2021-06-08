@@ -11,7 +11,8 @@ import OperationInfoAndData from "../../../wrapper/operation/OperationInfoAndDat
 const join_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
-  'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
+  'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count',
+  'operation_data.video_download', 'operation_data.file_download'
 ]
 const join_trash_select = _.concat(join_select, ['delete_member.user_name as delete_user_name', 'delete_member.user_nickname as delete_user_nickname'])
 const join_admin_select = _.concat(join_select, ['group_info.group_name'])
@@ -19,7 +20,8 @@ const join_search_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count',
-  'operation_folder.access_type'
+  'operation_folder.access_type',
+  'operation_data.video_download', 'operation_data.file_download'
 ]
 
 export default class OperationModel extends MySQLModel {
