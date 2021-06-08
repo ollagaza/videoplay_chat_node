@@ -4,6 +4,7 @@ import Auth from '../../middlewares/auth.middleware'
 import StdObject from '../../wrapper/std-object'
 import Util from '../../utils/Util'
 import AuthService from '../../service/member/AuthService'
+import {UserDataModel} from "../../database/mongodb/UserData";
 
 const routes = Router()
 
@@ -16,10 +17,12 @@ routes.post('/', Wrap(async (req, res) => {
     const output = new StdObject(2001, '잘못된 요청입니다.', 400)
     return res.json(output)
   }
-  const member_info = AuthService.login(null, req)
+  const member_info = await AuthService.login(null, req)
   member_info.agent_id = agent_id
 
   const output = await Auth.getAgentTokenResult(member_info)
+  const group_seq = (await UserDataModel.findByMemberSeq(member_info.seq)).get('group_seq')
+  output.add('group_seq', group_seq)
   return res.json(output)
 }))
 
