@@ -164,6 +164,7 @@ const SyncServiceClass = class {
       if (ServiceConfig.isVacs()) {
         // vacs에서는 원본 보존
         // await Util.deleteDirectory(directory_info.origin)
+        await OperationService.updateStatus(null, [operation_seq], 'Y')
       } else {
         try {
           const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq })
