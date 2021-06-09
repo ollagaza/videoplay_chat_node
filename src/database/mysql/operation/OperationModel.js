@@ -11,8 +11,7 @@ import OperationInfoAndData from "../../../wrapper/operation/OperationInfoAndDat
 const join_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
-  'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count',
-  'operation_data.video_download', 'operation_data.file_download'
+  'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count'
 ]
 const join_trash_select = _.concat(join_select, ['delete_member.user_name as delete_user_name', 'delete_member.user_nickname as delete_user_nickname'])
 const join_admin_select = _.concat(join_select, ['group_info.group_name'])
@@ -20,8 +19,7 @@ const join_search_select = [
   'operation.*', 'member.user_id', 'member.user_name', 'member.user_nickname', 'operation_storage.seq as storage_seq',
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count', 'operation_storage.trans_video_count',
-  'operation_folder.access_type',
-  'operation_data.video_download', 'operation_data.file_download'
+  'operation_folder.access_type'
 ]
 
 export default class OperationModel extends MySQLModel {
@@ -60,13 +58,16 @@ export default class OperationModel extends MySQLModel {
     return await this.getOperation(where, import_media_info)
   }
 
-  getOperationInfoListPage = async (group_seq, member_seq, group_grade_number = null, is_group_admin = false, page_params = {}, filter_params = {}, order_params = {}, is_admin = false, operation_data_seq_list = []) => {
+  getOperationInfoListPage = async (group_seq, member_seq, group_grade_number = null, is_group_admin = false, page_params = {}, filter_params = {}, order_params = {}, is_admin = false, operation_data_seq_list = [], is_agent = false) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
 
     const is_trash = filter_params.menu === 'trash'
     const select_fields = is_admin ? join_admin_select : (is_trash ? join_trash_select : join_select)
+    if (is_agent) {
+      select_fields.push('operation_data.video_download', 'operation_data.file_download')
+    }
     const query = this.database.select(select_fields)
     query.column(['operation_data.total_time', 'operation_data.thumbnail'])
     query.from('operation')

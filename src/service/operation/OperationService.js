@@ -514,7 +514,7 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListByRequest = async (database, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request, is_admin = false) => {
+  getOperationListByRequest = async (database, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request, is_admin = false, is_agent = false) => {
     const request_query = request.query ? request.query : {}
     const page_params = {}
     page_params.page = request_query.page
@@ -560,7 +560,7 @@ const OperationServiceClass = class {
     }
 
     const operation_model = this.getOperationModel(database)
-    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params, is_admin, operation_data_seq_list)
+    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params, is_admin, operation_data_seq_list, is_agent)
   }
 
   setMediaInfo = async (database, operation_info) => {
