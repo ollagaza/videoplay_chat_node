@@ -136,9 +136,9 @@ routes.post('/make/:project_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), W
 }))
 
 routes.post('/make/process', Wrap(async (req, res) => {
-  // const is_success = await StudioService.updateMakeProcess(req)
-  // res.send(is_success ? 'ok' : 'fail')
-  res.send('ok')
+  const is_success = await StudioService.updateMakeProcess(req)
+  res.send(is_success ? 'ok' : 'fail')
+  // res.send('ok')
 }))
 
 routes.post('/operation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
