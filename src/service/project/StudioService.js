@@ -489,6 +489,7 @@ const StudioServiceClass = class {
 
     await Util.deleteFile(video_directory + process_info.smil_file_name)
     await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
+    await Util.deleteFile(video_directory + process_info.video_file_name + '_audio.flt')
     await Util.deleteFile(video_directory + 'video_project.xml')
     await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
     await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
