@@ -369,7 +369,8 @@ const StudioServiceClass = class {
     } else if (process_info.status === 'process') {
       return this.onMakeProgress(video_project, process_info, is_admin_page)
     } else if (process_info.status === 'complete') {
-      return this.onMakeComplete(video_project, content_id, process_info, is_admin_page)
+      this.onMakeComplete(video_project, content_id, process_info, is_admin_page)
+      return 'ok'
     } else if (process_info.status === 'error') {
       log.debug('project error')
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'E')
