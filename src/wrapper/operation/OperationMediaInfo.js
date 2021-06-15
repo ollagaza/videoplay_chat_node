@@ -30,7 +30,7 @@ export default class OperationMediaInfo extends JsonWrapper {
       this.thumbnail_url = ServiceConfig.get('static_storage_prefix') + this.thumbnail
 
       const media_video = operation_info.origin_seq ? directory_info.media_video_origin : directory_info.media_video
-      logger.debug('[OperationMediaInfo]', 'media_video', media_video, directory_info.media_video, directory_info.media_video_origin)
+      // logger.debug('[OperationMediaInfo]', 'media_video', media_video, directory_info.media_video, directory_info.media_video_origin)
       if (ServiceConfig.isVacs()) {
         this.streaming_url = ServiceConfig.get('static_storage_prefix') + media_video + this.video_file_name
       } else {
