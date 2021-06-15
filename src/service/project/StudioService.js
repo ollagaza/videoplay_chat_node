@@ -369,7 +369,8 @@ const StudioServiceClass = class {
     } else if (process_info.status === 'process') {
       return this.onMakeProgress(video_project, process_info, is_admin_page)
     } else if (process_info.status === 'complete') {
-      return this.onMakeComplete(video_project, content_id, process_info, is_admin_page)
+      this.onMakeComplete(video_project, content_id, process_info, is_admin_page)
+      return 'ok'
     } else if (process_info.status === 'error') {
       log.debug('project error')
       const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, 'E')
@@ -489,6 +490,7 @@ const StudioServiceClass = class {
 
     await Util.deleteFile(video_directory + process_info.smil_file_name)
     await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
+    await Util.deleteFile(video_directory + process_info.video_file_name + '_audio.flt')
     await Util.deleteFile(video_directory + 'video_project.xml')
     await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
     await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)

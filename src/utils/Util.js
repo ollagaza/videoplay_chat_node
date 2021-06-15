@@ -764,7 +764,7 @@ const getImageScaling = async (origin_path, scaling_path = null, scaling_type = 
   return executeFFmpeg(args)
 }
 
-const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1, media_info = null) => {
+const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, height = -1, media_info = null, is_rotate = false) => {
   const args = []
   args.push('-y')
   if (second > 0) {
@@ -793,6 +793,11 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
 
     const w_ratio = dimension.width / width
     const h_ratio = dimension.height / height
+    if (is_rotate) {
+      const temp = width
+      width = height
+      height = temp
+    }
     let crop_option
     if (w_ratio >= h_ratio) {
       crop_option = `crop=in_h*${width}/${height}:in_h`
@@ -802,7 +807,11 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
     const scale_option = `scale=${width}:${height}`
     // filter = `-filter:v "${crop_option},${scale_option}"`
     args.push('-filter:v')
-    args.push(`${crop_option},${scale_option}`)
+    if (is_rotate) {
+      args.push(`${crop_option},${scale_option},transpose=dir=1`)
+    } else {
+      args.push(`${crop_option},${scale_option}`)
+    }
   }
   args.push('-an')
   args.push(resize_path)

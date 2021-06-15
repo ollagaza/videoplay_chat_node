@@ -173,14 +173,19 @@ const OperationFileServiceClass = class {
     if (media_info.media_type === Constants.VIDEO || media_info.media_type === Constants.IMAGE) {
       file_info.width = media_info.media_info.width
       file_info.height = media_info.media_info.height
+      const is_rotate = await Util.isImageRotate(upload_file_info.path)
+      if (is_rotate) {
+        file_info.width = media_info.media_info.height
+        file_info.height = media_info.media_info.width
+      }
 
       const upload_file_path = path.parse(upload_file_info.path)
       const ext = upload_file_path.ext === '.png' ? '.png' : '.jpg';
       const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
       const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
-      const thumb_file_name = `${upload_file_path.name}_thumb${upload_file_path.ext}`
+      const thumb_file_name = `${upload_file_path.name}_thumb${ext}`
       const thumbnail_image_path = `${upload_file_path.dir}/${thumb_file_name}`
-      const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height, media_info)
+      const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height, media_info, is_rotate)
 
       if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
         file_info.thumbnail_path = directory_info.media_file + thumb_file_name
