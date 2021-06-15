@@ -10,6 +10,7 @@ const default_key_list = [
   , 'group_name', 'hospital', 'title', 'view_count', 'total_time', 'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html'
   , 'type', 'is_complete', 'mento_group_seq', 'is_mento_complete', 'is_open_refer_file', 'is_open_video'
   , 'is_delete_by_admin', 'delete_member_seq', 'delete_user_name', 'delete_user_nickname', 'is_video_download', 'is_file_download'
+  , 'download_file_size', 'download_file_count'
 ]
 
 export default class OperationInfoAndData extends JsonWrapper {
