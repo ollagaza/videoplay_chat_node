@@ -33,6 +33,7 @@ export default class OperationMediaInfo extends JsonWrapper {
       // logger.debug('[OperationMediaInfo]', 'media_video', media_video, directory_info.media_video, directory_info.media_video_origin)
       if (ServiceConfig.isVacs()) {
         this.streaming_url = ServiceConfig.get('static_storage_prefix') + media_video + this.video_file_name
+        this.download_url = ServiceConfig.get('static_storage_prefix') + media_video + this.video_file_name
       } else {
         if (Util.isEmpty(this.stream_url)) {
           this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + media_video + proxy_file_name + '/master.m3u8'
@@ -41,6 +42,7 @@ export default class OperationMediaInfo extends JsonWrapper {
           this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + media_video + this.stream_url + '/master.m3u8'
           this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + media_video + this.stream_url + '/manifest.mpd'
         }
+        this.download_url = ServiceConfig.get('cdn_url') + media_video + this.video_file_name
       }
     }
   }

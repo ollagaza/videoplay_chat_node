@@ -13,75 +13,55 @@ import MemberService from '../../service/member/MemberService'
 
 const routes = Router()
 
-const checkMachine = async (request) => {
+const checkToken = async (request) => {
   const token_info = request.token_info
-  const machine_id = request.headers['machine-id']
-  if (token_info.getMachineId() !== machine_id) {
-    throw new StdObject(-1, '잘못된 요청입니다.', 403, request.headers)
+  const agent_id = request.headers['agent-id']
+  if (token_info.getAgentId() !== agent_id) {
+    throw new StdObject(2001, '잘못된 요청입니다.', 403, request.headers)
   }
-}
-
-const getUserTokenInfo = async (request) => {
   const user_token = await Auth.verifyTokenByString(request.headers['user-token'])
   if (user_token.error !== 0) {
     throw user_token
   }
-  return user_token.get('token_info')
+  const operation_seq = request.params.operation_seq
+  return { token_info, user_token_info: user_token.get('token_info'), operation_seq }
 }
 
 routes.post('/start', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
   req.accepts('application/json')
-  await checkMachine(req)
-  const token_info = req.token_info
-  const user_token_info = await getUserTokenInfo(req)
+  const { token_info, user_token_info } = await checkToken(req)
 
   const member_seq = user_token_info.getId()
   const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
   const group_seq = user_token_info.getGroupSeq()
   const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
   if (group_member_info.isEmpty()) {
-    throw new StdObject(-2, '등록된 회원이 아닙니다.', 403)
+    throw new StdObject(2002, '등록된 회원이 아닙니다.', 403)
   }
 
-  const machine_id = token_info.getMachineId()
+  const agent_id = token_info.getAgentId()
   const request_body = req.body ? req.body : {}
 
-  log.d(req, `[AGENT 01] 수술 시작`, machine_id, request_body, group_seq, member_seq)
+  log.d(req, `[AGENT 01] 수술 시작`, agent_id, request_body, group_seq, member_seq)
 
   const current_date = Util.currentFormattedDate('yyyy-mm-dd HH:MM:ss')
-  const has_operation_name = !!request_body.operation_name
-  let operation_name = null;
-  if (has_operation_name) {
-    const name_list = request_body.operation_name.split('_')
-    if (name_list.length >= 4) {
-      const doctor_name = Util.trim(name_list[0])
-      const pid = Util.trim(name_list[1])
-      const date = Util.trim(name_list[2]).replace(/([\d]{4})([\d]{2})([\d]{2})/g, '$1.$2.$3')
-      const time = Util.trim(name_list[3]).replace(/([\d]{2})([\d]{2})([\d]{2})/g, '$1:$2:$3')
-
-      operation_name = ''
-      if (pid && pid !== '0000') {
-        operation_name = pid + ' '
-      }
-      operation_name += `${doctor_name} ${date} ${time} [${machine_id}]`
-    } else {
-      operation_name = request_body.operation_name
-    }
-  }
+  let operation_name = Util.trim(request_body.operation_name)
   if (!operation_name) {
-    operation_name = `${current_date} [${machine_id}]`
+    operation_name = `${current_date}`
   }
 
-  const operation_code = `${machine_id}_${current_date}`
+  const operation_code = `${agent_id}_${current_date}`
   const operation_date = request_body.operation_date ? request_body.operation_date : current_date.substr(0, 10)
   const hour = request_body.hour ? request_body.hour : current_date.substr(11, 2)
   const minute = request_body.minute ? request_body.minute : current_date.substr(14, 2)
+  const folder_seq = request_body.folder_seq ? request_body.folder_seq : null
   const operation_info = {
-    'operation_code': operation_code,
-    'operation_name': operation_name,
-    'operation_date': operation_date,
-    'hour': hour,
-    'minute': minute,
+    operation_code,
+    operation_name,
+    operation_date,
+    hour,
+    minute,
+    folder_seq
   }
 
   const operation_body = {
@@ -99,10 +79,8 @@ routes.post('/start', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) =>
   res.json(output)
 }))
 
-routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
-  await checkMachine(req)
-
-  const operation_seq = req.params.operation_seq
+routes.post('/:operation_seq(\\d+)/upload/video', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
+  const { operation_seq } = await checkToken(req)
   const file_type = 'video'
   log.d(req, `[AGENT 03] 수술 동영상 업로드 시작 (id: ${operation_seq})`, operation_seq)
 
@@ -119,14 +97,11 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.AGENT), Wr
 }))
 
 routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
-  await checkMachine(req)
-  const operation_seq = req.params.operation_seq
+  const { user_token_info, operation_seq } = await checkToken(req)
 
   log.d(req, `[AGENT 05] 수술 동영상 업로드 완료 (id: ${operation_seq})`, operation_seq)
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
 
-
-  const user_token_info = await getUserTokenInfo(req)
   log.d(req, '[user_token_info]', user_token_info)
   const member_seq = user_token_info.getId()
   const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
@@ -148,9 +123,7 @@ routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.AGENT), Wrap(a
 }))
 
 routes.post('/:operation_seq(\\d+)/file/one', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
-  await checkMachine(req)
-
-  const operation_seq = req.params.operation_seq
+  const { operation_seq } = await checkToken(req)
 
   log.d(req, `[AGENT 09] 첨부파일 업로드 시작 (id: ${operation_seq})`, operation_seq)
 
@@ -168,9 +141,7 @@ routes.post('/:operation_seq(\\d+)/file/one', Auth.isAuthenticated(Role.AGENT), 
 }))
 
 routes.post('/:operation_seq(\\d+)/file/zip(/:encoding)?', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
-  await checkMachine(req)
-
-  const operation_seq = req.params.operation_seq
+  const { operation_seq } = await checkToken(req)
   let encoding = req.params.encoding
   if (!encoding) encoding = 'utf-8'
   log.d(req, operation_seq, encoding) // outputs zip entries information
@@ -190,6 +161,16 @@ routes.post('/:operation_seq(\\d+)/file/zip(/:encoding)?', Auth.isAuthenticated(
   OperationService.uploadOperationFileByZip(operation_info, temp_directory, zip_file_path, encoding, file_type)
 
   const output = new StdObject()
+  res.json(output)
+}))
+
+routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  // const { token_info, user_token_info, operation_seq } = await checkToken(req)
+
+  const operation_seq = req.params.operation_seq
+  const file_list = await OperationService.getAgentFileList(operation_seq, req.query)
+  const output = new StdObject()
+  output.add('file_list', file_list)
   res.json(output)
 }))
 

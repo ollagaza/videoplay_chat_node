@@ -1269,6 +1269,72 @@ const OperationServiceClass = class {
     }
     return true
   }
+
+  getAgentFileList = async (operation_seq, query) => {
+    const { operation_info } = await this.getOperationInfoNoAuth(null, operation_seq)
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(2011, '수술정보가 존재하지 않습니다.')
+    }
+    const import_main_files = Util.isTrue(query.main)
+    const import_refer_files = Util.isTrue(query.refer)
+    const mode = operation_info.mode
+    const file_list = []
+    if (import_main_files) {
+      if (mode === this.MODE_FILE) {
+        const file_list_query = {
+          last_seq: 0,
+          limit: 1000
+        }
+        while (true) {
+          const operation_file_list = await OperationFileService.getOperationFileList(null, operation_seq, true, file_list_query)
+          const list_count = operation_file_list ? operation_file_list.length : 0
+          if (list_count <= 0) {
+            break;
+          }
+          for (let i = 0; i < list_count; i++) {
+            const file_info = operation_file_list[i]
+            file_list.push({
+              type: 'image',
+              seq: file_info.seq,
+              directory: file_info.directory,
+              file_name: file_info.file_name,
+              download_url: file_info.download_url,
+              file_size: file_info.file_size
+            })
+          }
+          file_list_query.last_seq = operation_file_list[list_count - 1].seq
+        }
+      } else {
+        const media_info = operation_info.media_info
+        file_list.push({
+          type: 'video',
+          seq: media_info.seq,
+          directory: null,
+          file_name: media_info.video_file_name,
+          download_url: media_info.download_url,
+          file_size: operation_info.trans_video_size
+        })
+      }
+    }
+    if (import_refer_files) {
+      const refer_file_list = await OperationFileService.getReferFileList(null, operation_info.storage_seq, true)
+      if (refer_file_list && refer_file_list.length > 0) {
+        for (let i = 0; i < refer_file_list.length; i++) {
+          const file_info = refer_file_list[i]
+          file_list.push({
+            type: 'refer_file',
+            seq: file_info.seq,
+            directory: null,
+            file_name: file_info.file_name,
+            download_url: file_info.download_url,
+            file_size: file_info.file_size
+          })
+        }
+      }
+    }
+
+    return file_list
+  }
 }
 
 const OperationService = new OperationServiceClass()
