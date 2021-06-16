@@ -56,6 +56,7 @@ const StudioServiceClass = class {
     fields.project_path.require = true
     fields.total_time.require = true
     fields.sequence_list.require = true
+    fields.operation_hisotry_list.require = true
 
     const payload = Util.getPayload(data, fields)
 
@@ -71,6 +72,7 @@ const StudioServiceClass = class {
     fields.sequence_list.require = true
     fields.operation_seq_list.require = true
     fields.sequence_list.require = true
+    fields.operation_hisotry_list.require = true
 
     const payload = Util.getPayload(data, fields)
 
