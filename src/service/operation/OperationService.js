@@ -32,6 +32,7 @@ import GroupAlarmService from '../group/GroupAlarmService'
 import SyncService from '../sync/SyncService'
 import Constants from '../../constants/constants'
 import HashtagService from './HashtagService'
+import TranscoderSyncService from '../sync/TranscoderSyncService'
 
 const OperationServiceClass = class {
   constructor () {
@@ -643,7 +644,7 @@ const OperationServiceClass = class {
     return video_index_info.index_list ? video_index_info.index_list : []
   }
 
-  uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null) => {
+  uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null, file_name = null) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     let media_directory
     if (file_type === OperationFileService.TYPE_REFER) {
@@ -664,7 +665,7 @@ const OperationServiceClass = class {
     } else if (file_type === OperationFileService.TYPE_FILE) {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
     } else {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory)
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, file_name)
     }
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
@@ -1268,6 +1269,10 @@ const OperationServiceClass = class {
       throw new StdObject(3, '상위폴더에 접근 권한이 없습니다.', 400)
     }
     return true
+  }
+
+  onAgentVideoUploadComplete = async (operation_info) => {
+    await TranscoderSyncService.updateTranscodingComplete(operation_info, Constants.AGENT_VIDEO_FILE_NAME, null, null)
   }
 
   getAgentFileList = async (operation_seq, query) => {
