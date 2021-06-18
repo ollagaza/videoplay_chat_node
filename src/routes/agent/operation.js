@@ -155,9 +155,8 @@ routes.delete('/:operation_seq(\\d+)', Auth.isAuthenticated(Role.AGENT), Wrap(as
   const { operation_seq, member_seq } = await checkToken(req)
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
 
-  const file_list = await OperationService.updateStatusTrash(null, operation_info.group_seq, {}, false, false, member_seq)
+  await OperationService.updateStatusTrash(null, operation_info.group_seq, {}, false, false, member_seq)
   const output = new StdObject()
-  output.add('file_list', file_list)
   res.json(output)
 }))
 export default routes
