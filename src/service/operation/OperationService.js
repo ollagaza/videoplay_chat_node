@@ -1317,7 +1317,7 @@ const OperationServiceClass = class {
           directory: null,
           file_name: media_info.video_file_name,
           download_url: media_info.download_url,
-          file_size: operation_info.trans_video_size
+          file_size: operation_info.origin_video_size
         })
       }
     }
