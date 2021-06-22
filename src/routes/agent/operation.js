@@ -89,7 +89,7 @@ routes.post('/:operation_seq(\\d+)/upload/video', Auth.isAuthenticated(Role.AGEN
 
   log.d(req, `[AGENT 04] 수술 동영상 업로드 종료 (id: ${operation_seq})`, operation_seq, upload_result)
 
-  await OperationService.onUploadComplete(operation_info, true)
+  await OperationService.onUploadComplete(operation_info, false)
   log.d(req, `[AGENT 06] 수술 업로드 완료 요청 (id: ${operation_seq})`, operation_seq)
 
   await OperationService.onAgentVideoUploadComplete(operation_info)
@@ -100,25 +100,24 @@ routes.post('/:operation_seq(\\d+)/upload/video', Auth.isAuthenticated(Role.AGEN
   res.json(output)
 }))
 
-routes.post('/:operation_seq(\\d+)/file/one', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/upload/refer/one', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
   const { operation_seq } = await checkToken(req)
 
-  log.d(req, `[AGENT 09] 첨부파일 업로드 시작 (id: ${operation_seq})`, operation_seq)
+  log.d(req, `[AGENT 21] 첨부파일 업로드 시작 (id: ${operation_seq})`, operation_seq)
 
   const file_type = 'refer'
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
-  const upload_result = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
+  const refer_file_seq = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
+  await OperationService.updateStorageSize(operation_info)
 
-  log.d(req, `[AGENT 10] 첨부파일 업로드 완료 (id: ${operation_seq})`, operation_seq, upload_result)
+  log.d(req, `[AGENT 22] 첨부파일 업로드 완료 (id: ${operation_seq})`, operation_seq, refer_file_seq)
 
   const output = new StdObject()
-  output.add('upload_seq', upload_result.upload_seq)
-  output.add('url', upload_result.file_url)
-  output.add('file_path', upload_result.file_path)
+  output.add('refer_file_seq', refer_file_seq)
   res.json(output)
 }))
 
-routes.post('/:operation_seq(\\d+)/file/zip(/:encoding)?', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
+routes.post('/:operation_seq(\\d+)/upload/refer/zip(/:encoding)?', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
   const { operation_seq } = await checkToken(req)
   let encoding = req.params.encoding
   if (!encoding) encoding = 'utf-8'

@@ -1315,7 +1315,7 @@ const OperationServiceClass = class {
           type: 'video',
           seq: media_info.seq,
           directory: null,
-          file_name: media_info.video_file_name,
+          file_name: `${operation_info.operation_name}.mp4`,
           download_url: media_info.download_url,
           file_size: operation_info.origin_video_size
         })
