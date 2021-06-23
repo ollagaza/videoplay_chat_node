@@ -81,7 +81,7 @@ const MemberServiceClass = class {
 
   getMemberStateError = (member_info) => {
     const output = new StdObject()
-    if (this.isActiveMember(member_info)) {
+    if (!this.isActiveMember(member_info)) {
       output.error = -1
       output.message = '등록된 회원이 아닙니다.'
       output.httpStatusCode = 403
