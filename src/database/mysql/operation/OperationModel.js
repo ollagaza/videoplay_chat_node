@@ -80,7 +80,7 @@ export default class OperationModel extends MySQLModel {
         query.joinRaw('LEFT OUTER JOIN `member` AS delete_member ON delete_member.seq = operation.delete_member_seq')
       }
       query.where('operation.group_seq', group_seq)
-      if (!is_trash) {
+      if (!is_trash && !is_group_admin) {
         query.where(
           this.database.raw(`
             IF (
