@@ -149,7 +149,7 @@ export default class OperationFolderModel extends MySQLModel {
     }
 
     const target_folder_parent_seq_update = this.database
-      .update({'parent_seq': folder_info.seq, 'access_type': folder_info.access_type})
+      .update({'parent_seq': folder_info.seq, 'access_type': folder_info.access_type, 'is_access_way': folder_info.is_access_way, 'access_list': folder_info.access_list})
       .from(this.table_name)
       .where('seq', target_folder_info.seq)
     await target_folder_parent_seq_update
