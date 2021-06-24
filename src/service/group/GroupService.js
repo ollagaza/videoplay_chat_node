@@ -899,7 +899,7 @@ const GroupServiceClass = class {
     return await group_info_model.getMemberGroupInfoAll(member_seq)
   }
 
-  getGroupListForBox = async (database, group_seq_list = null) => {
+  getGroupListForBox = async (database, machine_id, group_seq_list = null) => {
     const result_list = []
     const group_info_model = this.getGroupModel(database)
     const group_list = await group_info_model.getGroupListForBox(group_seq_list)
@@ -907,10 +907,11 @@ const GroupServiceClass = class {
       const group_info = group_list[i]
       const member_info = {
         'seq': group_info.member_seq,
-        'group_seq': group_info.group_seq
+        'group_seq': group_info.group_seq,
+        machine_id
       }
       const treat_code = group_info.treatcode ? JSON.parse(group_info.treatcode) : null
-      const token_result = await Auth.getTokenResult(null, member_info, Role.API, true)
+      const token_result = await Auth.getTokenResult(null, member_info, Role.BOX, true)
       result_list.push({
         'user_name': group_info.group_type === this.GROUP_TYPE_PERSONAL ? group_info.user_name : `${group_info.group_name}`,
         'user_id': group_info.user_id,

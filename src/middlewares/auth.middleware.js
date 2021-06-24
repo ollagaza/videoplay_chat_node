@@ -189,7 +189,6 @@ const getMachineTokenResult = async (machine_info) => {
   if (token_result != null && token_result.token != null) {
     output.add('token', `Bearer ${token_result.token}`)
     output.add('expire', token_result.expire)
-    output.add('group_seq', machine_info.group_seq)
   } else {
     output.setError(-1)
     output.setMessage('인증토큰 생성 실패')
