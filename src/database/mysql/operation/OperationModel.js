@@ -81,7 +81,26 @@ export default class OperationModel extends MySQLModel {
       }
       query.where('operation.group_seq', group_seq)
       if (!is_trash) {
-        query.where(this.database.raw('(CASE WHEN operation_folder.access_type IS NULL THEN 1 WHEN operation_folder.access_type = \'A\' THEN 99 WHEN operation_folder.access_type = \'O\' THEN 99 ELSE operation_folder.access_type END) <= ?', [group_grade_number]))
+        query.where(
+          this.database.raw(`
+            IF (
+              operation_folder.is_access_way IS NULL,
+                true,
+                IF (
+                  operation_folder.is_access_way = 0,
+                    (
+                      CASE
+                        WHEN operation_folder.access_type IS NULL THEN 1
+                        WHEN operation_folder.access_type = 'A' THEN 99
+                        WHEN operation_folder.access_type = 'O' THEN 99
+                        ELSE operation_folder.access_type
+                      END
+                    ) <= ?,
+                    JSON_EXTRACT(operation_folder.access_list, '$.read."?"') = true
+                )
+            )
+          `, [group_grade_number, group_grade_number])
+        )
       }
     } else if (filter_params.group_seq) {
       query.where('operation.group_seq', filter_params.group_seq)
