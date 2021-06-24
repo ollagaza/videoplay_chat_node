@@ -332,7 +332,13 @@ const OperationFolderServiceClass = class {
     for (let cnt = 0; cnt < group_folder_list.length; cnt++) {
       const folder_info = group_folder_list[cnt]
       const folder_grade = this.getFolderGradeNumber(folder_info.access_type)
-      const bool_grade = member_grade >= folder_grade
+      let bool_grade = false;
+      if (folder_info.is_access_way === 1) {
+        const access_list = JSON.parse(folder_info.access_list)
+        bool_grade = access_list.read[member_grade]
+      } else {
+        bool_grade = member_grade >= folder_grade
+      }
       folder_info.is_read = bool_grade
       folder_info.is_create = bool_grade
       folder_info.is_delete = bool_grade
