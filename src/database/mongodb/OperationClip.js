@@ -27,6 +27,7 @@ const getFieldInfos = () => {
     full_path: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
     directory: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
     file_name: { type: String, default: null, require: false, message: '파일 경로가 없습니다.' },
+    file_seq: { type: Number, default: null, require: false, message: '파일 경로가 없습니다.' },
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' }
   }
@@ -84,7 +85,10 @@ operation_clip_schema.statics.updateOperationClip = function (clip_id, clip_info
   }
   if (clip_info.start_time === 0 || clip_info.start_time) update.start_time = clip_info.start_time
   if (clip_info.end_time === 0 || clip_info.end_time) update.end_time = clip_info.end_time
-  if (clip_info.thumbnail_url) update.thumbnail_url = clip_info.thumbnail_url
+  if (clip_info.directory) update.directory = clip_info.directory
+  if (clip_info.file_name) update.file_name = clip_info.file_name
+  if (clip_info.file_seq) update.file_seq = clip_info.file_seq
+  if (clip_info.full_path) update.full_path = clip_info.full_path
   if (tag_list) {
     update.tag_list = tag_list
   }

@@ -332,8 +332,9 @@ const GroupChannelHomeServiceClass = class {
           })
         }
       })
-
-    await model.CreateGroupRecommendListCount(group_counting)
+    if (group_counting.length > 0) {
+      await model.CreateGroupRecommendListCount(group_counting)
+    }
   }
 
   GroupMemberDataCounting = async () => {

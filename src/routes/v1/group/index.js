@@ -492,7 +492,7 @@ routes.post('/savefolderandboard/:group_seq(\\d+)/:member_seq(\\d+)', Auth.isAut
               folder_info: folder_list[cnt],
             }
             await OperationFolderService.updateOperationFolder(transaction, folder_list[cnt].seq, folder_info)
-            await OperationFolderService.updateParentFolderAccessType(transaction, folder_list[cnt].seq, folder_list[cnt].access_type)
+            await OperationFolderService.updateParentFolderAccessType(transaction, folder_list[cnt].seq, folder_list[cnt].access_type, folder_list[cnt].is_access_way, folder_list[cnt].access_list)
           } else {
             const folder_info = {
               folder_info: folder_list[cnt],
