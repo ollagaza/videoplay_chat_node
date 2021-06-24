@@ -126,8 +126,8 @@ export default class OperationFolderModel extends MySQLModel {
     return this.update({ seq: folder_seq }, update_params)
   }
 
-  updateOperationFolderAccessType = async (folder_seq, access_type) => {
-    return this.database.update({access_type})
+  updateOperationFolderAccessType = async (folder_seq, access_type, is_access_way, access_list) => {
+    return this.database.update({access_type, is_access_way, access_list})
       .from(this.table_name)
       .where(this.database.raw(`JSON_CONTAINS(parent_folder_list, '${folder_seq}') = 1`))
   }

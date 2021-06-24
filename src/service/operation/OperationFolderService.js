@@ -135,6 +135,8 @@ const OperationFolderServiceClass = class {
       folder_info.parent_folder_list = parent_folder_info.parent_folder_list
       folder_info.parent_folder_list.push(parent_folder_info.seq)
       folder_info.access_type = parent_folder_info.access_type ? parent_folder_info.access_type : '1';
+      folder_info.is_access_way = parent_folder_info.is_access_way;
+      folder_info.access_list = parent_folder_info.access_list;
     } else {
       folder_info.depth = 0
       folder_info.parent_folder_list = []
@@ -172,9 +174,9 @@ const OperationFolderServiceClass = class {
     return update_result
   }
 
-  updateParentFolderAccessType = async (database, folder_seq, access_type) => {
+  updateParentFolderAccessType = async (database, folder_seq, access_type, is_access_way, access_list) => {
     const model = this.getOperationFolderModel(database)
-    const update_result = await model.updateOperationFolderAccessType(folder_seq, access_type)
+    const update_result = await model.updateOperationFolderAccessType(folder_seq, access_type, is_access_way, access_list)
     return update_result
   }
 
