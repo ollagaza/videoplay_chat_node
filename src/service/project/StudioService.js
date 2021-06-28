@@ -57,6 +57,7 @@ const StudioServiceClass = class {
     fields.total_time.require = true
     fields.sequence_list.require = true
     fields.operation_history_list.require = true
+    fiedls.subtitle_list.require = true
 
     const payload = Util.getPayload(data, fields)
 
@@ -73,6 +74,7 @@ const StudioServiceClass = class {
     fields.operation_seq_list.require = true
     fields.sequence_list.require = true
     fields.operation_history_list.require = true
+    fields.subtitle_list.require = true
 
     const payload = Util.getPayload(data, fields)
 
