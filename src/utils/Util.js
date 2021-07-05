@@ -819,6 +819,45 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
   return executeFFmpeg(args)
 }
 
+const resizeImage = async (origin_path, resize_path, width = -1, height = -1, media_info = null, is_rotate = false) => {
+  const args = []
+  args.push('-y')
+  args.push('-i')
+  args.push(origin_path)
+  if (width > 0 && height > 0) {
+    let dimension = null
+    if (media_info) {
+      dimension = {
+        width: media_info.media_info.width,
+        height: media_info.media_info.height
+      }
+    } else {
+      dimension = await getVideoDimension(origin_path)
+    }
+    if (dimension.width <= 0 || dimension.height <= 0) {
+      return { success: false }
+    }
+
+    if (is_rotate) {
+      const temp = width
+      width = height
+      height = temp
+    }
+    const scale_option = `scale=${width}:${height}`
+    // filter = `-filter:v "${crop_option},${scale_option}"`
+    args.push('-filter:v')
+    if (is_rotate) {
+      args.push(`${scale_option},transpose=dir=1`)
+    } else {
+      args.push(`${scale_option}`)
+    }
+  }
+  args.push('-an')
+  args.push(resize_path)
+
+  return executeFFmpeg(args)
+}
+
 const secondToTimeStr = (second, format = 'HH:MM:ss', use_decimal_point = false) => {
   let date_str = dateFormatter(second * 1000, format, true)
   if (use_decimal_point) {
@@ -1521,6 +1560,7 @@ export default {
   'getVideoDimension': getVideoDimension,
   'getVideoDuration': getVideoDuration,
   'getThumbnail': getThumbnail,
+  'resizeImage': resizeImage,
 
   'isNull': (value, check_str_null = true) => {
     if (value === null || value === undefined) return true;
