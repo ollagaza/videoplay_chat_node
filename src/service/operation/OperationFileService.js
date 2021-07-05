@@ -192,7 +192,7 @@ const OperationFileServiceClass = class {
         resize_height = is_rotate ? media_info.media_info.width : media_info.media_info.height
         w_ratio = is_rotate ? resize_width / default_height : resize_width / default_width
         h_ratio = is_rotate ? resize_height / default_width : resize_height / default_height
-        resize_ratio = Math.max(w_ratio, w_ratio)
+        resize_ratio = Math.max(w_ratio, h_ratio)
         resize_width = resize_width / resize_ratio
         resize_height = resize_height / resize_ratio
         log.debug(this.log_prefix, '[createOperationFileInfo] resize_image', `width: ${media_info.media_info.width}, w_ratio: ${w_ratio}, resize_width: ${resize_width}, height: ${media_info.media_info.height}, h_ratio: ${h_ratio}, resize_height: ${resize_height}`)
