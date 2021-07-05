@@ -188,14 +188,23 @@ const OperationFileServiceClass = class {
         const resize_image_name = `${upload_file_path.name}_resize.jpg`
         const resize_image_path = `${upload_file_path.dir}/${resize_image_name}`
         let w_ratio, h_ratio, resize_ratio, resize_width, resize_height
-        resize_width = is_rotate ? media_info.media_info.height : media_info.media_info.width
-        resize_height = is_rotate ? media_info.media_info.width : media_info.media_info.height
-        w_ratio = is_rotate ? resize_width / default_height : resize_width / default_width
-        h_ratio = is_rotate ? resize_height / default_width : resize_height / default_height
+        resize_width = media_info.media_info.width
+        resize_height = media_info.media_info.height
+        w_ratio = resize_width / default_width
+        h_ratio = resize_height / default_height
+        if (resize_height > resize_width) {
+          w_ratio = resize_width / default_height
+          h_ratio = resize_height / default_width
+        }
         resize_ratio = Math.max(w_ratio, h_ratio)
-        resize_width = resize_width / resize_ratio
-        resize_height = resize_height / resize_ratio
-        log.debug(this.log_prefix, '[createOperationFileInfo] resize_image', `width: ${media_info.media_info.width}, w_ratio: ${w_ratio}, resize_width: ${resize_width}, height: ${media_info.media_info.height}, h_ratio: ${h_ratio}, resize_height: ${resize_height}`)
+
+        if (is_rotate) {
+          resize_width = media_info.media_info.height / resize_ratio
+          resize_height = media_info.media_info.width / resize_ratio
+        } else {
+          resize_width = media_info.media_info.width / resize_ratio
+          resize_height = media_info.media_info.height / resize_ratio
+        }
         const resize_result = await Util.resizeImage(upload_file_info.path, resize_image_path, resize_width, resize_height, media_info, is_rotate)
         if (resize_result.success && (await Util.fileExists(resize_image_path))) {
           file_info.resize_path = directory_info.media_file + resize_image_name
