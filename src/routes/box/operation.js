@@ -107,14 +107,13 @@ routes.post('/:operation_seq(\\d+)/upload', Auth.isAuthenticated(Role.BOX), Wrap
   log.d(req, `[BOX 03] 수술 동영상 업로드 시작 (id: ${operation_seq})`, operation_seq)
 
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
-  const upload_result = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
 
-  log.d(req, `[BOX 04] 수술 동영상 업로드 종료 (id: ${operation_seq})`, operation_seq, upload_result)
+  const upload_seq = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
+
+  log.d(req, `[BOX 04] 수술 동영상 업로드 종료 (id: ${operation_seq})`, operation_seq, upload_seq)
 
   const output = new StdObject()
-  output.add('upload_seq', upload_result.upload_seq)
-  output.add('url', upload_result.file_url)
-  output.add('file_path', upload_result.file_path)
+  output.add('upload_seq', upload_seq)
   res.json(output)
 }))
 
@@ -125,22 +124,25 @@ routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.BOX), Wrap(asy
   log.d(req, `[BOX 05] 수술 동영상 업로드 완료 (id: ${operation_seq})`, operation_seq)
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
 
+  if (operation_info.analysis_status !== 'N') {
+    log.d(req, `[BOX 11] 수술 종료 요청 - 이미 인코딩이 완료된 수술 (id: ${operation_seq})`, operation_seq, operation_info.analysis_status)
+  } else {
+    const user_token_info = await getUserTokenInfo(req)
+    log.d(req, '[user_token_info]', user_token_info)
+    const member_seq = user_token_info.getId()
+    const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
+    const group_seq = user_token_info.getGroupSeq()
+    const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
 
-  const user_token_info = await getUserTokenInfo(req)
-  log.d(req, '[user_token_info]', user_token_info)
-  const member_seq = user_token_info.getId()
-  const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
-  const group_seq = user_token_info.getGroupSeq()
-  const group_member_info = await GroupService.getGroupMemberInfo(DBMySQL, group_seq, member_seq)
+    await OperationService.onUploadComplete(operation_info, true)
+    log.d(req, `[BOX 06] 수술 종료 요청 (id: ${operation_seq})`, operation_seq)
 
-  await OperationService.onUploadComplete(operation_info, true)
-  log.d(req, `[BOX 06] 수술 종료 요청 (id: ${operation_seq})`, operation_seq)
+    await OperationService.requestAnalysis(DBMySQL, null, operation_seq, group_member_info, member_info)
+    log.d(req, `[BOX 07] 수술 분석요청 (id: ${operation_seq})`, operation_seq)
 
-  await OperationService.requestAnalysis(DBMySQL, null, operation_seq, group_member_info, member_info)
-  log.d(req, `[BOX 07] 수술 분석요청 (id: ${operation_seq})`, operation_seq)
-
-  await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
-  log.d(req, `[BOX 08] 수술 종료 요청 완료 (id: ${operation_seq})`, operation_seq)
+    await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
+    log.d(req, `[BOX 08] 수술 종료 요청 완료 (id: ${operation_seq})`, operation_seq)
+  }
 
   const output = new StdObject()
   output.add('url', ServiceConfig.get('service_url') + `/v2/curation/${operation_seq}`)

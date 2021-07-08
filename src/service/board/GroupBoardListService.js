@@ -58,6 +58,9 @@ const GroupBoardListServiceClass = class {
     if (board_info.header_list && typeof board_info.header_list === 'object') {
       board_info.header_list = JSON.stringify(board_info.header_list)
     }
+    if (board_info.access_list && typeof board_info.access_list === 'object') {
+      board_info.access_list = JSON.stringify(board_info.access_list)
+    }
 
     if (board_info.reg_date) delete board_info.reg_date
     if (board_info.modify_date) delete board_info.modify_date
@@ -73,6 +76,9 @@ const GroupBoardListServiceClass = class {
     if (board_info.change_bool) delete board_info.change_bool
     if (board_info.header_list && typeof board_info.header_list === 'object') {
       board_info.header_list = JSON.stringify(board_info.header_list)
+    }
+    if (board_info.access_list && typeof board_info.access_list === 'object') {
+      board_info.access_list = JSON.stringify(board_info.access_list)
     }
 
     board_info.modify_date = database.raw('NOW()')

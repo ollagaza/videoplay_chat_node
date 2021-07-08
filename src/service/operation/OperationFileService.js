@@ -180,14 +180,52 @@ const OperationFileServiceClass = class {
       }
 
       const upload_file_path = path.parse(upload_file_info.path)
-      const ext = upload_file_path.ext === '.png' ? '.png' : '.jpg';
+      const image_ext = `${upload_file_path.ext}`.toLowerCase()
+      const ext = image_ext === '.png' ? '.png' : '.jpg'
+      const default_width = 1920
+      const default_height = 1080
+      const max_resolution = default_width * default_height
+      const image_resolution = file_info.width * file_info.height
+      if ((image_ext !== '.png' && image_ext !== '.jpg') || image_resolution > max_resolution) {
+        let resize_ratio = 1
+        if (image_resolution > max_resolution) {
+          let w_ratio, h_ratio, width, height
+          width = media_info.media_info.width
+          height = media_info.media_info.height
+          w_ratio = width / default_width
+          h_ratio = height / default_height
+          if (height > width) {
+            w_ratio = width / default_height
+            h_ratio = height / default_width
+          }
+          resize_ratio = Math.max(w_ratio, h_ratio)
+        }
+
+        let resize_width, resize_height
+        if (is_rotate) {
+          resize_width = media_info.media_info.height / resize_ratio
+          resize_height = media_info.media_info.width / resize_ratio
+        } else {
+          resize_width = media_info.media_info.width / resize_ratio
+          resize_height = media_info.media_info.height / resize_ratio
+        }
+        const resize_image_name = `${upload_file_path.name}_resize${ext}`
+        const resize_image_path = `${upload_file_path.dir}/${resize_image_name}`
+        const resize_result = await Util.resizeImage(upload_file_info.path, resize_image_path, resize_width, resize_height, media_info, is_rotate)
+        if (resize_result.success && (await Util.fileExists(resize_image_path))) {
+          file_info.resize_path = directory_info.media_file + resize_image_name
+          file_info.width = resize_width
+          file_info.height = resize_height
+        }
+      }
+
       const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
       const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
       const thumb_file_name = `${upload_file_path.name}_thumb${ext}`
       const thumbnail_image_path = `${upload_file_path.dir}/${thumb_file_name}`
-      const get_thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height, media_info, is_rotate)
+      const thumbnail_result = await Util.getThumbnail(upload_file_info.path, thumbnail_image_path, -1, thumb_width, thumb_height, media_info, is_rotate)
 
-      if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
+      if (thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
         file_info.thumbnail_path = directory_info.media_file + thumb_file_name
       }
       file_info.file_type = media_info.media_type
