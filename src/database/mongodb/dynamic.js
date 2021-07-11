@@ -22,6 +22,32 @@ dynamic_schema.statics.findAll = function () {
   return this.find({})
 }
 
+dynamic_schema.statics.getDynamicTotalCount = function (search_keyword = null, search_option = null) {
+  const filter = {}
+  if (search_option && search_option.request_status) {
+    filter.request_status = search_option.request_status
+  }
+  if (search_keyword) {
+    filter.project_name = new RegExp(search_keyword)
+  }
+  return this.count(filter)
+}
+
+dynamic_schema.statics.getDynamicList = function (page_navigation, sort_field = { _id: -1 }, search_keyword = null, search_option = null) {
+  const filter = {}
+  if (search_option && search_option.request_status && search_option.request_status !== '0') {
+    filter.request_status = search_option.request_status
+  }
+  if (search_keyword) {
+    filter.project_name = new RegExp(search_keyword)
+  }
+  const find_result = filter ? this.find(filter) : this.find()
+  return find_result
+    .sort(sort_field)
+    .skip(page_navigation.list_count * (page_navigation.cur_page - 1))
+    .limit(page_navigation.list_count)
+}
+
 dynamic_schema.statics.createDynamic = function (data) {
   const model = new this(data)
   return model.save()
