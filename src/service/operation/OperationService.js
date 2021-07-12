@@ -747,12 +747,10 @@ const OperationServiceClass = class {
   }
 
   onUploadComplete = async (operation_info, is_create = false) => {
-    const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === 'file') {
       if (!ServiceConfig.isVacs()) {
-        if (is_create) {
-          await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
-        } else {
+        const directory_info = this.getOperationDirectoryInfo(operation_info)
+        if (!is_create) {
           await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
         }
       }
@@ -777,13 +775,15 @@ const OperationServiceClass = class {
 
   requestAnalysis = async (database, token_info, operation_seq, group_member_info, member_info) => {
     const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === this.MODE_FILE) {
       if (ServiceConfig.isVacs()) {
         await OperationService.updateOperationDataFileThumbnail(operation_info)
         await this.updateAnalysisStatus(null, operation_info, 'Y')
         SyncService.sendAnalysisCompleteMessage(operation_info)
       } else {
-        await this.updateAnalysisStatus(null, operation_info, operation_info.analysis_status === 'Y' ? 'Y' : 'R')
+        await this.updateAnalysisStatus(null, operation_info, 'R')
+        await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
         this.onOperationCreateComplete(operation_info, group_member_info, member_info)
       }
     } else {
