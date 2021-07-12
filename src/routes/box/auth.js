@@ -22,7 +22,6 @@ routes.post('/', Wrap(async (req, res) => {
   // }
   const machine_info = {}
   machine_info.seq = 1
-  machine_info.group_seq = 0
   machine_info.machine_id = machine_id
 
   const output = await Auth.getMachineTokenResult(machine_info)

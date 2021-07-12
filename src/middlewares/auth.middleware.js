@@ -189,7 +189,23 @@ const getMachineTokenResult = async (machine_info) => {
   if (token_result != null && token_result.token != null) {
     output.add('token', `Bearer ${token_result.token}`)
     output.add('expire', token_result.expire)
-    output.add('group_seq', machine_info.group_seq)
+  } else {
+    output.setError(-1)
+    output.setMessage('인증토큰 생성 실패')
+    output.httpStatusCode = 500
+  }
+
+  return output
+}
+
+const getAgentTokenResult = async (member_info) => {
+  member_info.role = Role.AGENT
+  const token_result = await generateTokenByMemberInfo(member_info, true)
+
+  const output = new StdObject()
+  if (token_result != null && token_result.token != null) {
+    output.add('token', `Bearer ${token_result.token}`)
+    output.add('expire', token_result.expire)
   } else {
     output.setError(-1)
     output.setMessage('인증토큰 생성 실패')
@@ -207,6 +223,7 @@ export default {
   'verifyTokenByString': verifyTokenByString,
   'getTokenResult': getTokenResult,
   'getMachineTokenResult': getMachineTokenResult,
+  'getAgentTokenResult': getAgentTokenResult,
   'getLanguage': getLanguage,
   'getGroupSeq': getGroupSeq
 }
