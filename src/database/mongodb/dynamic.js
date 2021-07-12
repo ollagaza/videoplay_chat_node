@@ -14,12 +14,9 @@ const schema_field_infos = getFieldInfos()
 
 const dynamic_schema = new Schema(schema_field_infos, { strict: false })
 
-dynamic_schema.statics.findData = function (data_type) {
-  return this.findOne({ data_type }, '-_id -member_seq -created_date -modify_date')
-}
-
-dynamic_schema.statics.findAll = function () {
-  return this.find({})
+dynamic_schema.statics.findOne = function (id) {
+  const _id = mongoose.Types.ObjectId(id)
+  return this.findOne({ _id })
 }
 
 dynamic_schema.statics.getDynamicTotalCount = function (search_keyword = null, search_option = null) {

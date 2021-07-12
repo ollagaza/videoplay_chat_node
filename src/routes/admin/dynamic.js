@@ -19,6 +19,14 @@ routes.get('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.get('/:_id', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const _id = req.params._id
+  output.add('template', await DynamicAdminService.getDynamicTemplateOne(_id))
+  res.json(output)
+}))
+
 routes.post('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()

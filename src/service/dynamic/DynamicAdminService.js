@@ -20,6 +20,10 @@ const DynamicAdminServiceClass = class {
     return { dynamic_list, page_navigation }
   }
 
+  getDynamicTemplateOne = async (_id) => {
+    return DynamicModel.findOne(_id);
+  }
+
   createDynamicTemplate = async (data) => {
     const result = await DynamicModel.createDynamic(data);
     return result;
