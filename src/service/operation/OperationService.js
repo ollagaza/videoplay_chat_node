@@ -783,7 +783,7 @@ const OperationServiceClass = class {
         await this.updateAnalysisStatus(null, operation_info, 'Y')
         SyncService.sendAnalysisCompleteMessage(operation_info)
       } else {
-        await this.updateAnalysisStatus(null, operation_info, 'R')
+        await this.updateAnalysisStatus(null, operation_info, operation_info.analysis_status === 'Y' ? 'Y' : 'R')
         this.onOperationCreateComplete(operation_info, group_member_info, member_info)
       }
     } else {
