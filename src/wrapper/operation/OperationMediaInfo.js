@@ -41,6 +41,7 @@ export default class OperationMediaInfo extends JsonWrapper {
           this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + media_video + this.stream_url + '/master.m3u8'
           this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + media_video + this.stream_url + '/manifest.mpd'
         }
+        this.streaming_url = ServiceConfig.get('cdn_url') + media_video + this.video_file_name
       }
     }
   }
