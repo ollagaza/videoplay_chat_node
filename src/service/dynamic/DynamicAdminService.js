@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import Util from '../../utils/Util'
 import log from '../../libs/logger'
-import {DynamicModel} from '../../database/mongodb/dynamic';
+import {DynamicModel} from '../../database/mongodb/dynamic'
 
 
 const DynamicAdminServiceClass = class {
@@ -13,7 +13,7 @@ const DynamicAdminServiceClass = class {
     const dynamic_count = await DynamicModel.getDynamicTotalCount(search_keyword, search_option)
     page_navigation.list_count = Util.parseInt(page_navigation.list_count)
     page_navigation.cur_page = Util.parseInt(page_navigation.cur_page)
-    page_navigation.total_count = dynamic_count;
+    page_navigation.total_count = dynamic_count
     const sort = JSON.parse(`{ "${field_order.name}": ${field_order.direction === 'desc' ? -1 : 1} }`)
     const dynamic_list = await DynamicModel.getDynamicList(page_navigation, sort, search_keyword, search_option)
 
@@ -21,12 +21,22 @@ const DynamicAdminServiceClass = class {
   }
 
   getDynamicTemplateOne = async (_id) => {
-    return DynamicModel.findOne(_id);
+    return DynamicModel.findOneById(_id)
   }
 
   createDynamicTemplate = async (data) => {
-    const result = await DynamicModel.createDynamic(data);
-    return result;
+    const result = await DynamicModel.createDynamic(data)
+    return result
+  }
+
+  updateDynamicTemplate = async (template_id, data) => {
+    const result = await DynamicModel.updateById(template_id, data)
+    return result
+  }
+
+  daleteDynamicTemplate = async (template_id, data) => {
+    const result = await DynamicModel.deleteById(template_id, data)
+    return result
   }
 }
 

@@ -22,8 +22,8 @@ routes.get('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
 routes.get('/:_id', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
-  const _id = req.params._id
-  output.add('template', await DynamicAdminService.getDynamicTemplateOne(_id))
+  const template_id = req.params._id
+  output.add('template', await DynamicAdminService.getDynamicTemplateOne(template_id))
   res.json(output)
 }))
 
@@ -34,15 +34,19 @@ routes.post('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   res.json(output)
 }))
 
-routes.put('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+routes.put('/:_id', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
+  const template_id = req.params._id
+  output.add('result', await DynamicAdminService.updateDynamicTemplate(template_id, req.body))
   res.json(output)
 }))
 
-routes.delete('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+routes.delete('/:_id', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
+  const template_id = req.params._id
+  output.add('result', await DynamicAdminService.daleteDynamicTemplate(template_id, req.body))
   res.json(output)
 }))
 
