@@ -1,14 +1,12 @@
-import _ from 'lodash'
 import StdObject from '../../wrapper/std-object'
 import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
-import util from "../../utils/Util";
 import OperationService from '../operation/OperationService'
-import OperationModel from "../../database/mysql/operation/OperationModel";
 import OperationFolderModel from '../../database/mysql/operation/OperationFolderModel'
 import OperationFolderInfo from '../../wrapper/operation/OperationFolderInfo'
 import OperationStorageModel from '../../database/mysql/operation/OperationStorageModel'
 import Util from '../../utils/Util'
+import GroupService from "../group/GroupService";
 
 const OperationFolderServiceClass = class {
   constructor () {
@@ -323,6 +321,31 @@ const OperationFolderServiceClass = class {
       return 99
     }
     return Util.parseInt(access_type, 99)
+  }
+
+  getFolderListWithAgent = async (database, group_seq, member_seq) => {
+    const folder_model = this.getOperationFolderModel(database)
+    const group_member_info = await GroupService.getGroupMemberInfo(database, group_seq, member_seq)
+    const member_grade = this.getFolderGradeNumber(group_member_info.grade)
+    const group_folder_list = await folder_model.getAllGroupFolderList(group_seq)
+
+    for (let cnt = 0; cnt < group_folder_list.length; cnt++) {
+      const folder_info = group_folder_list[cnt]
+      const folder_grade = this.getFolderGradeNumber(folder_info.access_type)
+      let bool_grade = false;
+      if (folder_info.is_access_way === 1) {
+        const access_list = JSON.parse(folder_info.access_list)
+        bool_grade = access_list.read[member_grade]
+      } else {
+        bool_grade = member_grade >= folder_grade
+      }
+      folder_info.is_read = bool_grade
+      folder_info.is_create = bool_grade
+      folder_info.is_delete = bool_grade
+      folder_info.is_upload = bool_grade
+    }
+
+    return group_folder_list
   }
 }
 

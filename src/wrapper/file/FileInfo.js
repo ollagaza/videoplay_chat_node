@@ -14,11 +14,12 @@ export default class FileInfo extends JsonWrapper {
     const cloud_url = ServiceConfig.get('static_cloud_prefix')
     const static_url = ServiceConfig.get('static_storage_prefix')
     if (this.file_path) {
-      if (ServiceConfig.isVacs() && this.is_moved) {
+      if (!ServiceConfig.isVacs() && this.is_moved) {
         this.url = cloud_url + this.file_path
       } else {
         this.url = static_url + this.file_path
       }
+      this.download_url = ServiceConfig.get('service_url') + this.url
     }
     if (this.thumbnail) {
       this.thumbnail_url = static_url + this.thumbnail
