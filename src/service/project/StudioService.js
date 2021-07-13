@@ -267,6 +267,14 @@ const StudioServiceClass = class {
           sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
         }
       }
+      const subtitle_sequence_list = video_project_info.subtitle_list
+      const subtitle_sequence_model_list = []
+      for (let i = 0; i < subtitle_sequence_list.length; i++) {
+        const sequence_model = new SequenceModel().init(subtitle_sequence_list[i])
+        if (sequence_model.type) {
+          subtitle_sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
+        }
+      }
 
       const video_xml_json = {
         'VideoInfo': {
@@ -277,10 +285,12 @@ const StudioServiceClass = class {
           },
           'SequenceList': {
             'Sequence': sequence_model_list
+          },
+          'SubtitleList': {
+            'Sequence': subtitle_sequence_model_list
           }
         }
       }
-
       const file_name = 'video_project.xml'
       await Util.writeXmlFile(directory, file_name, video_xml_json)
 
