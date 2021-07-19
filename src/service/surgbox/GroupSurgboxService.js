@@ -55,7 +55,7 @@ const GroupSurgboxServiceClass = class {
         group_seq_list.push(box_group_list[i].group_seq)
       }
     }
-    return GroupService.getGroupListForBox(DBMySQL, group_seq_list)
+    return GroupService.getGroupListForBox(DBMySQL, machine_id, group_seq_list)
   }
 }
 

@@ -114,4 +114,23 @@ export default class OperationFileModel extends MySQLModel {
     const query_result = await query
     return !query_result || Util.parseInt(query_result.cnt, 0) === 0
   }
+
+  changeFilesTypeByDirectory = async (operation_seq, type, directory) => {
+    return this.database
+      .update({ type })
+      .from(this.table_name)
+      .where('operation_seq', operation_seq)
+      .where((builder) => {
+        builder.where('directory', directory)
+        builder.orWhere('directory', 'LIKE', `${directory}/%`)
+      })
+  }
+
+  changeFilesTypeByFileSeqList = async (operation_seq, type, file_seq_list) => {
+    return this.database
+      .update({ type })
+      .from(this.table_name)
+      .where('operation_seq', operation_seq)
+      .whereIn('seq', file_seq_list)
+  }
 }

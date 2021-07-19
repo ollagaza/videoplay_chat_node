@@ -158,14 +158,13 @@ routes.post('/:operation_seq(\\d+)/file/one', Auth.isAuthenticated(Role.BOX), Wr
 
   const file_type = 'refer'
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, false)
-  const upload_result = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
+  const refer_file_seq = await OperationService.uploadOperationFile(DBMySQL, req, res, operation_info, file_type, 'file')
+  await OperationService.updateStorageSize(operation_info)
 
-  log.d(req, `[BOX 10] 첨부파일 업로드 완료 (id: ${operation_seq})`, operation_seq, upload_result)
+  log.d(req, `[BOX 10] 첨부파일 업로드 완료 (id: ${operation_seq})`, operation_seq, refer_file_seq)
 
   const output = new StdObject()
-  output.add('upload_seq', upload_result.upload_seq)
-  output.add('url', upload_result.file_url)
-  output.add('file_path', upload_result.file_path)
+  output.add('refer_file_seq', refer_file_seq)
   res.json(output)
 }))
 

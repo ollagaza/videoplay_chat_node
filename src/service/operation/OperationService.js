@@ -32,6 +32,7 @@ import GroupAlarmService from '../group/GroupAlarmService'
 import SyncService from '../sync/SyncService'
 import Constants from '../../constants/constants'
 import HashtagService from './HashtagService'
+import TranscoderSyncService from '../sync/TranscoderSyncService'
 import DynamicService from "../dynamic/DynamicService";
 
 const OperationServiceClass = class {
@@ -515,7 +516,7 @@ const OperationServiceClass = class {
     }
   }
 
-  getOperationListByRequest = async (database, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request, is_admin = false) => {
+  getOperationListByRequest = async (database, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request, is_admin = false, is_agent = false) => {
     const request_query = request.query ? request.query : {}
     const page_params = {}
     page_params.page = request_query.page
@@ -561,7 +562,7 @@ const OperationServiceClass = class {
     }
 
     const operation_model = this.getOperationModel(database)
-    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params, is_admin, operation_data_seq_list)
+    return operation_model.getOperationInfoListPage(group_seq, member_seq, group_grade_number, is_group_admin, page_params, filter_params, order_params, is_admin, operation_data_seq_list, is_agent)
   }
 
   setMediaInfo = async (database, operation_info) => {
@@ -644,7 +645,7 @@ const OperationServiceClass = class {
     return video_index_info.index_list ? video_index_info.index_list : []
   }
 
-  uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null) => {
+  uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null, file_name = null) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     let media_directory
     if (file_type === OperationFileService.TYPE_REFER) {
@@ -665,7 +666,7 @@ const OperationServiceClass = class {
     } else if (file_type === OperationFileService.TYPE_FILE) {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, Util.getRandomId())
     } else {
-      await Util.uploadByRequest(request, response, file_field_name, media_directory)
+      await Util.uploadByRequest(request, response, file_field_name, media_directory, file_name)
     }
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
@@ -747,12 +748,10 @@ const OperationServiceClass = class {
   }
 
   onUploadComplete = async (operation_info, is_create = false) => {
-    const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === 'file') {
       if (!ServiceConfig.isVacs()) {
-        if (is_create) {
-          await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
-        } else {
+        const directory_info = this.getOperationDirectoryInfo(operation_info)
+        if (!is_create) {
           await NaverObjectStorageService.moveFolder(directory_info.file, directory_info.media_file)
         }
       }
@@ -777,6 +776,7 @@ const OperationServiceClass = class {
 
   requestAnalysis = async (database, token_info, operation_seq, group_member_info, member_info) => {
     const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === this.MODE_FILE) {
       if (ServiceConfig.isVacs()) {
         await OperationService.updateOperationDataFileThumbnail(operation_info)
@@ -784,6 +784,7 @@ const OperationServiceClass = class {
         SyncService.sendAnalysisCompleteMessage(operation_info)
       } else {
         await this.updateAnalysisStatus(null, operation_info, 'R')
+        await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
         this.onOperationCreateComplete(operation_info, group_member_info, member_info)
       }
     } else {
@@ -1276,6 +1277,76 @@ const OperationServiceClass = class {
       throw new StdObject(3, '상위폴더에 접근 권한이 없습니다.', 400)
     }
     return true
+  }
+
+  onAgentVideoUploadComplete = async (operation_info) => {
+    await TranscoderSyncService.updateTranscodingComplete(operation_info, Constants.AGENT_VIDEO_FILE_NAME, null, null)
+  }
+
+  getAgentFileList = async (operation_seq, query) => {
+    const { operation_info } = await this.getOperationInfoNoAuth(null, operation_seq)
+    if (!operation_info || operation_info.isEmpty()) {
+      throw new StdObject(2011, '수술정보가 존재하지 않습니다.')
+    }
+    const import_main_files = Util.isTrue(query.main)
+    const import_refer_files = Util.isTrue(query.refer)
+    const mode = operation_info.mode
+    const file_list = []
+    if (import_main_files) {
+      if (mode === this.MODE_FILE) {
+        const file_list_query = {
+          last_seq: 0,
+          limit: 1000
+        }
+        while (true) {
+          const operation_file_list = await OperationFileService.getOperationFileList(null, operation_seq, true, file_list_query)
+          const list_count = operation_file_list ? operation_file_list.length : 0
+          if (list_count <= 0) {
+            break;
+          }
+          for (let i = 0; i < list_count; i++) {
+            const file_info = operation_file_list[i]
+            file_list.push({
+              type: 'image',
+              seq: file_info.seq,
+              directory: file_info.directory,
+              file_name: file_info.file_name,
+              download_url: file_info.download_url,
+              file_size: file_info.file_size
+            })
+          }
+          file_list_query.last_seq = operation_file_list[list_count - 1].seq
+        }
+      } else {
+        const media_info = operation_info.media_info
+        file_list.push({
+          type: 'video',
+          seq: media_info.seq,
+          directory: null,
+          file_name: `${operation_info.operation_name}.mp4`,
+          download_url: media_info.download_url,
+          file_size: operation_info.origin_video_size
+        })
+      }
+    }
+    if (import_refer_files) {
+      const refer_file_list = await OperationFileService.getReferFileList(null, operation_info.storage_seq, true)
+      if (refer_file_list && refer_file_list.length > 0) {
+        for (let i = 0; i < refer_file_list.length; i++) {
+          const file_info = refer_file_list[i]
+          file_list.push({
+            type: 'refer_file',
+            seq: file_info.seq,
+            directory: null,
+            file_name: file_info.file_name,
+            download_url: file_info.download_url,
+            file_size: file_info.file_size
+          })
+        }
+      }
+    }
+
+    return file_list
   }
 }
 

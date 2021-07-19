@@ -93,6 +93,7 @@ operation_clip_schema.statics.updateOperationClip = function (clip_id, clip_info
     update.tag_list = tag_list
   }
   if (clip_info.is_shape) {
+    update.is_shape = true;
     update.shape_info_list = clip_info.shape_info_list ? clip_info.shape_info_list : null
   } else {
     update.shape_info_list = null

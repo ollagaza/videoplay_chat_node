@@ -46,6 +46,8 @@ const LOCAL = 'local'
 const UP = 'up'
 const DOWN = 'down'
 
+const AGENT_VIDEO_FILE_NAME = 'Trans_agent.mp4'
+
 export default {
   'NONE': NONE,
   'NO_MEDIA': NO_MEDIA,
@@ -81,5 +83,6 @@ export default {
   'LOCAL': LOCAL,
   'MAX_ARCHIVE_FILE_SIZE': MAX_ARCHIVE_FILE_SIZE,
   'UP': UP,
-  'DOWN': DOWN
+  'DOWN': DOWN,
+  AGENT_VIDEO_FILE_NAME
 }
