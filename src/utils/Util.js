@@ -476,11 +476,13 @@ const execute = async (command) => {
   return result
 }
 
-const executeSpawn = (command, args = [], spawn_options = {}, out_encoding = 'utf8', err_encoding = 'utf8') => {
+const executeSpawn = (command, args = [], spawn_options = {}, on_start = null, out_encoding = 'utf8', err_encoding = 'utf8') => {
   const event_emitter = new EventEmitter()
   const execute_command = `${command} ${args ? args.join(' ') : ''}`
-  log.debug(log_prefix, '[execute]', `[command = ${execute_command}]`, spawn_options)
-  event_emitter.emit('onStart', execute_command)
+  // log.debug(log_prefix, '[execute]', `[command = ${execute_command}]`, spawn_options)
+  if (on_start && typeof on_start === 'function') {
+    on_start(execute_command)
+  }
   const process = spawn(command, args, spawn_options)
   if (out_encoding) {
     process.stdout.setEncoding(out_encoding)
@@ -719,8 +721,7 @@ const executeFFmpeg = (args = [], spawn_option = {}, progress_callback = null) =
       command: null
     }
 
-    const spawn = executeSpawn('ffmpeg', args, spawn_option)
-    spawn.on('onStart', (cmd) => {
+    const spawn = executeSpawn('ffmpeg', args, spawn_option, (cmd) => {
       result.command = cmd
     })
 
@@ -780,14 +781,23 @@ const getThumbnail = async (origin_path, resize_path, second = -1, width = -1, h
   if (width > 0 && height > 0) {
     let dimension = null
     if (media_info) {
-      dimension = {
-        width: media_info.media_info.width,
-        height: media_info.media_info.height
+      if (media_info.width) {
+        dimension = {
+          width: media_info.width,
+          height: media_info.height
+        }
+      } else if (media_info.media_info) {
+        dimension = {
+          width: media_info.media_info.width,
+          height: media_info.media_info.height
+        }
       }
-    } else {
+    }
+
+    if (!dimension) {
       dimension = await getVideoDimension(origin_path)
     }
-    if (dimension.width <= 0 || dimension.height <= 0) {
+    if (!dimension || dimension.width <= 0 || dimension.height <= 0) {
       return { success: false }
     }
 
@@ -1141,10 +1151,10 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
     req.disable_auto_ext = disable_auto_ext
     uploader(req, res, error => {
       if (error) {
-        log.e(req, error)
+        log.e(req, log_prefix, '[uploadByRequest]', error)
         reject(error)
       } else {
-        log.d(req, 'on upload job finished')
+        // log.d(req, 'on upload job finished')
         resolve(true)
       }
     })

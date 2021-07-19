@@ -672,7 +672,7 @@ const OperationServiceClass = class {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
     }
     upload_file_info.new_file_name = request.new_file_name
-    log.debug(this.log_prefix, '[uploadOperationFile]', 'request.body', request.body)
+    // log.debug(this.log_prefix, '[uploadOperationFile]', 'request.body', request.body)
 
     return await this.createOperationFileInfo(file_type, operation_info, upload_file_info, request.body)
   }
@@ -856,17 +856,25 @@ const OperationServiceClass = class {
     await this.updateStorageSize(operation_info)
   }
 
-  createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0) => {
+  createOperationVideoThumbnail = async (origin_video_path, operation_info, second = 0, media_info) => {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
-    const dimension = await Util.getVideoDimension(origin_video_path)
-    if (!dimension.error && dimension.width && dimension.height) {
+    let width, height
+    if (media_info) {
+      width = media_info.width
+      height = media_info.height
+    } else {
+      const dimension = await Util.getVideoDimension(origin_video_path)
+      width = dimension.width
+      height = dimension.height
+    }
+    if (width && height) {
       const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
       const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
       const file_id = Util.getRandomId()
       const thumbnail_file_name = `thumb_${file_id}.png`
       const thumbnail_image_path = `${directory_info.image}${thumbnail_file_name}`
 
-      const get_thumbnail_result = await Util.getThumbnail(origin_video_path, thumbnail_image_path, second, thumb_width, thumb_height)
+      const get_thumbnail_result = await Util.getThumbnail(origin_video_path, thumbnail_image_path, second, thumb_width, thumb_height, media_info)
       if (get_thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
         return {
           file_id: file_id,

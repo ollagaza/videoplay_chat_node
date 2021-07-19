@@ -71,16 +71,16 @@ const OperationMediaServiceClass = class {
     } : smil_info.findProxyVideoInfo()
   }
 
-  updateTranscodingComplete = async (database, operation_info, video_file_name, smil_file_name) => {
+  updateTranscodingComplete = async (database, log_id, operation_info, video_file_name, smil_file_name) => {
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const trans_video_file_path = directory_info.origin + video_file_name
     if (!(await Util.fileExists(trans_video_file_path))) {
-      throw new StdObject(-1, '트랜스코딩된 동영상 파일이 존재하지 않습니다.', 400)
+      throw new StdObject(-1, '트랜스코딩된 동영상 파일이 존재하지 않습니다.', 400, { log_id })
     }
     const media_result = await Util.getMediaInfo(trans_video_file_path)
-    log.debug(this.log_prefix, '[updateTranscodingComplete]', 'media_result', media_result)
+    log.debug(this.log_prefix, '[updateTranscodingComplete]', log_id, 'media_result', media_result)
     if (!media_result.success || media_result.media_type !== Constants.VIDEO) {
-      throw new StdObject(-1, '동영상 파일이 아닙니다.', 400)
+      throw new StdObject(-1, '동영상 파일이 아닙니다.', 400, { log_id })
     }
     const media_info = media_result.media_info
     const smil_info = await this.getSmilInfo(directory_info, smil_file_name)
@@ -104,13 +104,13 @@ const OperationMediaServiceClass = class {
       'is_trans_complete': 1
     }
 
-    const thumbnail_result = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info)
+    const thumbnail_result = await OperationService.createOperationVideoThumbnail(trans_video_file_path, operation_info, 0, media_info)
     if (thumbnail_result) {
       update_params.thumbnail = thumbnail_result.path
       try {
         await OperationDataService.setThumbnailAuto(operation_info.seq, update_params.thumbnail)
       } catch (error) {
-        log.error(this.log_prefix, '[updateTranscodingComplete ]', error)
+        log.error(this.log_prefix, '[updateTranscodingComplete ]', log_id, error)
       }
     }
 

@@ -150,7 +150,7 @@ const OperationFileServiceClass = class {
 
     let thumbnail_path = null
     if (create_thumbnail) {
-      const thumbnail_info = await OperationService.createOperationVideoThumbnail(upload_file_info.path, operation_info)
+      const thumbnail_info = await OperationService.createOperationVideoThumbnail(upload_file_info.path, operation_info, 0, media_info.media_info)
       thumbnail_path = thumbnail_info.path
     }
 

@@ -16,42 +16,47 @@ const TranscoderSyncServiceClass = class {
     return await OperationService.getOperationInfoByContentId(database, content_id)
   }
 
-  onTranscodingComplete = async (content_id, video_file_name, smil_file_name, request) => {
+  onTranscodingComplete = async (content_id, log_id, video_file_name, smil_file_name, request) => {
     if (Util.isEmpty(content_id) || Util.isEmpty(video_file_name) || Util.isEmpty(smil_file_name)) {
-      throw new StdObject(1, '잘못된 파라미터', 400)
+      throw new StdObject(1, '잘못된 파라미터', 400, { log_id })
     }
     const { operation_info } = await this.getOperationInfoByContentId(DBMySQL, content_id)
     if (!operation_info || operation_info.isEmpty()) {
-      throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400)
+      throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400, { log_id })
     }
-    await this.updateTranscodingComplete(operation_info, video_file_name, smil_file_name, request)
+    this.updateTranscodingComplete(operation_info, log_id, video_file_name, smil_file_name, request)
   }
 
-  updateTranscodingComplete = async (operation_info, video_file_name, smil_file_name, request) => {
-    try {
-      await OperationMediaService.updateTranscodingComplete(DBMySQL, operation_info, video_file_name, smil_file_name)
-      await SyncService.onAnalysisComplete(operation_info)
-    } catch (error) {
-      log.error(this.log_prefix, '[onTranscodingComplete]', error)
-      let error_str = null
-      if (error.toJSON) {
-        error_str = JSON.stringify(error.toJSON())
-      } else if (error.stack) {
-        error_str = JSON.stringify(error.stack)
-      } else if (error.message) {
-        error_str = error.message
-      } else {
-        error_str = error.toString()
+  updateTranscodingComplete = (operation_info, log_id, video_file_name, smil_file_name, request) => {
+    (
+      async (operation_info, video_file_name, smil_file_name, request) => {
+        try {
+          log.debug(this.log_prefix, '[onTranscodingComplete]', log_id, operation_info.seq, operation_info.content_id, video_file_name)
+          await OperationMediaService.updateTranscodingComplete(DBMySQL, log_id, operation_info, video_file_name, smil_file_name)
+          await SyncService.onAnalysisComplete(operation_info, log_id)
+        } catch (error) {
+          log.error(this.log_prefix, '[onTranscodingComplete]', log_id, error)
+          let error_str = null
+          if (error.toJSON) {
+            error_str = JSON.stringify(error.toJSON())
+          } else if (error.stack) {
+            error_str = JSON.stringify(error.stack)
+          } else if (error.message) {
+            error_str = error.message
+          } else {
+            error_str = error.toString()
+          }
+          await this.onTranscodingError(operation_info.content_id, error_str, request)
+        }
       }
-      await this.onTranscodingError(operation_info.content_id, error_str, request)
-    }
+    )(operation_info, video_file_name, smil_file_name, request)
   }
 
-  onTranscodingError = async (content_id, message, request) => {
+  onTranscodingError = async (content_id, log_id, message, request) => {
     if (Util.isEmpty(content_id)) {
-      throw new StdObject(1, '잘못된 파라미터', 400)
+      throw new StdObject(1, '잘못된 파라미터', 400, { log_id })
     }
-
+    message = `[${log_id}] ${message}`
     const { operation_info } = await this.getOperationInfoByContentId(DBMySQL, content_id)
     const service_error_model = new ServiceErrorModel(DBMySQL)
     if (operation_info.isEmpty()) {
