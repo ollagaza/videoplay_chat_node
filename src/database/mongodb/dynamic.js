@@ -28,6 +28,15 @@ dynamic_schema.statics.getDynamicTotalCount = function (search_keyword = null, s
   return this.count(filter)
 }
 
+dynamic_schema.statics.getDynamicTemplateTypeList = function (template_type) {
+  const filter = {}
+  if (template_type) {
+    filter.type = template_type
+  }
+  const find_result = filter ? this.find(filter) : this.find()
+  return find_result.sort({ created_date: -1 })
+}
+
 dynamic_schema.statics.getDynamicList = function (page_navigation, sort_field = { _id: -1 }, search_keyword = null, search_option = null) {
   const filter = {}
   if (search_option && search_option.request_status && search_option.request_status !== '0') {
