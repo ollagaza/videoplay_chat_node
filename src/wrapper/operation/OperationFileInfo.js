@@ -6,7 +6,7 @@ export default class OperationFileInfo extends JsonWrapper {
   constructor (data = null, private_keys = []) {
     super(data, private_keys)
     this.setKeys([
-      'seq', 'directory', 'file_name', 'file_size', 'file_type', 'width', 'height', 'url', 'download_url', 'full_path', 'thumbnail_url', 'reg_date'
+      'seq', 'directory', 'file_name', 'file_size', 'file_type', 'width', 'height', 'url', 'download_url', 'full_path', 'thumbnail_url', 'reg_date', 'type'
     ])
   }
 

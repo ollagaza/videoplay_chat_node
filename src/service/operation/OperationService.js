@@ -33,6 +33,7 @@ import SyncService from '../sync/SyncService'
 import Constants from '../../constants/constants'
 import HashtagService from './HashtagService'
 import TranscoderSyncService from '../sync/TranscoderSyncService'
+import DynamicService from "../dynamic/DynamicService";
 
 const OperationServiceClass = class {
   constructor () {
@@ -983,6 +984,7 @@ const OperationServiceClass = class {
       writer_info: true,
       refer_file_list: true,
       import_media_info: true,
+      questionnaire: true,
     }
     return this.getOperationDataInfo(operation_seq, group_seq, options)
   }
@@ -994,6 +996,7 @@ const OperationServiceClass = class {
       writer_info: true,
       refer_file_list: true,
       import_media_info: false,
+      questionnaire: true,
     }
     return this.getOperationDataInfo(operation_seq, group_seq, options)
   }
@@ -1048,6 +1051,11 @@ const OperationServiceClass = class {
       if (options.medical_info) {
         const medical_info = await MongoDataService.getMedicalInfo()
         output.add('medical_info', medical_info)
+      }
+
+      if (options.questionnaire) {
+        const questionnaire_list = await DynamicService.getDynamicResultList(operation_seq)
+        output.add('questionnaire_list', questionnaire_list)
       }
     }
 

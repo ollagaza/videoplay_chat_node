@@ -357,6 +357,32 @@ const OperationFileServiceClass = class {
     }
     return false;
   }
+
+  changeOperationFilesType = async (operation_info, request_body) => {
+    if (!request_body || !request_body.data ) {
+      return false
+    }
+    const file_type = request_body.type ? request_body.type : null
+    const directory_list = request_body.data.directory_list
+    const file_seq_list = request_body.data.file_seq_list
+    const current_type = request_body.current_type ? request_body.current_type : null
+
+    if (directory_list || file_seq_list) {
+      const operation_seq = operation_info.seq
+      await DBMySQL.transaction(async (transaction) => {
+        const operation_file_model = this.getOperationFileModel(transaction)
+        if (directory_list && directory_list.length > 0) {
+          for (let i = 0; i < directory_list.length; i++) {
+            await operation_file_model.changeFilesTypeByDirectory(operation_seq, file_type, directory_list[i], current_type)
+          }
+        }
+        if (file_seq_list && file_seq_list.length > 0) {
+          await operation_file_model.changeFilesTypeByFileSeqList(operation_seq, file_type, file_seq_list, current_type)
+        }
+      })
+    }
+    return false;
+  }
 }
 
 const operation_file_service = new OperationFileServiceClass()

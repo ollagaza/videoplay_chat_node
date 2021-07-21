@@ -512,4 +512,12 @@ routes.post('/:api_type/:api_key/operation/files/name/validation', Auth.isAuthen
   res.json(output)
 }))
 
+routes.put('/:api_type/:api_key/operation/files/type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info } = await getBaseInfo(req, true, true, true)
+  const is_valid = await OperationFileService.changeOperationFilesType(operation_info, req.body)
+  const output = new StdObject()
+  output.add('is_valid', is_valid);
+  res.json(output)
+}))
+
 export default routes
