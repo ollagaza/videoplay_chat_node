@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import Question_BasicData from "../../data/dynamic_template/question.json";
 
 const Schema = mongoose.Schema
 
@@ -64,6 +65,16 @@ dynamic_schema.statics.updateById = function (id, data) {
     new: true,
     setDefaultsOnInsert: true
   })
+}
+
+dynamic_schema.statics.InsertDefaultData = function (question) {
+  if (!question || !question._id) {
+    const model = new this(Question_BasicData)
+    return model.save()
+  }
+  if (!question.version || question.version < Question_BasicData.version) {
+    return this.updateOne({ _id: question._id }, Question_BasicData)
+  }
 }
 
 dynamic_schema.statics.deleteById = function (id) {
