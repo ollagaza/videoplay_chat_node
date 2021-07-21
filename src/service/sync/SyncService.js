@@ -34,15 +34,15 @@ const SyncServiceClass = class {
     await this.onAnalysisComplete(operation_info)
   }
 
-  onAnalysisComplete = async (operation_info) => {
+  onAnalysisComplete = async (operation_info, log_id) => {
     if (!operation_info || operation_info.isEmpty()) {
-      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
+      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400, { log_id })
     }
     const operation_seq = operation_info.seq
     const group_seq = operation_info.group_seq
     const member_seq = operation_info.member_seq
     const content_id = operation_info.content_id
-    const log_info = `[onAnalysisComplete] [operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
+    const log_info = `[onAnalysisComplete] [log_id: ${log_id}, operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
     log.debug(this.log_prefix, log_info, `start`)
 
     const operation_media_info = await OperationMediaService.getOperationMediaInfo(DBMySQL, operation_info)
@@ -167,7 +167,7 @@ const SyncServiceClass = class {
         await OperationService.updateStatus(null, [operation_seq], 'Y')
       } else {
         try {
-          const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq })
+          const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq, log_info })
           log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
         } catch (error) {
           log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
@@ -187,10 +187,11 @@ const SyncServiceClass = class {
       throw new StdObject(-1, '잘못된 요청입니다.', 400)
     }
     const operation_seq = response_data.operation_seq
+    const log_info = response_data.log_info
     const operation_info = await this.getOperationInfoBySeq(operation_seq)
     const status = response_data.is_success ? 'Y' : 'E'
     if (!response_data.is_success) {
-      log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', response_data)
+      log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', log_info, response_data)
     }
     await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status)
     await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
@@ -273,7 +274,7 @@ const SyncServiceClass = class {
     const index_file_list = []
     const url_prefix = ServiceConfig.get('static_storage_prefix')
     for (let second = 0; second < total_second; second += step_second) {
-      const thumbnail_result = await OperationService.createOperationVideoThumbnail(video_file_path, operation_info, second)
+      const thumbnail_result = await OperationService.createOperationVideoThumbnail(video_file_path, operation_info, second, media_info)
       if (thumbnail_result) {
         let end_time = second + step_second
         let end_frame = end_time * fps

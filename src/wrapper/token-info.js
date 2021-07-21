@@ -5,6 +5,7 @@ export default class TokenInfo {
   constructor (token_info, token, expire_time) {
     this.group_seq = null
     this.machine_id = null
+    this.agent_id = null
     this.service_domain = null
     if (token_info != null) {
       this.id = Util.parseInt(token_info.id) // member table seq
@@ -16,6 +17,9 @@ export default class TokenInfo {
       }
       if (token_info.machine_id) {
         this.machine_id = token_info.machine_id // machine id
+      }
+      if (token_info.agent_id) {
+        this.agent_id = token_info.agent_id // machine id
       }
     }
   }
@@ -31,6 +35,9 @@ export default class TokenInfo {
     }
     if (this.machine_id) {
       token_info.machine_id = this.machine_id
+    }
+    if (this.agent_id) {
+      token_info.agent_id = this.agent_id
     }
     if (this.service_domain) {
       token_info.service_domain = this.service_domain
@@ -50,6 +57,9 @@ export default class TokenInfo {
     }
     if (member_info.machine_id) {
       this.machine_id = member_info.machine_id // machine id
+    }
+    if (member_info.agent_id) {
+      this.agent_id = member_info.agent_id // machine id
     }
   }
 
@@ -100,6 +110,12 @@ export default class TokenInfo {
   }
   setMachineId = (machine_id) => {
     this.machine_id = machine_id
+  }
+  getAgentId = () => {
+    return this.agent_id
+  }
+  setAgentId = (agent_id) => {
+    this.agent_id = agent_id
   }
 
   getServiceDomain = () => {

@@ -46,15 +46,36 @@ routes.get('/verify/sso', Wrap(async (req, res) => {
   if (!Util.trim(req.query.token)) {
     throw new StdObject(3001, '잘못된 요청입니다.', 403)
   }
-  const verify_token_info = await Auth.verifyTokenByString(req.query.token)
-  if (verify_token_info.error) {
+  if (!Util.trim(req.query.id)) {
     throw new StdObject(3002, '잘못된 요청입니다.', 403)
   }
+  const id = Util.trim(req.query.id)
+  const verify_token_info = await Auth.verifyTokenByString(req.query.token)
+  if (verify_token_info.error) {
+    log.d(req, 3004, 'verify_token_info.error:', verify_token_info.error)
+    throw new StdObject(3003, '잘못된 요청입니다.', 403)
+  }
   const token_info = verify_token_info.get('token_info')
+  if (token_info.role === Role.AGENT) {
+    if (token_info.agent_id !== id) {
+      log.d(req, 3004, 'token_info:', token_info, 'token_info.agent_id:', token_info.agent_id, 'id:', id)
+      throw new StdObject(3011, '잘못된 요청입니다.', 403)
+    }
+  } else if (token_info.role === Role.BOX) {
+    if (token_info.agent_id !== id) {
+      log.d(req, 3004, 'token_info:', token_info, 'token_info.agent_id:', token_info.agent_id, 'id:', id)
+      throw new StdObject(3011, '잘못된 요청입니다.', 403)
+    }
+  } else if (token_info.role === Role.API) {
+
+  } else {
+    log.d(req, 3004, 'token_info:', token_info)
+    throw new StdObject(3021, '잘못된 요청입니다.', 403)
+  }
   const member_seq = token_info.getId()
   const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
   if (!member_info || member_info.isEmpty()) {
-    throw new StdObject(3003, '회원정보가 존재하지 않습니다.', 403)
+    throw new StdObject(3031, '회원정보가 존재하지 않습니다.', 403)
   }
   const member_status = MemberService.getMemberStateError(member_info)
   if (member_status.error) {
