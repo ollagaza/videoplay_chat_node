@@ -45,7 +45,7 @@ const IS_DEV = Config.isDev()
 if (IS_DEV) {
 
   routes.get('/pdf', Wrap(async (req, res) => {
-    const image_list = await PDFtoImage.convert('d:/aa.pdf')
+    const image_list = await PDFtoImage.convert('d:/bb.pdf')
     log.d(req, image_list ? image_list.length : 'aaaaaaaaa');
     if (image_list) {
       for (let i = 0; i < image_list.length; i++) {

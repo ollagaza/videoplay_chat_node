@@ -47,9 +47,11 @@ export default class OperationFileInfo extends JsonWrapper {
 
     this.operation_seq = operation_seq
     this.directory = Util.isNull(directory) ? null : directory
-    this.file_name = upload_file_info.originalname
-    this.file_path = media_path + upload_file_info.new_file_name
-    this.file_size = upload_file_info.size
+    if (upload_file_info) {
+      this.file_name = upload_file_info.originalname
+      this.file_path = media_path + upload_file_info.new_file_name
+      this.file_size = upload_file_info.size
+    }
 
     this.is_empty = false
 

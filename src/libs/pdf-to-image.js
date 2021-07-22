@@ -6,152 +6,148 @@ import fs from 'fs'
 import util from 'util'
 import * as PDFjs from 'pdfjs-dist/legacy/build/pdf'
 import logger from './logger'
+import StdObject from '../wrapper/std-object'
 
 const readFile = util.promisify(fs.readFile);
 
-const log_prefix = '[PDFtoImage]';
+const log_prefix = '[PDFtoImage]'
 
-function NodeCanvasFactory() {}
-NodeCanvasFactory.prototype = {
-  create: function NodeCanvasFactory_create(width, height) {
+const MAX_WIDTH = 1920
+const MAX_HEIGHT = 1080
+const MAX_DIMENSION = MAX_WIDTH * MAX_HEIGHT
+const MAX_SCALE = 2
+
+const NodeCanvasFactory = class {
+  create = (width, height) => {
     Assert(width > 0 && height > 0, "Invalid canvas size");
     const canvas = Canvas.createCanvas(width, height);
     const context = canvas.getContext("2d");
     return {
       canvas: canvas,
       context: context,
-    };
-  },
+    }
+  }
 
-  reset: function NodeCanvasFactory_reset(canvasAndContext, width, height) {
-    Assert(canvasAndContext.canvas, "Canvas is not specified");
-    Assert(width > 0 && height > 0, "Invalid canvas size");
-    canvasAndContext.canvas.width = width;
-    canvasAndContext.canvas.height = height;
-  },
+  reset = (canvas_and_context, width, height) => {
+    Assert(canvas_and_context.canvas, "Canvas is not specified")
+    Assert(width > 0 && height > 0, "Invalid canvas size")
+    canvas_and_context.canvas.width = width
+    canvas_and_context.canvas.height = height
+  }
 
-  destroy: function NodeCanvasFactory_destroy(canvasAndContext) {
-    Assert(canvasAndContext.canvas, "Canvas is not specified");
+  destroy = (canvas_and_context) => {
+    Assert(canvas_and_context.canvas, "Canvas is not specified")
 
     // Zeroing the width and height cause Firefox to release graphics
     // resources immediately, which can greatly reduce memory consumption.
-    canvasAndContext.canvas.width = 0;
-    canvasAndContext.canvas.height = 0;
-    canvasAndContext.canvas = null;
-    canvasAndContext.context = null;
-  },
-};
+    canvas_and_context.canvas.width = 0
+    canvas_and_context.canvas.height = 0
+    canvas_and_context.canvas = null
+    canvas_and_context.context = null
+  }
+}
 
 module.exports.convert = async function (pdf, conversion_config = {}) {
-
+  if (!conversion_config) conversion_config = {}
   // Get the PDF in Uint8Array form
-  let pdfData = pdf;
+  let pdf_data = pdf;
 
   if (typeof pdf === 'string') {
-    // Support for URL input
-    if (IsUrl(pdf) || pdf.startsWith('moz-extension://') || pdf.startsWith('chrome-extension://') || pdf.startsWith('file://')) {
-      const resp = await NodeFetch(pdf);
-      pdfData = new Uint8Array(await resp.arrayBuffer());
-    }
-    // Support for base64 encoded pdf input
-    else if (/pdfData:pdf\/([a-zA-Z]*);base64,([^"]*)/.test(pdf)) {
-      pdfData = new Uint8Array(Buffer.from(pdf.split(',')[1], 'base64'));
-    }
-    // Support for filepath input
-    else {
-      pdfData = new Uint8Array(await readFile(pdf));
-    }
+    pdf_data = new Uint8Array(await readFile(pdf));
   }
-  // Support for buffer input
   else if (Buffer.isBuffer(pdf)) {
-    pdfData = new Uint8Array(pdf);
+    pdf_data = new Uint8Array(pdf);
   }
-  // Support for Uint8Array input
   else if (!(pdf instanceof Uint8Array)) {
-    return pdf;
+    throw new StdObject(3050, 'pdf 정보가 올바르지 않습니다.', 400, { pdf })
   }
 
   // At this point, we want to convert the pdf data into a 2D array representing
   // the images (indexed like array[page][pixel])
 
-  var outputPages = [];
-  var loadingTask = PDFjs.getDocument({ data: pdfData, disableFontFace: true });
+  const page_data_list = [];
+  const loading_task = PDFjs.getDocument({ data: pdf_data, disableFontFace: true });
+  const pdf_document = await loading_task.promise
+  const canvasFactory = new NodeCanvasFactory();
 
-  var pdfDocument = await loadingTask.promise
-
-  var canvasFactory = new NodeCanvasFactory();
-
-  if (conversion_config.height <= 0 || conversion_config.width <= 0)
+  if (conversion_config.height <= 0 || conversion_config.width <= 0) {
+    delete conversion_config.height
+    delete conversion_config.width
     logger.error(log_prefix, "Negative viewport dimension given. Defaulting to 100% scale.");
+  }
 
   // If there are page numbers supplied in the conversion config
 
-  if (conversion_config.page_numbers)
+  if (conversion_config.page_numbers) {
     for (let i = 0; i < conversion_config.page_numbers.length; i++) {
       // This just pushes a render of the page to the array
-      let currentPage = await doc_render(pdfDocument, conversion_config.page_numbers[i], canvasFactory, conversion_config);
-      if (currentPage != null) {
-        // This allows for base64 conversion of output images
-        if (conversion_config.base64)
-          outputPages.push(currentPage.toString('base64'));
-        else
-          outputPages.push(new Uint8Array(currentPage));
+      const page_data = await docRender(pdf_document, conversion_config.page_numbers[i], canvasFactory, conversion_config);
+      if (page_data && page_data.data) {
+        page_data_list.push(page_data)
       }
     }
-  // Otherwise just loop the whole doc
-  else
-    for (let i = 1; i <= pdfDocument.numPages; i++) {
-      let currentPage = await doc_render(pdfDocument, i, canvasFactory, conversion_config)
-      if (currentPage != null) {
-        // This allows for base64 conversion of output images
-        if (conversion_config.base64)
-          outputPages.push(currentPage.toString('base64'));
-        else
-          outputPages.push(new Uint8Array(currentPage));
+  }
+  else {
+    for (let i = 1; i <= pdf_document.numPages; i++) {
+      const page_data = await docRender(pdf_document, i, canvasFactory, conversion_config)
+      if (page_data && page_data.data) {
+        page_data_list.push(page_data)
       }
     }
-
-  return outputPages;
+  }
+  return page_data_list;
 
 } // convert method
 
-async function doc_render(pdfDocument, pageNo, canvasFactory, conversion_config) {
+const docRender = async (pdfDocument, pageNo, canvasFactory) => {
 
   // Page number sanity check
   if (pageNo < 1 || pageNo > pdfDocument.numPages) {
     logger.error(log_prefix, "Invalid page number " + pageNo);
-    return
+    return null
   }
 
-  // Get the page
-  let page = await pdfDocument.getPage(pageNo);
+  try {
+    const page = await pdfDocument.getPage(pageNo);
 
-  // Create a viewport at 100% scale
-  let outputScale = 1.0;
-  let viewport = page.getViewport({ scale: outputScale });
+    // Create a viewport at 100% scale
+    let viewport = page.getViewport({ scale: 1 });
+    let width = viewport.width
+    let height = viewport.height
 
-  // Scale it up / down dependent on the sizes given in the config (if there
-  // are any)
-  if (conversion_config.width)
-    outputScale = conversion_config.width / viewport.width;
-  else if (conversion_config.height)
-    outputScale = conversion_config.height / viewport.height;
-  if (outputScale != 1 && outputScale > 0)
-    viewport = page.getViewport({ scale: outputScale });
+    let scale = 1.0
+    let w_scale
+    let h_scale
+    if (width >= height) {
+      w_scale = MAX_WIDTH / width
+      h_scale = MAX_HEIGHT / height
+    } else {
+      w_scale = MAX_HEIGHT / width
+      h_scale = MAX_WIDTH / height
+    }
+    scale = Math.min(w_scale, h_scale)
 
-  let canvasAndContext = canvasFactory.create(
-    viewport.width,
-    viewport.height
-  );
+    if (scale > MAX_SCALE) scale = MAX_SCALE
+    viewport = page.getViewport({ scale });
+    width = viewport.width
+    height = viewport.height
 
-  let renderContext = {
-    canvasContext: canvasAndContext.context,
-    viewport: viewport,
-    canvasFactory: canvasFactory
-  };
-
-  await page.render(renderContext).promise;
-
-  // Convert the canvas to an image buffer.
-  return canvasAndContext.canvas.toBuffer();
+    const canvas_and_context = canvasFactory.create(
+      width,
+      height
+    )
+    const renderContext = {
+      canvasContext: canvas_and_context.context,
+      viewport: viewport,
+      canvasFactory: canvasFactory
+    }
+    await page.render(renderContext).promise;
+    return {
+      width: width,
+      height: height,
+      data: new Uint8Array(canvas_and_context.canvas.toBuffer())
+    };
+  } catch (error) {
+    return null
+  }
 }

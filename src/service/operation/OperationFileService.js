@@ -12,6 +12,10 @@ import FileInfo from '../../wrapper/file/FileInfo'
 import OperationFileInfo from '../../wrapper/operation/OperationFileInfo'
 import Constants from '../../constants/constants'
 import StdObject from '../../wrapper/std-object'
+import * as PDFtoImage from "../../libs/pdf-to-image"
+import PNGtoJPG from 'png-to-jpeg'
+import _ from 'lodash'
+import NaverObjectStorageService from '../storage/naver-object-storage-service'
 
 const OperationFileServiceClass = class {
   constructor () {
@@ -170,7 +174,7 @@ const OperationFileServiceClass = class {
     }
     const media_info = await Util.getMediaInfo(upload_file_info.path)
     if (!media_info || !media_info.media_info.width || !media_info.media_info.height) return false
-    if (media_info.media_type === Constants.VIDEO || media_info.media_type === Constants.IMAGE) {
+    if (media_info.media_type === Constants.IMAGE) {
       file_info.width = media_info.media_info.width
       file_info.height = media_info.media_info.height
       const is_rotate = await Util.isImageRotate(upload_file_info.path)
@@ -230,11 +234,75 @@ const OperationFileServiceClass = class {
       }
       file_info.file_type = media_info.media_type
     } else {
-      file_info.file_type = Util.getMimeType(upload_file_info.path, file_info.file_name)
+      return false
     }
 
     const operation_file_model = this.getOperationFileModel(database)
     return await operation_file_model.createOperationFile(file_info)
+  }
+
+  createOperationFileInfoByPDF = async (database, request, response, operation_info, field_name = null, type = null) => {
+    const file_field_name = field_name ? field_name : 'target'
+    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    const file_id = Util.getRandomId()
+    const pdf_directory = `${directory_info.temp}${file_id}/`
+    const media_path = `${directory_info.media_file}${file_id}/`
+    await Util.createDirectory(pdf_directory)
+    await Util.uploadByRequest(request, response, file_field_name, pdf_directory, null, null, true)
+    const upload_file_info = request.file
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(3001, '파일 업로드가 실패하였습니다.', 500)
+    }
+    const origin_file_info = path.parse(upload_file_info.path)
+    const origin_file_name = origin_file_info.name
+    // const origin_file_ext = origin_file_info.ext
+    const origin_file_path = upload_file_info.path
+    const mime_type = await Util.getMimeType(upload_file_info.path, upload_file_info.originalname)
+    if (mime_type !== 'pdf') {
+      await Util.deleteFile(origin_file_path)
+      throw new StdObject(3002, '지원하지 않는 파일 형식입니다.', 400, { mime_type, original_name: upload_file_info.originalname, })
+    }
+    const directory = `/${upload_file_info.originalname}`
+    type = type ? type : 'type_chart'
+    const pdf_data_list = await PDFtoImage.convert(origin_file_path)
+    const operation_file_model = this.getOperationFileModel(database)
+    const file_seq_list = []
+    if (pdf_data_list) {
+      const pad = `${pdf_data_list.length}`.length
+      for (let i = 0; i < pdf_data_list.length; i++) {
+        const pdf_data = pdf_data_list[i]
+        const jpg_file_name = `${origin_file_name}_${_.padStart(i + 1, pad, '0')}`
+        const jpg_file_path = `${pdf_directory}/${jpg_file_name}.jpg`
+        const jpg = await PNGtoJPG({quality: 100})(pdf_data.data)
+        await Util.writeFile(jpg_file_path, jpg)
+
+        const file_info = new OperationFileInfo().getByUploadFileInfo(operation_info.seq, null, directory, media_path).toJSON()
+        file_info.file_name = `Page ${_.padStart(i + 1, pad, '0')}`
+        file_info.file_path = `${media_path}${jpg_file_name}.jpg`
+        file_info.file_size = Buffer.byteLength(pdf_data.data)
+        file_info.width = pdf_data.width
+        file_info.height = pdf_data.height
+        file_info.file_type = 'pdf'
+        file_info.type = type
+
+        const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
+        const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
+        const thumb_file_name = `${jpg_file_name}_thumb.jpg`
+        const thumbnail_image_path = `${pdf_directory}/${thumb_file_name}`
+        const thumbnail_result = await Util.getThumbnail(jpg_file_path, thumbnail_image_path, -1, thumb_width, thumb_height, pdf_data, false)
+        if (thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
+          file_info.thumbnail_path = directory_info.media_file + thumb_file_name
+        }
+
+        const file_seq = await operation_file_model.createOperationFile(file_info)
+        file_seq_list.push(file_seq)
+      }
+    }
+    log.debug(this.log_prefix, '[createOperationFileInfoByPDF]', pdf_directory, file_seq_list)
+    if (file_seq_list.length > 0) {
+      await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
+    }
+    return file_seq_list
   }
 
   deleteFileList = async (database, operation_info, file_seq_list, file_type = this.TYPE_REFER) => {
