@@ -3,7 +3,7 @@ import Util from '../../utils/Util'
 import log from '../../libs/logger'
 import {DynamicModel} from '../../database/mongodb/dynamic'
 import {DynamicResultModel} from "../../database/mongodb/dynamic_result";
-
+import Question_BasicData from "../../data/dynamic_template/question.json";
 
 const DynamicServiceClass = class {
   constructor() {
@@ -36,6 +36,16 @@ const DynamicServiceClass = class {
   daleteDynamicTemplate = async (result_seq, data) => {
     const result = await DynamicResultModel.deleteById(result_seq, data)
     return result
+  }
+
+  setJsonTemplateData = async () => {
+    const template = await DynamicModel.findByTemplate_id(Question_BasicData.template_id)
+    log.debug(this.log_prefix, 'setJsonTemplateData', Question_BasicData, Question_BasicData.template_id, template._doc.version, Question_BasicData.version);
+    if (template._doc && template._doc.version < Question_BasicData.version) {
+      await DynamicModel.updateByTemplate_id(Question_BasicData)
+    } else if (!template || !template._doc.version) {
+      await DynamicModel.createDynamic(Question_BasicData)
+    }
   }
 }
 

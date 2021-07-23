@@ -8,7 +8,7 @@ import { MedicalModel } from './mongodb/Medical'
 import { InterestModel } from './mongodb/Interest'
 import { LogCodeModel } from './mongodb/MemberLogCode'
 import { initSystemData } from './mongodb/SystemData'
-import {DynamicModel} from "./mongodb/dynamic";
+import DynamicService from "../service/dynamic/DynamicService";
 
 const LOG_PREFIX = '[MongoDB]\n'
 
@@ -56,8 +56,7 @@ const defaultMongoCollections = async () => {
   await LogCodeModel.InsertDefaultData(log_code)
 
   // 임시로 하나만 작성해서 디폴트로 올림.
-  const question = await DynamicModel.findOne()
-  await DynamicModel.InsertDefaultData(question)
+  await DynamicService.setJsonTemplateData()
 
   await initSystemData()
 }

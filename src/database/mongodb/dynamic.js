@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import Question_BasicData from "../../data/dynamic_template/question.json";
 
 const Schema = mongoose.Schema
 
@@ -16,6 +15,10 @@ const dynamic_schema = new Schema(schema_field_infos, { strict: false })
 
 dynamic_schema.statics.findOneById = function (id) {
   return this.findById(id)
+}
+
+dynamic_schema.statics.findByTemplate_id = function (template_id, projection = null) {
+  return this.findOne({ template_id: template_id }, projection)
 }
 
 dynamic_schema.statics.getDynamicTotalCount = function (search_keyword = null, search_option = null) {
@@ -67,14 +70,8 @@ dynamic_schema.statics.updateById = function (id, data) {
   })
 }
 
-dynamic_schema.statics.InsertDefaultData = function (question) {
-  if (!question || !question._id) {
-    const model = new this(Question_BasicData)
-    return model.save()
-  }
-  if (!question.version || question.version < Question_BasicData.version) {
-    return this.updateOne({ _id: question._id }, Question_BasicData)
-  }
+dynamic_schema.statics.updateByTemplate_id = function (question) {
+  return this.updateOne({ template_id: question.template_id }, question)
 }
 
 dynamic_schema.statics.deleteById = function (id) {

@@ -1,5 +1,5 @@
 {
-  "version" : 1.2,
+  "version" : 1.4,
   "type" : "operation",
   "template_id" : "60f60234b46d7a5d7c02d3b8",
   "title" : "사전 및 패널 조사지",
@@ -136,7 +136,7 @@
                 },
                 {
                   "key" : "font-size",
-                  "value" : 15,
+                  "value" : "15",
                   "unit" : "px"
                 },
                 {
@@ -147,7 +147,9 @@
                   "key" : "text-align",
                   "value" : "left"
                 }
-              ]
+              ],
+              "is_input_explain" : false,
+              "input_explain" : ""
             },
             {
               "type" : "textbox",
@@ -192,8 +194,14 @@
                   "active" : true
                 }
               ],
-              "control_style" : [],
-              "title" : true
+              "control_style" : [
+                {
+                  "key" : "indent",
+                  "value" : false
+                }
+              ],
+              "title" : true,
+              "placeholder" : "제목 입력"
             }
           ]
         },
@@ -293,8 +301,24 @@
                   "key" : "margin-right",
                   "value" : "20",
                   "unit" : "px"
+                },
+                {
+                  "key" : "width",
+                  "value" : "auto",
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-size",
+                  "value" : "15",
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-weight",
+                  "value" : 400
                 }
-              ]
+              ],
+              "is_input_explain" : false,
+              "input_explain" : ""
             },
             {
               "type" : "textbox",
@@ -421,7 +445,33 @@
               "value" : "around"
             }
           ],
-          "style" : [],
+          "style" : [
+            {
+              "key" : "padding-left",
+              "value" : "6",
+              "unit" : "px"
+            },
+            {
+              "key" : "padding-top",
+              "value" : "6",
+              "unit" : "px"
+            },
+            {
+              "key" : "padding-right",
+              "value" : "6",
+              "unit" : "px"
+            },
+            {
+              "key" : "padding-bottom",
+              "value" : "6",
+              "unit" : "px"
+            },
+            {
+              "key" : "height",
+              "value" : "52",
+              "unit" : "px"
+            }
+          ],
           "parent" : [],
           "controls" : [
             {
@@ -1356,8 +1406,24 @@
                           "key" : "margin-right",
                           "value" : "20",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     },
                     {
                       "type" : "radio",
@@ -1626,8 +1692,24 @@
                         {
                           "key" : "text-align",
                           "value" : "left"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     },
                     {
                       "type" : "radio",
@@ -1678,6 +1760,11 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "width",
+                      "value" : "120",
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -1859,6 +1946,11 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "width",
+                      "value" : "120",
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -1891,7 +1983,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -2294,7 +2386,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -2777,8 +2869,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -3011,7 +3119,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -3335,7 +3443,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -3525,8 +3633,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -3714,7 +3838,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -3903,8 +4027,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -4308,14 +4448,21 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "15",
                           "unit" : "px"
                         },
                         {
                           "key" : "font-weight",
                           "value" : 400
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -4373,8 +4520,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -4559,8 +4722,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -4663,7 +4842,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -4682,8 +4861,27 @@
                   "grid_row" : 13,
                   "grid_column" : 1,
                   "row_end" : 13,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 13,
+                      "grid_column" : 2,
+                      "row_end" : 14,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -4738,7 +4936,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -4755,28 +4953,10 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 13,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 14,
                   "col_end" : 10,
                   "cell_span_item" : [
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 13,
-                      "grid_column" : 3,
-                      "row_end" : 14,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -4899,6 +5079,7 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -4909,12 +5090,12 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -4923,8 +5104,7 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ],
-                      "my_link_id" : ""
+                      ]
                     }
                   ]
                 },
@@ -5154,8 +5334,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -5189,6 +5385,11 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "width",
+                      "value" : "120",
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -5213,8 +5414,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -5345,8 +5562,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -5380,6 +5613,11 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "width",
+                      "value" : "120",
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -5404,8 +5642,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -5463,8 +5717,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -5559,8 +5829,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -5618,8 +5904,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -6123,7 +6425,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6168,7 +6475,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6212,7 +6524,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6293,7 +6610,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6359,7 +6681,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -6485,7 +6807,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6530,7 +6857,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6574,7 +6906,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6655,7 +6992,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6721,7 +7063,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -6847,7 +7189,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6892,7 +7239,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6936,7 +7288,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7017,7 +7374,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7083,7 +7445,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -7209,7 +7571,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7254,7 +7621,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7298,7 +7670,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7379,7 +7756,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7389,8 +7771,27 @@
                   "grid_row" : 20,
                   "grid_column" : 1,
                   "row_end" : 21,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 20,
+                      "grid_column" : 2,
+                      "row_end" : 21,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -7462,28 +7863,10 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 20,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 21,
                   "col_end" : 13,
                   "cell_span_item" : [
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 20,
-                      "grid_column" : 3,
-                      "row_end" : 21,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -7660,6 +8043,7 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -7670,16 +8054,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7774,8 +8163,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -7833,8 +8238,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -7868,6 +8289,11 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "width",
+                      "value" : "120",
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -7900,7 +8326,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -8034,7 +8460,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -8168,7 +8594,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -8302,7 +8728,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -8427,7 +8853,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -8546,7 +8972,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -8828,7 +9254,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -9054,8 +9480,27 @@
                   "grid_row" : 24,
                   "grid_column" : 1,
                   "row_end" : 25,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 24,
+                      "grid_column" : 2,
+                      "row_end" : 25,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -9110,7 +9555,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -9127,28 +9572,10 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 24,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 25,
                   "col_end" : 13,
                   "cell_span_item" : [
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 24,
-                      "grid_column" : 3,
-                      "row_end" : 25,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -9325,10 +9752,32 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
-                      "style" : [],
-                      "control_style" : []
+                      "style" : [
+                        {
+                          "key" : "width",
+                          "value" : 100,
+                          "unit" : "%"
+                        },
+                        {
+                          "key" : "margin-left",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "margin-right",
+                          "value" : 0,
+                          "unit" : "px"
+                        }
+                      ],
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -9423,8 +9872,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -9673,8 +10138,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -9732,8 +10213,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -10017,8 +10514,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -10582,8 +11095,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -10768,8 +11297,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -10864,8 +11409,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -11331,8 +11892,24 @@
                           "key" : "margin-right",
                           "value" : "20",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -11522,8 +12099,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -11581,8 +12174,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -11640,8 +12249,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -11736,8 +12361,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -11795,8 +12436,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -12164,8 +12821,24 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -12282,7 +12955,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12326,7 +13004,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12370,7 +13053,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12451,7 +13139,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12517,7 +13210,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -12643,7 +13336,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12687,7 +13385,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12731,7 +13434,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12812,7 +13520,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -12878,7 +13591,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -13004,7 +13717,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -13048,7 +13766,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -13092,7 +13815,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -13173,7 +13901,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -13231,8 +13964,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -13399,7 +14148,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -13443,7 +14197,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -13524,7 +14283,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -13582,8 +14346,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -13808,7 +14588,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -14015,6 +14800,11 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "width",
+                      "value" : "120",
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -14047,7 +14837,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -14100,7 +14890,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -14166,7 +14961,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -14219,7 +15014,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -14285,7 +15085,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -14338,7 +15138,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -14404,7 +15209,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -14457,7 +15262,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -14523,7 +15333,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -14576,7 +15386,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -14610,6 +15425,26 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "5",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -14642,12 +15477,16 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
                           "key" : "font-weight",
                           "value" : 400
+                        },
+                        {
+                          "key" : "text-align",
+                          "value" : "center"
                         }
                       ],
                       "is_input_explain" : true,
@@ -14937,8 +15776,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -15004,7 +15859,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -15057,7 +15912,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -15123,7 +15983,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -15176,7 +16036,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -15242,7 +16107,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -15295,7 +16160,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -15361,7 +16231,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -15414,7 +16284,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -15480,7 +16355,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -15533,7 +16408,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -15567,6 +16447,26 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "5",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
                     }
                   ],
                   "parent" : [],
@@ -15599,7 +16499,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -15921,7 +16821,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -16363,7 +17263,7 @@
                       "control_style" : [
                         {
                           "key" : "indent",
-                          "value" : true
+                          "value" : false
                         }
                       ]
                     }
@@ -16703,7 +17603,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -16937,7 +17837,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -16995,8 +17900,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -17524,8 +18445,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -18510,7 +19447,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -18631,7 +19573,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -18699,8 +19641,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -18907,7 +19865,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -18965,8 +19928,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -19173,7 +20152,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -19231,8 +20215,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -19439,7 +20439,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -19497,8 +20502,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -19705,7 +20726,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -20021,8 +21047,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -20248,7 +21290,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -20306,8 +21353,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -20371,7 +21434,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -20483,8 +21551,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -20695,8 +21779,24 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -20922,7 +22022,12 @@
                           "unit" : "px"
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 }
@@ -21811,7 +22916,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -22514,7 +23619,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -22829,7 +23934,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -23463,7 +24568,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -23471,7 +24576,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -24154,7 +25261,7 @@
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : true
+                                  "value" : false
                                 }
                               ],
                               "multiline" : true
@@ -24260,7 +25367,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -24268,7 +25375,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -24939,7 +26048,7 @@
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : true
+                                  "value" : false
                                 }
                               ],
                               "multiline" : true
@@ -25008,7 +26117,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -25016,7 +26125,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -25367,7 +26478,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -25375,7 +26486,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -26051,7 +27164,7 @@
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : true
+                                  "value" : false
                                 }
                               ],
                               "multiline" : true
@@ -26120,7 +27233,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -26128,7 +27241,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -27708,7 +28823,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -27716,7 +28831,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -28935,7 +30052,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -28943,7 +30060,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -30190,7 +31309,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -30885,7 +32004,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -31200,7 +32319,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -31834,7 +32953,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -31842,7 +32961,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -32614,7 +33735,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -32622,7 +33743,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -33353,7 +34476,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -33361,7 +34484,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -33717,7 +34842,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -33725,7 +34850,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -34461,7 +35588,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -34469,7 +35596,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -36051,7 +37180,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -36059,7 +37188,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -37255,7 +38386,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -37263,7 +38394,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -37420,7 +38553,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -37428,7 +38561,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -37549,7 +38684,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -37557,7 +38692,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -37642,7 +38779,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -37650,7 +38787,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -37983,7 +39122,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -37991,7 +39130,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -38324,7 +39465,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -38332,7 +39473,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -38665,7 +39808,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -38673,7 +39816,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -39006,7 +40151,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -39014,7 +40159,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -39607,7 +40754,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -39615,7 +40762,9 @@
                                   "value" : 400
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },

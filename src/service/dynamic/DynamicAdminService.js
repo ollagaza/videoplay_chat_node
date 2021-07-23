@@ -20,8 +20,8 @@ const DynamicAdminServiceClass = class {
     return { dynamic_list, page_navigation }
   }
 
-  getDynamicTemplateOne = async (_id) => {
-    return DynamicModel.findOneById(_id)
+  getDynamicTemplateOne = async (template_id) => {
+    return DynamicModel.findByTemplate_id(template_id)
   }
 
   createDynamicTemplate = async (data) => {
