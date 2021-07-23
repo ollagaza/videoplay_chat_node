@@ -483,6 +483,7 @@ const executeSpawn = (command, args = [], spawn_options = {}, on_start = null, o
   if (on_start && typeof on_start === 'function') {
     on_start(execute_command)
   }
+  if (!spawn_options) spawn_options = {}
   const process = spawn(command, args, spawn_options)
   if (out_encoding) {
     process.stdout.setEncoding(out_encoding)
@@ -540,6 +541,7 @@ const getMediaInfo = (media_path) => {
     const media_result = {
       success: false,
       media_type: Constants.NO_MEDIA,
+      file_size: 0,
       media_info: {}
     }
 
@@ -574,11 +576,15 @@ const getMediaInfo = (media_path) => {
                   const duration = Math.round(getFloat(getXmlText(track.Duration)))
                   const width = getInt(getXmlText(track.Width))
                   const height = getInt(getXmlText(track.Height))
+                  const file_size = Math.max(getFloat(getXmlText(track.FileSize)), getFloat(getXmlText(track.File_size)))
                   const fps = Math.max(getFloat(getXmlText(track.FrameRate)), getFloat(getXmlText(track.Frame_rate)))
                   const frame_count = Math.max(getFloat(getXmlText(track.FrameCount)), getFloat(getXmlText(track.Frame_count)))
                   const sample_rate = Math.max(getFloat(getXmlText(track.SamplingRate)), getFloat(getXmlText(track.Sampling_rate)))
                   const bit_depth = Math.max(getFloat(getXmlText(track.BitDepth)), getFloat(getXmlText(track.Bit_depth)))
-                  if (track_type === Constants.VIDEO) {
+                  if (track_type === 'general') {
+                    media_result.file_size = file_size
+                    media_result.format = getXmlText(track.Format)
+                  } else if (track_type === Constants.VIDEO) {
                     media_result.media_type = Constants.VIDEO
                     media_result.media_info.width = width
                     media_result.media_info.height = height
@@ -1262,6 +1268,84 @@ const isImageRotate = async (file_path) => {
   return orientation >= 5 && orientation <= 8
 }
 
+const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', quality = 150) => {
+  return new Promise(async (resolve) => {
+    const result = {
+      success: false,
+      message: '',
+      data: null,
+      error: null,
+      command: null,
+      code: null,
+      file_list: []
+    }
+    if (!await fileExists(pdf_file_path)) {
+      result.message = '대상 파일이 존재하지 않습니다.'
+      result.out = {
+        pdf_file_path,
+        output_directory
+      }
+      resolve(result);
+      return;
+    }
+    output_directory = removePathLastSlash(output_directory)
+    await createDirectory(output_directory)
+    const args = [
+      '-jpeg',
+      '-r',
+      quality,
+      pdf_file_path,
+      `${output_directory}/${prefix}`
+    ]
+    const spawn = executeSpawn('pdftoppm', args, null, (cmd) => {
+      result.command = cmd
+    })
+
+    let data_str = ''
+    let error_str = ''
+    spawn.on('onData', (data) => {
+      data_str += data + '\n'
+    })
+    spawn.on('onError', (data) => {
+      error_str += data + '\n'
+    })
+    spawn.on('onExit', async (code) => {
+      result.success = code === 0
+      result.code = code
+      result.data = data_str
+      result.error = error_str
+      spawn.emit('kill')
+      const file_list = await getDirectoryFileList(output_directory)
+      const file_regexp = new RegExp(`^${prefix}-[\\d]+\\.jpg`)
+      if (file_list) {
+        for (let i = 0; i < file_list.length; i++) {
+          const dirent = file_list[i]
+          if (dirent.isFile() && file_regexp.test(dirent.name)) {
+            const file_name = dirent.name
+            const file_path = `${output_directory}/${file_name}`
+            const media_info = await getMediaInfo(file_path)
+            if (!media_info || media_info.media_type !== Constants.IMAGE) continue;
+            const file_info = {
+              file_name: dirent.name,
+              file_size: media_info.file_size,
+              width: media_info.media_info.width,
+              height: media_info.media_info.height,
+              media_info
+            }
+            result.file_list.push(file_info)
+          }
+        }
+      }
+      if (result.file_list.length <= 0) {
+        result.message = '변환된 파일이 존재하지 않습니다.'
+        result.success = false
+      }
+      spawn.emit('finish')
+      resolve(result)
+    })
+  })
+}
+
 export default {
   getFileBuffer,
   getImageTags,
@@ -1642,5 +1726,6 @@ export default {
       return ''
     }
     return '#' + hashtag_list.join(' #')
-  }
+  },
+  pdfToImage
 }

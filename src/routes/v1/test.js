@@ -35,8 +35,6 @@ import SendMailService from "../../service/etc/SendMailService";
 import TempService from "../../service/TempService";
 import ExifReader from 'exifreader'
 import fs from 'fs'
-import * as PDFtoImage from "../../libs/pdf-to-image"
-import PNGtoJPG from 'png-to-jpeg'
 
 const routes = Router()
 
@@ -45,15 +43,8 @@ const IS_DEV = Config.isDev()
 if (IS_DEV) {
 
   routes.get('/pdf', Wrap(async (req, res) => {
-    const image_list = await PDFtoImage.convert('d:/bb.pdf')
-    log.d(req, image_list ? image_list.length : 'aaaaaaaaa');
-    if (image_list) {
-      for (let i = 0; i < image_list.length; i++) {
-        const jpg = await PNGtoJPG({quality: 100})(image_list[i])
-        fs.writeFileSync(`d:/temp/pdf/${i + 1}.jpg`, jpg)
-      }
-    }
-    res.send()
+    const image_list = await Util.pdfToImage('d:/cc.pdf', 'd:/temp/pdf/aa')
+    res.json(image_list)
   }))
 
   routes.get('/exif', Wrap(async (req, res) => {
