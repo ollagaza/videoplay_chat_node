@@ -97,7 +97,7 @@ const NaverObjectStorageClass = class {
     const storage_client = this.getStorageClient(client)
     const target_bucket_name = this.getBucketName(bucket_name)
     const remote_file_path = remote_file_name !== null ? `${remote_path}/${remote_file_name}` : remote_path
-    log.debug(this.log_prefix, '[uploadFile]', `local_file_path: ${local_file_path}`, `remote_file_path: ${bucket_name}/${remote_file_path}`)
+    // log.debug(this.log_prefix, '[uploadFile]', `local_file_path: ${local_file_path}`, `remote_file_path: ${bucket_name}/${remote_file_path}`)
     const object_params = {
       Bucket: target_bucket_name,
       Key: remote_file_path,

@@ -63,7 +63,7 @@ dynamic_schema.statics.createDynamic = function (data) {
 
 dynamic_schema.statics.updateById = function (id, data) {
   data.modify_date = Date.now()
-  return this.findOneAndUpdate({ _id: id }, data, {
+  return this.findOneAndUpdate({ template_id: id }, data, {
     upsert: true,
     new: true,
     setDefaultsOnInsert: true

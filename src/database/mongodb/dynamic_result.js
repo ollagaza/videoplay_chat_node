@@ -38,6 +38,9 @@ dynamic_result_schema.statics.updateById = function (id, data) {
     setDefaultsOnInsert: true
   })
 }
+dynamic_result_schema.statics.deleteById = function (id) {
+  return this.findByIdAndDelete(id)
+}
 
 const dynamic_result_model = mongoose.model('dynamic_result', dynamic_result_schema)
 

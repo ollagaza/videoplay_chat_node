@@ -520,11 +520,12 @@ routes.put('/:api_type/:api_key/operation/files/type', Auth.isAuthenticated(Role
   res.json(output)
 }))
 
-routes.post('/:api_type/:api_key/operation/files/chart/pdf', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const { operation_info } = await getBaseInfo(req, true, true, true)
-  const file_seq_list = await OperationFileService.createOperationFileInfoByPDF(DBMySQL, req, res, operation_info)
+routes.post('/:api_type/:api_key/operation/files/chart/pdf/:upload_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info, member_info, group_member_info } = await getBaseInfo(req, true, true, true)
+  const upload_id = req.params.upload_id
+  const pdf_info = await OperationFileService.uploadOperationChartPDF(DBMySQL, req, res, operation_info, group_member_info, member_info, upload_id)
   const output = new StdObject()
-  output.add('file_seq_list', file_seq_list)
+  output.add('pdf_info', pdf_info)
   res.json(output)
 }))
 

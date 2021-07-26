@@ -34,6 +34,16 @@ routes.get('/result/:id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req
   res.json(output)
 }))
 
+routes.delete('/result/:operation_seq(\\d+)/:_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const result_id = req.params._id
+  const operation_seq = req.params.operation_seq;
+  const delete_resutl = await DynamicService.deleteTemplateResult(result_id)
+  output.add('questionnaire_list', await DynamicService.getDynamicResultList(operation_seq))
+  res.json(output)
+}))
+
 routes.get('/result_list/:id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
@@ -53,7 +63,7 @@ routes.put('/:id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) 
   req.accepts('application/json')
   const output = new StdObject()
   const result_id = req.params.id
-  output.add('result', await DynamicService.updateDynamicTemplate(result_id, req.body))
+  output.add('result', await DynamicService.updateTemplateResult(result_id, req.body))
   res.json(output)
 }))
 

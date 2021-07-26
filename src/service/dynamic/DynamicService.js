@@ -28,20 +28,20 @@ const DynamicServiceClass = class {
     return result
   }
 
-  updateDynamicTemplate = async (result_seq, data) => {
+  updateTemplateResult = async (result_seq, data) => {
     const result = await DynamicResultModel.updateById(result_seq, data)
     return result
   }
 
-  daleteDynamicTemplate = async (result_seq, data) => {
+  deleteTemplateResult = async (result_seq, data) => {
     const result = await DynamicResultModel.deleteById(result_seq, data)
     return result
   }
 
   setJsonTemplateData = async () => {
     const template = await DynamicModel.findByTemplate_id(Question_BasicData.template_id)
-    log.debug(this.log_prefix, 'setJsonTemplateData', Question_BasicData, Question_BasicData.template_id, template._doc.version, Question_BasicData.version);
-    if (template._doc && template._doc.version < Question_BasicData.version) {
+    if (template && template._doc && template._doc.version < Question_BasicData.version) {
+      log.debug(this.log_prefix, 'setJsonTemplateData', Question_BasicData, Question_BasicData.template_id, template._doc.version, Question_BasicData.version);
       await DynamicModel.updateByTemplate_id(Question_BasicData)
     } else if (!template || !template._doc.version) {
       await DynamicModel.createDynamic(Question_BasicData)
