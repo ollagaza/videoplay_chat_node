@@ -12,6 +12,8 @@ import FileInfo from '../../wrapper/file/FileInfo'
 import OperationFileInfo from '../../wrapper/operation/OperationFileInfo'
 import Constants from '../../constants/constants'
 import StdObject from '../../wrapper/std-object'
+import _ from 'lodash'
+import NaverObjectStorageService from '../storage/naver-object-storage-service'
 
 const OperationFileServiceClass = class {
   constructor () {
@@ -20,6 +22,9 @@ const OperationFileServiceClass = class {
     this.TYPE_REFER = 'refer'
     this.TYPE_FILE = 'file'
     this.TYPE_ALL = 'all'
+    this.DEFAULT_WIDTH = 1920
+    this.DEFAULT_HEIGHT = 1080
+    this.MAX_DIMENSION = this.DEFAULT_WIDTH * this.DEFAULT_HEIGHT
   }
 
   getReferFileModel = (database = null) => {
@@ -170,7 +175,7 @@ const OperationFileServiceClass = class {
     }
     const media_info = await Util.getMediaInfo(upload_file_info.path)
     if (!media_info || !media_info.media_info.width || !media_info.media_info.height) return false
-    if (media_info.media_type === Constants.VIDEO || media_info.media_type === Constants.IMAGE) {
+    if (media_info.media_type === Constants.IMAGE) {
       file_info.width = media_info.media_info.width
       file_info.height = media_info.media_info.height
       const is_rotate = await Util.isImageRotate(upload_file_info.path)
@@ -182,21 +187,18 @@ const OperationFileServiceClass = class {
       const upload_file_path = path.parse(upload_file_info.path)
       const image_ext = `${upload_file_path.ext}`.toLowerCase()
       const ext = image_ext === '.png' ? '.png' : '.jpg'
-      const default_width = 1920
-      const default_height = 1080
-      const max_resolution = default_width * default_height
-      const image_resolution = file_info.width * file_info.height
-      if ((image_ext !== '.png' && image_ext !== '.jpg') || image_resolution > max_resolution) {
+      const image_dimension = file_info.width * file_info.height
+      if ((image_ext !== '.png' && image_ext !== '.jpg') || image_dimension > this.MAX_DIMENSION) {
         let resize_ratio = 1
-        if (image_resolution > max_resolution) {
+        if (image_dimension > this.MAX_DIMENSION) {
           let w_ratio, h_ratio, width, height
           width = media_info.media_info.width
           height = media_info.media_info.height
-          w_ratio = width / default_width
-          h_ratio = height / default_height
+          w_ratio = width / this.DEFAULT_WIDTH
+          h_ratio = height / this.DEFAULT_HEIGHT
           if (height > width) {
-            w_ratio = width / default_height
-            h_ratio = height / default_width
+            w_ratio = width / this.DEFAULT_HEIGHT
+            h_ratio = height / this.DEFAULT_WIDTH
           }
           resize_ratio = Math.max(w_ratio, h_ratio)
         }
@@ -230,11 +232,106 @@ const OperationFileServiceClass = class {
       }
       file_info.file_type = media_info.media_type
     } else {
-      file_info.file_type = Util.getMimeType(upload_file_info.path, file_info.file_name)
+      return false
     }
 
     const operation_file_model = this.getOperationFileModel(database)
     return await operation_file_model.createOperationFile(file_info)
+  }
+
+  createOperationFileInfoByPDF = async (database, request, response, operation_info, field_name = null, type = null) => {
+    const file_field_name = field_name ? field_name : 'target'
+    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    const file_id = Util.getRandomId()
+    const pdf_directory = `${directory_info.temp}${file_id}/`
+    const media_path = `${directory_info.media_file}${file_id}/`
+    await Util.createDirectory(pdf_directory)
+    await Util.uploadByRequest(request, response, file_field_name, pdf_directory, null, null, true)
+    const upload_file_info = request.file
+    if (Util.isEmpty(upload_file_info)) {
+      throw new StdObject(3001, '파일 업로드가 실패하였습니다.', 500)
+    }
+    // const origin_file_info = path.parse(upload_file_info.path)
+    // const origin_file_name = origin_file_info.name
+    // const origin_file_ext = origin_file_info.ext
+    const origin_file_path = upload_file_info.path
+    const mime_type = await Util.getMimeType(upload_file_info.path, upload_file_info.originalname)
+    if (mime_type !== 'pdf') {
+      await Util.deleteDirectory(pdf_directory)
+      log.error(this.log_prefix, '[createOperationFileInfoByPDF]', '지원하지 않는 파일 형식입니다.', mime_type, upload_file_info)
+      throw new StdObject(3002, '지원하지 않는 파일 형식입니다.', 400)
+    }
+    const directory = `/${upload_file_info.originalname}`
+    type = type ? type : 'type_chart'
+    const operation_file_model = this.getOperationFileModel(database)
+    const convert_pdf_result = await Util.pdfToImage(origin_file_path, pdf_directory)
+    const file_seq_list = []
+    if (convert_pdf_result && convert_pdf_result.success !== true) {
+      await Util.deleteDirectory(pdf_directory)
+      log.error(this.log_prefix, '[createOperationFileInfoByPDF]', 'PDF파일을 변환할 수 없습니다.', convert_pdf_result)
+      throw new StdObject(3003, 'PDF파일을 변환할 수 없습니다.', 400)
+    }
+    const pad = `${convert_pdf_result.file_list.length}`.length
+    for (let i = 0; i < convert_pdf_result.file_list.length; i++) {
+      const pdf_data = convert_pdf_result.file_list[i]
+      const jpg_file_name = path.parse(pdf_data.file_name).name
+      const jpg_file_path = `${pdf_directory}/${pdf_data.file_name}`
+
+      const file_info = new OperationFileInfo().getByUploadFileInfo(operation_info.seq, null, directory, media_path).toJSON()
+      file_info.file_name = `Page ${_.padStart(i + 1, pad, '0')}`
+      file_info.file_path = `${media_path}${pdf_data.file_name}`
+      file_info.file_size = pdf_data.file_size
+      file_info.width = pdf_data.width
+      file_info.height = pdf_data.height
+      file_info.file_type = 'pdf'
+      file_info.type = type
+
+      const media_info = pdf_data.media_info
+      const image_dimension = pdf_data.width * pdf_data.height
+      if (image_dimension > this.MAX_DIMENSION) {
+        let resize_ratio = 1
+        if (image_dimension > this.MAX_DIMENSION) {
+          let w_ratio, h_ratio, width, height
+          width = media_info.media_info.width
+          height = media_info.media_info.height
+          w_ratio = width / this.DEFAULT_WIDTH
+          h_ratio = height / this.DEFAULT_HEIGHT
+          if (height > width) {
+            w_ratio = width / this.DEFAULT_HEIGHT
+            h_ratio = height / this.DEFAULT_WIDTH
+          }
+          resize_ratio = Math.max(w_ratio, h_ratio)
+        }
+
+        const resize_width = media_info.media_info.width / resize_ratio
+        const resize_height = media_info.media_info.height / resize_ratio
+        const resize_image_name = `${jpg_file_name}_resize.jpg`
+        const resize_image_path = `${pdf_directory}/${resize_image_name}`
+        const resize_result = await Util.resizeImage(jpg_file_path, resize_image_path, resize_width, resize_height, media_info)
+        if (resize_result.success && (await Util.fileExists(resize_image_path))) {
+          file_info.resize_path = media_path + resize_image_name
+          file_info.width = resize_width
+          file_info.height = resize_height
+        }
+      }
+
+      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
+      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
+      const thumb_file_name = `${jpg_file_name}_thumb.jpg`
+      const thumbnail_image_path = `${pdf_directory}/${thumb_file_name}`
+      const thumbnail_result = await Util.getThumbnail(jpg_file_path, thumbnail_image_path, -1, thumb_width, thumb_height, pdf_data, false)
+      if (thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
+        file_info.thumbnail_path = media_path + thumb_file_name
+      }
+
+      const file_seq = await operation_file_model.createOperationFile(file_info)
+      file_seq_list.push(file_seq)
+    }
+    log.debug(this.log_prefix, '[createOperationFileInfoByPDF]', pdf_directory, file_seq_list)
+    if (file_seq_list.length > 0) {
+      await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
+    }
+    return file_seq_list
   }
 
   deleteFileList = async (database, operation_info, file_seq_list, file_type = this.TYPE_REFER) => {
@@ -354,6 +451,32 @@ const OperationFileServiceClass = class {
       return operation_file_model.isValidFileName(operation_seq, request_body.file_seq, request_body.directory, request_body.new_file_name)
     } else if (request_body.is_folder) {
       return operation_file_model.isValidFolderName(operation_seq, request_body.new_file_name)
+    }
+    return false;
+  }
+
+  changeOperationFilesType = async (operation_info, request_body) => {
+    if (!request_body || !request_body.data ) {
+      return false
+    }
+    const file_type = request_body.type ? request_body.type : null
+    const directory_list = request_body.data.directory_list
+    const file_seq_list = request_body.data.file_seq_list
+    const current_type = request_body.current_type ? request_body.current_type : null
+
+    if (directory_list || file_seq_list) {
+      const operation_seq = operation_info.seq
+      await DBMySQL.transaction(async (transaction) => {
+        const operation_file_model = this.getOperationFileModel(transaction)
+        if (directory_list && directory_list.length > 0) {
+          for (let i = 0; i < directory_list.length; i++) {
+            await operation_file_model.changeFilesTypeByDirectory(operation_seq, file_type, directory_list[i], current_type)
+          }
+        }
+        if (file_seq_list && file_seq_list.length > 0) {
+          await operation_file_model.changeFilesTypeByFileSeqList(operation_seq, file_type, file_seq_list, current_type)
+        }
+      })
     }
     return false;
   }

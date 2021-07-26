@@ -152,7 +152,7 @@ export default class GroupAlarmModel extends MySQLModel {
     const recent_timestamp = Util.addDay(-(Util.parseInt(interval, 30)), Constants.TIMESTAMP)
     return this.database
       .from(this.table_name)
-      .where('reg_date', '<=', recent_timestamp)
+      .where('reg_date', '<=', this.database.raw('FROM_UNIXTIME(?)', [recent_timestamp]))
       .del()
   }
 

@@ -1,11 +1,12 @@
 import log from '../libs/logger'
 import config from '../config/config'
-import FolderTotalSizeSyncScheduler from "../scheduler/FolderTotalSizeSyncScheduler";
-import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler";
-import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDeleteScheduler";
-import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler";
-import GroupInfoMemberCountSyncScheduler from "../scheduler/GroupInfoMemberCountSyncScheduler";
-import GroupMemberPauseResetScheduler from "../scheduler/GroupMemberPauseResetScheduler";
+import FolderTotalSizeSyncScheduler from "../scheduler/FolderTotalSizeSyncScheduler"
+import ReservationEmailScheduler from "../scheduler/ReservationEmailScheduler"
+import ThreeMonthsEmailDeleteScheduler from "../scheduler/ThreeMonthsEmailDeleteScheduler"
+import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler"
+import GroupInfoMemberCountSyncScheduler from "../scheduler/GroupInfoMemberCountSyncScheduler"
+import GroupMemberPauseResetScheduler from "../scheduler/GroupMemberPauseResetScheduler"
+import GroupAlarmDeleteScheduler from '../scheduler/GroupAlarmDeleteScheduler'
 
 const SchedulerManagerClass = class {
   constructor() {
@@ -21,6 +22,7 @@ const SchedulerManagerClass = class {
       GroupDataCountingScheduler.startSchedule()
       GroupInfoMemberCountSyncScheduler.startSchedule()
       GroupMemberPauseResetScheduler.startSchedule()
+      GroupAlarmDeleteScheduler.startSchedule()
     }
   }
 }

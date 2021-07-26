@@ -41,6 +41,12 @@ const routes = Router()
 const IS_DEV = Config.isDev()
 
 if (IS_DEV) {
+
+  routes.get('/pdf', Wrap(async (req, res) => {
+    const image_list = await Util.pdfToImage('d:/cc.pdf', 'd:/temp/pdf/aa')
+    res.json(image_list)
+  }))
+
   routes.get('/exif', Wrap(async (req, res) => {
     const a1 = await Util.isImageRotate('d:/a1.jpg')
     const a2 = await Util.isImageRotate('d:/a2.jpg')

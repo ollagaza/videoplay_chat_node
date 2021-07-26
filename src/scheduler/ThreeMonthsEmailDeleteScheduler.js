@@ -13,7 +13,7 @@ class ThreeMonthsEmailDeleteSchedulerClass {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('0 3,13,23,33,43,53 * * * *', this.deleteEmailBeforeThreeMonth)
+        this.current_job = scheduler.scheduleJob('0 35 2 * * *', this.deleteEmailBeforeThreeMonth)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
