@@ -15,6 +15,12 @@ export default class OperationFileModel extends MySQLModel {
     return this.create(operation_file_info, 'seq')
   }
 
+  createOperationFileBatch = async (operation_file_info_list) => {
+    return this.database
+      .insert(operation_file_info_list)
+      .into(this.table_name)
+  }
+
   getOperationFileList = async (operation_seq, last_seq = null, limit = 0) => {
     const query = this.database
       .select(this.selectable_fields)

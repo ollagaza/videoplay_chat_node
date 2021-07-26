@@ -14,6 +14,7 @@ import Constants from '../../constants/constants'
 import StdObject from '../../wrapper/std-object'
 import _ from 'lodash'
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
+import GroupAlarmService from '../group/GroupAlarmService'
 
 const OperationFileServiceClass = class {
   constructor () {
@@ -239,99 +240,143 @@ const OperationFileServiceClass = class {
     return await operation_file_model.createOperationFile(file_info)
   }
 
-  createOperationFileInfoByPDF = async (database, request, response, operation_info, field_name = null, type = null) => {
-    const file_field_name = field_name ? field_name : 'target'
+  uploadOperationChartPDF = async (database, request, response, operation_info, group_member_info, member_info, upload_id) => {
+    const operation_seq = operation_info.seq
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     const file_id = Util.getRandomId()
-    const pdf_directory = `${directory_info.temp}${file_id}/`
-    const media_path = `${directory_info.media_file}${file_id}/`
+    const pdf_directory = ServiceConfig.isVacs() ? `${directory_info.file}${file_id}/` : `${directory_info.temp}${file_id}/`
     await Util.createDirectory(pdf_directory)
-    await Util.uploadByRequest(request, response, file_field_name, pdf_directory, null, null, true)
+    await Util.uploadByRequest(request, response, 'target', pdf_directory, null, null, true)
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
+      log.error(this.log_prefix, '[createOperationFileInfoByPDF]', `operation_seq: ${operation_seq}`, mime_type, upload_file_info)
       throw new StdObject(3001, '파일 업로드가 실패하였습니다.', 500)
     }
-    // const origin_file_info = path.parse(upload_file_info.path)
-    // const origin_file_name = origin_file_info.name
-    // const origin_file_ext = origin_file_info.ext
-    const origin_file_path = upload_file_info.path
     const mime_type = await Util.getMimeType(upload_file_info.path, upload_file_info.originalname)
     if (mime_type !== 'pdf') {
       await Util.deleteDirectory(pdf_directory)
-      log.error(this.log_prefix, '[createOperationFileInfoByPDF]', '지원하지 않는 파일 형식입니다.', mime_type, upload_file_info)
+      log.error(this.log_prefix, '[createOperationFileInfoByPDF]', `operation_seq: ${operation_seq}`, '지원하지 않는 파일 형식입니다.', mime_type, upload_file_info)
       throw new StdObject(3002, '지원하지 않는 파일 형식입니다.', 400)
     }
-    const directory = `/${upload_file_info.originalname}`
-    type = type ? type : 'type_chart'
-    const operation_file_model = this.getOperationFileModel(database)
-    const convert_pdf_result = await Util.pdfToImage(origin_file_path, pdf_directory)
-    const file_seq_list = []
-    if (convert_pdf_result && convert_pdf_result.success !== true) {
-      await Util.deleteDirectory(pdf_directory)
-      log.error(this.log_prefix, '[createOperationFileInfoByPDF]', 'PDF파일을 변환할 수 없습니다.', convert_pdf_result)
-      throw new StdObject(3003, 'PDF파일을 변환할 수 없습니다.', 400)
-    }
-    const pad = `${convert_pdf_result.file_list.length}`.length
-    for (let i = 0; i < convert_pdf_result.file_list.length; i++) {
-      const pdf_data = convert_pdf_result.file_list[i]
-      const jpg_file_name = path.parse(pdf_data.file_name).name
-      const jpg_file_path = `${pdf_directory}/${pdf_data.file_name}`
+    this.convertChartPDFToImage(operation_info, group_member_info, member_info, file_id, pdf_directory, upload_file_info.originalname, upload_file_info.path, upload_id)
+  }
 
-      const file_info = new OperationFileInfo().getByUploadFileInfo(operation_info.seq, null, directory, media_path).toJSON()
-      file_info.file_name = `Page ${_.padStart(i + 1, pad, '0')}`
-      file_info.file_path = `${media_path}${pdf_data.file_name}`
-      file_info.file_size = pdf_data.file_size
-      file_info.width = pdf_data.width
-      file_info.height = pdf_data.height
-      file_info.file_type = 'pdf'
-      file_info.type = type
+  convertChartPDFToImage = (operation_info, group_member_info, member_info, file_id, pdf_directory, pdf_file_name, pdf_file_path, upload_id) => {
+    const operation_seq = operation_info.seq;
+    (
+      async () => {
+        try {
+          const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+          const media_path = `${directory_info.media_file}${file_id}/`;
 
-      const media_info = pdf_data.media_info
-      const image_dimension = pdf_data.width * pdf_data.height
-      if (image_dimension > this.MAX_DIMENSION) {
-        let resize_ratio = 1
-        if (image_dimension > this.MAX_DIMENSION) {
-          let w_ratio, h_ratio, width, height
-          width = media_info.media_info.width
-          height = media_info.media_info.height
-          w_ratio = width / this.DEFAULT_WIDTH
-          h_ratio = height / this.DEFAULT_HEIGHT
-          if (height > width) {
-            w_ratio = width / this.DEFAULT_HEIGHT
-            h_ratio = height / this.DEFAULT_WIDTH
+          const directory = `/${pdf_file_name}`
+          const type = 'type_chart'
+          const convert_pdf_result = await Util.pdfToImage(pdf_file_path, pdf_directory)
+          if (convert_pdf_result && convert_pdf_result.success !== true) {
+            await Util.deleteDirectory(pdf_directory)
+            log.error(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'PDF파일을 변환할 수 없습니다.', convert_pdf_result)
+            throw new StdObject(3012, 'PDF파일을 변환할 수 없습니다.', 400)
           }
-          resize_ratio = Math.max(w_ratio, h_ratio)
-        }
 
-        const resize_width = media_info.media_info.width / resize_ratio
-        const resize_height = media_info.media_info.height / resize_ratio
-        const resize_image_name = `${jpg_file_name}_resize.jpg`
-        const resize_image_path = `${pdf_directory}/${resize_image_name}`
-        const resize_result = await Util.resizeImage(jpg_file_path, resize_image_path, resize_width, resize_height, media_info)
-        if (resize_result.success && (await Util.fileExists(resize_image_path))) {
-          file_info.resize_path = media_path + resize_image_name
-          file_info.width = resize_width
-          file_info.height = resize_height
+          const total_count = convert_pdf_result.file_list.length
+          log.debug(this.log_prefix, '[operationChartPDFToImage]', 'convert complete. file list count:', total_count)
+          const pad = `${total_count}`.length
+          let file_info_list = []
+          let batch_size = 100
+          let insert_count = 0
+          const operation_file_model = this.getOperationFileModel(DBMySQL)
+          for (let i = 0; i < total_count; i++) {
+            const pdf_data = convert_pdf_result.file_list[i]
+            const jpg_file_name = path.parse(pdf_data.file_name).name
+            const jpg_file_path = `${pdf_directory}/${pdf_data.file_name}`
+
+            const file_info = new OperationFileInfo().getByUploadFileInfo(operation_info.seq, null, directory, media_path).toJSON()
+            file_info.file_name = `Page ${_.padStart(i + 1, pad, '0')}`
+            file_info.file_path = `${media_path}${pdf_data.file_name}`
+            file_info.file_size = pdf_data.file_size
+            file_info.width = pdf_data.width
+            file_info.height = pdf_data.height
+            file_info.file_type = 'pdf'
+            file_info.type = type
+
+            const image_dimension = pdf_data.width * pdf_data.height
+            if (image_dimension > this.MAX_DIMENSION) {
+              let resize_ratio = 1
+              if (image_dimension > this.MAX_DIMENSION) {
+                let w_ratio, h_ratio, width, height
+                width = pdf_data.width
+                height = pdf_data.height
+                w_ratio = width / this.DEFAULT_WIDTH
+                h_ratio = height / this.DEFAULT_HEIGHT
+                if (height > width) {
+                  w_ratio = width / this.DEFAULT_HEIGHT
+                  h_ratio = height / this.DEFAULT_WIDTH
+                }
+                resize_ratio = Math.max(w_ratio, h_ratio)
+              }
+
+              const resize_width = pdf_data.width / resize_ratio
+              const resize_height = pdf_data.height / resize_ratio
+              const resize_image_name = `${jpg_file_name}_resize.jpg`
+              const resize_image_path = `${pdf_directory}/${resize_image_name}`
+              const resize_result = await Util.resizeImage(jpg_file_path, resize_image_path, resize_width, resize_height, pdf_data)
+              if (resize_result.success && (await Util.fileExists(resize_image_path))) {
+                file_info.resize_path = media_path + resize_image_name
+                file_info.width = resize_width
+                file_info.height = resize_height
+              }
+            }
+
+            const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
+            const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
+            const thumb_file_name = `${jpg_file_name}_thumb.jpg`
+            const thumbnail_image_path = `${pdf_directory}/${thumb_file_name}`
+            const thumbnail_result = await Util.getThumbnail(jpg_file_path, thumbnail_image_path, -1, thumb_width, thumb_height, pdf_data, false)
+            if (thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
+              file_info.thumbnail_path = media_path + thumb_file_name
+            }
+
+            file_info_list.push(file_info)
+
+            if (file_info_list.length >= batch_size) {
+              await operation_file_model.createOperationFileBatch(file_info_list)
+              insert_count += file_info_list.length
+              file_info_list = []
+              log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'insert part complete:', insert_count, '/', total_count)
+            }
+          }
+          if (file_info_list.length > 0) {
+            await operation_file_model.createOperationFileBatch(file_info_list)
+            insert_count += file_info_list.length
+            log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'insert part complete:', insert_count, '/', total_count)
+          }
+          log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'insert complete', total_count)
+          if (insert_count > 0) {
+            await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
+            log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'file move complete', total_count)
+            await OperationService.updateStorageSize(operation_info)
+
+            const alarm_data = {
+              operation_seq: operation_info.seq,
+              member_seq: member_info.seq
+            }
+            const alarm_message = `'{name}'님이 '${operation_info.operation_name}'수술에 ${pdf_file_name} 차트를 등록했습니다.`
+
+            const name = group_member_info.member_name_used ? member_info.user_name : member_info.user_nickname
+            const socket_message = {
+              title: `'${name}'님이 '${operation_info.operation_name}'수술에 ${pdf_file_name} 차트를 등록했습니다.`
+            }
+            const socket_data = {
+              operation_seq: operation_info.seq,
+              upload_id
+            }
+            GroupAlarmService.createOperationGroupAlarm(operation_info.group_seq, GroupAlarmService.ALARM_TYPE_OPERTION_CHART, alarm_message, operation_info, member_info, alarm_data, socket_message, socket_data, true)
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, '알수없는 오류.', error)
         }
       }
-
-      const thumb_width = Util.parseInt(ServiceConfig.get('thumb_width'), 212)
-      const thumb_height = Util.parseInt(ServiceConfig.get('thumb_height'), 160)
-      const thumb_file_name = `${jpg_file_name}_thumb.jpg`
-      const thumbnail_image_path = `${pdf_directory}/${thumb_file_name}`
-      const thumbnail_result = await Util.getThumbnail(jpg_file_path, thumbnail_image_path, -1, thumb_width, thumb_height, pdf_data, false)
-      if (thumbnail_result.success && (await Util.fileExists(thumbnail_image_path))) {
-        file_info.thumbnail_path = media_path + thumb_file_name
-      }
-
-      const file_seq = await operation_file_model.createOperationFile(file_info)
-      file_seq_list.push(file_seq)
-    }
-    log.debug(this.log_prefix, '[createOperationFileInfoByPDF]', pdf_directory, file_seq_list)
-    if (file_seq_list.length > 0) {
-      await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
-    }
-    return file_seq_list
+    )()
   }
 
   deleteFileList = async (database, operation_info, file_seq_list, file_type = this.TYPE_REFER) => {

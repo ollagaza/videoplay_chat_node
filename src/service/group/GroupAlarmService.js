@@ -12,6 +12,7 @@ const GroupAlarmServiceClass = class {
     this.ALARM_TYPE_OPERATION = 'operation'
     this.ALARM_TYPE_CLIP = 'clip'
     this.ALARM_TYPE_COMMENT = 'comment'
+    this.ALARM_TYPE_OPERTION_CHART = 'operation_chart'
   }
 
   getGroupAlarmModel = (database) => {

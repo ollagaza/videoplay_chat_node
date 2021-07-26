@@ -843,9 +843,16 @@ const resizeImage = async (origin_path, resize_path, width = -1, height = -1, me
   if (width > 0 && height > 0) {
     let dimension = null
     if (media_info) {
-      dimension = {
-        width: media_info.media_info.width,
-        height: media_info.media_info.height
+      if (media_info.width) {
+        dimension = {
+          width: media_info.width,
+          height: media_info.height
+        }
+      } else if (media_info.media_info) {
+        dimension = {
+          width: media_info.media_info.width,
+          height: media_info.media_info.height
+        }
       }
     } else {
       dimension = await getVideoDimension(origin_path)
@@ -1257,6 +1264,7 @@ const getImageTags = async (file_path) => {
     return result
   }
   result.data = ExifReader.load(file_buffer.data, {expanded: true});
+  result.success = true
   return result
 }
 const isImageRotate = async (file_path) => {
@@ -1294,6 +1302,8 @@ const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', qual
       '-jpeg',
       '-r',
       quality,
+      '-jpegopt',
+      'quality=100',
       pdf_file_path,
       `${output_directory}/${prefix}`
     ]
@@ -1317,28 +1327,43 @@ const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', qual
       spawn.emit('kill')
       const file_list = await getDirectoryFileList(output_directory)
       const file_regexp = new RegExp(`^${prefix}-[\\d]+\\.jpg`)
+      log.debug(log_prefix, 'pdfToImage', file_list.length);
       if (file_list) {
         for (let i = 0; i < file_list.length; i++) {
           const dirent = file_list[i]
+          // log.debug(log_prefix, 'pdfToImage', i, dirent.name, file_regexp.test(dirent.name));
           if (dirent.isFile() && file_regexp.test(dirent.name)) {
             const file_name = dirent.name
             const file_path = `${output_directory}/${file_name}`
-            const media_info = await getMediaInfo(file_path)
-            if (!media_info || media_info.media_type !== Constants.IMAGE) continue;
+            // const media_info = await getMediaInfo(file_path)
+            // if (!media_info || media_info.media_type !== Constants.IMAGE) continue;
+            // const file_info = {
+            //   file_name: dirent.name,
+            //   file_size: media_info.file_size,
+            //   width: media_info.media_info.width,
+            //   height: media_info.media_info.height,
+            //   media_info
+            // }
+            // result.file_list.push(file_info)
+            const exif_info = await getImageTags(file_path)
+            const file_size = await getFileSize(file_path)
+            const image_file_info = exif_info.data.file
             const file_info = {
               file_name: dirent.name,
-              file_size: media_info.file_size,
-              width: media_info.media_info.width,
-              height: media_info.media_info.height,
-              media_info
+              file_size,
+              width: image_file_info['Image Width'].value,
+              height: image_file_info['Image Height'].value
             }
             result.file_list.push(file_info)
+            // log.debug(log_prefix, 'pdfToImage', i, file_info)
           }
         }
       }
       if (result.file_list.length <= 0) {
         result.message = '변환된 파일이 존재하지 않습니다.'
         result.success = false
+      } else {
+        result.file_list = _.sortBy(result.file_list, ['file_name'])
       }
       spawn.emit('finish')
       resolve(result)
