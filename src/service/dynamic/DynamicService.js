@@ -28,12 +28,12 @@ const DynamicServiceClass = class {
     return result
   }
 
-  updateDynamicTemplate = async (result_seq, data) => {
+  updateTemplateResult = async (result_seq, data) => {
     const result = await DynamicResultModel.updateById(result_seq, data)
     return result
   }
 
-  daleteDynamicTemplate = async (result_seq, data) => {
+  deleteTemplateResult = async (result_seq, data) => {
     const result = await DynamicResultModel.deleteById(result_seq, data)
     return result
   }
