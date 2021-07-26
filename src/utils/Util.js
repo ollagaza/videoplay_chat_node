@@ -1302,8 +1302,8 @@ const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', qual
       '-jpeg',
       '-r',
       quality,
-      '-jpegopt',
-      'quality=100',
+      // '-jpegopt',
+      // 'quality=100',
       pdf_file_path,
       `${output_directory}/${prefix}`
     ]
