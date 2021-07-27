@@ -1,5 +1,5 @@
 {
-  "version" : "1.8",
+  "version" : "1.9",
   "type" : "operation",
   "template_id" : "60f60234b46d7a5d7c02d3b8",
   "title" : "",
@@ -8127,6 +8127,15 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -8453,6 +8462,15 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -9252,9 +9270,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -9534,9 +9566,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -9836,6 +9882,15 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -10540,9 +10595,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -10768,9 +10837,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -10849,9 +10932,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -14656,44 +14753,45 @@
                   "grid_row" : 37,
                   "grid_column" : 10,
                   "row_end" : 38,
-                  "col_end" : 11,
-                  "cell_span_item" : [],
-                  "row_span_item" : [],
-                  "class" : [
-                    {
-                      "value" : "flex"
-                    }
-                  ],
-                  "style" : [],
-                  "parent" : [],
-                  "controls" : []
-                },
-                {
-                  "grid_id" : "grid[1,1]/[1,4]",
-                  "grid" : 1,
-                  "grid_row" : 37,
-                  "grid_column" : 11,
-                  "row_end" : 38,
-                  "col_end" : 12,
-                  "cell_span_item" : [],
-                  "row_span_item" : [],
-                  "class" : [
-                    {
-                      "value" : "flex"
-                    }
-                  ],
-                  "style" : [],
-                  "parent" : [],
-                  "controls" : []
-                },
-                {
-                  "grid_id" : "grid[1,1]/[1,4]",
-                  "grid" : 1,
-                  "grid_row" : 37,
-                  "grid_column" : 12,
-                  "row_end" : 38,
                   "col_end" : 13,
-                  "cell_span_item" : [],
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 37,
+                      "grid_column" : 11,
+                      "row_end" : 38,
+                      "col_end" : 12,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    },
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 37,
+                      "grid_column" : 12,
+                      "row_end" : 38,
+                      "col_end" : 13,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -14702,7 +14800,54 @@
                   ],
                   "style" : [],
                   "parent" : [],
-                  "controls" : []
+                  "controls" : [
+                    {
+                      "type" : "textbox",
+                      "required" : false,
+                      "text" : "텍스트 입력",
+                      "placeholder" : "",
+                      "value" : "",
+                      "class" : [],
+                      "style" : [
+                        {
+                          "key" : "height",
+                          "value" : "auto",
+                          "unit" : "%"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : 100,
+                          "unit" : "%"
+                        },
+                        {
+                          "key" : "margin-left",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "margin-right",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        }
+                      ],
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ],
+                      "title" : false
+                    }
+                  ]
                 },
                 {
                   "grid_id" : "grid[1,1]/[1,4]",
@@ -37292,12 +37437,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39411,7 +39565,8 @@
                             {
                               "key" : "height",
                               "value" : "60",
-                              "unit" : "px"
+                              "unit" : "px",
+                              "min" : true
                             }
                           ],
                           "parent" : [],
@@ -39778,7 +39933,8 @@
                             {
                               "key" : "height",
                               "value" : "60",
-                              "unit" : "px"
+                              "unit" : "px",
+                              "min" : true
                             }
                           ],
                           "parent" : [],
@@ -40145,7 +40301,8 @@
                             {
                               "key" : "height",
                               "value" : "60",
-                              "unit" : "px"
+                              "unit" : "px",
+                              "min" : true
                             }
                           ],
                           "parent" : [],
@@ -40512,7 +40669,8 @@
                             {
                               "key" : "height",
                               "value" : "60",
-                              "unit" : "px"
+                              "unit" : "px",
+                              "min" : true
                             }
                           ],
                           "parent" : [],
@@ -40879,7 +41037,8 @@
                             {
                               "key" : "height",
                               "value" : "60",
-                              "unit" : "px"
+                              "unit" : "px",
+                              "min" : true
                             }
                           ],
                           "parent" : [],
