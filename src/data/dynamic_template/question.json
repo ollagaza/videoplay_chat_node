@@ -1,5 +1,5 @@
 {
-  "version" : 1.5,
+  "version" : 1.6,
   "type" : "operation",
   "template_id" : "60f60234b46d7a5d7c02d3b8",
   "title" : "사전 및 패널 조사지",
@@ -453,6 +453,10 @@
           "class" : [
             {
               "value" : "flex"
+            },
+            {
+              "key" : "control-align",
+              "value" : "around"
             }
           ],
           "style" : [
