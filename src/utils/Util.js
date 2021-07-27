@@ -875,6 +875,8 @@ const resizeImage = async (origin_path, resize_path, width = -1, height = -1, me
       args.push(`${scale_option}`)
     }
   }
+  args.push('-q:v')
+  args.push(1)
   args.push('-an')
   args.push(resize_path)
 
@@ -1276,7 +1278,7 @@ const isImageRotate = async (file_path) => {
   return orientation >= 5 && orientation <= 8
 }
 
-const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', quality = 150) => {
+const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', quality = 100) => {
   return new Promise(async (resolve) => {
     const result = {
       success: false,
@@ -1299,7 +1301,7 @@ const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', qual
     output_directory = removePathLastSlash(output_directory)
     await createDirectory(output_directory)
     const args = [
-      '-jpeg',
+      '-png',
       '-r',
       quality,
       // '-jpegopt',
@@ -1326,28 +1328,17 @@ const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', qual
       result.error = error_str
       spawn.emit('kill')
       const file_list = await getDirectoryFileList(output_directory)
-      const file_regexp = new RegExp(`^${prefix}-[\\d]+\\.jpg`)
+      const file_regexp = new RegExp(`^${prefix}-[\\d]+\\.png`)
       log.debug(log_prefix, 'pdfToImage', file_list.length);
       if (file_list) {
         for (let i = 0; i < file_list.length; i++) {
           const dirent = file_list[i]
-          // log.debug(log_prefix, 'pdfToImage', i, dirent.name, file_regexp.test(dirent.name));
           if (dirent.isFile() && file_regexp.test(dirent.name)) {
             const file_name = dirent.name
             const file_path = `${output_directory}/${file_name}`
-            // const media_info = await getMediaInfo(file_path)
-            // if (!media_info || media_info.media_type !== Constants.IMAGE) continue;
-            // const file_info = {
-            //   file_name: dirent.name,
-            //   file_size: media_info.file_size,
-            //   width: media_info.media_info.width,
-            //   height: media_info.media_info.height,
-            //   media_info
-            // }
-            // result.file_list.push(file_info)
             const exif_info = await getImageTags(file_path)
             const file_size = await getFileSize(file_path)
-            const image_file_info = exif_info.data.file
+            const image_file_info = exif_info.data.pngFile
             const file_info = {
               file_name: dirent.name,
               file_size,
@@ -1355,7 +1346,6 @@ const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', qual
               height: image_file_info['Image Height'].value
             }
             result.file_list.push(file_info)
-            // log.debug(log_prefix, 'pdfToImage', i, file_info)
           }
         }
       }

@@ -317,7 +317,7 @@ const OperationFileServiceClass = class {
 
               const resize_width = pdf_data.width / resize_ratio
               const resize_height = pdf_data.height / resize_ratio
-              const resize_image_name = `${jpg_file_name}_resize.jpg`
+              const resize_image_name = `${jpg_file_name}_resize.png`
               const resize_image_path = `${pdf_directory}/${resize_image_name}`
               const resize_result = await Util.resizeImage(jpg_file_path, resize_image_path, resize_width, resize_height, pdf_data)
               if (resize_result.success && (await Util.fileExists(resize_image_path))) {
@@ -352,8 +352,10 @@ const OperationFileServiceClass = class {
           }
           log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'insert complete', total_count)
           if (insert_count > 0) {
-            await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
-            log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'file move complete', total_count)
+            if (!ServiceConfig.isVacs()) {
+              await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
+              log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'file move complete', total_count)
+            }
             await OperationService.updateStorageSize(operation_info)
 
             const alarm_data = {

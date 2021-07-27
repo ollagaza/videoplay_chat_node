@@ -43,7 +43,7 @@ const NaverObjectStorageClass = class {
 
   getStorageClient = (client = null) => {
     if (client) return client
-    log.debug(this.log_prefix, '[getStorageClient]', this.ENDPOINT, this.REGION)
+    // log.debug(this.log_prefix, '[getStorageClient]', this.ENDPOINT, this.REGION)
     let storage_client = null
     try {
       storage_client = new AWS.S3({
