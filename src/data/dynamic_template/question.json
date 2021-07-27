@@ -1,5 +1,5 @@
 {
-  "version" : 1.4,
+  "version" : 1.5,
   "type" : "operation",
   "template_id" : "60f60234b46d7a5d7c02d3b8",
   "title" : "사전 및 패널 조사지",
@@ -131,12 +131,12 @@
                 },
                 {
                   "key" : "width",
-                  "value" : "150",
+                  "value" : "130",
                   "unit" : "px"
                 },
                 {
                   "key" : "font-size",
-                  "value" : "15",
+                  "value" : "14",
                   "unit" : "px"
                 },
                 {
@@ -149,7 +149,7 @@
                 }
               ],
               "is_input_explain" : false,
-              "input_explain" : ""
+              "input_explain" : null
             },
             {
               "type" : "textbox",
@@ -160,8 +160,8 @@
               "style" : [
                 {
                   "key" : "width",
-                  "value" : 100,
-                  "unit" : "%"
+                  "value" : "800",
+                  "unit" : "px"
                 },
                 {
                   "key" : "margin-left",
@@ -192,12 +192,17 @@
                   "key" : "border-bottom",
                   "value" : "1px solid #eaeaea",
                   "active" : true
+                },
+                {
+                  "key" : "height",
+                  "value" : "30",
+                  "unit" : "px"
                 }
               ],
               "control_style" : [
                 {
                   "key" : "indent",
-                  "value" : false
+                  "value" : true
                 }
               ],
               "title" : true,
@@ -304,17 +309,21 @@
                 },
                 {
                   "key" : "width",
-                  "value" : "auto",
+                  "value" : "130",
                   "unit" : "px"
                 },
                 {
                   "key" : "font-size",
-                  "value" : "15",
+                  "value" : "14",
                   "unit" : "px"
                 },
                 {
                   "key" : "font-weight",
                   "value" : 400
+                },
+                {
+                  "key" : "text-align",
+                  "value" : "left"
                 }
               ],
               "is_input_explain" : false,
@@ -329,7 +338,7 @@
               "style" : [
                 {
                   "key" : "width",
-                  "value" : "300",
+                  "value" : "400",
                   "unit" : "px"
                 },
                 {
@@ -360,6 +369,11 @@
                 {
                   "key" : "margin-right",
                   "value" : 0,
+                  "unit" : "px"
+                },
+                {
+                  "key" : "height",
+                  "value" : "30",
                   "unit" : "px"
                 }
               ],
@@ -439,10 +453,6 @@
           "class" : [
             {
               "value" : "flex"
-            },
-            {
-              "key" : "control-align",
-              "value" : "around"
             }
           ],
           "style" : [
@@ -489,8 +499,19 @@
                   "key" : "width",
                   "value" : "330",
                   "unit" : "px"
+                },
+                {
+                  "key" : "font-size",
+                  "value" : "15",
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-weight",
+                  "value" : 400
                 }
-              ]
+              ],
+              "link_id" : "1627283802_tFa8r",
+              "movetolink" : true
             },
             {
               "type" : "button",
@@ -507,8 +528,19 @@
                   "key" : "width",
                   "value" : "330",
                   "unit" : "px"
+                },
+                {
+                  "key" : "font-size",
+                  "value" : 15,
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-weight",
+                  "value" : 400
                 }
-              ]
+              ],
+              "movetolink" : true,
+              "link_id" : "1627286014_YDhem"
             },
             {
               "type" : "button",
@@ -525,8 +557,19 @@
                   "key" : "width",
                   "value" : "330",
                   "unit" : "px"
+                },
+                {
+                  "key" : "font-size",
+                  "value" : 15,
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-weight",
+                  "value" : 400
                 }
-              ]
+              ],
+              "movetolink" : true,
+              "link_id" : "1627286029_VKQsj"
             }
           ]
         },
@@ -889,8 +932,16 @@
                         {
                           "key" : "font-weight",
                           "value" : "600"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627283802_tFa8r",
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -1440,7 +1491,17 @@
                         }
                       ],
                       "class" : [],
-                      "style" : []
+                      "style" : [
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6299,7 +6360,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -7846,7 +7907,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -10375,7 +10436,27 @@
                         }
                       ],
                       "class" : [],
-                      "style" : []
+                      "style" : [
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
+                          "key" : "margin-left",
+                          "value" : "6",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "margin-right",
+                          "value" : 0,
+                          "unit" : "px"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -11436,8 +11517,27 @@
                   "grid_row" : 30,
                   "grid_column" : 1,
                   "row_end" : 31,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 30,
+                      "grid_column" : 2,
+                      "row_end" : 31,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -11493,34 +11593,16 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 30,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 31,
                   "col_end" : 10,
                   "cell_span_item" : [
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
-                      "grid_column" : 3,
-                      "row_end" : 30,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 4,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 5,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11536,9 +11618,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 5,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 6,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11554,9 +11636,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 6,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 7,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11572,9 +11654,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 7,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 8,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11590,9 +11672,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 8,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 9,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11608,9 +11690,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 9,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 10,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11637,6 +11719,7 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -11647,13 +11730,22 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -11661,8 +11753,7 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ],
-                      "link_id" : ""
+                      ]
                     }
                   ]
                 },
@@ -14298,8 +14389,27 @@
                   "grid_row" : 37,
                   "grid_column" : 1,
                   "row_end" : 38,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 37,
+                      "grid_column" : 2,
+                      "row_end" : 38,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -14371,28 +14481,10 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 37,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 38,
-                  "col_end" : 13,
+                  "col_end" : 8,
                   "cell_span_item" : [
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 3,
-                      "row_end" : 38,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -14464,96 +14556,6 @@
                       "style" : [],
                       "parent" : [],
                       "controls" : []
-                    },
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 8,
-                      "row_end" : 38,
-                      "col_end" : 9,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 9,
-                      "row_end" : 38,
-                      "col_end" : 10,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 10,
-                      "row_end" : 38,
-                      "col_end" : 11,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 11,
-                      "row_end" : 38,
-                      "col_end" : 12,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 12,
-                      "row_end" : 38,
-                      "col_end" : 13,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
                     }
                   ],
                   "row_span_item" : [],
@@ -14569,6 +14571,7 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -14579,13 +14582,22 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -14596,6 +14608,96 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "grid_id" : "grid[1,1]/[1,4]",
+                  "grid" : 1,
+                  "grid_row" : 37,
+                  "grid_column" : 8,
+                  "row_end" : 38,
+                  "col_end" : 9,
+                  "cell_span_item" : [],
+                  "row_span_item" : [],
+                  "class" : [
+                    {
+                      "value" : "flex"
+                    }
+                  ],
+                  "style" : [],
+                  "parent" : [],
+                  "controls" : []
+                },
+                {
+                  "grid_id" : "grid[1,1]/[1,4]",
+                  "grid" : 1,
+                  "grid_row" : 37,
+                  "grid_column" : 9,
+                  "row_end" : 38,
+                  "col_end" : 10,
+                  "cell_span_item" : [],
+                  "row_span_item" : [],
+                  "class" : [
+                    {
+                      "value" : "flex"
+                    }
+                  ],
+                  "style" : [],
+                  "parent" : [],
+                  "controls" : []
+                },
+                {
+                  "grid_id" : "grid[1,1]/[1,4]",
+                  "grid" : 1,
+                  "grid_row" : 37,
+                  "grid_column" : 10,
+                  "row_end" : 38,
+                  "col_end" : 11,
+                  "cell_span_item" : [],
+                  "row_span_item" : [],
+                  "class" : [
+                    {
+                      "value" : "flex"
+                    }
+                  ],
+                  "style" : [],
+                  "parent" : [],
+                  "controls" : []
+                },
+                {
+                  "grid_id" : "grid[1,1]/[1,4]",
+                  "grid" : 1,
+                  "grid_row" : 37,
+                  "grid_column" : 11,
+                  "row_end" : 38,
+                  "col_end" : 12,
+                  "cell_span_item" : [],
+                  "row_span_item" : [],
+                  "class" : [
+                    {
+                      "value" : "flex"
+                    }
+                  ],
+                  "style" : [],
+                  "parent" : [],
+                  "controls" : []
+                },
+                {
+                  "grid_id" : "grid[1,1]/[1,4]",
+                  "grid" : 1,
+                  "grid_row" : 37,
+                  "grid_column" : 12,
+                  "row_end" : 38,
+                  "col_end" : 13,
+                  "cell_span_item" : [],
+                  "row_span_item" : [],
+                  "class" : [
+                    {
+                      "value" : "flex"
+                    }
+                  ],
+                  "style" : [],
+                  "parent" : [],
+                  "controls" : []
                 },
                 {
                   "grid_id" : "grid[1,1]/[1,4]",
@@ -15428,7 +15530,7 @@
                     },
                     {
                       "key" : "padding-left",
-                      "value" : 0,
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -15438,7 +15540,7 @@
                     },
                     {
                       "key" : "padding-right",
-                      "value" : "5",
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -16450,7 +16552,7 @@
                     },
                     {
                       "key" : "padding-left",
-                      "value" : 0,
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -16460,7 +16562,7 @@
                     },
                     {
                       "key" : "padding-right",
-                      "value" : "5",
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -16746,8 +16848,50 @@
                   "grid_row" : 42,
                   "grid_column" : 1,
                   "row_end" : 44,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 42,
+                      "grid_column" : 2,
+                      "row_end" : 44,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [
+                        {
+                          "grid_id" : "grid[1,1]/[1,4]",
+                          "grid" : 1,
+                          "grid_row" : 43,
+                          "grid_column" : 2,
+                          "row_end" : 44,
+                          "col_end" : 3,
+                          "cell_span_item" : [],
+                          "row_span_item" : [],
+                          "class" : [
+                            {
+                              "value" : "flex"
+                            }
+                          ],
+                          "style" : [],
+                          "parent" : [],
+                          "controls" : []
+                        }
+                      ],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        },
+                        {
+                          "key" : "vertical-align",
+                          "value" : "start"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
@@ -16838,28 +16982,10 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 42,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 44,
                   "col_end" : 13,
                   "cell_span_item" : [
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 42,
-                      "grid_column" : 3,
-                      "row_end" : 43,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -17028,28 +17154,10 @@
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
                       "grid_row" : 43,
-                      "grid_column" : 2,
+                      "grid_column" : 3,
                       "row_end" : 44,
                       "col_end" : 13,
                       "cell_span_item" : [
-                        {
-                          "grid_id" : "grid[1,1]/[1,4]",
-                          "grid" : 1,
-                          "grid_row" : 43,
-                          "grid_column" : 3,
-                          "row_end" : 44,
-                          "col_end" : 4,
-                          "cell_span_item" : [],
-                          "row_span_item" : [],
-                          "class" : [
-                            {
-                              "value" : "flex"
-                            }
-                          ],
-                          "style" : [],
-                          "parent" : [],
-                          "controls" : []
-                        },
                         {
                           "grid_id" : "grid[1,1]/[1,4]",
                           "grid" : 1,
@@ -17227,10 +17335,6 @@
                   "class" : [
                     {
                       "value" : "flex"
-                    },
-                    {
-                      "key" : "vertical-align",
-                      "value" : "start"
                     }
                   ],
                   "style" : [],
@@ -17240,6 +17344,7 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -17250,22 +17355,31 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "multiline" : true,
                       "control_style" : [
                         {
                           "key" : "indent",
-                          "value" : false
+                          "value" : true
                         }
-                      ]
+                      ],
+                      "multiline" : true
                     }
                   ]
                 },
@@ -18686,7 +18800,7 @@
                       "type" : "autogrid",
                       "grid_item" : {
                         "auto_increase" : false,
-                        "input_row_count" : 2,
+                        "input_row_count" : 3,
                         "grid_row" : 1,
                         "grid_column" : 1,
                         "row_end" : 2,
@@ -18928,6 +19042,82 @@
                               {
                                 "key" : "flex",
                                 "value" : 1
+                              }
+                            ]
+                          },
+                          {
+                            "type" : "textbox",
+                            "grid_row" : 3,
+                            "grid_column" : 1,
+                            "row_end" : 4,
+                            "col_end" : 2,
+                            "class" : [
+                              {
+                                "value" : "flex"
+                              }
+                            ],
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ]
+                          },
+                          {
+                            "type" : "textbox",
+                            "grid_row" : 3,
+                            "grid_column" : 2,
+                            "row_end" : 4,
+                            "col_end" : 4,
+                            "class" : [
+                              {
+                                "value" : "flex"
+                              }
+                            ],
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ]
+                          },
+                          {
+                            "type" : "textbox",
+                            "grid_row" : 3,
+                            "grid_column" : 4,
+                            "row_end" : 4,
+                            "col_end" : 5,
+                            "class" : [
+                              {
+                                "value" : "flex"
+                              }
+                            ],
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ]
+                          },
+                          {
+                            "type" : "textbox",
+                            "grid_row" : 3,
+                            "grid_column" : 5,
+                            "row_end" : 4,
+                            "col_end" : 13,
+                            "class" : [
+                              {
+                                "value" : "flex"
+                              }
+                            ],
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
                               }
                             ]
                           }
@@ -20982,14 +21172,21 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
                           "key" : "font-weight",
                           "value" : "600"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -21675,10 +21872,6 @@
                   "class" : [
                     {
                       "value" : "flex"
-                    },
-                    {
-                      "key" : "control-align",
-                      "value" : "default"
                     }
                   ],
                   "style" : [],
@@ -21721,7 +21914,27 @@
                           "value" : "around"
                         }
                       ],
-                      "style" : []
+                      "style" : [
+                        {
+                          "key" : "margin-left",
+                          "value" : "6",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "margin-right",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        }
+                      ]
                     }
                   ]
                 },
@@ -22564,7 +22777,10 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "my_link_id" : "1627286014_YDhem",
+                              "is_input_explain" : false,
+                              "input_explain" : null
                             }
                           ]
                         },
@@ -25002,7 +25218,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -25256,12 +25492,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -25797,7 +26042,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -26043,12 +26308,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -26269,7 +26543,27 @@
                                 }
                               ],
                               "class" : [],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -26913,7 +27207,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -27159,12 +27473,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -28467,12 +28790,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -28940,10 +29272,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -28985,13 +29313,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "around"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -29527,10 +29870,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -29567,13 +29906,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "around"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -29959,7 +30313,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -29967,7 +30321,9 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -30961,7 +31317,10 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "my_link_id" : "1627286029_VKQsj",
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -33347,10 +33706,6 @@
                             {
                               "key" : "vertical-align",
                               "value" : "center"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "default"
                             }
                           ],
                           "style" : [],
@@ -33378,7 +33733,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -33624,12 +33999,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -34156,7 +34540,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -34402,12 +34806,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -34633,7 +35046,27 @@
                                   "value" : "row"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -35268,7 +35701,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -35514,12 +35967,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -35740,7 +36202,27 @@
                                 }
                               ],
                               "class" : [],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -37297,10 +37779,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -37342,13 +37820,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "around"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -37875,10 +38368,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -37915,13 +38404,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "between"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -38898,7 +39402,13 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px"
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -38923,12 +39433,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39029,12 +39548,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39241,7 +39769,13 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px"
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -39266,12 +39800,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39372,12 +39915,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39584,7 +40136,13 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px"
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -39609,12 +40167,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39715,12 +40282,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39927,7 +40503,13 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px"
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -39952,12 +40534,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40058,12 +40649,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40270,7 +40870,13 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px"
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -40295,12 +40901,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40401,12 +41016,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40661,7 +41285,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -40669,7 +41293,9 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
