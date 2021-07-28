@@ -527,6 +527,31 @@ const OperationFileServiceClass = class {
     }
     return false;
   }
+
+  changeOperationFilesRotation = async (operation_info, request_body) => {
+    if (!request_body || !request_body.data ) {
+      return false
+    }
+    const directory_list = request_body.data.directory_list
+    const file_seq_list = request_body.data.file_seq_list
+    const rotation = request_body.rotation
+
+    if (directory_list || file_seq_list) {
+      const operation_seq = operation_info.seq
+      await DBMySQL.transaction(async (transaction) => {
+        const operation_file_model = this.getOperationFileModel(transaction)
+        if (directory_list && directory_list.length > 0) {
+          for (let i = 0; i < directory_list.length; i++) {
+            await operation_file_model.changeFilesRotationByDirectory(operation_seq, rotation, directory_list[i])
+          }
+        }
+        if (file_seq_list && file_seq_list.length > 0) {
+          await operation_file_model.changeFilesRotationByFileSeqList(operation_seq, rotation, file_seq_list)
+        }
+      })
+    }
+    return false;
+  }
 }
 
 const operation_file_service = new OperationFileServiceClass()

@@ -147,4 +147,23 @@ export default class OperationFileModel extends MySQLModel {
     }
     return query
   }
+
+  changeFilesRotationByDirectory = async (operation_seq, rotation, directory) => {
+    return this.database
+      .update({ rotation })
+      .from(this.table_name)
+      .where('operation_seq', operation_seq)
+      .where((builder) => {
+        builder.where('directory', directory)
+        builder.orWhere('directory', 'LIKE', `${directory}/%`)
+      })
+  }
+
+  changeFilesRotationByFileSeqList = async (operation_seq, rotation, file_seq_list) => {
+    return this.database
+      .update({ rotation })
+      .from(this.table_name)
+      .where('operation_seq', operation_seq)
+      .whereIn('seq', file_seq_list)
+  }
 }

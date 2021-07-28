@@ -514,9 +514,17 @@ routes.post('/:api_type/:api_key/operation/files/name/validation', Auth.isAuthen
 
 routes.put('/:api_type/:api_key/operation/files/type', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { operation_info } = await getBaseInfo(req, true, true, true)
-  const is_valid = await OperationFileService.changeOperationFilesType(operation_info, req.body)
+  const success = await OperationFileService.changeOperationFilesType(operation_info, req.body)
   const output = new StdObject()
-  output.add('is_valid', is_valid);
+  output.add('success', success);
+  res.json(output)
+}))
+
+routes.put('/:api_type/:api_key/operation/files/rotation', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info } = await getBaseInfo(req, true, true, true)
+  const success = await OperationFileService.changeOperationFilesRotation(operation_info, req.body)
+  const output = new StdObject()
+  output.add('success', success);
   res.json(output)
 }))
 
