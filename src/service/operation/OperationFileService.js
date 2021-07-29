@@ -503,52 +503,39 @@ const OperationFileServiceClass = class {
   }
 
   changeOperationFilesType = async (operation_info, request_body) => {
-    if (!request_body || !request_body.data ) {
+    if (!request_body || !request_body.data || !operation_info || operation_info.isEmpty() ) {
       return false
     }
-    const file_type = request_body.type ? request_body.type : null
+    const type = request_body.type ? request_body.type : null
+    return this.updateFilesInfoByRequest(operation_info, request_body, { type })
+  }
+
+  changeOperationFilesRotation = async (operation_info, request_body) => {
+    if (!request_body || !request_body.data || !operation_info || operation_info.isEmpty() ) {
+      return false
+    }
+    const rotation = request_body.rotation
+    return this.updateFilesInfoByRequest(operation_info, request_body, { rotation })
+  }
+  updateFilesInfoByRequest = async (operation_info, request_body, update_data) => {
+    const operation_seq = operation_info.seq
     const directory_list = request_body.data.directory_list
     const file_seq_list = request_body.data.file_seq_list
     const current_type = request_body.current_type ? request_body.current_type : null
 
     if (directory_list || file_seq_list) {
-      const operation_seq = operation_info.seq
       await DBMySQL.transaction(async (transaction) => {
         const operation_file_model = this.getOperationFileModel(transaction)
         if (directory_list && directory_list.length > 0) {
           for (let i = 0; i < directory_list.length; i++) {
-            await operation_file_model.changeFilesTypeByDirectory(operation_seq, file_type, directory_list[i], current_type)
+            await operation_file_model.changeFilesInfoByDirectory(operation_seq, update_data, directory_list[i], current_type)
           }
         }
         if (file_seq_list && file_seq_list.length > 0) {
-          await operation_file_model.changeFilesTypeByFileSeqList(operation_seq, file_type, file_seq_list, current_type)
+          await operation_file_model.changeFilesInfoByFileSeqList(operation_seq, update_data, file_seq_list)
         }
       })
-    }
-    return false;
-  }
-
-  changeOperationFilesRotation = async (operation_info, request_body) => {
-    if (!request_body || !request_body.data ) {
-      return false
-    }
-    const directory_list = request_body.data.directory_list
-    const file_seq_list = request_body.data.file_seq_list
-    const rotation = request_body.rotation
-
-    if (directory_list || file_seq_list) {
-      const operation_seq = operation_info.seq
-      await DBMySQL.transaction(async (transaction) => {
-        const operation_file_model = this.getOperationFileModel(transaction)
-        if (directory_list && directory_list.length > 0) {
-          for (let i = 0; i < directory_list.length; i++) {
-            await operation_file_model.changeFilesRotationByDirectory(operation_seq, rotation, directory_list[i])
-          }
-        }
-        if (file_seq_list && file_seq_list.length > 0) {
-          await operation_file_model.changeFilesRotationByFileSeqList(operation_seq, rotation, file_seq_list)
-        }
-      })
+      return true
     }
     return false;
   }
