@@ -121,7 +121,6 @@ const GroupServiceClass = class {
     if (!MemberService.isActiveMember(member_info)) {
       throw MemberService.getMemberStateError(member_info)
     }
-    log.debug(this.log_prefix, '[checkGroupAuthBySeq]', group_seq, member_seq, check_group_auth, throw_exception)
     const group_auth_result = {
       token_info: null,
       member_seq: null,
