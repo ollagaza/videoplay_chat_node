@@ -62,6 +62,10 @@ const ServiceConfigClass = class {
   supporterEmailList = () => {
     return this.supporter_email_list
   }
+
+  getServiceUrl = () => {
+    return this.service_config_map.service_url
+  }
 }
 
 const ServiceConfig = new ServiceConfigClass()

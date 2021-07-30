@@ -111,6 +111,17 @@ const GroupServiceClass = class {
   }
 
   checkGroupAuth = async (database, req, group_seq_from_token = true, check_group_auth = true, throw_exception = false, only_admin = false) => {
+    const { token_info, member_seq, group_seq } = this.getBaseInfo(req, group_seq_from_token)
+    const group_auth_result = await this.checkGroupAuthBySeq(database, group_seq, member_seq, check_group_auth, throw_exception, only_admin)
+    group_auth_result.token_info = token_info
+    return group_auth_result
+  }
+  checkGroupAuthBySeq = async (database, group_seq, member_seq, check_group_auth = true, throw_exception = false, only_admin = false) => {
+    const member_info = await MemberService.getMemberInfo(database, member_seq)
+    if (!MemberService.isActiveMember(member_info)) {
+      throw MemberService.getMemberStateError(member_info)
+    }
+    log.debug(this.log_prefix, '[checkGroupAuthBySeq]', group_seq, member_seq, check_group_auth, throw_exception)
     const group_auth_result = {
       token_info: null,
       member_seq: null,
@@ -123,23 +134,14 @@ const GroupServiceClass = class {
       group_grade: null,
       group_grade_number: null
     }
-    const { token_info, member_seq, group_seq } = this.getBaseInfo(req, group_seq_from_token)
-    const member_info = await MemberService.getMemberInfo(database, member_seq)
-    if (!MemberService.isActiveMember(member_info)) {
-      throw MemberService.getMemberStateError(member_info)
-    }
+
     let group_member_info = null
     let is_active_group_member = false
     let is_group_admin = false
     let is_group_manager = false
     let group_grade = 0
     let group_grade_number = 0
-    // if (token_info.getRole() === Role.ADMIN) {
-    //   is_active_group_member = true
-    //   is_group_admin = true
-    //   is_group_manager = true
-    //   group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
-    // } else
+
     if (check_group_auth) {
       if (!group_seq) {
         is_active_group_member = false
@@ -172,7 +174,7 @@ const GroupServiceClass = class {
     if (only_admin && !is_group_admin) {
       throw new StdObject(10000, '권한이 없습니다', 403)
     }
-    group_auth_result.token_info = token_info
+
     group_auth_result.member_seq = member_seq
     group_auth_result.group_seq = group_seq
     group_auth_result.member_info = member_info
@@ -182,6 +184,7 @@ const GroupServiceClass = class {
     group_auth_result.is_group_manager = is_group_manager
     group_auth_result.group_grade = group_grade
     group_auth_result.group_grade_number = group_grade_number
+
     return group_auth_result
   }
 
