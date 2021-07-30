@@ -163,6 +163,9 @@ export default class OperationModel extends MySQLModel {
     if (filter_params.member_seq) {
       query.andWhere('operation.member_seq', filter_params.member_seq)
     }
+    if (filter_params.analysis_status) {
+      query.andWhere('operation.analysis_status', filter_params.analysis_status)
+    }
     if (filter_params.search_keyword) {
       query.where((builder) => {
         builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)

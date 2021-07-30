@@ -1,5 +1,5 @@
 {
-  "version" : "1.9",
+  "version" : "2.0",
   "type" : "operation",
   "template_id" : "60f60234b46d7a5d7c02d3b8",
   "title" : "",
@@ -28217,7 +28217,7 @@
                             {
                               "type" : "label",
                               "required" : false,
-                              "text" : "종합의견",
+                              "text" : "패널의견",
                               "class" : [
                                 {
                                   "key" : "label_type",

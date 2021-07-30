@@ -544,6 +544,9 @@ const OperationServiceClass = class {
     if (request_query.limit) {
       filter_params.limit = request_query.limit
     }
+    if (request_query.analysis_status) {
+      filter_params.analysis_status = `${request_query.analysis_status}`.toUpperCase()
+    }
     filter_params.use_user_name = !group_member_info || group_member_info.member_name_used === 1
     const order_params = {}
     order_params.field = request_query.order_fields
@@ -1366,6 +1369,7 @@ const OperationServiceClass = class {
   getAgentOperationList = async (group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request) => {
     log.debug(this.log_prefix, request.query)
     request.query.no_paging = 'y'
+    request.query.analysis_status = 'Y'
     request.query.menu = 'drive'
     const operation_list = await this.getOperationListByRequest(DBMySQL, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request, false, true)
 
