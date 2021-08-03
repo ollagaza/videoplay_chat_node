@@ -1291,7 +1291,7 @@ const OperationServiceClass = class {
   }
 
   onAgentVideoUploadComplete = async (operation_info) => {
-    await TranscoderSyncService.updateTranscodingComplete(operation_info, Constants.AGENT_VIDEO_FILE_NAME, null, null)
+    await TranscoderSyncService.updateTranscodingComplete(operation_info, Util.getRandomId(), Constants.AGENT_VIDEO_FILE_NAME, null, null)
   }
 
   getAgentFileList = async (operation_seq, query, member_seq) => {
