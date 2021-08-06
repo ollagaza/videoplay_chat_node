@@ -14,15 +14,15 @@ const schema_field_infos = getFieldInfos()
 const dynamic_result_schema = new Schema(schema_field_infos, { strict: false })
 
 dynamic_result_schema.statics.findByResultId = function (result_id, projection = null) {
-  return this.findById({ _id: result_id }, projection)
+  return this.findById({ _id: result_id.toString() }, projection)
 }
 
 dynamic_result_schema.statics.findByResultSeq = function (seq, projection = null) {
-  return this.findOne({ result_seq: seq }, projection)
+  return this.findOne({ result_seq: seq.toString() }, projection)
 }
 
 dynamic_result_schema.statics.getDynamicResultList = function (seq, projection = null) {
-  return this.find({ result_seq: seq }, projection)
+  return this.find({ result_seq: seq.toString() }, projection)
 }
 
 dynamic_result_schema.statics.createDynamicResult = function (data) {
@@ -32,7 +32,7 @@ dynamic_result_schema.statics.createDynamicResult = function (data) {
 
 dynamic_result_schema.statics.updateById = function (id, data) {
   data.modify_date = Date.now()
-  return this.findOneAndUpdate({ _id: id }, data, {
+  return this.findOneAndUpdate({ _id: id.toString() }, data, {
     upsert: true,
     new: true,
     setDefaultsOnInsert: true
