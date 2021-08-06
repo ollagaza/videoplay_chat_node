@@ -30,6 +30,8 @@ const getFieldInfos = () => {
     created_date: { type: Date, default: Date.now, require: false, message: '생성 일자가 없습니다.' },
     modify_date: { type: Date, default: Date.now, require: false, message: '수정 일자가 없습니다.' },
     delete_date: { type: Date, default: Date.now, require: false, message: '삭제 일자가 없습니다.' },
+    operation_history_list: { type: [Number], default: [], require: false, message: '사용한 수술 히스토리 목록이 없습니다.' },
+    subtitle_list: { type: Array, default: [], require: false, message: '자막 목록이 없습니다.' },
   }
 }
 
