@@ -544,12 +544,15 @@ const OperationServiceClass = class {
     if (request_query.limit) {
       filter_params.limit = request_query.limit
     }
+    if (request_query.analysis_status) {
+      filter_params.analysis_status = `${request_query.analysis_status}`.toUpperCase()
+    }
     filter_params.use_user_name = !group_member_info || group_member_info.member_name_used === 1
     const order_params = {}
     order_params.field = request_query.order_fields
     order_params.type = request_query.order_type
 
-    log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params, order_params)
+    // log.debug(this.log_prefix, '[getOperationListByRequest]', 'request.query', request_query, page_params, filter_params, order_params)
 
     let operation_data_seq_list = []
     if (filter_params.search_keyword) {
@@ -1288,30 +1291,32 @@ const OperationServiceClass = class {
   }
 
   onAgentVideoUploadComplete = async (operation_info) => {
-    await TranscoderSyncService.updateTranscodingComplete(operation_info, Constants.AGENT_VIDEO_FILE_NAME, null, null)
+    await TranscoderSyncService.updateTranscodingComplete(operation_info, Util.getRandomId(), Constants.AGENT_VIDEO_FILE_NAME, null, null)
   }
 
-  getAgentFileList = async (operation_seq, query) => {
+  getAgentFileList = async (operation_seq, query, member_seq) => {
     const { operation_info } = await this.getOperationInfoNoAuth(null, operation_seq)
     if (!operation_info || operation_info.isEmpty()) {
       throw new StdObject(2011, '수술정보가 존재하지 않습니다.')
     }
+    const group_seq = operation_info.group_seq
+    const { is_group_admin } = await GroupService.checkGroupAuthBySeq(null, group_seq, member_seq, true, false, false)
+    const has_admin_permission = is_group_admin === true || operation_info.member_seq === member_seq
     const import_main_files = Util.isTrue(query.main)
     const import_refer_files = Util.isTrue(query.refer)
+    log.debug(this.log_prefix, '[getAgentFileList]', operation_seq, query, is_group_admin, member_seq, is_group_admin === true, import_main_files, import_refer_files)
+
     const mode = operation_info.mode
     const file_list = []
-    if (import_main_files) {
+    if (import_main_files && (has_admin_permission || operation_info.is_video_download)) {
       if (mode === this.MODE_FILE) {
         const file_list_query = {
           last_seq: 0,
           limit: 1000
         }
-        while (true) {
-          const operation_file_list = await OperationFileService.getOperationFileList(null, operation_seq, true, file_list_query)
-          const list_count = operation_file_list ? operation_file_list.length : 0
-          if (list_count <= 0) {
-            break;
-          }
+        let operation_file_list = await OperationFileService.getOperationFileList(null, operation_seq, true, file_list_query)
+        let list_count = operation_file_list ? operation_file_list.length : 0
+        while (list_count > 0) {
           for (let i = 0; i < list_count; i++) {
             const file_info = operation_file_list[i]
             file_list.push({
@@ -1319,11 +1324,14 @@ const OperationServiceClass = class {
               seq: file_info.seq,
               directory: file_info.directory,
               file_name: file_info.file_name,
-              download_url: file_info.download_url,
+              download_url: file_info.origin_url,
               file_size: file_info.file_size
             })
           }
           file_list_query.last_seq = operation_file_list[list_count - 1].seq
+
+          operation_file_list = await OperationFileService.getOperationFileList(null, operation_seq, true, file_list_query)
+          list_count = operation_file_list ? operation_file_list.length : 0
         }
       } else {
         const media_info = operation_info.media_info
@@ -1337,7 +1345,8 @@ const OperationServiceClass = class {
         })
       }
     }
-    if (import_refer_files) {
+    log.debug(this.log_prefix, '', import_refer_files, has_admin_permission, operation_info.is_file_download, import_refer_files && (has_admin_permission || operation_info.is_file_download))
+    if (import_refer_files && (has_admin_permission || operation_info.is_file_download)) {
       const refer_file_list = await OperationFileService.getReferFileList(null, operation_info.storage_seq, true)
       if (refer_file_list && refer_file_list.length > 0) {
         for (let i = 0; i < refer_file_list.length; i++) {
@@ -1355,6 +1364,28 @@ const OperationServiceClass = class {
     }
 
     return file_list
+  }
+
+  getAgentOperationList = async (group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request) => {
+    log.debug(this.log_prefix, request.query)
+    request.query.no_paging = 'y'
+    request.query.analysis_status = 'Y'
+    request.query.menu = 'drive'
+    const operation_list = await this.getOperationListByRequest(DBMySQL, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, request, false, true)
+
+    if (operation_list && operation_list.data) {
+      for (let i = 0; i < operation_list.data.length; i++) {
+        const operation_info = operation_list.data[i];
+        if (is_group_admin) {
+          operation_info.is_video_download = true
+          operation_info.is_file_download = true
+        } else if (operation_info.member_seq === member_seq) {
+          operation_info.is_video_download = true
+          operation_info.is_file_download = true
+        }
+      }
+    }
+    return operation_list
   }
 }
 

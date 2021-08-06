@@ -142,9 +142,9 @@ routes.post('/:operation_seq(\\d+)/upload/refer/zip(/:encoding)?', Auth.isAuthen
 }))
 
 routes.get('/:operation_seq(\\d+)/files', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) => {
-  const { operation_seq } = await checkToken(req)
+  const { operation_seq, member_seq } = await checkToken(req)
 
-  const file_list = await OperationService.getAgentFileList(operation_seq, req.query)
+  const file_list = await OperationService.getAgentFileList(operation_seq, req.query, member_seq)
   const output = new StdObject()
   output.add('file_list', file_list)
   res.json(output)

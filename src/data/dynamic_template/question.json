@@ -1,8 +1,9 @@
 {
-  "version" : 1.4,
+  "version" : "2.7",
   "type" : "operation",
   "template_id" : "60f60234b46d7a5d7c02d3b8",
-  "title" : "사전 및 패널 조사지",
+  "title" : "",
+  "template_title" : "사전 및 패널 조사지",
   "class" : [
     {
       "index" : 99,
@@ -131,12 +132,12 @@
                 },
                 {
                   "key" : "width",
-                  "value" : "150",
+                  "value" : "130",
                   "unit" : "px"
                 },
                 {
                   "key" : "font-size",
-                  "value" : "15",
+                  "value" : "14",
                   "unit" : "px"
                 },
                 {
@@ -149,7 +150,7 @@
                 }
               ],
               "is_input_explain" : false,
-              "input_explain" : ""
+              "input_explain" : null
             },
             {
               "type" : "textbox",
@@ -160,8 +161,8 @@
               "style" : [
                 {
                   "key" : "width",
-                  "value" : 100,
-                  "unit" : "%"
+                  "value" : "800",
+                  "unit" : "px"
                 },
                 {
                   "key" : "margin-left",
@@ -192,12 +193,17 @@
                   "key" : "border-bottom",
                   "value" : "1px solid #eaeaea",
                   "active" : true
+                },
+                {
+                  "key" : "height",
+                  "value" : "30",
+                  "unit" : "px"
                 }
               ],
               "control_style" : [
                 {
                   "key" : "indent",
-                  "value" : false
+                  "value" : true
                 }
               ],
               "title" : true,
@@ -304,17 +310,21 @@
                 },
                 {
                   "key" : "width",
-                  "value" : "auto",
+                  "value" : "130",
                   "unit" : "px"
                 },
                 {
                   "key" : "font-size",
-                  "value" : "15",
+                  "value" : "14",
                   "unit" : "px"
                 },
                 {
                   "key" : "font-weight",
                   "value" : 400
+                },
+                {
+                  "key" : "text-align",
+                  "value" : "left"
                 }
               ],
               "is_input_explain" : false,
@@ -329,7 +339,7 @@
               "style" : [
                 {
                   "key" : "width",
-                  "value" : "300",
+                  "value" : "400",
                   "unit" : "px"
                 },
                 {
@@ -360,6 +370,11 @@
                 {
                   "key" : "margin-right",
                   "value" : 0,
+                  "unit" : "px"
+                },
+                {
+                  "key" : "height",
+                  "value" : "30",
                   "unit" : "px"
                 }
               ],
@@ -489,8 +504,19 @@
                   "key" : "width",
                   "value" : "330",
                   "unit" : "px"
+                },
+                {
+                  "key" : "font-size",
+                  "value" : "15",
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-weight",
+                  "value" : 400
                 }
-              ]
+              ],
+              "link_id" : "1627283802_tFa8r",
+              "movetolink" : true
             },
             {
               "type" : "button",
@@ -507,8 +533,19 @@
                   "key" : "width",
                   "value" : "330",
                   "unit" : "px"
+                },
+                {
+                  "key" : "font-size",
+                  "value" : 15,
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-weight",
+                  "value" : 400
                 }
-              ]
+              ],
+              "movetolink" : true,
+              "link_id" : "1627286014_YDhem"
             },
             {
               "type" : "button",
@@ -525,8 +562,19 @@
                   "key" : "width",
                   "value" : "330",
                   "unit" : "px"
+                },
+                {
+                  "key" : "font-size",
+                  "value" : 15,
+                  "unit" : "px"
+                },
+                {
+                  "key" : "font-weight",
+                  "value" : 400
                 }
-              ]
+              ],
+              "movetolink" : true,
+              "link_id" : "1627286029_VKQsj"
             }
           ]
         },
@@ -889,8 +937,16 @@
                         {
                           "key" : "font-weight",
                           "value" : "600"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627283802_tFa8r",
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -1440,7 +1496,17 @@
                         }
                       ],
                       "class" : [],
-                      "style" : []
+                      "style" : [
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1905,6 +1971,15 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -2107,6 +2182,15 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -3219,13 +3303,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -3236,12 +3342,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -3251,7 +3366,7 @@
                           "value" : true
                         }
                       ],
-                      "my_link_id" : ""
+                      "my_link_id" : "1627525450_t8BVQ"
                     }
                   ]
                 },
@@ -3543,13 +3658,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -3560,13 +3697,17 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
-                          "key" : "margin-right",
-                          "value" : "0",
+                          "key" : "font-size",
+                          "value" : "14",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -3575,7 +3716,7 @@
                           "value" : true
                         }
                       ],
-                      "my_link_id" : ""
+                      "my_link_id" : "1627525569_gsung"
                     }
                   ]
                 },
@@ -3741,13 +3882,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -3758,12 +3921,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -3772,7 +3944,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627525569_gsung"
                     }
                   ]
                 },
@@ -3938,13 +4112,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -3955,12 +4151,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -3969,7 +4174,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627551016_FHiT4"
                     }
                   ]
                 },
@@ -4135,13 +4341,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -4152,12 +4380,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -4166,7 +4403,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627551016_FHiT4"
                     }
                   ]
                 },
@@ -6012,13 +6251,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -6029,13 +6290,17 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
-                          "key" : "margin-right",
-                          "value" : "0",
+                          "key" : "font-size",
+                          "value" : "14",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -6044,8 +6309,7 @@
                           "value" : true
                         }
                       ],
-                      "my_link_id" : "",
-                      "link_id" : ""
+                      "link_id" : "1627525450_t8BVQ"
                     }
                   ]
                 },
@@ -6063,13 +6327,34 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
                       "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
@@ -6081,13 +6366,17 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
-                          "key" : "margin-right",
-                          "value" : "0",
+                          "key" : "font-size",
+                          "value" : "14",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -6095,8 +6384,7 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ],
-                      "my_link_id" : ""
+                      ]
                     }
                   ]
                 },
@@ -6299,7 +6587,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -6399,13 +6687,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -6416,12 +6726,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -6430,7 +6749,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627550566_2OP0L"
                     }
                   ]
                 },
@@ -6448,13 +6768,34 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
                       "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
@@ -6466,12 +6807,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -6480,7 +6830,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627550566_2OP0L"
                     }
                   ]
                 },
@@ -6781,13 +7133,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -6798,13 +7172,17 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
-                          "key" : "margin-right",
-                          "value" : "0",
+                          "key" : "font-size",
+                          "value" : "14",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -6812,7 +7190,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627525522_JgocW"
                     }
                   ]
                 },
@@ -6830,13 +7209,34 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
                       "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
@@ -6848,12 +7248,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -6862,7 +7271,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627525522_JgocW"
                     }
                   ]
                 },
@@ -6990,6 +7401,11 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "border-top",
+                          "value" : "none",
+                          "active" : false
                         }
                       ],
                       "control_style" : [
@@ -7163,13 +7579,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -7180,12 +7618,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -7194,7 +7641,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627550679_3azqg"
                     }
                   ]
                 },
@@ -7212,13 +7660,34 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
                       "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
@@ -7230,12 +7699,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -7244,7 +7722,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627550679_3azqg"
                     }
                   ]
                 },
@@ -7545,13 +8025,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -7562,12 +8064,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -7576,7 +8087,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627550694_5L9FM"
                     }
                   ]
                 },
@@ -7594,13 +8106,34 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
                       "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
@@ -7612,12 +8145,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -7626,7 +8168,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627550694_5L9FM"
                     }
                   ]
                 },
@@ -7846,7 +8390,7 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
@@ -8061,6 +8605,15 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -8387,6 +8940,15 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -9186,9 +9748,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -9468,9 +10044,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -9523,6 +10113,12 @@
                         245,
                         245
                       ]
+                    },
+                    {
+                      "key" : "height",
+                      "value" : "120",
+                      "unit" : "px",
+                      "min" : false
                     }
                   ],
                   "parent" : [],
@@ -9770,6 +10366,15 @@
                           "key" : "margin-right",
                           "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -9777,7 +10382,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "title" : false,
+                      "multiline" : true
                     }
                   ]
                 },
@@ -10375,7 +10982,27 @@
                         }
                       ],
                       "class" : [],
-                      "style" : []
+                      "style" : [
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
+                          "key" : "margin-left",
+                          "value" : "6",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "margin-right",
+                          "value" : 0,
+                          "unit" : "px"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -10454,9 +11081,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -10682,9 +11323,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -10763,9 +11418,23 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "control_style" : []
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
                     }
                   ]
                 },
@@ -11436,8 +12105,27 @@
                   "grid_row" : 30,
                   "grid_column" : 1,
                   "row_end" : 31,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 30,
+                      "grid_column" : 2,
+                      "row_end" : 31,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -11493,34 +12181,16 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 30,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 31,
                   "col_end" : 10,
                   "cell_span_item" : [
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
-                      "grid_column" : 3,
-                      "row_end" : 30,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 4,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 5,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11536,9 +12206,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 5,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 6,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11554,9 +12224,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 6,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 7,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11572,9 +12242,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 7,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 8,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11590,9 +12260,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 8,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 9,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11608,9 +12278,9 @@
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
-                      "grid_row" : 29,
+                      "grid_row" : 30,
                       "grid_column" : 9,
-                      "row_end" : 30,
+                      "row_end" : 31,
                       "col_end" : 10,
                       "cell_span_item" : [],
                       "row_span_item" : [],
@@ -11637,6 +12307,7 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -11647,13 +12318,22 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -11661,8 +12341,7 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ],
-                      "link_id" : ""
+                      ]
                     }
                   ]
                 },
@@ -12544,13 +13223,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -12561,13 +13262,17 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
-                          "key" : "margin-right",
-                          "value" : "0",
+                          "key" : "font-size",
+                          "value" : "14",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -12576,7 +13281,7 @@
                           "value" : true
                         }
                       ],
-                      "link_id" : ""
+                      "link_id" : "1627525450_t8BVQ"
                     }
                   ]
                 },
@@ -12594,13 +13299,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -12611,13 +13338,17 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
-                          "key" : "margin-right",
-                          "value" : "0",
+                          "key" : "font-size",
+                          "value" : "14",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -12625,8 +13356,7 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ],
-                      "link_id" : ""
+                      ]
                     }
                   ]
                 },
@@ -12929,13 +13659,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -12946,13 +13698,17 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
-                          "key" : "margin-right",
-                          "value" : "0",
+                          "key" : "font-size",
+                          "value" : "14",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -12960,7 +13716,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "link_id" : "1627525522_JgocW"
                     }
                   ]
                 },
@@ -12978,13 +13735,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -12995,12 +13774,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -13009,7 +13797,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525522_JgocW",
+                      "second_cap_link_id" : "1627525450_t8BVQ"
                     }
                   ]
                 },
@@ -13310,13 +14100,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -13327,12 +14139,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -13341,7 +14162,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627550885_93gGy"
                     }
                   ]
                 },
@@ -13359,13 +14181,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -13376,12 +14220,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -13390,7 +14243,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627550885_93gGy"
                     }
                   ]
                 },
@@ -13691,13 +14546,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -13708,12 +14585,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -13722,7 +14608,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "my_link_id" : "1627550898_eQUY8"
                     }
                   ]
                 },
@@ -13740,13 +14627,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -13757,12 +14666,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -13771,7 +14689,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627550898_eQUY8"
                     }
                   ]
                 },
@@ -14072,30 +14992,56 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "날짜를 입력하세요.",
                       "value" : "",
                       "class" : [],
                       "style" : [
                         {
-                          "key" : "margin-left",
-                          "value" : "0",
-                          "unit" : "px"
-                        },
-                        {
-                          "key" : "margin-right",
-                          "value" : "0",
-                          "unit" : "px"
-                        },
-                        {
                           "key" : "width",
                           "value" : 100,
                           "unit" : "%"
+                        },
+                        {
+                          "key" : "margin-left",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -14104,7 +15050,7 @@
                           "value" : true
                         }
                       ],
-                      "link_id" : ""
+                      "link_id" : "1627525569_gsung"
                     }
                   ]
                 },
@@ -14122,13 +15068,35 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "padding-left",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-top",
+                      "value" : 0,
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-right",
+                      "value" : "0",
+                      "unit" : "px"
+                    },
+                    {
+                      "key" : "padding-bottom",
+                      "value" : 0,
+                      "unit" : "px"
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
-                      "type" : "textbox",
+                      "type" : "datepicker",
                       "required" : false,
-                      "text" : "텍스트 입력",
+                      "text" : "날짜를 입력하세요.",
+                      "placeholder" : "0:00",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -14139,12 +15107,21 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        },
+                        {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         }
                       ],
@@ -14153,7 +15130,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "first_cap_link_id" : "1627525450_t8BVQ",
+                      "second_cap_link_id" : "1627525569_gsung"
                     }
                   ]
                 },
@@ -14298,8 +15277,27 @@
                   "grid_row" : 37,
                   "grid_column" : 1,
                   "row_end" : 38,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 37,
+                      "grid_column" : 2,
+                      "row_end" : 38,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [],
                   "class" : [
                     {
@@ -14371,28 +15369,10 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 37,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 38,
-                  "col_end" : 13,
+                  "col_end" : 10,
                   "cell_span_item" : [
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 3,
-                      "row_end" : 38,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -14500,25 +15480,67 @@
                       "style" : [],
                       "parent" : [],
                       "controls" : []
-                    },
+                    }
+                  ],
+                  "row_span_item" : [],
+                  "class" : [
                     {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 37,
-                      "grid_column" : 10,
-                      "row_end" : 38,
-                      "col_end" : 11,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
+                      "value" : "flex"
+                    }
+                  ],
+                  "style" : [],
+                  "parent" : [],
+                  "controls" : [
+                    {
+                      "type" : "textbox",
+                      "required" : false,
+                      "text" : "텍스트 입력",
+                      "placeholder" : "",
+                      "value" : "",
+                      "class" : [],
+                      "style" : [
                         {
-                          "value" : "flex"
+                          "key" : "width",
+                          "value" : 100,
+                          "unit" : "%"
+                        },
+                        {
+                          "key" : "margin-left",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "margin-right",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
+                      "control_style" : [
+                        {
+                          "key" : "indent",
+                          "value" : true
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "grid_id" : "grid[1,1]/[1,4]",
+                  "grid" : 1,
+                  "grid_row" : 37,
+                  "grid_column" : 10,
+                  "row_end" : 38,
+                  "col_end" : 13,
+                  "cell_span_item" : [
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -14569,9 +15591,15 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
+                        {
+                          "key" : "height",
+                          "value" : "auto",
+                          "unit" : "%"
+                        },
                         {
                           "key" : "width",
                           "value" : 100,
@@ -14579,13 +15607,22 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -14593,7 +15630,8 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "title" : false
                     }
                   ]
                 },
@@ -15428,7 +16466,7 @@
                     },
                     {
                       "key" : "padding-left",
-                      "value" : 0,
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -15438,7 +16476,7 @@
                     },
                     {
                       "key" : "padding-right",
-                      "value" : "5",
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -16450,7 +17488,7 @@
                     },
                     {
                       "key" : "padding-left",
-                      "value" : 0,
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -16460,7 +17498,7 @@
                     },
                     {
                       "key" : "padding-right",
-                      "value" : "5",
+                      "value" : "20",
                       "unit" : "px"
                     },
                     {
@@ -16746,8 +17784,50 @@
                   "grid_row" : 42,
                   "grid_column" : 1,
                   "row_end" : 44,
-                  "col_end" : 2,
-                  "cell_span_item" : [],
+                  "col_end" : 3,
+                  "cell_span_item" : [
+                    {
+                      "grid_id" : "grid[1,1]/[1,4]",
+                      "grid" : 1,
+                      "grid_row" : 42,
+                      "grid_column" : 2,
+                      "row_end" : 44,
+                      "col_end" : 3,
+                      "cell_span_item" : [],
+                      "row_span_item" : [
+                        {
+                          "grid_id" : "grid[1,1]/[1,4]",
+                          "grid" : 1,
+                          "grid_row" : 43,
+                          "grid_column" : 2,
+                          "row_end" : 44,
+                          "col_end" : 3,
+                          "cell_span_item" : [],
+                          "row_span_item" : [],
+                          "class" : [
+                            {
+                              "value" : "flex"
+                            }
+                          ],
+                          "style" : [],
+                          "parent" : [],
+                          "controls" : []
+                        }
+                      ],
+                      "class" : [
+                        {
+                          "value" : "flex"
+                        },
+                        {
+                          "key" : "vertical-align",
+                          "value" : "start"
+                        }
+                      ],
+                      "style" : [],
+                      "parent" : [],
+                      "controls" : []
+                    }
+                  ],
                   "row_span_item" : [
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
@@ -16838,28 +17918,10 @@
                   "grid_id" : "grid[1,1]/[1,4]",
                   "grid" : 1,
                   "grid_row" : 42,
-                  "grid_column" : 2,
+                  "grid_column" : 3,
                   "row_end" : 44,
                   "col_end" : 13,
                   "cell_span_item" : [
-                    {
-                      "grid_id" : "grid[1,1]/[1,4]",
-                      "grid" : 1,
-                      "grid_row" : 42,
-                      "grid_column" : 3,
-                      "row_end" : 43,
-                      "col_end" : 4,
-                      "cell_span_item" : [],
-                      "row_span_item" : [],
-                      "class" : [
-                        {
-                          "value" : "flex"
-                        }
-                      ],
-                      "style" : [],
-                      "parent" : [],
-                      "controls" : []
-                    },
                     {
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
@@ -17028,28 +18090,10 @@
                       "grid_id" : "grid[1,1]/[1,4]",
                       "grid" : 1,
                       "grid_row" : 43,
-                      "grid_column" : 2,
+                      "grid_column" : 3,
                       "row_end" : 44,
                       "col_end" : 13,
                       "cell_span_item" : [
-                        {
-                          "grid_id" : "grid[1,1]/[1,4]",
-                          "grid" : 1,
-                          "grid_row" : 43,
-                          "grid_column" : 3,
-                          "row_end" : 44,
-                          "col_end" : 4,
-                          "cell_span_item" : [],
-                          "row_span_item" : [],
-                          "class" : [
-                            {
-                              "value" : "flex"
-                            }
-                          ],
-                          "style" : [],
-                          "parent" : [],
-                          "controls" : []
-                        },
                         {
                           "grid_id" : "grid[1,1]/[1,4]",
                           "grid" : 1,
@@ -17227,10 +18271,6 @@
                   "class" : [
                     {
                       "value" : "flex"
-                    },
-                    {
-                      "key" : "vertical-align",
-                      "value" : "start"
                     }
                   ],
                   "style" : [],
@@ -17240,6 +18280,7 @@
                       "type" : "textbox",
                       "required" : false,
                       "text" : "텍스트 입력",
+                      "placeholder" : "",
                       "value" : "",
                       "class" : [],
                       "style" : [
@@ -17250,22 +18291,31 @@
                         },
                         {
                           "key" : "margin-left",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
                         },
                         {
                           "key" : "margin-right",
-                          "value" : "0",
+                          "value" : 0,
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : 15,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
-                      "multiline" : true,
                       "control_style" : [
                         {
                           "key" : "indent",
-                          "value" : false
+                          "value" : true
                         }
-                      ]
+                      ],
+                      "multiline" : true
                     }
                   ]
                 },
@@ -18686,21 +19736,23 @@
                       "type" : "autogrid",
                       "grid_item" : {
                         "auto_increase" : false,
-                        "input_row_count" : 2,
+                        "input_row_count" : 3,
                         "grid_row" : 1,
                         "grid_column" : 1,
                         "row_end" : 2,
                         "col_end" : 2,
                         "max_col_cnt" : 12,
                         "height" : 40,
-                        "head" : [
-                          {
-                            "type" : "textbox",
+                        "head" : {
+                          "row_1_col_1" : {
+                            "index" : 0,
+                            "type" : "datepicker",
                             "grid_row" : 1,
                             "grid_column" : 1,
                             "row_end" : 2,
-                            "col_end" : 2,
+                            "col_end" : 3,
                             "text" : "일시",
+                            "value" : "",
                             "head_class" : [
                               {
                                 "key" : "",
@@ -18726,45 +19778,15 @@
                               }
                             ]
                           },
-                          {
+                          "row_1_col_2" : {
+                            "index" : 1,
                             "type" : "textbox",
                             "grid_row" : 1,
-                            "grid_column" : 2,
-                            "row_end" : 2,
-                            "col_end" : 4,
-                            "text" : "주요내용",
-                            "head_class" : [
-                              {
-                                "key" : "",
-                                "value" : "flex"
-                              },
-                              {
-                                "key" : "vertical-align",
-                                "value" : "center"
-                              },
-                              {
-                                "key" : "text-align",
-                                "value" : "center"
-                              }
-                            ],
-                            "head_style" : [
-                              {
-                                "key" : "background-color",
-                                "value" : [
-                                  245,
-                                  245,
-                                  245
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "type" : "textbox",
-                            "grid_row" : 1,
-                            "grid_column" : 4,
+                            "grid_column" : 3,
                             "row_end" : 2,
                             "col_end" : 5,
-                            "text" : "경과시간 (내원후)",
+                            "text" : "주요내용",
+                            "value" : "",
                             "head_class" : [
                               {
                                 "key" : "",
@@ -18790,13 +19812,18 @@
                               }
                             ]
                           },
-                          {
-                            "type" : "textbox",
+                          "row_1_col_3" : {
+                            "index" : 2,
+                            "type" : "datepicker",
                             "grid_row" : 1,
                             "grid_column" : 5,
                             "row_end" : 2,
-                            "col_end" : 12,
-                            "text" : "내용",
+                            "col_end" : 6,
+                            "text" : "경과시간 (내원후)",
+                            "value" : "",
+                            "standard_cap_calc" : true,
+                            "first_cap_field" : "row_3_col_1",
+                            "second_cap_field" : "col_1",
                             "head_class" : [
                               {
                                 "key" : "",
@@ -18822,8 +19849,44 @@
                               }
                             ]
                           },
-                          {
-                            "type" : "button",
+                          "row_1_col_4" : {
+                            "index" : 3,
+                            "type" : "textbox",
+                            "grid_row" : 1,
+                            "grid_column" : 6,
+                            "row_end" : 2,
+                            "col_end" : 12,
+                            "multiline" : true,
+                            "text" : "내용",
+                            "value" : "",
+                            "head_class" : [
+                              {
+                                "key" : "",
+                                "value" : "flex"
+                              },
+                              {
+                                "key" : "vertical-align",
+                                "value" : "center"
+                              },
+                              {
+                                "key" : "text-align",
+                                "value" : "center"
+                              }
+                            ],
+                            "head_style" : [
+                              {
+                                "key" : "background-color",
+                                "value" : [
+                                  245,
+                                  245,
+                                  245
+                                ]
+                              }
+                            ]
+                          },
+                          "row_add" : {
+                            "index" : 99,
+                            "type" : "addrow",
                             "grid_row" : 1,
                             "grid_column" : 12,
                             "row_end" : 2,
@@ -18854,84 +19917,142 @@
                               }
                             ]
                           }
-                        ],
-                        "row" : [
-                          {
-                            "type" : "textbox",
+                        },
+                        "row" : {
+                          "row_2_col_1" : {
+                            "type" : "datepicker",
                             "grid_row" : 2,
                             "grid_column" : 1,
-                            "row_end" : 2,
-                            "col_end" : 2,
-                            "class" : [
-                              {
-                                "value" : "flex"
-                              }
-                            ],
+                            "row_end" : 3,
+                            "col_end" : 3,
+                            "value" : "",
                             "style" : [
                               {
                                 "key" : "width",
                                 "value" : 100,
-                                "unit" : "px"
-                              }
-                            ]
-                          },
-                          {
-                            "type" : "textbox",
-                            "grid_row" : 2,
-                            "grid_column" : 2,
-                            "row_end" : 2,
-                            "col_end" : 4,
-                            "class" : [
-                              {
-                                "value" : "flex"
+                                "unit" : "%"
                               }
                             ],
-                            "style" : [
-                              {
-                                "key" : "width",
-                                "value" : 300,
-                                "unit" : "px"
-                              }
-                            ]
+                            "control_style" : []
                           },
-                          {
+                          "row_2_col_2" : {
                             "type" : "textbox",
                             "grid_row" : 2,
-                            "grid_column" : 4,
-                            "row_end" : 2,
+                            "grid_column" : 3,
+                            "row_end" : 3,
                             "col_end" : 5,
-                            "class" : [
-                              {
-                                "value" : "flex"
-                              }
-                            ],
+                            "value" : "",
                             "style" : [
                               {
                                 "key" : "width",
                                 "value" : 100,
-                                "unit" : "px"
+                                "unit" : "%"
                               }
-                            ]
+                            ],
+                            "control_style" : []
                           },
-                          {
-                            "type" : "textbox",
+                          "row_2_col_3" : {
+                            "type" : "datepicker",
                             "grid_row" : 2,
                             "grid_column" : 5,
-                            "row_end" : 2,
-                            "col_end" : 13,
-                            "class" : [
-                              {
-                                "value" : "flex"
-                              }
-                            ],
+                            "row_end" : 3,
+                            "col_end" : 6,
+                            "value" : "",
                             "style" : [
                               {
-                                "key" : "flex",
-                                "value" : 1
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
                               }
-                            ]
+                            ],
+                            "control_style" : []
+                          },
+                          "row_2_col_4" : {
+                            "type" : "textbox",
+                            "grid_row" : 2,
+                            "grid_column" : 6,
+                            "row_end" : 3,
+                            "col_end" : 13,
+                            "multiline" : true,
+                            "value" : "",
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ],
+                            "control_style" : []
+                          },
+                          "row_3_col_1" : {
+                            "type" : "datepicker",
+                            "grid_row" : 3,
+                            "grid_column" : 1,
+                            "row_end" : 4,
+                            "col_end" : 3,
+                            "value" : "",
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ],
+                            "control_style" : []
+                          },
+                          "row_3_col_2" : {
+                            "type" : "textbox",
+                            "grid_row" : 3,
+                            "grid_column" : 3,
+                            "row_end" : 4,
+                            "col_end" : 5,
+                            "value" : "",
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ],
+                            "control_style" : []
+                          },
+                          "row_3_col_3" : {
+                            "type" : "datepicker",
+                            "grid_row" : 3,
+                            "grid_column" : 5,
+                            "row_end" : 4,
+                            "col_end" : 6,
+                            "standard_cap_calc" : true,
+                            "first_cap_field" : "row_3_col_1",
+                            "second_cap_field" : "col_1",
+                            "value" : "",
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ],
+                            "control_style" : []
+                          },
+                          "row_3_col_4" : {
+                            "type" : "textbox",
+                            "grid_row" : 3,
+                            "grid_column" : 6,
+                            "row_end" : 4,
+                            "col_end" : 13,
+                            "multiline" : true,
+                            "value" : "",
+                            "style" : [
+                              {
+                                "key" : "width",
+                                "value" : 100,
+                                "unit" : "%"
+                              }
+                            ],
+                            "control_style" : []
                           }
-                        ]
+                        }
                       }
                     }
                   ]
@@ -19421,7 +20542,14 @@
                       "value" : "flex"
                     }
                   ],
-                  "style" : [],
+                  "style" : [
+                    {
+                      "key" : "height",
+                      "value" : "120",
+                      "unit" : "px",
+                      "min" : false
+                    }
+                  ],
                   "parent" : [],
                   "controls" : [
                     {
@@ -19445,6 +20573,15 @@
                           "key" : "margin-right",
                           "value" : "0",
                           "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
                         }
                       ],
                       "control_style" : [
@@ -19452,7 +20589,9 @@
                           "key" : "indent",
                           "value" : true
                         }
-                      ]
+                      ],
+                      "title" : false,
+                      "multiline" : true
                     }
                   ]
                 },
@@ -20982,14 +22121,21 @@
                         },
                         {
                           "key" : "font-size",
-                          "value" : 15,
+                          "value" : "14",
                           "unit" : "px"
                         },
                         {
                           "key" : "font-weight",
                           "value" : "600"
+                        },
+                        {
+                          "key" : "width",
+                          "value" : "auto",
+                          "unit" : "px"
                         }
-                      ]
+                      ],
+                      "is_input_explain" : false,
+                      "input_explain" : ""
                     }
                   ]
                 },
@@ -21675,10 +22821,6 @@
                   "class" : [
                     {
                       "value" : "flex"
-                    },
-                    {
-                      "key" : "control-align",
-                      "value" : "default"
                     }
                   ],
                   "style" : [],
@@ -21721,7 +22863,27 @@
                           "value" : "around"
                         }
                       ],
-                      "style" : []
+                      "style" : [
+                        {
+                          "key" : "margin-left",
+                          "value" : "6",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "margin-right",
+                          "value" : 0,
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-size",
+                          "value" : "14",
+                          "unit" : "px"
+                        },
+                        {
+                          "key" : "font-weight",
+                          "value" : 400
+                        }
+                      ]
                     }
                   ]
                 },
@@ -22564,7 +23726,10 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "my_link_id" : "1627286014_YDhem",
+                              "is_input_explain" : false,
+                              "input_explain" : null
                             }
                           ]
                         },
@@ -25002,7 +26167,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -25256,12 +26441,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -25797,7 +26991,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -26043,12 +27257,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -26269,7 +27492,27 @@
                                 }
                               ],
                               "class" : [],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -26913,7 +28156,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -27159,12 +28422,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -27744,7 +29016,7 @@
                             {
                               "type" : "label",
                               "required" : false,
-                              "text" : "종합의견",
+                              "text" : "패널의견",
                               "class" : [
                                 {
                                   "key" : "label_type",
@@ -27790,7 +29062,9 @@
                                   ]
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : null
                             }
                           ]
                         },
@@ -28467,12 +29741,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -28940,10 +30223,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -28985,13 +30264,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "around"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -29527,10 +30821,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -29567,13 +30857,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "around"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -29959,7 +31264,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -29967,7 +31272,9 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -30961,7 +32268,10 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "my_link_id" : "1627286029_VKQsj",
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },
@@ -33347,10 +34657,6 @@
                             {
                               "key" : "vertical-align",
                               "value" : "center"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "default"
                             }
                           ],
                           "style" : [],
@@ -33378,7 +34684,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -33624,12 +34950,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -34156,7 +35491,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -34402,12 +35757,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -34633,7 +35997,27 @@
                                   "value" : "row"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -35268,7 +36652,27 @@
                                   "value" : "column"
                                 }
                               ],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -35514,12 +36918,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -35740,7 +37153,27 @@
                                 }
                               ],
                               "class" : [],
-                              "style" : [],
+                              "style" : [
+                                {
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
+                                }
+                              ],
                               "control_style" : []
                             }
                           ]
@@ -36805,12 +38238,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -37297,10 +38739,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -37342,13 +38780,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "around"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -37875,10 +39328,6 @@
                           "class" : [
                             {
                               "value" : "flex"
-                            },
-                            {
-                              "key" : "control-align",
-                              "value" : "around"
                             }
                           ],
                           "style" : [],
@@ -37915,13 +39364,28 @@
                                   "checked" : false
                                 }
                               ],
-                              "class" : [
+                              "class" : [],
+                              "style" : [
                                 {
-                                  "key" : "control-align",
-                                  "value" : "between"
+                                  "key" : "margin-left",
+                                  "value" : "20",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "margin-right",
+                                  "value" : 0,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : "14",
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
-                              "style" : [],
                               "control_style" : []
                             }
                           ]
@@ -38898,7 +40362,14 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px",
+                              "min" : true
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -38923,12 +40394,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39029,12 +40509,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39241,7 +40730,14 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px",
+                              "min" : true
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -39266,12 +40762,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39372,12 +40877,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39584,7 +41098,14 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px",
+                              "min" : true
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -39609,12 +41130,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39715,12 +41245,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -39927,7 +41466,14 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px",
+                              "min" : true
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -39952,12 +41498,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40058,12 +41613,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40270,7 +41834,14 @@
                               "value" : "flex"
                             }
                           ],
-                          "style" : [],
+                          "style" : [
+                            {
+                              "key" : "height",
+                              "value" : "60",
+                              "unit" : "px",
+                              "min" : true
+                            }
+                          ],
                           "parent" : [],
                           "controls" : [
                             {
@@ -40295,12 +41866,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40401,12 +41981,21 @@
                                   "key" : "margin-right",
                                   "value" : 0,
                                   "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-size",
+                                  "value" : 15,
+                                  "unit" : "px"
+                                },
+                                {
+                                  "key" : "font-weight",
+                                  "value" : 400
                                 }
                               ],
                               "control_style" : [
                                 {
                                   "key" : "indent",
-                                  "value" : false
+                                  "value" : true
                                 }
                               ],
                               "multiline" : true
@@ -40661,7 +42250,7 @@
                                 },
                                 {
                                   "key" : "font-size",
-                                  "value" : 15,
+                                  "value" : "14",
                                   "unit" : "px"
                                 },
                                 {
@@ -40669,7 +42258,9 @@
                                   "value" : "600"
                                 }
                               ],
-                              "control_style" : []
+                              "control_style" : [],
+                              "is_input_explain" : false,
+                              "input_explain" : ""
                             }
                           ]
                         },

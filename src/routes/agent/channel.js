@@ -103,9 +103,7 @@ routes.get('/:group_seq(\\d+)/operation', Auth.isAuthenticated(Role.AGENT), Wrap
   const { group_seq, group_grade_number, group_member_info, is_group_admin, member_seq } = await GroupService.checkGroupAuth(DBMySQL, req, false, true, true)
 
   if (group_seq) {
-    req.query.no_paging = 'y'
-    req.query.menu = 'drive'
-    output.add('operation_list', await OperationService.getOperationListByRequest(DBMySQL, group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, req, false, true))
+    output.add('operation_list', await OperationService.getAgentOperationList(group_seq, member_seq, group_member_info, group_grade_number, is_group_admin, req))
   } else {
     return res.json(new StdObject(-1, '채널정보가 없습니다.', 403))
   }

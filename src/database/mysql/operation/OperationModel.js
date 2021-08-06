@@ -13,7 +13,8 @@ const join_select = [
   'operation_storage.total_file_size', 'operation_storage.total_file_count', 'operation_storage.clip_count',
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count',
   'operation_storage.trans_video_size', 'operation_storage.trans_video_count', 'operation_storage.operation_file_size', 'operation_storage.operation_file_count',
-  'operation_storage.refer_file_size', 'operation_storage.refer_file_count', 'operation_storage.origin_video_size'
+  'operation_storage.refer_file_size', 'operation_storage.refer_file_count', 'operation_storage.origin_video_size',
+  'operation_data.video_download', 'operation_data.file_download', 'operation_data.total_time', 'operation_data.thumbnail'
 ]
 const join_trash_select = _.concat(join_select, ['delete_member.user_name as delete_user_name', 'delete_member.user_nickname as delete_user_nickname'])
 const join_admin_select = _.concat(join_select, ['group_info.group_name'])
@@ -46,6 +47,7 @@ export default class OperationModel extends MySQLModel {
     const query = this.database.select(join_select)
     query.from('operation')
     query.innerJoin('member', 'member.seq', 'operation.member_seq')
+    query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
     query.leftOuterJoin('operation_storage', 'operation_storage.operation_seq', 'operation.seq')
     query.where(where)
     query.first()
@@ -67,11 +69,7 @@ export default class OperationModel extends MySQLModel {
 
     const is_trash = filter_params.menu === 'trash'
     let select_fields = is_admin ? join_admin_select : (is_trash ? join_trash_select : join_select)
-    if (is_agent) {
-      select_fields = select_fields.concat(['operation_data.video_download', 'operation_data.file_download'])
-    }
     const query = this.database.select(select_fields)
-    query.column(['operation_data.total_time', 'operation_data.thumbnail'])
     query.from('operation')
     query.innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
     query.innerJoin('member', 'member.seq', 'operation.member_seq')
@@ -164,6 +162,9 @@ export default class OperationModel extends MySQLModel {
 
     if (filter_params.member_seq) {
       query.andWhere('operation.member_seq', filter_params.member_seq)
+    }
+    if (filter_params.analysis_status) {
+      query.andWhere('operation.analysis_status', filter_params.analysis_status)
     }
     if (filter_params.search_keyword) {
       query.where((builder) => {

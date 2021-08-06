@@ -121,9 +121,9 @@ export default class OperationFileModel extends MySQLModel {
     return !query_result || Util.parseInt(query_result.cnt, 0) === 0
   }
 
-  changeFilesTypeByDirectory = async (operation_seq, type, directory, current_type) => {
+  changeFilesInfoByDirectory = async (operation_seq, update_data, directory, current_type = null) => {
     const query = this.database
-      .update({ type })
+      .update(update_data)
       .from(this.table_name)
       .where('operation_seq', operation_seq)
       .where((builder) => {
@@ -136,9 +136,9 @@ export default class OperationFileModel extends MySQLModel {
     return query
   }
 
-  changeFilesTypeByFileSeqList = async (operation_seq, type, file_seq_list, current_type) => {
+  changeFilesInfoByFileSeqList = async (operation_seq, update_data, file_seq_list, current_type = null) => {
     const query = this.database
-      .update({ type })
+      .update(update_data)
       .from(this.table_name)
       .where('operation_seq', operation_seq)
       .whereIn('seq', file_seq_list)

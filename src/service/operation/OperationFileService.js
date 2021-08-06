@@ -317,7 +317,7 @@ const OperationFileServiceClass = class {
 
               const resize_width = pdf_data.width / resize_ratio
               const resize_height = pdf_data.height / resize_ratio
-              const resize_image_name = `${jpg_file_name}_resize.jpg`
+              const resize_image_name = `${jpg_file_name}_resize.png`
               const resize_image_path = `${pdf_directory}/${resize_image_name}`
               const resize_result = await Util.resizeImage(jpg_file_path, resize_image_path, resize_width, resize_height, pdf_data)
               if (resize_result.success && (await Util.fileExists(resize_image_path))) {
@@ -352,8 +352,10 @@ const OperationFileServiceClass = class {
           }
           log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'insert complete', total_count)
           if (insert_count > 0) {
-            await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
-            log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'file move complete', total_count)
+            if (!ServiceConfig.isVacs()) {
+              await NaverObjectStorageService.moveFolder(pdf_directory, media_path)
+              log.debug(this.log_prefix, '[operationChartPDFToImage]', `operation_seq: ${operation_seq}`, 'file move complete', total_count)
+            }
             await OperationService.updateStorageSize(operation_info)
 
             const alarm_data = {
@@ -501,27 +503,39 @@ const OperationFileServiceClass = class {
   }
 
   changeOperationFilesType = async (operation_info, request_body) => {
-    if (!request_body || !request_body.data ) {
+    if (!request_body || !request_body.data || !operation_info || operation_info.isEmpty() ) {
       return false
     }
-    const file_type = request_body.type ? request_body.type : null
+    const type = request_body.type ? request_body.type : null
+    return this.updateFilesInfoByRequest(operation_info, request_body, { type })
+  }
+
+  changeOperationFilesRotation = async (operation_info, request_body) => {
+    if (!request_body || !request_body.data || !operation_info || operation_info.isEmpty() ) {
+      return false
+    }
+    const rotation = request_body.rotation
+    return this.updateFilesInfoByRequest(operation_info, request_body, { rotation })
+  }
+  updateFilesInfoByRequest = async (operation_info, request_body, update_data) => {
+    const operation_seq = operation_info.seq
     const directory_list = request_body.data.directory_list
     const file_seq_list = request_body.data.file_seq_list
     const current_type = request_body.current_type ? request_body.current_type : null
 
     if (directory_list || file_seq_list) {
-      const operation_seq = operation_info.seq
       await DBMySQL.transaction(async (transaction) => {
         const operation_file_model = this.getOperationFileModel(transaction)
         if (directory_list && directory_list.length > 0) {
           for (let i = 0; i < directory_list.length; i++) {
-            await operation_file_model.changeFilesTypeByDirectory(operation_seq, file_type, directory_list[i], current_type)
+            await operation_file_model.changeFilesInfoByDirectory(operation_seq, update_data, directory_list[i], current_type)
           }
         }
         if (file_seq_list && file_seq_list.length > 0) {
-          await operation_file_model.changeFilesTypeByFileSeqList(operation_seq, file_type, file_seq_list, current_type)
+          await operation_file_model.changeFilesInfoByFileSeqList(operation_seq, update_data, file_seq_list)
         }
       })
+      return true
     }
     return false;
   }

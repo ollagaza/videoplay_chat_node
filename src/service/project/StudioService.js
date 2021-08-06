@@ -692,7 +692,7 @@ const StudioServiceClass = class {
       path: down_video_file_path
     }
     await OperationFileService.createVideoFileInfo(DBMySQL, operation_info, video_file_info)
-    await TranscoderSyncService.updateTranscodingComplete(operation_info, file_name, null, null)
+    await TranscoderSyncService.updateTranscodingComplete(operation_info, Util.getRandomId(), file_name, null, null)
   }
 }
 

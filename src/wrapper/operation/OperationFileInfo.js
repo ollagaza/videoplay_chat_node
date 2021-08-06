@@ -6,7 +6,8 @@ export default class OperationFileInfo extends JsonWrapper {
   constructor (data = null, private_keys = []) {
     super(data, private_keys)
     this.setKeys([
-      'seq', 'directory', 'file_name', 'file_size', 'file_type', 'width', 'height', 'url', 'download_url', 'full_path', 'thumbnail_url', 'reg_date', 'type'
+      'seq', 'directory', 'file_name', 'file_size', 'file_type', 'width', 'height',
+      'url', 'download_url', 'full_path', 'thumbnail_url', 'reg_date', 'type', 'rotation'
     ])
   }
 
@@ -16,6 +17,7 @@ export default class OperationFileInfo extends JsonWrapper {
     const cdn_url = ServiceConfig.get('cdn_url')
     if (ServiceConfig.isVacs()) {
       this.url = static_url + this.file_path
+      this.origin_url = static_url + this.file_path
       this.download_url = static_url + this.file_path
       this.thumbnail_url = static_url + this.thumbnail_path
       if (this.resize_path) {
@@ -23,6 +25,7 @@ export default class OperationFileInfo extends JsonWrapper {
       }
     } else {
       this.url = cdn_url + this.file_path
+      this.origin_url = cdn_url + this.file_path
       this.download_url = cloud_url + this.file_path
       this.thumbnail_url = cdn_url + this.thumbnail_path
       if (this.resize_path) {
