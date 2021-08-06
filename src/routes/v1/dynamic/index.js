@@ -6,6 +6,8 @@ import StdObject from '../../../wrapper/std-object'
 import DynamicService from "../../../service/dynamic/DynamicService";
 import DynamicAdminService from "../../../service/dynamic/DynamicAdminService";
 import Util from "../../../utils/Util";
+import GroupService from "../../../service/group/GroupService";
+import DBMySQL from "../../../database/knex-mysql";
 
 const routes = Router()
 
@@ -52,18 +54,19 @@ routes.get('/result_list/:id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   res.json(output)
 }))
 
-routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/:api_type/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
-  output.add('result', await DynamicService.saveTemplateResult(req.body))
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  output.add('result', await DynamicService.saveTemplateResult(group_auth, req))
   res.json(output)
 }))
 
-routes.put('/:id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/:api_type/:api_key/:id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
-  const result_id = req.params.id
-  output.add('result', await DynamicService.updateTemplateResult(result_id, req.body))
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  output.add('result', await DynamicService.updateTemplateResult(group_auth, req))
   res.json(output)
 }))
 
