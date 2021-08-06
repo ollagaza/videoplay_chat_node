@@ -63,7 +63,7 @@ dynamic_schema.statics.createDynamic = function (data) {
 
 dynamic_schema.statics.updateById = function (id, data) {
   data.modify_date = Date.now()
-  return this.findOneAndUpdate({ template_id: id.toString() }, data, {
+  return this.findOneAndUpdate({ template_id: id }, data, {
     upsert: true,
     new: true,
     setDefaultsOnInsert: true
@@ -71,7 +71,7 @@ dynamic_schema.statics.updateById = function (id, data) {
 }
 
 dynamic_schema.statics.updateByTemplate_id = function (question) {
-  return this.updateOne({ template_id: question.template_id.toString() }, question)
+  return this.updateOne({ template_id: question.template_id }, question)
 }
 
 dynamic_schema.statics.deleteById = function (id) {
