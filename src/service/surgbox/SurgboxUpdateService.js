@@ -46,6 +46,7 @@ const SurgboxUpdateServiceClass = class {
   createUpdateInfo = async (member_seq, request_body) => {
     const update_info = this.getUpdateInfoByRequest(request_body)
     update_info.member_seq = member_seq
+    if (!update_info.type) update_info.type = 'box'
 
     const file_path = `/surgbox/update/${update_info.version}/`
     const media_root = ServiceConfig.get('media_root')
