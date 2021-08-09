@@ -4,7 +4,6 @@ import DBMySQL from '../../database/knex-mysql'
 import log from '../../libs/logger'
 import {DynamicModel} from '../../database/mongodb/dynamic'
 import {DynamicResultModel} from "../../database/mongodb/dynamic_result";
-import Question_BasicData from "../../data/dynamic_template/question.json";
 import GroupAlarmService from "../group/GroupAlarmService";
 import OperationService from "../operation/OperationService";
 
@@ -51,13 +50,26 @@ const DynamicServiceClass = class {
     return result
   }
 
-  setJsonTemplateData = async () => {
-    const template = await DynamicModel.findByTemplate_id(Question_BasicData.template_id)
-    if (template && template._doc && template._doc.version < Question_BasicData.version) {
-      log.debug(this.log_prefix, 'setJsonTemplateData', Question_BasicData, Question_BasicData.template_id, template._doc.version, Question_BasicData.version);
-      await DynamicModel.updateByTemplate_id(Question_BasicData)
-    } else if (!template || !template._doc.version) {
-      await DynamicModel.createDynamic(Question_BasicData)
+  setJsonTemplateData = () => {
+    const json_file_list = require.context('../../data/dynamic_template', true, /\/[^.]+\.json$/)
+    if (json_file_list && json_file_list.keys()) {
+      json_file_list.keys().forEach((key) => {
+        (
+          async (key) => {
+            const data_json = json_file_list(key)
+            log.debug(this.log_prefix, key, data_json)
+
+            const template = await DynamicModel.findByTemplate_id(data_json.template_id)
+            log.debug(this.log_prefix, key, template)
+            if (template && template._doc && template._doc.version < data_json.version) {
+              log.debug(this.log_prefix, 'setJsonTemplateData', data_json, data_json.template_id, template._doc.version, data_json.version);
+              await DynamicModel.updateByTemplate_id(data_json)
+            } else if (!template || !template._doc.version) {
+              await DynamicModel.createDynamic(data_json)
+            }
+          }
+        )(key)
+      })
     }
   }
 
