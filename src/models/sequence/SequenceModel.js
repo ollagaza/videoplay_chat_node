@@ -154,6 +154,9 @@ export default class SequenceModel {
     const embeddings = []
     for (let i = 0; i < this._embeddings.length; i++) {
       const embed = this._embeddings[i]
+      if (this.type === Constants.VIDEO && embed.type !== Constants.VIDEO) {
+        continue
+      }
       if (embed.isUse && !Util.isEmpty(embed.src)) {
         embeddings.push(await embed.getXmlJson(scale, options))
       } else {
