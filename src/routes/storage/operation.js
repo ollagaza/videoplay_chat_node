@@ -2,6 +2,7 @@ import { Router } from 'express'
 import Wrap from '../../utils/express-async'
 import SyncService from '../../service/sync/SyncService'
 import StdObject from '../../wrapper/std-object'
+import logger from '../../libs/logger'
 
 const routes = Router()
 

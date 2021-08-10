@@ -42,14 +42,14 @@ const SyncServiceClass = class {
     const group_seq = operation_info.group_seq
     const member_seq = operation_info.member_seq
     const content_id = operation_info.content_id
-    const log_info = `[onAnalysisComplete] [log_id: ${log_id}, operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
-    log.debug(this.log_prefix, log_info, `start`)
+    const log_info = `[log_id: ${log_id}, operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `start`)
 
     const operation_media_info = await OperationMediaService.getOperationMediaInfo(DBMySQL, operation_info)
     const is_sync_complete = operation_media_info.is_trans_complete
 
     if (!is_sync_complete) {
-      log.debug(this.log_prefix, log_info, `sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_media_info.is_trans_complete}]. process end`)
+      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_media_info.is_trans_complete}]. process end`)
       return
     }
 
@@ -63,7 +63,7 @@ const SyncServiceClass = class {
     const media_info = media_result.media_info
     let index_info_list = []
     index_info_list = await this.getIndexInfoByMedia(trans_video_file_path, operation_info, media_info, log_info)
-    log.debug(this.log_prefix, log_info, 'getIndexInfoByMedia complete', index_info_list.length)
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'getIndexInfoByMedia complete', index_info_list.length)
 
     const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq)
     if (video_index_info) {
@@ -71,7 +71,7 @@ const SyncServiceClass = class {
     } else {
       await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info_list)
     }
-    log.debug(this.log_prefix, log_info, 'createVideoIndexInfoByOperation complete')
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'createVideoIndexInfoByOperation complete')
 
     const trans_file_regex = /^trans_([\w_-]+)\.mp4$/i
     let origin_video_size = 0
@@ -116,7 +116,7 @@ const SyncServiceClass = class {
         stream_url = `Trans_,${adaptive_list.join(',')},.mp4.smil`
       }
     }
-    log.debug(this.log_prefix, log_info, 'check and mode video files', `origin_video_size: ${origin_video_size}, origin_video_count: ${origin_video_count}, trans_video_size: ${trans_video_size}, trans_video_count: ${trans_video_count}`)
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'check and mode video files', `origin_video_size: ${origin_video_size}, origin_video_count: ${origin_video_count}, trans_video_size: ${trans_video_size}, trans_video_count: ${trans_video_count}`)
 
     let operation_storage_model = new OperationStorageModel(DBMySQL)
     const operation_storage_info = await operation_storage_model.getOperationStorageInfo(operation_info)
@@ -144,7 +144,7 @@ const SyncServiceClass = class {
 
       analysis_status = ServiceConfig.isVacs() ? 'Y' : 'M'
       await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status)
-      log.debug(this.log_prefix, log_info, `sync complete`)
+      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `sync complete`)
 
       await GroupService.updateMemberUsedStorage(transaction, group_seq, member_seq)
       await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
@@ -168,9 +168,9 @@ const SyncServiceClass = class {
       } else {
         try {
           const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq, log_info })
-          log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
+          log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
         } catch (error) {
-          log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
+          log.error(this.log_prefix, '[onAnalysisComplete]', log_info, '[CloudFileService.requestMoveToObject]', error)
         }
         this.moveOriginFileToArchive(directory_info.media_origin, operation_info.content_id, log_info)
       }
@@ -179,7 +179,7 @@ const SyncServiceClass = class {
       this.sendAnalysisCompleteMessage(operation_info)
     }
 
-    log.debug(this.log_prefix, log_info, `end`)
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `end`)
   }
 
   onOperationVideoFileCopyCompeteByRequest = async (response_data) => {
@@ -209,25 +209,26 @@ const SyncServiceClass = class {
       async (origin_directory, content_id) => {
         try {
           const request_result = await CloudFileService.requestMoveToArchive(origin_directory, true, content_id)
-          log.debug(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, request_result)
+          log.debug(this.log_prefix, '[moveOriginFileToArchive]', log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, request_result)
         } catch (error) {
-          log.error(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, error)
+          log.error(this.log_prefix, '[moveOriginFileToArchive]', log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, error)
         }
       }
-    )(origin_directory, content_id, log_info)
+    )(origin_directory, content_id, '[moveOriginFileToArchive]', log_info)
   }
 
   sendAnalysisCompleteMessage = (operation_info) => {
     if (!operation_info || !operation_info.user_id) return
+    log.error(this.log_prefix, '[sendAnalysisCompleteMessage]', operation_info.toJSON());
     (
-      async () => {
+      async (operation_info) => {
         try {
           await this.sendMessageToSocket(operation_info)
         } catch (error) {
           log.error(this.log_prefix, '[sendAnalysisCompleteMessage]', error)
         }
       }
-    )()
+    )(operation_info)
   }
 
   sendMessageToSocket = async (operation_info) => {

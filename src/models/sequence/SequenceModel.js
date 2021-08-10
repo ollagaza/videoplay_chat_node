@@ -178,4 +178,9 @@ export default class SequenceModel {
       }
     }
   }
+
+  getOperationSeq = () => {
+    if (this.operation_seq_list && this.operation_seq_list.length > 0) return this.operation_seq_list[0]
+    return 0
+  }
 }

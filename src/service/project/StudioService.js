@@ -16,6 +16,7 @@ import OperationFileService from '../operation/OperationFileService'
 import TranscoderSyncService from '../sync/TranscoderSyncService'
 import GroupSocketService from "../socket/GroupSocketService"
 import AdminSocketService from "../socket/AdminSocketService"
+import OperationModel from '../../database/mysql/operation/OperationModel'
 
 const StudioServiceClass = class {
   constructor () {
@@ -158,59 +159,74 @@ const StudioServiceClass = class {
       extra_data.operation_name = operation_info.operation_name
     }
     if (ServiceConfig.isVacs()) {
-      if (!await this.requestMakeProject(video_project_info, extra_data)) {
-        throw new StdObject(903, '동영상 제작요청에 실패하였습니다.', 400)
-      }
+      this.requestMakeProject(video_project_info, extra_data)
     } else {
-      await this.requestDownloadVideoFiles(group_member_info, video_project_info, extra_data)
+      this.requestDownloadVideoFiles(group_member_info, video_project_info, extra_data)
     }
     const update_result = await VideoProjectModel.updateRequestStatus(project_seq, 'R')
     return update_result && update_result._id && update_result._id > 0
   }
 
-  requestDownloadVideoFiles = async (group_member_info, video_project_info, extra_data = null) => {
-    const media_root = ServiceConfig.get('media_root')
-    const operation_origin_path = video_project_info.project_path + '/' + this.DOWNLOAD_SUFFIX
-    const download_directory = media_root + operation_origin_path
-    if (!(await Util.fileExists(download_directory))) {
-      await Util.createDirectory(download_directory)
-    }
-
-    const group_path = `${group_member_info.media_path}/operation/`
-    const group_root_directory = media_root + group_path
-
-    log.debug(this.log_prefix, '[requestDownloadVideoFiles]', `group_path: ${group_path}, ${group_root_directory}`)
-    const sequence_list = video_project_info.sequence_list
-    const download_file_info_list = []
-    for (let i = 0; i < sequence_list.length; i++) {
-      const sequence_model = new SequenceModel().init(sequence_list[i])
-      if (sequence_model.type === Constants.VIDEO) {
-        const video_name = sequence_model.getVideoName()
-        log.debug(this.log_prefix, '[requestDownloadVideoFiles]', `video_name: ${video_name}`)
-        const content_directory = Util.getDirectoryName(video_name)
-        const video_file_name = Util.getFileName(video_name)
-        log.debug(this.log_prefix, '[requestDownloadVideoFiles]', `video_name: ${video_name}, content_directory: ${content_directory}, directory: ${download_directory + content_directory}`)
-        download_file_info_list.push(
-          {
-            'origin_file_name': video_name,
-            'remote_file_name': video_file_name,
+  requestDownloadVideoFiles = (group_member_info, video_project_info, extra_data = null) => {
+    (
+      async () => {
+        const project_seq = video_project_info._id
+        try {
+          const media_root = ServiceConfig.get('media_root')
+          const operation_origin_path = video_project_info.project_path + '/' + this.DOWNLOAD_SUFFIX
+          const download_directory = media_root + operation_origin_path
+          if (!(await Util.fileExists(download_directory))) {
+            await Util.createDirectory(download_directory)
           }
-        )
+
+          log.debug(this.log_prefix, '[requestDownloadVideoFiles]', project_seq)
+          const sequence_list = video_project_info.sequence_list
+          const download_file_info_list = []
+          const operation_model = new OperationModel(DBMySQL)
+          for (let i = 0; i < sequence_list.length; i++) {
+            const sequence_model = new SequenceModel().init(sequence_list[i])
+            if (sequence_model.type === Constants.VIDEO) {
+              const operation_seq = sequence_model.getOperationSeq()
+              const operation_info = await operation_model.getOperationInfo(operation_seq, true)
+              // log.debug(this.log_prefix, operation_info.toJ)
+              const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+              const video_file_name = operation_info.media_info.video_file_name
+              let origin_file_name
+              if (operation_info.origin_seq) {
+                origin_file_name = directory_info.media_video_origin + video_file_name
+              } else {
+                origin_file_name = directory_info.media_video + video_file_name
+              }
+              // const video_name = sequence_model.getVideoName()
+              // log.debug(this.log_prefix, '[requestDownloadVideoFiles]', `video_name: ${video_name}`)
+              // const content_directory = Util.getDirectoryName(video_name)
+              // const video_file_name = Util.getFileName(video_name)
+              log.debug(this.log_prefix, '[requestDownloadVideoFiles]', `origin_file_name: ${origin_file_name}, download_file_name: ${video_file_name}, directory: ${download_directory + video_file_name}`)
+              download_file_info_list.push(
+                {
+                  'origin_file_name': origin_file_name,
+                  'remote_file_name': video_file_name,
+                }
+              )
+            }
+          }
+          log.debug(this.log_prefix, '[requestDownloadVideoFiles]', project_seq, 'download_file_info_list', download_file_info_list)
+          const response_url = '/api/storage/studio/download/complete'
+          const response_data = {
+            project_seq: video_project_info._id,
+            extra_data
+          }
+          if (download_file_info_list.length > 0) {
+            await CloudFileService.requestDownloadObjectByList(operation_origin_path, '', download_file_info_list, false, video_project_info.content_id, response_url, response_data)
+          } else {
+            response_data.is_success = true
+            await this.onDownloadComplete(response_data)
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[requestDownloadVideoFiles]', project_seq, error)
+        }
       }
-    }
-    log.debug(this.log_prefix, '[requestDownloadVideoFiles]', 'download_file_info_list', download_file_info_list)
-    // requestCopyToLocalByList = async (file_path, file_list = null, is_folder = true, response_url = null, method = 'POST', response_data = null)
-    const response_url = '/api/storage/studio/download/complete'
-    const response_data = {
-      project_seq: video_project_info._id,
-      extra_data
-    }
-    if (download_file_info_list.length > 0) {
-      await CloudFileService.requestDownloadObjectByList(operation_origin_path, group_path, download_file_info_list, false, video_project_info.content_id, response_url, response_data)
-    } else {
-      response_data.is_success = true
-      await this.onDownloadComplete(response_data)
-    }
+    )()
   }
 
   onDownloadComplete = async (response_data) => {
@@ -230,126 +246,130 @@ const StudioServiceClass = class {
     return true
   }
 
-  requestMakeProject = async (video_project_info, extra_data = null) => {
-    try {
-      if (!video_project_info || !video_project_info._id) {
-        log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info is empty', video_project_info)
-        return false
-      }
-      const project_path = video_project_info.project_path + '/'
-      const directory = ServiceConfig.get('media_root') + project_path
-      const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
-      const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
-      let editor_server_group_video_directory = null
-      if (ServiceConfig.isVacs()) {
-        const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
-        editor_server_group_video_directory = ServiceConfig.get('auto_editor_file_root') + group_info.media_path + '/operation/'
-      }
-      const temp_directory = directory + this.TEMP_SUFFIX
-      await Util.deleteDirectory(temp_directory)
-      await Util.createDirectory(temp_directory)
-      log.debug(this.log_prefix, '[requestMakeProject]', `directory: ${directory}, editor_server_directory: ${editor_server_directory}, editor_server_download_directory: ${editor_server_download_directory}`)
-
-      const scale = 1
-      const sequence_list = video_project_info.sequence_list
-      const sequence_model_list = []
-      const options = {
-        file_path: directory,
-        editor_server_directory: editor_server_directory,
-        editor_server_download_directory: editor_server_download_directory,
-        editor_server_group_video_directory: editor_server_group_video_directory,
-        temp_suffix: this.TEMP_SUFFIX,
-        is_vacs: ServiceConfig.isVacs()
-      }
-      for (let i = 0; i < sequence_list.length; i++) {
-        const sequence_model = new SequenceModel().init(sequence_list[i])
-        if (sequence_model.type) {
-          sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
-        }
-      }
-      const subtitle_sequence_list = video_project_info.subtitle_list
-      const subtitle_sequence_model_list = []
-      for (let i = 0; i < subtitle_sequence_list.length; i++) {
-        const sequence_model = new SequenceModel().init(subtitle_sequence_list[i])
-        if (sequence_model.type) {
-          subtitle_sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
-        }
-      }
-
-      const video_xml_json = {
-        'VideoInfo': {
-          'MediaInfo': {
-            'ContentId': video_project_info.content_id,
-            'Width': 1920 * scale,
-            'Height': 1080 * scale,
-          },
-          'SequenceList': {
-            'Sequence': sequence_model_list
-          },
-          'SubtitleList': {
-            'Sequence': subtitle_sequence_model_list
-          }
-        }
-      }
-      const file_name = 'video_project.xml'
-      await Util.writeXmlFile(directory, file_name, video_xml_json)
-
-      const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
-      const member_info = await MemberService.getMemberInfo(DBMySQL, video_project_info.member_seq)
-
-      const query_data = {
-        project_seq: video_project_info._id,
-        'ContentID': video_project_info.content_id,
-        project_name: video_project_info.project_name,
-        group_seq: video_project_info.group_seq,
-        group_name: group_info.group_name,
-        member_seq: video_project_info.member_seq,
-        user_name: video_project_info.user_name,
-        user_id: member_info.user_id,
-        create_date: Util.dateFormat(video_project_info.created_date),
-        'OutputPath': editor_server_directory,
-        'XmlFilePath': editor_server_directory + file_name,
-        host_data: {
-          host: ServiceConfig.get('api_server_domain'),
-          port: ServiceConfig.get('api_server_port'),
-          path: '/api/v1/project/video/make/process'
-        },
-        extra_data
-      }
-
-      const request_options = {
-        hostname: ServiceConfig.get('auto_editor_server_domain'),
-        port: ServiceConfig.get('auto_editor_server_port'),
-        path: ServiceConfig.get('auto_editor_merge_api'),
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      }
-
-      const api_url = 'http://' + ServiceConfig.get('auto_editor_server_domain') + ':' + ServiceConfig.get('auto_editor_server_port') + ServiceConfig.get('auto_editor_merge_api')
-      log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url, query_data)
-
-      let api_request_result = null
-      let is_request_success = false
-      try {
-        api_request_result = await Util.httpRequest(request_options, JSON.stringify(query_data), false)
+  requestMakeProject = (video_project_info, extra_data = null) => {
+    (
+      async () => {
         try {
-          api_request_result = JSON.parse(api_request_result)
-          is_request_success = api_request_result && api_request_result.error === 0
-          log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_request_success, api_url, api_request_result)
+          if (!video_project_info || !video_project_info._id) {
+            log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info is empty', video_project_info)
+            return false
+          }
+          const project_path = video_project_info.project_path + '/'
+          const directory = ServiceConfig.get('media_root') + project_path
+          const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
+          const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
+          let editor_server_group_video_directory = null
+          if (ServiceConfig.isVacs()) {
+            const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
+            editor_server_group_video_directory = ServiceConfig.get('auto_editor_file_root') + group_info.media_path + '/operation/'
+          }
+          const temp_directory = directory + this.TEMP_SUFFIX
+          await Util.deleteDirectory(temp_directory)
+          await Util.createDirectory(temp_directory)
+          log.debug(this.log_prefix, '[requestMakeProject]', `directory: ${directory}, editor_server_directory: ${editor_server_directory}, editor_server_download_directory: ${editor_server_download_directory}`)
+
+          const scale = 1
+          const sequence_list = video_project_info.sequence_list
+          const sequence_model_list = []
+          const options = {
+            file_path: directory,
+            editor_server_directory: editor_server_directory,
+            editor_server_download_directory: editor_server_download_directory,
+            editor_server_group_video_directory: editor_server_group_video_directory,
+            temp_suffix: this.TEMP_SUFFIX,
+            is_vacs: ServiceConfig.isVacs()
+          }
+          for (let i = 0; i < sequence_list.length; i++) {
+            const sequence_model = new SequenceModel().init(sequence_list[i])
+            if (sequence_model.type) {
+              sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
+            }
+          }
+          const subtitle_sequence_list = video_project_info.subtitle_list
+          const subtitle_sequence_model_list = []
+          for (let i = 0; i < subtitle_sequence_list.length; i++) {
+            const sequence_model = new SequenceModel().init(subtitle_sequence_list[i])
+            if (sequence_model.type) {
+              subtitle_sequence_model_list.push(await sequence_model.getXmlJson(i, scale, options))
+            }
+          }
+
+          const video_xml_json = {
+            'VideoInfo': {
+              'MediaInfo': {
+                'ContentId': video_project_info.content_id,
+                'Width': 1920 * scale,
+                'Height': 1080 * scale,
+              },
+              'SequenceList': {
+                'Sequence': sequence_model_list
+              },
+              'SubtitleList': {
+                'Sequence': subtitle_sequence_model_list
+              }
+            }
+          }
+          const file_name = 'video_project.xml'
+          await Util.writeXmlFile(directory, file_name, video_xml_json)
+
+          const group_info = await GroupService.getGroupInfo(DBMySQL, video_project_info.group_seq)
+          const member_info = await MemberService.getMemberInfo(DBMySQL, video_project_info.member_seq)
+
+          const query_data = {
+            project_seq: video_project_info._id,
+            ContentID: video_project_info.content_id,
+            project_name: video_project_info.project_name,
+            group_seq: video_project_info.group_seq,
+            group_name: group_info.group_name,
+            member_seq: video_project_info.member_seq,
+            user_name: video_project_info.user_name,
+            user_id: member_info.user_id,
+            create_date: Util.dateFormat(video_project_info.created_date),
+            OutputPath: editor_server_directory,
+            XmlFilePath: editor_server_directory + file_name,
+            host_data: {
+              host: ServiceConfig.get('api_server_domain'),
+              port: ServiceConfig.get('api_server_port'),
+              path: '/api/v1/project/video/make/process'
+            },
+            extra_data
+          }
+
+          const request_options = {
+            hostname: ServiceConfig.get('auto_editor_server_domain'),
+            port: ServiceConfig.get('auto_editor_server_port'),
+            path: ServiceConfig.get('auto_editor_merge_api'),
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
+
+          const api_url = 'http://' + ServiceConfig.get('auto_editor_server_domain') + ':' + ServiceConfig.get('auto_editor_server_port') + ServiceConfig.get('auto_editor_merge_api')
+          log.debug(this.log_prefix, '[requestMakeProject]', 'request - start', api_url, query_data)
+
+          let api_request_result = null
+          let is_request_success = false
+          try {
+            api_request_result = await Util.httpRequest(request_options, JSON.stringify(query_data), false)
+            try {
+              api_request_result = JSON.parse(api_request_result)
+              is_request_success = api_request_result && api_request_result.error === 0
+              log.debug(this.log_prefix, '[requestMakeProject]', 'request - result', is_request_success, api_url, api_request_result)
+            } catch (error) {
+              is_request_success = false
+              log.error(this.log_prefix, '[requestMakeProject]', 'request error', api_request_result)
+            }
+          } catch (error) {
+            log.error(this.log_prefix, '[requestMakeProject]', 'request error', error)
+          }
+          return is_request_success
         } catch (error) {
-          is_request_success = false
-          log.error(this.log_prefix, '[requestMakeProject]', 'request error', api_request_result)
+          log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info', video_project_info)
+          return false
         }
-      } catch (error) {
-        log.error(this.log_prefix, '[requestMakeProject]', 'request error', error)
       }
-      return is_request_success
-    } catch (error) {
-      log.error(this.log_prefix, '[requestMakeProject]', 'video_project_info', video_project_info)
-      return false
-    }
+    )()
   }
 
   updateMakeProcess = async (request) => {
@@ -470,94 +490,100 @@ const StudioServiceClass = class {
     return update_result
   }
 
-  onMakeComplete = async (video_project, content_id, process_info, is_admin_page) => {
-    let update_result = false
-    log.debug('project complete')
-    if (Util.isEmpty(process_info.video_file_name) || Util.isEmpty(process_info.smil_file_name)) {
-      throw new StdObject(931, '결과파일 이름 누락', 400)
-    }
-    const project_seq = video_project._id
-    const project_path = video_project.project_path + '/'
-    const video_directory = ServiceConfig.get('media_root') + project_path
-    const video_file_path = video_directory + process_info.video_file_name
-    const extra_data = process_info.extra_data
-    const operation_seq = extra_data ? Util.parseInt(extra_data.operation_seq, 0) : 0
-    const export_to_drive = extra_data && extra_data.export_to_drive === true && operation_seq !== 0
+  onMakeComplete = (video_project, content_id, process_info, is_admin_page) => {
+    const project_seq = video_project._id;
+    (
+      async () => {
+        try {
+          log.debug(this.log_prefix, '[onMakeComplete]', 'project complete', project_seq)
+          let update_result = false
+          if (Util.isEmpty(process_info.video_file_name) || Util.isEmpty(process_info.smil_file_name)) {
+            throw new StdObject(931, '결과파일 이름 누락', 400)
+          }
+          const project_path = video_project.project_path + '/'
+          const video_directory = ServiceConfig.get('media_root') + project_path
+          const video_file_path = video_directory + process_info.video_file_name
+          const extra_data = process_info.extra_data
+          const operation_seq = extra_data ? Util.parseInt(extra_data.operation_seq, 0) : 0
+          const export_to_drive = extra_data && extra_data.export_to_drive === true && operation_seq !== 0
 
-    if (!(await Util.fileExists(video_file_path))) {
-      await VideoProjectModel.updateRequestStatus(project_seq, 'E', 100)
-      throw new StdObject(932, '동영상 파일이 없습니다.', 400)
-    }
-    video_project.video_file_name = process_info.video_file_name
+          if (!(await Util.fileExists(video_file_path))) {
+            await VideoProjectModel.updateRequestStatus(project_seq, 'E', 100)
+            throw new StdObject(932, '동영상 파일이 없습니다.', 400)
+          }
+          video_project.video_file_name = process_info.video_file_name
 
-    const video_file_size = await Util.getFileSize(video_file_path)
-    if (export_to_drive) {
-      const operation_info = (await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq, false)).operation_info
-      const operation_origin_path = OperationService.getOperationDirectoryInfo(operation_info).origin
-      const video_file_name = 'Trans_studio.mp4'
-      await this.exportVideoLocal(video_project, operation_info, operation_origin_path, video_file_name)
-    } else {
-      if (ServiceConfig.isVacs() === false) {
-        await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name)
+          const video_file_size = await Util.getFileSize(video_file_path)
+          if (export_to_drive) {
+            const operation_info = (await OperationService.getOperationInfoNoAuth(DBMySQL, operation_seq, false)).operation_info
+            const operation_origin_path = OperationService.getOperationDirectoryInfo(operation_info).origin
+            const video_file_name = 'Trans_studio.mp4'
+            await this.exportVideoLocal(video_project, operation_info, operation_origin_path, video_file_name)
+          } else {
+            if (ServiceConfig.isVacs() === false) {
+              await NaverObjectStorageService.moveFile(video_file_path, video_project.project_path, process_info.video_file_name)
+            }
+          }
+
+          await Util.deleteFile(video_directory + process_info.smil_file_name)
+          await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
+          await Util.deleteFile(video_directory + process_info.video_file_name + '_audio.flt')
+          await Util.deleteFile(video_directory + 'video_project.xml')
+          await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
+          await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
+
+          let request_status = 'Y'
+          if (export_to_drive) {
+            await Util.deleteFile(video_directory + process_info.video_file_name)
+            process_info.download_url = null
+            process_info.stream_url = null
+            process_info.total_size = 0
+            process_info.video_file_size = 0
+            request_status = 'N'
+          } else {
+            const directory_file_size = await Util.getDirectoryFileSize(video_directory)
+            if (ServiceConfig.isVacs()) {
+              process_info.download_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
+              process_info.stream_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
+              process_info.total_size = directory_file_size
+            } else {
+              process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name
+              process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8'
+              process_info.total_size = directory_file_size + video_file_size
+            }
+            process_info.video_file_size = video_file_size
+          }
+
+          const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, request_status, 100, process_info)
+          if (result && result.ok === 1) {
+            update_result = true
+          } else {
+            log.error(this.log_prefix, '[updateMakeProcess]', 'update final', project_seq, process_info, result)
+          }
+
+          if (update_result) {
+            const message_info = {}
+            if (!export_to_drive) {
+              message_info.message = `'${video_project.project_name}'비디오 제작이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
+            }
+            const extra_data = {
+              project_seq: video_project._id,
+              reload_studio_page: true
+            }
+            if (is_admin_page) {
+              await AdminSocketService.onGeneralAdminNotice('studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+            } else {
+              await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
+            }
+            if (ServiceConfig.isVacs()) {
+              VacsService.updateStorageInfo()
+            }
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[updateMakeProcess]', project_seq, process_info, error)
+        }
       }
-    }
-
-    await Util.deleteFile(video_directory + process_info.smil_file_name)
-    await Util.deleteFile(video_directory + process_info.video_file_name + '.flt')
-    await Util.deleteFile(video_directory + process_info.video_file_name + '_audio.flt')
-    await Util.deleteFile(video_directory + 'video_project.xml')
-    await Util.deleteDirectory(video_directory + this.TEMP_SUFFIX)
-    await Util.deleteDirectory(video_directory + this.DOWNLOAD_SUFFIX)
-
-    let request_status = 'Y'
-    if (export_to_drive) {
-      await Util.deleteFile(video_directory + process_info.video_file_name)
-      process_info.download_url = null
-      process_info.stream_url = null
-      process_info.total_size = 0
-      process_info.video_file_size = 0
-      request_status = 'N'
-    } else {
-      const directory_file_size = await Util.getDirectoryFileSize(video_directory)
-      if (ServiceConfig.isVacs()) {
-        process_info.download_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
-        process_info.stream_url = ServiceConfig.get('static_storage_prefix') + project_path + process_info.video_file_name
-        process_info.total_size = directory_file_size
-      } else {
-        process_info.download_url = ServiceConfig.get('static_cloud_prefix') + project_path + process_info.video_file_name
-        process_info.stream_url = ServiceConfig.get('hls_streaming_url') + project_path + process_info.video_file_name + '/master.m3u8'
-        process_info.total_size = directory_file_size + video_file_size
-      }
-      process_info.video_file_size = video_file_size
-    }
-
-    const result = await VideoProjectModel.updateRequestStatusByContentId(content_id, request_status, 100, process_info)
-    if (result && result.ok === 1) {
-      update_result = true
-    } else {
-      log.error(this.log_prefix, '[updateMakeProcess]', 'update final', process_info, result)
-    }
-
-    if (update_result) {
-      const message_info = {}
-      if (!export_to_drive) {
-        message_info.message = `'${video_project.project_name}'비디오 제작이 완료되었습니다.<br/>결과를 확인하려면 클릭하세요.`
-      }
-      const extra_data = {
-        project_seq: video_project._id,
-        reload_studio_page: true
-      }
-      if (is_admin_page) {
-        await AdminSocketService.onGeneralAdminNotice('studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
-      } else {
-        await GroupSocketService.onGeneralGroupNotice(video_project.group_seq, 'studioInfoChange', 'moveVideoEditor', 'videoMakeComplete', message_info, extra_data)
-      }
-      if (ServiceConfig.isVacs()) {
-        VacsService.updateStorageInfo()
-      }
-    }
-
-    return update_result
+    )()
   }
 
   migrationGroupSeq = async (member_seq, group_seq) => {
