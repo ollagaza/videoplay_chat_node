@@ -99,9 +99,8 @@ const OperationDataServiceClass = class {
       operation_data_info.is_open_video = modify_operation_data.is_open_video ? 1 : 0
     }
 
-    const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
     if (operation_info.mode !== OperationService.MODE_FILE && operation_data_info.thumbnail) {
-      operation_data_info.thumbnail = operation_data_info.thumbnail.replace(replace_regex, operation_info.content_id)
+      operation_data_info.thumbnail = operation_data_info.thumbnail.replace(operation_info.origin_media_path, operation_info.media_path)
     }
 
     await this.setOperationDataInfo(operation_data_info, operation_info)
