@@ -1157,7 +1157,7 @@ const uploadByRequest = async (req, res, key, upload_directory, new_file_name = 
     const uploader = multer({
       storage,
       limits: {
-        fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
+        // fileSize: 20 * 1024 * 1024 * 1024, ///< 20GB 제한
       }
     }).single(key)
     req.upload_directory = upload_directory
