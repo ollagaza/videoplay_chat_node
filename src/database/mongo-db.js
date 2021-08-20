@@ -59,9 +59,9 @@ const defaultMongoCollections = async () => {
 
     // 임시로 하나만 작성해서 디폴트로 올림.
     await DynamicService.setJsonTemplateData()
-
-    await initSystemData()
   }
+
+  await initSystemData()
 }
 
 export default {
