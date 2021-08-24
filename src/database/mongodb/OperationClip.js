@@ -89,6 +89,7 @@ operation_clip_schema.statics.updateOperationClip = function (clip_id, clip_info
   if (clip_info.file_name) update.file_name = clip_info.file_name
   if (clip_info.file_seq) update.file_seq = clip_info.file_seq
   if (clip_info.full_path) update.full_path = clip_info.full_path
+  if (clip_info.thumbnail_url) update.thumbnail_url = clip_info.thumbnail_url
   if (tag_list) {
     update.tag_list = tag_list
   }
