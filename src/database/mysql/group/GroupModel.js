@@ -351,7 +351,7 @@ export default class GroupModel extends MySQLModel {
   }
 
   getGroupInfoList = async (paging, search_option = null, search_keyword = null, order_field = null, order_type = null) => {
-    const select_fields = ['group_info.seq', 'group_info.group_name', 'mem.user_name as group_admin', 'group_info.reg_date', 'group_info.member_count', 'group_info.status as group_status',
+    const select_fields = ['group_info.seq', 'group_info.group_name', 'mem.user_name as group_admin_name', 'mem.user_id as group_admin_id', 'group_info.reg_date', 'group_info.member_count', 'group_info.status as group_status',
       this.database.raw('sum(g_mem.vid_cnt) as video_count'), this.database.raw('sum(0) as image_count'),
       this.database.raw('sum(0) as project_count'), this.database.raw('sum(g_mem.board_cnt) as board_count')
     ]
