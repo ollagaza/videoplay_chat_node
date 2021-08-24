@@ -1722,6 +1722,27 @@ const GroupServiceClass = class {
     const group_member_model = this.getGroupMemberModel(database)
     return await group_member_model.getGroupMemberGradeCount(group_seq, grade)
   }
+
+  getGroupInfoList = async (database, req) => {
+    const request_body = req.query ? req.query : {}
+    const cur_page = request_body.cur_page ? request_body.cur_page : null
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const order_field = request_body.order_id ? request_body.order_id : null
+    const order_type = request_body.order_type ? request_body.order_type : null
+    const search_option = request_body.search_option ? request_body.search_option : null
+    const search_keyword = request_body.search_keyword ? request_body.search_keyword : null
+
+    const paging = {}
+    paging.cur_page = cur_page ? cur_page : 1
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+
+    paging.no_paging = request_body.no_paging ? request_body.no_paging : 'n'
+    paging.limit = request_body.limit ? request_body.limit : null
+
+    const group_model = this.getGroupModel(database)
+    return group_model.getGroupInfoList(paging, search_option, search_keyword, order_field, order_type)
+  }
 }
 
 const group_service = new GroupServiceClass()
