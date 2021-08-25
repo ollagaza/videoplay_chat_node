@@ -225,13 +225,27 @@ export default class GroupChannelHomeModel extends MySQLModel {
     return this.findOne(this.database.raw('date_format(regist_date, \'%y%m%d\') = date_format(now(), \'%y%m%d\')'))
   }
 
-  getOperationCount = async (is_all = true) => {
-    const oQuery = this.database.select(['group_info.seq as group_seq'
-      , this.database.raw('case when op.mode = \'operation\' then count(op.seq) else 0 end as video_count')
-      , this.database.raw('case when op.mode = \'file\' then count(op.seq) else 0 end as file_count')])
+  getOperationVideoCount = async (is_all = true) => {
+    const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op.seq) as count')])
       .from('group_info')
       .innerJoin('operation as op', (query) => {
         query.on('op.group_seq', 'group_info.seq')
+        query.andOnVal('op.mode', 'operation')
+        query.andOnVal('op.status', 'Y')
+      })
+      .where('group_info.group_type', 'G')
+    if (is_all) {
+      oQuery.andWhere(this.database.raw('date_format(date_sub(op.reg_date, interval 7 day), \'%y%m%d\') <= date_format(now(), \'%y%m%d\')'))
+    }
+    oQuery.groupBy('group_info.seq')
+    return oQuery
+  }
+  getOperationFileCount = async (is_all = true) => {
+    const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op.seq) as count')])
+      .from('group_info')
+      .innerJoin('operation as op', (query) => {
+        query.on('op.group_seq', 'group_info.seq')
+        query.andOnVal('op.mode', 'file')
         query.andOnVal('op.status', 'Y')
       })
       .where('group_info.group_type', 'G')
