@@ -227,8 +227,8 @@ export default class GroupChannelHomeModel extends MySQLModel {
 
   getOperationCount = async (is_all = true) => {
     const oQuery = this.database.select(['group_info.seq as group_seq'
-      , this.database.raw('case when op.mode = \'operation\' then count(op.seq) end as video_count')
-      , this.database.raw('case when op.mode = \'file\' then count(op.seq) end as file_count')])
+      , this.database.raw('case when op.mode = \'operation\' then count(op.seq) else 0 end as video_count')
+      , this.database.raw('case when op.mode = \'file\' then count(op.seq) else 0 end as file_count')])
       .from('group_info')
       .innerJoin('operation as op', (query) => {
         query.on('op.group_seq', 'group_info.seq')
