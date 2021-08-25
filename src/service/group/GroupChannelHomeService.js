@@ -12,6 +12,7 @@ import GroupChannelHomeModel from "../../database/mysql/group/GroupChannelHomeMo
 import {OperationClipModel} from '../../database/mongodb/OperationClip'
 import ServiceConfig from "../service-config";
 import GroupService from "./GroupService";
+import {VideoProjectModel} from "../../database/mongodb/VideoProject";
 
 const GroupChannelHomeServiceClass = class {
   constructor() {
@@ -259,6 +260,7 @@ const GroupChannelHomeServiceClass = class {
     Object.keys(operation_anotation_count)
       .forEach((item) => {
         const data = _.find(group_counting, {group_seq: operation_anotation_count[item]._id})
+
         if (data) {
           data.total_count += operation_anotation_count[item].count
           data.video_anotation = operation_anotation_count[item].count
@@ -272,18 +274,38 @@ const GroupChannelHomeServiceClass = class {
           }
         }
       })
+    const project_count = await VideoProjectModel.getProjectGroupSeqCount()
+    Object.keys(project_count)
+      .forEach((item) => {
+        const data = _.find(group_counting, {group_seq: project_count[item]._id})
+
+        if (data) {
+          data.total_count += project_count[item].count
+          data.project_count = project_count[item].count
+        } else {
+          if (project_count[item]._id) {
+            group_counting.push({
+              group_seq: project_count[item]._id,
+              total_count: project_count[item].count,
+              project_count: project_count[item].count
+            })
+          }
+        }
+      })
     const operation_data_count = await model.getOperationCount()
     await Object.keys(operation_data_count)
       .forEach((item) => {
         const data = _.find(group_counting, {group_seq: operation_data_count[item].group_seq})
         if (data) {
           data.total_count += operation_data_count[item].count
-          data.video = operation_data_count[item].count
+          data.video = operation_data_count[item].video_count
+          data.file = operation_data_count[item].file_count
         } else {
           group_counting.push({
             group_seq: operation_data_count[item].group_seq,
             total_count: operation_data_count[item].count,
-            video: operation_data_count[item].count
+            video: operation_data_count[item].video_count,
+            file: operation_data_count[item].file_count
           })
         }
       })
@@ -337,6 +359,100 @@ const GroupChannelHomeServiceClass = class {
     }
   }
 
+  updateGroupCounts = async () => {
+    const model = this.getGroupChannelHomeModel()
+    const group_model = this.getGroupCountsModel()
+    const group_counts = []
+
+    const operation_anotation_count = await OperationClipModel.getGroupSeqCount()
+    Object.keys(operation_anotation_count)
+      .forEach((item) => {
+        const counts = _.find(group_counts, {group_seq: operation_anotation_count[item]._id})
+        if (counts) {
+          counts.anno_count = operation_anotation_count[item].count
+        } else {
+          if (operation_anotation_count[item]._id) {
+            group_counts.push({
+              group_seq: operation_anotation_count[item]._id,
+              anno_count: operation_anotation_count[item].count
+            })
+          }
+        }
+      })
+    const project_count = await VideoProjectModel.getProjectGroupSeqCount()
+    Object.keys(project_count)
+      .forEach((item) => {
+        const counts = _.find(group_counts, {group_seq: project_count[item]._id})
+        if (counts) {
+          counts.project_count = project_count[item].count
+        } else {
+          if (project_count[item]._id) {
+            group_counts.push({
+              group_seq: project_count[item]._id,
+              project_count: project_count[item].count
+            })
+          }
+        }
+      })
+    const operation_data_count = await model.getOperationCount(false)
+    await Object.keys(operation_data_count)
+      .forEach((item) => {
+        const counts = _.find(group_counts, {group_seq: operation_data_count[item]._id})
+        if (counts) {
+          counts.video_count = operation_data_count[item].video_count
+          counts.file_count = operation_data_count[item].file_count
+        } else {
+          group_counts.push({
+            group_seq: operation_data_count[item].group_seq,
+            video_count: operation_data_count[item].video_count,
+            file_count: operation_data_count[item].file_count
+          })
+        }
+      })
+    const operation_comment_count = await model.getOperationCommentCount(false)
+    await Object.keys(operation_comment_count)
+      .forEach((item) => {
+        const counts = _.find(group_counts, {group_seq: operation_comment_count[item]._id})
+        if (counts) {
+          counts.video_comment = operation_comment_count[item].count
+        } else {
+          group_counts.push({
+            group_seq: operation_comment_count[item].group_seq,
+            video_comment: operation_comment_count[item].count
+          })
+        }
+      })
+    const board_data_count = await model.getBoardCount(false)
+    await Object.keys(board_data_count)
+      .forEach((item) => {
+        const counts = _.find(group_counts, {group_seq: board_data_count[item]._id})
+        if (counts) {
+          counts.note_count = board_data_count[item].count
+        } else {
+          group_counting.push({
+            group_seq: board_data_count[item].group_seq,
+            note_count: board_data_count[item].count
+          })
+        }
+      })
+    const board_comment_count = await model.getBoardCommentCount(false)
+    await Object.keys(board_comment_count)
+      .forEach((item) => {
+        const counts = _.find(group_counts, {group_seq: board_comment_count[item]._id})
+        if (counts) {
+          counts.board_comment = board_comment_count[item].count
+        } else {
+          group_counts.push({
+            group_seq: board_comment_count[item].group_seq,
+            board_comment: board_comment_count[item].count
+          })
+        }
+      })
+    if (group_counts.length > 0) {
+      await group_model.updateGroupCounts(group_counts)
+    }
+  }
+
   GroupMemberDataCounting = async () => {
     const model = this.getGroupChannelHomeModel()
     const group_counting = []
@@ -357,7 +473,7 @@ const GroupChannelHomeServiceClass = class {
           }
         }
       })
-    const operation_data_count = await model.getOperationGroupMemberCount()
+    const operation_data_count = await model.getOperationGroupMemberCount('operation')
     await Object.keys(operation_data_count)
       .forEach((item) => {
         const data = _.find(group_counting, { group_seq: operation_data_count[item].group_seq, member_seq: operation_data_count[item].member_seq })
@@ -368,6 +484,20 @@ const GroupChannelHomeServiceClass = class {
             group_seq: operation_data_count[item].group_seq,
             member_seq: operation_data_count[item].member_seq,
             vid_cnt: operation_data_count[item].count
+          })
+        }
+      })
+    const operation_file_count = await model.getOperationGroupMemberCount('file')
+    await Object.keys(operation_file_count)
+      .forEach((item) => {
+        const data = _.find(group_counting, { group_seq: operation_file_count[item].group_seq, member_seq: operation_file_count[item].member_seq })
+        if (data) {
+          data.file_cnt = operation_file_count[item].count
+        } else {
+          group_counting.push({
+            group_seq: operation_file_count[item].group_seq,
+            member_seq: operation_file_count[item].member_seq,
+            file_cnt: operation_file_count[item].count
           })
         }
       })

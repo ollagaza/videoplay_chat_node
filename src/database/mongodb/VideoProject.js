@@ -168,6 +168,10 @@ video_project_schema.statics.updateUserInfo = function (member_seq, user_name, u
   }
   return this.updateMany({ member_seq: member_seq }, update, { 'multi': true })
 }
+video_project_schema.statics.getProjectGroupSeqCount = function () {
+  return this.aggregate().group({ _id: '$group_seq', 'count': { '$sum': 1 } })
+}
+
 video_project_schema.statics.getProjectTotalCount = function (search_keyword = null, search_option = null) {
   const filter = {}
   if (search_option && search_option.request_status) {

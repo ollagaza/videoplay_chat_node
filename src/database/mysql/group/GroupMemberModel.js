@@ -908,6 +908,8 @@ export default class GroupMemberModel extends MySQLModel {
     const update_params = {}
     if (update_column === 'vid') {
       update_params.vid_cnt = set_count;
+    } else if (update_column === 'file') {
+      update_params.file_cnt = set_count;
     } else if (update_column === 'anno') {
       update_params.anno_cnt = set_count;
     } else if (update_column === 'vid_comment') {

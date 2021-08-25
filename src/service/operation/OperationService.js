@@ -137,7 +137,7 @@ const OperationServiceClass = class {
       }
 
       if (group_member_info) {
-        GroupService.onChangeGroupMemberContentCount(group_member_info.group_seq, member_info.seq, 'vid', Constants.UP);
+        GroupService.onChangeGroupMemberContentCount(group_member_info.group_seq, member_info.seq, operation_info.mode === 'operation' ? 'vid' : 'file', Constants.UP);
       }
     }
 
@@ -336,7 +336,7 @@ const OperationServiceClass = class {
 
         result.success = true
         await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
-        GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, 'vid', Constants.UP, 1)
+        GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, operation_info.mode === 'operation' ? 'vid' : 'file', Constants.UP, 1)
       }
     } catch (e) {
       log.error(this.log_prefix, '[copyOperationOne]', origin_operation_seq, e, result)
@@ -1089,9 +1089,9 @@ const OperationServiceClass = class {
         const operation_info = await model.getOperation(where);
 
         if (is_restore) {
-          GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, 'vid', Constants.UP)
+          GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, operation_info.mode === 'operation' ? 'vid' : 'file', Constants.UP)
         } else {
-          GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, 'vid', Constants.DOWN)
+          GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, operation_info.mode === 'operation' ? 'vid' : 'file', Constants.DOWN)
         }
 
         if (is_restore && restore_folder_info && restore_folder_info.seq) {

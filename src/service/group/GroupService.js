@@ -31,6 +31,7 @@ import InstantMessageService from "../mypage/InstantMessageService";
 import striptags from "striptags";
 import GroupAlarmService from './GroupAlarmService'
 import MemberModel from '../../database/mysql/member/MemberModel';
+import {VideoProjectModel} from "../../database/mongodb/VideoProject";
 
 const GroupServiceClass = class {
   constructor () {
@@ -1740,8 +1741,10 @@ const GroupServiceClass = class {
     paging.no_paging = request_body.no_paging ? request_body.no_paging : 'n'
     paging.limit = request_body.limit ? request_body.limit : null
 
-    const group_model = this.getGroupModel(database)
-    return group_model.getGroupInfoList(paging, search_option, search_keyword, order_field, order_type)
+    const group_model = this.getGroupCountsModel(database)
+    const groupinfolist = await group_model.getGroupInfoList(paging, search_option, search_keyword, order_field, order_type)
+
+    return groupinfolist
   }
 }
 
