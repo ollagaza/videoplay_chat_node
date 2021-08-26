@@ -6,6 +6,7 @@ import SyncService from './SyncService'
 import OperationService from '../operation/OperationService'
 import OperationMediaService from '../operation/OperationMediaService'
 import ServiceErrorModel from '../../database/mysql/service-error-model'
+import Constants from '../../constants/constants'
 
 const TranscoderSyncServiceClass = class {
   constructor () {
@@ -18,11 +19,11 @@ const TranscoderSyncServiceClass = class {
 
   onTranscodingComplete = async (content_id, log_id, video_file_name, smil_file_name, request) => {
     if (Util.isEmpty(content_id) || Util.isEmpty(video_file_name) || Util.isEmpty(smil_file_name)) {
-      throw new StdObject(1, '잘못된 파라미터', 400, { log_id })
+      throw new StdObject(801, '잘못된 파라미터', 400, { log_id, content_id, video_file_name, smil_file_name })
     }
     const { operation_info } = await this.getOperationInfoByContentId(DBMySQL, content_id)
     if (!operation_info || operation_info.isEmpty()) {
-      throw new StdObject(2, '등록된 컨텐츠가 없습니다.', 400, { log_id })
+      throw new StdObject(802, '등록된 컨텐츠가 없습니다.', 400, { log_id, content_id, video_file_name, smil_file_name })
     }
     this.updateTranscodingComplete(operation_info, log_id, video_file_name, smil_file_name, request)
   }
@@ -30,10 +31,11 @@ const TranscoderSyncServiceClass = class {
   updateTranscodingComplete = (operation_info, log_id, video_file_name, smil_file_name, request) => {
     (
       async (operation_info, video_file_name, smil_file_name, request) => {
+        log.debug(this.log_prefix, '[onTranscodingComplete]', log_id, operation_info.seq, operation_info.content_id, video_file_name)
+        let is_error = false
         try {
-          log.debug(this.log_prefix, '[onTranscodingComplete]', log_id, operation_info.seq, operation_info.content_id, video_file_name)
           await OperationMediaService.updateTranscodingComplete(DBMySQL, log_id, operation_info, video_file_name, smil_file_name)
-          await SyncService.onAnalysisComplete(operation_info, log_id)
+          await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'T')
         } catch (error) {
           log.error(this.log_prefix, '[onTranscodingComplete]', log_id, error)
           let error_str = null
@@ -47,6 +49,24 @@ const TranscoderSyncServiceClass = class {
             error_str = error.toString()
           }
           await this.onTranscodingError(operation_info.content_id, error_str, request)
+          is_error = true
+        }
+        if (!is_error) {
+          try {
+            await SyncService.onAnalysisComplete(operation_info, log_id)
+          } catch (error) {
+            const encoding_info = {
+              is_error: true,
+              able_re_encoding: false,
+              message: '동영상 인코딩 후 정상적으로 완료되지 않았습니다.',
+              transcoding: true,
+              is_trans_success: true,
+              video_file_list: [],
+              next: Constants.ENCODING_PROCESS_TRANSCODING_COMPLETE,
+              error
+            }
+            await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
+          }
         }
       }
     )(operation_info, video_file_name, smil_file_name, request)
@@ -54,7 +74,7 @@ const TranscoderSyncServiceClass = class {
 
   onTranscodingError = async (content_id, log_id, message, request) => {
     if (Util.isEmpty(content_id)) {
-      throw new StdObject(1, '잘못된 파라미터', 400, { log_id })
+      throw new StdObject(803, '잘못된 파라미터', 400, { log_id })
     }
     message = `[${log_id}] ${message}`
     const { operation_info } = await this.getOperationInfoByContentId(DBMySQL, content_id)
@@ -62,7 +82,17 @@ const TranscoderSyncServiceClass = class {
     if (operation_info.isEmpty()) {
       await service_error_model.createServiceError('trans', null, content_id, message, request)
     } else {
-      await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E')
+      const encoding_info = {
+        is_error: true,
+        able_re_encoding: false,
+        message: '동영상 인코딩이 정상적으로 완료되지 않았습니다.',
+        transcoding: false,
+        is_trans_success: false,
+        video_file_list: [],
+        next: Constants.ENCODING_PROCESS_REQUEST_TRANSCODING,
+        error: message
+      }
+      await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
       await service_error_model.createServiceError('trans', operation_info.seq, content_id, message, request)
     }
   }

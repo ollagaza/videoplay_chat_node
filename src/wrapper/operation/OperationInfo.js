@@ -8,7 +8,7 @@ export default class OperationInfo extends JsonWrapper {
     this.setKeys([
       'seq', 'list_no', 'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq', 'group_seq', 'member_seq', 'user_name'
       , 'patient_age', 'patient_sex', 'hour', 'minute', 'status', 'analysis_status', 'is_favorite'
-      , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress', 'has_link', 'mode', 'export_from_project'
+      , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress', 'has_link', 'mode', 'export_from_project', 'encoding_info'
       , 'total_file_size', 'total_file_count', 'clip_count', 'index2_file_count', 'origin_video_count', 'trans_video_count', 'modify_date'
     ])
 

@@ -581,6 +581,10 @@ const getMediaInfo = (media_path) => {
                   const frame_count = Math.max(getFloat(getXmlText(track.FrameCount)), getFloat(getXmlText(track.Frame_count)))
                   const sample_rate = Math.max(getFloat(getXmlText(track.SamplingRate)), getFloat(getXmlText(track.Sampling_rate)))
                   const bit_depth = Math.max(getFloat(getXmlText(track.BitDepth)), getFloat(getXmlText(track.Bit_depth)))
+                  const format = getXmlText(track.Format)
+                  const profile = getXmlText(track.Format_Profile)
+                  const level = getXmlText(track.Format_Level)
+                  const bit_rate = getFloat(getXmlText(track.BitRate))
                   if (track_type === 'general') {
                     media_result.file_size = file_size
                     media_result.format = getXmlText(track.Format)
@@ -592,16 +596,23 @@ const getMediaInfo = (media_path) => {
                     media_result.media_info.frame_count = frame_count
                     media_result.media_info.duration = duration
                     media_result.media_info.bit_depth = bit_depth
+                    media_result.media_info.bit_rate = bit_rate
+                    media_result.media_info.format = format
+                    media_result.media_info.profile = profile
+                    media_result.media_info.level = level
                     media_result.success = true
                     break
                   } else if (track_type === Constants.AUDIO) {
                     media_result.media_type = Constants.AUDIO
+                    media_result.media_info.format = format
+                    media_result.media_info.bit_rate = bit_rate
                     media_result.media_info.duration = duration
                     media_result.media_info.sample_rate = sample_rate
                     media_result.success = true
                     break
                   } else if (track_type === Constants.IMAGE) {
                     media_result.media_type = Constants.IMAGE
+                    media_result.media_info.format = format
                     media_result.media_info.width = width
                     media_result.media_info.height = height
                     media_result.success = true

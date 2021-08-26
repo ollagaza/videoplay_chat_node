@@ -537,4 +537,9 @@ routes.post('/:api_type/:api_key/operation/files/chart/pdf/:upload_id', Auth.isA
   res.json(output)
 }))
 
+routes.post('/:api_type/:api_key/operation/encoding/force', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const { operation_info } = await getBaseInfo(req, true, true, true)
+  await OperationService.encodingForce(operation_info)
+}))
+
 export default routes

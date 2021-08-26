@@ -178,11 +178,7 @@ const OperationDataServiceClass = class {
 
   setThumbnailAuto = async (operation_seq, thumbnail_path) => {
     const operation_data_model = this.getOperationDataModel()
-    const operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_seq)
-    if (!operation_data || operation_data.isEmpty()) {
-      return null
-    }
-    await operation_data_model.updateThumbnailImageNotExists(operation_data.seq, thumbnail_path)
+    await operation_data_model.updateThumbnailImageNotExists(operation_seq, thumbnail_path)
   }
 
   onUpdateComplete = async (operation_seq) => {
