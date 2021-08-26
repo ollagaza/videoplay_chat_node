@@ -112,7 +112,7 @@ const OperationDataServiceClass = class {
     }
 
     this.updateHashtag(operation_data_seq, operation_data_info.group_seq, hashtag)
-    await this.updateCount(operation_data_info.group_seq, operation_data_info)
+    await this.updateCount(operation_data_info.group_seq, operation_info, operation_data_info)
 
     return { operation_data_seq, origin_data_seq }
   }
@@ -202,31 +202,31 @@ const OperationDataServiceClass = class {
     await operation_data_model.updateOperationData(operation_seq, operation_data_info)
     // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
 
-    await this.updateCount(group_seq, operation_data)
+    await this.updateCount(group_seq, operation_info, operation_data)
   }
 
-  updateCount = async (group_seq, operation_data) => {
-    const group_count_field_name = ['video_count']
-    const content_count_field_name = [ContentCountService.VIDEO_COUNT]
-    if (operation_data.type === 'M') {
-      group_count_field_name.push('mentoring')
-      content_count_field_name.push(ContentCountService.MENTORING_COUNT)
-    } else if (operation_data.type === 'C') {
-      group_count_field_name.push('community')
-      content_count_field_name.push(ContentCountService.COMMUNITY_COUNT)
-    }
+  updateCount = async (group_seq, operation_info, operation_data) => {
+    const group_count_field_name = [operation_info.mode === OperationService.MODE_OPERATION ? 'video_count' : 'file_count']
+    // const content_count_field_name = [ContentCountService.VIDEO_COUNT]
+    // if (operation_data.type === 'M') {
+    //   group_count_field_name.push('mentoring')
+    //   content_count_field_name.push(ContentCountService.MENTORING_COUNT)
+    // } else if (operation_data.type === 'C') {
+    //   group_count_field_name.push('community')
+    //   content_count_field_name.push(ContentCountService.COMMUNITY_COUNT)
+    // }
     if (operation_data.is_open_video) {
       group_count_field_name.push('open_count')
     }
     await GroupService.UpdateGroupInfoAddCnt(null, group_seq, group_count_field_name)
 
-    if (operation_data.category_list) {
-      for (let i = 0; i < operation_data.category_list.length; i++) {
-        const category_code = operation_data.category_list[i]
-        await ContentCountService.addContentCount(null, category_code, group_seq, content_count_field_name)
-      }
-      await ContentCountService.updateAllCount(null, group_seq)
-    }
+    // if (operation_data.category_list) {
+    //   for (let i = 0; i < operation_data.category_list.length; i++) {
+    //     const category_code = operation_data.category_list[i]
+    //     await ContentCountService.addContentCount(null, category_code, group_seq, content_count_field_name)
+    //   }
+    //   await ContentCountService.updateAllCount(null, group_seq)
+    // }
   }
 
   setOperationDataInfo = async (operation_data_info, operation_info) => {

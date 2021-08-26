@@ -413,10 +413,12 @@ const GroupChannelHomeServiceClass = class {
         const counts = _.find(group_counts, {group_seq: operation_video_count[item].group_seq})
         if (counts) {
           counts.video_count = operation_video_count[item].count
+          counts.video_storage = operation_video_count[item].size
         } else {
           group_counts.push({
             group_seq: operation_video_count[item].group_seq,
-            video_count: operation_video_count[item].count
+            video_count: operation_video_count[item].count,
+            video_storage: operation_video_count[item].size
           })
         }
       })
@@ -426,10 +428,12 @@ const GroupChannelHomeServiceClass = class {
         const counts = _.find(group_counts, {group_seq: operation_file_count[item].group_seq})
         if (counts) {
           counts.file_count = operation_file_count[item].count
+          counts.file_storage = operation_file_count[item].size
         } else {
           group_counts.push({
             group_seq: operation_file_count[item].group_seq,
-            file_count: operation_file_count[item].count
+            file_count: operation_file_count[item].count,
+            file_storage: operation_file_count[item].size
           })
         }
       })

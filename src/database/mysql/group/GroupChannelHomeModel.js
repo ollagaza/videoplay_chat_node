@@ -226,12 +226,15 @@ export default class GroupChannelHomeModel extends MySQLModel {
   }
 
   getOperationVideoCount = async (is_all = true) => {
-    const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op.seq) as count')])
+    const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op.seq) as count'), this.database.raw('sum(storage.total_file_size) as size')])
       .from('group_info')
       .innerJoin('operation as op', (query) => {
         query.on('op.group_seq', 'group_info.seq')
         query.andOnVal('op.mode', 'operation')
         query.andOnVal('op.status', 'Y')
+      })
+      .innerJoin('operation_storage as storage', (query) => {
+        query.on('op.seq', 'storage.operation_seq')
       })
       .where('group_info.group_type', 'G')
     if (is_all) {
@@ -241,12 +244,15 @@ export default class GroupChannelHomeModel extends MySQLModel {
     return oQuery
   }
   getOperationFileCount = async (is_all = true) => {
-    const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op.seq) as count')])
+    const oQuery = this.database.select(['group_info.seq as group_seq', this.database.raw('count(op.seq) as count'), this.database.raw('sum(storage.total_file_size) as size')])
       .from('group_info')
       .innerJoin('operation as op', (query) => {
         query.on('op.group_seq', 'group_info.seq')
         query.andOnVal('op.mode', 'file')
         query.andOnVal('op.status', 'Y')
+      })
+      .innerJoin('operation_storage as storage', (query) => {
+        query.on('op.seq', 'storage.operation_seq')
       })
       .where('group_info.group_type', 'G')
     if (is_all) {

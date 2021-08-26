@@ -36,7 +36,8 @@ export default class GroupMemberModel extends MySQLModel {
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
-      'group_info.reg_date', 'group_info.member_count', 'group_member.status AS member_status', 'group_member.grade', 'group_info.channel_top_img_path', 'group_info.channel_top_img_path as channel_top_img_url'
+      'group_info.reg_date', 'group_info.member_count', 'group_member.status AS member_status', 'group_member.grade', 'group_info.channel_top_img_path', 'group_info.channel_top_img_path as channel_top_img_url',
+      'group_counts.*'
     ]
 
     this.group_invite_select = [
@@ -123,6 +124,7 @@ export default class GroupMemberModel extends MySQLModel {
       this.on("group_info.seq", "group_member.group_seq")
         .andOn(in_raw)
     })
+    query.innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
     query.where(filter)
     query.orderBy([{column: 'group_info.group_type', order: 'desc'}, { column: 'group_member.join_date', order: 'desc' }]);
 
