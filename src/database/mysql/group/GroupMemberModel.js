@@ -17,7 +17,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq', 'group_member.ban_reason',
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
-      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer',
+      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer', 'member.user_type',
       'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_cnt', 'group_member.board_comment_cnt', 'member.profile_image_path', 'group_member.ban_hide'
     ]
     this.member_group_select = [
