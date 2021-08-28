@@ -25,6 +25,7 @@ export default class OperationInfo extends JsonWrapper {
       if (data.is_analysis_complete != null) {
         this.is_analysis_complete = parseInt(data.is_analysis_complete) > 0
       }
+      if (data.encoding_info && typeof data.encoding_info === 'string') this.encoding_info = JSON.parse(data.encoding_info)
 
       if (this.reg_date) {
         this.reg_diff_hour = Util.hourDifference(this.reg_date, 'Y-m-d')

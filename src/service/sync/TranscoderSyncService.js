@@ -32,10 +32,10 @@ const TranscoderSyncServiceClass = class {
     (
       async (operation_info, video_file_name, smil_file_name, request) => {
         log.debug(this.log_prefix, '[onTranscodingComplete]', log_id, operation_info.seq, operation_info.content_id, video_file_name)
-        let is_error = false
         try {
           await OperationMediaService.updateTranscodingComplete(DBMySQL, log_id, operation_info, video_file_name, smil_file_name)
           await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'T')
+          this.onTranscodingSuccess(operation_info, log_id)
         } catch (error) {
           log.error(this.log_prefix, '[onTranscodingComplete]', log_id, error)
           let error_str = null
@@ -49,27 +49,30 @@ const TranscoderSyncServiceClass = class {
             error_str = error.toString()
           }
           await this.onTranscodingError(operation_info.content_id, error_str, request)
-          is_error = true
         }
-        if (!is_error) {
-          try {
-            await SyncService.onAnalysisComplete(operation_info, log_id)
-          } catch (error) {
-            const encoding_info = {
-              is_error: true,
-              able_re_encoding: false,
-              message: '동영상 인코딩 후 정상적으로 완료되지 않았습니다.',
-              transcoding: true,
-              is_trans_success: true,
-              video_file_list: [],
-              next: Constants.ENCODING_PROCESS_TRANSCODING_COMPLETE,
-              error
-            }
-            await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
-          }
-        }
+
       }
     )(operation_info, video_file_name, smil_file_name, request)
+  }
+
+  onTranscodingSuccess = (operation_info, log_id) => {
+    (
+      async () => {
+        try {
+          await SyncService.onAnalysisComplete(operation_info, log_id)
+        } catch (error) {
+          const encoding_info = {
+            is_error: true,
+            message: '동영상 인코딩 완료 후 처리가 정상적으로 완료되지 않았습니다.',
+            is_trans_success: true,
+            video_file_list: [],
+            next: Constants.ENCODING_PROCESS_TRANSCODING_COMPLETE,
+            error
+          }
+          await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
+        }
+      }
+    )()
   }
 
   onTranscodingError = async (content_id, log_id, message, request) => {
@@ -84,10 +87,9 @@ const TranscoderSyncServiceClass = class {
     } else {
       const encoding_info = {
         is_error: true,
-        able_re_encoding: false,
         message: '동영상 인코딩이 정상적으로 완료되지 않았습니다.',
-        transcoding: false,
         is_trans_success: false,
+        is_trans_coding_error: true,
         video_file_list: [],
         next: Constants.ENCODING_PROCESS_REQUEST_TRANSCODING,
         error: message

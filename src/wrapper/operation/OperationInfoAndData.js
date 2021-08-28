@@ -48,6 +48,7 @@ export default class OperationInfoAndData extends JsonWrapper {
       this.is_delete_by_admin = Util.isTrue(data.is_delete_by_admin)
       this.is_video_download = Util.isTrue(data.video_download)
       this.is_file_download = Util.isTrue(data.file_download)
+      if (data.encoding_info && typeof data.encoding_info === 'string') this.encoding_info = JSON.parse(data.encoding_info)
       this.setUrl();
 
       if (this.reg_date) {

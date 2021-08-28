@@ -790,9 +790,7 @@ const OperationServiceClass = class {
         } catch (error) {
           const encoding_info = {
             is_error: true,
-            able_re_encoding: false,
             message: '이미지 클라우드 업로드 요청이 실패하였습니다.',
-            transcoding: true,
             is_trans_success: true,
             video_file_list: [],
             next: Constants.ENCODING_PROCESS_FILE_MOVE,
@@ -905,7 +903,7 @@ const OperationServiceClass = class {
   }
 
   requestTranscoder = async (operation_info) => {
-    const encoding_info = await this.checkOperationFileStatus(operation_info)
+    const encoding_info = await this.checkOperationFileStatus(operation_info, null, false, true)
     log.debug(this.log_prefix, '[requestTranscoder]', encoding_info)
     if (encoding_info.is_error) {
       await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
@@ -937,6 +935,7 @@ const OperationServiceClass = class {
       request_error = api_request_result
     } catch (error) {
       log.error(this.log_prefix, '[requestTranscoder]', 603, 'trans api url', api_url, error)
+      request_error = error
     }
 
     if (is_execute_success) {
@@ -944,16 +943,14 @@ const OperationServiceClass = class {
     } else {
       const encoding_info = {
         is_error: true,
-        able_re_encoding: true,
         message: '동영상 인코딩 요청이 실패하였습니다.',
-        transcoding: false,
         is_trans_success: false,
         video_file_list: [],
         next: Constants.ENCODING_PROCESS_REQUEST_TRANSCODING,
         error: request_error
       }
       await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
-      throw new StdObject(604, '동영상 인코딩 요청 실패', 500)
+      throw new StdObject(604, encoding_info.message, 500, encoding_info)
     }
   }
 
@@ -1415,13 +1412,13 @@ const OperationServiceClass = class {
 
   checkOperationStatus = async (operation_info) => {
     const operation_seq = operation_info.seq
-    const operation_model = this.getOperationModel()
-    const encoding_info = {
+    const prev_encoding_info = operation_info.encoding_info
+    const prev_next = prev_encoding_info ? prev_encoding_info.next : null
+    let encoding_info = {
       is_error: false,
-      able_re_encoding: false,
       message: null,
-      transcoding: false,
       is_trans_success: false,
+      is_trans_coding_error: false,
       video_file_list: [],
       next: null,
     }
@@ -1443,30 +1440,42 @@ const OperationServiceClass = class {
       encoding_info.message = '인코딩 완료 후 추가 작업 중 입니다.'
       encoding_info.next = Constants.ENCODING_PROCESS_TRANSCODING_COMPLETE
     }
-    else if (analysis_status === 'N') {
-      encoding_info.message = '파일을 업로드 하는 중입니다.'
-      encoding_info.next = Constants.ENCODING_PROCESS_REQUEST_TRANSCODING
-    }
     else if (operation_info.mode === this.MODE_OPERATION) {
-      await this.checkOperationFileStatus(operation_info, encoding_info, true)
+      if (!prev_next || prev_next === Constants.ENCODING_PROCESS_REQUEST_TRANSCODING) {
+        await this.checkOperationFileStatus(operation_info, encoding_info, true)
+      } else if (prev_encoding_info) {
+        encoding_info = prev_encoding_info
+      } else if (analysis_status === 'R') {
+        encoding_info.message = '동영상 인코딩 중입니다.'
+        encoding_info.next = Constants.ENCODING_PROCESS_REQUEST_TRANSCODING
+      } else {
+        encoding_info.message = '파일을 업로드 하는 중입니다.'
+        encoding_info.next = Constants.ENCODING_PROCESS_REQUEST_TRANSCODING
+      }
     }
     else if (operation_info.mode === this.MODE_FILE) {
-      encoding_info.message = '파일을 업로드 하는 중입니다.'
+      if (prev_encoding_info) {
+        encoding_info = prev_encoding_info
+      } else {
+        encoding_info.message = '파일을 업로드 하는 중입니다.'
+        encoding_info.next = Constants.ENCODING_PROCESS_FILE_MOVE
+      }
     }
+
+    const operation_model = this.getOperationModel()
     await operation_model.updateAnalysisStatus(operation_seq, encoding_info.is_error ? 'E' : analysis_status, encoding_info)
     const result = new StdObject()
-    result.adds(encoding_info)
+    result.add('encoding_info', encoding_info)
     return result
   }
 
-  checkOperationFileStatus = async (operation_info, encoding_info = null, check_trans_file = false) => {
+  checkOperationFileStatus = async (operation_info, encoding_info = null, check_trans_file = false, delete_non_origin_files = false) => {
     if (!encoding_info) {
       encoding_info = {
         is_error: false,
-        able_re_encoding: false,
         message: null,
-        transcoding: false,
         is_trans_success: false,
+        is_trans_coding_error: false,
         video_file_list: [],
         next: null,
       }
@@ -1479,8 +1488,8 @@ const OperationServiceClass = class {
       encoding_info.is_error = true
     } else {
       let prev_video_info = null
-      encoding_info.able_re_encoding = true
       const trans_file_regex = /^trans_([\w_-]+)\.mp4$/i
+      const origin_file_regex = /^upload_.+$/i
       for (let i = 0; i < origin_file_list.length; i++) {
         const file_info = origin_file_list[i]
         if (file_info.isFile()) {
@@ -1506,63 +1515,159 @@ const OperationServiceClass = class {
             video_file_info.bitrate = video_info.bit_rate
           }
           if (trans_file_regex.test(file_name)) {
+            if (delete_non_origin_files) {
+              await Util.deleteFile(file_path)
+              continue
+            }
             video_file_info.is_trans_video = true
             if (!check_trans_file) continue
             if (media_info.media_type !== Constants.VIDEO) {
               if (encoding_info.message === null) encoding_info.message = '인코딩이 진행중이거나 정상 완료되지 않았습니다.'
               encoding_info.next = Constants.ENCODING_PROCESS_REQUEST_TRANSCODING
+              encoding_info.is_trans_coding_error = true
               video_file_info.is_video = false
             } else {
               if (encoding_info.message === null) encoding_info.message = '인코딩이 파일이 생성되었습니다. 추가 작업이 진행중일수도 있습니다.'
               encoding_info.is_trans_success = true
               encoding_info.next = Constants.ENCODING_PROCESS_TRANSCODING_COMPLETE
             }
-            encoding_info.transcoding = true
-          } else if (file_size === 0) {
-            if (encoding_info.message === null) encoding_info.message = '동영상 파일의 크기가 0 입니다.'
-            encoding_info.able_re_encoding = false
-            encoding_info.is_error = true
-            video_file_info.error = true
-            video_file_info.is_video = false
-          } else {
-            video_file_info.origin_file_name = file_name.replace(/^upload_/, '')
-            if (media_info.media_type !== Constants.VIDEO) {
-              if (encoding_info.message === null) encoding_info.message = '원본 파일 중 동영상 정보를 확인할 수 없는 파일이 존재합니다.'
-              encoding_info.able_re_encoding = false
+          }
+          else if (origin_file_regex.test(file_name)) {
+            if (file_size === 0) {
+              if (encoding_info.message === null) encoding_info.message = '동영상 파일의 크기가 0 입니다.'
               encoding_info.is_error = true
+              video_file_info.error = true
               video_file_info.is_video = false
-            } else {
-              if (prev_video_info !== null) {
-                if (video_info.format !== prev_video_info.format) {
-                  if (encoding_info.message === null) encoding_info.message = '동영상의 포멧이 일치하지 않습니다.'
-                  encoding_info.able_re_encoding = false
-                  encoding_info.is_error = true
-                  video_file_info.error = true
-                } else if (video_info.width !== prev_video_info.width || video_info.height !== prev_video_info.height) {
-                  if (encoding_info.message === null) encoding_info.message = '동영상의 가로 세로 크기가 일치하지 않습니다.'
-                  encoding_info.able_re_encoding = false
-                  encoding_info.is_error = true
-                  video_file_info.error = true
-                } else if (video_info.profile !== prev_video_info.profile || video_info.level !== prev_video_info.level) {
-                  if (encoding_info.message === null) encoding_info.message = '동영상의 프로파일이 일치하지 않습니다.'
-                  encoding_info.able_re_encoding = false
-                  encoding_info.is_error = true
-                  video_file_info.error = true
-                }
+            }
+            else {
+              video_file_info.origin_file_name = file_name.replace(/^upload_/, '')
+              if (media_info.media_type !== Constants.VIDEO) {
+                if (encoding_info.message === null) encoding_info.message = '원본 파일 중 동영상 정보를 확인할 수 없는 파일이 존재합니다.'
+                encoding_info.is_error = true
+                video_file_info.is_video = false
               } else {
-                prev_video_info = media_info.media_info
+                if (prev_video_info !== null) {
+                  if (video_info.format !== prev_video_info.format) {
+                    if (encoding_info.message === null) encoding_info.message = '동영상의 포멧이 일치하지 않습니다.'
+                    encoding_info.is_error = true
+                    video_file_info.error = true
+                  } else if (video_info.width !== prev_video_info.width || video_info.height !== prev_video_info.height) {
+                    if (encoding_info.message === null) encoding_info.message = '동영상의 가로 세로 크기가 일치하지 않습니다.'
+                    encoding_info.is_error = true
+                    video_file_info.error = true
+                  } else if (video_info.profile !== prev_video_info.profile || video_info.level !== prev_video_info.level) {
+                    if (encoding_info.message === null) encoding_info.message = '동영상의 프로파일이 일치하지 않습니다.'
+                    encoding_info.is_error = true
+                    video_file_info.error = true
+                  }
+                } else {
+                  prev_video_info = media_info.media_info
+                }
               }
             }
+          } else if (delete_non_origin_files) {
+            await Util.deleteFile(file_path)
+            continue
           }
+
           encoding_info.video_file_list.push(video_file_info)
         }
       }
     }
+    if (!encoding_info.is_error && !encoding_info.next) {
+      encoding_info.next = Constants.ENCODING_PROCESS_REQUEST_TRANSCODING
+    }
     return encoding_info
   }
 
-  encodingForce = async (operation_info) => {
+  continueProcessForce = async (operation_info) => {
+    if (!operation_info || !operation_info.encoding_info || !operation_info.encoding_info.next) {
+      return new StdObject(2001, '진행상태 정보가 없어 재시작이 불가능 합니다.')
+    }
+    const encoding_info = operation_info.encoding_info
+    const next = encoding_info.next
+    if (next === Constants.ENCODING_PROCESS_REQUEST_TRANSCODING) {
+      return this.requestTranscodingForce(operation_info)
+    } else if (next === Constants.ENCODING_PROCESS_TRANSCODING_COMPLETE) {
+      TranscoderSyncService.onTranscodingSuccess(operation_info, Util.getRandomId())
+      return new StdObject(0, '인코딩 완료 후 처리가 시작되었습니다.')
+    } else if (next === Constants.ENCODING_PROCESS_FILE_MOVE) {
+      return await this.requestFileMoveForce(operation_info)
+    }
+    return new StdObject(2003, '다음 프로세스를 진행할 수 없습니다.', { next })
+  }
 
+  requestTranscodingForce = async (operation_info) => {
+    await OperationService.requestTranscoder(operation_info)
+    return new StdObject(0, '인코딩 시작 요청이 성공하였습니다.')
+  }
+
+  requestFileMoveForce = async (operation_info) => {
+    const encoding_info = await SyncService.moveTransFileToObject(operation_info, Util.getRandomId())
+    if (encoding_info.is_error === true) {
+      throw new StdObject(2002, encoding_info.message, { encoding_info })
+    }
+    return new StdObject(0, '파일이동 시작되었습니다.')
+  }
+
+  transcodingCompleteForce = async (operation_info) => {
+    const operation_model = this.getOperationModel()
+    const encoding_info = {
+      is_error: false,
+      message: null,
+      is_trans_success: false,
+      is_trans_coding_error: false,
+      video_file_list: [],
+      next: null,
+    }
+    const trans_file_regex = /^trans_([\w_-]+)\.mp4$/i
+    const smil_file_regex = /^.+\.smil$/i
+    let video_file_name = null
+    let smil_file_name = null
+    const directory_info = this.getOperationDirectoryInfo(operation_info)
+    const origin_file_list = await Util.getDirectoryFileList(directory_info.origin)
+    for (let i = 0; i < origin_file_list.length; i++) {
+      const file_info = origin_file_list[i]
+      if (file_info.isFile()) {
+        const file_name = file_info.name
+        if (trans_file_regex.test(file_name)) {
+          const file_path = directory_info.origin + file_name
+          const file_size = await Util.getFileSize(file_path)
+          const media_info = await Util.getMediaInfo(file_path)
+          if (file_size === 0 || media_info.media_type !== Constants.VIDEO) {
+            encoding_info.is_error = true
+            encoding_info.message = '인코딩 완료 된 파일이 정상적이 않습니다.'
+            encoding_info.is_trans_success = false
+            encoding_info.is_trans_coding_error = true
+            encoding_info.next = Constants.ENCODING_PROCESS_REQUEST_TRANSCODING
+            encoding_info.video_file_list.push({
+              origin_file_name: file_name,
+              file_name,
+              file_path,
+              file_size,
+              media_type: media_info.media_type,
+              is_video: false
+            })
+            break
+          }
+          video_file_name = file_name
+        }
+        if (smil_file_regex.test(file_name)) smil_file_name = file_name
+      }
+    }
+    if (!video_file_name) {
+      encoding_info.is_error = true
+      encoding_info.message = '인코딩된 파일이 존재하지 않습니다.'
+      encoding_info.is_trans_success = false
+      encoding_info.is_trans_coding_error = true
+      encoding_info.next = Constants.ENCODING_PROCESS_REQUEST_TRANSCODING
+    }
+    if (encoding_info.is_error) {
+      await operation_model.updateAnalysisStatus(operation_info.seq, 'E', encoding_info)
+      throw new StdObject(2002, encoding_info.message, 200, { encoding_info })
+    }
+    TranscoderSyncService.updateTranscodingComplete(operation_info, Util.getRandomId(), video_file_name, smil_file_name, null)
+    return new StdObject(0, '인코딩 완료 후 처리가 시작되었습니다.')
   }
 }
 

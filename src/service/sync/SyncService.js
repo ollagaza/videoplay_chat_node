@@ -41,10 +41,14 @@ const SyncServiceClass = class {
     log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `start`)
 
     const operation_media_info = await OperationMediaService.getOperationMediaInfo(DBMySQL, operation_info)
-    const is_sync_complete = operation_media_info.analysis_status === 'Y' && operation_media_info.is_trans_complete
+    const is_encoding_complete = operation_media_info.is_trans_complete
 
-    if (!is_sync_complete) {
-      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `sync is not complete [analysis: ${operation_info.analysis_status}, trans: ${operation_media_info.is_trans_complete}]. process end`)
+    if (!is_encoding_complete) {
+      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `encoding is not complete [analysis: ${operation_info.analysis_status}, trans: ${operation_media_info.is_trans_complete}]. process end`)
+      return
+    }
+    if (operation_media_info.analysis_status === 'Y') {
+      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `sync already complete [analysis: ${operation_info.analysis_status}, trans: ${operation_media_info.is_trans_complete}]. process end`)
       return
     }
 
@@ -148,10 +152,6 @@ const SyncServiceClass = class {
       is_complete = true
     })
 
-    if (is_sync_complete) {
-      // await new BatchOperationQueueModel(DBMySQL).onJobComplete(operation_seq);
-    }
-
     if (is_complete) {
       for (let i = 0; i < move_file_list.length; i++) {
         const move_file_info = move_file_list[i]
@@ -163,7 +163,7 @@ const SyncServiceClass = class {
         await OperationService.updateStatus(null, [operation_seq], 'Y')
       } else {
         this.copyOriginFileToArchive(operation_info.content_id, log_info)
-        if (!await this.moveTransFileToObject(operation_info, log_info)) {
+        if ((await this.moveTransFileToObject(operation_info, log_info)).is_error === true) {
           return
         }
       }
@@ -172,34 +172,33 @@ const SyncServiceClass = class {
       this.sendAnalysisCompleteMessage(operation_info)
     }
 
-    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `end`)
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'is_complete:', is_complete, `end`)
   }
 
   moveTransFileToObject = async (operation_info, log_info = null) => {
     if (!log_info) {
       log_info = `[log_id: ${Util.getRandomId()}, operation_seq: ${operation_info.seq}, content_id: ${operation_info.content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
     }
+    const encoding_info = {
+      is_error: false,
+      message: '동영상 클라우드 업로드 요청이 실패하였습니다.',
+      is_trans_success: true,
+      video_file_list: [],
+      next: Constants.ENCODING_PROCESS_FILE_MOVE,
+      log_info,
+      error: null
+    }
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     try {
       const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq, log_info })
-      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
-      return true
+      log.debug(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
     } catch (error) {
-      log.error(this.log_prefix, '[onAnalysisComplete]', log_info, '[CloudFileService.requestMoveToObject]', error)
-      const encoding_info = {
-        is_error: true,
-        able_re_encoding: false,
-        message: '동영상 클라우드 업로드 요청이 실패하였습니다.',
-        transcoding: true,
-        is_trans_success: true,
-        video_file_list: [],
-        next: Constants.ENCODING_PROCESS_FILE_MOVE,
-        log_info,
-        error
-      }
+      log.error(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject]', error)
+      encoding_info.is_error = true
+      encoding_info.message = '동영상 클라우드 업로드 요청이 실패하였습니다.'
       await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
     }
-    return false
+    return encoding_info
   }
 
   onOperationVideoFileCopyCompeteByRequest = (response_data) => {
@@ -223,9 +222,7 @@ const SyncServiceClass = class {
             log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', log_info, response_data)
             encoding_info = {
               is_error: true,
-              able_re_encoding: false,
               message: response_data.error_message,
-              transcoding: true,
               is_trans_success: true,
               video_file_list: [],
               next: Constants.ENCODING_PROCESS_FILE_MOVE,
