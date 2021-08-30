@@ -334,9 +334,11 @@ export default class OperationModel extends MySQLModel {
     })
   }
 
-  updateAnalysisStatus = async (operation_seq, status) => {
+  updateAnalysisStatus = async (operation_seq, status, encoding_info = null) => {
+    if (encoding_info && typeof encoding_info === 'object') encoding_info = JSON.stringify(encoding_info)
     return await this.update({ 'seq': operation_seq }, {
       analysis_status: status ? status.toUpperCase() : 'N',
+      encoding_info,
       'modify_date': this.database.raw('NOW()')
     })
   }
@@ -507,9 +509,6 @@ export default class OperationModel extends MySQLModel {
       ]
     }
     return this.find(params)
-  }
-  getTargetListByStatusD = async (group_seq) => {
-    return this.find({ group_seq, 'status': 'D' })
   }
   getOperationMode = async (operation_seq) => {
     return this.findOne({ seq: operation_seq}, ['mode'])

@@ -114,7 +114,7 @@ if (IS_DEV) {
       }
     }
 
-    await Util.writeXmlFile(ServiceConfig.get('media_root') + video_project.project_path, 'video_project.xml', video_xml_json)
+    await Util.writeXmlFile(ServiceConfig.getMediaRoot() + video_project.project_path, 'video_project.xml', video_xml_json)
 
     res.json(video_xml_json)
   }))

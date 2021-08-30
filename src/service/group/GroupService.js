@@ -967,7 +967,7 @@ const GroupServiceClass = class {
   changeGroupProfileImage = async (database, group_member_info, request, response) => {
     const output = new StdObject(-1, '프로필 업로드 실패')
 
-    const media_root = ServiceConfig.get('media_root')
+    const media_root = ServiceConfig.getMediaRoot()
     const upload_path = group_member_info.media_path + `/profile`
     const upload_full_path = media_root + upload_path
     if (!(await Util.fileExists(upload_full_path))) {

@@ -70,9 +70,9 @@ export default class OperationDataModel extends MySQLModel {
     return this.update(filter, update_params)
   }
 
-  updateThumbnailImageNotExists = async (operation_data_seq, thumbnail_path) => {
+  updateThumbnailImageNotExists = async (operation_seq, thumbnail_path) => {
     const filter = {
-      seq: operation_data_seq
+      operation_seq
     }
     const update_params = {
       thumbnail: this.database.raw(`IF(\`thumbnail\` IS NULL, '${thumbnail_path}', \`thumbnail\`)`),
