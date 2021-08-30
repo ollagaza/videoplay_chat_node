@@ -487,10 +487,12 @@ const OperationServiceClass = class {
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (delete_origin) {
       await Util.deleteDirectory(directory_info.root_origin)
+      await Util.deleteDirectory(directory_info.root_origin_video)
     }
     if (ServiceConfig.isVacs() === false) {
       log.debug(this.log_prefix, '[deleteOperationFiles]', 'directory_info.root', directory_info.root)
       await Util.deleteDirectory(directory_info.root)
+      await Util.deleteDirectory(directory_info.root_video)
       if (delete_link_file) {
         await CloudFileService.requestDeleteObjectFile(directory_info.media_path, true)
       }
@@ -776,7 +778,6 @@ const OperationServiceClass = class {
 
   requestAnalysis = async (database, token_info, operation_seq, group_member_info, member_info) => {
     const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
-    const directory_info = this.getOperationDirectoryInfo(operation_info)
     if (operation_info.mode === this.MODE_FILE) {
       if (ServiceConfig.isVacs()) {
         await OperationService.updateOperationDataFileThumbnail(operation_info)
@@ -785,19 +786,7 @@ const OperationServiceClass = class {
       } else {
         await this.updateAnalysisStatus(null, operation_info, 'R')
         this.onOperationCreateComplete(operation_info, group_member_info, member_info)
-        try {
-          await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq })
-        } catch (error) {
-          const encoding_info = {
-            is_error: true,
-            message: '이미지 클라우드 업로드 요청이 실패하였습니다.',
-            is_trans_success: true,
-            video_file_list: [],
-            next: Constants.ENCODING_PROCESS_FILE_MOVE,
-            error: error
-          }
-          await this.updateAnalysisStatus(null, operation_info, 'E', encoding_info)
-        }
+        await SyncService.moveImageFileToObject(operation_info)
       }
     } else {
       await this.requestTranscoder(operation_info)
@@ -1180,22 +1169,24 @@ const OperationServiceClass = class {
   getOperationDirectoryInfo = (operation_info) => {
     const media_path = operation_info.media_path
     const origin_media_path = operation_info.origin_media_path
-    const media_directory = ServiceConfig.get('media_root') + media_path
+    const media_directory = ServiceConfig.getMediaRoot() + media_path
+    const video_directory = ServiceConfig.getVideoRoot() + media_path
     const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
     const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
-    const origin_media_directory = ServiceConfig.get('media_root') + origin_media_path
+    const origin_media_directory = ServiceConfig.getMediaRoot() + origin_media_path
     const origin_url_prefix = ServiceConfig.get('static_storage_prefix') + origin_media_path
     const origin_cdn_url = ServiceConfig.get('static_cloud_prefix') + origin_media_path
     const content_path = operation_info.content_id + '/'
     const origin_content_path = operation_info.origin_content_id + '/'
     const trans_server_root = ServiceConfig.get('trans_server_root')
-    const storage_server_root = ServiceConfig.get('storage_server_root')
 
     return {
       'root': media_directory,
+      'root_video': video_directory,
       'root_origin': origin_media_directory,
-      'origin': media_directory + 'origin/',
-      'video': media_directory + 'video/',
+      'root_origin_video': origin_media_directory,
+      'origin': video_directory + 'origin/',
+      'video': video_directory + 'video/',
       'video_origin': origin_media_directory + 'video/',
       'other': media_directory + 'other/',
       'refer': media_directory + 'refer/',
@@ -1214,10 +1205,6 @@ const OperationServiceClass = class {
       'media_file': media_path + 'file/',
       'trans_origin': trans_server_root + media_path + 'origin/',
       'trans_video': trans_server_root + media_path + 'video/',
-      'storage_path': storage_server_root + media_path,
-      'storage_origin': storage_server_root + media_path + 'origin/',
-      'storage_video': storage_server_root + media_path + 'video/',
-      'storage_file': storage_server_root + media_path + 'file/',
       'url_prefix': url_prefix,
       'url_origin': url_prefix + 'origin/',
       'url_video': url_prefix + 'video/',
@@ -1603,7 +1590,12 @@ const OperationServiceClass = class {
   }
 
   requestFileMoveForce = async (operation_info) => {
-    const encoding_info = await SyncService.moveTransFileToObject(operation_info, Util.getRandomId())
+    let encoding_info
+    if (operation_info.mode === OperationService.MODE_FILE) {
+      encoding_info = await SyncService.moveImageFileToObject(operation_info)
+    } else {
+      encoding_info = await SyncService.moveTransFileToObject(operation_info)
+    }
     if (encoding_info.is_error === true) {
       throw new StdObject(2002, encoding_info.message, { encoding_info })
     }

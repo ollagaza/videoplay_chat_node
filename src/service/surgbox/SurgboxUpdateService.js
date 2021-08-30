@@ -49,7 +49,7 @@ const SurgboxUpdateServiceClass = class {
     if (!update_info.type) update_info.type = 'box'
 
     const file_path = `/surgbox/update/${update_info.version}/`
-    const media_root = ServiceConfig.get('media_root')
+    const media_root = ServiceConfig.getMediaRoot()
     await Util.createDirectory(`${media_root}/${file_path}`)
     update_info.file_path = file_path
 
@@ -181,7 +181,7 @@ const SurgboxUpdateServiceClass = class {
   uploadFile = async (update_seq, request, response) => {
     const update_info = await this.getUpdateInfo(update_seq)
     const upload_path = update_info.file_path
-    const upload_directory = `${ServiceConfig.get('media_root')}${update_info.file_path}`
+    const upload_directory = `${ServiceConfig.getMediaRoot()}${update_info.file_path}`
     logger.debug(this.log_prefix, '[uploadFile]', `{ update_seq: ${update_seq} }`, upload_directory)
     if (!(await Util.fileExists(upload_directory))) {
       await Util.createDirectory(upload_directory)
@@ -252,7 +252,7 @@ const SurgboxUpdateServiceClass = class {
   deleteFiles = (file_path, file_path_list) => {
     (
       async (file_path, file_path_list) => {
-        const upload_directory = `${ServiceConfig.get('media_root')}${file_path}`
+        const upload_directory = `${ServiceConfig.getMediaRoot()}${file_path}`
         for (let i = 0; i < file_path_list.length; i++) {
           try {
             await Util.deleteFile(upload_directory + file_path_list[i])
@@ -286,7 +286,7 @@ const SurgboxUpdateServiceClass = class {
       async (update_info) => {
         try {
           const file_path = update_info.file_path
-          await Util.deleteDirectory(ServiceConfig.get('media_root') + file_path)
+          await Util.deleteDirectory(ServiceConfig.getMediaRoot() + file_path)
           await NaverObjectStorageService.deleteFolder(file_path)
         } catch (error) {
           logger.error(this.log_prefix, '[deleteDirectory]', update_info.toJSON(), error)

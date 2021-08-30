@@ -454,7 +454,7 @@ const OperationFileServiceClass = class {
     (
       async () => {
         try {
-          const media_root = ServiceConfig.get('media_root')
+          const media_root = ServiceConfig.getMediaRoot()
           const cloud_file_list = []
           for (let i = 0; i < file_info_list.length; i++) {
             const file_info = file_info_list[i]

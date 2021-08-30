@@ -37,7 +37,7 @@ const StudioServiceClass = class {
     const data = request.body
 
     const content_id = Util.getContentId()
-    const media_root = ServiceConfig.get('media_root')
+    const media_root = ServiceConfig.getMediaRoot()
     const project_path = `${group_member_info.media_path}/studio/${content_id}`
 
     await Util.createDirectory(media_root + project_path)
@@ -105,7 +105,7 @@ const StudioServiceClass = class {
   deleteProjectFiles = (project_info) => {
     (
       async (project_info) => {
-        const media_root = ServiceConfig.get('media_root')
+        const media_root = ServiceConfig.getMediaRoot()
         const project_path = project_info.project_path
         try {
           await Util.deleteDirectory(media_root + project_path)
@@ -129,7 +129,7 @@ const StudioServiceClass = class {
 
   uploadImage = async (project_seq, request, response) => {
     const video_project_info = await this.getVideoProjectInfo(project_seq)
-    const media_root = ServiceConfig.get('media_root')
+    const media_root = ServiceConfig.getMediaRoot()
     const upload_path = video_project_info.project_path + '/image/'
     const upload_full_path = media_root + upload_path
     if (!(await Util.fileExists(upload_full_path))) {
@@ -172,7 +172,7 @@ const StudioServiceClass = class {
       async () => {
         const project_seq = video_project_info._id
         try {
-          const media_root = ServiceConfig.get('media_root')
+          const media_root = ServiceConfig.getMediaRoot()
           const operation_origin_path = video_project_info.project_path + '/' + this.DOWNLOAD_SUFFIX
           const download_directory = media_root + operation_origin_path
           if (!(await Util.fileExists(download_directory))) {
@@ -255,7 +255,7 @@ const StudioServiceClass = class {
             return false
           }
           const project_path = video_project_info.project_path + '/'
-          const directory = ServiceConfig.get('media_root') + project_path
+          const directory = ServiceConfig.getMediaRoot() + project_path
           const editor_server_directory = ServiceConfig.get('auto_editor_file_root') + project_path
           const editor_server_download_directory = editor_server_directory + this.DOWNLOAD_SUFFIX
           let editor_server_group_video_directory = null
@@ -501,7 +501,7 @@ const StudioServiceClass = class {
             throw new StdObject(931, '결과파일 이름 누락', 400)
           }
           const project_path = video_project.project_path + '/'
-          const video_directory = ServiceConfig.get('media_root') + project_path
+          const video_directory = ServiceConfig.getMediaRoot() + project_path
           const video_file_path = video_directory + process_info.video_file_name
           const extra_data = process_info.extra_data
           const operation_seq = extra_data ? Util.parseInt(extra_data.operation_seq, 0) : 0
@@ -695,7 +695,7 @@ const StudioServiceClass = class {
 
   exportVideoLocal = async (video_project_info, operation_info, operation_origin_path, video_file_name) => {
     const project_path = video_project_info.project_path + '/'
-    const video_directory = ServiceConfig.get('media_root') + project_path
+    const video_directory = ServiceConfig.getMediaRoot() + project_path
     const video_file_path = video_directory + video_project_info.video_file_name
     const down_video_file_path = operation_origin_path + video_file_name
     await Util.copyFile(video_file_path, down_video_file_path)

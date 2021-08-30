@@ -288,7 +288,7 @@ const GroupBoardDataServiceClass = class {
     logger.debug(this.log_prefix, `{ UPLOAD_ROOT: ${this.UPLOAD_ROOT}, FILE_URL_PREFIX: ${ServiceConfig.get('static_storage_prefix')} }`)
     const board_info = await this.getBoardDataDetail(DBMySQL, board_seq)
     const upload_path = `/group_board/${board_info.content_id}/`
-    const upload_directory = `${ServiceConfig.get('media_root')}/${upload_path}`
+    const upload_directory = `${ServiceConfig.getMediaRoot()}/${upload_path}`
     logger.debug(this.log_prefix, '[uploadFile]', `{ board_seq: ${board_seq} }`, upload_directory)
     if (!(await Util.fileExists(upload_directory))) {
       await Util.createDirectory(upload_directory)
@@ -342,7 +342,7 @@ const GroupBoardDataServiceClass = class {
       const storage_client = await NaverObjectStorageService.getStorageClient()
       await NaverObjectStorageService.deleteFile(`${file.file_path}`, file.file_name, ServiceConfig.get('naver_object_storage_bucket_name'), storage_client)
     } else {
-      const media_root = ServiceConfig.get('media_root')
+      const media_root = ServiceConfig.getMediaRoot()
       const file_full_path = `${media_root}${file.file_path}${file.file_name}`
       await Util.deleteFile(file_full_path)
     }

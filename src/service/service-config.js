@@ -2,6 +2,7 @@ import DBMySQL from '../database/knex-mysql'
 import ServiceConfigModel from '../database/mysql/service-config-model'
 import SocketManager from './socket-manager'
 import log from '../libs/logger'
+import _ from 'lodash'
 
 const ServiceConfigClass = class {
   constructor () {
@@ -20,7 +21,9 @@ const ServiceConfigClass = class {
     if (config_list && config_list.length) {
       for (let i = 0; i < config_list.length; i++) {
         const config = config_list[i]
-        this.service_config_map[config.key] = config.value
+        if (config.value && _.trim(config.value)) {
+          this.service_config_map[config.key] = _.trim(config.value)
+        }
       }
     }
 
@@ -65,6 +68,22 @@ const ServiceConfigClass = class {
 
   getServiceUrl = () => {
     return this.service_config_map.service_url
+  }
+
+  getMediaRoot = () => {
+    return this.service_config_map['media_root']
+  }
+
+  getVideoRoot = () => {
+    return this.service_config_map['video_root'] ? this.service_config_map['video_root'] : this.service_config_map['media_root']
+  }
+
+  getStorageServerRoot = () => {
+    return this.service_config_map['storage_server_root']
+  }
+
+  getStorageServerVideoRoot = () => {
+    return this.service_config_map['storage_server_video_root'] ? this.service_config_map['storage_server_video_root'] : this.service_config_map['storage_server_root']
   }
 }
 

@@ -36,7 +36,7 @@ const EditorServiceClass = class {
 
   uploadEditorImage = async (media_path, request, response) => {
     try {
-      const editor_root = ServiceConfig.get('media_root') + media_path + '/editor'
+      const editor_root = ServiceConfig.getMediaRoot() + media_path + '/editor'
       if (!(await Util.fileExists(editor_root))) {
         await Util.createDirectory(editor_root)
       }
@@ -55,7 +55,7 @@ const EditorServiceClass = class {
 
   uploadEditorFile = async (media_path, request, response) => {
     const file_path = media_path + '/editor/' + Util.getRandomString(5) + '/'
-    const editor_root = ServiceConfig.get('media_root') + file_path
+    const editor_root = ServiceConfig.getMediaRoot() + file_path
     if (!(await Util.fileExists(editor_root))) {
       await Util.createDirectory(editor_root)
     }

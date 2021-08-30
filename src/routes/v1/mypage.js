@@ -76,7 +76,7 @@ routes.put('/profile',
     try {
       const media_path = group_member_info.media_path
       if (upload_type === 'image') {
-        const profile_dir = ServiceConfig.get('media_root') + media_path + '/profile'
+        const profile_dir = ServiceConfig.getMediaRoot() + media_path + '/profile'
         const directory_exits = await Util.createDirectory(profile_dir)
         const save_file_name = `${req.files.profile_image[0].filename}.jpg`
         const rename_path = `${profile_dir}/${save_file_name}`

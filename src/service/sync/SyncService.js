@@ -162,7 +162,7 @@ const SyncServiceClass = class {
         // await Util.deleteDirectory(directory_info.origin)
         await OperationService.updateStatus(null, [operation_seq], 'Y')
       } else {
-        this.copyOriginFileToArchive(operation_info.content_id, log_info)
+        this.copyOriginFileToArchive(operation_info, log_info)
         if ((await this.moveTransFileToObject(operation_info, log_info)).is_error === true) {
           return
         }
@@ -190,7 +190,7 @@ const SyncServiceClass = class {
     }
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     try {
-      const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq: operation_info.seq, log_info })
+      const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/video/move/complete', { operation_seq: operation_info.seq, log_info }, ServiceConfig.getStorageServerVideoRoot(), ServiceConfig.getVideoRoot())
       log.debug(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
     } catch (error) {
       log.error(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject]', error)
@@ -201,7 +201,32 @@ const SyncServiceClass = class {
     return encoding_info
   }
 
-  onOperationVideoFileCopyCompeteByRequest = (response_data) => {
+  moveImageFileToObject = async (operation_info, log_info = null) => {
+    if (!log_info) {
+      log_info = `[log_id: ${Util.getRandomId()}, operation_seq: ${operation_info.seq}, content_id: ${operation_info.content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
+    }
+    const encoding_info = {
+      is_error: false,
+      message: '이미지 클라우드 업로드 요청이 실패하였습니다.',
+      is_trans_success: true,
+      video_file_list: [],
+      next: Constants.ENCODING_PROCESS_FILE_MOVE,
+      log_info,
+      error: null
+    }
+    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    try {
+      await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/image/move/complete', { operation_seq: operation_info.seq })
+    } catch (error) {
+      log.error(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject]', error)
+      encoding_info.is_error = true
+      encoding_info.message = '이미지 클라우드 업로드 요청이 실패하였습니다.'
+      await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
+    }
+    return encoding_info
+  }
+
+  onOperationFileMoveCompeteByRequest = (response_data) => {
     (
       async (response_data) => {
         try {
@@ -253,7 +278,7 @@ const SyncServiceClass = class {
         const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
         const origin_directory = directory_info.media_origin
         try {
-          const request_result = await CloudFileService.requestCopyToArchive(origin_directory, true, operation_info.content_id, '/api/storage/operation/copy/origin', { operation_seq: operation_info.seq, log_info })
+          const request_result = await CloudFileService.requestCopyToArchive(origin_directory, true, operation_info.content_id, '/api/storage/operation/origin/copy/complete', { operation_seq: operation_info.seq, log_info }, ServiceConfig.getStorageServerVideoRoot(), ServiceConfig.getVideoRoot())
           log.debug(this.log_prefix, '[copyOriginFileToArchive]', log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, request_result)
         } catch (error) {
           log.error(this.log_prefix, '[copyOriginFileToArchive]', log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, error)
@@ -276,9 +301,9 @@ const SyncServiceClass = class {
           return
         }
         const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
-        const origin_directory = directory_info.media_origin
+        const origin_directory = directory_info.origin
         await Util.deleteDirectory(origin_directory)
-        log.error(this.log_prefix, '[onOperationOriginFileCopyCompeteByRequest]', log_info, '원본 파일을 로컬 스토리지에서 삭제하였습니다.', response_data)
+        log.debug(this.log_prefix, '[onOperationOriginFileCopyCompeteByRequest]', log_info, '원본 파일을 로컬 스토리지에서 삭제하였습니다.', origin_directory, response_data)
       }
     )(response_data)
 
@@ -287,7 +312,7 @@ const SyncServiceClass = class {
 
   sendAnalysisCompleteMessage = (operation_info) => {
     if (!operation_info || !operation_info.user_id) return
-    log.error(this.log_prefix, '[sendAnalysisCompleteMessage]', operation_info.toJSON());
+    // log.error(this.log_prefix, '[sendAnalysisCompleteMessage]', operation_info.toJSON());
     (
       async (operation_info) => {
         try {

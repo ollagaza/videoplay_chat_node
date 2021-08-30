@@ -310,14 +310,14 @@ const deleteDirectory = async (path) => {
     const file = file_list[i]
     if (file.isDirectory()) {
       await deleteDirectory(path + '/' + file.name)
-      const delete_directory_result = await removeDirectory(path + '/' + file.name)
+      await removeDirectory(path + '/' + file.name)
       // log.debug(log_prefix, 'delete sub dir', path + '/' + file.name, delete_directory_result);
     } else {
-      const delete_file_result = await deleteFile(path + '/' + file.name)
+      await deleteFile(path + '/' + file.name)
       // log.debug(log_prefix, 'delete sub file', path + '/' + file.name, delete_file_result);
     }
   }
-  const delete_root_result = await removeDirectory(path)
+  await removeDirectory(path)
   // log.debug(log_prefix, 'delete root dir', path, delete_root_result);
 }
 
@@ -1138,7 +1138,7 @@ const storage = multer.diskStorage({
 })
 
 const uploadImageFile = async (user_info, req, res, key = 'image', disable_auto_ext = false) => {
-  const media_root = ServiceConfig.get('media_root')
+  const media_root = ServiceConfig.getMediaRoot()
   const upload_path = user_info.user_media_path + 'image'
   const upload_full_path = media_root + upload_path
   if (!(await fileExists(upload_full_path))) {

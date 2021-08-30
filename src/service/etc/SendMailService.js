@@ -58,14 +58,14 @@ const SendMailServiceClass = class {
     if (!file_list) return await sendmail_model.deleteMail(mail_info.seq);
 
     for (let cnt = 0; cnt < Object.keys(file_list).length; cnt++) {
-      const file_path = `${ServiceConfig.get('media_root')}${file_list[0].file_path}${file_list[0].file_name}`
+      const file_path = `${ServiceConfig.getMediaRoot()}${file_list[0].file_path}${file_list[0].file_name}`
       try {
         await Util.deleteFile(file_path)
       } catch (error) {
         logger.error(this.log_prefix, '[deleteFile]', error)
       }
     }
-    await Util.deleteDirectory(`${ServiceConfig.get('media_root')}${file_list[0].file_path}`);
+    await Util.deleteDirectory(`${ServiceConfig.getMediaRoot()}${file_list[0].file_path}`);
 
     return await sendmail_model.deleteMail(mail_info.seq)
   }
@@ -122,7 +122,7 @@ const SendMailServiceClass = class {
     logger.debug(this.log_prefix, `{ UPLOAD_ROOT: ${this.UPLOAD_ROOT}, FILE_URL_PREFIX: ${ServiceConfig.get('static_storage_prefix')} }`)
     const mail_info = await this.getSendMailOne(DBMySQL, mail_seq)
     const upload_path = `/email/${mail_info.content_id}/`
-    const upload_directory = `${ServiceConfig.get('media_root')}/${upload_path}`
+    const upload_directory = `${ServiceConfig.getMediaRoot()}/${upload_path}`
     logger.debug(this.log_prefix, '[uploadFile]', `{ mail_seq: ${mail_seq} }`, upload_directory)
     if (!(await Util.fileExists(upload_directory))) {
       await Util.createDirectory(upload_directory)
