@@ -1174,6 +1174,7 @@ const OperationServiceClass = class {
     const url_prefix = ServiceConfig.get('static_storage_prefix') + media_path
     const cdn_url = ServiceConfig.get('static_cloud_prefix') + media_path
     const origin_media_directory = ServiceConfig.getMediaRoot() + origin_media_path
+    const origin_media_video_directory = ServiceConfig.getVideoRoot() + origin_media_path
     const origin_url_prefix = ServiceConfig.get('static_storage_prefix') + origin_media_path
     const origin_cdn_url = ServiceConfig.get('static_cloud_prefix') + origin_media_path
     const content_path = operation_info.content_id + '/'
@@ -1184,15 +1185,14 @@ const OperationServiceClass = class {
       'root': media_directory,
       'root_video': video_directory,
       'root_origin': origin_media_directory,
-      'root_origin_video': origin_media_directory,
+      'root_origin_video': origin_media_video_directory,
       'origin': video_directory + 'origin/',
       'video': video_directory + 'video/',
-      'video_origin': origin_media_directory + 'video/',
       'other': media_directory + 'other/',
       'refer': media_directory + 'refer/',
       'image': media_directory + 'image/',
       'temp': media_directory + 'temp/',
-      'file': media_directory + 'file/',
+      'file': video_directory + 'file/',
       'media_path': media_path,
       'media_path_origin': origin_media_path,
       'media_origin': media_path + 'origin/',

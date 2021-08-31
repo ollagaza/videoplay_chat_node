@@ -216,7 +216,7 @@ const SyncServiceClass = class {
     }
     const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
     try {
-      await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/image/move/complete', { operation_seq: operation_info.seq })
+      await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/image/move/complete', { operation_seq: operation_info.seq }, ServiceConfig.getStorageServerVideoRoot(), ServiceConfig.getVideoRoot())
     } catch (error) {
       log.error(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject]', error)
       encoding_info.is_error = true
