@@ -18,7 +18,8 @@ export default class GroupModel extends MySQLModel {
       'group_info.group_name', 'group_info.expire_date AS group_expire_date', 'group_info.is_set_group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
       'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc', 'group_info.group_question', 'group_info.group_message', 'group_info.group_join_way',
-      'group_info.member_count', 'group_info.channel_top_img_path'
+      'group_info.member_count', 'group_info.channel_top_img_path',
+      'group_counts.video_count', 'group_counts.file_count', 'group_counts.project_count', 'group_counts.anno_count', 'group_counts.note_count', 'group_counts.video_comment', 'group_counts.board_comment'
     ]
     this.group_user_list = [
       'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
@@ -163,6 +164,7 @@ export default class GroupModel extends MySQLModel {
     }
     const query = this.database.select(this.group_with_product_select)
     query.from(this.table_name)
+    query.innerJoin('group_counts', 'group_counts.group_seq', `${this.table_name}.seq`)
     query.leftOuterJoin('payment_list', { 'payment_list.code': 'group_info.pay_code' })
     query.where(filter)
     query.first()
