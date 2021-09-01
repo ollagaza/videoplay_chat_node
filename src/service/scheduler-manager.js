@@ -20,11 +20,11 @@ const SchedulerManagerClass = class {
       FolderTotalSizeSyncScheduler.startSchedule()
       ReservationEmailScheduler.startSchedule()
       ThreeMonthsEmailDeleteScheduler.startSchedule()
-      GroupDataCountingScheduler.startSchedule()
       GroupInfoMemberCountSyncScheduler.startSchedule()
       GroupMemberPauseResetScheduler.startSchedule()
       GroupAlarmDeleteScheduler.startSchedule()
       OperationDataCountingScheduler.startSchedule()
+      GroupDataCountingScheduler.startSchedule()
     }
   }
 }
