@@ -105,7 +105,7 @@ export default class OperationStorageModel extends MySQLModel {
 
   updateClipCount = async (storage_seq, clip_count) => {
     return await this.update({ 'seq': storage_seq }, {
-      clip_count: clip_count,
+      clip_count: this.database.raw(clip_count > 0 ? `clip_count + ${clip_count}` : `IF(clip_count > 0, clip_count + ${clip_count}, 0)`),
       'modify_date': this.database.raw('NOW()')
     })
   }

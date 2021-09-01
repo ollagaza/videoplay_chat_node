@@ -14,6 +14,12 @@ export default class GroupCountModel extends MySQLModel {
       following: true,
       video_count: true,
       open_count: true,
+      file_count: true,
+      project_count: true,
+      anno_count: true,
+      note_count: true,
+      video_comment: true,
+      board_comment: true,
     }
   }
 
@@ -39,21 +45,29 @@ export default class GroupCountModel extends MySQLModel {
     return result_map;
   }
 
-  AddCount = async (seq, update_field) => {
+  AddCount = async (seq, update_field, is_group_seq = false) => {
     const params = this.getAddCountQueryParams(update_field, this.field_name_map)
     if (!params) {
       return false
     }
-    return await this.update({ seq }, params)
+    if (is_group_seq) {
+      return await this.update({ group_seq: seq }, params)
+    } else {
+      return await this.update({ seq }, params)
+    }
   }
 
-  MinusCount = async (seq, update_field) => {
+  MinusCount = async (seq, update_field, is_group_seq = false) => {
     const params = this.getMinusCountQueryParams(update_field, this.field_name_map)
     if (!params) {
       return false
     }
 
-    return await this.update({ seq }, params)
+    if (is_group_seq) {
+      return await this.update({ group_seq: seq }, params)
+    } else {
+      return await this.update({ seq }, params)
+    }
   }
 
   getGroupInfoList = async (paging, search_option = null, search_keyword = null, order_field = null, order_type = null) => {

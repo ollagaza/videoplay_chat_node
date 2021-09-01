@@ -229,6 +229,10 @@ operation_clip_schema.statics.findByMemberSeqAndGroupSeq = function (member_seq,
   return this.find({ member_seq: member_seq, group_seq: group_seq }, projection)
 }
 
+operation_clip_schema.statics.getOperationClipCounts = function () {
+  return this.aggregate().group({ _id: '$operation_seq', 'count': { '$sum': 1 } })
+}
+
 const operation_clip_model = mongoose.model('OperationClip', operation_clip_schema)
 
 export const OperationClipModel = operation_clip_model

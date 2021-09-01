@@ -8,6 +8,7 @@ import OperationCommentService from './OperationCommentService'
 import GroupAlarmService from '../group/GroupAlarmService'
 import GroupService from '../group/GroupService'
 import Constants from '../../constants/constants'
+import OperationDataService from "./OperationDataService";
 
 const OperationClipServiceClass = class {
   constructor () {
@@ -16,7 +17,6 @@ const OperationClipServiceClass = class {
 
   updateClipCount = async (operation_info, clip_count) => {
     try {
-      clip_count = Util.parseInt(clip_count, 0)
       await new OperationStorageModel(DBMySQL).updateClipCount(operation_info.storage_seq, clip_count)
     } catch (error) {
       log.error(this.log_prefix, '[updateClipCount]', error)
@@ -28,7 +28,8 @@ const OperationClipServiceClass = class {
     const clip_count = request_body.clip_count
     const create_result = await OperationClipModel.createOperationClip(operation_info, member_info, clip_info)
     if (update_clip_count) {
-      await this.updateClipCount(operation_info, clip_count)
+      await this.updateClipCount(operation_info, 1)
+      await OperationDataService.increaseAnnoCount(DBMySQL, operation_info)
       if (group_member_info) {
         GroupService.onChangeGroupMemberContentCount(group_member_info.group_seq, member_info.seq, 'anno', Constants.UP);
       }
@@ -75,7 +76,8 @@ const OperationClipServiceClass = class {
     const delete_result = await OperationClipModel.deleteById(clip_id)
 
     const clip_count = request_body.clip_count
-    await this.updateClipCount(operation_info, clip_count)
+    await this.updateClipCount(operation_info, -1)
+    await OperationDataService.decreaseAnnoCount(DBMySQL, operation_info)
 
     if (request_body.remove_phase === true) {
       await this.deletePhase(operation_info.seq, request_body.phase_id)
@@ -193,6 +195,10 @@ const OperationClipServiceClass = class {
 
   findByMemberSeqAndGroupSeq = async (member_seq, group_seq) => {
     return await OperationClipModel.findByMemberSeqAndGroupSeq(member_seq, group_seq)
+  }
+
+  getOperationClipCounts = async () => {
+    return await OperationClipModel.getOperationClipCounts()
   }
 }
 

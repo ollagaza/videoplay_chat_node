@@ -168,4 +168,33 @@ export default class OperationDataModel extends MySQLModel {
     }
     return oKnex
   }
+  increaseAnnoCount = async (operation_seq, field_name) => {
+    const filter = {
+      operation_seq
+    }
+    const params = {}
+    params[field_name] = this.database.raw(`${field_name} + 1`)
+    return this.update(filter, params)
+  }
+
+  decreaseAnnoCount = async (operation_seq, field_name) => {
+    const filter = {
+      operation_seq
+    }
+    const params = {}
+    params[field_name] = this.database.raw(`IF(${field_name} > 0, ${field_name} - 1, 0)`)
+    return this.update(filter, params)
+  }
+
+  updateOperationDataCounts = async (seq, field_name, counts, is_operation_seq = true) => {
+    const filter = {}
+    const params = {}
+    if (is_operation_seq) {
+      filter.operation_seq = seq
+    } else {
+      filter.seq = seq
+    }
+    params[field_name] = counts
+    return this.update(filter, params)
+  }
 }

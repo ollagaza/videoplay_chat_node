@@ -335,8 +335,8 @@ routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticate
 
 routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { operation_data_seq, comment_seq } = await getBaseInfo(req, true)
-  const delete_result = await OperationCommentService.deleteComment(operation_data_seq, comment_seq, req.body)
+  const { operation_seq, operation_data_seq, comment_seq } = await getBaseInfo(req, true)
+  const delete_result = await OperationCommentService.deleteComment(operation_seq, operation_data_seq, comment_seq, req.body)
 
   const output = new StdObject()
   output.adds(delete_result)

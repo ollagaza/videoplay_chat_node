@@ -9,6 +9,7 @@ import { OperationClipModel } from '../../database/mongodb/OperationClip'
 import GroupAlarmService from '../group/GroupAlarmService'
 import GroupService from '../group/GroupService'
 import Constants from '../../constants/constants'
+import OperationDataService from "./OperationDataService";
 
 const OperationCommentServiceClass = class {
   constructor () {
@@ -60,6 +61,7 @@ const OperationCommentServiceClass = class {
 
     const comment_seq = await comment_model.createComment(operation_data_seq, create_params)
 
+    await OperationDataService.increaseOperationCommentCount(database, operation_info)
     GroupService.onChangeGroupMemberContentCount(group_member_info.group_seq, member_info.seq, 'vid_comment', Constants.UP);
 
     if (is_reply && parent_seq) {
@@ -107,7 +109,7 @@ const OperationCommentServiceClass = class {
     return await comment_model.changeComment(operation_data_seq, comment_seq, comment)
   }
 
-  deleteComment = async (operation_data_seq, comment_seq, request_body) => {
+  deleteComment = async (operation_seq, operation_data_seq, comment_seq, request_body) => {
     if (!operation_data_seq || !comment_seq) {
       throw new StdObject(-1, '잘못된 요청입니다', 400)
     }
@@ -155,6 +157,7 @@ const OperationCommentServiceClass = class {
     Object.keys(comment_count_map).forEach((member_seq) => {
       if (comment_count_map[member_seq] > 0) {
         GroupService.onChangeGroupMemberContentCount(group_seq, member_seq, 'vid_comment', Constants.DOWN, comment_count_map[member_seq])
+        OperationDataService.decreaseOperationCommentCount(DBMySQL, { group_seq, seq: operation_seq })
       }
     })
 
@@ -311,6 +314,11 @@ const OperationCommentServiceClass = class {
       }
     }
     return res_data;
+  }
+
+  getOperationCommentCounts = async () => {
+    const operation_comment_model = this.getOperationCommentModel(DBMySQL)
+    return operation_comment_model.getOperationCommentCounts()
   }
 }
 

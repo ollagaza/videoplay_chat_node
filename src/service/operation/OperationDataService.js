@@ -13,6 +13,9 @@ import striptags from 'striptags'
 import HashtagService from './HashtagService'
 import ServiceConfig from '../service-config'
 import logger from "../../libs/logger";
+import GroupCountModel from "../../database/mysql/group/GroupCountsModel";
+import OperationClipService from "./OperationClipService";
+import OperationCommentService from "./OperationCommentService";
 
 const OperationDataServiceClass = class {
   constructor () {
@@ -26,6 +29,13 @@ const OperationDataServiceClass = class {
       return new OperationDataModel(database)
     }
     return new OperationDataModel(DBMySQL)
+  }
+
+  getGroupCountsModel = (database) => {
+    if (database) {
+      return new GroupCountModel(database)
+    }
+    return new GroupCountModel(DBMySQL)
   }
 
   getOperationData = async (database, operation_seq) => {
@@ -326,6 +336,49 @@ const OperationDataServiceClass = class {
     const operation_data_info = { hospital }
     const operation_data_model = this.getOperationDataModel(database)
     await operation_data_model.updateOperationDataByGroupSeq(group_seq, operation_data_info)
+  }
+
+  increaseAnnoCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.increaseAnnoCount(operation_info.seq, 'anno_count')
+    const group_count_field_name = ['anno_count']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.AddCount(operation_info.group_seq, group_count_field_name, true)
+  }
+  decreaseAnnoCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.decreaseAnnoCount(operation_info.seq, 'anno_count')
+    const group_count_field_name = ['anno_count']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.MinusCount(operation_info.group_seq, group_count_field_name, true)
+  }
+
+  increaseOperationCommentCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.increaseAnnoCount(operation_info.seq, 'comment_count')
+    const group_count_field_name = ['video_comment']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.AddCount(operation_info.group_seq, group_count_field_name, true)
+  }
+  decreaseOperationCommentCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.decreaseAnnoCount(operation_info.seq, 'comment_count')
+    const group_count_field_name = ['video_comment']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.MinusCount(operation_info.group_seq, group_count_field_name, true)
+  }
+  updateOperationDataCounts = async () => {
+    const operation_data_model = this.getOperationDataModel(DBMySQL)
+    const operation_clip_count = await OperationClipService.getOperationClipCounts()
+    for (let cnt = 0; cnt < operation_clip_count.length; cnt++) {
+      const clip_item = operation_clip_count[cnt]
+      await operation_data_model.updateOperationDataCounts(clip_item._id, 'anno_count', clip_item.count)
+    }
+    const operation_comment_count = await OperationCommentService.getOperationCommentCounts()
+    for (let cnt = 0; cnt < operation_comment_count.length; cnt++) {
+      const comment_count = operation_comment_count[cnt]
+      await operation_data_model.updateOperationDataCounts(comment_count.operation_data_seq, 'comment_count', comment_count.count, false)
+    }
   }
 }
 

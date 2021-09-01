@@ -14,7 +14,7 @@ const join_select = [
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count',
   'operation_storage.trans_video_size', 'operation_storage.trans_video_count', 'operation_storage.operation_file_size', 'operation_storage.operation_file_count',
   'operation_storage.refer_file_size', 'operation_storage.refer_file_count', 'operation_storage.origin_video_size',
-  'operation_data.video_download', 'operation_data.file_download', 'operation_data.total_time', 'operation_data.thumbnail'
+  'operation_data.video_download', 'operation_data.file_download', 'operation_data.total_time', 'operation_data.thumbnail', 'operation_data.anno_count', 'operation_data.comment_count'
 ]
 const join_trash_select = _.concat(join_select, ['delete_member.user_name as delete_user_name', 'delete_member.user_nickname as delete_user_nickname'])
 const join_admin_select = _.concat(join_select, ['group_info.group_name'])
