@@ -21,7 +21,7 @@ class FolderTotalSizeSyncSchedulerClass {
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.syncFolderTotalSize()
+    // this.syncFolderTotalSize()
   }
 
   stopSchedule = () => {

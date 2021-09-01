@@ -19,7 +19,7 @@ class ReservationEmailSchedulerClass {
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.sendReservationEmail()
+    // this.sendReservationEmail()
   }
 
   stopSchedule = () => {

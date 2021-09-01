@@ -19,7 +19,7 @@ class ThreeMonthsEmailDeleteSchedulerClass {
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.deleteEmailBeforeThreeMonth()
+    // this.deleteEmailBeforeThreeMonth()
   }
 
   stopSchedule = () => {

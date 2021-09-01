@@ -22,7 +22,7 @@ class GroupAlarmDeleteSchedulerClass {
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.deleteOldGroupAlarm()
+    // this.deleteOldGroupAlarm()
   }
 
   stopSchedule = () => {

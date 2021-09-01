@@ -20,7 +20,7 @@ class GroupInfoMemberCountSyncSchedulerClass {
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.syncGroupMemberCount()
+    // this.syncGroupMemberCount()
   }
 
   stopSchedule = () => {
