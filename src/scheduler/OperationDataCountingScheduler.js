@@ -20,7 +20,7 @@ class OperationDataCountingSchedulerClass {
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.syncOperationDataCounting()
+    // this.syncOperationDataCounting()
   }
 
   stopSchedule = () => {
