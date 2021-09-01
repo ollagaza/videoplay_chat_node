@@ -170,6 +170,7 @@ export default class OperationModel extends MySQLModel {
       query.where((builder) => {
         builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)
         builder.orWhere('operation.operation_date', 'like', `%${filter_params.search_keyword}%`)
+        builder.orWhere('operation.seq', filter_params.search_keyword)
         if (is_admin) {
           builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
           builder.orWhere('member.user_id', 'like', `%${filter_params.search_keyword}%`)
