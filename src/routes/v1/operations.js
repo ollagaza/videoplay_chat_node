@@ -404,11 +404,9 @@ routes.get('/clips/:member_seq(\\d+)?', Auth.isAuthenticated(Role.DEFAULT), Wrap
 }))
 
 routes.get('/:operation_seq(\\d+)/active', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  const { group_seq, group_grade_number, is_group_admin } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq
-  const is_active = await OperationService.isOperationActive(operation_seq)
-
-  const output = new StdObject()
-  output.add('is_active', is_active)
+  const output = await OperationService.isOperationActive(operation_seq, group_seq, is_group_admin, group_grade_number)
   res.json(output)
 }))
 

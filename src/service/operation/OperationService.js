@@ -1274,9 +1274,36 @@ const OperationServiceClass = class {
     return OperationFolderService.getFolderGradeNumber(query_result.access_type)
   }
 
-  isOperationActive = async (operation_seq) => {
+  isOperationActive = async (operation_seq, group_seq, is_group_admin, group_grade_number) => {
     const operation_info = await this.getOperationInfoNoJoin(null, operation_seq, true)
-    return operation_info && Util.parseInt(operation_info.seq, 0) === Util.parseInt(operation_seq, 0) && operation_info.status === 'Y'
+    if (!operation_info || Util.parseInt(operation_info.seq, 0) !== Util.parseInt(operation_seq, 0)) {
+      return new StdObject(51, '수술정보가 존재하지 않습니다.')
+    }
+    if (operation_info.status === 'T') {
+      return new StdObject(52, '휴지통에 있는 수술은 확인이 불가능 합니다.')
+    }
+    if (operation_info.status === 'D') {
+      return new StdObject(53, '삭제된 수술입니다.')
+    }
+    const folder_seq = operation_info.folder_seq
+    if (is_group_admin || !folder_seq) {
+      return new StdObject()
+    }
+    const folder_info = await OperationFolderService.getFolderInfo(null, group_seq, folder_seq);
+    const folder_grade_num = OperationFolderService.getFolderGradeNumber(folder_info.access_type)
+    let is_able_access_folder = false
+    if (folder_info.is_access_way === 1) {
+      if (folder_info.access_list) {
+        const access_list = JSON.parse(folder_info.access_list)
+        is_able_access_folder = access_list.read[group_grade_number]
+      }
+    } else {
+      is_able_access_folder = group_grade_number >= folder_grade_num
+    }
+    if (!is_able_access_folder) {
+      return new StdObject(54, '폴더 접근 권한이 없습니다.')
+    }
+    return new StdObject()
   }
 
   isOperationAbleRestore = async (operation_seq, group_seq, group_grade_number, is_group_admin) => {
