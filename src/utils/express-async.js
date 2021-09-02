@@ -2,6 +2,7 @@ import StdObject from '../wrapper/std-object'
 import Config from '../config/config'
 import ServiceErrorModel from '../database/mysql/service-error-model'
 import DBMySQL from '../database/knex-mysql'
+import logger from '../libs/logger'
 
 const IS_DEV = Config.isDev()
 
@@ -10,6 +11,8 @@ export default (fn) => {
     const [req, res, next] = args
 
     return fn(...args).catch((error) => {
+      logger.error('[ApiExecuteError]', error)
+
       let error_object = null
       // 일반적인 에러
       if (error instanceof StdObject) {
