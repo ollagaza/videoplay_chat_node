@@ -259,4 +259,26 @@ export default class OperationFolderModel extends MySQLModel {
   getGroupFolderByDepthZero = async (group_seq) => {
     return await this.find({ group_seq, status: 'Y', depth: 0 }, this.selectable_fields, { name: 'sort', direction: 'asc' })
   }
+
+  updateFolderCounts = async (filter, params) => {
+    return this.update(filter, params)
+  }
+  updateCounts = async (folder_seq, mode, is_crease = true) => {
+    const params = {}
+    if (mode === 'operation') {
+      if (is_crease) {
+        params.video_count = this.database.raw('video_count + 1')
+      } else {
+        params.video_count = this.database.raw('IF(video_count > 0, video_count - 1, 0)')
+      }
+    }
+    if (mode === 'file') {
+      if (is_crease) {
+        params.file_count = this.database.raw('file_count + 1')
+      } else {
+        params.file_count = this.database.raw('IF(file_count > 0, file_count - 1, 0)')
+      }
+    }
+    return this.update({ seq: folder_seq }, params)
+  }
 }

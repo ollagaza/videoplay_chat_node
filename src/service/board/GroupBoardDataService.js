@@ -10,6 +10,7 @@ import logger from "../../libs/logger";
 import GroupService from '../group/GroupService'
 import Constants from '../../constants/constants'
 import NaverObjectStorageService from "../storage/naver-object-storage-service";
+import GroupCountModel from "../../database/mysql/group/GroupCountsModel";
 
 const GroupBoardDataServiceClass = class {
   constructor() {
@@ -136,6 +137,8 @@ const GroupBoardDataServiceClass = class {
         }
       })
       this.incrementBoardCommentCount(comment_data.board_data_seq)
+      const group_count_field_name = ['board_comment']
+      await new GroupCountModel(DBMySQL).AddCount(comment_data.group_seq, group_count_field_name, true)
 
       GroupService.onChangeGroupMemberContentCount(comment_data.group_seq, comment_data.member_seq, 'board_comment', Constants.UP)
     }
@@ -195,6 +198,8 @@ const GroupBoardDataServiceClass = class {
 
     if (board_data.status !== 'T') {
       GroupService.onChangeGroupMemberContentCount(board_data.group_seq, board_data.member_seq, 'board_cnt', Constants.UP)
+      const group_count_field_name = ['note_count']
+      await new GroupCountModel(DBMySQL).AddCount(board_data.group_seq, group_count_field_name, true)
     }
     return result
   }
@@ -234,6 +239,8 @@ const GroupBoardDataServiceClass = class {
     const result = await model.DeleteComment(delete_status, comment_seq)
 
     GroupService.onChangeGroupMemberContentCount(comment_info.group_seq, comment_info.member_seq, 'board_comment', Constants.DOWN, 1)
+    const group_count_field_name = ['board_comment']
+    await new GroupCountModel(DBMySQL).MinusCount(comment_info.group_seq, group_count_field_name, true)
 
     const board_model = this.getGroupBoardDataModel(database)
     await board_model.decrementBoardCommentCnt(board_data_seq, 1)
@@ -251,6 +258,8 @@ const GroupBoardDataServiceClass = class {
       this.decreaseCommentCount(comment_count_list, target_info.group_seq)
       await model.DeleteBoardData(board_seq)
       await model.updateParentDataSubject(board_seq)
+      const group_count_field_name = ['note_count']
+      await new GroupCountModel(DBMySQL).MinusCount(target_info.group_seq, group_count_field_name, true)
     } else {
       await model.DeleteTempBoardData(board_seq)
     }

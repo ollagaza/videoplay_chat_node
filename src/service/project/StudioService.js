@@ -17,6 +17,7 @@ import TranscoderSyncService from '../sync/TranscoderSyncService'
 import GroupSocketService from "../socket/GroupSocketService"
 import AdminSocketService from "../socket/AdminSocketService"
 import OperationModel from '../../database/mysql/operation/OperationModel'
+import GroupCountModel from "../../database/mysql/group/GroupCountsModel";
 
 const StudioServiceClass = class {
   constructor () {
@@ -61,7 +62,8 @@ const StudioServiceClass = class {
     fields.subtitle_list.require = true
 
     const payload = Util.getPayload(data, fields)
-
+    const group_count_field_name = ['project_count']
+    await new GroupCountModel(DBMySQL).AddCount(group_member_info.group_seq, group_count_field_name, true)
     return await VideoProjectModel.createVideoProject(payload)
   }
 
@@ -99,6 +101,8 @@ const StudioServiceClass = class {
   deleteVideoProject = async (group_seq, project_seq) => {
     const project_info = await VideoProjectModel.deleteById(group_seq, project_seq)
     this.deleteProjectFiles(project_info)
+    const group_count_field_name = ['project_count']
+    await new GroupCountModel(DBMySQL).MinusCount(group_seq, group_count_field_name, true)
     return project_info
   }
 

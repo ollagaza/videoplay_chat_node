@@ -349,6 +349,26 @@ const OperationFolderServiceClass = class {
 
     return group_folder_list
   }
+  updateContentCounts = async (database, mode, counts) => {
+    const folder_model = this.getOperationFolderModel(database)
+    for (let cnt = 0; cnt < counts.length; cnt++) {
+      const item = counts[cnt]
+      const filter = {
+        seq: item.folder_seq
+      }
+      const params = {}
+      params[mode] = item.count
+      await folder_model.updateFolderCounts(filter, params)
+    }
+  }
+  increaseCount = async (database, folder_seq, mode) => {
+    const folder_model = this.getOperationFolderModel(database)
+    return folder_model.updateCounts(folder_seq, mode)
+  }
+  decreaseCount = async (database, folder_seq, mode) => {
+    const folder_model = this.getOperationFolderModel(database)
+    return folder_model.updateCounts(folder_seq, mode, false)
+  }
 }
 
 const operation_folder_service = new OperationFolderServiceClass()

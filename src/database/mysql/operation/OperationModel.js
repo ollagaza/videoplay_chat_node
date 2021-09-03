@@ -522,4 +522,18 @@ export default class OperationModel extends MySQLModel {
       .where('operation.seq', operation_seq)
       .first()
   }
+  getOperationVideoCountWithFolder = async () => {
+    return this.database.select(['folder_seq', this.database.raw('count(*) as count')])
+      .from('operation')
+      .where('mode', 'operation')
+      .andWhere('status', 'Y')
+      .groupBy('folder_seq')
+  }
+  getOperationFileCountWithFolder = async () => {
+    return this.database.select(['folder_seq', this.database.raw('count(*) as count')])
+      .from('operation')
+      .where('mode', 'file')
+      .andWhere('status', 'Y')
+      .groupBy('folder_seq')
+  }
 }

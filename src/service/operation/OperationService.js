@@ -34,6 +34,7 @@ import Constants from '../../constants/constants'
 import HashtagService from './HashtagService'
 import TranscoderSyncService from '../sync/TranscoderSyncService'
 import DynamicService from "../dynamic/DynamicService";
+import GroupCountModel from "../../database/mysql/group/GroupCountsModel";
 
 const OperationServiceClass = class {
   constructor () {
@@ -334,6 +335,11 @@ const OperationServiceClass = class {
         result.success = true
         await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
         GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, operation_info.mode === 'operation' ? 'vid' : 'file', Constants.UP, 1)
+        if (!Util.isEmpty(operation_info.folder_seq)) {
+          await OperationFolderService.increaseCount(DBMySQL, operation_info.folder_seq, operation_info.mode)
+        }
+        const group_count_field_name = [operation_info.mode === 'operation' ? 'video_count' : 'file_count']
+        await new GroupCountModel(DBMySQL).AddCount(operation_info.group_seq, group_count_field_name, true)
       }
     } catch (e) {
       log.error(this.log_prefix, '[copyOperationOne]', origin_operation_seq, e, result)
@@ -798,6 +804,11 @@ const OperationServiceClass = class {
     (
       async () => {
         try {
+          if (!Util.isEmpty(operation_info.folder_seq)) {
+            await OperationFolderService.increaseCount(DBMySQL, operation_info.folder_seq, operation_info.mode)
+          }
+          const group_count_field_name = [operation_info.mode === 'operation' ? 'video_count' : 'file_count']
+          await new GroupCountModel(DBMySQL).AddCount(operation_info.group_seq, group_count_field_name, true)
 
           const alarm_data = {
             operation_seq: operation_info.seq,
@@ -1101,8 +1112,18 @@ const OperationServiceClass = class {
 
         if (is_restore) {
           GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, operation_info.mode === 'operation' ? 'vid' : 'file', Constants.UP)
+          if (!Util.isEmpty(operation_info.folder_seq)) {
+            await OperationFolderService.increaseCount(DBMySQL, operation_info.folder_seq, operation_info.mode)
+          }
+          const group_count_field_name = [operation_info.mode === 'operation' ? 'video_count' : 'file_count']
+          await new GroupCountModel(DBMySQL).AddCount(operation_info.group_seq, group_count_field_name, true)
         } else {
           GroupService.onChangeGroupMemberContentCount(group_seq, operation_info.member_seq, operation_info.mode === 'operation' ? 'vid' : 'file', Constants.DOWN)
+          if (!Util.isEmpty(operation_info.folder_seq)) {
+            await OperationFolderService.decreaseCount(DBMySQL, operation_info.folder_seq, operation_info.mode)
+          }
+          const group_count_field_name = [operation_info.mode === 'operation' ? 'video_count' : 'file_count']
+          await new GroupCountModel(DBMySQL).MinusCount(operation_info.group_seq, group_count_field_name, true)
         }
 
         if (is_restore && restore_folder_info && restore_folder_info.seq) {
@@ -1138,9 +1159,14 @@ const OperationServiceClass = class {
         if (operation_info.folder_seq) {
           old_folder_map[operation_info.folder_seq] = true
         }
+        if (!Util.isEmpty(folder_info.seq)) {
+          await OperationFolderService.increaseCount(DBMySQL, folder_info.seq, operation_info.mode)
+          await OperationFolderService.decreaseCount(DBMySQL, operation_info.folder_seq, operation_info.mode)
+        }
       }
 
       await model.moveOperationFolder(operation_seq_list, folder_info ? folder_info.seq : null)
+
       if (folder_info) {
         await OperationFolderService.onChangeFolderSize(group_seq, folder_info.seq)
       }
@@ -1687,6 +1713,13 @@ const OperationServiceClass = class {
     }
     TranscoderSyncService.updateTranscodingComplete(operation_info, Util.getRandomId(), video_file_name, smil_file_name, null)
     return new StdObject(0, '인코딩 완료 후 처리가 시작되었습니다.')
+  }
+
+  getOperationModeCountWithFolder = async () => {
+    const operation_model = this.getOperationModel(DBMySQL)
+    const video_counts = await operation_model.getOperationVideoCountWithFolder()
+    const file_counts = await operation_model.getOperationFileCountWithFolder()
+    return { video_counts, file_counts }
   }
 }
 

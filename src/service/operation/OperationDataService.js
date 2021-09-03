@@ -16,6 +16,7 @@ import logger from "../../libs/logger";
 import GroupCountModel from "../../database/mysql/group/GroupCountsModel";
 import OperationClipService from "./OperationClipService";
 import OperationCommentService from "./OperationCommentService";
+import OperationFolderService from "./OperationFolderService";
 
 const OperationDataServiceClass = class {
   constructor () {
