@@ -109,7 +109,7 @@ const OperationFolderServiceClass = class {
   createDefaultOperationFolder = async (database, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo();
-    folder_info.folder_name = '기본폴더';
+    folder_info.folder_name = 'Folder';
     folder_info.depth = 0
     folder_info.parent_folder_list = []
     folder_info.group_seq = group_seq
