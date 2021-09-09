@@ -1074,7 +1074,8 @@ const OperationServiceClass = class {
       }
 
       if (options.medical_info) {
-        const medical_info = await MongoDataService.getMedicalInfo()
+        const medical_info_lang = options.medical_info_lang ? options.medical_info_lang : 'kor';
+        const medical_info = await MongoDataService.getMedicalInfo(medical_info_lang)
         output.add('medical_info', medical_info)
       }
 
