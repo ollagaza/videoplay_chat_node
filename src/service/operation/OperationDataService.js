@@ -13,6 +13,10 @@ import striptags from 'striptags'
 import HashtagService from './HashtagService'
 import ServiceConfig from '../service-config'
 import logger from "../../libs/logger";
+import GroupCountModel from "../../database/mysql/group/GroupCountsModel";
+import OperationClipService from "./OperationClipService";
+import OperationCommentService from "./OperationCommentService";
+import OperationFolderService from "./OperationFolderService";
 
 const OperationDataServiceClass = class {
   constructor () {
@@ -26,6 +30,13 @@ const OperationDataServiceClass = class {
       return new OperationDataModel(database)
     }
     return new OperationDataModel(DBMySQL)
+  }
+
+  getGroupCountsModel = (database) => {
+    if (database) {
+      return new GroupCountModel(database)
+    }
+    return new GroupCountModel(DBMySQL)
   }
 
   getOperationData = async (database, operation_seq) => {
@@ -99,9 +110,8 @@ const OperationDataServiceClass = class {
       operation_data_info.is_open_video = modify_operation_data.is_open_video ? 1 : 0
     }
 
-    const replace_regex = new RegExp(operation_info.origin_content_id, 'gi')
     if (operation_info.mode !== OperationService.MODE_FILE && operation_data_info.thumbnail) {
-      operation_data_info.thumbnail = operation_data_info.thumbnail.replace(replace_regex, operation_info.content_id)
+      operation_data_info.thumbnail = operation_data_info.thumbnail.replace(operation_info.origin_media_path, operation_info.media_path)
     }
 
     await this.setOperationDataInfo(operation_data_info, operation_info)
@@ -113,7 +123,7 @@ const OperationDataServiceClass = class {
     }
 
     this.updateHashtag(operation_data_seq, operation_data_info.group_seq, hashtag)
-    await this.updateCount(operation_data_info.group_seq, operation_data_info)
+    await this.updateCount(operation_data_info.group_seq, operation_info, operation_data_info)
 
     return { operation_data_seq, origin_data_seq }
   }
@@ -179,11 +189,7 @@ const OperationDataServiceClass = class {
 
   setThumbnailAuto = async (operation_seq, thumbnail_path) => {
     const operation_data_model = this.getOperationDataModel()
-    const operation_data = await operation_data_model.getOperationDataByOperationSeq(operation_seq)
-    if (!operation_data || operation_data.isEmpty()) {
-      return null
-    }
-    await operation_data_model.updateThumbnailImageNotExists(operation_data.seq, thumbnail_path)
+    await operation_data_model.updateThumbnailImageNotExists(operation_seq, thumbnail_path)
   }
 
   onUpdateComplete = async (operation_seq) => {
@@ -203,31 +209,31 @@ const OperationDataServiceClass = class {
     await operation_data_model.updateOperationData(operation_seq, operation_data_info)
     // const operation_info = await OperationService.getOperationInfoNoAuth(null, operation_seq)
 
-    await this.updateCount(group_seq, operation_data)
+    await this.updateCount(group_seq, operation_info, operation_data)
   }
 
-  updateCount = async (group_seq, operation_data) => {
-    const group_count_field_name = ['video_count']
-    const content_count_field_name = [ContentCountService.VIDEO_COUNT]
-    if (operation_data.type === 'M') {
-      group_count_field_name.push('mentoring')
-      content_count_field_name.push(ContentCountService.MENTORING_COUNT)
-    } else if (operation_data.type === 'C') {
-      group_count_field_name.push('community')
-      content_count_field_name.push(ContentCountService.COMMUNITY_COUNT)
-    }
+  updateCount = async (group_seq, operation_info, operation_data) => {
+    const group_count_field_name = [operation_info.mode === OperationService.MODE_OPERATION ? 'video_count' : 'file_count']
+    // const content_count_field_name = [ContentCountService.VIDEO_COUNT]
+    // if (operation_data.type === 'M') {
+    //   group_count_field_name.push('mentoring')
+    //   content_count_field_name.push(ContentCountService.MENTORING_COUNT)
+    // } else if (operation_data.type === 'C') {
+    //   group_count_field_name.push('community')
+    //   content_count_field_name.push(ContentCountService.COMMUNITY_COUNT)
+    // }
     if (operation_data.is_open_video) {
       group_count_field_name.push('open_count')
     }
     await GroupService.UpdateGroupInfoAddCnt(null, group_seq, group_count_field_name)
 
-    if (operation_data.category_list) {
-      for (let i = 0; i < operation_data.category_list.length; i++) {
-        const category_code = operation_data.category_list[i]
-        await ContentCountService.addContentCount(null, category_code, group_seq, content_count_field_name)
-      }
-      await ContentCountService.updateAllCount(null, group_seq)
-    }
+    // if (operation_data.category_list) {
+    //   for (let i = 0; i < operation_data.category_list.length; i++) {
+    //     const category_code = operation_data.category_list[i]
+    //     await ContentCountService.addContentCount(null, category_code, group_seq, content_count_field_name)
+    //   }
+    //   await ContentCountService.updateAllCount(null, group_seq)
+    // }
   }
 
   setOperationDataInfo = async (operation_data_info, operation_info) => {
@@ -331,6 +337,49 @@ const OperationDataServiceClass = class {
     const operation_data_info = { hospital }
     const operation_data_model = this.getOperationDataModel(database)
     await operation_data_model.updateOperationDataByGroupSeq(group_seq, operation_data_info)
+  }
+
+  increaseAnnoCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.increaseAnnoCount(operation_info.seq, 'anno_count')
+    const group_count_field_name = ['anno_count']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.AddCount(operation_info.group_seq, group_count_field_name, true)
+  }
+  decreaseAnnoCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.decreaseAnnoCount(operation_info.seq, 'anno_count')
+    const group_count_field_name = ['anno_count']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.MinusCount(operation_info.group_seq, group_count_field_name, true)
+  }
+
+  increaseOperationCommentCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.increaseAnnoCount(operation_info.seq, 'comment_count')
+    const group_count_field_name = ['video_comment']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.AddCount(operation_info.group_seq, group_count_field_name, true)
+  }
+  decreaseOperationCommentCount = async (database, operation_info) => {
+    const operation_data_model = this.getOperationDataModel(database)
+    await operation_data_model.decreaseAnnoCount(operation_info.seq, 'comment_count')
+    const group_count_field_name = ['video_comment']
+    const group_counts_model = this.getGroupCountsModel(database)
+    await group_counts_model.MinusCount(operation_info.group_seq, group_count_field_name, true)
+  }
+  updateOperationDataCounts = async () => {
+    const operation_data_model = this.getOperationDataModel(DBMySQL)
+    const operation_clip_count = await OperationClipService.getOperationClipCounts()
+    for (let cnt = 0; cnt < operation_clip_count.length; cnt++) {
+      const clip_item = operation_clip_count[cnt]
+      await operation_data_model.updateOperationDataCounts(clip_item._id, 'anno_count', clip_item.count)
+    }
+    const operation_comment_count = await OperationCommentService.getOperationCommentCounts()
+    for (let cnt = 0; cnt < operation_comment_count.length; cnt++) {
+      const comment_count = operation_comment_count[cnt]
+      await operation_data_model.updateOperationDataCounts(comment_count.operation_data_seq, 'comment_count', comment_count.count, false)
+    }
   }
 }
 

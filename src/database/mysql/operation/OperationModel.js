@@ -14,7 +14,7 @@ const join_select = [
   'operation_storage.index2_file_count', 'operation_storage.origin_video_count',
   'operation_storage.trans_video_size', 'operation_storage.trans_video_count', 'operation_storage.operation_file_size', 'operation_storage.operation_file_count',
   'operation_storage.refer_file_size', 'operation_storage.refer_file_count', 'operation_storage.origin_video_size',
-  'operation_data.video_download', 'operation_data.file_download', 'operation_data.total_time', 'operation_data.thumbnail'
+  'operation_data.video_download', 'operation_data.file_download', 'operation_data.total_time', 'operation_data.thumbnail', 'operation_data.anno_count', 'operation_data.comment_count'
 ]
 const join_trash_select = _.concat(join_select, ['delete_member.user_name as delete_user_name', 'delete_member.user_nickname as delete_user_nickname'])
 const join_admin_select = _.concat(join_select, ['group_info.group_name'])
@@ -170,6 +170,7 @@ export default class OperationModel extends MySQLModel {
       query.where((builder) => {
         builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)
         builder.orWhere('operation.operation_date', 'like', `%${filter_params.search_keyword}%`)
+        builder.orWhere('operation.seq', 'like', `%${filter_params.search_keyword}%`)
         if (is_admin) {
           builder.orWhere('member.user_name', 'like', `%${filter_params.search_keyword}%`)
           builder.orWhere('member.user_id', 'like', `%${filter_params.search_keyword}%`)
@@ -334,9 +335,11 @@ export default class OperationModel extends MySQLModel {
     })
   }
 
-  updateAnalysisStatus = async (operation_seq, status) => {
+  updateAnalysisStatus = async (operation_seq, status, encoding_info = null) => {
+    if (encoding_info && typeof encoding_info === 'object') encoding_info = JSON.stringify(encoding_info)
     return await this.update({ 'seq': operation_seq }, {
       analysis_status: status ? status.toUpperCase() : 'N',
+      encoding_info,
       'modify_date': this.database.raw('NOW()')
     })
   }
@@ -508,9 +511,6 @@ export default class OperationModel extends MySQLModel {
     }
     return this.find(params)
   }
-  getTargetListByStatusD = async (group_seq) => {
-    return this.find({ group_seq, 'status': 'D' })
-  }
   getOperationMode = async (operation_seq) => {
     return this.findOne({ seq: operation_seq}, ['mode'])
   }
@@ -521,5 +521,19 @@ export default class OperationModel extends MySQLModel {
       .leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
       .where('operation.seq', operation_seq)
       .first()
+  }
+  getOperationVideoCountWithFolder = async () => {
+    return this.database.select(['folder_seq', this.database.raw('count(*) as count')])
+      .from('operation')
+      .where('mode', 'operation')
+      .andWhere('status', 'Y')
+      .groupBy('folder_seq')
+  }
+  getOperationFileCountWithFolder = async () => {
+    return this.database.select(['folder_seq', this.database.raw('count(*) as count')])
+      .from('operation')
+      .where('mode', 'file')
+      .andWhere('status', 'Y')
+      .groupBy('folder_seq')
   }
 }

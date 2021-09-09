@@ -7,6 +7,7 @@ import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler"
 import GroupInfoMemberCountSyncScheduler from "../scheduler/GroupInfoMemberCountSyncScheduler"
 import GroupMemberPauseResetScheduler from "../scheduler/GroupMemberPauseResetScheduler"
 import GroupAlarmDeleteScheduler from '../scheduler/GroupAlarmDeleteScheduler'
+import OperationDataCountingScheduler from "../scheduler/OperationDataCountingScheduler";
 
 const SchedulerManagerClass = class {
   constructor() {
@@ -19,10 +20,11 @@ const SchedulerManagerClass = class {
       FolderTotalSizeSyncScheduler.startSchedule()
       ReservationEmailScheduler.startSchedule()
       ThreeMonthsEmailDeleteScheduler.startSchedule()
-      GroupDataCountingScheduler.startSchedule()
       GroupInfoMemberCountSyncScheduler.startSchedule()
       GroupMemberPauseResetScheduler.startSchedule()
       GroupAlarmDeleteScheduler.startSchedule()
+      OperationDataCountingScheduler.startSchedule()
+      GroupDataCountingScheduler.startSchedule()
     }
   }
 }

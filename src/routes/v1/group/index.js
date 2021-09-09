@@ -706,4 +706,14 @@ routes.get('/:group_seq(\\d+)/member/grade/count/:grade', Auth.isAuthenticated(R
   res.json(output)
 }))
 
+routes.get('/:group_seq(\\d+)/counts', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const group_seq = req.params.group_seq
+  const group_count = await GroupService.getGroupCountsInfo(DBMySQL, group_seq)
+
+  const output = new StdObject()
+  output.add('group_count', group_count)
+  res.json(output)
+}))
+
 export default routes

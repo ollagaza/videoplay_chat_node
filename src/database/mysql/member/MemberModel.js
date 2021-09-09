@@ -68,7 +68,7 @@ export default class MemberModel extends MySQLModel {
     member.password = this.encryptPassword(member_info.password)
     member.user_media_path = `/user/${member.user_id}`
 
-    const media_root = ServiceConfig.get('media_root')
+    const media_root = ServiceConfig.getMediaRoot()
 
     if (!(await Util.fileExists(media_root + member.user_media_path))) {
       await Util.createDirectory(media_root + member.user_media_path)

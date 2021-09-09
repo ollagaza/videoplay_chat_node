@@ -1,11 +1,12 @@
 import scheduler from 'node-schedule'
 import log from '../libs/logger'
 import GroupChannelHomeService from "../service/group/GroupChannelHomeService";
+import OperationDataService from "../service/operation/OperationDataService";
 
-class GroupDataCountingSchedulerClass {
+class OperationDataCountingSchedulerClass {
   constructor () {
     this.current_job = null
-    this.log_prefix = '[GroupDataCountingScheduler]'
+    this.log_prefix = '[OperationDataCountingSchedulerClass]'
   }
 
   startSchedule = () => {
@@ -13,13 +14,13 @@ class GroupDataCountingSchedulerClass {
       if (this.current_job) {
         log.debug(this.log_prefix, '[startSchedule] cancel. current_job is not null')
       } else {
-        this.current_job = scheduler.scheduleJob('0 15 0 * * *', this.syncGroupDataCounting)
+        this.current_job = scheduler.scheduleJob('0 0 4 * * Sun', this.syncOperationDataCounting)
         log.debug(this.log_prefix, '[startSchedule]')
       }
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.syncGroupDataCounting()
+    // this.syncOperationDataCounting()
   }
 
   stopSchedule = () => {
@@ -34,22 +35,21 @@ class GroupDataCountingSchedulerClass {
     this.current_job = null
   }
 
-  syncGroupDataCounting = () => {
-    log.debug(this.log_prefix, '[syncGroupDataCounting]', 'start');
+  syncOperationDataCounting = () => {
+    log.debug(this.log_prefix, '[syncOperationDataCounting]', 'start');
     (
       async () => {
         try {
-          await GroupChannelHomeService.GroupDataCounting()
-          await GroupChannelHomeService.updateGroupCounts()
-          log.debug(this.log_prefix, '[syncGroupDataCounting]', 'end');
+          await OperationDataService.updateOperationDataCounts()
+          log.debug(this.log_prefix, '[syncOperationDataCounting]', 'end');
         } catch (error) {
-          log.error(this.log_prefix, '[syncGroupDataCounting]', error)
+          log.error(this.log_prefix, '[syncOperationDataCounting]', error)
         }
       }
     )()
   }
 }
 
-const GroupDataCountingScheduler = new GroupDataCountingSchedulerClass()
+const OperationDataCountingScheduler = new OperationDataCountingSchedulerClass()
 
-export default GroupDataCountingScheduler
+export default OperationDataCountingScheduler

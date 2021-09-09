@@ -25,4 +25,12 @@ routes.put('/createEnterprise', Wrap(async (req, res) => {
   res.json(output)
 }))
 
+routes.get('/', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const channel_list = await GroupService.getGroupInfoList(DBMySQL, req)
+  output.adds(channel_list)
+  res.json(output)
+}))
+
 export default routes

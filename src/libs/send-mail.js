@@ -31,7 +31,7 @@ export default class SendMail {
     const upload_form_data = new FormData();
 
     for (let cnt = 0; cnt < Object.keys(file_list).length; cnt++) {
-      const full_path = `${ServiceConfig.get('media_root')}${file_list[cnt].file_path}${file_list[cnt].file_name}`
+      const full_path = `${ServiceConfig.getMediaRoot()}${file_list[cnt].file_path}${file_list[cnt].file_name}`
       const file = await fs.createReadStream(full_path)
       upload_form_data.append('fileList', file);
     }

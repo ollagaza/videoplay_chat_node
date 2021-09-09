@@ -60,14 +60,14 @@ routes.get('/:member_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(asy
   res.json(output)
 }))
 
-routes.post('/', Util.common_path_upload.fields([{ name: 'profile_image' }, { name: 'licens_image' }]), Wrap(async (req, res) => {
+routes.post('/', Util.common_path_upload.fields([{ name: 'profile_image' }, { name: 'license_image' }]), Wrap(async (req, res) => {
   const output = new StdObject()
   const params = JSON.parse(req.body.params)
 
   _.forEach(req.files, (value) => {
     if (value[0].fieldname === 'profile_image') {
       params.user_info.profile_image_path = '/common/' + value[0].filename
-    } else if (value[0].fieldname === 'licens_image') {
+    } else if (value[0].fieldname === 'license_image') {
       params.user_sub_info.license_image_path = '/common/' + value[0].filename
     }
   })

@@ -454,14 +454,14 @@ const OperationFileServiceClass = class {
     (
       async () => {
         try {
-          const media_root = ServiceConfig.get('media_root')
+          const media_root = ServiceConfig.getMediaRoot()
           const cloud_file_list = []
           for (let i = 0; i < file_info_list.length; i++) {
             const file_info = file_info_list[i]
             const file_name = Util.getFileName(file_info.file_path)
             const target_path = media_root + file_info.file_path
             await Util.deleteFile(target_path)
-            cloud_file_list.push(file_name)
+            cloud_file_list.push({ 'origin_file_name': file_name })
           }
           if (ServiceConfig.isVacs() === false) {
             await CloudFileService.requestDeleteObjectFileList(file_base_path, cloud_file_list, false)

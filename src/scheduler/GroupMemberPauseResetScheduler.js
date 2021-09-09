@@ -20,7 +20,7 @@ class GroupMemberPauseResetSchedulerClass {
     } catch (error) {
       log.error(this.log_prefix, '[startSchedule]', error)
     }
-    this.resetGroupMemberPause()
+    // this.resetGroupMemberPause()
   }
 
   stopSchedule = () => {

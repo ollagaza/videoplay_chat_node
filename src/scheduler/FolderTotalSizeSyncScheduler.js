@@ -3,6 +3,7 @@ import log from '../libs/logger'
 import OperationFolderService from "../service/operation/OperationFolderService";
 import DBMySQL from "../database/knex-mysql";
 import GroupModel from '../database/mysql/group/GroupModel'
+import OperationService from "../service/operation/OperationService";
 
 class FolderTotalSizeSyncSchedulerClass {
   constructor () {
@@ -43,10 +44,17 @@ class FolderTotalSizeSyncSchedulerClass {
         try {
           const group_model = new GroupModel(DBMySQL)
           const group_info_list = await group_model.getAllGroupInfo()
+          const operation_folder_count = await OperationService.getOperationModeCountWithFolder()
           if (group_info_list && group_info_list.length > 0) {
             for (let i = 0; i < group_info_list.length; i++) {
               await OperationFolderService.syncFolderTotalSize(group_info_list[i].seq)
             }
+          }
+          if (operation_folder_count.video_counts.length > 0) {
+            await OperationFolderService.updateContentCounts(DBMySQL, 'video_count', operation_folder_count.video_counts)
+          }
+          if (operation_folder_count.file_counts.length > 0) {
+            await OperationFolderService.updateContentCounts(DBMySQL, 'file_count', operation_folder_count.file_counts)
           }
           log.debug(this.log_prefix, '[syncFolderTotalSize]', 'end');
         } catch (error) {

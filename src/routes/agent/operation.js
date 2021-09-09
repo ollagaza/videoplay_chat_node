@@ -68,7 +68,7 @@ routes.post('/start', Auth.isAuthenticated(Role.AGENT), Wrap(async (req, res) =>
     meta_data: {}
   }
 
-  const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, operation_body, 'D')
+  const create_operation_result = await OperationService.createOperation(DBMySQL, member_info, group_member_info, operation_body, 'Y')
 
   log.d(req, `[AGENT 02] 수술 시작 (id: ${create_operation_result.get('operation_seq')})`, request_body, group_seq, member_seq, create_operation_result.toJSON())
 

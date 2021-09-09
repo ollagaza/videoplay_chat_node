@@ -22,7 +22,7 @@ export default class SurgboxUpdateInfo extends JsonWrapper {
     this.setIgnoreEmpty(true)
 
     if (request_body != null) {
-      if (!request_body.type) request_body.type = 'box'
+      // if (!request_body.type) request_body.type = 'box'
       this.json_keys.forEach((key) => {
         if (!Util.isEmpty(request_body[key])) {
           this[key] = request_body[key]

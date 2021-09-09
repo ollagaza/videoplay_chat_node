@@ -67,8 +67,8 @@ export default class StdObject {
     return this.message
   }
 
-  add (key, val) {
-    this.variables[key] = val
+  add (key, value) {
+    this.variables[key] = value
 
     return this
   }
@@ -79,9 +79,14 @@ export default class StdObject {
     }
 
     for (const key in object) {
-      let val = object[key]
-      this.variables[key] = val
+      this.variables[key] = object[key]
     }
+
+    return this
+  }
+
+  set (key, value) {
+    this.variables[key] = value
 
     return this
   }

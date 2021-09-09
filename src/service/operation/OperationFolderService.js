@@ -109,7 +109,7 @@ const OperationFolderServiceClass = class {
   createDefaultOperationFolder = async (database, group_seq, member_seq) => {
     const model = this.getOperationFolderModel(database)
     const folder_info = new OperationFolderInfo();
-    folder_info.folder_name = '기본폴더';
+    folder_info.folder_name = 'Folder';
     folder_info.depth = 0
     folder_info.parent_folder_list = []
     folder_info.group_seq = group_seq
@@ -333,7 +333,9 @@ const OperationFolderServiceClass = class {
       const folder_info = group_folder_list[cnt]
       const folder_grade = this.getFolderGradeNumber(folder_info.access_type)
       let bool_grade = false;
-      if (folder_info.is_access_way === 1) {
+      if (member_grade >= 6) {
+        bool_grade = true
+      } else if (folder_info.is_access_way === 1) {
         const access_list = JSON.parse(folder_info.access_list)
         bool_grade = access_list.read[member_grade]
       } else {
@@ -346,6 +348,26 @@ const OperationFolderServiceClass = class {
     }
 
     return group_folder_list
+  }
+  updateContentCounts = async (database, mode, counts) => {
+    const folder_model = this.getOperationFolderModel(database)
+    for (let cnt = 0; cnt < counts.length; cnt++) {
+      const item = counts[cnt]
+      const filter = {
+        seq: item.folder_seq
+      }
+      const params = {}
+      params[mode] = item.count
+      await folder_model.updateFolderCounts(filter, params)
+    }
+  }
+  increaseCount = async (database, folder_seq, mode) => {
+    const folder_model = this.getOperationFolderModel(database)
+    return folder_model.updateCounts(folder_seq, mode)
+  }
+  decreaseCount = async (database, folder_seq, mode) => {
+    const folder_model = this.getOperationFolderModel(database)
+    return folder_model.updateCounts(folder_seq, mode, false)
   }
 }
 

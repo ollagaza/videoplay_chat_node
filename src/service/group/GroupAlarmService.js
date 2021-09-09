@@ -101,7 +101,13 @@ const GroupAlarmServiceClass = class {
           data.group_seq = group_seq
           data.grade = alarm_data.grade
           data.type = alarm_data.type
-          data.is_alarm = true
+          if (data.type === 'join' || data.type === 'join_request') {
+            data.is_join = true
+            data.is_alarm = false
+          } else {
+            data.is_join = false
+            data.is_alarm = true
+          }
 
           if (action_type) data.action_type = action_type
           if (extra_data) data.extra_data = extra_data

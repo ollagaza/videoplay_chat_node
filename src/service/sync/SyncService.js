@@ -24,32 +24,31 @@ const SyncServiceClass = class {
   getOperationInfoBySeq = async (operation_seq) => {
     const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false)
     if (!operation_info || operation_info.isEmpty()) {
-      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400)
+      throw new StdObject(701, '수술정보가 존재하지 않습니다.', 400)
     }
     return operation_info
   }
 
-  onAnalysisCompleteBySeq = async (operation_seq) => {
-    const operation_info = this.getOperationInfoBySeq(operation_seq)
-    await this.onAnalysisComplete(operation_info)
-  }
-
   onAnalysisComplete = async (operation_info, log_id) => {
     if (!operation_info || operation_info.isEmpty()) {
-      throw new StdObject(1, '수술정보가 존재하지 않습니다.', 400, { log_id })
+      throw new StdObject(702, '수술정보가 존재하지 않습니다.', 400, { log_id })
     }
     const operation_seq = operation_info.seq
     const group_seq = operation_info.group_seq
     const member_seq = operation_info.member_seq
     const content_id = operation_info.content_id
-    const log_info = `[onAnalysisComplete] [log_id: ${log_id}, operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
-    log.debug(this.log_prefix, log_info, `start`)
+    const log_info = `[log_id: ${log_id}, operation_seq: ${operation_seq}, content_id: ${content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `start`)
 
     const operation_media_info = await OperationMediaService.getOperationMediaInfo(DBMySQL, operation_info)
-    const is_sync_complete = operation_media_info.is_trans_complete
+    const is_encoding_complete = operation_media_info.is_trans_complete
 
-    if (!is_sync_complete) {
-      log.debug(this.log_prefix, log_info, `sync is not complete [analysis: ${operation_info.is_analysis_complete}, trans: ${operation_media_info.is_trans_complete}]. process end`)
+    if (!is_encoding_complete) {
+      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `encoding is not complete [analysis: ${operation_info.analysis_status}, trans: ${operation_media_info.is_trans_complete}]. process end`)
+      return
+    }
+    if (operation_media_info.analysis_status === 'Y') {
+      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `sync already complete [analysis: ${operation_info.analysis_status}, trans: ${operation_media_info.is_trans_complete}]. process end`)
       return
     }
 
@@ -58,12 +57,13 @@ const SyncServiceClass = class {
     const trans_video_file_path = directory_info.origin + operation_media_info.video_file_name
     const media_result = await Util.getMediaInfo(trans_video_file_path)
     if (!media_result.success || media_result.media_type !== Constants.VIDEO) {
-      throw new StdObject(-1, '동영상 파일이 아닙니다.', 400)
+      throw new StdObject(703, '인코딩된 동영상의 정보를 확인할 수 없습니다.', 400, { log_id })
     }
     const media_info = media_result.media_info
     let index_info_list = []
+
     index_info_list = await this.getIndexInfoByMedia(trans_video_file_path, operation_info, media_info, log_info)
-    log.debug(this.log_prefix, log_info, 'getIndexInfoByMedia complete', index_info_list.length)
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'getIndexInfoByMedia complete', index_info_list.length)
 
     const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq)
     if (video_index_info) {
@@ -71,7 +71,7 @@ const SyncServiceClass = class {
     } else {
       await VideoIndexInfoModel.createVideoIndexInfoByOperation(operation_info, index_info_list)
     }
-    log.debug(this.log_prefix, log_info, 'createVideoIndexInfoByOperation complete')
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'createVideoIndexInfoByOperation complete')
 
     const trans_file_regex = /^trans_([\w_-]+)\.mp4$/i
     let origin_video_size = 0
@@ -116,7 +116,7 @@ const SyncServiceClass = class {
         stream_url = `Trans_,${adaptive_list.join(',')},.mp4.smil`
       }
     }
-    log.debug(this.log_prefix, log_info, 'check and mode video files', `origin_video_size: ${origin_video_size}, origin_video_count: ${origin_video_count}, trans_video_size: ${trans_video_size}, trans_video_count: ${trans_video_count}`)
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'check and mode video files', `origin_video_size: ${origin_video_size}, origin_video_count: ${origin_video_count}, trans_video_size: ${trans_video_size}, trans_video_count: ${trans_video_count}`)
 
     let operation_storage_model = new OperationStorageModel(DBMySQL)
     const operation_storage_info = await operation_storage_model.getOperationStorageInfo(operation_info)
@@ -144,17 +144,13 @@ const SyncServiceClass = class {
 
       analysis_status = ServiceConfig.isVacs() ? 'Y' : 'M'
       await OperationService.updateAnalysisStatus(transaction, operation_info, analysis_status)
-      log.debug(this.log_prefix, log_info, `sync complete`)
+      log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, `sync complete`)
 
       await GroupService.updateMemberUsedStorage(transaction, group_seq, member_seq)
       await OperationFolderService.onChangeFolderSize(operation_info.group_seq, operation_info.folder_seq)
 
       is_complete = true
     })
-
-    if (is_sync_complete) {
-      // await new BatchOperationQueueModel(DBMySQL).onJobComplete(operation_seq);
-    }
 
     if (is_complete) {
       for (let i = 0; i < move_file_list.length; i++) {
@@ -166,68 +162,166 @@ const SyncServiceClass = class {
         // await Util.deleteDirectory(directory_info.origin)
         await OperationService.updateStatus(null, [operation_seq], 'Y')
       } else {
-        try {
-          const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/analysis/complete', { operation_seq, log_info })
-          log.debug(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
-        } catch (error) {
-          log.error(this.log_prefix, log_info, '[CloudFileService.requestMoveToObject]', error)
+        this.copyOriginFileToArchive(operation_info, log_info)
+        if ((await this.moveTransFileToObject(operation_info, log_info)).is_error === true) {
+          return
         }
-        this.moveOriginFileToArchive(directory_info.media_origin, operation_info.content_id, log_info)
       }
     }
     if (analysis_status === 'Y') {
       this.sendAnalysisCompleteMessage(operation_info)
     }
 
-    log.debug(this.log_prefix, log_info, `end`)
+    log.debug(this.log_prefix, '[onAnalysisComplete]', log_info, 'is_complete:', is_complete, `end`)
   }
 
-  onOperationVideoFileCopyCompeteByRequest = async (response_data) => {
-    if (!response_data || !response_data.operation_seq) {
-      throw new StdObject(-1, '잘못된 요청입니다.', 400)
+  moveTransFileToObject = async (operation_info, log_info = null) => {
+    if (!log_info) {
+      log_info = `[log_id: ${Util.getRandomId()}, operation_seq: ${operation_info.seq}, content_id: ${operation_info.content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
     }
-    const operation_seq = response_data.operation_seq
-    const log_info = response_data.log_info
-    const operation_info = await this.getOperationInfoBySeq(operation_seq)
-    const status = response_data.is_success ? 'Y' : 'E'
-    if (!response_data.is_success) {
-      log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', log_info, response_data)
+    const encoding_info = {
+      is_error: false,
+      message: '동영상 클라우드 업로드 요청이 실패하였습니다.',
+      is_trans_success: true,
+      video_file_list: [],
+      next: Constants.ENCODING_PROCESS_FILE_MOVE,
+      log_info,
+      error: null
     }
-    await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status)
-    await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
+    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    try {
+      const request_result = await CloudFileService.requestMoveToObject(directory_info.media_video, true, operation_info.content_id, '/api/storage/operation/video/move/complete', { operation_seq: operation_info.seq, log_info }, ServiceConfig.getStorageServerVideoRoot(), ServiceConfig.getVideoRoot())
+      log.debug(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject] - video', `file_path: ${directory_info.media_video}`, request_result)
+    } catch (error) {
+      log.error(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject]', error)
+      encoding_info.is_error = true
+      encoding_info.message = '동영상 클라우드 업로드 요청이 실패하였습니다.'
+      await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
+    }
+    return encoding_info
+  }
 
-    if (status === 'Y') {
-      await OperationService.updateOperationDataFileThumbnail(operation_info)
-      this.sendAnalysisCompleteMessage(operation_info)
+  moveImageFileToObject = async (operation_info, log_info = null) => {
+    if (!log_info) {
+      log_info = `[log_id: ${Util.getRandomId()}, operation_seq: ${operation_info.seq}, content_id: ${operation_info.content_id}, is_vacs: ${ServiceConfig.isVacs()}]`
     }
+    const encoding_info = {
+      is_error: false,
+      message: '이미지 클라우드 업로드 요청이 실패하였습니다.',
+      is_trans_success: true,
+      video_file_list: [],
+      next: Constants.ENCODING_PROCESS_FILE_MOVE,
+      log_info,
+      error: null
+    }
+    const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+    try {
+      await CloudFileService.requestMoveToObject(directory_info.media_file, true, operation_info.content_id, '/api/storage/operation/image/move/complete', { operation_seq: operation_info.seq }, ServiceConfig.getStorageServerVideoRoot(), ServiceConfig.getVideoRoot())
+    } catch (error) {
+      log.error(this.log_prefix, '[moveTransFileToObject]', log_info, '[CloudFileService.requestMoveToObject]', error)
+      encoding_info.is_error = true
+      encoding_info.message = '이미지 클라우드 업로드 요청이 실패하였습니다.'
+      await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
+    }
+    return encoding_info
+  }
+
+  onOperationFileMoveCompeteByRequest = (response_data) => {
+    (
+      async (response_data) => {
+        try {
+          if (!response_data || !response_data.operation_seq) {
+            log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', '잘못된 요청입니다.', response_data)
+            return
+          }
+          const operation_seq = response_data.operation_seq
+          const log_info = response_data.log_info
+          const operation_info = await this.getOperationInfoBySeq(operation_seq)
+          if (!operation_info || !operation_info.seq) {
+            log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', log_info, '수술 정보가 없습니다.', response_data)
+            return
+          }
+          const status = response_data.is_success ? 'Y' : 'E'
+          let encoding_info = null
+          if (!response_data.is_success) {
+            log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', log_info, response_data)
+            encoding_info = {
+              is_error: true,
+              message: response_data.error_message,
+              is_trans_success: true,
+              video_file_list: [],
+              next: Constants.ENCODING_PROCESS_FILE_MOVE,
+              log_info,
+              error: response_data
+            }
+          }
+          await OperationService.updateAnalysisStatus(DBMySQL, operation_info, status, encoding_info)
+          await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
+
+          if (status === 'Y') {
+            log.debug(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', log_info, '작업 완료된 파일이 클라우드로 업로드 되었습니다.', response_data)
+            await OperationService.updateOperationDataFileThumbnail(operation_info)
+            this.sendAnalysisCompleteMessage(operation_info)
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[onOperationVideoFileCopyCompeteByRequest]', response_data, error)
+        }
+      }
+    )(response_data)
 
     return true
   }
 
-  moveOriginFileToArchive = (origin_directory, content_id, log_info) => {
+  copyOriginFileToArchive = (operation_info, log_info) => {
     (
-      async (origin_directory, content_id) => {
+      async (operation_info, log_info) => {
+        const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+        const origin_directory = directory_info.media_origin
         try {
-          const request_result = await CloudFileService.requestMoveToArchive(origin_directory, true, content_id)
-          log.debug(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, request_result)
+          const request_result = await CloudFileService.requestCopyToArchive(origin_directory, true, operation_info.content_id, '/api/storage/operation/origin/copy/complete', { operation_seq: operation_info.seq, log_info }, ServiceConfig.getStorageServerVideoRoot(), ServiceConfig.getVideoRoot())
+          log.debug(this.log_prefix, '[copyOriginFileToArchive]', log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, request_result)
         } catch (error) {
-          log.error(this.log_prefix, log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, error)
+          log.error(this.log_prefix, '[copyOriginFileToArchive]', log_info, '[CloudFileService.moveOriginFileToArchive] - archive', `file_path: ${origin_directory}`, error)
         }
       }
-    )(origin_directory, content_id, log_info)
+    )(operation_info, log_info)
+  }
+
+  onOperationOriginFileCopyCompeteByRequest = (response_data) => {
+    (
+      async (response_data) => {
+        if (!response_data || !response_data.operation_seq) {
+          throw new StdObject(-1, '잘못된 요청입니다.', 400)
+        }
+        const operation_seq = response_data.operation_seq
+        const log_info = response_data.log_info
+        const operation_info = await this.getOperationInfoBySeq(operation_seq)
+        if (!operation_info || !operation_info.seq) {
+          log.error(this.log_prefix, '[onOperationOriginFileCopyCompeteByRequest]', log_info, '수술 정보가 없습니다.', response_data)
+          return
+        }
+        const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
+        const origin_directory = directory_info.origin
+        await Util.deleteDirectory(origin_directory)
+        log.debug(this.log_prefix, '[onOperationOriginFileCopyCompeteByRequest]', log_info, '원본 파일을 로컬 스토리지에서 삭제하였습니다.', origin_directory, response_data)
+      }
+    )(response_data)
+
+    return true
   }
 
   sendAnalysisCompleteMessage = (operation_info) => {
     if (!operation_info || !operation_info.user_id) return
+    // log.error(this.log_prefix, '[sendAnalysisCompleteMessage]', operation_info.toJSON());
     (
-      async () => {
+      async (operation_info) => {
         try {
           await this.sendMessageToSocket(operation_info)
         } catch (error) {
           log.error(this.log_prefix, '[sendAnalysisCompleteMessage]', error)
         }
       }
-    )()
+    )(operation_info)
   }
 
   sendMessageToSocket = async (operation_info) => {
@@ -274,7 +368,7 @@ const SyncServiceClass = class {
     const index_file_list = []
     const url_prefix = ServiceConfig.get('static_storage_prefix')
     for (let second = 0; second < total_second; second += step_second) {
-      const thumbnail_result = await OperationService.createOperationVideoThumbnail(video_file_path, operation_info, second, media_info)
+      const thumbnail_result = await OperationService.createOperationVideoThumbnail(video_file_path, operation_info, second, media_info, true)
       if (thumbnail_result) {
         let end_time = second + step_second
         let end_frame = end_time * fps

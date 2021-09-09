@@ -43,7 +43,7 @@ const GroupBoardListServiceClass = class {
 
     const board_info = {
       group_seq,
-      board_name: '기본 노트',
+      board_name: 'Note',
       sort: 0,
     }
 

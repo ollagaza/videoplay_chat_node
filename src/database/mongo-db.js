@@ -9,6 +9,7 @@ import { InterestModel } from './mongodb/Interest'
 import { LogCodeModel } from './mongodb/MemberLogCode'
 import { initSystemData } from './mongodb/SystemData'
 import DynamicService from "../service/dynamic/DynamicService";
+import config from "../config/config";
 
 const LOG_PREFIX = '[MongoDB]\n'
 
@@ -46,17 +47,19 @@ const init = () => {
 }
 
 const defaultMongoCollections = async () => {
-  const medical = await MedicalModel.findOne()
-  await MedicalModel.InsertDefaultData(medical)
+  if (config.isDemon()) {
+    const medical = await MedicalModel.findOne()
+    await MedicalModel.InsertDefaultData(medical)
 
-  const interest = await InterestModel.findOne()
-  await InterestModel.InsertDefaultData(interest)
+    const interest = await InterestModel.findOne()
+    await InterestModel.InsertDefaultData(interest)
 
-  const log_code = await LogCodeModel.findOne()
-  await LogCodeModel.InsertDefaultData(log_code)
+    const log_code = await LogCodeModel.findOne()
+    await LogCodeModel.InsertDefaultData(log_code)
 
-  // 임시로 하나만 작성해서 디폴트로 올림.
-  await DynamicService.setJsonTemplateData()
+    // 임시로 하나만 작성해서 디폴트로 올림.
+    await DynamicService.setJsonTemplateData()
+  }
 
   await initSystemData()
 }

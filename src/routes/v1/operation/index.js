@@ -20,7 +20,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
   const api_key = request.params.api_key
 
   if (Util.isEmpty(api_type) || Util.isEmpty(api_key)) {
-    throw new StdObject(-1, '잘못된 접근입니다.', 400)
+    throw new StdObject(801, '잘못된 접근입니다.', 400)
   }
 
   let check_group_auth = false
@@ -66,7 +66,7 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
   } else if (api_type === 'open_channel') {
     await getOpenChannelVideoInfo(result, api_key)
   } else {
-    throw new StdObject(-2, '잘못된 접근입니다.', 400)
+    throw new StdObject(802, '잘못된 접근입니다.', 400)
   }
 
   if (import_operation_info && !result.operation_info) {
@@ -74,10 +74,10 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
   }
 
   if (check_auth && !result.is_auth) {
-    throw new StdObject(102, '접근 권한이 없습니다.', 403)
+    throw new StdObject(803, '접근 권한이 없습니다.', 403)
   }
   if (check_writer && !result.is_writer) {
-    throw new StdObject(101, '수정 권한이 없습니다.', 403)
+    throw new StdObject(804, '수정 권한이 없습니다.', 403)
   }
 
   return result
@@ -85,11 +85,11 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
 
 const getAdminInfo = async (result, operation_seq) => {
   if (!result.token_info.isAdmin()) {
-    throw new StdObject(-100, '접근 권한이 없습니다.', 400)
+    throw new StdObject(805, '접근 권한이 없습니다.', 400)
   }
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, true)
   if (!operation_info || operation_info.isEmpty()) {
-    throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+    throw new StdObject(806, '등록된 정보가 없습니다.', 400)
   }
   result.operation_seq = operation_info.seq
   result.operation_info = operation_info
@@ -107,16 +107,16 @@ const getDriveInfo = async (result, operation_seq, check_folder_auth = false) =>
   const group_seq = result.group_seq
   const operation_info = await OperationService.getOperationInfo(DBMySQL, operation_seq, null, false, true)
   if (!operation_info || operation_info.isEmpty()) {
-    throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+    throw new StdObject(807, '등록된 정보가 없습니다.', 400)
   }
   if (operation_info.group_seq !== group_seq) {
-    throw new StdObject(201, '접근권한이 없습니다.', 400)
+    throw new StdObject(808, '접근권한이 없습니다.', 400)
   }
 
   if (check_folder_auth) {
     const folder_grade = await OperationService.getFolderGrade(operation_seq)
     if (folder_grade > result.group_grade_number) {
-      throw new StdObject(202, '접근권한이 없습니다.', 400)
+      throw new StdObject(809, '접근권한이 없습니다.', 400)
     }
   }
 
@@ -138,7 +138,7 @@ const getDriveInfo = async (result, operation_seq, check_folder_auth = false) =>
 const getLinkInfo = async (result, link_code) => {
   const link_info = await OperationLinkService.getOperationLinkByCode(DBMySQL, link_code)
   if (!link_info || link_info.isEmpty()) {
-    throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+    throw new StdObject(810, '등록된 정보가 없습니다.', 400)
   }
 
   const is_editor_link = link_info.auth === OperationLinkService.AUTH_WRITE
@@ -157,10 +157,10 @@ const getMentoringInfo = async (result, operation_data_seq) => {
   const group_seq = result.group_seq
   const operation_data_info = await OperationDataService.getOperationData(DBMySQL, operation_data_seq)
   if (!operation_data_info || operation_data_info.isEmpty()) {
-    throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+    throw new StdObject(811, '등록된 정보가 없습니다.', 400)
   }
   if (operation_data_info.type !== 'M') {
-    throw new StdObject(-3, '잘못된 접근입니다.', 403)
+    throw new StdObject(812, '잘못된 접근입니다.', 403)
   }
 
   const is_writer = operation_data_info.group_seq === group_seq
@@ -177,10 +177,10 @@ const getOpenVideoInfo = async (result, operation_data_seq) => {
   const group_seq = result.group_seq
   const operation_data_info = await OperationDataService.getOperationData(DBMySQL, operation_data_seq)
   if (!operation_data_info || operation_data_info.isEmpty()) {
-    throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+    throw new StdObject(813, '등록된 정보가 없습니다.', 400)
   }
   if (!operation_data_info.is_open_video) {
-    throw new StdObject(-3, '잘못된 접근입니다.', 403)
+    throw new StdObject(814, '잘못된 접근입니다.', 403)
   }
 
   const is_writer = operation_data_info.group_seq === group_seq
@@ -362,8 +362,8 @@ routes.put('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticate
 
 routes.delete('/:api_type/:api_key/comment/:comment_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
-  const { operation_data_seq, comment_seq } = await getBaseInfo(req, true)
-  const delete_result = await OperationCommentService.deleteComment(operation_data_seq, comment_seq, req.body)
+  const { operation_seq, operation_data_seq, comment_seq } = await getBaseInfo(req, true)
+  const delete_result = await OperationCommentService.deleteComment(operation_seq, operation_data_seq, comment_seq, req.body)
 
   const output = new StdObject()
   output.adds(delete_result)
@@ -562,6 +562,53 @@ routes.post('/:api_type/:api_key/operation/files/chart/pdf/:upload_id', Auth.isA
   const output = new StdObject()
   output.add('pdf_info', pdf_info)
   res.json(output)
+}))
+
+routes.post('/:api_type/:api_key/operation/process/check', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const check_auth = !token_info.isAdmin()
+  const { operation_info } = await getBaseInfo(req, check_auth, check_auth, true)
+  res.json(await OperationService.checkOperationStatus(operation_info))
+}))
+
+routes.post('/:api_type/:api_key/operation/process/continue', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const check_auth = !token_info.isAdmin()
+  const { operation_info } = await getBaseInfo(req, check_auth, check_auth, true)
+  res.json(await OperationService.continueProcessForce(operation_info))
+}))
+
+routes.post('/:api_type/:api_key/operation/process/trans/request', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const check_auth = !token_info.isAdmin()
+  const { operation_info } = await getBaseInfo(req, check_auth, check_auth, true)
+  res.json(await OperationService.requestTranscodingForce(operation_info))
+}))
+
+routes.post('/:api_type/:api_key/operation/process/trans/complete', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const check_auth = !token_info.isAdmin()
+  const { operation_info } = await getBaseInfo(req, check_auth, check_auth, true)
+  res.json(await OperationService.transcodingCompleteForce(operation_info))
+}))
+
+routes.post('/:api_type/:api_key/operation/process/file/move', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const check_auth = !token_info.isAdmin()
+  const { operation_info } = await getBaseInfo(req, check_auth, check_auth, true)
+  res.json(await OperationService.requestFileMoveForce(operation_info))
+}))
+
+routes.post('/:api_type/:api_key/operation/process/file/move', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const token_info = req.token_info
+  const check_auth = !token_info.isAdmin()
+  const { operation_info } = await getBaseInfo(req, check_auth, check_auth, true)
+  res.json(await OperationService.requestFileMoveForce(operation_info))
+}))
+
+routes.post('/:api_type/operation/process/trans/request/list', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  res.json(await OperationService.requestTranscodingList(req.body))
 }))
 
 export default routes

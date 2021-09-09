@@ -4,7 +4,7 @@ const default_key_list = [
   'seq', 'group_seq', 'member_seq', 'folder_name', 'folder_explain', 'parent_seq', 'parent_folder_list'
   , 'sort', 'status', 'depth', 'user_name', 'user_nickname'
   , 'access_type', 'is_access_way', 'access_list', 'access_users', 'reg_date', 'modify_date', 'children', 'is_favorite', 'total_folder_size'
-  , 'is_delete_by_admin', 'delete_member_seq', 'delete_user_name', 'delete_user_nickname'
+  , 'is_delete_by_admin', 'delete_member_seq', 'delete_user_name', 'delete_user_nickname', 'video_count', 'file_count'
 ]
 
 export default class OperationFolderInfo extends JsonWrapper {

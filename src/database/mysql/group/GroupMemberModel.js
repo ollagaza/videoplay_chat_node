@@ -17,7 +17,7 @@ export default class GroupMemberModel extends MySQLModel {
       'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.ban_date', 'group_member.ban_member_seq', 'group_member.ban_reason',
       'group_member.invite_email', 'group_member.invite_status', 'group_member.invite_date', 'group_member.invite_code',
       'group_member.pause_sdate', 'group_member.pause_edate', 'group_member.pause_member_seq', 'group_member.pause_reason', 'group_member.pause_count',
-      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer',
+      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.email_address', 'member.hospname', 'member.treatcode', 'member.used', 'group_member.join_answer', 'member.user_type',
       'group_member.vid_cnt', 'group_member.anno_cnt', 'group_member.comment_cnt', 'group_member.board_cnt', 'group_member.board_comment_cnt', 'member.profile_image_path', 'group_member.ban_hide'
     ]
     this.member_group_select = [
@@ -36,7 +36,8 @@ export default class GroupMemberModel extends MySQLModel {
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
-      'group_info.reg_date', 'group_info.member_count', 'group_member.status AS member_status', 'group_member.grade', 'group_info.channel_top_img_path', 'group_info.channel_top_img_path as channel_top_img_url'
+      'group_info.reg_date', 'group_info.member_count', 'group_member.status AS member_status', 'group_member.grade', 'group_info.channel_top_img_path', 'group_info.channel_top_img_path as channel_top_img_url',
+      'group_counts.*'
     ]
 
     this.group_invite_select = [
@@ -123,6 +124,7 @@ export default class GroupMemberModel extends MySQLModel {
       this.on("group_info.seq", "group_member.group_seq")
         .andOn(in_raw)
     })
+    query.innerJoin('group_counts', 'group_counts.group_seq', 'group_info.seq')
     query.where(filter)
     query.orderBy([{column: 'group_info.group_type', order: 'desc'}, { column: 'group_member.join_date', order: 'desc' }]);
 
@@ -908,6 +910,8 @@ export default class GroupMemberModel extends MySQLModel {
     const update_params = {}
     if (update_column === 'vid') {
       update_params.vid_cnt = set_count;
+    } else if (update_column === 'file') {
+      update_params.file_cnt = set_count;
     } else if (update_column === 'anno') {
       update_params.anno_cnt = set_count;
     } else if (update_column === 'vid_comment') {

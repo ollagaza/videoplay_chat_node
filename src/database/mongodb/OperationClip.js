@@ -89,6 +89,7 @@ operation_clip_schema.statics.updateOperationClip = function (clip_id, clip_info
   if (clip_info.file_name) update.file_name = clip_info.file_name
   if (clip_info.file_seq) update.file_seq = clip_info.file_seq
   if (clip_info.full_path) update.full_path = clip_info.full_path
+  if (clip_info.thumbnail_url) update.thumbnail_url = clip_info.thumbnail_url
   if (tag_list) {
     update.tag_list = tag_list
   }
@@ -226,6 +227,10 @@ operation_clip_schema.statics.getGroupMemberSeqCount = function () {
 
 operation_clip_schema.statics.findByMemberSeqAndGroupSeq = function (member_seq, group_seq, projection = null) {
   return this.find({ member_seq: member_seq, group_seq: group_seq }, projection)
+}
+
+operation_clip_schema.statics.getOperationClipCounts = function () {
+  return this.aggregate().group({ _id: '$operation_seq', 'count': { '$sum': 1 } })
 }
 
 const operation_clip_model = mongoose.model('OperationClip', operation_clip_schema)

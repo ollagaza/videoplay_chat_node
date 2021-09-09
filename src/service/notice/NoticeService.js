@@ -121,7 +121,7 @@ const NoticeServiceClass = class {
       async (notice_seq) => {
         try {
           const upload_path = `/notice/${notice_seq}`
-          const upload_directory = `${ServiceConfig.get('media_root')}/${upload_path}`
+          const upload_directory = `${ServiceConfig.getMediaRoot()}/${upload_path}`
           await Util.deleteDirectory(upload_directory)
         } catch (error) {
           logger.error(this.log_prefix, '[deleteDirectory]', `[notice_seq: ${notice_seq}]`, error)
@@ -179,7 +179,7 @@ const NoticeServiceClass = class {
   uploadFile = async (notice_seq, request, response) => {
     logger.debug(this.log_prefix, `{ UPLOAD_ROOT: ${this.UPLOAD_ROOT}, FILE_URL_PREFIX: ${ServiceConfig.get('static_storage_prefix')} }`)
     const upload_path = `/notice/${notice_seq}/`
-    const upload_directory = `${ServiceConfig.get('media_root')}/${upload_path}`
+    const upload_directory = `${ServiceConfig.getMediaRoot()}/${upload_path}`
     logger.debug(this.log_prefix, '[uploadFile]', `{ notice_seq: ${notice_seq} }`, upload_directory)
     if (!(await Util.fileExists(upload_directory))) {
       await Util.createDirectory(upload_directory)
@@ -266,7 +266,7 @@ const NoticeServiceClass = class {
     if (!file_info) return true;
 
     await notice_file_model.deleteNoticeFile(notice_seq, notice_file_seq)
-    const file_path = `${ServiceConfig.get('media_root')}${file_info.file_path}`
+    const file_path = `${ServiceConfig.getMediaRoot()}${file_info.file_path}`
     if (delete_file) {
       try {
         await Util.deleteFile(file_path)

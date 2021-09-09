@@ -9,6 +9,8 @@ import GroupBoardCommentModel from '../../database/mysql/board/GroupBoardComment
 import logger from "../../libs/logger";
 import GroupService from '../group/GroupService'
 import Constants from '../../constants/constants'
+import NaverObjectStorageService from "../storage/naver-object-storage-service";
+import GroupCountModel from "../../database/mysql/group/GroupCountsModel";
 
 const GroupBoardDataServiceClass = class {
   constructor() {
@@ -135,6 +137,8 @@ const GroupBoardDataServiceClass = class {
         }
       })
       this.incrementBoardCommentCount(comment_data.board_data_seq)
+      const group_count_field_name = ['board_comment']
+      await new GroupCountModel(DBMySQL).AddCount(comment_data.group_seq, group_count_field_name, true)
 
       GroupService.onChangeGroupMemberContentCount(comment_data.group_seq, comment_data.member_seq, 'board_comment', Constants.UP)
     }
@@ -194,6 +198,8 @@ const GroupBoardDataServiceClass = class {
 
     if (board_data.status !== 'T') {
       GroupService.onChangeGroupMemberContentCount(board_data.group_seq, board_data.member_seq, 'board_cnt', Constants.UP)
+      const group_count_field_name = ['note_count']
+      await new GroupCountModel(DBMySQL).AddCount(board_data.group_seq, group_count_field_name, true)
     }
     return result
   }
@@ -233,6 +239,8 @@ const GroupBoardDataServiceClass = class {
     const result = await model.DeleteComment(delete_status, comment_seq)
 
     GroupService.onChangeGroupMemberContentCount(comment_info.group_seq, comment_info.member_seq, 'board_comment', Constants.DOWN, 1)
+    const group_count_field_name = ['board_comment']
+    await new GroupCountModel(DBMySQL).MinusCount(comment_info.group_seq, group_count_field_name, true)
 
     const board_model = this.getGroupBoardDataModel(database)
     await board_model.decrementBoardCommentCnt(board_data_seq, 1)
@@ -250,6 +258,8 @@ const GroupBoardDataServiceClass = class {
       this.decreaseCommentCount(comment_count_list, target_info.group_seq)
       await model.DeleteBoardData(board_seq)
       await model.updateParentDataSubject(board_seq)
+      const group_count_field_name = ['note_count']
+      await new GroupCountModel(DBMySQL).MinusCount(target_info.group_seq, group_count_field_name, true)
     } else {
       await model.DeleteTempBoardData(board_seq)
     }
@@ -287,7 +297,7 @@ const GroupBoardDataServiceClass = class {
     logger.debug(this.log_prefix, `{ UPLOAD_ROOT: ${this.UPLOAD_ROOT}, FILE_URL_PREFIX: ${ServiceConfig.get('static_storage_prefix')} }`)
     const board_info = await this.getBoardDataDetail(DBMySQL, board_seq)
     const upload_path = `/group_board/${board_info.content_id}/`
-    const upload_directory = `${ServiceConfig.get('media_root')}/${upload_path}`
+    const upload_directory = `${ServiceConfig.getMediaRoot()}/${upload_path}`
     logger.debug(this.log_prefix, '[uploadFile]', `{ board_seq: ${board_seq} }`, upload_directory)
     if (!(await Util.fileExists(upload_directory))) {
       await Util.createDirectory(upload_directory)
@@ -306,6 +316,12 @@ const GroupBoardDataServiceClass = class {
       file_size: upload_file_info.size,
       file_type: await Util.getFileType(upload_file_info.path, this.file_name),
       file_url: `${ServiceConfig.get('static_storage_prefix')}${upload_path}/${request.new_file_name}`
+    }
+    if (!ServiceConfig.isVacs()) {
+      const storage_client = await NaverObjectStorageService.getStorageClient()
+      await NaverObjectStorageService.moveFile(`${upload_directory}${request.new_file_name}`, upload_path, request.new_file_name, ServiceConfig.get('naver_object_storage_bucket_name'), storage_client)
+      email_file_list.is_object_storage = true
+      email_file_list.download_cdn = `${ServiceConfig.get('cdn_url')}${upload_path}${request.new_file_name}`
     }
     logger.debug(this.log_prefix, '[uploadFile]', `{ board_seq: ${board_seq} }`, 'email_file_list', email_file_list)
 
@@ -331,9 +347,14 @@ const GroupBoardDataServiceClass = class {
     const board_info = await this.getBoardDataDetail(database, board_seq)
     let board_file_lists = JSON.parse(board_info.attach_file)
     board_file_lists = _.reject(board_file_lists, file)
-    const media_root = ServiceConfig.get('media_root')
-    const file_full_path = `${media_root}${file.file_path}${file.file_name}`
-    await Util.deleteFile(file_full_path)
+    if (file.is_object_storage) {
+      const storage_client = await NaverObjectStorageService.getStorageClient()
+      await NaverObjectStorageService.deleteFile(`${file.file_path}`, file.file_name, ServiceConfig.get('naver_object_storage_bucket_name'), storage_client)
+    } else {
+      const media_root = ServiceConfig.getMediaRoot()
+      const file_full_path = `${media_root}${file.file_path}${file.file_name}`
+      await Util.deleteFile(file_full_path)
+    }
     const param = {
       attach_file: JSON.stringify(board_file_lists),
     }

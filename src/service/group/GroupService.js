@@ -31,6 +31,7 @@ import InstantMessageService from "../mypage/InstantMessageService";
 import striptags from "striptags";
 import GroupAlarmService from './GroupAlarmService'
 import MemberModel from '../../database/mysql/member/MemberModel';
+import {VideoProjectModel} from "../../database/mongodb/VideoProject";
 
 const GroupServiceClass = class {
   constructor () {
@@ -966,7 +967,7 @@ const GroupServiceClass = class {
   changeGroupProfileImage = async (database, group_member_info, request, response) => {
     const output = new StdObject(-1, '프로필 업로드 실패')
 
-    const media_root = ServiceConfig.get('media_root')
+    const media_root = ServiceConfig.getMediaRoot()
     const upload_path = group_member_info.media_path + `/profile`
     const upload_full_path = media_root + upload_path
     if (!(await Util.fileExists(upload_full_path))) {
@@ -1721,6 +1722,29 @@ const GroupServiceClass = class {
   getGroupMemberGradeCount = async (database, group_seq, grade) => {
     const group_member_model = this.getGroupMemberModel(database)
     return await group_member_model.getGroupMemberGradeCount(group_seq, grade)
+  }
+
+  getGroupInfoList = async (database, req) => {
+    const request_body = req.query ? req.query : {}
+    const cur_page = request_body.cur_page ? request_body.cur_page : null
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const order_field = request_body.order_id ? request_body.order_id : null
+    const order_type = request_body.order_type ? request_body.order_type : null
+    const search_option = request_body.search_option ? request_body.search_option : null
+    const search_keyword = request_body.search_keyword ? request_body.search_keyword : null
+
+    const paging = {}
+    paging.cur_page = cur_page ? cur_page : 1
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 10
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+
+    paging.no_paging = request_body.no_paging ? request_body.no_paging : 'n'
+    paging.limit = request_body.limit ? request_body.limit : null
+
+    const group_model = this.getGroupCountsModel(database)
+    const groupinfolist = await group_model.getGroupInfoList(paging, search_option, search_keyword, order_field, order_type)
+
+    return groupinfolist
   }
 }
 
