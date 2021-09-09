@@ -1651,7 +1651,7 @@ const OperationServiceClass = class {
       encoding_info = await SyncService.moveTransFileToObject(operation_info)
     }
     if (encoding_info.is_error === true) {
-      throw new StdObject(2002, encoding_info.message, { encoding_info })
+      throw new StdObject(2004, encoding_info.message, { encoding_info })
     }
     return new StdObject(0, '파일이동 시작되었습니다.')
   }
@@ -1710,7 +1710,7 @@ const OperationServiceClass = class {
     }
     if (encoding_info.is_error) {
       await operation_model.updateAnalysisStatus(operation_info.seq, 'E', encoding_info)
-      throw new StdObject(2002, encoding_info.message, 200, { encoding_info })
+      throw new StdObject(2005, encoding_info.message, 200, { encoding_info })
     }
     TranscoderSyncService.updateTranscodingComplete(operation_info, Util.getRandomId(), video_file_name, smil_file_name, null)
     return new StdObject(0, '인코딩 완료 후 처리가 시작되었습니다.')
@@ -1721,6 +1721,42 @@ const OperationServiceClass = class {
     const video_counts = await operation_model.getOperationVideoCountWithFolder()
     const file_counts = await operation_model.getOperationFileCountWithFolder()
     return { video_counts, file_counts }
+  }
+
+  requestTranscodingList = async (request_body) => {
+    const seq_list_text = Util.trim(request_body.seq_list)
+    if (!seq_list_text) {
+      throw new StdObject(2006, '잘못된 요청입니다.', 200)
+    }
+    const list_split_regex = /[^\d]+/i
+    const seq_list = seq_list_text.split(list_split_regex)
+    if (!seq_list || seq_list.length <= 0) {
+      throw new StdObject(2007, '수술 번호 목록이 비었습니다.', 200)
+    }
+    this.requestTranscodingByOperationSeqList(seq_list)
+    return new StdObject()
+  }
+  requestTranscodingByOperationSeqList = (operation_seq_list) => {
+    (
+      async (operation_seq_list) => {
+        try {
+          for (let i = 0; i < operation_seq_list.length; i++) {
+            const operation_seq = Util.parseInt(operation_seq_list[i], 0)
+            if (operation_seq <= 0) continue
+            const { operation_info } = await this.getOperationInfoNoAuth(DBMySQL, operation_seq, true)
+            if (!operation_info || operation_info.isEmpty()) {
+              try {
+                await this.requestTranscodingForce(operation_info)
+              } catch (error) {
+                log.error(this.log_prefix, '[requestTranscodingByOperationSeqList]', operation_info.seq, error);
+              }
+            }
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[requestTranscodingByOperationSeqList]', operation_seq_list, error);
+        }
+      }
+    )(operation_seq_list)
   }
 }
 
