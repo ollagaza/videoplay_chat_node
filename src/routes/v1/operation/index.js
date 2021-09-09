@@ -579,11 +579,9 @@ routes.post('/:api_type/:api_key/operation/process/file/move', Auth.isAuthentica
   res.json(await OperationService.requestFileMoveForce(operation_info))
 }))
 
-routes.post('/:api_type/:api_key/operation/process/trans/request/list', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
-  const token_info = req.token_info
-  const check_auth = !token_info.isAdmin()
-  const { operation_info } = await getBaseInfo(req, check_auth, check_auth, true)
-  res.json(await OperationService.requestTranscodingForce(operation_info))
+routes.post('/:api_type/operation/process/trans/request/list', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  res.json(await OperationService.requestTranscodingList(req.body))
 }))
 
 export default routes

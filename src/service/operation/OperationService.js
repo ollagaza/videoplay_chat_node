@@ -1734,7 +1734,7 @@ const OperationServiceClass = class {
       throw new StdObject(2007, '수술 번호 목록이 비었습니다.', 200)
     }
     this.requestTranscodingByOperationSeqList(seq_list)
-    return new StdObject()
+    return new StdObject(0, `${seq_list.length}개의 수술 인코딩 요청이 시작되었습니다.`)
   }
   requestTranscodingByOperationSeqList = (operation_seq_list) => {
     (
@@ -1744,7 +1744,15 @@ const OperationServiceClass = class {
             const operation_seq = Util.parseInt(operation_seq_list[i], 0)
             if (operation_seq <= 0) continue
             const { operation_info } = await this.getOperationInfoNoAuth(DBMySQL, operation_seq, true)
-            if (!operation_info || operation_info.isEmpty()) {
+            if (operation_info && !operation_info.isEmpty()) {
+              log.debug(this.log_prefix, '[requestTranscodingByOperationSeqList]', operation_info.seq, operation_info.mode, operation_info.status, operation_info.analysis_status)
+              if (operation_info.mode !== this.MODE_OPERATION) {
+                continue
+              }
+              if (operation_info.status === 'D' || (operation_info.analysis_status !== 'N' && operation_info.analysis_status !== 'R' && operation_info.analysis_status !== 'E')) {
+                log.debug(this.log_prefix, '[requestTranscodingByOperationSeqList] - trans complete pass', operation_info.seq, operation_info.mode, operation_info.status, operation_info.analysis_status)
+                continue
+              }
               try {
                 await this.requestTranscodingForce(operation_info)
               } catch (error) {
