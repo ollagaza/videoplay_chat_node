@@ -1,5 +1,5 @@
 {
-  "version": 0.6,
+  "version": 0.7,
   "kor": [
     {
       "code": "00",
@@ -436,47 +436,47 @@
         {
           "code": "01",
           "pCode": "01",
-          "text": "소화기내과"
+          "text": "Gastroenterology"
         },
         {
           "code": "01",
           "pCode": "02",
-          "text": "순환기내과"
+          "text": "Cardiology"
         },
         {
           "code": "01",
           "pCode": "03",
-          "text": "호흡기내과"
+          "text": "Pulmonology"
         },
         {
           "code": "01",
           "pCode": "04",
-          "text": "내분비내과"
+          "text": "Endocrinology"
         },
         {
           "code": "01",
           "pCode": "05",
-          "text": "신장내과"
+          "text": "Nephrology"
         },
         {
           "code": "01",
           "pCode": "06",
-          "text": "혈액종양내과"
+          "text": "Hematology"
         },
         {
           "code": "01",
           "pCode": "07",
-          "text": "감염내과"
+          "text": "Infection"
         },
         {
           "code": "01",
           "pCode": "08",
-          "text": "알레르기내과"
+          "text": "Allergy"
         },
         {
           "code": "01",
           "pCode": "09",
-          "text": "류마티스내과"
+          "text": "Rheumatology"
         }
       ]
     },
@@ -507,37 +507,37 @@
         {
           "code": "04",
           "pCode": "01",
-          "text": "간담도췌외과"
+          "text": "Hepatobiliary pancreatic surgery"
         },
         {
           "code": "04",
           "pCode": "02",
-          "text": "간이식및간담도외과"
+          "text": "Liver transplantation and hepatobiliary surgery"
         },
         {
           "code": "04",
           "pCode": "03",
-          "text": "대장항문외과"
+          "text": "Colon and rectal surgery"
         },
         {
           "code": "04",
           "pCode": "04",
-          "text": "위장관외과"
+          "text": "Colon and rectal surgery"
         },
         {
           "code": "04",
           "pCode": "05",
-          "text": "유방내분비외과"
+          "text": "Breast and Endocrine Surgery"
         },
         {
           "code": "04",
           "pCode": "06",
-          "text": "일반외과"
+          "text": "General surgery"
         },
         {
           "code": "04",
           "pCode": "07",
-          "text": "혈관외과"
+          "text": "Hemato-oncology"
         }
       ]
     },
@@ -568,12 +568,12 @@
         {
           "code": "07",
           "pCode": "01",
-          "text": "성인심혈관외과"
+          "text": "Adult cardiac surgery"
         },
         {
           "code": "07",
           "pCode": "02",
-          "text": "폐식도외과"
+          "text": "Lung and Esophageal Surgery"
         }
       ]
     },
@@ -610,112 +610,112 @@
         {
           "code": "11",
           "pCode": "01",
-          "text": "소아청소년 내분비대사과"
+          "text": "Pediatric endocrinology"
         },
         {
           "code": "11",
           "pCode": "02",
-          "text": "소아청소년 신장과"
+          "text": "Pediatric Nephrology"
         },
         {
           "code": "11",
           "pCode": "03",
-          "text": "소아청소년 호흡기알레르기과"
+          "text": "Pediatric Pulmonology Allergy"
         },
         {
           "code": "11",
           "pCode": "04",
-          "text": "소아청소년 신경과"
+          "text": "Pediatric Neurology"
         },
         {
           "code": "11",
           "pCode": "05",
-          "text": "소아청소년 소화기 영양과"
+          "text": "Pediatric Gastroenterology"
         },
         {
           "code": "11",
           "pCode": "06",
-          "text": "소아청소년 중환자과"
+          "text": "Pediatric Critical Care Medicine"
         },
         {
           "code": "11",
           "pCode": "07",
-          "text": "소아청소년 일반과"
+          "text": "General Pediatrics"
         },
         {
           "code": "11",
           "pCode": "08",
-          "text": "소아청소년 종양혈액과"
+          "text": "Pediatric Hemato Oncology"
         },
         {
           "code": "11",
           "pCode": "09",
-          "text": "소아청소년 심장과"
+          "text": "Pediatric Cardiology"
         },
         {
           "code": "11",
           "pCode": "10",
-          "text": "소아청소년 감염과"
+          "text": "Pediatric Infection Immunity"
         },
         {
           "code": "11",
           "pCode": "11",
-          "text": "신생아과"
+          "text": "Neonate"
         },
         {
           "code": "11",
           "pCode": "12",
-          "text": "소아청소년 정신건강의학과"
+          "text": "Pediatric Psychiatry"
         },
         {
           "code": "11",
           "pCode": "13",
-          "text": "소아외과"
+          "text": "Pediatric Surgery"
         },
         {
           "code": "11",
           "pCode": "14",
-          "text": "소아청소년 심장외과"
+          "text": "Pediatric Cardiac Surgery"
         },
         {
           "code": "11",
           "pCode": "15",
-          "text": "소아청소년 정형외과"
+          "text": "Pediatric Orthopedic Surgery"
         },
         {
           "code": "11",
           "pCode": "16",
-          "text": "소아청소년 신경외과"
+          "text": "Pediatric Neurosurgery"
         },
         {
           "code": "11",
           "pCode": "17",
-          "text": "소아청소년 비뇨의학과"
+          "text": "Pediatric Urology"
         },
         {
           "code": "11",
           "pCode": "18",
-          "text": "소아청소년 재활의학과"
+          "text": "Pediatric Rehabilitation Medicine"
         },
         {
           "code": "11",
           "pCode": "19",
-          "text": "소아청소년 영상의학과"
+          "text": "Pediatric Radiology"
         },
         {
           "code": "11",
           "pCode": "20",
-          "text": "소아천식아토피센터"
+          "text": "Childhood Asthma Atopy Center"
         },
         {
           "code": "11",
           "pCode": "21",
-          "text": "의학유전학과"
+          "text": "Genetics"
         },
         {
           "code": "11",
           "pCode": "22",
-          "text": "일반소아청소년과"
+          "text": "General Pediatrics"
         }
       ]
     },
