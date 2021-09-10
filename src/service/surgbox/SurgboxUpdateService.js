@@ -48,7 +48,7 @@ const SurgboxUpdateServiceClass = class {
     update_info.member_seq = member_seq
     if (!update_info.type) update_info.type = 'box'
 
-    const file_path = `/surgbox/update/${update_info.version}/`
+    const file_path = `/update/${update_info.type}/${update_info.version}/`
     const media_root = ServiceConfig.getMediaRoot()
     await Util.createDirectory(`${media_root}/${file_path}`)
     update_info.file_path = file_path
