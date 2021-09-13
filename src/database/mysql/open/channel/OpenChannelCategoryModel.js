@@ -1,4 +1,4 @@
-import MySQLModel from '../../mysql-model'
+import MySQLModel from '../../../mysql-model'
 
 export default class OpenChannelCategoryModel extends MySQLModel {
   constructor (database) {
