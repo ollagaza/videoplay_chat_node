@@ -1,4 +1,5 @@
 import MySQLModel from '../../../mysql-model'
+import OpenChannelCategoryInfo from '../../../../wrapper/open/channel/OpenChannelCategoryInfo'
 
 export default class OpenChannelCategoryModel extends MySQLModel {
   constructor (database) {
@@ -9,37 +10,82 @@ export default class OpenChannelCategoryModel extends MySQLModel {
     this.log_prefix = '[OpenChannelCategoryModel]'
   }
 
-  updateStorageStatus = async (date, used, total) => {
-    const sql = `
-      INSERT INTO ${this.table_name} (\`state_date\`, \`used_size\`, \`total_size\`, \`modify_date\`)
-      VALUES (?, ?, ?, current_timestamp())
-      ON DUPLICATE KEY UPDATE
-        \`used_size\` = VALUES(\`used_size\`),
-        \`total_size\` = VALUES(\`total_size\`),
-        \`modify_date\` = current_timestamp()
+  getOpenChannelCategoryList = async (group_seq) => {
+    const result_list = []
+
+    const query_result = await this.find({ group_seq }, null, { name: 'order', direction: 'asc' })
+    if (query_result && query_result.length) {
+      for (let i = 0; i < query_result.length; i++) {
+        result_list.push(new OpenChannelCategoryInfo(query_result[i]))
+      }
+    }
+
+    return result_list
+  }
+
+  createOpenChannelCategoryInfo = async (category_info) => {
+    const category_seq = await this.create(category_info.getQueryJson(), 'seq')
+    return this.getOpenChannelCategoryInfo(category_seq)
+  }
+
+  getOpenChannelCategoryInfo = async (category_seq) => {
+    const category_info = await this.findOne({ seq: category_seq })
+    return new OpenChannelCategoryInfo(category_info)
+  }
+
+  modifyCategoryName = async (group_seq, category_seq, category_name) => {
+    return this.update({ group_seq, seq: category_seq }, { category_name })
+  }
+
+  modifyCategoryOrder = async (group_seq, order_data_list) => {
+    if (!order_data_list || !order_data_list.length) return
+
+    let query_str = `
+      UPDATE ${this.table_name} O
+      JOIN (`
+
+    for (let i = 0; i < order_data_list.length; i++) {
+      const order_data = order_data_list[i]
+      if (i !== 0) {
+        query_str += `
+        UNION ALL`
+      }
+      query_str += `
+        SELECT ${order_data.seq} AS category_seq, ${order_data.order} AS new_order`
+    }
+
+    query_str += `
+      ) D
+        ON O.seq = D.category_seq
+      SET O.order = D.new_order,
+        O.modify_date = NOW()
+      WHERE O.group_seq = '${group_seq}'
     `
-    const query_result = await this.database.raw(sql, [date, used, total])
 
-    if (!query_result || !query_result.length || !query_result[0]) {
-      return false
-    }
-    return query_result[0].affectedRows > 0
+    return this.rawQueryUpdate(query_str)
   }
 
-  getCurrentStorageStatus = async () => {
-    return await this.findOne(null, ['*'], { name: 'state_date', direction: 'desc' })
+  deleteOpenChannelCategoryInfo = async (group_seq, category_seq) => {
+    return this.delete({ seq: category_seq, group_seq })
   }
 
-  increaseCount = async (date, upload_count = 0, delete_count = 0) => {
-    const params = {
-      'modify_date': this.database.raw('NOW()')
-    }
-    if (upload_count) {
-      params.upload_count = this.database.raw(`\`upload_count\` + ${upload_count}`)
-    }
-    if (delete_count) {
-      params.delete_count = this.database.raw(`\`delete_count\` + ${delete_count}`)
-    }
-    return await this.update({ state_date: date }, params)
+  setCategoryVideoCount = async (group_seq, category_seq) => {
+    const query_str = `
+      UPDATE ${this.table_name} O
+      JOIN (
+        SELECT category_seq, COUNT(*) AS cnt
+        FROM open_channel_video
+        WHERE group_seq = '${group_seq}'
+          AND category_seq = '${category_seq}'
+        GROUP BY category_seq
+      ) AS D
+        ON O.seq = D.category_seq
+      SET O.order = D.new_order,
+        O.modify_date = NOW()
+      WHERE O.group_seq = '${group_seq}'
+        AND O.seq = '${category_seq}'
+    `
+
+    return this.rawQueryUpdate(query_str)
   }
 }

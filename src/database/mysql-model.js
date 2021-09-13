@@ -406,4 +406,12 @@ export default class DBMySQL {
     }
     return oKnex
   }
+
+  rawQueryUpdate = async (query_str) => {
+    const query_result = await this.database.raw(query_str)
+    if (!query_result || !query_result.length || !query_result[0]) {
+      return false
+    }
+    return query_result[0].affectedRows > 0
+  }
 }
