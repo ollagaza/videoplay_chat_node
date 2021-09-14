@@ -1,13 +1,14 @@
 import _ from "lodash";
 import { Router } from 'express'
-import log from '../../../../libs/logger'
-import Auth from '../../../../middlewares/auth.middleware'
-import Role from '../../../../constants/roles'
-import Wrap from '../../../../utils/express-async'
-import StdObject from '../../../../wrapper/std-object'
-import DBMySQL from '../../../../database/knex-mysql'
-import Util from "../../../../utils/Util"
-import GroupService from "../../../../service/group/GroupService"
+import log from '../../../../../libs/logger'
+import Auth from '../../../../../middlewares/auth.middleware'
+import Role from '../../../../../constants/roles'
+import Wrap from '../../../../../utils/express-async'
+import StdObject from '../../../../../wrapper/std-object'
+import DBMySQL from '../../../../../database/knex-mysql'
+import Util from "../../../../../utils/Util"
+import GroupService from "../../../../../service/group/GroupService"
+import OpenChannelManagerService from '../../../../../service/group/OpenChannelManagerService'
 
 const routes = Router()
 
@@ -36,38 +37,35 @@ const checkGroupAuth = async (req) => {
 
 routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-}))
-
-routes.put('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.getOpenChannelInfo(group_auth.group_seq))
 }))
 
 routes.post('/banner', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.addBanner(group_auth.group_seq, req, res))
 }))
-
-routes.post('/banner/upload', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/banner/:banner_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.deleteBanner(group_auth.group_seq, req.params.banner_seq))
 }))
-
-routes.delete('/banner/:banner_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/banner/:banner_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.modifyBannerInfo(group_auth.group_seq, req.params.banner_seq, req))
 }))
-
-routes.put('/banner/:banner_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/banner/order', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.modifyBannerOrder(group_auth.group_seq, req))
 }))
 
+routes.get('/category/name/validate/:category_name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.modifyBannerOrder(group_auth.group_seq, req))
+
+}))
 routes.post('/category', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
 
 }))
-
 routes.put('/category/:category_id/name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
 

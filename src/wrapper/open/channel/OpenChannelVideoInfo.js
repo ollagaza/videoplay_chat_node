@@ -11,18 +11,8 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
 
   getOpenVideoInfo = (is_member) => {
     this.setKeys([
-      'seq', 'video_reg_date', 'title', 'doc', 'view_count', 'reg_date', 'modify_date', 'thumbnail_url', 'total_time', 'stream_info', 'non_user_play_time'
+      'seq', 'group_seq', 'category_seq', 'operation_seq', 'view_count', 'non_user_play_time', 'title', 'doc_html', 'thumbnail', 'total_time', 'reg_date', 'operation_date', 'mode', 'title', 'html', 'text'
     ])
-    if (Util.trim(this.video_title)) {
-      this.title = Util.trim(this.video_title)
-    } else if (this.title) {
-      this.title = Util.trim(this.title)
-    }
-    if (Util.trim(this.video_doc_html)) {
-      this.doc = Util.trim(this.video_doc_html)
-    } else if (Util.trim(this.doc_html)) {
-      this.doc = Util.trim(this.doc_html)
-    }
 
     if (this.thumbnail) {
       if (this.mode === 'file' && !ServiceConfig.isVacs()) {
@@ -64,7 +54,7 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
 
   getQueryJson = () => {
     this.setKeys([
-      'seq', 'group_seq', 'category_seq', 'operation_seq', 'video_title', 'video_doc_text', 'video_doc_html', 'non_user_play_time', 'view_count', 'video_reg_date', 'reg_date', 'modify_date'
+      'seq', 'group_seq', 'category_seq', 'operation_seq', 'video_title', 'video_doc_text', 'video_doc_html', 'non_user_play_time', 'view_count', 'reg_date', 'modify_date'
     ])
     this.setIgnoreEmpty(true)
     return this.toJSON()

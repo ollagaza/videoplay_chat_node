@@ -868,7 +868,7 @@ const resizeImage = async (origin_path, resize_path, width = -1, height = -1, me
     } else {
       dimension = await getVideoDimension(origin_path)
     }
-    if (dimension.width <= 0 || dimension.height <= 0) {
+    if (!dimension || dimension.width <= 0 || dimension.height <= 0) {
       return { success: false }
     }
 

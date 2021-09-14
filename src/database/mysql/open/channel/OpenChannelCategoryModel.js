@@ -88,4 +88,9 @@ export default class OpenChannelCategoryModel extends MySQLModel {
 
     return this.rawQueryUpdate(query_str)
   }
+
+  validateCategoryName = async (group_seq, category_name) => {
+    const query_result = await this.findOne({ group_seq, category_name })
+    return !(query_result && query_result.seq)
+  }
 }

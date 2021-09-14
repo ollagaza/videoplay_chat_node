@@ -33,6 +33,12 @@ export default class OpenChannelBannerModel extends MySQLModel {
     return new OpenChannelBannerInfo(banner_info).setUrl()
   }
 
+  modifyBannerInfo = async (group_seq, banner_seq, banner_info) => {
+    banner_info = banner_info.getQueryJson()
+    banner_info.modify_date = this.database.raw('NOW()')
+    return this.update({ group_seq, seq: banner_seq })
+  }
+
   modifyBannerOrder = async (group_seq, order_data_list) => {
     if (!order_data_list || !order_data_list.length) return
 
