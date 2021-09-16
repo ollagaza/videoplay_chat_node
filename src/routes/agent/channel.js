@@ -9,6 +9,7 @@ import GroupService from '../../service/group/GroupService'
 import {UserDataModel} from "../../database/mongodb/UserData";
 import OperationFolderService from "../../service/operation/OperationFolderService";
 import OperationService from "../../service/operation/OperationService";
+import Util from '../../utils/Util'
 
 const routes = Router()
 
@@ -66,13 +67,13 @@ routes.post('/:group_seq(\\d+)/folder', Auth.isAuthenticated(Role.AGENT), Wrap(a
   const group_seq = req.params.group_seq
 
   const parent_folder_seq = req.body.parent_folder_seq
-  const folder_name = req.body.folder_name.trim()
+  const folder_name = Util.trim(req.body.folder_name)
 
   if (!parent_folder_seq) {
     return res.json(new StdObject(-1, '상위 폴더 정보가 없습니다.', 403))
   }
 
-  if (!folder_name.trim()) {
+  if (folder_name) {
     return res.json(new StdObject(-1, '생성할 폴더명이 입력되지 않았습니다.', 403))
   }
 

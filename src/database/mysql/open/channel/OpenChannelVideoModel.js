@@ -5,8 +5,8 @@ import Util from '../../../../utils/Util'
 
 
 const default_field_list = [
-  'open_channel_video.seq', 'open_channel_video.group_seq', 'open_channel_video.category_seq', 'open_channel_video.operation_seq', 'open_channel_video.view_count', 'open_channel_video.non_user_play_time',
-  'operation_data.title', 'operation_data.doc_html', 'operation_data.thumbnail', 'operation_data.total_time',
+  'open_channel_video.seq AS video_seq', 'open_channel_video.category_seq', 'open_channel_video.view_count',
+  'operation_data.seq AS data_seq', 'operation_data.group_seq', 'operation_data.operation_seq', 'operation_data.thumbnail', 'operation_data.total_time', 'operation_data.is_play_limit', 'operation_data.play_limit_time',
   'operation.reg_date', 'operation.operation_date', 'operation.mode',
   'IF(open_channel_video.video_title IS NOT NULL, open_channel_video.video_title, operation_data.title) AS title',
   'IF(open_channel_video.video_doc_html IS NOT NULL, open_channel_video.video_doc_html, operation_data.doc_html) AS html',
@@ -23,32 +23,37 @@ export default class OpenChannelVideoModel extends MySQLModel {
     this.log_prefix = '[OpenChannelVideoModel]'
   }
 
-  getOpenChannelVideoList = async (group_seq, category_seq, page_params = {}, filter_params = {}, order_params = {}) => {
-    const is_all = Util.parseInt(category_seq, 0) === 0
-
+  getOpenChannelVideoList = async (group_seq, is_all, category_seq, page_params = {}, filter_params = {}, order_params = {}) => {
     const sub_query = this.database
-      .select(default_field_list)
+      .select(this.arrayToSafeQuery(default_field_list))
     if (is_all) {
       sub_query.from('operation_data')
-        .leftOuterJoin(this.table_name, { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
-        .innerJoin('operation', { 'operation.seq': 'operation_data.operation_seq' })
+        .innerJoin('operation', (builder) => {
+          this.setOperationJoinOption(builder, 'operation_data.operation_seq')
+        })
+        .leftOuterJoin('open_channel_video', { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
     } else {
-      sub_query.from(this.table_name)
+      sub_query.from('open_channel_video')
+        .innerJoin('operation', (builder) => {
+          this.setOperationJoinOption(builder, 'open_channel_video.operation_seq')
+        })
         .innerJoin('operation_data', { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
-        .innerJoin('operation', { 'operation.seq': 'open_channel_video.operation_seq' })
     }
 
-    sub_query.where('open_channel_video.group_seq', group_seq)
+    sub_query.where('operation_data.group_seq', group_seq)
 
     if (is_all) {
-      sub_query.where('operation_data.is_open_video', 1)
+      sub_query.where(builder => {
+        builder.where('operation_data.is_open_video', 1)
+        builder.orWhereNotNull('open_channel_video.seq')
+      })
     } else {
       sub_query.where('open_channel_video.category_seq', category_seq)
     }
 
     const query = this.database
       .select('*')
-      .from(sub_query)
+      .from({ data: sub_query })
 
     if (filter_params.search_keyword) {
       query.where((builder) => {
@@ -95,28 +100,34 @@ export default class OpenChannelVideoModel extends MySQLModel {
     return paging_result
   }
 
+  setOperationJoinOption = (builder, operation_seq_column) => {
+    builder.andOn('operation.seq', operation_seq_column)
+    builder.andOn(this.database.raw("operation.mode = 'operation'"))
+    builder.andOn(this.database.raw("operation.status = 'Y'"))
+    builder.andOn(this.database.raw("operation.analysis_status = 'Y'"))
+  }
 
   createOpenChannelVideoInfo = async (video_info) => {
     const video_seq = await this.create(video_info.getQueryJson(), 'seq')
     return this.getOpenChannelVideoInfo(video_seq)
   }
 
-  getOpenChannelVideoInfo = async (video_seq, join_media = false) => {
+  getOpenChannelVideoInfo = async (operation_seq, join_media = false) => {
     const query = this.database
       .select(join_media ? media_field_list : default_field_list)
       .from(this.table_name)
-      .innerJoin('operation', { 'operation.seq': 'open_channel_video.operation_seq' })
-      .innerJoin('operation_data', { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
+      .innerJoin('operation_data', { 'operation_data.operation_seq': operation_seq })
+      .innerJoin('open_channel_video', { 'open_channel_video.operation_seq': operation_seq })
     if (join_media) {
-      query.innerJoin('operation_media', { 'operation_media.operation_seq': 'open_channel_video.operation_seq' })
+      query.innerJoin('operation_media', { 'operation_media.operation_seq': operation_seq })
     }
-    query.where('open_channel_video.seq', video_seq)
+    query.where('operation.seq', operation_seq)
       .first()
     const video_info = await query
     return new OpenChannelVideoInfo(video_info).getOpenVideoInfo()
   }
 
-  deleteOpenChannelVideoInfo = async (category_seq, video_seq) => {
-    return this.delete({ seq: video_seq, category_seq })
+  deleteOpenChannelVideoInfo = async (video_seq) => {
+    return this.delete({ seq: video_seq })
   }
 }

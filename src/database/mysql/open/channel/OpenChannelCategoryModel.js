@@ -1,5 +1,6 @@
 import MySQLModel from '../../../mysql-model'
 import OpenChannelCategoryInfo from '../../../../wrapper/open/channel/OpenChannelCategoryInfo'
+import logger from '../../../../libs/logger'
 
 export default class OpenChannelCategoryModel extends MySQLModel {
   constructor (database) {
@@ -89,7 +90,7 @@ export default class OpenChannelCategoryModel extends MySQLModel {
     return this.rawQueryUpdate(query_str)
   }
 
-  validateCategoryName = async (group_seq, category_name) => {
+  verifyCategoryName = async (group_seq, category_name) => {
     const query_result = await this.findOne({ group_seq, category_name })
     return !(query_result && query_result.seq)
   }

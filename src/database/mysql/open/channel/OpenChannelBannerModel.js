@@ -16,7 +16,7 @@ export default class OpenChannelBannerModel extends MySQLModel {
     const query_result = await this.find({ group_seq }, null, { name: 'order', direction: 'asc' })
     if (query_result && query_result.length) {
       for (let i = 0; i < query_result.length; i++) {
-        result_list.push(new OpenChannelBannerInfo(query_result[i]))
+        result_list.push(new OpenChannelBannerInfo(query_result[i]).setUrl())
       }
     }
 
@@ -36,7 +36,7 @@ export default class OpenChannelBannerModel extends MySQLModel {
   modifyBannerInfo = async (group_seq, banner_seq, banner_info) => {
     banner_info = banner_info.getQueryJson()
     banner_info.modify_date = this.database.raw('NOW()')
-    return this.update({ group_seq, seq: banner_seq })
+    return this.update({ group_seq, seq: banner_seq }, banner_info)
   }
 
   modifyBannerOrder = async (group_seq, order_data_list) => {

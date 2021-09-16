@@ -117,7 +117,7 @@ const OperationFolderServiceClass = class {
 
     const folder_seq = await model.createOperationFolder(folder_info)
     folder_info.seq = folder_seq
-    log.debug(this.log_prefix, '[createDefaultOperationFolder]', folder_seq, folder_info)
+    // log.debug(this.log_prefix, '[createDefaultOperationFolder]', folder_seq, folder_info)
 
     return folder_info
   }

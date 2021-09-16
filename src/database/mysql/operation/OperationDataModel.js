@@ -1,6 +1,5 @@
 import MySQLModel from '../../mysql-model'
 import OperationDataInfo from '../../../wrapper/operation/OperationDataInfo'
-import logger from '../../../libs/logger'
 
 export default class OperationDataModel extends MySQLModel {
   constructor (database) {
@@ -195,6 +194,26 @@ export default class OperationDataModel extends MySQLModel {
       filter.seq = seq
     }
     params[field_name] = counts
+    return this.update(filter, params)
+  }
+
+  setPlayLimit = async (seq, limit_info) => {
+    const filter = {
+      seq
+    }
+    const params = {}
+    let is_change = false
+    if (limit_info) {
+      if (limit_info.is_play_limit !== undefined) {
+        params.is_play_limit = limit_info.is_play_limit
+        is_change = true
+      }
+      if (limit_info.play_limit_time) {
+        params.play_limit_time = limit_info.play_limit_time
+        is_change = true
+      }
+    }
+    if (!is_change) return
     return this.update(filter, params)
   }
 }

@@ -16,6 +16,7 @@ import GroupBoardDataService from "../../../service/board/GroupBoardDataService"
 import OperationCommentService from "../../../service/operation/OperationCommentService";
 import Constants from '../../../constants/constants'
 import MemberService from "../../../service/member/MemberService";
+import OpenChannelManagerService from '../../../service/group/OpenChannelManagerService'
 
 const routes = Router()
 
@@ -219,8 +220,9 @@ routes.post('/create_group_new', Util.common_path_upload.fields([{ name: 'group_
     pay_code: 'f_12TB',
     start_date: (Util.getToDate()).concat(' 00:00:00'),
     expire_date: (Util.getDateYearAdd(Util.getToDate(), 1)).concat(' 23:59:59'),
-    group_name: params.group_name.trim(),
-    group_color: params.group_color.trim(),
+    group_name: Util.trim(params.group_name),
+    domain: Util.trim(params.domain),
+    group_color: Util.trim(params.group_color),
     group_open: params.group_open,
     is_channel: params.group_open,
     group_join_way: params.group_join_way,
@@ -247,7 +249,8 @@ routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_prof
   })
   const { member_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const options = {
-    group_name: params.group_name.trim(),
+    group_name: Util.trim(params.group_name),
+    domain: Util.trim(params.domain),
     gnb_color: params.group_color,
     group_open: params.group_open,
     group_join_way: params.group_join_way,
@@ -714,6 +717,10 @@ routes.get('/:group_seq(\\d+)/counts', Auth.isAuthenticated(Role.DEFAULT), Wrap(
   const output = new StdObject()
   output.add('group_count', group_count)
   res.json(output)
+}))
+
+routes.get('/domain/verify/:domain', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  res.json(await OpenChannelManagerService.verifyChannelDomain(req.params.domain))
 }))
 
 export default routes

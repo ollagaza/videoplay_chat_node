@@ -13,7 +13,7 @@ import OpenChannelManagerService from '../../../../../service/group/OpenChannelM
 const routes = Router()
 
 const checkGroupAuth = async (req) => {
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, false, true, false)
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, false)
   if (!group_auth.is_group_admin) {
     throw new StdObject(3001, '채널 관리자만 접근 가능합니다.', 403)
   }
@@ -40,55 +40,60 @@ routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => 
   res.json(await OpenChannelManagerService.getOpenChannelInfo(group_auth.group_seq))
 }))
 
+routes.get('/domain/verify/:domain', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.verifyChannelDomain(req.params.domain, group_auth.group_seq))
+}))
+
 routes.post('/banner', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
   res.json(await OpenChannelManagerService.addBanner(group_auth.group_seq, req, res))
-}))
-routes.delete('/banner/:banner_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.deleteBanner(group_auth.group_seq, req.params.banner_seq))
-}))
-routes.put('/banner/:banner_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.modifyBannerInfo(group_auth.group_seq, req.params.banner_seq, req))
 }))
 routes.put('/banner/order', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
   res.json(await OpenChannelManagerService.modifyBannerOrder(group_auth.group_seq, req))
 }))
-
-routes.get('/category/name/validate/:category_name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/banner/:banner_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.modifyBannerOrder(group_auth.group_seq, req))
+  res.json(await OpenChannelManagerService.modifyBannerInfo(group_auth.group_seq, req.params.banner_seq, req))
+}))
+routes.delete('/banner/:banner_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.deleteBanner(group_auth.group_seq, req.params.banner_seq))
+}))
 
+routes.get('/category/name/verify', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.verifyCategoryName(group_auth.group_seq, req.query.category_name))
 }))
 routes.post('/category', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.createCategory(group_auth.group_seq, req))
 }))
 routes.put('/category/:category_id/name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
 
 }))
-
 routes.delete('/category/:category_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
 
 }))
 
+routes.get('/category/:category/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.getOpenChannelVideoList(group_auth.group_seq, req.params.category, req))
+}))
 routes.post('/category/:category/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
 
 }))
-
-routes.put('/category/:category/video/:video_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/video/:operation_data_seq/limit', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.setVideoPlayLimit(group_auth.group_seq, req.params.operation_data_seq, req))
 }))
-
-routes.delete('/category/:category/video/:video_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/video/:category_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.deleteVideo(group_auth.group_seq, req.params.category_id, req))
 }))
 
 
