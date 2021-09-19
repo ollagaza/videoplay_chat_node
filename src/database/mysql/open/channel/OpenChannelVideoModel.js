@@ -135,13 +135,35 @@ export default class OpenChannelVideoModel extends MySQLModel {
     return this.delete({ seq: video_seq })
   }
 
-  getOpenVideoList = async (group_seq, folder_seq, page_params = {}, filter_params = {}) => {
+  getTargetVideoList = async (group_seq, folder_seq, page_params = {}, filter_params = {}) => {
+    folder_seq = Util.parseInt(folder_seq, 0)
     const query = this.database
-      .select(['operation.operation_name', 'operation.operation_date', 'operation.reg_date'])
+      .select(['operation.seq', 'operation.operation_name', 'operation.operation_date', 'operation.reg_date'])
       .from('operation')
-      .innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
+      .leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
       .where('operation.group_seq', group_seq)
       .where('operation.status', 'Y')
       .where('operation.analysis_status', 'Y')
+      .where('operation.mode', 'operation')
+
+    if (filter_params.search_keyword) {
+      query
+        .where((builder) => {
+          builder.whereNull('operation.folder_seq')
+          builder.orWhere('operation_folder.status', 'Y')
+        })
+        .where((builder) => {
+          builder.where('operation.operation_name', 'like', `%${filter_params.search_keyword}%`)
+        })
+    } else if (Util.parseInt(folder_seq, 0) > 0) {
+      query.where('operation.folder_seq', folder_seq)
+    } else {
+      query.whereNull('operation.folder_seq')
+    }
+
+    const page = page_params.page ? page_params.page : 1
+    const list_count = page_params.list_count ? page_params.list_count : 10
+    const page_count = page_params.page_count ? page_params.page_count : 10
+    return this.queryPaginated(query, list_count, page, page_count, page_params.no_paging)
   }
 }

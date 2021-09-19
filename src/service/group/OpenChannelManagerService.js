@@ -319,13 +319,19 @@ const OpenChannelManagerServiceClass = class {
     await category_model.deleteOpenChannelCategoryInfo(group_seq, category_id)
     return new StdObject()
   }
-  getOpenVideoList = async (group_seq, request) => {
+  getTargetVideoList = async (group_seq, request) => {
     const folder_seq = request.query && request.query.folder_seq ? request.query.folder_seq : null
     const { page_params, order_params, filter_params} = this.getListParams(request)
 
     const video_model = this.getVideoModel()
-    await video_model.getOpenVideoList(group_seq, folder_seq, page_params, order_params, filter_params)
-    return new StdObject()
+    const video_list = await video_model.getTargetVideoList(group_seq, folder_seq, page_params, order_params, filter_params)
+
+    const output = new StdObject()
+    output.adds(video_list)
+    return output
+  }
+  addOpenChannelVideoList = async (group_seq, category_id, request) => {
+
   }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()

@@ -85,7 +85,7 @@ routes.get('/category/:category_id/video', Auth.isAuthenticated(Role.LOGIN_USER)
 }))
 routes.post('/category/:category_id/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.addOpenChannelVideoList(group_auth.group_seq, req.params.category_id, req))
 }))
 routes.put('/video/:operation_data_seq/limit', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
@@ -95,9 +95,9 @@ routes.delete('/video/:category_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap
   const group_auth = await checkGroupAuth(req)
   res.json(await OpenChannelManagerService.deleteVideo(group_auth.group_seq, req.params.category_id, req))
 }))
-routes.get('/open/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.getOpenVideoList(group_auth.group_seq, req.query.folder_seq))
+  res.json(await OpenChannelManagerService.getTargetVideoList(group_auth.group_seq, req))
 }))
 
 
