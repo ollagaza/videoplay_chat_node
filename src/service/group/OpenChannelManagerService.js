@@ -97,11 +97,11 @@ const OpenChannelManagerServiceClass = class {
     return output
   }
 
-  getOpenChannelVideoList = async (group_seq, category_id, request) => {
+  getListParams = (request) => {
     const page_params = {}
     const order_params = {}
+    const filter_params = {}
     const list_params = request.query ? request.query : request.body
-    logger.debug(this.log_prefix, '[getOpenChannelVideoList]', list_params)
     if (list_params) {
       page_params.page = Util.parseInt(list_params.page, 1)
       page_params.list_count = Util.parseInt(list_params.list_count, 20)
@@ -109,11 +109,17 @@ const OpenChannelManagerServiceClass = class {
       page_params.no_paging = list_params.no_paging === 'n' ? 'n' : 'y'
       order_params.field = list_params.order_fields ? list_params.order_fields : 'operation.seq'
       order_params.type = list_params.order_type ? list_params.order_type : 'desc'
+      filter_params.search_keyword = Util.trim(filter_params.search_keyword) ? Util.trim(filter_params.search_keyword) : null
     }
+    return { page_params, order_params, filter_params}
+  }
+
+  getOpenChannelVideoList = async (group_seq, category_id, request) => {
+    const { page_params, order_params, filter_params} = this.getListParams(request)
     category_id = this.getCategoryId(category_id)
 
     const video_model = this.getVideoModel()
-    const video_list = await video_model.getOpenChannelVideoList(group_seq, category_id === this.CATEGORY_ALL, category_id, page_params, order_params)
+    const video_list = await video_model.getOpenChannelVideoList(group_seq, category_id === this.CATEGORY_ALL, category_id, page_params, filter_params, order_params)
 
     const output = new StdObject()
     output.adds(video_list)
@@ -224,11 +230,11 @@ const OpenChannelManagerServiceClass = class {
     return output
   }
 
-  verifyCategoryName = async (group_seq, category_name) => {
+  verifyCategoryName = async (group_seq, category_name, category_id = null) => {
     const category_model = this.getCategoryModel()
-    const verify_result = await category_model.verifyCategoryName(group_seq, category_name)
+    const is_used_category_name = await category_model.isUsedCategoryName(group_seq, category_name, category_id)
     const output = new StdObject()
-    output.add('is_verify', verify_result === true)
+    output.add('is_verify', is_used_category_name !== true)
     return output
   }
 
@@ -273,12 +279,22 @@ const OpenChannelManagerServiceClass = class {
     return int_id > 0 ? int_id : this.CATEGORY_ALL
   }
 
-  async createCategory (group_seq, request) {
+  isUsedCategoryName = async (group_seq, category_name, category_id = null) => {
+    const verify_category_name = await this.verifyCategoryName(group_seq, category_name, category_id)
+    logger.debug(this.log_prefix, '[isUsedCategoryName]', group_seq, category_name, category_id, verify_category_name.toJSON(), verify_category_name.get('is_verify'))
+    if (!verify_category_name.get('is_verify')) {
+      throw new StdObject(8842, '이미 사용중인 카테고리명입니다.', 500)
+    }
+  }
+
+  createCategory = async (group_seq, request) => {
     if (!request.body || !request.body.category_info) {
       return new StdObject(8821, '잘못된 접근입니다.', 500)
     }
     const category_info = new OpenChannelCategoryInfo(request.body.category_info)
     category_info.group_seq = group_seq
+
+    await this.isUsedCategoryName(group_seq, category_info.category_name)
 
     const category_model = this.getCategoryModel()
     const create_category_info = await category_model.createOpenChannelCategoryInfo(category_info)
@@ -286,6 +302,30 @@ const OpenChannelManagerServiceClass = class {
     const output = new StdObject()
     output.add('category_info', create_category_info)
     return output
+  }
+  modifyCategory = async (group_seq, category_id, request) => {
+    if (!request.body || !request.body.category_info || !Util.trim(request.body.category_info.category_name)) {
+      return new StdObject(8831, '잘못된 접근입니다.', 500)
+    }
+    const category_name = Util.trim(request.body.category_info.category_name)
+    await this.isUsedCategoryName(group_seq, category_name)
+
+    const category_model = this.getCategoryModel()
+    await category_model.modifyCategoryName(group_seq, category_id, category_name)
+    return new StdObject()
+  }
+  deleteCategory = async (group_seq, category_id) => {
+    const category_model = this.getCategoryModel()
+    await category_model.deleteOpenChannelCategoryInfo(group_seq, category_id)
+    return new StdObject()
+  }
+  getOpenVideoList = async (group_seq, request) => {
+    const folder_seq = request.query && request.query.folder_seq ? request.query.folder_seq : null
+    const { page_params, order_params, filter_params} = this.getListParams(request)
+
+    const video_model = this.getVideoModel()
+    await video_model.getOpenVideoList(group_seq, folder_seq, page_params, order_params, filter_params)
+    return new StdObject()
   }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()

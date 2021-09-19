@@ -1,6 +1,7 @@
 import MySQLModel from '../../../mysql-model'
 import OpenChannelCategoryInfo from '../../../../wrapper/open/channel/OpenChannelCategoryInfo'
 import logger from '../../../../libs/logger'
+import Util from '../../../../utils/Util'
 
 export default class OpenChannelCategoryModel extends MySQLModel {
   constructor (database) {
@@ -90,8 +91,13 @@ export default class OpenChannelCategoryModel extends MySQLModel {
     return this.rawQueryUpdate(query_str)
   }
 
-  verifyCategoryName = async (group_seq, category_name) => {
-    const query_result = await this.findOne({ group_seq, category_name })
-    return !(query_result && query_result.seq)
+  isUsedCategoryName = async (group_seq, category_name, category_id = null) => {
+    const filter = { group_seq, category_name }
+    const query_result = await this.findOne(filter)
+    if (!query_result || !query_result.seq) return false
+    if (Util.parseInt(category_id)) {
+      return query_result.seq !== Util.parseInt(category_id)
+    }
+    return true
   }
 }

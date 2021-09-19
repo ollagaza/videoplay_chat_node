@@ -39,8 +39,12 @@ export default class OpenChannelVideoModel extends MySQLModel {
         })
         .innerJoin('operation_data', { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
     }
-
+    sub_query.leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
     sub_query.where('operation_data.group_seq', group_seq)
+    sub_query.where((builder) => {
+      builder.whereNull('operation.folder_seq')
+      builder.orWhere('operation_folder.status', 'Y')
+    })
 
     if (is_all) {
       sub_query.where(builder => {
@@ -129,5 +133,15 @@ export default class OpenChannelVideoModel extends MySQLModel {
 
   deleteOpenChannelVideoInfo = async (video_seq) => {
     return this.delete({ seq: video_seq })
+  }
+
+  getOpenVideoList = async (group_seq, folder_seq, page_params = {}, filter_params = {}) => {
+    const query = this.database
+      .select(['operation.operation_name', 'operation.operation_date', 'operation.reg_date'])
+      .from('operation')
+      .innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
+      .where('operation.group_seq', group_seq)
+      .where('operation.status', 'Y')
+      .where('operation.analysis_status', 'Y')
   }
 }

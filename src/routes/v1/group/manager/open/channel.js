@@ -72,18 +72,18 @@ routes.post('/category', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req,
 }))
 routes.put('/category/:category_id/name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.modifyCategory(group_auth.group_seq, req.params.category_id, req))
 }))
 routes.delete('/category/:category_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-
+  res.json(await OpenChannelManagerService.deleteCategory(group_auth.group_seq, req.params.category_id))
 }))
 
-routes.get('/category/:category/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/category/:category_id/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.getOpenChannelVideoList(group_auth.group_seq, req.params.category, req))
+  res.json(await OpenChannelManagerService.getOpenChannelVideoList(group_auth.group_seq, req.params.category_id, req))
 }))
-routes.post('/category/:category/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/category/:category_id/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
 
 }))
@@ -94,6 +94,10 @@ routes.put('/video/:operation_data_seq/limit', Auth.isAuthenticated(Role.LOGIN_U
 routes.delete('/video/:category_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
   res.json(await OpenChannelManagerService.deleteVideo(group_auth.group_seq, req.params.category_id, req))
+}))
+routes.get('/open/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.getOpenVideoList(group_auth.group_seq, req.query.folder_seq))
 }))
 
 
