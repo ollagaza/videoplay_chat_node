@@ -11,7 +11,7 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
 
   getOpenVideoInfo = (is_member) => {
     this.setKeys([
-      'data_seq', 'group_seq', 'category_seq', 'operation_seq', 'view_count', 'is_play_limit', 'play_limit_time', 'title', 'doc_html', 'thumbnail', 'total_time', 'reg_date', 'operation_date', 'mode', 'title', 'html', 'text'
+      'video_seq', 'data_seq', 'group_seq', 'category_seq', 'operation_seq', 'view_count', 'is_play_limit', 'play_limit_time', 'title', 'doc_html', 'thumbnail', 'total_time', 'reg_date', 'operation_date', 'mode', 'title', 'html', 'text'
     ])
 
     if (this.thumbnail) {

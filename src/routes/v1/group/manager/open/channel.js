@@ -70,30 +70,38 @@ routes.post('/category', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req,
   const group_auth = await checkGroupAuth(req)
   res.json(await OpenChannelManagerService.createCategory(group_auth.group_seq, req))
 }))
-routes.put('/category/:category_id/name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/category/:category_seq/name', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.modifyCategory(group_auth.group_seq, req.params.category_id, req))
+  res.json(await OpenChannelManagerService.modifyCategory(group_auth.group_seq, req.params.category_seq, req))
 }))
-routes.delete('/category/:category_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/category/:category_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.deleteCategory(group_auth.group_seq, req.params.category_id))
+  res.json(await OpenChannelManagerService.deleteCategory(group_auth.group_seq, req.params.category_seq))
 }))
 
-routes.get('/category/:category_id/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/category/:category_seq/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.getOpenChannelVideoList(group_auth.group_seq, req.params.category_id, req))
+  res.json(await OpenChannelManagerService.getOpenChannelVideoList(group_auth.group_seq, req.params.category_seq, req))
 }))
-routes.post('/category/:category_id/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/category/:category_seq/video/order/max', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.addOpenChannelVideoList(group_auth.group_seq, req.params.category_id, req))
+  res.json(await OpenChannelManagerService.getMaxOrder(group_auth.group_seq, req.params.category_seq))
+}))
+routes.post('/category/:category_seq/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.addOpenChannelVideoList(group_auth.group_seq, req.params.category_seq, req))
+}))
+routes.put('/category/:category_seq/video/:video_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const group_auth = await checkGroupAuth(req)
+  res.json(await OpenChannelManagerService.changeOpenVideo(group_auth.group_seq, req.params.category_seq, req.params.video_seq, req))
 }))
 routes.put('/video/:operation_data_seq/limit', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
   res.json(await OpenChannelManagerService.setVideoPlayLimit(group_auth.group_seq, req.params.operation_data_seq, req))
 }))
-routes.delete('/video/:category_id', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.delete('/video/:category_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.deleteVideo(group_auth.group_seq, req.params.category_id, req))
+  res.json(await OpenChannelManagerService.deleteVideo(group_auth.group_seq, req.params.category_seq, req))
 }))
 routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)

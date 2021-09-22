@@ -2,10 +2,11 @@ import MySQLModel from '../../../mysql-model'
 import OpenChannelVideoInfo from '../../../../wrapper/open/channel/OpenChannelVideoInfo'
 import _ from 'lodash'
 import Util from '../../../../utils/Util'
+import logger from '../../../../libs/logger'
 
 
 const default_field_list = [
-  'open_channel_video.seq AS video_seq', 'open_channel_video.category_seq', 'open_channel_video.view_count',
+  'open_channel_video.seq AS video_seq', 'open_channel_video.category_seq', 'open_channel_video.view_count', 'open_channel_video.video_order',
   'operation_data.seq AS data_seq', 'operation_data.group_seq', 'operation_data.operation_seq', 'operation_data.thumbnail', 'operation_data.total_time', 'operation_data.is_play_limit', 'operation_data.play_limit_time',
   'operation.reg_date', 'operation.operation_date', 'operation.mode',
   'IF(open_channel_video.video_title IS NOT NULL, open_channel_video.video_title, operation_data.title) AS title',
@@ -31,7 +32,15 @@ export default class OpenChannelVideoModel extends MySQLModel {
         .innerJoin('operation', (builder) => {
           this.setOperationJoinOption(builder, 'operation_data.operation_seq')
         })
-        .leftOuterJoin('open_channel_video', { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
+        .leftOuterJoin(this.database.raw(`
+          (
+            SELECT *
+            FROM open_channel_video
+            WHERE group_seq = ?
+            GROUP BY operation_seq
+          ) AS open_channel_video
+            ON open_channel_video.operation_seq = operation_data.operation_seq
+        `, group_seq))
     } else {
       sub_query.from('open_channel_video')
         .innerJoin('operation', (builder) => {
@@ -66,7 +75,7 @@ export default class OpenChannelVideoModel extends MySQLModel {
       })
     }
 
-    const order_by = { name: 'operation_seq', direction: 'DESC' }
+    const order_by = is_all ? { name: 'operation_seq', direction: 'DESC' } : { name: 'video_order', direction: 'ASC' }
     if (order_params.field) {
       switch (order_params.field) {
         case 'title':
@@ -91,6 +100,10 @@ export default class OpenChannelVideoModel extends MySQLModel {
     }
     query.orderBy(order_by.name, order_by.direction)
 
+    return this.getPagingResult(query, page_params)
+  }
+
+  getPagingResult = async (query, page_params) => {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
@@ -101,6 +114,7 @@ export default class OpenChannelVideoModel extends MySQLModel {
         paging_result.data[key] = new OpenChannelVideoInfo(paging_result.data[key]).getOpenVideoInfo()
       }
     }
+
     return paging_result
   }
 
@@ -131,16 +145,27 @@ export default class OpenChannelVideoModel extends MySQLModel {
     return new OpenChannelVideoInfo(video_info).getOpenVideoInfo()
   }
 
-  deleteOpenChannelVideoInfo = async (video_seq) => {
-    return this.delete({ seq: video_seq })
+  deleteOpenChannelVideoInfo = async (operation_seq, video_seq) => {
+    const filter = {
+      operation_seq
+    }
+    if (video_seq) {
+      filter.seq = video_seq;
+    }
+    return this.delete(filter)
   }
 
-  getTargetVideoList = async (group_seq, folder_seq, page_params = {}, filter_params = {}) => {
+  getTargetVideoList = async (group_seq, category_seq, folder_seq, page_params = {}, filter_params = {}) => {
+    logger.debug(this.log_prefix, '[getTargetVideoList]', filter_params)
     folder_seq = Util.parseInt(folder_seq, 0)
     const query = this.database
-      .select(['operation.seq', 'operation.operation_name', 'operation.operation_date', 'operation.reg_date'])
+      .select(this.arrayToSafeQuery(default_field_list))
       .from('operation')
+      .innerJoin('operation_data', 'operation_data.operation_seq', 'operation.seq')
       .leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
+      .leftOuterJoin('open_channel_video',
+        { 'open_channel_video.operation_seq': 'operation_data.operation_seq', 'open_channel_video.category_seq': this.database.raw(category_seq) }
+      )
       .where('operation.group_seq', group_seq)
       .where('operation.status', 'Y')
       .where('operation.analysis_status', 'Y')
@@ -160,10 +185,58 @@ export default class OpenChannelVideoModel extends MySQLModel {
     } else {
       query.whereNull('operation.folder_seq')
     }
+    query.orderBy('operation.operation_name', 'ASC')
 
-    const page = page_params.page ? page_params.page : 1
-    const list_count = page_params.list_count ? page_params.list_count : 10
-    const page_count = page_params.page_count ? page_params.page_count : 10
-    return this.queryPaginated(query, list_count, page, page_count, page_params.no_paging)
+    return this.getPagingResult(query, page_params)
+  }
+
+  getMaxOrder = async (group_seq, category_seq) => {
+    const query = this.database
+      .select(this.database.raw('MAX(video_order) AS MAX_ORDER'))
+      .from(this.table_name)
+      .where('group_seq', group_seq)
+      .where('category_seq', category_seq)
+      .first()
+    const result = await query
+    if (!result || !result.MAX_ORDER) return 1
+    return Util.parseInt(result.MAX_ORDER, 0) + 1
+  };
+
+  addOpenVideo = async (group_seq, category_seq, video_info_list) => {
+    const values = []
+    let sql = `
+      INSERT INTO ${this.table_name} (\`group_seq\`, \`category_seq\`, \`operation_seq\`, \`video_order\`)
+      VALUES `
+    for (let i = 0; i < video_info_list.length; i++) {
+      if (i !== 0) {
+        sql += ', '
+      }
+      sql += '(?, ?, ?, ?)'
+      values.push(group_seq)
+      values.push(category_seq)
+      values.push(video_info_list[i].operation_seq)
+      values.push(video_info_list[i].order)
+    }
+    sql += `
+      ON DUPLICATE KEY UPDATE
+        \`modify_date\` = current_timestamp()
+    `
+    const query_result = await this.database.raw(sql, values)
+    if (!query_result || !query_result.length || !query_result[0]) {
+      return false
+    }
+    return query_result[0].affectedRows > 0
+  }
+
+  changeOpenVideo = async (group_seq, category_seq, video_seq, video_info) => {
+    const update_params = {
+      operation_seq: video_info.operation_seq
+    }
+    const filter_params = {
+      seq: video_seq,
+      group_seq,
+      category_seq
+    };
+    return this.update(filter_params, update_params)
   }
 }

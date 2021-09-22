@@ -72,31 +72,44 @@ export default class OpenChannelCategoryModel extends MySQLModel {
   }
 
   setCategoryVideoCount = async (group_seq, category_seq) => {
-    const query_str = `
+    let query_str = `
       UPDATE ${this.table_name} O
       JOIN (
-        SELECT category_seq, COUNT(*) AS cnt
-        FROM open_channel_video
-        WHERE group_seq = '${group_seq}'
-          AND category_seq = '${category_seq}'
-        GROUP BY category_seq
+        SELECT C.seq, COUNT(V.seq) AS video_count
+        FROM open_channel_category AS C
+        LEFT OUTER JOIN open_channel_video AS V
+          ON V.category_seq = C.seq
+        WHERE C.group_seq = '${group_seq}'`
+    if (category_seq) {
+      query_str += `
+          AND C.seq = '${category_seq}'`
+    }
+    query_str += `
+        GROUP BY C.seq
       ) AS D
-        ON O.seq = D.category_seq
-      SET O.order = D.new_order,
+        ON D.seq = O.seq
+      SET O.content_count = D.video_count,
         O.modify_date = NOW()
-      WHERE O.group_seq = '${group_seq}'
-        AND O.seq = '${category_seq}'
+      WHERE
+        O.group_seq = '${group_seq}'
     `
+    // if (category_seq) {
+    //   query_str += `
+    //     AND O.seq = '${category_seq}'`
+    // } else {
+    //   query_str += `
+    //     AND O.seq = '${category_seq}'`
+    // }
 
     return this.rawQueryUpdate(query_str)
   }
 
-  isUsedCategoryName = async (group_seq, category_name, category_id = null) => {
+  isUsedCategoryName = async (group_seq, category_name, category_seq = null) => {
     const filter = { group_seq, category_name }
     const query_result = await this.findOne(filter)
     if (!query_result || !query_result.seq) return false
-    if (Util.parseInt(category_id)) {
-      return query_result.seq !== Util.parseInt(category_id)
+    if (Util.parseInt(category_seq)) {
+      return query_result.seq !== Util.parseInt(category_seq)
     }
     return true
   }

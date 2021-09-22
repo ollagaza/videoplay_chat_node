@@ -101,25 +101,26 @@ const OpenChannelManagerServiceClass = class {
     const page_params = {}
     const order_params = {}
     const filter_params = {}
-    const list_params = request.query ? request.query : request.body
-    if (list_params) {
-      page_params.page = Util.parseInt(list_params.page, 1)
-      page_params.list_count = Util.parseInt(list_params.list_count, 20)
-      page_params.page_count = Util.parseInt(list_params.page_count, 10)
-      page_params.no_paging = list_params.no_paging === 'n' ? 'n' : 'y'
-      order_params.field = list_params.order_fields ? list_params.order_fields : 'operation.seq'
-      order_params.type = list_params.order_type ? list_params.order_type : 'desc'
-      filter_params.search_keyword = Util.trim(filter_params.search_keyword) ? Util.trim(filter_params.search_keyword) : null
+    const request_params = request.query ? request.query : request.body
+    if (request_params) {
+      page_params.page = Util.parseInt(request_params.page, 1)
+      page_params.list_count = Util.parseInt(request_params.list_count, 20)
+      page_params.page_count = Util.parseInt(request_params.page_count, 10)
+      page_params.no_paging = request_params.no_paging === 'n' ? 'n' : 'y'
+      order_params.field = request_params.order_fields ? request_params.order_fields : 'operation.seq'
+      order_params.type = request_params.order_type ? request_params.order_type : 'desc'
+      filter_params.search_keyword = Util.trim(request_params.search_keyword) ? Util.trim(request_params.search_keyword) : null
     }
+    logger.debug(this.log_prefix, '[getListParams]', request_params.search_keyword, filter_params)
     return { page_params, order_params, filter_params}
   }
 
-  getOpenChannelVideoList = async (group_seq, category_id, request) => {
+  getOpenChannelVideoList = async (group_seq, category_seq, request) => {
     const { page_params, order_params, filter_params} = this.getListParams(request)
-    category_id = this.getCategoryId(category_id)
+    category_seq = this.getCategoryId(category_seq)
 
     const video_model = this.getVideoModel()
-    const video_list = await video_model.getOpenChannelVideoList(group_seq, category_id === this.CATEGORY_ALL, category_id, page_params, filter_params, order_params)
+    const video_list = await video_model.getOpenChannelVideoList(group_seq, category_seq === this.CATEGORY_ALL, category_seq, page_params, filter_params, order_params)
 
     const output = new StdObject()
     output.adds(video_list)
@@ -230,58 +231,22 @@ const OpenChannelManagerServiceClass = class {
     return output
   }
 
-  verifyCategoryName = async (group_seq, category_name, category_id = null) => {
+  verifyCategoryName = async (group_seq, category_name, category_seq = null) => {
     const category_model = this.getCategoryModel()
-    const is_used_category_name = await category_model.isUsedCategoryName(group_seq, category_name, category_id)
+    const is_used_category_name = await category_model.isUsedCategoryName(group_seq, category_name, category_seq)
     const output = new StdObject()
     output.add('is_verify', is_used_category_name !== true)
     return output
   }
 
-  setVideoPlayLimit = async (group_seq, operation_data_seq, request) => {
-    if (!request.body || !request.body.limit_info) {
-      return new StdObject(8811, '잘못된 접근입니다.', 500)
-    }
-    const limit_info = request.body.limit_info
-    if (limit_info.is_play_limit !== undefined) {
-      limit_info.is_play_limit = Util.isTrue(limit_info.is_play_limit)
-    }
-    if (limit_info.play_limit_time !== undefined) {
-      limit_info.play_limit_time = Util.parseInt(limit_info.play_limit_time, 0)
-    }
-    const operation_data_model = this.getOperationDataModel()
-    return operation_data_model.setPlayLimit(operation_data_seq, limit_info)
-  }
-
-  deleteVideo = async (group_seq, category_id, request) => {
-    if (!request.body || !request.body.open_video_info) {
-      return new StdObject(8821, '잘못된 접근입니다.', 500)
-    }
-    category_id = this.getCategoryId(category_id)
-    const open_video_info = request.body.open_video_info
-    // const operation_seq = open_video_info.operation_seq
-    const operation_data_seq = open_video_info.data_seq
-    const video_seq = open_video_info.video_seq
-    const is_all = category_id === this.CATEGORY_ALL
-    if (is_all) {
-      const operation_model = this.getOperationDataModel()
-      await operation_model.updateOpenVideo(operation_data_seq, false)
-    }
-    if (video_seq) {
-      const video_model = this.getVideoModel()
-      await video_model.deleteOpenChannelVideoInfo(video_seq)
-    }
-    return new StdObject()
-  }
-
-  getCategoryId = (category_id) => {
-    const int_id = Util.parseInt(category_id, 0)
+  getCategoryId = (category_seq) => {
+    const int_id = Util.parseInt(category_seq, 0)
     return int_id > 0 ? int_id : this.CATEGORY_ALL
   }
 
-  isUsedCategoryName = async (group_seq, category_name, category_id = null) => {
-    const verify_category_name = await this.verifyCategoryName(group_seq, category_name, category_id)
-    logger.debug(this.log_prefix, '[isUsedCategoryName]', group_seq, category_name, category_id, verify_category_name.toJSON(), verify_category_name.get('is_verify'))
+  isUsedCategoryName = async (group_seq, category_name, category_seq = null) => {
+    const verify_category_name = await this.verifyCategoryName(group_seq, category_name, category_seq)
+    logger.debug(this.log_prefix, '[isUsedCategoryName]', group_seq, category_name, category_seq, verify_category_name.toJSON(), verify_category_name.get('is_verify'))
     if (!verify_category_name.get('is_verify')) {
       throw new StdObject(8842, '이미 사용중인 카테고리명입니다.', 500)
     }
@@ -303,7 +268,7 @@ const OpenChannelManagerServiceClass = class {
     output.add('category_info', create_category_info)
     return output
   }
-  modifyCategory = async (group_seq, category_id, request) => {
+  modifyCategory = async (group_seq, category_seq, request) => {
     if (!request.body || !request.body.category_info || !Util.trim(request.body.category_info.category_name)) {
       return new StdObject(8831, '잘못된 접근입니다.', 500)
     }
@@ -311,27 +276,100 @@ const OpenChannelManagerServiceClass = class {
     await this.isUsedCategoryName(group_seq, category_name)
 
     const category_model = this.getCategoryModel()
-    await category_model.modifyCategoryName(group_seq, category_id, category_name)
+    await category_model.modifyCategoryName(group_seq, category_seq, category_name)
     return new StdObject()
   }
-  deleteCategory = async (group_seq, category_id) => {
+  deleteCategory = async (group_seq, category_seq) => {
     const category_model = this.getCategoryModel()
-    await category_model.deleteOpenChannelCategoryInfo(group_seq, category_id)
+    await category_model.deleteOpenChannelCategoryInfo(group_seq, category_seq)
     return new StdObject()
   }
+
   getTargetVideoList = async (group_seq, request) => {
+    const category_seq = request.query && request.query.category_seq ? request.query.category_seq : null
     const folder_seq = request.query && request.query.folder_seq ? request.query.folder_seq : null
-    const { page_params, order_params, filter_params} = this.getListParams(request)
+    const { page_params, filter_params} = this.getListParams(request)
 
     const video_model = this.getVideoModel()
-    const video_list = await video_model.getTargetVideoList(group_seq, folder_seq, page_params, order_params, filter_params)
+    const video_list = await video_model.getTargetVideoList(group_seq, category_seq, folder_seq, page_params, filter_params)
 
     const output = new StdObject()
     output.adds(video_list)
     return output
   }
-  addOpenChannelVideoList = async (group_seq, category_id, request) => {
+  getMaxOrder = async (group_seq, category_seq) => {
+    const video_model = this.getVideoModel()
+    const max_order = await video_model.getMaxOrder(group_seq, category_seq)
 
+    const output = new StdObject()
+    output.add('max_order', max_order)
+    return output
+  }
+  addOpenChannelVideoList = async (group_seq, category_seq, request) => {
+    if (!request.body || !request.body.video_info_list || !request.body.video_info_list.length) {
+      return new StdObject(8841, '잘못된 접근입니다.', 500)
+    }
+    const video_info_list = request.body.video_info_list
+
+    const video_model = this.getVideoModel()
+    const result = await video_model.addOpenVideo(group_seq, category_seq, video_info_list)
+
+    const category_model = this.getCategoryModel()
+    await category_model.setCategoryVideoCount(group_seq, category_seq)
+
+    const output = new StdObject()
+    output.add('result', result)
+    return output
+  }
+  changeOpenVideo = async (group_seq, category_seq, video_seq, request) => {
+    if (!request.body || !request.body.video_info) {
+      return new StdObject(8851, '잘못된 접근입니다.', 500)
+    }
+
+    const video_model = this.getVideoModel()
+    const result = await video_model.changeOpenVideo(group_seq, category_seq, video_seq, request.body.video_info)
+
+    const output = new StdObject()
+    output.add('result', result)
+    return output
+  }
+
+  setVideoPlayLimit = async (group_seq, operation_data_seq, request) => {
+    if (!request.body || !request.body.limit_info) {
+      return new StdObject(8811, '잘못된 접근입니다.', 500)
+    }
+    const limit_info = request.body.limit_info
+    if (limit_info.is_play_limit !== undefined) {
+      limit_info.is_play_limit = Util.isTrue(limit_info.is_play_limit)
+    }
+    if (limit_info.play_limit_time !== undefined) {
+      limit_info.play_limit_time = Util.parseInt(limit_info.play_limit_time, 0)
+    }
+    const operation_data_model = this.getOperationDataModel()
+    return operation_data_model.setPlayLimit(operation_data_seq, limit_info)
+  }
+
+  deleteVideo = async (group_seq, category_seq, request) => {
+    if (!request.body || !request.body.open_video_info) {
+      return new StdObject(8821, '잘못된 접근입니다.', 500)
+    }
+    category_seq = this.getCategoryId(category_seq)
+    const open_video_info = request.body.open_video_info
+    const operation_data_seq = open_video_info.data_seq
+    const operation_seq = open_video_info.operation_seq
+    const video_seq = open_video_info.video_seq
+    const is_all = category_seq === this.CATEGORY_ALL
+    const operation_model = this.getOperationDataModel()
+    const video_model = this.getVideoModel()
+    if (is_all) {
+      await operation_model.updateOpenVideo(operation_data_seq, false)
+    }
+    await video_model.deleteOpenChannelVideoInfo(operation_seq, is_all ? null : video_seq)
+
+    const category_model = this.getCategoryModel()
+    await category_model.setCategoryVideoCount(group_seq, is_all ? null : category_seq)
+
+    return new StdObject()
   }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()
