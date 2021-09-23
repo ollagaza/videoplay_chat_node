@@ -81,11 +81,14 @@ export default class GroupModel extends MySQLModel {
       seq: group_seq
     }
     const query_result = await this.findOne(filter)
-    const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
-    rs_data.addKey('channel_top_img_url')
-    rs_data.addKey('profile_image_url')
-    rs_data.addKey('group_image_url')
-    return rs_data;
+    const group_info = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
+    group_info.addKey('channel_top_img_url')
+    group_info.addKey('profile_image_url')
+    group_info.addKey('group_image_url')
+    return group_info;
+  }
+  getGroupSeqByDomain = async (domain) => {
+    return this.findOne({ domain }, ['seq'])
   }
 
   getMemberSeqbyPersonalGroupInfo = async (member_seq, private_keys = null) => {

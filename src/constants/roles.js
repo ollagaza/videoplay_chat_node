@@ -1,5 +1,6 @@
 const NONE = -1
 const ALL = 0
+const REFRESH = 0.5
 const BOX = 1
 const AGENT = 2
 const API = 3
@@ -13,6 +14,7 @@ export default {
   'API': API,
   'BOX': BOX,
   'AGENT': AGENT,
+  'REFRESH': REFRESH,
   'MEMBER': MEMBER,
   'MANAGER': MANAGER,
   'ADMIN': ADMIN,

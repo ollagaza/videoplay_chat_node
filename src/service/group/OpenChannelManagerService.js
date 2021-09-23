@@ -1,11 +1,10 @@
-import _ from 'lodash'
-import log from '../../libs/logger'
 import Util from '../../utils/Util'
 import DBMySQL from '../../database/knex-mysql'
 import OpenChannelBannerModel from '../../database/mysql/open/channel/OpenChannelBannerModel'
 import OpenChannelCategoryModel from '../../database/mysql/open/channel/OpenChannelCategoryModel'
 import OpenChannelVideoModel from '../../database/mysql/open/channel/OpenChannelVideoModel'
 import GroupModel from '../../database/mysql/group/GroupModel'
+import GroupMemberModel from '../../database/mysql/group/GroupMemberModel'
 import OperationDataModel from '../../database/mysql/operation/OperationDataModel'
 import StdObject from '../../wrapper/std-object'
 import ServiceConfig from '../service-config'
@@ -15,6 +14,7 @@ import OpenChannelBannerInfo from '../../wrapper/open/channel/OpenChannelBannerI
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import logger from '../../libs/logger'
 import OpenChannelCategoryInfo from '../../wrapper/open/channel/OpenChannelCategoryInfo'
+import GroupService from './GroupService'
 
 const OpenChannelManagerServiceClass = class {
   constructor() {
@@ -57,6 +57,13 @@ const OpenChannelManagerServiceClass = class {
     return new GroupModel(DBMySQL)
   }
 
+  getGroupMemberModel = (database) => {
+    if (database) {
+      return new GroupMemberModel(database)
+    }
+    return new GroupMemberModel(DBMySQL)
+  }
+
   getGroupInfo = async (group_seq) => {
     group_seq = Util.parseInt(group_seq, 0)
     if (group_seq <= 0) {
@@ -67,7 +74,7 @@ const OpenChannelManagerServiceClass = class {
     if (!group_info || group_info.seq !== group_seq) {
       throw new StdObject(8702, '채널 정보가 존재하지 않습니다.', 500)
     }
-    if (group_info.status !== 'F' && group_info.status !== 'Y') {
+    if (group_info.status !== GroupService.GROUP_STATUS_FREE && group_info.status !== GroupService.GROUP_STATUS_ENABLE) {
       throw new StdObject(8703, '사용이 정지된 채널입니다.', 500)
     }
     return group_info
@@ -85,7 +92,9 @@ const OpenChannelManagerServiceClass = class {
 
     const channel_info = {
       'tag_list': group_info.search_keyword ? JSON.parse(group_info.search_keyword) : {},
+      'channel_name': Util.trim(group_info.group_name),
       'explain': Util.trim(group_info.group_explain),
+      'member_count': Util.parseInt(group_info.member_count),
       'group_image_url': Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image),
       'profile_image_url': Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path),
       'channel_top_img_url': Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.channel_top_img_path),
@@ -336,7 +345,7 @@ const OpenChannelManagerServiceClass = class {
 
   setVideoPlayLimit = async (group_seq, operation_data_seq, request) => {
     if (!request.body || !request.body.limit_info) {
-      return new StdObject(8811, '잘못된 접근입니다.', 500)
+      return new StdObject(8861, '잘못된 접근입니다.', 500)
     }
     const limit_info = request.body.limit_info
     if (limit_info.is_play_limit !== undefined) {
@@ -370,6 +379,41 @@ const OpenChannelManagerServiceClass = class {
     await category_model.setCategoryVideoCount(group_seq, is_all ? null : category_seq)
 
     return new StdObject()
+  }
+
+  getStatusByDomain = async (domain, request) => {
+    const group_model = this.getGroupModel()
+    const group_seq_info = await group_model.getGroupSeqByDomain(domain)
+    if (!group_seq_info || !group_seq_info.seq) {
+      throw new StdObject(8871, '존재하지 않는 채널입니다.', 400)
+    }
+    const group_seq = group_seq_info.seq
+    await this.getGroupInfo(group_seq)
+    const token_info = request.token_info
+    logger.debug(this.log_prefix, '[getStatusByDomain]', token_info)
+    let member_seq = null
+    if (token_info) {
+      member_seq = Util.parseInt(token_info.getId(), null)
+    }
+
+    const result = {
+      group_seq,
+      member_seq,
+      token_info,
+      is_channel_manager: false,
+      is_join_channel: false
+    }
+    if (member_seq) {
+      const group_member_model = this.getGroupMemberModel()
+      const group_member_info = await group_member_model.getGroupMemberInfo(group_seq, member_seq)
+      group_member_info.group_member_status = group_member_info.status
+      const member_status = GroupService.checkGroupMemberStatus(group_member_info)
+      logger.debug(this.log_prefix, '[getStatusByDomain]', group_member_info, member_status)
+      result.is_channel_manager = member_status.is_group_admin
+      result.is_join_channel = member_status.is_active_group_member
+    }
+
+    return result
   }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()

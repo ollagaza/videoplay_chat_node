@@ -939,8 +939,7 @@ export default class GroupMemberModel extends MySQLModel {
     query.where(filter)
     query.first()
 
-    const query_result = await query
-    return query_result
+    return query
   }
 
   updateGroupMemberJoin = async (group_seq, member_seq = null, group_member_seq = null, params) => {

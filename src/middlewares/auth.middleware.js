@@ -5,20 +5,12 @@ import Role from '../constants/roles'
 import Config from '../config/config'
 import Constants from '../constants/constants'
 import Util from '../utils/Util'
+import logger from '../libs/logger'
 
 const IS_DEV = Config.isDev()
 
 const TOKEN_SECRET = Constants.TOKEN_SECRET
 const HOUR = 60 * 60
-
-const setResponseHeader = (res, token_info) => {
-  if (!res || !token_info) {
-    return
-  }
-  res.setHeader('authorization', 'Bearer ' + token_info.getToken())
-  res.setHeader('auth-expire', '' + token_info.getExpireTime())
-  res.setHeader('auth-role', '' + token_info.getRole())
-}
 
 const getToken = (req) => {
   if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
@@ -41,10 +33,14 @@ const generateTokenByMemberInfo = (member_info, un_limit = false) => {
 
   token_info.token = token
 
+  const refresh_token = Util.encrypt({ id: token_info.getId(), t: Util.getRandomString(5) })
+  logger.debug('generateTokenByMemberInfo', refresh_token)
+
   return {
     'token_info': token_info,
     'token': token,
-    'expire': expire
+    'expire': expire,
+    refresh_token
   }
 }
 
@@ -145,15 +141,15 @@ const getTokenResult = async (res, member_info, role, un_limit = false) => {
 
   member_info.role = role
 
-  const token_result = await generateTokenByMemberInfo(member_info, un_limit)
+  const token_result = generateTokenByMemberInfo(member_info, un_limit)
 
   const output = new StdObject()
-  if (token_result != null && token_result.token != null) {
+  if (token_result.token !== null) {
     output.add('token', token_result.token)
+    output.add('refresh_token', token_result.refresh_token)
     output.add('expire', token_result.expire)
     output.add('member_seq', member_info.seq)
     output.add('role', token_result.token_info.getRole())
-    setResponseHeader(res, token_result.token_info)
   } else {
     output.setError(-1)
     output.setMessage('인증토큰 생성 실패')
@@ -216,7 +212,6 @@ const getAgentTokenResult = async (member_info) => {
 }
 
 export default {
-  'setResponseHeader': setResponseHeader,
   'generateTokenByMemberInfo': generateTokenByMemberInfo,
   'isAuthenticated': isAuthenticated,
   'verifyToken': verifyToken,
