@@ -14,12 +14,14 @@ const getStatusByDomain = async (request) => {
 
 routes.get('/:domain', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
   const domain_status = await getStatusByDomain(req)
-  const channel_info_result = await OpenChannelManagerService.getOpenChannelInfo(domain_status.group_seq)
-  const channel_info = channel_info_result.get('channel_info')
-  channel_info.is_channel_manager = domain_status.is_channel_manager
-  channel_info.is_join_channel = domain_status.is_join_channel
-  res.json(channel_info_result)
+  res.json(await OpenChannelManagerService.getChannelSummary(domain_status))
 }))
+
+routes.get('/:domain/info', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  const domain_status = await getStatusByDomain(req)
+  res.json(await OpenChannelManagerService.getOpenChannelInfo(domain_status.group_seq))
+}))
+
 
 routes.get('/:domain/video', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
 

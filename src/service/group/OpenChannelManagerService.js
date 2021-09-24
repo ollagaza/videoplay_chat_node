@@ -83,7 +83,6 @@ const OpenChannelManagerServiceClass = class {
   getOpenChannelInfo = async (group_seq) => {
     const output = new StdObject()
 
-    const group_info = await this.getGroupInfo(group_seq)
     const banner_model = this.getBannerModel()
     const category_model = this.getCategoryModel()
 
@@ -91,18 +90,32 @@ const OpenChannelManagerServiceClass = class {
     const category_list = await category_model.getOpenChannelCategoryList(group_seq)
 
     const channel_info = {
-      'tag_list': group_info.search_keyword ? JSON.parse(group_info.search_keyword) : {},
-      'channel_name': Util.trim(group_info.group_name),
-      'explain': Util.trim(group_info.group_explain),
-      'member_count': Util.parseInt(group_info.member_count),
-      'group_image_url': Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image),
-      'profile_image_url': Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path),
-      'channel_top_img_url': Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.channel_top_img_path),
       'banner_list': banner_list,
       'category_list': category_list
     }
 
     output.add('channel_info', channel_info)
+    return output
+  }
+
+  getChannelSummary = async (domain_status) => {
+    const group_seq = domain_status.group_seq
+    const group_info = await this.getGroupInfo(group_seq)
+
+    const channel_summary = {
+      is_channel_manager: domain_status.is_channel_manager,
+      is_join_channel: domain_status.is_join_channel,
+      tag_list: group_info.search_keyword ? JSON.parse(group_info.search_keyword) : {},
+      channel_name: Util.trim(group_info.group_name),
+      explain: Util.trim(group_info.group_explain),
+      member_count: Util.parseInt(group_info.member_count),
+      group_image_url: Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image),
+      profile_image_url: Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path),
+      channel_top_img_url: Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.channel_top_img_path)
+    }
+
+    const output = new StdObject()
+    output.add('channel', channel_summary)
     return output
   }
 
