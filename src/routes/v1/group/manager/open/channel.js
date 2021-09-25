@@ -37,7 +37,7 @@ const checkGroupAuth = async (req) => {
 
 routes.get('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.getOpenChannelInfo(group_auth.group_seq))
+  res.json(await OpenChannelManagerService.getOpenChannelContentInfo(group_auth.group_seq))
 }))
 
 routes.get('/domain/verify/:domain', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {

@@ -80,7 +80,7 @@ const OpenChannelManagerServiceClass = class {
     return group_info
   }
 
-  getOpenChannelInfo = async (group_seq) => {
+  getOpenChannelContentInfo = async (group_seq) => {
     const output = new StdObject()
 
     const banner_model = this.getBannerModel()
@@ -94,7 +94,7 @@ const OpenChannelManagerServiceClass = class {
       'category_list': category_list
     }
 
-    output.add('channel_info', channel_info)
+    output.add('channel_content', channel_info)
     return output
   }
 
@@ -143,7 +143,6 @@ const OpenChannelManagerServiceClass = class {
 
     const video_model = this.getVideoModel()
     const video_list = await video_model.getOpenChannelVideoList(group_seq, category_seq === this.CATEGORY_ALL, category_seq, page_params, filter_params, order_params)
-
     const output = new StdObject()
     output.adds(video_list)
 
@@ -421,12 +420,19 @@ const OpenChannelManagerServiceClass = class {
       const group_member_info = await group_member_model.getGroupMemberInfo(group_seq, member_seq)
       group_member_info.group_member_status = group_member_info.status
       const member_status = GroupService.checkGroupMemberStatus(group_member_info)
-      logger.debug(this.log_prefix, '[getStatusByDomain]', group_member_info, member_status)
       result.is_channel_manager = member_status.is_group_admin
       result.is_join_channel = member_status.is_active_group_member
     }
 
     return result
+  }
+
+  getOpenVideoInfo = async (operation_seq) => {
+    const video_model = this.getVideoModel()
+    const video_info = await video_model.getOpenChannelVideoInfo(operation_seq, true)
+    const output = new StdObject()
+    output.add('video_info', video_info)
+    return output
   }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()
