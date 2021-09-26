@@ -119,6 +119,12 @@ export default class OperationModel extends MySQLModel {
     let check_folder = true
     const recent_timestamp = Util.addDay(-(Util.parseInt(filter_params.day, 7)), Constants.TIMESTAMP)
     switch (filter_params.menu) {
+      case 'open':
+        query.andWhere('operation.status', 'Y')
+        query.andWhere('operation.analysis_status', 'Y')
+        query.andWhere('operation_data.is_open_video', 1)
+        check_folder = false
+        break
       case 'recent':
         query.andWhere('operation.reg_date', '>=', recent_timestamp)
         query.andWhere('operation.status', 'Y')

@@ -214,7 +214,7 @@ export default class DBMySQL {
     cur_page = parseInt(cur_page)
     page_count = parseInt(page_count)
     start_count = parseInt(start_count)
-    const offset_start = parseInt(start_count != 0 ? start_count : list_count)
+    const offset_start = parseInt(start_count !== 0 ? start_count : list_count)
 
     const use_paging = (no_paging && no_paging.toLowerCase() !== 'y')
 
@@ -273,7 +273,7 @@ export default class DBMySQL {
   }
 
   arrayToSafeQuery = (columns) => {
-    arrayToSafeQuery(this.database, columns)
+    return arrayToSafeQuery(this.database, columns)
   }
 
   queryWhere = (oKnex, filter) => {
@@ -405,5 +405,13 @@ export default class DBMySQL {
       queryWhere(oKnex, filters)
     }
     return oKnex
+  }
+
+  rawQueryUpdate = async (query_str) => {
+    const query_result = await this.database.raw(query_str)
+    if (!query_result || !query_result.length || !query_result[0]) {
+      return false
+    }
+    return query_result[0].affectedRows > 0
   }
 }

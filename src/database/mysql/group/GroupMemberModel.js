@@ -23,7 +23,7 @@ export default class GroupMemberModel extends MySQLModel {
     this.member_group_select = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
       'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
-      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name',
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name', 'group_info.domain',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
@@ -32,7 +32,7 @@ export default class GroupMemberModel extends MySQLModel {
     this.member_group_select_old = [
       'group_member.seq AS group_member_seq', 'group_member.status AS group_member_status', 'group_member.grade', 'group_member.invite_email',
       'group_member.join_date', 'group_member.used_storage_size', 'group_member.max_storage_size', 'group_member.member_seq',
-      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name', 'group_info.gnb_color',
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.group_name', 'group_info.gnb_color', 'group_info.domain',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size', 'group_info.media_path',
       'group_info.profile_image_path', 'group_info.profile_image_path as profile_image_url', 'group_info.profile', 'group_info.is_set_group_name',
       'group_info.search_keyword', 'group_info.group_explain', 'group_info.group_open', 'group_info.group_join_way', 'group_info.member_open', 'group_info.member_name_used',
@@ -43,7 +43,7 @@ export default class GroupMemberModel extends MySQLModel {
     this.group_invite_select = [
       'group_member.invite_code', 'group_member.member_seq AS join_member_seq', 'group_member.seq AS invite_seq', 'group_member.grade',
       'group_member.status AS group_member_status', 'group_member.join_date', 'group_member.invite_status', 'group_member.invite_email', 'group_member.invite_date',
-      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.domain',
       'group_info.group_name', 'group_info.expire_date AS group_expire_date',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
       'payment_list.name AS plan_name', 'payment_list.desc AS plan_desc',
@@ -939,8 +939,7 @@ export default class GroupMemberModel extends MySQLModel {
     query.where(filter)
     query.first()
 
-    const query_result = await query
-    return query_result
+    return query
   }
 
   updateGroupMemberJoin = async (group_seq, member_seq = null, group_member_seq = null, params) => {

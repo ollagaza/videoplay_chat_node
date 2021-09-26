@@ -63,6 +63,8 @@ const getBaseInfo = async (request, check_auth = false, check_writer = false, im
     await getOpenVideoInfo(result, api_key)
   } else if (api_type === 'admin') {
     await getAdminInfo(result, api_key)
+  } else if (api_type === 'open_channel') {
+    await getOpenChannelVideoInfo(result, api_key)
   } else {
     throw new StdObject(802, '잘못된 접근입니다.', 400)
   }
@@ -188,6 +190,31 @@ const getOpenVideoInfo = async (result, operation_data_seq) => {
   result.operation_data_seq = operation_data_seq
   result.is_writer = is_writer
   result.is_auth = true
+}
+
+const getOpenChannelVideoInfo = async (result, api_key) => {
+  // const group_seq = result.group_seq
+  // const operation_data_info = await OperationDataService.getOperationData(DBMySQL, operation_data_seq)
+  // if (!operation_data_info || operation_data_info.isEmpty()) {
+  //   throw new StdObject(100, '등록된 정보가 없습니다.', 400)
+  // }
+  // if (!operation_data_info.is_open_video) {
+  //   throw new StdObject(-3, '잘못된 접근입니다.', 403)
+  // }
+  //
+  // const is_writer = operation_data_info.group_seq === group_seq
+  //
+  // result.operation_seq = operation_data_info.operation_seq
+  // result.operation_data_info = operation_data_info
+  // result.operation_data_seq = operation_data_seq
+  // result.is_writer = is_writer
+  // result.is_auth = true
+  //
+  // const operation_data_info = await OperationDataService.getOperationDataByOperationSeq(DBMySQL, operation_seq)
+  // if (operation_data_info && !operation_data_info.isEmpty()) {
+  //   result.operation_data_info = operation_data_info
+  //   result.operation_data_seq = operation_data_info.seq
+  // }
 }
 
 routes.get('/admin', Auth.isAuthenticated(Role.ADMIN), Wrap(async (req, res) => {

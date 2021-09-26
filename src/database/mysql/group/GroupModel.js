@@ -13,7 +13,7 @@ export default class GroupModel extends MySQLModel {
     this.log_prefix = '[GroupModel]'
     this.group_private_fields = ['member_seq', 'content_id', 'media_path', 'start_date', 'reg_date', 'modify_date']
     this.group_with_product_select = [
-      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status',
+      'group_info.seq AS group_seq', 'group_info.group_type', 'group_info.status AS group_status', 'group_info.status AS domain',
       'group_info.profile', 'group_info.profile_image_path', 'group_info.search_keyword', 'group_info.group_explain',
       'group_info.group_name', 'group_info.expire_date AS group_expire_date', 'group_info.is_set_group_name',
       'group_info.storage_size AS group_max_storage_size', 'group_info.used_storage_size AS group_used_storage_size',
@@ -81,11 +81,14 @@ export default class GroupModel extends MySQLModel {
       seq: group_seq
     }
     const query_result = await this.findOne(filter)
-    const rs_data = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
-    rs_data.addKey('channel_top_img_url')
-    rs_data.addKey('profile_image_url')
-    rs_data.addKey('group_image_url')
-    return rs_data;
+    const group_info = new GroupInfo(query_result, private_keys ? private_keys : this.group_private_fields);
+    group_info.addKey('channel_top_img_url')
+    group_info.addKey('profile_image_url')
+    group_info.addKey('group_image_url')
+    return group_info;
+  }
+  getGroupSeqByDomain = async (domain) => {
+    return this.findOne({ domain }, ['seq'])
   }
 
   getMemberSeqbyPersonalGroupInfo = async (member_seq, private_keys = null) => {
@@ -350,5 +353,18 @@ export default class GroupModel extends MySQLModel {
       member_seq
     }
     return await this.update(filter, update_params);
+  }
+
+  verifyChannelDomain = async (group_seq, domain) => {
+    const query = this.database
+      .select(['seq'])
+      .from(this.table_name)
+    if (group_seq) {
+      query.whereNot('seq', group_seq)
+    }
+    query.where('domain', domain)
+      .first()
+    const query_result = await query
+    return !(query_result && query_result.seq)
   }
 }

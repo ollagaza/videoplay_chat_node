@@ -141,35 +141,27 @@ const GroupServiceClass = class {
     let is_group_manager = false
     let group_grade = 0
     let group_grade_number = 0
+    let member_status = null
 
     if (check_group_auth) {
       if (!group_seq) {
         is_active_group_member = false
       } else {
         group_member_info = await this.getGroupMemberInfo(database, group_seq, member_seq)
-        is_active_group_member = group_member_info && group_member_info.group_member_status === this.MEMBER_STATUS_ENABLE
-        is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
-        is_group_manager = this.isGroupManagerByMemberInfo(group_member_info)
-        group_grade = group_member_info.grade
-        if (is_group_admin) {
-          group_grade_number = 99
-        } else {
-          group_grade_number = Util.parseInt(group_grade, 0)
-        }
+        member_status = this.checkGroupMemberStatus(group_member_info)
+        is_active_group_member = member_status.is_active_group_member
+        is_group_admin = member_status.is_group_admin
+        is_group_manager = member_status.is_group_manager
+        group_grade = member_status.group_grade
+        group_grade_number = member_status.group_grade_number
       }
     }
     if (check_group_auth && !is_active_group_member && throw_exception) {
-      let error_code = 10001
       let message = '권한이 없습니다'
-      if (group_member_info) {
-        const status = group_member_info.group_member_status
-        if (status === this.MEMBER_STATUS_PAUSE) {
-          message = '채널 사용이 정지되었습니다.';
-        } else if (status === this.MEMBER_STATUS_DISABLE || status === this.MEMBER_STATUS_BAN) {
-          message = '탈퇴한 채널입니다.';
-        }
+      if (member_status) {
+        message = member_status.message
       }
-      throw new StdObject(error_code, message, 403)
+      throw new StdObject(10001, message, 403)
     }
     if (only_admin && !is_group_admin) {
       throw new StdObject(10000, '권한이 없습니다', 403)
@@ -188,6 +180,38 @@ const GroupServiceClass = class {
     return group_auth_result
   }
 
+  checkGroupMemberStatus = (group_member_info) => {
+    const result = {
+      message: '권한이 없습니다.',
+      is_active_group_member: false,
+      is_group_admin: false,
+      is_group_manager: false,
+      group_grade: '0',
+      group_grade_number: 0
+    }
+    if (group_member_info) {
+      const status = group_member_info.group_member_status
+      result.is_active_group_member = status === this.MEMBER_STATUS_ENABLE
+      if (!result.is_active_group_member) {
+        if (status === this.MEMBER_STATUS_PAUSE) {
+          result.message = '채널 사용이 정지되었습니다.'
+        } else if (status === this.MEMBER_STATUS_DISABLE || status === this.MEMBER_STATUS_BAN) {
+          result.message = '탈퇴한 채널입니다.'
+        }
+      } else {
+        result.is_group_admin = this.isGroupAdminByMemberInfo(group_member_info)
+        result.is_group_manager = this.isGroupManagerByMemberInfo(group_member_info)
+        result.group_grade = group_member_info.grade
+        if (result.is_group_admin) {
+          result.group_grade_number = 99
+        } else {
+          result.group_grade_number = Util.parseInt(result.group_grade, 0)
+        }
+      }
+    }
+    return result
+  }
+
   createPersonalGroup = async (database, member_info, options = {}) => {
     const storage_size = Util.parseInt(options.storage_size, 0)
     const pay_code = options.pay_code ? options.pay_code : 'free'
@@ -200,6 +224,7 @@ const GroupServiceClass = class {
       group_type: this.GROUP_TYPE_PERSONAL,
       status,
       group_name: member_info.user_name,
+      domain: Util.trim(options.domain).toLowerCase(),
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size,
       pay_code,
@@ -221,7 +246,8 @@ const GroupServiceClass = class {
       member_seq: member_info.seq,
       group_type: this.GROUP_TYPE_ENTERPRISE,
       status,
-      group_name: options.group_name ? options.group_name.trim() : member_info.user_nickname.trim(),
+      group_name: options.group_name ? Util.trim(options.group_name) : Util.trim(member_info.user_nickname),
+      domain: Util.trim(options.domain).toLowerCase(),
       storage_size: storage_size > 0 ? storage_size : Util.parseInt(ServiceConfig.get('default_storage_size')) * Constants.GB,
       used_storage_size: 0,
       gnb_color: options.group_color,
@@ -268,6 +294,7 @@ const GroupServiceClass = class {
     const modify_group_info = {
       group_type: this.GROUP_TYPE_ENTERPRISE,
       group_name: options.group_name?options.group_name:member_info.user_name,
+      domain: Util.trim(options.domain).toLowerCase(),
       gnb_color: options.gnb_color?options.gnb_color:'1c3048',
       group_open: options.group_open?options.group_open:0,
       group_join_way: options.group_join_way?options.group_join_way:0,
@@ -314,9 +341,9 @@ const GroupServiceClass = class {
       const group_model = this.getGroupModel(database)
       await group_model.updateGroup(modify_group_info, seq)
       resObj.group_info = await group_model.getGroupInfo(seq, null);
-      resObj.group_info.group_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
-      resObj.group_info.profile_image_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
-      resObj.group_info.channel_top_img_url = await Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.channel_top_img_path)
+      resObj.group_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
+      resObj.group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
+      resObj.group_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.channel_top_img_path)
       return resObj;
     } catch (e) {
       log.error(this.log_prefix, '[updateGroupInfo]', e)
