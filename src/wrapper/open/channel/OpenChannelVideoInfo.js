@@ -11,7 +11,9 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
 
   getOpenVideoInfo = (is_member) => {
     this.setKeys([
-      'video_seq', 'data_seq', 'group_seq', 'category_seq', 'operation_seq', 'view_count', 'is_play_limit', 'play_limit_time', 'title', 'doc_html', 'thumbnail', 'total_time', 'reg_date', 'operation_date', 'mode', 'title', 'html', 'text'
+      'video_seq', 'data_seq', 'group_seq', 'category_seq', 'operation_seq', 'view_count',
+      'is_play_limit', 'play_limit_time', 'title', 'doc_html', 'thumbnail', 'total_time',
+      'reg_date', 'operation_date', 'mode', 'title', 'html', 'text', 'stream_info', 'media_info'
     ])
 
     if (this.thumbnail) {
@@ -41,12 +43,17 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
           stream_url = ServiceConfig.get('cdn_url') + media_video + this.video_file_name
         } else {
           media_type = 'application/x-mpegURL'
-          stream_url = ServiceConfig.get('hls_streaming_url') + '/vodEnd/' + play_time_limit + media_video + this.video_file_name + '/master.m3u8'
+          stream_url = ServiceConfig.get('hls_streaming_url') + '/vodStart/0/vodEnd/' + play_time_limit * 1000 + media_video + this.video_file_name + '/master.m3u8'
         }
       }
       this.stream_info = {
         type: media_type,
-        src: stream_url
+        src: stream_url,
+        poster: this.thumbnail
+      }
+      this.media_info = {
+        width: this.width,
+        height: this.height
       }
     }
 

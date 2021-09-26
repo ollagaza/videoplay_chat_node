@@ -13,7 +13,12 @@ const default_field_list = [
   'IF(open_channel_video.video_doc_html IS NOT NULL, open_channel_video.video_doc_html, operation_data.doc_html) AS html',
   'IF(open_channel_video.video_doc_text IS NOT NULL, open_channel_video.video_doc_text, operation_data.doc_text) AS text'
 ]
-const media_field_list = _.concat(default_field_list, ['operation_media.video_file_name', 'operation_media.proxy_file_name', 'operation_media.stream_url'])
+const media_field_list = _.concat(default_field_list,
+  [
+    'operation_media.video_file_name', 'operation_media.proxy_file_name', 'operation_media.stream_url', 'operation_media.width', 'operation_media.height',
+    'operation.media_path', 'operation.origin_media_path', 'operation.origin_seq'
+  ]
+)
 
 export default class OpenChannelVideoModel extends MySQLModel {
   constructor (database) {
@@ -127,8 +132,8 @@ export default class OpenChannelVideoModel extends MySQLModel {
 
   getOpenChannelVideoInfo = async (operation_seq, join_media = false) => {
     const query = this.database
-      .select(join_media ? media_field_list : default_field_list)
-      .from(this.table_name)
+      .select(this.arrayToSafeQuery(join_media ? media_field_list : default_field_list))
+      .from('operation')
       .innerJoin('operation_data', { 'operation_data.operation_seq': operation_seq })
       .innerJoin('open_channel_video', { 'open_channel_video.operation_seq': operation_seq })
     if (join_media) {
@@ -136,6 +141,7 @@ export default class OpenChannelVideoModel extends MySQLModel {
     }
     query.where('operation.seq', operation_seq)
       .first()
+    logger.debug(this.log_prefix, '[getOpenChannelVideoInfo]', query.toQuery())
     const video_info = await query
     return new OpenChannelVideoInfo(video_info).getOpenVideoInfo()
   }
