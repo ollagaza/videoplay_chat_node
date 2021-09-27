@@ -135,13 +135,12 @@ export default class OpenChannelVideoModel extends MySQLModel {
       .select(this.arrayToSafeQuery(join_media ? media_field_list : default_field_list))
       .from('operation')
       .innerJoin('operation_data', { 'operation_data.operation_seq': operation_seq })
-      .innerJoin('open_channel_video', { 'open_channel_video.operation_seq': operation_seq })
+      .leftOuterJoin('open_channel_video', { 'open_channel_video.operation_seq': operation_seq })
     if (join_media) {
       query.innerJoin('operation_media', { 'operation_media.operation_seq': operation_seq })
     }
     query.where('operation.seq', operation_seq)
       .first()
-    logger.debug(this.log_prefix, '[getOpenChannelVideoInfo]', query.toQuery())
     const video_info = await query
     return new OpenChannelVideoInfo(video_info).getOpenVideoInfo()
   }
