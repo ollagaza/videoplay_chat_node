@@ -69,6 +69,7 @@ const OperationDataServiceClass = class {
     operation_data_info.operation_seq = operation_seq
     operation_data_info.group_seq = group_seq
     operation_data_info.group_name = group_name
+    operation_data_info.template_grade = '{ "is_grade": false }'
     if (group_type === GroupService.GROUP_TYPE_PERSONAL) {
       operation_data_info.hospital = hospital_name
     }
@@ -100,6 +101,7 @@ const OperationDataServiceClass = class {
     operation_data_info.group_seq = operation_info.group_seq
     operation_data_info.type = type ? type : 'N'
     operation_data_info.mento_group_seq = mento_group_seq
+    operation_data_info.template_grade = '{ "is_grade": false }'
 
     if (!Util.isEmpty(modify_operation_data)) {
       // operation_data_info.category_list = modify_operation_data.category_list
