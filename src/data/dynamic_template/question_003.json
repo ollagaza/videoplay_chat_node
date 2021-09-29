@@ -1,9 +1,10 @@
 {
   "type": "operation",
-  "version": "0.4",
+  "version": "0.5",
   "template_id": "1630293984_7Y0iM",
   "title": "",
   "template_title": "검토위원 조사",
+  "is_used": true,
   "class": [
     {
       "index": 99,
@@ -4024,7 +4025,7 @@
               "options": [
                 {
                   "index": 0,
-                  "text": "손상이나 후유증이 심하지만 생존이 가능",
+                  "text": "표준에 따라 적절한 평가와 관리를 하였음",
                   "checked": false
                 },
                 {
@@ -11551,6 +11552,5 @@
         }
       ]
     }
-  ],
-  "is_used": true
+  ]
 }
