@@ -7,7 +7,7 @@ const default_key_list = [
   'seq', 'operation_seq', 'group_seq', 'group_name', 'hospital', 'title', 'view_count', 'total_time',
   'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html',
   'type', 'status', 'is_complete', 'mento_group_seq',
-  'is_mento_complete', 'is_open_refer_file', 'is_open_video', 'video_download', 'file_download',
+  'is_mento_complete', 'is_open_refer_file', 'is_open_video', 'video_download', 'file_download', 'template_grade',
   'reg_date', 'modify_date',
 ]
 
@@ -23,6 +23,9 @@ export default class OperationDataInfo extends JsonWrapper {
       }
       if (data.category_list && typeof data.category_list === 'string') {
         this.category_list = JSON.parse(data.category_list)
+      }
+      if (data.template_grade && typeof data.template_grade === 'string') {
+        this.template_grade = JSON.parse(data.template_grade)
       }
       if (data.hashtag && typeof data.hashtag === 'string') {
         this.hashtag_list = Util.parseHashtag(data.hashtag)

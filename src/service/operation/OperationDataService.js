@@ -381,6 +381,13 @@ const OperationDataServiceClass = class {
       await operation_data_model.updateOperationDataCounts(comment_count.operation_data_seq, 'comment_count', comment_count.count, false)
     }
   }
+  setTemplateGrade = (operation_seq, request_body) => {
+    const output = new StdObject()
+    const template_grade = request_body.template_grade;
+    const operation_data_model = this.getOperationDataModel()
+    output.add(operation_data_model.setTemplateGrade(operation_seq, template_grade))
+    return output
+  }
 }
 
 const OperationDataService = new OperationDataServiceClass()

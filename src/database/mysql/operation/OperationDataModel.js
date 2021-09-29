@@ -216,4 +216,7 @@ export default class OperationDataModel extends MySQLModel {
     if (!is_change) return
     return this.update(filter, params)
   }
+  setTemplateGrade = async (operation_seq, template_grade) => {
+    return this.update({ operation_seq }, { template_grade })
+  }
 }
