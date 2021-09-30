@@ -611,12 +611,12 @@ routes.post('/:api_type/operation/process/trans/request/list', Auth.isAuthentica
   res.json(await OperationService.requestTranscodingList(req.body))
 }))
 
-routes.post('/:api_key/template_grade', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/:api_type/:api_key/template_grade', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const baseinfo = await getBaseInfo(req, true, false, true)
   const operation_seq = req.params.api_key
 
-  if (baseinfo.is_group_manager || baseinfo.is_group_admin || baseinfo.operation_info.member_seq === baseinfo.member_seq) {
+  if (baseinfo.is_group_manager || baseinfo.is_group_admin || baseinfo.operation_info.is_writer) {
     res.json(await OperationDataService.setTemplateGrade(operation_seq, req.body))
   } else {
     res.json(new StdObject(-1, '사용 권한이 없습니다.', 403))
