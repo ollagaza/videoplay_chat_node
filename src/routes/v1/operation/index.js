@@ -611,7 +611,7 @@ routes.post('/:api_type/operation/process/trans/request/list', Auth.isAuthentica
   res.json(await OperationService.requestTranscodingList(req.body))
 }))
 
-routes.post('/:api_key/template_grade', Auth.isAuthenticated(Role.ADMINS), Wrap(async (req, res) => {
+routes.post('/:api_key/template_grade', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const operation_seq = req.params.api_key
   res.json(await OperationDataService.setTemplateGrade(operation_seq, req.body))

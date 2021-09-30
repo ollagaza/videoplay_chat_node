@@ -260,8 +260,8 @@ routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_prof
     group_explain: params.group_explain,
     profile_image_path: params.profile_image_path,
     channel_top_img_path: params.channel_top_img_path,
-    delete_channel_top_img: params.delete_channel_top_img?params.delete_channel_top_img:null,
-    delete_channel_profile_img: params.delete_channel_profile_img?params.delete_channel_profile_img:null,
+    delete_channel_top_img: params.delete_channel_top_img ? params.delete_channel_top_img : null,
+    delete_channel_profile_img: params.delete_channel_profile_img ? params.delete_channel_profile_img : null,
   }
   const output = new StdObject()
   const rs_gorup_info = await GroupService.updateEnterpriseGroup(DBMySQL, member_info, options, params.seq);
