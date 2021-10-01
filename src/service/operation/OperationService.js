@@ -676,6 +676,7 @@ const OperationServiceClass = class {
     } else {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, file_name)
     }
+    log.debug('uploadOperationFile', upload_file_info)
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
