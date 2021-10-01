@@ -654,6 +654,7 @@ const OperationServiceClass = class {
   }
 
   uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null, file_name = null) => {
+    log.debug('uploadOperationFile', 1)
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     let media_directory
     if (file_type === OperationFileService.TYPE_REFER) {
