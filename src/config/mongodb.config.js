@@ -7,6 +7,14 @@ export default {
     port: 27017
   },
 
+  docker: {
+    database: 'surgstory',
+    user: 'mteg_vas',
+    password: 'dpaxldlwl_!',
+    domain: '200.200.200.101',
+    port: 27017
+  },
+
   development: {
     database: 'surgstory',
     user: 'mteg_vas',

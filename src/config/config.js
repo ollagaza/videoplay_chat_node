@@ -6,6 +6,7 @@ const LOG_LEVEL = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : null
 const IS_DEMON = process.env.SERVER_MODE === 'demon'
 const PRINT_DB_LOG = process.env.PRINT_DB_LOG === true || process.env.PRINT_DB_LOG === 'true'
 const IS_LOCAL = process.env.LOCAL === true || process.env.LOCAL === 'true'
+const IS_DOCKER = process.env.DOCKER === true || process.env.DOCKER === 'true'
 const MYSQL_HOST = process.env.MYSQL_HOST || null
 const MONGODB_HOST = process.env.MONGODB_HOST || null
 
@@ -14,6 +15,7 @@ const config_info = {
   IS_RELEASE,
   IS_DEV,
   IS_LOCAL,
+  IS_DOCKER,
   IS_DEMON,
   PRINT_DB_LOG,
   LOG_PATH,
@@ -40,6 +42,10 @@ export default {
 
   isLocal: () => {
     return IS_LOCAL
+  },
+
+  isDocker: () => {
+    return IS_DOCKER
   },
 
   printDBLog: () => {

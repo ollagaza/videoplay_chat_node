@@ -15,6 +15,23 @@ export default {
     }
   },
 
+  docker: {
+    client: 'mysql',
+    connection: {
+      host: '200.200.200.100',
+      database: 'surgbook',
+      user: 'root',
+      password: '_media_',
+    },
+    pool: {
+      min: 10,
+      max: 20
+    },
+    migrations: {
+      tableName: 'knex_migrations'
+    }
+  },
+
   development: {
     client: 'mysql',
     connection: {
