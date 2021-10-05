@@ -1,6 +1,7 @@
 import express from 'express'
 import path from 'path'
 import bodyParser from 'body-parser'
+import cookieParser from 'cookie-parser'
 import swaggerJSDoc from 'swagger-jsdoc'
 import swaggerUi from 'swagger-ui-express'
 import headerMiddleware from './middlewares/header.middleware'
@@ -29,6 +30,7 @@ app.use(bodyParser.urlencoded({
   limit: '50mb',
   extended: false
 }))
+app.use(cookieParser())
 app.use(express.static(path.join(__dirname, '../public')))
 
 // 기본 헤더 셋팅

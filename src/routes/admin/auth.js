@@ -12,7 +12,7 @@ routes.post('/', Wrap(async (req, res) => {
   req.accepts('application/json')
   try {
     const member_info = await AuthService.login(DBMySQL, req)
-    const output = await Auth.getTokenResult(res, member_info, Role.ADMIN)
+    const output = await Auth.getTokenResult(req, res, member_info, Role.ADMIN)
     return res.json(output)
   } catch (e) {
     const output = e
@@ -26,7 +26,7 @@ routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async 
 
   const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
 
-  const output = await Auth.getTokenResult(res, member_info, Role.MEMBER)
+  const output = await Auth.getTokenResult(req, res, member_info, Role.MEMBER)
   return res.json(output)
 }))
 

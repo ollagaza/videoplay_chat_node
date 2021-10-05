@@ -20,9 +20,9 @@ routes.get('/', Auth.isAuthenticated(Role.BOX), Wrap(async (req, res) => {
   let user_list = null
   // log.d(req, machine_id, ServiceConfig.isVacs(), ServiceConfig.isVacsUseMachineId())
   if (ServiceConfig.isVacs() && ServiceConfig.isVacsUseMachineId() !== true) {
-    user_list = await GroupService.getGroupListForBox(DBMySQL)
+    user_list = await GroupService.getGroupListForBox(DBMySQL, req)
   } else {
-    user_list = await GroupSurgboxService.getGroupBoxUserList(machine_id)
+    user_list = await GroupSurgboxService.getGroupBoxUserList(req, machine_id)
   }
   log.d(req, '[BOX 01] 의사목록 조회', req.headers)
   const output = new StdObject()

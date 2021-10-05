@@ -11,6 +11,7 @@ const IS_DEV = Config.isDev()
 
 const TOKEN_SECRET = Constants.TOKEN_SECRET
 const HOUR = 60 * 60
+const LOG_PREFIX = '[auth.middleware]'
 
 const getToken = (req) => {
   if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
@@ -21,7 +22,15 @@ const getToken = (req) => {
   return null
 }
 
-const generateTokenByMemberInfo = (member_info, un_limit = false) => {
+const getSecret = (req, timestamp) => {
+  logger.debug(LOG_PREFIX, '[getSecret]', req.headers, timestamp)
+  const agent = Util.trim(req.headers && req.headers['user-agent'] ? req.headers['user-agent'] : 'surgstory')
+  const timestamp_str = `${timestamp}`.toString()
+  const last_number = Util.parseInt(timestamp_str[timestamp_str.length - 1])
+  return Util.hash(timestamp_str.slice(-5) +  agent.toString()).substr(last_number, 10)
+}
+
+const generateTokenByMemberInfo = (request, member_info, un_limit = false) => {
   const expire = Util.getCurrentTimestamp() + (un_limit ? Number.MAX_VALUE : 24 * HOUR)
   const token_info = new TokenInfo()
   token_info.setTokenByMemberInfo(member_info)
@@ -33,16 +42,21 @@ const generateTokenByMemberInfo = (member_info, un_limit = false) => {
 
   token_info.token = token
 
-  const refresh_token = Util.encrypt({ id: token_info.getId(), t: Util.getRandomString(5) })
+  const timestamp = Util.getCurrentTimestamp()
+  logger.debug(LOG_PREFIX, '[generateTokenByMemberInfo]', 'timestamp', timestamp)
+  const secret = getSecret(request, timestamp)
+  const refresh_token = Util.encrypt({ id: token_info.getId(), t: timestamp })
   logger.debug('generateTokenByMemberInfo', refresh_token)
 
   return {
     'token_info': token_info,
     'token': token,
     'expire': expire,
-    refresh_token
+    refresh_token,
+    secret
   }
 }
+
 
 const isAuthenticated = (require_roles) => {
   return async (req, res, next) => {
@@ -137,16 +151,46 @@ const verifyTokenByString = async (token, require_roles = null) => {
   return output
 }
 
-const getTokenResult = async (res, member_info, role, un_limit = false) => {
+const verifyRefreshToken = (req) => {
+  const result = {
+    is_verify: false,
+    id: null
+  }
+  const cookies = req && req.cookies ? req.cookies : null
+  if (!cookies) {
+    return result
+  }
+  const refresh_token = Util.trim(cookies.refresh_token)
+  const secret = Util.trim(cookies.secret)
+  if (!refresh_token || !secret) {
+    return result
+  }
+  let refresh_token_info = Util.decrypt(refresh_token)
+  if (!refresh_token_info) {
+    return result
+  }
+  refresh_token_info = JSON.parse(refresh_token_info)
+  const id = refresh_token_info.id
+  const timestamp = refresh_token_info.t
+  if (id && getSecret(req, timestamp) === secret) {
+    result.is_verify = true
+    result.id = id
+  }
+
+  return result
+}
+
+const getTokenResult = async (req, res, member_info, role, un_limit = false) => {
 
   member_info.role = role
 
-  const token_result = generateTokenByMemberInfo(member_info, un_limit)
+  const token_result = generateTokenByMemberInfo(req, member_info, un_limit)
 
   const output = new StdObject()
   if (token_result.token !== null) {
     output.add('token', token_result.token)
     output.add('refresh_token', token_result.refresh_token)
+    output.add('secret', token_result.secret)
     output.add('expire', token_result.expire)
     output.add('member_seq', member_info.seq)
     output.add('role', token_result.token_info.getRole())
@@ -177,29 +221,12 @@ const getServiceDomain = (req) => {
   return req.headers.service_domain
 }
 
-const getMachineTokenResult = async (machine_info) => {
-  machine_info.role = Role.BOX
-  const token_result = await generateTokenByMemberInfo(machine_info, true)
+const getTokenByRole = async (request, role, info) => {
+  info.role = role
+  const token_result = generateTokenByMemberInfo(request, info, true)
 
   const output = new StdObject()
-  if (token_result != null && token_result.token != null) {
-    output.add('token', `Bearer ${token_result.token}`)
-    output.add('expire', token_result.expire)
-  } else {
-    output.setError(-1)
-    output.setMessage('인증토큰 생성 실패')
-    output.httpStatusCode = 500
-  }
-
-  return output
-}
-
-const getAgentTokenResult = async (member_info) => {
-  member_info.role = Role.AGENT
-  const token_result = await generateTokenByMemberInfo(member_info, true)
-
-  const output = new StdObject()
-  if (token_result != null && token_result.token != null) {
+  if (token_result.token !== null) {
     output.add('token', `Bearer ${token_result.token}`)
     output.add('expire', token_result.expire)
   } else {
@@ -216,9 +243,9 @@ export default {
   'isAuthenticated': isAuthenticated,
   'verifyToken': verifyToken,
   'verifyTokenByString': verifyTokenByString,
+  'verifyRefreshToken': verifyRefreshToken,
   'getTokenResult': getTokenResult,
-  'getMachineTokenResult': getMachineTokenResult,
-  'getAgentTokenResult': getAgentTokenResult,
+  'getTokenByRole': getTokenByRole,
   'getLanguage': getLanguage,
   'getGroupSeq': getGroupSeq
 }

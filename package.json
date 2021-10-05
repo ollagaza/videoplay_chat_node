@@ -35,6 +35,7 @@
     "base64-url": "^2.3.3",
     "basic-ftp": "^4.6.2",
     "body-parser": "^1.18.2",
+    "cookie-parser": "^1.4.5",
     "canvas": "^2.6.1",
     "child-process": "^1.0.2",
     "dateformat": "^3.0.3",

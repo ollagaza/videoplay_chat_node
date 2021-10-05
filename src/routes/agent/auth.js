@@ -5,6 +5,7 @@ import StdObject from '../../wrapper/std-object'
 import Util from '../../utils/Util'
 import AuthService from '../../service/member/AuthService'
 import {UserDataModel} from "../../database/mongodb/UserData";
+import Role from '../../constants/roles'
 
 const routes = Router()
 
@@ -20,7 +21,7 @@ routes.post('/', Wrap(async (req, res) => {
   const member_info = await AuthService.login(null, req)
   member_info.agent_id = agent_id
 
-  const output = await Auth.getAgentTokenResult(member_info)
+  const output = await Auth.getTokenByRole(req, member_info, Role.AGENT)
   const group_seq = (await UserDataModel.findByMemberSeq(member_info.seq)).get('group_seq')
   output.add('group_seq', group_seq)
   return res.json(output)

@@ -16,7 +16,7 @@ const routes = Router()
 routes.post('/', Wrap(async (req, res) => {
   req.accepts('application/json')
   const member_info = await AuthService.login(DBMySQL, req)
-  const output = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
+  const output = await Auth.getTokenResult(req, res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
   let ip = ''
   if (req.headers['x-forwarded-for']) {
     if (req.headers['x-forwarded-for'].indexOf(',') !== -1) {
@@ -33,13 +33,7 @@ routes.post('/', Wrap(async (req, res) => {
 }))
 
 routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  const token_info = req.token_info
-  const member_seq = token_info.getId()
-
-  const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
-
-  const output = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
-  return res.json(output)
+  return res.json(await AuthService.authByCookie(req, res))
 }))
 
 routes.get('/verify/sso', Wrap(async (req, res) => {
@@ -81,7 +75,7 @@ routes.get('/verify/sso', Wrap(async (req, res) => {
   if (member_status.error) {
     throw member_status
   }
-  const output = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
+  const output = await Auth.getTokenResult(req, res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
   output.add('user_name', member_info.user_name)
   output.add('user_nickname', member_info.user_nickname)
   output.add('user_id', member_info.user_id)
