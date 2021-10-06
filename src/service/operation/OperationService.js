@@ -902,7 +902,7 @@ const OperationServiceClass = class {
   }
 
   requestTranscoder = async (operation_info) => {
-    const encoding_info = await this.checkOperationFileStatus(operation_info, null, false, true)
+    const encoding_info = await this.checkOperationFileStatus(operation_info, null, false, true, true)
     log.debug(this.log_prefix, '[requestTranscoder]', encoding_info)
     if (encoding_info.is_error) {
       await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
