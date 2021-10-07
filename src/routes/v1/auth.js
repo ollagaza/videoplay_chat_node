@@ -33,7 +33,7 @@ routes.post('/', Wrap(async (req, res) => {
 }))
 
 routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  return res.json(await AuthService.authByCookie(req, res))
+  return res.json(await AuthService.authByToken(req, res))
 }))
 
 routes.get('/verify/sso', Wrap(async (req, res) => {

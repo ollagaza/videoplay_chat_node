@@ -23,7 +23,11 @@ routes.post('/', Wrap(async (req, res) => {
   res.json(token_info)
 }))
 
-routes.get('/', Wrap(async (req, res) => {
+routes.get('/cookie', Wrap(async (req, res) => {
+  res.json(await AuthService.authByCookie(req, res))
+}))
+
+routes.get('/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   res.json(await AuthService.authByCookie(req, res))
 }))
 

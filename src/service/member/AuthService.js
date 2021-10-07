@@ -63,16 +63,37 @@ const AuthServiceClass = class {
     return member_info
   }
 
+  authByToken = async (req, res) => {
+    const result = new StdObject()
+
+    const auth_token_info = req.token_info
+    const member_seq = auth_token_info.getId()
+
+    const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
+    if (member_info && member_info.seq) {
+      const token_info = await Auth.getTokenResult(res, member_info, member_info.used_admin !== 'A' ? Role.MEMBER : Role.ADMIN)
+      if (token_info.error === 0) {
+        result.add('is_verify', true)
+        result.add('member_info', member_info)
+        result.adds(token_info.variables)
+      }
+    }
+
+    return result
+  }
+
   authByCookie = async (req, res) => {
     const result = new StdObject()
     const verify_result = Auth.verifyRefreshToken(req)
     if (verify_result.is_verify) {
       const member_info = await MemberService.getMemberInfo(null, verify_result.id)
-      const token_info = await Auth.getTokenResult(req, res, member_info, Role.MEMBER)
-      if (token_info.error === 0) {
-        result.add('is_verify', verify_result.is_verify)
-        result.add('member_info', member_info)
-        result.adds(token_info.variables)
+      if (member_info && member_info.seq) {
+        const token_info = await Auth.getTokenResult(req, res, member_info, Role.MEMBER)
+        if (token_info.error === 0) {
+          result.add('is_verify', verify_result.is_verify)
+          result.add('member_info', member_info)
+          result.adds(token_info.variables)
+        }
       }
     }
     return result
