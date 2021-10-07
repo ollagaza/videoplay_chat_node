@@ -42,6 +42,7 @@ const MAX_ARCHIVE_FILE_SIZE = GB
 const ARCHIVE = 'archive'
 const OBJECT = 'object'
 const LOCAL = 'local'
+const DOCKER = 'docker'
 
 const UP = 'up'
 const DOWN = 'down'
@@ -85,6 +86,7 @@ export default {
   'ARCHIVE': ARCHIVE,
   'OBJECT': OBJECT,
   'LOCAL': LOCAL,
+  'DOCKER': DOCKER,
   'MAX_ARCHIVE_FILE_SIZE': MAX_ARCHIVE_FILE_SIZE,
   'UP': UP,
   'DOWN': DOWN,

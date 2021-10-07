@@ -537,6 +537,7 @@ const sshExec = async (cmd, host, port = 22, user = 'mteg_vas', password = 'dpax
 }
 
 const getMediaInfo = (media_path) => {
+  log.debug(log_prefix, 'getMediainfo', media_path);
   return new Promise((resolve) => {
     const media_result = {
       success: false,
@@ -545,7 +546,7 @@ const getMediaInfo = (media_path) => {
       media_info: {}
     }
 
-    const spawn = executeSpawn('mediainfo', ['--Full', '--Output=XML', media_path])
+    const spawn = executeSpawn('mediainfo', ['--Full', '--Output=XML', media_path], (cmd) => { log.debug(log_prefix, 'getMediaInfo_execute_onstart', cmd) })
     let mediainfo_data = ''
     let mediainfo_error_data = ''
     spawn.on('onData', (data) => {
