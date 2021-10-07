@@ -546,7 +546,7 @@ const getMediaInfo = (media_path) => {
       media_info: {}
     }
 
-    const spawn = executeSpawn('mediainfo', ['--Full', '--Output=XML', media_path], (cmd) => { log.debug(log_prefix, 'getMediaInfo_execute_onstart', cmd) })
+    const spawn = executeSpawn('mediainfo', ['--Full', '--Output=XML', media_path], {}, (cmd) => { log.debug(log_prefix, 'getMediaInfo_execute_onstart', cmd) })
     let mediainfo_data = ''
     let mediainfo_error_data = ''
     spawn.on('onData', (data) => {
