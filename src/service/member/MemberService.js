@@ -420,7 +420,8 @@ const MemberServiceClass = class {
       await MemberLogService.memberJoinLog(transaction, create_member_info.seq)
 
       const search_keyword = {}
-      const group_explain = member_info.foreigner === 'Y' ? `Welcome! This is ${member_info.user_nickname}'s channel.` : `안녕하세요. ${member_info.user_nickname} 채널입니다.`
+      // const group_explain = member_info.foreigner === 'Y' ? `Welcome! This is ${member_info.user_nickname}'s channel.` : `안녕하세요. ${member_info.user_nickname} 채널입니다.`
+      const group_explain = `Welcome to ${member_info.user_nickname}'(s) channel.`;
 
       if (member_info.treatcode) {
         _.forEach(JSON.parse(member_info.treatcode), async (item, index) => {

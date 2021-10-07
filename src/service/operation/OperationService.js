@@ -654,7 +654,6 @@ const OperationServiceClass = class {
   }
 
   uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null, file_name = null) => {
-    log.debug('uploadOperationFile', 1)
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     let media_directory
     if (file_type === OperationFileService.TYPE_REFER) {
@@ -677,13 +676,11 @@ const OperationServiceClass = class {
     } else {
       await Util.uploadByRequest(request, response, file_field_name, media_directory, file_name)
     }
-    log.debug('uploadOperationFile', upload_file_info)
     const upload_file_info = request.file
     if (Util.isEmpty(upload_file_info)) {
       throw new StdObject(-1, '파일 업로드가 실패하였습니다.', 500)
     }
     upload_file_info.new_file_name = request.new_file_name
-    // log.debug(this.log_prefix, '[uploadOperationFile]', 'request.body', request.body)
 
     return await this.createOperationFileInfo(file_type, operation_info, upload_file_info, request.body)
   }
@@ -905,7 +902,7 @@ const OperationServiceClass = class {
   }
 
   requestTranscoder = async (operation_info) => {
-    const encoding_info = await this.checkOperationFileStatus(operation_info, null, false, true)
+    const encoding_info = await this.checkOperationFileStatus(operation_info, null, false, true, true)
     log.debug(this.log_prefix, '[requestTranscoder]', encoding_info)
     if (encoding_info.is_error) {
       await OperationService.updateAnalysisStatus(DBMySQL, operation_info, 'E', encoding_info)
@@ -1512,7 +1509,7 @@ const OperationServiceClass = class {
     return result
   }
 
-  checkOperationFileStatus = async (operation_info, encoding_info = null, check_trans_file = false, delete_non_origin_files = false) => {
+  checkOperationFileStatus = async (operation_info, encoding_info = null, check_trans_file = false, delete_non_origin_files = false, delete_error_file_force = false) => {
     if (!encoding_info) {
       encoding_info = {
         is_error: false,
@@ -1558,7 +1555,7 @@ const OperationServiceClass = class {
             video_file_info.bitrate = video_info.bit_rate
           }
           if (trans_file_regex.test(file_name)) {
-            if (delete_non_origin_files) {
+            if (delete_non_origin_files || delete_error_file_force) {
               await Util.deleteFile(file_path)
               continue
             }
@@ -1579,8 +1576,8 @@ const OperationServiceClass = class {
             if (file_size === 0) {
               if (encoding_info.message === null) encoding_info.message = '동영상 파일의 크기가 0 입니다.'
               encoding_info.is_error = true
-              video_file_info.error = true
               video_file_info.is_video = false
+              video_file_info.error = true
             }
             else {
               video_file_info.origin_file_name = file_name.replace(/^upload_/, '')
@@ -1588,6 +1585,7 @@ const OperationServiceClass = class {
                 if (encoding_info.message === null) encoding_info.message = '원본 파일 중 동영상 정보를 확인할 수 없는 파일이 존재합니다.'
                 encoding_info.is_error = true
                 video_file_info.is_video = false
+                video_file_info.error = true
               } else {
                 if (prev_video_info !== null) {
                   if (video_info.format !== prev_video_info.format) {
@@ -1609,6 +1607,12 @@ const OperationServiceClass = class {
               }
             }
           } else if (delete_non_origin_files) {
+            await Util.deleteFile(file_path)
+            continue
+          }
+
+          if (delete_error_file_force && video_file_info.error === true) {
+            encoding_info.message = null
             await Util.deleteFile(file_path)
             continue
           }
