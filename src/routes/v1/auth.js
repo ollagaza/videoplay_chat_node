@@ -32,7 +32,11 @@ routes.post('/', Wrap(async (req, res) => {
   return res.json(output)
 }))
 
-routes.post('/token/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/cookie/refresh', Wrap(async (req, res) => {
+  return res.json(await AuthService.authByCookie(req, res))
+}))
+
+routes.post('/token/refresh', Wrap(async (req, res) => {
   return res.json(await AuthService.authByToken(req, res))
 }))
 

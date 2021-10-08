@@ -4,6 +4,7 @@ import ServiceConfig from '../../service/service-config'
 import MemberService from '../../service/member/MemberService'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
+import logger from '../../libs/logger'
 
 const AuthServiceClass = class {
   constructor () {
@@ -11,7 +12,6 @@ const AuthServiceClass = class {
   }
 
   login = async (database, req) => {
-    const result = new StdObject()
     const req_body = req.body
 
     if (!req_body || !req_body.user_id || !req_body.password) {
@@ -89,6 +89,7 @@ const AuthServiceClass = class {
       const member_info = await MemberService.getMemberInfo(null, verify_result.id)
       if (member_info && member_info.seq) {
         const token_info = await Auth.getTokenResult(req, res, member_info, Role.MEMBER)
+        logger.debug(this.log_prefix, '[authByCookie]', 'token_info', token_info.toJSON())
         if (token_info.error === 0) {
           result.add('is_verify', verify_result.is_verify)
           result.add('member_info', member_info)
@@ -96,6 +97,7 @@ const AuthServiceClass = class {
         }
       }
     }
+    logger.debug(this.log_prefix, '[authByCookie]', result.toJSON())
     return result
   }
 }

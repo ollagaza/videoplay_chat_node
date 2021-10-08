@@ -22,12 +22,13 @@ const getToken = (req) => {
   return null
 }
 
-const getSecret = (req, timestamp) => {
-  logger.debug(LOG_PREFIX, '[getSecret]', req.headers, timestamp)
-  const agent = Util.trim(req.headers && req.headers['user-agent'] ? req.headers['user-agent'] : 'surgstory')
+const getSecret = (request, timestamp) => {
+  const agent = Util.trim(request.headers && request.headers['user-agent'] ? request.headers['user-agent'] : 'surgstory')
   const timestamp_str = `${timestamp}`.toString()
   const last_number = Util.parseInt(timestamp_str[timestamp_str.length - 1])
-  return Util.hash(timestamp_str.slice(-5) +  agent.toString()).substr(last_number, 10)
+  const secret = Util.hash(timestamp_str.slice(-5) +  agent.toString()).substr(last_number, 10)
+  logger.debug(LOG_PREFIX, '[getSecret]', agent, timestamp_str, last_number, secret)
+  return secret
 }
 
 const generateTokenByMemberInfo = (request, member_info, un_limit = false) => {
@@ -43,10 +44,9 @@ const generateTokenByMemberInfo = (request, member_info, un_limit = false) => {
   token_info.token = token
 
   const timestamp = Util.getCurrentTimestamp()
-  logger.debug(LOG_PREFIX, '[generateTokenByMemberInfo]', 'timestamp', timestamp)
   const secret = getSecret(request, timestamp)
-  const refresh_token = Util.encrypt({ id: token_info.getId(), t: timestamp })
-  logger.debug('generateTokenByMemberInfo', refresh_token)
+  const refresh_token = Util.encrypt({ id: token_info.getId(), t: timestamp, a: request.headers['user-agent'] })
+  logger.debug('generateTokenByMemberInfo', refresh_token, secret)
 
   return {
     'token_info': token_info,
@@ -151,28 +151,32 @@ const verifyTokenByString = async (token, require_roles = null) => {
   return output
 }
 
-const verifyRefreshToken = (req) => {
+const verifyRefreshToken = (request) => {
   const result = {
     is_verify: false,
     id: null
   }
-  const cookies = req && req.cookies ? req.cookies : null
+  const cookies = request && request.cookies ? request.cookies : null
+  logger.debug(LOG_PREFIX, 1, cookies)
   if (!cookies) {
     return result
   }
   const refresh_token = Util.trim(cookies.refresh_token)
   const secret = Util.trim(cookies.secret)
+  logger.debug(LOG_PREFIX, 2, refresh_token, secret)
   if (!refresh_token || !secret) {
     return result
   }
   let refresh_token_info = Util.decrypt(refresh_token)
+  logger.debug(LOG_PREFIX, 3, refresh_token_info)
   if (!refresh_token_info) {
     return result
   }
   refresh_token_info = JSON.parse(refresh_token_info)
   const id = refresh_token_info.id
   const timestamp = refresh_token_info.t
-  if (id && getSecret(req, timestamp) === secret) {
+  logger.debug(LOG_PREFIX, 4, refresh_token_info, request.headers['user-agent'], getSecret(request, timestamp), getSecret(request, timestamp) === secret)
+  if (id && getSecret(request, timestamp) === secret) {
     result.is_verify = true
     result.id = id
   }
