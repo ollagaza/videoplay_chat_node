@@ -781,22 +781,34 @@ const OperationServiceClass = class {
     }
   }
 
-  requestAnalysis = async (database, token_info, operation_seq, group_member_info, member_info) => {
-    const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
-    if (operation_info.mode === this.MODE_FILE) {
-      if (ServiceConfig.isVacs()) {
-        await OperationService.updateOperationDataFileThumbnail(operation_info)
-        await this.updateAnalysisStatus(null, operation_info, 'Y')
-        SyncService.sendAnalysisCompleteMessage(operation_info)
-      } else {
-        await this.updateAnalysisStatus(null, operation_info, 'R')
-        this.onOperationCreateComplete(operation_info, group_member_info, member_info)
-        await SyncService.moveImageFileToObject(operation_info)
+  requestAnalysis = (database, token_info, operation_seq, group_member_info, member_info) => {
+    (
+      async () => {
+        try {
+          const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
+          if (operation_info && operation_info.seq === operation_seq) {
+            if (operation_info.mode === this.MODE_FILE) {
+              if (ServiceConfig.isVacs()) {
+                await OperationService.updateOperationDataFileThumbnail(operation_info)
+                await this.updateAnalysisStatus(null, operation_info, 'Y')
+                SyncService.sendAnalysisCompleteMessage(operation_info)
+              } else {
+                await this.updateAnalysisStatus(null, operation_info, 'R')
+                this.onOperationCreateComplete(operation_info, group_member_info, member_info)
+                await SyncService.moveImageFileToObject(operation_info)
+              }
+            } else {
+              await this.requestTranscoder(operation_info)
+              this.onOperationCreateComplete(operation_info, group_member_info, member_info)
+            }
+          } else {
+            log.error(this.log_prefix, '[requestAnalysis] operation not exists', operation_seq)
+          }
+        } catch (error) {
+          log.error(this.log_prefix, '[requestAnalysis]', operation_seq, error)
+        }
       }
-    } else {
-      await this.requestTranscoder(operation_info)
-      this.onOperationCreateComplete(operation_info, group_member_info, member_info)
-    }
+    )()
   }
 
   onOperationCreateComplete(operation_info, group_member_info, member_info) {

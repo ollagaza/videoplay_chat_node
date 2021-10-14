@@ -214,7 +214,7 @@ routes.delete('/:operation_seq(\\d+)/phase/:phase_id', Auth.isAuthenticated(Role
 routes.post('/:operation_seq(\\d+)/request/analysis', Auth.isAuthenticated(Role.DEFAULT), Wrap(async (req, res) => {
   const { member_info, group_member_info, token_info } = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const operation_seq = req.params.operation_seq
-  await OperationService.requestAnalysis(DBMySQL, token_info, operation_seq, group_member_info, member_info)
+  OperationService.requestAnalysis(DBMySQL, token_info, operation_seq, group_member_info, member_info)
 
   res.json(new StdObject())
 }))
