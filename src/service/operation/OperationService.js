@@ -786,7 +786,8 @@ const OperationServiceClass = class {
       async () => {
         try {
           const operation_info = await this.getOperationInfo(database, operation_seq, token_info, false)
-          if (operation_info && operation_info.seq === operation_seq) {
+          // log.debug(this.log_prefix, 'operation_info', 'operation_info.seq:', operation_info.seq, 'operation_seq:', operation_seq, `${operation_info.seq}` === `${operation_seq}`)
+          if (operation_info && `${operation_info.seq}` === `${operation_seq}`) {
             if (operation_info.mode === this.MODE_FILE) {
               if (ServiceConfig.isVacs()) {
                 await OperationService.updateOperationDataFileThumbnail(operation_info)
