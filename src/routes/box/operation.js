@@ -137,7 +137,7 @@ routes.put('/:operation_seq(\\d+)/end', Auth.isAuthenticated(Role.BOX), Wrap(asy
     await OperationService.onUploadComplete(operation_info, true)
     log.d(req, `[BOX 06] 수술 종료 요청 (id: ${operation_seq})`, operation_seq)
 
-    await OperationService.requestAnalysis(DBMySQL, null, operation_seq, group_member_info, member_info)
+    OperationService.requestAnalysis(DBMySQL, null, operation_seq, group_member_info, member_info)
     log.d(req, `[BOX 07] 수술 분석요청 (id: ${operation_seq})`, operation_seq)
 
     await OperationService.updateStatus(DBMySQL, [operation_seq], 'Y')
