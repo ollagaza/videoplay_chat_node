@@ -16,6 +16,7 @@ import {VideoProjectModel} from "../../database/mongodb/VideoProject";
 
 const GroupChannelHomeServiceClass = class {
   constructor() {
+    this.log_prefix = '[GroupChannelHomeServiceClass]'
   }
 
   getMemberModel = (database) => {
@@ -250,26 +251,26 @@ const GroupChannelHomeServiceClass = class {
     return model.getCategoryGroupInfo(menu_id, limit);
   }
 
-  GroupDataCounting = async () => {
+  updateGroupRecommendCount = async () => {
     const model = this.getGroupChannelHomeModel()
     const check_data = await model.checkGroupRecommendCount();
     if (check_data) return false;
     const group_counting = []
 
-    const operation_anotation_count = await OperationClipModel.getGroupSeqCount()
-    Object.keys(operation_anotation_count)
+    const operation_annotation_count = await OperationClipModel.getGroupSeqCount()
+    Object.keys(operation_annotation_count)
       .forEach((item) => {
-        const data = _.find(group_counting, {group_seq: operation_anotation_count[item]._id})
+        const data = _.find(group_counting, {group_seq: operation_annotation_count[item]._id})
 
         if (data) {
-          data.total_count += operation_anotation_count[item].count
-          data.video_anotation = operation_anotation_count[item].count
+          data.total_count += operation_annotation_count[item].count
+          data.video_annotation = operation_annotation_count[item].count
         } else {
-          if (operation_anotation_count[item]._id) {
+          if (operation_annotation_count[item]._id) {
             group_counting.push({
-              group_seq: operation_anotation_count[item]._id,
-              total_count: operation_anotation_count[item].count,
-              video_anotation: operation_anotation_count[item].count
+              group_seq: operation_annotation_count[item]._id,
+              total_count: operation_annotation_count[item].count,
+              video_annotation: operation_annotation_count[item].count
             })
           }
         }
@@ -293,6 +294,7 @@ const GroupChannelHomeServiceClass = class {
         }
       })
     const operation_video_count = await model.getOperationVideoCount()
+    log.debug(this.log_prefix, '[updateGroupCounts]', operation_video_count)
     await Object.keys(operation_video_count)
       .forEach((item) => {
         const data = _.find(group_counting, {group_seq: operation_video_count[item].group_seq})
@@ -377,17 +379,17 @@ const GroupChannelHomeServiceClass = class {
     const group_model = this.getGroupCountsModel()
     const group_counts = []
 
-    const operation_anotation_count = await OperationClipModel.getGroupSeqCount()
-    Object.keys(operation_anotation_count)
+    const operation_annotation_count = await OperationClipModel.getGroupSeqCount()
+    Object.keys(operation_annotation_count)
       .forEach((item) => {
-        const counts = _.find(group_counts, {group_seq: operation_anotation_count[item]._id})
+        const counts = _.find(group_counts, {group_seq: operation_annotation_count[item]._id})
         if (counts) {
-          counts.anno_count = operation_anotation_count[item].count
+          counts.anno_count = operation_annotation_count[item].count
         } else {
-          if (operation_anotation_count[item]._id) {
+          if (operation_annotation_count[item]._id) {
             group_counts.push({
-              group_seq: operation_anotation_count[item]._id,
-              anno_count: operation_anotation_count[item].count
+              group_seq: operation_annotation_count[item]._id,
+              anno_count: operation_annotation_count[item].count
             })
           }
         }
@@ -486,18 +488,18 @@ const GroupChannelHomeServiceClass = class {
     const model = this.getGroupChannelHomeModel()
     const group_counting = []
 
-    const operation_anotation_count = await OperationClipModel.getGroupMemberSeqCount()
-    Object.keys(operation_anotation_count)
+    const operation_annotation_count = await OperationClipModel.getGroupMemberSeqCount()
+    Object.keys(operation_annotation_count)
       .forEach((item) => {
-        const data = _.find(group_counting, { group_seq: operation_anotation_count[item]._id.group_seq, member_seq: operation_anotation_count[item]._id.member_seq })
+        const data = _.find(group_counting, { group_seq: operation_annotation_count[item]._id.group_seq, member_seq: operation_annotation_count[item]._id.member_seq })
         if (data) {
-          data.anno_cnt = operation_anotation_count[item].count
+          data.anno_cnt = operation_annotation_count[item].count
         } else {
-          if (operation_anotation_count[item]._id) {
+          if (operation_annotation_count[item]._id) {
             group_counting.push({
-              group_seq: operation_anotation_count[item]._id.group_seq,
-              member_seq: operation_anotation_count[item]._id.member_seq,
-              anno_cnt: operation_anotation_count[item].count
+              group_seq: operation_annotation_count[item]._id.group_seq,
+              member_seq: operation_annotation_count[item]._id.member_seq,
+              anno_cnt: operation_annotation_count[item].count
             })
           }
         }

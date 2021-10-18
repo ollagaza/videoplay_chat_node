@@ -39,7 +39,7 @@ class GroupDataCountingSchedulerClass {
     (
       async () => {
         try {
-          await GroupChannelHomeService.GroupDataCounting()
+          await GroupChannelHomeService.updateGroupRecommendCount()
           await GroupChannelHomeService.updateGroupCounts()
           log.debug(this.log_prefix, '[syncGroupDataCounting]', 'end');
         } catch (error) {

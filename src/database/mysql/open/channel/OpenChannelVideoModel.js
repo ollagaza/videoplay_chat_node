@@ -155,8 +155,8 @@ export default class OpenChannelVideoModel extends MySQLModel {
     return this.delete(filter)
   }
 
-  getTargetVideoList = async (group_seq, category_seq, folder_seq, page_params = {}, filter_params = {}) => {
-    logger.debug(this.log_prefix, '[getTargetVideoList]', filter_params)
+  getCategoryVideoList = async (group_seq, category_seq, folder_seq, page_params = {}, filter_params = {}) => {
+    // logger.debug(this.log_prefix, '[getCategoryVideoList]', filter_params)
     folder_seq = Util.parseInt(folder_seq, 0)
     const query = this.database
       .select(this.arrayToSafeQuery(default_field_list))

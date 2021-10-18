@@ -63,4 +63,8 @@ export default class GroupDataModel extends MySQLModel {
     }
     return query_result[0].affectedRows > 0
   }
+
+  getRecentOpenVideoList = async (group_seq) => {
+
+  }
 }
