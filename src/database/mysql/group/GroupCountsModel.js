@@ -83,24 +83,21 @@ export default class GroupCountModel extends MySQLModel {
     if (search_keyword) {
       switch (search_option) {
         case 'group_name':
-          query.innerJoin('group_member as g_mem', (builder) => {
-            builder.andOn('group_info.seq', 'g_mem.group_seq')
-          })
           query.innerJoin('member as mem', (builder) => {
             builder.on('group_info.member_seq', 'mem.seq')
           })
-          query.where('group_name', 'like', `%${search_keyword}%`)
+          query.where('group_info.group_name', 'like', `%${search_keyword}%`)
           break;
         case 'group_admin':
-          query.innerJoin('group_member as g_mem', (builder) => {
-            builder.andOn('group_info.seq', 'g_mem.group_seq')
-          })
           query.innerJoin('member as mem', (builder) => {
             builder.on('group_info.member_seq', 'mem.seq')
             builder.andOnVal('mem.user_name', 'like', `%${search_keyword}%`)
           })
           break;
         case 'group_member':
+          query.innerJoin('group_member as g_mem', (builder) => {
+            builder.andOn('group_info.seq', 'g_mem.group_seq')
+          })
           query.innerJoin('member as mem', (builder) => {
             builder.on(`g_mem.member_seq`, 'mem.seq')
             builder.andOnVal('mem.user_name', 'like', `%${search_keyword}%`)
