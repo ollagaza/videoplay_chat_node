@@ -197,24 +197,11 @@ export default class OperationDataModel extends MySQLModel {
     return this.update(filter, params)
   }
 
-  setPlayLimit = async (seq, limit_info) => {
+  setPlayLimit = async (seq, update_params) => {
     const filter = {
       seq
     }
-    const params = {}
-    let is_change = false
-    if (limit_info) {
-      if (limit_info.is_play_limit !== undefined) {
-        params.is_play_limit = limit_info.is_play_limit
-        is_change = true
-      }
-      if (limit_info.play_limit_time) {
-        params.play_limit_time = limit_info.play_limit_time
-        is_change = true
-      }
-    }
-    if (!is_change) return
-    return this.update(filter, params)
+    return this.update(filter, update_params)
   }
   setTemplateGrade = async (operation_seq, template_grade) => {
     return this.update({ operation_seq }, { template_grade })

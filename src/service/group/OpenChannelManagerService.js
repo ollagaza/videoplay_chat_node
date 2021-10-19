@@ -360,14 +360,17 @@ const OpenChannelManagerServiceClass = class {
       return new StdObject(8861, '잘못된 접근입니다.', 500)
     }
     const limit_info = request.body.limit_info
+    const update_params = {}
     if (limit_info.is_play_limit !== undefined) {
-      limit_info.is_play_limit = Util.isTrue(limit_info.is_play_limit)
+      update_params.is_play_limit = Util.isTrue(limit_info.is_play_limit)
     }
-    if (limit_info.play_limit_time !== undefined) {
-      limit_info.play_limit_time = Util.parseInt(limit_info.play_limit_time, 0)
+    if (!limit_info.is_play_limit) {
+      update_params.play_limit_time = 0
+    } else if (limit_info.play_limit_time !== undefined) {
+      update_params.play_limit_time = Util.parseInt(limit_info.play_limit_time, 0)
     }
     const operation_data_model = this.getOperationDataModel()
-    return operation_data_model.setPlayLimit(operation_data_seq, limit_info)
+    return operation_data_model.setPlayLimit(operation_data_seq, update_params)
   }
 
   deleteVideo = async (group_seq, category_seq, request) => {
