@@ -434,6 +434,10 @@ const OpenChannelManagerServiceClass = class {
     output.add('video_info', video_info)
     return output
   }
+
+  updateRecentVideoList = async (group_seq) => {
+
+  }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()
 

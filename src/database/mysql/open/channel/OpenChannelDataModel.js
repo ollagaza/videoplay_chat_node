@@ -1,19 +1,23 @@
-import MySQLModel from '../../mysql-model'
-import Util from '../../../utils/Util'
-import Constants from '../../../constants/constants'
+import MySQLModel from '../../../mysql-model'
 
-export default class GroupDataModel extends MySQLModel {
+export default class OpenChannelDataModel extends MySQLModel {
   constructor(database) {
     super(database)
 
-    this.table_name = 'group_data'
+    this.table_name = 'open_channel_data'
     this.selectable_fields = ['*']
-    this.log_prefix = '[GroupDataModel]'
-    this.FIELD_RECENT = 'recent_list'
-    this.FIELD_MOST_VIEW = 'most_view_list'
-    this.FIELD_MOST_RECOMMEND = 'most_recommend_list'
-    this.FIELD_MOST_COMMENT = 'most_comment_list'
+    this.log_prefix = '[OpenChannelDataModel]'
+    this.FIELD_COUNT_VIEW = 'view_count'
+    this.FIELD_COUNT_COMMENT = 'comment_count'
+    this.FIELD_COUNT_RECOMMEND = 'recommend_count'
+    this.FIELD_LIST_RECENT = 'recent_list'
+    this.FIELD_LIST_MOST_VIEW = 'most_view_list'
+    this.FIELD_LIST_MOST_RECOMMEND = 'most_recommend_list'
+    this.FIELD_LIST_MOST_COMMENT = 'most_comment_list'
     this.field_map = {
+      'view_count': true,
+      'comment_count': true,
+      'recommend_count': true,
       'recent_list': true,
       'most_view_list': true,
       'most_recommend_list': true,
@@ -28,8 +32,9 @@ export default class GroupDataModel extends MySQLModel {
     const data_key_list = []
     const value_list = [group_seq]
     for (let i = 0; i < key_list.length; i++) {
-      if (this.field_map[key_list[i]] === true && data_map[data_key_list[i]]) {
-        data_key_list.push(key_list[i])
+      const key = key_list[i]
+      if (this.field_map[key] === true && data_map[key]) {
+        data_key_list.push(key)
       }
     }
     if (data_key_list.length <= 0) return 0
@@ -62,9 +67,5 @@ export default class GroupDataModel extends MySQLModel {
       return false
     }
     return query_result[0].affectedRows > 0
-  }
-
-  getRecentOpenVideoList = async (group_seq) => {
-
   }
 }
