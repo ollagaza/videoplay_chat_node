@@ -15,6 +15,7 @@ import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import logger from '../../libs/logger'
 import OpenChannelCategoryInfo from '../../wrapper/open/channel/OpenChannelCategoryInfo'
 import GroupService from './GroupService'
+import OpenChannelDataModel from '../../database/mysql/open/channel/OpenChannelDataModel'
 
 const OpenChannelManagerServiceClass = class {
   constructor() {
@@ -41,6 +42,13 @@ const OpenChannelManagerServiceClass = class {
       return new OpenChannelVideoModel(database)
     }
     return new OpenChannelVideoModel(DBMySQL)
+  }
+
+  getDataModel = (database) => {
+    if (database) {
+      return new OpenChannelDataModel(database)
+    }
+    return new OpenChannelDataModel(DBMySQL)
   }
 
   getOperationDataModel = (database) => {
@@ -440,6 +448,67 @@ const OpenChannelManagerServiceClass = class {
 
   updateRecentVideoList = async (group_seq) => {
 
+  }
+
+  updateOpenPageData = () => {
+    (
+      async () => {
+        try {
+          const group_model = this.getGroupModel()
+          const group_list = await group_model.getAllGroupInfo()
+          logger.debug(this.log_prefix, '[updateOpenPageData]', 'start update => group count:', group_list.length)
+          for (let i = 0; i < group_list.length; i++) {
+            const group_info = group_list[i]
+            const group_seq = group_info.seq
+            try {
+              await this.updateOpenPageDataByGroupSeq(group_seq)
+              await Util.sleep(500)
+            } catch (error) {
+              logger.error(this.log_prefix, '[updateOpenPageData] update group data', group_seq, error)
+            }
+          }
+        } catch (error) {
+          logger.error(this.log_prefix, '[updateOpenPageData]', error)
+        }
+      }
+    )()
+  }
+
+  updateOpenPageDataByGroupSeq = async (group_seq) => {
+    const data_model = this.getDataModel()
+    const video_model = this.getVideoModel()
+
+    const update_data = {}
+    update_data[data_model.FIELD_COUNT_VIEW] = 0
+    update_data[data_model.FIELD_COUNT_COMMENT] = 0
+    update_data[data_model.FIELD_COUNT_RECOMMEND] = 0
+    update_data[data_model.FIELD_LIST_MOST_VIEW] = []
+    update_data[data_model.FIELD_LIST_MOST_COMMENT] = []
+    update_data[data_model.FIELD_LIST_MOST_RECOMMEND] = []
+
+    const page_params = {}
+    const order_params = {}
+    page_params.page = 1
+    page_params.list_count = 10
+    page_params.page_count = 10
+    page_params.no_paging = 'n'
+
+    order_params.field = 'reg_date'
+    order_params.type = 'desc'
+    update_data[data_model.FIELD_LIST_RECENT] = await this.getDataVideoList(video_model, group_seq, page_params, order_params)
+
+    return data_model.updateData(group_seq, update_data)
+  }
+
+  getDataVideoList = async (video_model, group_seq, page_params, order_params) => {
+    const video_list = []
+    const query_result = await video_model.getOpenChannelVideoList(group_seq, true, null, page_params, {}, order_params)
+    if (query_result && query_result.data && query_result.data.length) {
+      for (let i = 0; i < query_result.data.length; i++) {
+        video_list.push(query_result.data[i].getDataJSON())
+      }
+    }
+    return video_list
   }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()

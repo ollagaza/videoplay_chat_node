@@ -6,7 +6,7 @@ import logger from '../../../../libs/logger'
 
 
 const default_field_list = [
-  'open_channel_video.seq AS video_seq', 'open_channel_video.category_seq', 'open_channel_video.view_count', 'open_channel_video.video_order',
+  'open_channel_video.seq AS video_seq', 'open_channel_video.category_seq', 'open_channel_video.view_count', 'open_channel_video.video_order', 'open_channel_video.reg_date AS open_date',
   'operation_data.seq AS data_seq', 'operation_data.group_seq', 'operation_data.operation_seq', 'operation_data.thumbnail', 'operation_data.total_time', 'operation_data.is_play_limit', 'operation_data.play_limit_time',
   'operation.reg_date', 'operation.operation_date', 'operation.mode',
   'IF(open_channel_video.video_title IS NOT NULL, open_channel_video.video_title, operation_data.title) AS title',
@@ -37,15 +37,29 @@ export default class OpenChannelVideoModel extends MySQLModel {
         .innerJoin('operation', (builder) => {
           this.setOperationJoinOption(builder, 'operation_data.operation_seq')
         })
-        .leftOuterJoin(this.database.raw(`
-          (
-            SELECT *
-            FROM open_channel_video
-            WHERE group_seq = ?
-            GROUP BY operation_seq
-          ) AS open_channel_video
-            ON open_channel_video.operation_seq = operation_data.operation_seq
-        `, group_seq))
+      if (group_seq) {
+        sub_query.leftOuterJoin(
+          this.database.raw(`
+            (
+              SELECT *
+              FROM open_channel_video
+              WHERE group_seq = ?
+              GROUP BY operation_seq
+            ) AS open_channel_video
+              ON open_channel_video.operation_seq = operation_data.operation_seq
+          `, group_seq))
+      } else {
+        sub_query.leftOuterJoin(
+          this.database.raw(`
+            (
+              SELECT *
+              FROM open_channel_video
+              GROUP BY operation_seq
+            ) AS open_channel_video
+              ON open_channel_video.operation_seq = operation_data.operation_seq
+          `))
+      }
+
     } else {
       sub_query.from('open_channel_video')
         .innerJoin('operation', (builder) => {
@@ -54,7 +68,9 @@ export default class OpenChannelVideoModel extends MySQLModel {
         .innerJoin('operation_data', { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
     }
     sub_query.leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
-    sub_query.where('operation_data.group_seq', group_seq)
+    if (group_seq) {
+      sub_query.where('operation_data.group_seq', group_seq)
+    }
     sub_query.where((builder) => {
       builder.whereNull('operation.folder_seq')
       builder.orWhere('operation_folder.status', 'Y')
@@ -82,23 +98,7 @@ export default class OpenChannelVideoModel extends MySQLModel {
 
     const order_by = is_all ? { name: 'operation_seq', direction: 'DESC' } : { name: 'video_order', direction: 'ASC' }
     if (order_params.field) {
-      switch (order_params.field) {
-        case 'title':
-          order_by.name = 'title'
-          break;
-        case 'operation_date':
-          order_by.name = 'operation_date'
-          break;
-        case 'view_count':
-          order_by.name = 'view_count'
-          break;
-        case 'total_time':
-          order_by.name = 'total_time'
-          break;
-        default:
-          order_by.name = 'operation_seq'
-          break;
-      }
+      order_by.name = order_params.field
     }
     if (order_params.type) {
       order_by.direction = order_params.type

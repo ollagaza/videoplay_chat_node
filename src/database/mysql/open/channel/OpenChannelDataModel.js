@@ -1,4 +1,5 @@
 import MySQLModel from '../../../mysql-model'
+import logger from '../../../../libs/logger'
 
 export default class OpenChannelDataModel extends MySQLModel {
   constructor(database) {
@@ -33,7 +34,7 @@ export default class OpenChannelDataModel extends MySQLModel {
     const value_list = [group_seq]
     for (let i = 0; i < key_list.length; i++) {
       const key = key_list[i]
-      if (this.field_map[key] === true && data_map[key]) {
+      if (this.field_map[key] === true) {
         data_key_list.push(key)
       }
     }
@@ -41,7 +42,7 @@ export default class OpenChannelDataModel extends MySQLModel {
 
     let field = '`group_seq`'
     let value = '?'
-    for (let i = 0; data_key_list.length; i++) {
+    for (let i = 0; i < data_key_list.length; i++) {
       field += `, ${data_key_list[i]}`
       value += ', ?'
       let data = data_map[data_key_list[i]]
@@ -54,18 +55,34 @@ export default class OpenChannelDataModel extends MySQLModel {
       INSERT INTO ${this.table_name} ( ${field} )
       VALUES ( ${value} )
       ON DUPLICATE KEY UPDATE`
-    for (let i = 0; data_key_list.length; i++) {
+    for (let i = 0; i < data_key_list.length; i++) {
       sql += `
-        \`${data_key_list[i]}\` = VALUES(\`${data_key_list[i]}\`),
-      `
+        \`${data_key_list[i]}\` = VALUES(\`${data_key_list[i]}\`),`
     }
     sql += `
-        \`modify_date\` = current_timestamp()
-    `
+        \`modify_date\` = current_timestamp()`
     const query_result = await this.database.raw(sql, value_list)
     if (!query_result || !query_result.length || !query_result[0]) {
       return false
     }
     return query_result[0].affectedRows > 0
+  }
+
+  increaseCount = async (group_seq, field_name) => {
+    if (!this.field_map[field_name]) return 0
+    const params = {
+      'modify_date': this.database.raw('NOW()')
+    }
+    params[field_name] = this.database.raw(`${field_name} + 1`)
+    return this.update({ group_seq }, params)
+  }
+
+  decreaseCount = async (group_seq, field_name) => {
+    if (!this.field_map[field_name]) return 0
+    const params = {
+      'modify_date': this.database.raw('NOW()')
+    }
+    params[field_name] = this.database.raw(`IF(${field_name} > 1, ${field_name} - 1, 0)`)
+    return this.update({ group_seq }, params)
   }
 }
