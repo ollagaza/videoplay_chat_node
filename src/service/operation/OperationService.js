@@ -1626,6 +1626,7 @@ const OperationServiceClass = class {
 
           if (delete_error_file_force && video_file_info.error === true) {
             encoding_info.message = null
+            encoding_info.is_error = false
             await Util.deleteFile(file_path)
             continue
           }
