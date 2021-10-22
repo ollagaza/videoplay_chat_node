@@ -1,12 +1,12 @@
 import MySQLModel from '../../mysql-model'
 
-export default class QuestionModel extends MySQLModel {
+export default class CurriculumQuestionBankModel extends MySQLModel {
   constructor (database) {
     super(database)
 
-    this.table_name = 'question'
+    this.table_name = 'curriculum_question_bank'
     this.selectable_fields = ['*']
-    this.log_prefix = '[QuestionModel]'
+    this.log_prefix = '[CurriculumQuestionBankModel]'
   }
 
   createQuestion = async (question_data) => {
