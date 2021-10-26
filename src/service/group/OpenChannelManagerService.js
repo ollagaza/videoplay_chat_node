@@ -137,8 +137,10 @@ const OpenChannelManagerServiceClass = class {
       page_params.list_count = Util.parseInt(request_params.list_count, 20)
       page_params.page_count = Util.parseInt(request_params.page_count, 10)
       page_params.no_paging = request_params.no_paging === 'n' ? 'n' : 'y'
-      order_params.field = request_params.order_fields ? request_params.order_fields : 'operation.seq'
-      order_params.type = request_params.order_type ? request_params.order_type : 'desc'
+      if (Util.trim(request_params.order_fields) && Util.trim(request_params.order_type)) {
+        order_params.field = Util.trim(request_params.order_fields)
+        order_params.type = Util.trim(request_params.order_type)
+      }
       filter_params.search_keyword = Util.trim(request_params.search_keyword) ? Util.trim(request_params.search_keyword) : null
     }
     logger.debug(this.log_prefix, '[getListParams]', request_params.search_keyword, filter_params)
