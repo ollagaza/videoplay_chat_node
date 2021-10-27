@@ -26,8 +26,8 @@ const SchedulerManagerClass = class {
       GroupAlarmDeleteScheduler.startSchedule()
       OperationDataCountingScheduler.startSchedule()
       GroupDataCountingScheduler.startSchedule()
+      OpenPageDataScheduler.startSchedule()
     }
-    OpenPageDataScheduler.startSchedule()
   }
 }
 
