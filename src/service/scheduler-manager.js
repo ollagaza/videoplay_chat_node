@@ -7,7 +7,8 @@ import GroupDataCountingScheduler from "../scheduler/GroupDataCountingScheduler"
 import GroupInfoMemberCountSyncScheduler from "../scheduler/GroupInfoMemberCountSyncScheduler"
 import GroupMemberPauseResetScheduler from "../scheduler/GroupMemberPauseResetScheduler"
 import GroupAlarmDeleteScheduler from '../scheduler/GroupAlarmDeleteScheduler'
-import OperationDataCountingScheduler from "../scheduler/OperationDataCountingScheduler";
+import OperationDataCountingScheduler from "../scheduler/OperationDataCountingScheduler"
+import OpenPageDataScheduler from '../scheduler/OpenPageDataScheduler'
 
 const SchedulerManagerClass = class {
   constructor() {
@@ -25,6 +26,7 @@ const SchedulerManagerClass = class {
       GroupAlarmDeleteScheduler.startSchedule()
       OperationDataCountingScheduler.startSchedule()
       GroupDataCountingScheduler.startSchedule()
+      OpenPageDataScheduler.startSchedule()
     }
   }
 }

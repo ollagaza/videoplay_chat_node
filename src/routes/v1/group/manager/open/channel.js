@@ -105,7 +105,7 @@ routes.delete('/video/:category_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wra
 }))
 routes.get('/video', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const group_auth = await checkGroupAuth(req)
-  res.json(await OpenChannelManagerService.getTargetVideoList(group_auth.group_seq, req))
+  res.json(await OpenChannelManagerService.getCategoryVideoList(group_auth.group_seq, req))
 }))
 
 

@@ -13,8 +13,8 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
   getOpenVideoInfo = (is_member) => {
     this.setKeys([
       'video_seq', 'data_seq', 'group_seq', 'category_seq', 'operation_seq', 'view_count',
-      'is_play_limit', 'play_limit_time', 'title', 'doc_html', 'thumbnail', 'total_time',
-      'reg_date', 'operation_date', 'mode', 'title', 'html', 'text', 'stream_info', 'media_info'
+      'is_play_limit', 'play_limit_time', 'title', 'thumbnail', 'total_time',
+      'reg_date', 'operation_date', 'mode', 'html', 'text', 'stream_info', 'media_info', 'open_date'
     ])
 
     if (this.thumbnail) {
@@ -66,6 +66,14 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
   getQueryJson = () => {
     this.setKeys([
       'seq', 'group_seq', 'category_seq', 'operation_seq', 'video_title', 'video_doc_text', 'video_doc_html', 'non_user_play_time', 'view_count', 'reg_date', 'modify_date'
+    ])
+    this.setIgnoreEmpty(true)
+    return this.toJSON()
+  }
+
+  getDataJSON = () => {
+    this.setKeys([
+      'video_seq', 'operation_seq', 'view_count', 'title', 'thumbnail', 'total_time', 'reg_date', 'open_date'
     ])
     this.setIgnoreEmpty(true)
     return this.toJSON()

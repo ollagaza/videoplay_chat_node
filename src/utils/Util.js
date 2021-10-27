@@ -1373,6 +1373,10 @@ const pdfToImage = async (pdf_file_path, output_directory, prefix = 'Page', qual
   })
 }
 
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default {
   getFileBuffer,
   getImageTags,
@@ -1754,5 +1758,6 @@ export default {
     }
     return '#' + hashtag_list.join(' #')
   },
-  pdfToImage
+  pdfToImage,
+  sleep
 }

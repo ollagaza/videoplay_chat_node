@@ -24,7 +24,7 @@ routes.post('/', Wrap(async (req, res) => {
     throw new StdObject(-1, '등록된 회원 정보가 없습니다.', 400)
   }
 
-  const output = await Auth.getTokenResult(res, member_info, Role.API)
+  const output = await Auth.getTokenResult(req, res, member_info, Role.API)
 
   return res.json(output)
 }))

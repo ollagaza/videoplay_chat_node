@@ -46,7 +46,7 @@ const GroupSurgboxServiceClass = class {
     return model.modifyGroupSurgboxInfo(seq, new_machine_id)
   }
 
-  getGroupBoxUserList = async (machine_id) => {
+  getGroupBoxUserList = async (req, machine_id) => {
     const model = this.getModel()
     const box_group_list = await model.getBoxGroupList(machine_id)
     const group_seq_list = []
@@ -55,7 +55,7 @@ const GroupSurgboxServiceClass = class {
         group_seq_list.push(box_group_list[i].group_seq)
       }
     }
-    return GroupService.getGroupListForBox(DBMySQL, machine_id, group_seq_list)
+    return GroupService.getGroupListForBox(DBMySQL, req, machine_id, group_seq_list)
   }
 }
 
