@@ -45,9 +45,18 @@ const CurriculumServiceClass = class {
 
   createCurriculumIntro = async (database, group_auth, request_body) => {
     const curriculum_model = this.getCurriculumModel(database)
-    const question_data = request_body.body.param;
+    const question_data = request_body.body.params;
     question_data.content_id = Util.getContentId()
     return await curriculum_model.createCurriculum(question_data)
+  }
+
+  updateCurriculumIntro = async (database, api_key, request_body) => {
+    const curriculum_model = this.getCurriculumModel(database)
+    const question_data = request_body.body.params;
+    const filter = {
+      seq: api_key,
+    }
+    return await curriculum_model.updateCurriculum(filter, question_data)
   }
 
   uploadThumbnail = async (curriculum_seq, group_auth, request, response) => {
@@ -80,7 +89,7 @@ const CurriculumServiceClass = class {
     const curriculum_media_root = ServiceConfig.getMediaRoot()
     const thumbnail_path = group_media_path + '/curriculum/' + curriculum_info.content_id + '/thumbnail/'
     const thumbnail_directory = curriculum_media_root + thumbnail_path
-    const thumbnail_url_prefix = ServiceConfig.get('static_storage_prefix') + thumbnail_path
+    const thumbnail_url_prefix = ServiceConfig.get('static_storage_prefix') + thumbnail_path + 'thumbnail'
 
     return {
       thumbnail_path,
@@ -89,7 +98,7 @@ const CurriculumServiceClass = class {
     }
   }
 
-  getCurriculumList = async (database, _group_seq, req) => {
+  getCurriculumList = async (database, group_auth, _group_seq, req) => {
     const request_body = req.query ? req.query : {}
     const page = request_body.page ? request_body.page : null
     const group_seq = request_body.group_seq ? request_body.group_seq : _group_seq
@@ -103,12 +112,18 @@ const CurriculumServiceClass = class {
     }
 
     const curriculum_model = this.getCurriculumModel(database)
-    return await curriculum_model.getCurriculumList(filters, request_paging, request_order)
+    const result = await curriculum_model.getCurriculumList(filters, request_paging, request_order)
+    for (let cnt = 0; cnt < result.data.length; cnt++) {
+      result.data[cnt].thumbnail_url_prefix = this.getCurriculumDirectoryInfo(group_auth, result.data[cnt]).thumbnail_url_prefix
+    }
+    return result
   }
 
-  getCurriculum = async (database, api_type, api_key) => {
+  getCurriculum = async (database, group_auth, api_type, api_key) => {
     const curriculum_model = this.getCurriculumModel(database)
-    return await curriculum_model.getCurriculum(api_key)
+    const result = await curriculum_model.getCurriculum(api_key)
+    result.thumbnail_url_prefix = this.getCurriculumDirectoryInfo(group_auth, result).thumbnail_url_prefix
+    return result
   }
   getCurriculumEducation = async (database, api_type, api_key) => {
     const curriculum_model = this.getCurriculumEducationModel(database)
