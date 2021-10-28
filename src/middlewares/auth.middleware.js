@@ -225,7 +225,7 @@ const getServiceDomain = (req) => {
   return req.headers.service_domain
 }
 
-const getTokenByRole = async (request, role, info) => {
+const getTokenByRole = async (request, info, role) => {
   info.role = role
   const token_result = generateTokenByMemberInfo(request, info, true)
 

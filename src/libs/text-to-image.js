@@ -31,55 +31,55 @@ const log_prefix = '[text-to-image]'
  */
 const text2png = (text, options = {}) => {
   // Options
-  options = parseOptions(options)
-
-  // Register a custom font
-  if (options.localFontPath && options.localFontName) {
-    registerFont(options.localFontPath, { family: options.localFontName })
-  }
-
-  const canvas = createCanvas(0, 0)
-  const ctx = canvas.getContext('2d')
-  const text_canvas = makeText(text, options)
-  const contentWidth = text_canvas.width
-  const contentHeight = text_canvas.height
-
-  canvas.width = contentWidth
-  canvas.height = contentHeight
-
-  const hasBorder =
-    options.borderLeftWidth
-    || options.borderTopWidth
-    || options.borderRightWidth
-    || options.borderBottomWidth
-
-  if (hasBorder) {
-    ctx.fillStyle = options.borderColor
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-  }
-
-  if (options.backgroundColor) {
-    ctx.fillStyle = options.backgroundColor
-    ctx.fillRect(
-      options.borderLeftWidth,
-      options.borderTopWidth,
-      canvas.width - (options.borderLeftWidth + options.borderRightWidth),
-      canvas.height - (options.borderTopWidth + options.borderBottomWidth)
-    )
-  } else if (hasBorder) {
-    ctx.clearRect(
-      options.borderLeftWidth,
-      options.borderTopWidth,
-      canvas.width - (options.borderLeftWidth + options.borderRightWidth),
-      canvas.height - (options.borderTopWidth + options.borderBottomWidth)
-    )
-  }
-
-  ctx.drawImage(text_canvas, 0, 0)
-
-  const result = { width: contentWidth, height: contentHeight }
-
+  let result = { width: 0, height: 0 }
   try {
+    options = parseOptions(options)
+    // Register a custom font
+    if (options.localFontPath && options.localFontName) {
+      registerFont(options.localFontPath, { family: options.localFontName })
+    }
+
+    const canvas = createCanvas(0, 0)
+    const ctx = canvas.getContext('2d')
+    const text_canvas = makeText(text, options)
+    const contentWidth = text_canvas.width
+    const contentHeight = text_canvas.height
+
+    canvas.width = contentWidth
+    canvas.height = contentHeight
+
+    const hasBorder =
+      options.borderLeftWidth
+      || options.borderTopWidth
+      || options.borderRightWidth
+      || options.borderBottomWidth
+
+    if (hasBorder) {
+      ctx.fillStyle = options.borderColor
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
+
+    if (options.backgroundColor) {
+      ctx.fillStyle = options.backgroundColor
+      ctx.fillRect(
+        options.borderLeftWidth,
+        options.borderTopWidth,
+        canvas.width - (options.borderLeftWidth + options.borderRightWidth),
+        canvas.height - (options.borderTopWidth + options.borderBottomWidth)
+      )
+    } else if (hasBorder) {
+      ctx.clearRect(
+        options.borderLeftWidth,
+        options.borderTopWidth,
+        canvas.width - (options.borderLeftWidth + options.borderRightWidth),
+        canvas.height - (options.borderTopWidth + options.borderBottomWidth)
+      )
+    }
+
+    ctx.drawImage(text_canvas, 0, 0)
+
+    result = { width: contentWidth, height: contentHeight }
+
     switch (options.output) {
       case 'buffer':
         result.data = canvas.toBuffer()
