@@ -112,7 +112,8 @@ export default class OpenChannelVideoModel extends MySQLModel {
     const page = page_params.page ? page_params.page : 1
     const list_count = page_params.list_count ? page_params.list_count : 20
     const page_count = page_params.page_count ? page_params.page_count : 10
-    const paging_result = await this.queryPaginated(query, list_count, page, page_count, page_params.no_paging)
+    const offset = page_params.offset
+    const paging_result = await this.queryPaginated(query, list_count, page, page_count, 'n', 0, offset)
 
     if (paging_result && paging_result.data) {
       for (const key in paging_result.data) {

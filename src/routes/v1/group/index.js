@@ -16,7 +16,7 @@ import GroupBoardDataService from "../../../service/board/GroupBoardDataService"
 import OperationCommentService from "../../../service/operation/OperationCommentService";
 import Constants from '../../../constants/constants'
 import MemberService from "../../../service/member/MemberService";
-import OpenChannelManagerService from '../../../service/group/OpenChannelManagerService'
+import OpenChannelManagerService from '../../../service/open/OpenChannelManagerService'
 
 const routes = Router()
 

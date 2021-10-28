@@ -14,7 +14,7 @@ import OpenChannelBannerInfo from '../../wrapper/open/channel/OpenChannelBannerI
 import NaverObjectStorageService from '../storage/naver-object-storage-service'
 import logger from '../../libs/logger'
 import OpenChannelCategoryInfo from '../../wrapper/open/channel/OpenChannelCategoryInfo'
-import GroupService from './GroupService'
+import GroupService from '../group/GroupService'
 import OpenChannelDataModel from '../../database/mysql/open/channel/OpenChannelDataModel'
 
 const OpenChannelManagerServiceClass = class {
@@ -137,6 +137,7 @@ const OpenChannelManagerServiceClass = class {
       page_params.list_count = Util.parseInt(request_params.list_count, 20)
       page_params.page_count = Util.parseInt(request_params.page_count, 10)
       page_params.no_paging = request_params.no_paging === 'n' ? 'n' : 'y'
+      page_params.offset = Util.parseInt(request_params.offset, 0)
       if (Util.trim(request_params.order_fields) && Util.trim(request_params.order_type)) {
         order_params.field = Util.trim(request_params.order_fields)
         order_params.type = Util.trim(request_params.order_type)
@@ -461,12 +462,11 @@ const OpenChannelManagerServiceClass = class {
           logger.debug(this.log_prefix, '[updateOpenPageData]', 'start update => group count:', group_list.length)
           for (let i = 0; i < group_list.length; i++) {
             const group_info = group_list[i]
-            const group_seq = group_info.seq
             try {
-              await this.updateOpenPageDataByGroupSeq(group_seq)
+              await this.updateOpenPageDataByGroupSeq(group_info)
               await Util.sleep(500)
             } catch (error) {
-              logger.error(this.log_prefix, '[updateOpenPageData] update group data', group_seq, error)
+              logger.error(this.log_prefix, '[updateOpenPageData] update group data', group_info.seq, error)
             }
           }
         } catch (error) {
@@ -476,17 +476,20 @@ const OpenChannelManagerServiceClass = class {
     )()
   }
 
-  updateOpenPageDataByGroupSeq = async (group_seq) => {
+  updateOpenPageDataByGroupSeq = async (group_info) => {
+    const group_seq = group_info.seq
     const data_model = this.getDataModel()
     const video_model = this.getVideoModel()
 
     const update_data = {}
+    update_data[data_model.FIELD_COUNT_VIDEO] = 0
     update_data[data_model.FIELD_COUNT_VIEW] = 0
     update_data[data_model.FIELD_COUNT_COMMENT] = 0
     update_data[data_model.FIELD_COUNT_RECOMMEND] = 0
     update_data[data_model.FIELD_LIST_MOST_VIEW] = []
     update_data[data_model.FIELD_LIST_MOST_COMMENT] = []
     update_data[data_model.FIELD_LIST_MOST_RECOMMEND] = []
+    update_data[data_model.FIELD_DATE_RECENT_OPEN_VIDEO] = null
 
     const page_params = {}
     const order_params = {}
@@ -497,20 +500,47 @@ const OpenChannelManagerServiceClass = class {
 
     order_params.field = 'reg_date'
     order_params.type = 'desc'
-    update_data[data_model.FIELD_LIST_RECENT] = await this.getDataVideoList(video_model, group_seq, page_params, order_params)
+    let list_result = await this.getDataVideoList(video_model, group_seq, page_params, order_params)
+    update_data[data_model.FIELD_LIST_RECENT] = list_result.video_list
+    update_data[data_model.FIELD_DATE_RECENT_OPEN_VIDEO] = list_result.first_date
+    update_data[data_model.FIELD_COUNT_VIDEO] = list_result.video_count
 
-    return data_model.updateData(group_seq, update_data)
+    await data_model.updateData(group_seq, update_data)
+    await this.onChannelOpenChange(group_seq, Util.parseInt(group_info.group_open, 0) === 1)
   }
 
   getDataVideoList = async (video_model, group_seq, page_params, order_params) => {
+    let video_count = 0
+    let first_date = null
     const video_list = []
     const query_result = await video_model.getOpenChannelVideoList(group_seq, true, null, page_params, {}, order_params)
-    if (query_result && query_result.data && query_result.data.length) {
-      for (let i = 0; i < query_result.data.length; i++) {
-        video_list.push(query_result.data[i].getDataJSON())
+    if (query_result) {
+      video_count = Util.parseInt(query_result.calc_total_count, 0)
+      if (query_result.data && query_result.data.length) {
+        for (let i = 0; i < query_result.data.length; i++) {
+          if (i === 0) {
+            first_date = query_result.data[i].reg_date
+          }
+          video_list.push(query_result.data[i].getDataJSON())
+        }
       }
     }
-    return video_list
+    return { video_count, first_date, video_list }
+  }
+
+  onChannelOpenChange = async (group_seq, is_open) => {
+    const data_model = this.getDataModel()
+    return data_model.setChannelOpenDate(group_seq, is_open)
+  }
+
+  getOpenChannelList = async (request) => {
+    const { page_params, order_params, filter_params} = this.getListParams(request)
+    const data_model = this.getDataModel()
+    const channel_list = await data_model.getOpenChannelList(page_params, filter_params, order_params)
+
+    const output = new StdObject()
+    output.adds(channel_list)
+    return output
   }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()
