@@ -133,9 +133,17 @@ export default class StdObject {
     const json = {
       'error': this.error,
       'message': this.message,
-      'variables': this.variables ? (this.variables.toJSON ? this.variables.toJSON() : this.variables) : {},
+      'variables': {},
       'httpStatusCode': this.httpStatusCode
     }
+    const variables = {}
+    if (this.variables) {
+      Object.keys(this.variables).forEach((key) => {
+        const data = this.variables[key]
+        variables[key] = ( data && typeof data.toJSON === 'function' ) ? data.toJSON() : data
+      })
+    }
+    json.variables = variables
     if (this.stack) {
       json.stack = this.stack
     }

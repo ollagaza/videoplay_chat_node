@@ -2,6 +2,7 @@ import { Router } from 'express'
 import Wrap from '../../utils/express-async'
 import Auth from '../../middlewares/auth.middleware'
 import StdObject from '../../wrapper/std-object'
+import Role from '../../constants/roles'
 
 const routes = Router()
 
@@ -24,7 +25,7 @@ routes.post('/', Wrap(async (req, res) => {
   machine_info.seq = 1
   machine_info.machine_id = machine_id
 
-  const output = await Auth.getMachineTokenResult(machine_info)
+  const output = await Auth.getTokenByRole(req, machine_info, Role.AGENT)
   return res.json(output)
 }))
 

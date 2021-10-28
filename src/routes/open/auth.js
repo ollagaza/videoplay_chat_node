@@ -16,32 +16,19 @@ const routes = Router()
 routes.post('/', Wrap(async (req, res) => {
   req.accepts('application/json')
   const member_info = await AuthService.login(DBMySQL, req)
-  res.json(await Auth.getTokenResult(res, member_info, Role.MEMBER))
+  const token_info = await Auth.getTokenResult(req, res, member_info, Role.MEMBER)
+  if (token_info.error === 0) {
+    token_info.add('member_info', member_info)
+  }
+  res.json(token_info)
 }))
 
-routes.get('/refresh/:refresh_token', Wrap(async (req, res) => {
-  const refresh_token = Util.trim(req.params.refresh_token)
-  if (!refresh_token) {
-    throw new StdObject(9001, '잘못된 접근입니다.', 403)
-  }
-  const refresh_data = Util.decrypt(refresh_token)
-  if (!refresh_token) {
-    throw new StdObject(9002, '잘못된 접근입니다.', 403)
-  }
-  let refresh_info = null
-  try {
-    refresh_info = JSON.parse(refresh_data)
-  } catch (e) {
-    logger.e(req, refresh_data, e)
-    throw new StdObject(9003, '잘못된 접근입니다.', 403)
-  }
-  if (!refresh_info) {
-    throw new StdObject(9002, '잘못된 접근입니다.', 403)
-  }
-  const member_seq = refresh_info.id
-  const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
-  const output = await Auth.getTokenResult(res, member_info, Role.MEMBER)
-  return res.json(output)
+routes.get('/cookie', Wrap(async (req, res) => {
+  res.json(await AuthService.authByCookie(req, res))
+}))
+
+routes.get('/refresh', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  res.json(await AuthService.authByCookie(req, res))
 }))
 
 export default routes

@@ -73,7 +73,11 @@ export default class GroupModel extends MySQLModel {
   }
 
   getAllGroupInfo = async () => {
-    return this.find()
+    return this.database
+      .select(this.selectable_fields)
+      .from(this.table_name)
+      .where('status', 'Y')
+      .orWhere('status', 'F')
   }
 
   getGroupInfo = async (group_seq, private_keys = null) => {
