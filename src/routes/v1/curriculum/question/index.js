@@ -15,10 +15,18 @@ routes.post('/bank/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), W
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
 
   if (req.params.api_mode === 'create') {
-    output.add('result', await QuestionService.createQuestion(DBMySQL, group_auth, req))
+    output.add('result', await QuestionService.createQuestionBank(DBMySQL, group_auth, req))
   } else {
-    output.add('result', await QuestionService.updateQuestion(DBMySQL, group_auth, req))
+    output.add('result', await QuestionService.updateQuestionBank(DBMySQL, group_auth, req))
   }
+  res.json(output)
+}))
+
+routes.get('/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  output.add('result', await QuestionService.getQuestion(DBMySQL, group_auth, req))
   res.json(output)
 }))
 
@@ -26,7 +34,7 @@ routes.get('/bank/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   req.accepts('application/json')
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  output.add('result', await QuestionService.getQuestion(DBMySQL, group_auth, req))
+  output.add('result', await QuestionService.getQuestionBank(DBMySQL, group_auth, req))
   res.json(output)
 }))
 

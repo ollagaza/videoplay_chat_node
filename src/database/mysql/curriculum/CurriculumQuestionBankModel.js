@@ -16,4 +16,8 @@ export default class CurriculumQuestionBankModel extends MySQLModel {
   getQuestion = async (question_seq) => {
     return await this.findOne({ seq: question_seq })
   }
+
+  getQuestions = async (question_seqs) => {
+    return await this.find({ seq: question_seqs })
+  }
 }
