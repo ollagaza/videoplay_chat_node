@@ -10,8 +10,8 @@ export default class OpenChannelInfo extends JsonWrapper {
 
   getOpenChannelInfo = () => {
     this.setKeys([
-      'channel_name', 'explain', 'member_count', 'tag_list', 'group_image_url', 'profile_image_url', 'channel_top_img_url',
-      'order', 'video_count', 'recommend_count', 'comment_count', 'view_count',
+      'channel_name', 'domain', 'explain', 'member_count', 'tag_list', 'group_image_url', 'profile_image_url', 'channel_top_img_url',
+      'group_seq', 'order', 'video_count', 'recommend_count', 'comment_count', 'view_count',
       'recent_list', 'most_view_list', 'most_recommend_list', 'most_comment_list',
       'recent_open_video_date', 'channel_open_date'
     ])
@@ -23,9 +23,13 @@ export default class OpenChannelInfo extends JsonWrapper {
     this.stringFieldToJson('most_recommend_list', [])
     this.stringFieldToJson('most_comment_list', [])
 
+    this.domain =  Util.trim(this.domain)
     this.channel_name =  Util.trim(this.group_name)
     this.explain =  Util.trim(this.group_explain)
+    this.group_seq =  Util.parseInt(this.group_seq)
     this.member_count =  Util.parseInt(this.member_count)
+    this.video_count =  Util.parseInt(this.video_count)
+    this.order =  Util.parseInt(this.order)
     if (this.profile) {
       this.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(this.profile).image)
     }

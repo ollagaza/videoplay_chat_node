@@ -102,7 +102,7 @@ export default class OpenChannelDataModel extends MySQLModel {
 
   getOpenChannelList = async (page_params = {}, filter_params = {}, order_params = {}) => {
     const group_query = this.database
-      .select(['seq', 'group_name', 'group_explain', 'member_count', 'profile', 'profile_image_path', 'channel_top_img_path', 'search_keyword'])
+      .select(['seq', 'group_name', 'domain', 'group_explain', 'member_count', 'profile', 'profile_image_path', 'channel_top_img_path', 'search_keyword'])
       .from('group_info')
       .whereIn('status', ['Y', 'F'])
       .where('group_open', '1')
