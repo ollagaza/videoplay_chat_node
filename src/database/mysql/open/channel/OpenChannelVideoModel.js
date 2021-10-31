@@ -19,6 +19,11 @@ const media_field_list = _.concat(default_field_list,
     'operation.media_path', 'operation.origin_media_path', 'operation.origin_seq'
   ]
 )
+const library_field_list = _.concat(default_field_list,
+  [
+    'group_info.group_name', 'group_info.profile_image_path', 'group_info.domain'
+  ]
+)
 
 export default class OpenChannelVideoModel extends MySQLModel {
   constructor (database) {
@@ -29,9 +34,9 @@ export default class OpenChannelVideoModel extends MySQLModel {
     this.log_prefix = '[OpenChannelVideoModel]'
   }
 
-  getOpenChannelVideoList = async (group_seq, is_all, category_seq, page_params = {}, filter_params = {}, order_params = {}) => {
+  getOpenChannelVideoList = async (group_seq, is_all, category_seq, page_params = {}, filter_params = {}, order_params = {}, is_library = false) => {
     const sub_query = this.database
-      .select(this.arrayToSafeQuery(default_field_list))
+      .select(this.arrayToSafeQuery(is_library ? library_field_list : default_field_list))
     if (is_all) {
       sub_query.from('operation_data')
         .innerJoin('operation', (builder) => {
@@ -66,6 +71,13 @@ export default class OpenChannelVideoModel extends MySQLModel {
           this.setOperationJoinOption(builder, 'open_channel_video.operation_seq')
         })
         .innerJoin('operation_data', { 'operation_data.operation_seq': 'open_channel_video.operation_seq' })
+    }
+    if (is_library) {
+      sub_query.innerJoin('group_info', (builder) => {
+        builder.andOn('group_info.seq', 'operation_data.group_seq')
+        builder.andOn(this.database.raw("group_info.status IN ('Y', 'F')"))
+        builder.andOn(this.database.raw("group_info.group_open = 1"))
+      })
     }
     sub_query.leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')
     if (group_seq) {

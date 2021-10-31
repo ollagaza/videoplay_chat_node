@@ -542,6 +542,16 @@ const OpenChannelManagerServiceClass = class {
     output.adds(channel_list)
     return output
   }
+
+  getOpenVideoList = async (request) => {
+    const { page_params, order_params, filter_params} = this.getListParams(request)
+    const video_model = this.getVideoModel()
+    const video_list = await video_model.getOpenChannelVideoList(null, true, null, page_params, filter_params, order_params, true)
+
+    const output = new StdObject()
+    output.adds(video_list)
+    return output
+  }
 }
 const OpenChannelManagerService = new OpenChannelManagerServiceClass()
 

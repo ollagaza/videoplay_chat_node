@@ -22,6 +22,11 @@ routes.get('/channel', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => 
   res.json(await OpenChannelManagerService.getOpenChannelList(req))
 }))
 
+routes.get('/video', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
+  // const domain_status = await getStatusByDomain(req)
+  res.json(await OpenChannelManagerService.getOpenVideoList(req))
+}))
+
 // routes.get('/:domain/content', Auth.isAuthenticated(Role.ALL), Wrap(async (req, res) => {
 //   const domain_status = await getStatusByDomain(req)
 //   res.json(await OpenChannelManagerService.getOpenChannelContentInfo(domain_status.group_seq))
