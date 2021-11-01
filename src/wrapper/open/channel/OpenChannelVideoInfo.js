@@ -14,7 +14,8 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
     this.setKeys([
       'video_seq', 'data_seq', 'group_seq', 'category_seq', 'operation_seq', 'view_count',
       'is_play_limit', 'play_limit_time', 'title', 'thumbnail', 'total_time',
-      'reg_date', 'operation_date', 'mode', 'html', 'text', 'stream_info', 'media_info', 'open_date'
+      'reg_date', 'operation_date', 'mode', 'html', 'text', 'stream_info', 'media_info', 'open_date',
+      'domain', 'channel_name', 'profile_image_url'
     ])
 
     if (this.thumbnail) {
@@ -25,6 +26,12 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
       } else {
         this.thumbnail = ServiceConfig.get('static_storage_prefix') + this.thumbnail
       }
+    }
+
+    this.domain =  Util.trim(this.domain)
+    this.channel_name =  Util.trim(this.group_name)
+    if (this.profile_image_path) {
+      this.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), this.profile_image_path)
     }
 
     if (this.video_file_name) {

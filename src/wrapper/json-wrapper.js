@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import StdObject from './std-object'
 import Util from '../utils/Util'
+import logger from '../libs/logger'
 
 export default class JsonWrapper {
   constructor (data = null, private_keys = []) {
@@ -36,6 +37,7 @@ export default class JsonWrapper {
     this.ignore_empty = false
     this.auto_trim = false
     this.export_xml = false
+    this.log_prefix = '[JsonWrapper]'
   }
 
   setThrowException = (value) => {
@@ -147,5 +149,22 @@ export default class JsonWrapper {
       return element[0]
     }
     return element
+  }
+
+  stringFieldToJson = (field_name, default_value = null, set_default = true, save_field_name = null) => {
+    if (!field_name || this[field_name] === undefined) {
+      if (set_default) this[field_name] = default_value
+      return
+    }
+    if (typeof this[field_name] === 'object') {
+      return
+    }
+    try {
+      if (!save_field_name) save_field_name = field_name
+      this[save_field_name] = JSON.parse(this[field_name])
+    } catch (error) {
+      logger.debug(this.log_prefix, '[stringToJson]', error)
+      if (set_default) this[field_name] = default_value
+    }
   }
 }

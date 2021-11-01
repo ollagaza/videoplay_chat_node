@@ -1,10 +1,8 @@
-import _ from "lodash";
 import { Router } from 'express'
-import log from '../../libs/logger'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import Wrap from '../../utils/express-async'
-import OpenChannelManagerService from '../../service/group/OpenChannelManagerService'
+import OpenChannelManagerService from '../../service/open/OpenChannelManagerService'
 import Util from '../../utils/Util'
 
 const routes = Router()
