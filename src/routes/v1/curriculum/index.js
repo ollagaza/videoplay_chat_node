@@ -75,7 +75,7 @@ routes.get('/:api_type/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   const api_key = req.params.api_key
   output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, group_auth, api_type, api_key))
   output.add('curriculum_education', await CurriculumService.getCurriculumEducation(DBMySQL, api_type, api_key))
-  output.add('curriculum_survey', await CurriculumService.getCurriculumSurvey(DBMySQL, api_type, api_key))
+  output.add('curriculum_survey', await CurriculumService.getCurriculumSurvey(DBMySQL, req))
   res.json(output)
 }))
 

@@ -14,7 +14,7 @@ routes.post('/bank/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), W
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
 
-  if (req.params.api_mode === 'create') {
+  if (req.params.api_mode === 'new') {
     output.add('result', await QuestionService.createQuestionBank(DBMySQL, group_auth, req))
   } else {
     output.add('result', await QuestionService.updateQuestionBank(DBMySQL, group_auth, req))
@@ -35,6 +35,14 @@ routes.get('/bank/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   output.add('result', await QuestionService.getQuestionBank(DBMySQL, group_auth, req))
+  res.json(output)
+}))
+
+routes.get('/bank/list/:group_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  output.adds(await QuestionService.getQuestionBankList(DBMySQL, group_auth, req))
   res.json(output)
 }))
 

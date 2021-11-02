@@ -2,13 +2,12 @@ import _ from 'lodash'
 import Util from '../../utils/Util'
 import log from '../../libs/logger'
 import DBMySQL from "../../database/knex-mysql";
-import CurriculumModel from "../../database/mysql/curriculum/CurriculumModel";
-import CurriculumQuestionModel from "../../database/mysql/curriculum/CurriculumQuestionModel";
-import CurriculumQuestionBankModel from "../../database/mysql/curriculum/CurriculumQuestionBankModel";
-import OperationService from "../operation/OperationService";
+
 import StdObject from "../../wrapper/std-object";
 import ServiceConfig from "../service-config";
+import CurriculumModel from "../../database/mysql/curriculum/CurriculumModel";
 import CurriculumEducationModel from "../../database/mysql/curriculum/CurriculumEducationModel";
+import QuestionService from "./QuestionService";
 
 const CurriculumServiceClass = class {
   constructor() {
@@ -27,20 +26,6 @@ const CurriculumServiceClass = class {
       return new CurriculumEducationModel(database);
     }
     return new CurriculumEducationModel(DBMySQL);
-  }
-
-  getCurriculumSurveyModel(database) {
-    if (database) {
-      return new CurriculumQuestionModel(database);
-    }
-    return new CurriculumQuestionModel(DBMySQL);
-  }
-
-  getQuestionBankModel(database) {
-    if (database) {
-      return new CurriculumQuestionBankModel(database);
-    }
-    return new CurriculumQuestionBankModel(DBMySQL);
   }
 
   createCurriculumIntro = async (database, group_auth, request_body) => {
@@ -129,9 +114,8 @@ const CurriculumServiceClass = class {
     const curriculum_model = this.getCurriculumEducationModel(database)
     return await curriculum_model.getCurriculumEducation(api_key)
   }
-  getCurriculumSurvey = async (database, api_type, api_key) => {
-    const curriculum_model = this.getCurriculumSurveyModel(database)
-    return await curriculum_model.getCurriculumSurvey(api_key)
+  getCurriculumSurvey = async (database, request) => {
+    return await QuestionService.getQuestion(database, request)
   }
 }
 

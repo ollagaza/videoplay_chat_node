@@ -13,8 +13,16 @@ export default class CurriculumQuestionBankModel extends MySQLModel {
     return await this.create(question_data, 'seq')
   }
 
-  getQuestion = async (question_seq) => {
+  updateQuestion = async (question_seq, question_data) => {
+    return await this.update({ seq: question_seq }, question_data)
+  }
+
+  getQuestionBank = async (question_seq) => {
     return await this.findOne({ seq: question_seq })
+  }
+
+  getQuestionBankList = async (filters, paging, order) => {
+    return await this.findPaginated(filters, null, order, null, paging)
   }
 
   getQuestions = async (question_seqs) => {
