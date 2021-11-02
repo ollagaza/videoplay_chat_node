@@ -143,7 +143,7 @@ export default class OpenChannelVideoModel extends MySQLModel {
     builder.andOn(this.database.raw("operation.analysis_status = 'Y'"))
   }
 
-  getOpenChannelVideoInfo = async (operation_seq, join_media = false) => {
+  getOpenChannelVideoInfo = async (operation_seq, join_media, is_join_channel) => {
     const query = this.database
       .select(this.arrayToSafeQuery(join_media ? media_field_list : default_field_list))
       .from('operation')
@@ -155,7 +155,7 @@ export default class OpenChannelVideoModel extends MySQLModel {
     query.where('operation.seq', operation_seq)
       .first()
     const video_info = await query
-    return new OpenChannelVideoInfo(video_info).getOpenVideoInfo()
+    return new OpenChannelVideoInfo(video_info).getOpenVideoInfo(is_join_channel)
   }
 
   deleteOpenChannelVideoInfo = async (operation_seq, video_seq) => {

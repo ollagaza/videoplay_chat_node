@@ -443,9 +443,9 @@ const OpenChannelManagerServiceClass = class {
     return result
   }
 
-  getOpenVideoInfo = async (operation_seq) => {
+  getOpenVideoInfo = async (operation_seq, is_join_channel) => {
     const video_model = this.getVideoModel()
-    const video_info = await video_model.getOpenChannelVideoInfo(operation_seq, true)
+    const video_info = await video_model.getOpenChannelVideoInfo(operation_seq, true, is_join_channel)
     const output = new StdObject()
     output.add('video_info', video_info)
     return output
