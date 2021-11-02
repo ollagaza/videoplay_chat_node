@@ -12,4 +12,12 @@ export default class CurriculumEducationModel extends MySQLModel {
   getCurriculumEducation = async (curriculum_seq) => {
     return await this.find({ seq: curriculum_seq }, null, { name: 'sort', direction: 'asc' })
   }
+
+  getCurriculumEducationLastSort = async (curriculum_seq) => {
+    return await this.findOne({ curriculum_seq: curriculum_seq }, ['sort'], { name: 'sort', direction: 'DESC' });
+  }
+
+  addCurriculumEducation = async (question_data) => {
+    return await this.create(question_data, 'sort')
+  }
 }
