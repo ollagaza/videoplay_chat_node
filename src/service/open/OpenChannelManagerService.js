@@ -429,13 +429,15 @@ const OpenChannelManagerServiceClass = class {
       is_channel_manager: false,
       is_join_channel: false
     }
-    if (member_seq) {
+    if (group_seq && member_seq) {
       const group_member_model = this.getGroupMemberModel()
       const group_member_info = await group_member_model.getGroupMemberInfo(group_seq, member_seq)
-      group_member_info.group_member_status = group_member_info.status
-      const member_status = GroupService.checkGroupMemberStatus(group_member_info)
-      result.is_channel_manager = member_status.is_group_admin
-      result.is_join_channel = member_status.is_active_group_member
+      if (group_member_info) {
+        group_member_info.group_member_status = group_member_info.status
+        const member_status = GroupService.checkGroupMemberStatus(group_member_info)
+        result.is_channel_manager = member_status.is_group_admin
+        result.is_join_channel = member_status.is_active_group_member
+      }
     }
 
     return result
