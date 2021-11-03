@@ -20,6 +20,8 @@ default_data[data_types.SITE_INFO] = {
   main_logo_url: null,
   top_logo_url: null,
   site_name: null,
+  cookie_domain: "localhost",
+  library_domain: "localhost:8000",
   main_bg_url: null,
   navigation : {
     studio : true
