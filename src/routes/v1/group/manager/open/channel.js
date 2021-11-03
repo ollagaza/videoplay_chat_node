@@ -8,7 +8,7 @@ import StdObject from '../../../../../wrapper/std-object'
 import DBMySQL from '../../../../../database/knex-mysql'
 import Util from "../../../../../utils/Util"
 import GroupService from "../../../../../service/group/GroupService"
-import OpenChannelManagerService from '../../../../../service/group/OpenChannelManagerService'
+import OpenChannelManagerService from '../../../../../service/open/OpenChannelManagerService'
 
 const routes = Router()
 

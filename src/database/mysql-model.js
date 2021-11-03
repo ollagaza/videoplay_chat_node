@@ -208,13 +208,14 @@ export default class DBMySQL {
     return await this.queryPaginated(oKnex, pages.list_count, pages.cur_page, pages.page_count, pages.no_paging)
   }
 
-  async queryPaginated (oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n', start_count = 0) {
+  async queryPaginated (oKnex, list_count = 20, cur_page = 1, page_count = 10, no_paging = 'n', start_count = 0, offset = 0) {
     // 강제 형변환
     list_count = parseInt(list_count)
     cur_page = parseInt(cur_page)
     page_count = parseInt(page_count)
     start_count = parseInt(start_count)
     const offset_start = parseInt(start_count !== 0 ? start_count : list_count)
+    if (offset === 0) offset = offset_start * (cur_page - 1)
 
     const use_paging = (no_paging && no_paging.toLowerCase() !== 'y')
 
@@ -223,7 +224,7 @@ export default class DBMySQL {
     if (use_paging) {
       oDataListKnex
         .limit(list_count)
-        .offset(offset_start * (cur_page - 1))
+        .offset(offset)
     }
 
     // 갯수와 데이터를 동시에 얻기

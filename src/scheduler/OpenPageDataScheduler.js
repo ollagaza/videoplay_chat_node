@@ -1,6 +1,6 @@
 import scheduler from 'node-schedule'
 import log from '../libs/logger'
-import OpenChannelManagerService from '../service/group/OpenChannelManagerService'
+import OpenChannelManagerService from '../service/open/OpenChannelManagerService'
 
 class OpenPageDataSchedulerClass {
   constructor () {

@@ -32,6 +32,7 @@ import striptags from "striptags";
 import GroupAlarmService from './GroupAlarmService'
 import MemberModel from '../../database/mysql/member/MemberModel';
 import {VideoProjectModel} from "../../database/mongodb/VideoProject";
+import OpenChannelManagerService from '../open/OpenChannelManagerService'
 
 const GroupServiceClass = class {
   constructor () {
@@ -286,6 +287,7 @@ const GroupServiceClass = class {
     const content_counts_model = this.getContentCountsModel(database)
     await content_counts_model.createContentCount('all', group_info.seq)
     await this.addGroupMember(database, group_info, member_info, this.MEMBER_GRADE_OWNER)
+    await OpenChannelManagerService.onChannelOpenChange(group_info.seq, Util.parseInt(group_info.group_open, 0) === 1)
 
     return group_info
   }
@@ -340,10 +342,12 @@ const GroupServiceClass = class {
     try {
       const group_model = this.getGroupModel(database)
       await group_model.updateGroup(modify_group_info, seq)
-      resObj.group_info = await group_model.getGroupInfo(seq, null);
-      resObj.group_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(resObj.group_info.profile).image)
-      resObj.group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.profile_image_path)
-      resObj.group_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), resObj.group_info.channel_top_img_path)
+      const group_info = await group_model.getGroupInfo(seq, null)
+      resObj.group_info = group_info
+      resObj.group_info.group_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), JSON.parse(group_info.profile).image)
+      resObj.group_info.profile_image_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.profile_image_path)
+      resObj.group_info.channel_top_img_url = Util.getUrlPrefix(ServiceConfig.get('static_storage_prefix'), group_info.channel_top_img_path)
+      await OpenChannelManagerService.onChannelOpenChange(seq, Util.parseInt(group_info.group_open, 0) === 1)
       return resObj;
     } catch (e) {
       log.error(this.log_prefix, '[updateGroupInfo]', e)
