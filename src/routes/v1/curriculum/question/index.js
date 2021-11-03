@@ -33,8 +33,7 @@ routes.get('/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, 
 routes.get('/bank/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  output.add('result', await QuestionService.getQuestionBank(DBMySQL, group_auth, req))
+  output.add('result', await QuestionService.getQuestionBank(DBMySQL, req))
   res.json(output)
 }))
 
