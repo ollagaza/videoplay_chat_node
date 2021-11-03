@@ -20,4 +20,12 @@ export default class CurriculumEducationModel extends MySQLModel {
   addCurriculumEducation = async (question_data) => {
     return await this.create(question_data, 'sort')
   }
+
+  deleteCurriculumEducation = async (education_seq) => {
+    return await this.delete({ seq: education_seq });
+  }
+
+  updateCurriculumSort = async (education_seq, sort) => {
+    return await this.update({ seq: education_seq }, { sort });
+  }
 }

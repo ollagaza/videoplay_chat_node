@@ -4,6 +4,7 @@ import log from '../../libs/logger'
 import DBMySQL from "../../database/knex-mysql";
 import CurriculumEducationModel from "../../database/mysql/curriculum/CurriculumEducationModel";
 import data from "../../routes/v1/data";
+import {request} from "express";
 
 const CurriculumEducationServiceClass = class {
   constructor() {
@@ -29,6 +30,21 @@ const CurriculumEducationServiceClass = class {
       request.sort = Number(edu_list.sort) + 1;
     }
     return await edu_model.addCurriculumEducation(request);
+  }
+
+  deleteCurriculumEducation = async (database, curriculum_seq, education_seq) => {
+    const edu_model = this.getCurriculumEducationModel(database);
+    if (await edu_model.deleteCurriculumEducation(education_seq)) {
+      const edu_list = await edu_model.getCurriculumEducation(curriculum_seq);
+      for (let i = 1; i <= edu_list.length; i++) {
+        if (i !== edu_list[i-1].sort) {
+          await edu_model.updateCurriculumSort(edu_list[i-1].seq, i);
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
