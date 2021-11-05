@@ -20,7 +20,7 @@ export default class OperationMediaInfo extends JsonWrapper {
     }
   }
 
-  setUrl = (operation_info) => {
+  setUrl = (operation_info, start_time = null, end_time = null) => {
     if (this.is_trans_complete) {
       // const url_prefix = operation_info.url_prefix;
       const directory_info = OperationService.getOperationDirectoryInfo(operation_info)
@@ -42,8 +42,15 @@ export default class OperationMediaInfo extends JsonWrapper {
         //   this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + media_video + this.stream_url + '/master.m3u8'
         //   this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + media_video + this.stream_url + '/manifest.mpd'
         // }
-        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + media_video + this.video_file_name + '/master.m3u8'
-        this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + media_video + this.video_file_name + '/manifest.mpd'
+        let prefix = ''
+        start_time = Util.parseInt(start_time, 0)
+        end_time = Util.parseInt(end_time, 0)
+        if (start_time || end_time) {
+          prefix = `/vodStart/${start_time}/vodEnd/${end_time}`
+        }
+        logger.debug(start_time, end_time, prefix);
+        this.hls_streaming_url = ServiceConfig.get('hls_streaming_url') + prefix + media_video + this.video_file_name + '/master.m3u8'
+        this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + prefix + media_video + this.video_file_name + '/manifest.mpd'
         this.streaming_url = ServiceConfig.get('cdn_url') + media_video + this.video_file_name
         this.download_url = ServiceConfig.get('cdn_url') + media_video + this.video_file_name
       }

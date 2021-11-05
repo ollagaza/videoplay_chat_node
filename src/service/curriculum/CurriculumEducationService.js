@@ -3,6 +3,8 @@ import Util from '../../utils/Util'
 import log from '../../libs/logger'
 import DBMySQL from "../../database/knex-mysql";
 import CurriculumEducationModel from "../../database/mysql/curriculum/CurriculumEducationModel";
+import OperationMediaModel from "../../database/mysql/operation/OperationMediaModel";
+import OperationModel from "../../database/mysql/operation/OperationModel";
 import data from "../../routes/v1/data";
 import {request} from "express";
 
@@ -18,9 +20,36 @@ const CurriculumEducationServiceClass = class {
     return new CurriculumEducationModel(DBMySQL);
   }
 
+  getOperationMediaModel(database) {
+    if (database) {
+      return new OperationMediaModel(database);
+    }
+    return new OperationMediaModel(DBMySQL);
+  }
+
+  getOperationModel = (database = null) => {
+    if (database) {
+      return new OperationModel(database)
+    }
+    return new OperationModel(DBMySQL)
+  }
+
   getCurriculumEducation = async (database, curriculum_seq) => {
     const edu_model = this.getCurriculumEducationModel(database)
     return edu_model.getCurriculumEducation(curriculum_seq)
+  }
+
+  getCurriculumEducationDetail = async (database, curriculum_seq) => {
+    const edu_model = this.getCurriculumEducationModel(database);
+    const media_model = this.getOperationMediaModel(database);
+    const operation_model = this.getOperationModel(database);
+    const education_list = await edu_model.getCurriculumEducation(curriculum_seq);
+    for (let i = 0; i < education_list.length; i++) {
+      const operation_info = await operation_model.getOperationInfo(education_list[i].operation_seq, true);
+      operation_info.media_info.setUrl(operation_info, education_list[i].start_time, education_list[i].end_time);
+      education_list[i].media_info = operation_info.media_info;
+    }
+    return education_list;
   }
 
   addCurriculumEducation = async (database, request) => {
@@ -42,6 +71,24 @@ const CurriculumEducationServiceClass = class {
         }
       }
       return true;
+    } else {
+      return false;
+    }
+  }
+
+  swapCurriculumEducationSort = async (database, curriculum_seq, current_seq, target_seq) => {
+    const edu_model = this.getCurriculumEducationModel(database);
+    const edu_list = await edu_model.getCurriculumEducation(curriculum_seq);
+    const current_info = await edu_list.find(item => Number(item.seq) === Number(current_seq));
+    const target_info = await edu_list.find(item => Number(item.seq) === Number(target_seq));
+    if (current_info && target_info) {
+      const result_1 = await edu_model.updateCurriculumSort(Number(current_seq), target_info.sort);
+      const result_2 = await edu_model.updateCurriculumSort(Number(target_seq), current_info.sort);
+      if (result_1 && result_2) {
+        return true;
+      } else {
+        return false;
+      }
     } else {
       return false;
     }
