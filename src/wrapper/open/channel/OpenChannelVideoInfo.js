@@ -38,8 +38,8 @@ export default class OpenChannelVideoInfo extends JsonWrapper {
     if (this.video_file_name) {
       const directory_info = OperationService.getOperationDirectoryInfo(this)
       const media_video = this.origin_seq ? directory_info.media_video_origin : directory_info.media_video
-      this.is_play_limit = Util.parseInt(this.is_play_limit, 1) === 1
-      this.play_limit_time = Util.parseInt(this.play_limit_time, 0)
+      this.is_play_limit = is_member ? false : Util.parseInt(this.is_play_limit, 1) === 1
+      this.play_limit_time = is_member ? 0 : Util.parseInt(this.play_limit_time, 0)
       // if (play_time_limit <= 0) play_time_limit = 1
       let media_type = 'video/mp4'
       let stream_url = ''

@@ -188,10 +188,12 @@ const GroupServiceClass = class {
       is_group_admin: false,
       is_group_manager: false,
       group_grade: '0',
-      group_grade_number: 0
+      group_grade_number: 0,
+      group_member_status: this.MEMBER_STATUS_NORMAL
     }
     if (group_member_info) {
       const status = group_member_info.group_member_status
+      result.group_member_status = status
       result.is_active_group_member = status === this.MEMBER_STATUS_ENABLE
       if (!result.is_active_group_member) {
         if (status === this.MEMBER_STATUS_PAUSE) {
@@ -1141,6 +1143,26 @@ const GroupServiceClass = class {
       }
     }
     return result_list
+  }
+
+  getGroupJoinInfo = async (member_seq, query_params) => {
+    const group_model = this.getGroupModel()
+    const query_result = await group_model.getGroupJoinInfo(member_seq, query_params)
+    if (query_result) {
+      const group_info = new JsonWrapper(query_result).toJSON()
+      if (group_info.profile) {
+        group_info.profile = JSON.parse(group_info.profile)
+        if (group_info.profile.image) group_info.group_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile.image
+      }
+      if (group_info.group_question) {
+        group_info.group_question = JSON.parse(group_info.group_question)
+      }
+
+      if (group_info.profile_image_path) group_info.profile_image_url = ServiceConfig.get('static_storage_prefix') + group_info.profile_image_path
+      if (group_info.channel_top_img_path) group_info.channel_top_img_url = ServiceConfig.get('static_storage_prefix') + group_info.channel_top_img_path
+      return group_info
+    }
+    return null
   }
 
   requestJoinGroup = async (database, group_seq, member_info, params) => {

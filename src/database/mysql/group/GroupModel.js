@@ -292,6 +292,34 @@ export default class GroupModel extends MySQLModel {
     return query
   }
 
+  getGroupJoinInfo = async (member_seq, query_params) => {
+    const open_group_list_select = [
+      'group_info.seq AS group_seq', 'group_info.group_name', 'group_info.profile', 'group_info.group_explain', 'group_info.profile_image_path', 'group_info.channel_top_img_path',
+      'group_info.group_join_way', 'group_info.group_question', 'group_info.group_message', 'group_info.member_count', 'group_info.search_keyword', 'group_info.reg_date',
+      'group_counts.video_count', 'group_counts.file_count', 'group_counts.project_count', 'group_counts.note_count',
+      'group_member.status as group_member_status', 'group_member.grade', 'member.user_name', 'member.user_nickname'
+    ]
+    const query = this.database
+      .select(open_group_list_select)
+      .from('group_info')
+      .innerJoin('member', { 'member.seq': 'group_info.member_seq' })
+      .innerJoin('group_counts', { 'group_counts.group_seq': 'group_info.seq' })
+      .leftOuterJoin('group_member', { 'group_member.member_seq': member_seq, 'group_member.group_seq': 'group_info.seq' })
+
+    if (query_params.channel) {
+      query.where('group_info.seq', query_params.channel)
+    } else if (query_params.domain) {
+      query.where('group_info.domain', query_params.domain)
+    } else {
+      return null
+    }
+
+    query.whereIn('group_info.status', ['Y', 'F'])
+    query.first()
+
+    return query
+  }
+
   GroupMemberCountSync = async () => {
     const oKnex = this.database.raw('update group_info, (select group_seq, count(*) member_cnt from group_member where status in (\'Y\', \'P\') group by group_seq) group_mem set member_count = group_mem.member_cnt where group_info.seq = group_mem.group_seq')
     return oKnex

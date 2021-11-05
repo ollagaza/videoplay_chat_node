@@ -111,6 +111,11 @@ const OpenChannelManagerServiceClass = class {
     const group_info = await this.getGroupInfo(group_seq)
 
     const channel_summary = {
+      domain: domain_status.domain,
+      channel_seq: group_seq,
+      group_grade: domain_status.group_grade,
+      group_grade_number: domain_status.group_grade_number,
+      group_member_status: domain_status.group_member_status,
       is_channel_manager: domain_status.is_channel_manager,
       is_join_channel: domain_status.is_join_channel,
       tag_list: group_info.search_keyword ? JSON.parse(group_info.search_keyword) : {},
@@ -416,18 +421,21 @@ const OpenChannelManagerServiceClass = class {
     const group_seq = group_seq_info.seq
     await this.getGroupInfo(group_seq)
     const token_info = request.token_info
-    logger.debug(this.log_prefix, '[getStatusByDomain]', token_info)
     let member_seq = null
     if (token_info) {
       member_seq = Util.parseInt(token_info.getId(), null)
     }
 
     const result = {
+      domain,
       group_seq,
       member_seq,
       token_info,
       is_channel_manager: false,
-      is_join_channel: false
+      is_join_channel: false,
+      group_member_status: 'N',
+      group_grade: '0',
+      group_grade_number: 0
     }
     if (group_seq && member_seq) {
       const group_member_model = this.getGroupMemberModel()
@@ -437,6 +445,9 @@ const OpenChannelManagerServiceClass = class {
         const member_status = GroupService.checkGroupMemberStatus(group_member_info)
         result.is_channel_manager = member_status.is_group_admin
         result.is_join_channel = member_status.is_active_group_member
+        result.group_member_status = member_status.group_member_status
+        result.group_grade = member_status.group_grade
+        result.group_grade_number = member_status.group_grade_number
       }
     }
 
