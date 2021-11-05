@@ -18,19 +18,19 @@ routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) =>
 
   const result = await CurriculumEducationServiceClass.addCurriculumEducation(DBMySQL, req.body);
 
-  output.add('result', result);
-  res.json(output);
+  output.add('result', result)
+  res.json(output)
 }))
 
 routes.delete('/:curriculum_seq/:education_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
-  const curriculum_seq = req.params.curriculum_seq;
-  const education_seq = req.params.education_seq;
+  const curriculum_seq = req.params.curriculum_seq
+  const education_seq = req.params.education_seq
 
   const result = await CurriculumEducationServiceClass.deleteCurriculumEducation(DBMySQL, curriculum_seq, education_seq);
   output.add('result', result);
-  res.json(output);
+  res.json(output)
 }))
 
 routes.get('/:curriculum_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {

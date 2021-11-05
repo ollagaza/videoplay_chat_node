@@ -115,7 +115,7 @@ const CurriculumServiceClass = class {
     return await curriculum_model.getCurriculumEducation(api_key)
   }
   getCurriculumSurvey = async (database, request) => {
-    return await QuestionService.getQuestion(database, request)
+    return await QuestionService.getQuestionList(database, request)
   }
 }
 

@@ -4,6 +4,8 @@ import log from '../../libs/logger'
 import DBMySQL from "../../database/mysql-model";
 import CurriculumQuestionModel from "../../database/mysql/curriculum/CurriculumQuestionModel";
 import CurriculumQuestionBankModel from "../../database/mysql/curriculum/CurriculumQuestionBankModel";
+import CurriculumResultModel from "../../database/mysql/curriculum/CurriculumResultModel";
+import CurriculumService from "./CurriculumService";
 
 const QuestionServiceClass = class {
   constructor() {
@@ -24,6 +26,42 @@ const QuestionServiceClass = class {
     return new CurriculumQuestionBankModel(DBMySQL);
   }
 
+  getCurriculumResultModel(database) {
+    if (database) {
+      return new CurriculumResultModel(database);
+    }
+    return new CurriculumResultModel(DBMySQL);
+  }
+
+  createQuestion = async (database, group_auth, request_body) => {
+    const question_model = this.getQuestionModel(database)
+    const question_data = request_body.body.param;
+    question_data.questions = JSON.stringify(question_data.questions)
+    return await question_model.createQuestion(question_data)
+  }
+
+  updateQuestion = async (database, group_auth, request_body) => {
+    const question_seq = request_body.params.api_key
+    const question_model = this.getQuestionModel(database)
+    const question_data = request_body.body.param;
+    question_data.questions = JSON.stringify(question_data.questions)
+    return await question_model.updateQuestion(question_seq, question_data)
+  }
+
+  deleteQuestion = async (database, group_auth, request_body) => {
+    const curriculum_seq = request_body.params.api_key
+    const question_seq = request_body.params.api_sub_key
+    const question_model = this.getQuestionModel(database)
+    const question_result_model = this.getCurriculumResultModel(database)
+    const question_results = await question_result_model.getCurriculumResultCount(curriculum_seq)
+
+    if (question_results === 0) {
+      await question_model.deleteQuestion(question_seq)
+      return await this.getQuestion(database, request_body)
+    }
+    return null;
+  }
+
   createQuestionBank = async (database, group_auth, request_body) => {
     const question_model = this.getQuestionBankModel(database)
     const question_data = request_body.body.param;
@@ -35,27 +73,29 @@ const QuestionServiceClass = class {
     const question_seq = request_body.params.api_key
     const question_model = this.getQuestionBankModel(database)
     const question_data = request_body.body.param;
+    question_data.example = JSON.stringify(question_data.example)
+    question_data.modify_date = database.raw('NOW()')
     return await question_model.updateQuestion(question_seq, question_data)
   }
 
-  getQuestion = async (database, request) => {
-    const question_seq = request.params.api_key
+  getQuestionList = async (database, request) => {
+    const curriculum_seq = request.params.api_key
     const question_model = this.getQuestionModel(database)
-    const question_info = await question_model.getQuestion(question_seq)
+    const question_info = await question_model.getQuestionList(curriculum_seq)
     if (question_info && question_info.question) {
       question_info.question = JSON.parse(question_info.question)
+    }
 
-      if (question_info.question && question_info.question.length > 0) {
-        const question_bank_seqs = _.map(question_info.question, 'seq')
-        const question_bank_model = this.getQuestionBankModel(database)
-        const filter = {
-          is_new: true,
-          query: [
-            { seq: ['in'].concat(question_bank_seqs) },
-          ],
-        }
-        question_info.question_list = await question_bank_model.getQuestions(filter)
-      }
+    return question_info
+  }
+
+  getQuestion = async (database, group_auth, request) => {
+    const curriculum_seq = request.params.api_key
+    const question_seq = request.params.api_sub_key
+    const question_model = this.getQuestionModel(database)
+    const question_info = await question_model.getQuestionOne(curriculum_seq, question_seq)
+    if (question_info && question_info.question) {
+      question_info.question = JSON.parse(question_info.question)
     }
 
     return question_info

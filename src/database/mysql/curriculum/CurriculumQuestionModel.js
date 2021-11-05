@@ -9,7 +9,23 @@ export default class CurriculumQuestionModel extends MySQLModel {
     this.log_prefix = '[QuestionModel]'
   }
 
-  getQuestion = async (curriculum_seq) => {
+  createQuestion = async (params) => {
+    return await this.create(params, 'seq')
+  }
+
+  updateQuestion = async (question_seq, params) => {
+    return await this.update({ seq: question_seq }, params)
+  }
+
+  deleteQuestion = async (question_seq) => {
+    return await this.delete({ seq: question_seq })
+  }
+
+  getQuestionList = async (curriculum_seq) => {
     return await this.find({ curriculum_seq }, null, { name: 'sort', direction: 'asc' })
+  }
+
+  getQuestionOne = async (curriculum_seq, question_seq) => {
+    return await this.findOne({ seq: question_seq, curriculum_seq }, null, { name: 'sort', direction: 'asc' })
   }
 }
