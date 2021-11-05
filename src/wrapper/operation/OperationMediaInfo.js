@@ -43,8 +43,8 @@ export default class OperationMediaInfo extends JsonWrapper {
         //   this.dash_streaming_url = ServiceConfig.get('dash_streaming_url') + media_video + this.stream_url + '/manifest.mpd'
         // }
         let prefix = ''
-        start_time = Util.parseInt(start_time, 0)
-        end_time = Util.parseInt(end_time, 0)
+        start_time = Util.parseInt(start_time, 0) * 1000;
+        end_time = Util.parseInt(end_time, 0) * 1000;
         if (start_time || end_time) {
           prefix = `/vodStart/${start_time}/vodEnd/${end_time}`
         }

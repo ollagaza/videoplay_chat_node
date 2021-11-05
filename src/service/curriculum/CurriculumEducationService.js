@@ -39,17 +39,18 @@ const CurriculumEducationServiceClass = class {
     return edu_model.getCurriculumEducation(curriculum_seq)
   }
 
-  getCurriculumEducationDetail = async (database, curriculum_seq) => {
+  getCurriculumEducationDetail = async (database, curriculum_seq, education_seq) => {
     const edu_model = this.getCurriculumEducationModel(database);
-    const media_model = this.getOperationMediaModel(database);
     const operation_model = this.getOperationModel(database);
     const education_list = await edu_model.getCurriculumEducation(curriculum_seq);
-    for (let i = 0; i < education_list.length; i++) {
-      const operation_info = await operation_model.getOperationInfo(education_list[i].operation_seq, true);
-      operation_info.media_info.setUrl(operation_info, education_list[i].start_time, education_list[i].end_time);
-      education_list[i].media_info = operation_info.media_info;
+    const education_info = await education_list.find(item => item.seq === Number(education_seq));
+    if (education_info) {
+      const operation_info = await operation_model.getOperationInfo(education_info.operation_seq, true);
+      operation_info.media_info.setUrl(operation_info, education_info.start_time, education_info.end_time);
+      return { list: education_list, target_stream: operation_info };
+    } else {
+      return {};
     }
-    return education_list;
   }
 
   addCurriculumEducation = async (database, request) => {

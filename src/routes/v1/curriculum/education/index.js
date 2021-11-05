@@ -43,13 +43,14 @@ routes.get('/:curriculum_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   res.json(output);
 }))
 
-routes.get('/media/:curriculum_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/media/:curriculum_seq/:education_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq;
-  const result = await CurriculumEducationServiceClass.getCurriculumEducationDetail(DBMySQL, curriculum_seq);
+  const education_seq = req.params.education_seq;
+  const result = await CurriculumEducationServiceClass.getCurriculumEducationDetail(DBMySQL, curriculum_seq, education_seq);
 
-  output.add('list', result);
+  output.add('data', result);
   res.json(output);
 }))
 
