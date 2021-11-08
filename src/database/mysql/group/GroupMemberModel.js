@@ -4,6 +4,7 @@ import Util from '../../../utils/Util'
 import GroupMemberInfo from '../../../wrapper/member/GroupMemberInfo'
 import log from '../../../libs/logger'
 import Constants from '../../../constants/constants'
+import ServiceConfig from "../../../service/service-config";
 
 export default class GroupMemberModel extends MySQLModel {
   constructor (database) {
@@ -610,6 +611,9 @@ export default class GroupMemberModel extends MySQLModel {
       invite_email: email_address,
       invite_status: 'S',
       invite_date: this.database.raw('NOW()')
+    }
+    if(ServiceConfig.isVacs()) {
+      create_params.disable_box = 0;
     }
     const group_member_seq = await this.create(create_params, 'seq')
     create_params.seq = group_member_seq

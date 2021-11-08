@@ -267,6 +267,7 @@ const GroupServiceClass = class {
       profile_image_path: options.profile_image_path ? options.profile_image_path : null,
     }
     if (ServiceConfig.isVacs()) {
+      create_group_info.disable_box = 0;
       create_group_info.is_channel = 1
     }
     return await this.createGroupInfo(database, create_group_info, member_info, 'enterprise')
