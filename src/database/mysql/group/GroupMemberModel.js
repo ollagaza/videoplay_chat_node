@@ -612,9 +612,6 @@ export default class GroupMemberModel extends MySQLModel {
       invite_status: 'S',
       invite_date: this.database.raw('NOW()')
     }
-    if(ServiceConfig.isVacs()) {
-      create_params.disable_box = 0;
-    }
     const group_member_seq = await this.create(create_params, 'seq')
     create_params.seq = group_member_seq
     return new GroupMemberInfo(create_params, ['invite_date'])
