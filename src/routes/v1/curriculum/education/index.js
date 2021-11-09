@@ -67,4 +67,19 @@ routes.put('/:curriculum_seq/:current_seq/:target_seq', Auth.isAuthenticated(Rol
 }))
 
 
+routes.post('/:curriculum_seq/:education_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+
+  const { member_info } = await getBaseInfo(req, true, false, true)
+
+  const curriculum_seq = req.params.curriculum_seq;
+  const education_seq = req.params.education_seq;
+  // const result = await CurriculumEducationServiceClass.addCurriculumEducation(DBMySQL, req.body);
+
+  const test_result = [req.body, curriculum_seq, education_seq, member_info ];
+  output.add('result', test_result)
+  res.json(output)
+}))
+
 export default routes
