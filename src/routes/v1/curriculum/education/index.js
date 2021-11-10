@@ -9,6 +9,8 @@ import DBMySQL from "../../../../database/knex-mysql";
 import GroupService from "../../../../service/group/GroupService";
 import QuestionService from "../../../../service/curriculum/QuestionService";
 import CurriculumEducationServiceClass from "../../../../service/curriculum/CurriculumEducationService";
+import CurriculumEducationCommentService from "../../../../service/curriculum/CurriculumEducationCommentService";
+import MemberService from "../../../../service/member/MemberService";
 const routes = Router()
 
 
@@ -67,19 +69,69 @@ routes.put('/:curriculum_seq/:current_seq/:target_seq', Auth.isAuthenticated(Rol
 }))
 
 
-routes.post('/:curriculum_seq/:education_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/:education_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
 
-  const { member_info } = await getBaseInfo(req, true, false, true)
+  const { member_seq } = await GroupService.getBaseInfo(req, true, false, true);
+  const member_info = await MemberService.getMemberInfo(DBMySQL, member_seq)
 
-  const curriculum_seq = req.params.curriculum_seq;
   const education_seq = req.params.education_seq;
-  // const result = await CurriculumEducationServiceClass.addCurriculumEducation(DBMySQL, req.body);
+  const result = await CurriculumEducationCommentService.createCurriculumEducationComment(DBMySQL, education_seq, member_info, req.body);
 
-  const test_result = [req.body, curriculum_seq, education_seq, member_info ];
-  output.add('result', test_result)
+  output.add('result', result)
   res.json(output)
+}))
+
+routes.get('/:education_seq/comment/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const education_seq = req.params.education_seq;
+
+  const result = await CurriculumEducationCommentService.getCurriculumEducationCommentList(DBMySQL, education_seq, req.query);
+  const total_count = await CurriculumEducationCommentService.getCurriculumEducationCommentTotalCount(DBMySQL, education_seq);
+
+  output.add('list', result);
+  output.add('total', total_count);
+  res.json(output);
+}))
+
+routes.put('/:comment_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+
+  const comment_seq = req.params.comment_seq;
+  const result = await CurriculumEducationCommentService.updateCurriculumEducationComment(DBMySQL, comment_seq, req.body);
+
+  output.add('result', result)
+  res.json(output)
+}))
+
+routes.get('/:education_seq/:comment_seq/comment/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const comment_seq = req.params.comment_seq;
+  const education_seq = req.params.education_seq;
+  const result = await CurriculumEducationCommentService.getCurriculumEducationCommentList(DBMySQL, education_seq, req.query, comment_seq);
+  const total_count = await CurriculumEducationCommentService.getCurriculumEducationCommentTotalCount(DBMySQL, education_seq, comment_seq);
+
+  output.add('list', result);
+  output.add('total', total_count);
+  res.json(output);
+}))
+
+routes.get('/:education_seq/:comment_seq/comment/one', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const comment_seq = req.params.comment_seq;
+  const education_seq = req.params.education_seq;
+  const result = await CurriculumEducationCommentService.getCurriculumEducationComment(DBMySQL, comment_seq);
+  if (result.parent_seq) {
+    const total_count = await CurriculumEducationCommentService.getCurriculumEducationCommentTotalCount(DBMySQL, education_seq, result.parent_seq);
+    output.add('total', total_count);
+  }
+  output.add('comment_info', result);
+  res.json(output);
 }))
 
 export default routes
