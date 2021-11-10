@@ -77,6 +77,7 @@ export default class OpenChannelVideoModel extends MySQLModel {
         builder.andOn('group_info.seq', 'operation_data.group_seq')
         builder.andOn(this.database.raw("group_info.status IN ('Y', 'F')"))
         builder.andOn(this.database.raw("group_info.group_open = 1"))
+        builder.andOn(this.database.raw("group_info.domain IS NOT NULL"))
       })
     }
     sub_query.leftOuterJoin('operation_folder', 'operation_folder.seq', 'operation.folder_seq')

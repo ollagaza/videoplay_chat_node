@@ -4,6 +4,7 @@ import Util from '../../../utils/Util'
 import GroupMemberInfo from '../../../wrapper/member/GroupMemberInfo'
 import log from '../../../libs/logger'
 import Constants from '../../../constants/constants'
+import ServiceConfig from "../../../service/service-config";
 
 export default class GroupMemberModel extends MySQLModel {
   constructor (database) {

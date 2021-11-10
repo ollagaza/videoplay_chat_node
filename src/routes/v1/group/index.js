@@ -289,6 +289,15 @@ routes.get('/open', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res)
   res.json(output)
 }))
 
+routes.get('/open/join', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  const member_seq = req.token_info.getId()
+  const result = await GroupService.getGroupJoinInfo(member_seq, req.query)
+
+  const output = new StdObject()
+  output.add('group_info', result)
+  res.json(output)
+}))
+
 routes.post('/open/:group_seq(\\d+)/join', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const { group_seq, member_info } = await checkGroupAuth(DBMySQL, req, false, true)
   const result = await GroupService.requestJoinGroup(DBMySQL, group_seq, member_info, req.body)
