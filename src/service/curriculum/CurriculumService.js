@@ -83,31 +83,39 @@ const CurriculumServiceClass = class {
     }
   }
 
-  getCurriculumList = async (database, group_auth, _group_seq, req) => {
+  getCurriculumList = async (database, group_auth, _group_seq, req, is_open_page = false) => {
     const request_body = req.query ? req.query : {}
-    const page = request_body.page ? request_body.page : null
-    const group_seq = request_body.group_seq ? request_body.group_seq : _group_seq
+    let group_seq = request_body.group_seq ? request_body.group_seq : _group_seq
     const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
     const request_order = request_body.order ? JSON.parse(request_body.order) : null
-    const search_option = request_body.search_option ? request_body.search_option : null
     const search_keyword = request_body.search_keyword ? request_body.search_keyword : null
-
-    const filters = {
-      group_seq,
+    let curriculum_status = group_auth && group_auth.is_group_admin ? 0 : 1
+    if (is_open_page) {
+      group_seq = null
+      curriculum_status = 2
     }
 
     const curriculum_model = this.getCurriculumModel(database)
-    const result = await curriculum_model.getCurriculumList(filters, request_paging, request_order)
+    const result = await curriculum_model.getCurriculumList(curriculum_status, group_seq, search_keyword, request_paging, request_order)
     for (let cnt = 0; cnt < result.data.length; cnt++) {
-      result.data[cnt].thumbnail_url_prefix = this.getCurriculumDirectoryInfo(group_auth, result.data[cnt]).thumbnail_url_prefix
+      this.setCurriculumData(result.data[cnt])
     }
     return result
   }
+  setCurriculumData(curriculum_info) {
+    curriculum_info.thumbnail_url = ServiceConfig.get('static_storage_prefix') + curriculum_info.thumbnail
+    curriculum_info.member_profile_image = ServiceConfig.get('static_storage_prefix') + curriculum_info.member_profile_image
+    curriculum_info.group_profile_image = ServiceConfig.get('static_storage_prefix') + curriculum_info.group_profile_image
+    curriculum_info.group_top_image = ServiceConfig.get('static_storage_prefix') + curriculum_info.group_top_image
+    curriculum_info.group_explain = Util.trim(curriculum_info.group_explain)
+    const group_search_keyword = Util.trim(curriculum_info.group_search_keyword)
+    curriculum_info.group_search_keyword = group_search_keyword ? JSON.parse(curriculum_info.group_search_keyword) : null
+  }
 
-  getCurriculum = async (database, group_auth, api_type, api_key) => {
+  getCurriculum = async (database, group_auth, api_key) => {
     const curriculum_model = this.getCurriculumModel(database)
     const result = await curriculum_model.getCurriculum(api_key)
-    result.thumbnail_url_prefix = this.getCurriculumDirectoryInfo(group_auth, result).thumbnail_url_prefix
+    this.setCurriculumData(result)
     return result
   }
   getCurriculumEducation = async (database, api_type, api_key) => {

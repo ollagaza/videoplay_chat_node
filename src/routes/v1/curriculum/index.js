@@ -12,6 +12,27 @@ import CurriculumService from "../../../service/curriculum/CurriculumService";
 
 const routes = Router()
 
+routes.get('/:curriculum_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const api_type = req.params.api_type
+  const api_key = req.params.api_key
+  output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, group_auth, api_type, api_key))
+  output.add('curriculum_education', await CurriculumService.getCurriculumEducation(DBMySQL, api_type, api_key))
+  output.add('curriculum_survey', await CurriculumService.getCurriculumSurvey(DBMySQL, req))
+  res.json(output)
+}))
+
+routes.get('/group/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  const output = new StdObject()
+  const group_seq = req.params.group_seq
+  output.adds(await CurriculumService.getCurriculumList(DBMySQL, group_auth, group_seq, req))
+  res.json(output)
+}))
+
 routes.post('/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
@@ -55,27 +76,6 @@ routes.put('/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   } else if (api_mode === 'last') {
     output.add('result', await QuestionService.updateQuestion(DBMySQL, group_auth, req))
   }
-  res.json(output)
-}))
-
-routes.get('/:group_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const output = new StdObject()
-  const group_seq = req.params.group_seq
-  output.adds(await CurriculumService.getCurriculumList(DBMySQL, group_auth, group_seq, req))
-  res.json(output)
-}))
-
-routes.get('/:api_type/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const api_type = req.params.api_type
-  const api_key = req.params.api_key
-  output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, group_auth, api_type, api_key))
-  output.add('curriculum_education', await CurriculumService.getCurriculumEducation(DBMySQL, api_type, api_key))
-  output.add('curriculum_survey', await CurriculumService.getCurriculumSurvey(DBMySQL, req))
   res.json(output)
 }))
 
