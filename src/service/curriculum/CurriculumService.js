@@ -112,9 +112,9 @@ const CurriculumServiceClass = class {
     curriculum_info.group_search_keyword = group_search_keyword ? JSON.parse(curriculum_info.group_search_keyword) : null
   }
 
-  getCurriculum = async (database, group_auth, api_key) => {
+  getCurriculum = async (database, curriculum_seq) => {
     const curriculum_model = this.getCurriculumModel(database)
-    const result = await curriculum_model.getCurriculum(api_key)
+    const result = await curriculum_model.getCurriculum(curriculum_seq)
     this.setCurriculumData(result)
     return result
   }

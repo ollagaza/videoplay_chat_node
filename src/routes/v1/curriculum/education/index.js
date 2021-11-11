@@ -11,6 +11,7 @@ import QuestionService from "../../../../service/curriculum/QuestionService";
 import CurriculumEducationServiceClass from "../../../../service/curriculum/CurriculumEducationService";
 import CurriculumEducationCommentService from "../../../../service/curriculum/CurriculumEducationCommentService";
 import MemberService from "../../../../service/member/MemberService";
+import CurriculumService from "../../../../service/curriculum/CurriculumService";
 const routes = Router()
 
 
@@ -24,7 +25,20 @@ routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) =>
   res.json(output)
 }))
 
-routes.delete('/:curriculum_seq/:education_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+
+
+routes.delete('/:comment_seq(\\d+)/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+
+  const comment_seq = req.params.comment_seq;
+  const result = await CurriculumEducationCommentService.deleteCurriculumEducationComment(DBMySQL, comment_seq, req.body);
+
+  output.add('result', result)
+  res.json(output)
+}))
+
+routes.delete('/:curriculum_seq(\\d+)/:education_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq
@@ -35,7 +49,7 @@ routes.delete('/:curriculum_seq/:education_seq', Auth.isAuthenticated(Role.LOGIN
   res.json(output)
 }))
 
-routes.get('/:curriculum_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/:curriculum_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq;
@@ -45,18 +59,18 @@ routes.get('/:curriculum_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async
   res.json(output);
 }))
 
-routes.get('/media/:curriculum_seq/:education_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/media/:curriculum_seq(\\d+)/:education_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq;
   const education_seq = req.params.education_seq;
-  const result = await CurriculumEducationServiceClass.getCurriculumEducationDetail(DBMySQL, curriculum_seq, education_seq);
 
-  output.add('data', result);
+  output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, curriculum_seq))
+  output.add('data', await CurriculumEducationServiceClass.getCurriculumEducationDetail(DBMySQL, curriculum_seq, education_seq));
   res.json(output);
 }))
 
-routes.put('/:curriculum_seq/:current_seq/:target_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/:curriculum_seq(\\d+)/:current_seq(\\d+)/:target_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq;
@@ -69,7 +83,7 @@ routes.put('/:curriculum_seq/:current_seq/:target_seq', Auth.isAuthenticated(Rol
 }))
 
 
-routes.post('/:education_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/:education_seq(\\d+)/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
 
@@ -83,7 +97,7 @@ routes.post('/:education_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wr
   res.json(output)
 }))
 
-routes.get('/:education_seq/comment/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/:education_seq(\\d+)/comment/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const education_seq = req.params.education_seq;
@@ -96,7 +110,7 @@ routes.get('/:education_seq/comment/list', Auth.isAuthenticated(Role.LOGIN_USER)
   res.json(output);
 }))
 
-routes.put('/:comment_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/:comment_seq(\\d+)/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
 
@@ -107,7 +121,7 @@ routes.put('/:comment_seq/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(
   res.json(output)
 }))
 
-routes.get('/:education_seq/:comment_seq/comment/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/:education_seq(\\d+)/:comment_seq(\\d+)/comment/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const comment_seq = req.params.comment_seq;
@@ -120,7 +134,7 @@ routes.get('/:education_seq/:comment_seq/comment/list', Auth.isAuthenticated(Rol
   res.json(output);
 }))
 
-routes.get('/:education_seq/:comment_seq/comment/one', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/:education_seq(\\d+)/:comment_seq(\\d+)/comment/one', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const comment_seq = req.params.comment_seq;
@@ -133,5 +147,18 @@ routes.get('/:education_seq/:comment_seq/comment/one', Auth.isAuthenticated(Role
   output.add('comment_info', result);
   res.json(output);
 }))
+
+routes.get('/:education_seq(\\d+)/:comment_seq(\\d+)/comment/reply/count', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const comment_seq = req.params.comment_seq;
+  const education_seq = req.params.education_seq;
+
+  const total_count = await CurriculumEducationCommentService.getCurriculumEducationCommentTotalCount(DBMySQL, education_seq, comment_seq);
+  output.add('total', total_count);
+
+  res.json(output);
+}))
+
 
 export default routes

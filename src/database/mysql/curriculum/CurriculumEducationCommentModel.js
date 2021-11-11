@@ -74,4 +74,8 @@ export default class CurriculumEducationCommentModel extends MySQLModel {
     }
     return await this.update(filter, params);
   }
+
+  deleteCurriculumEducationComment = async (comment_seq) => {
+    return await this.delete({ seq: comment_seq });
+  }
 }

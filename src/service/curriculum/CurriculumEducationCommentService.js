@@ -78,6 +78,20 @@ const CurriculumEducationCommentServiceClass = class {
     const edu_comment_model = this.getCurriculumEducationCommentModel(database);
     return await edu_comment_model.getCurriculumEducationCommentTotalCount(education_seq, comment_seq);
   }
+
+  deleteCurriculumEducationComment = async (database, comment_seq, request) => {
+    log.debug(this.log_prefix, comment_seq);
+    const edu_comment_model = this.getCurriculumEducationCommentModel(database);
+    if (request.is_reply) {
+      const result = await edu_comment_model.deleteCurriculumEducationComment(comment_seq);
+      if (result) {
+        await edu_comment_model.updateCurriculumEducationCommentReplyCount('del', request.parent_seq);
+      }
+      return result;
+    } else {
+      return await edu_comment_model.deleteCurriculumEducationComment(comment_seq);
+    }
+  }
 }
 const curriculum_education_comment_service = new CurriculumEducationCommentServiceClass()
 
