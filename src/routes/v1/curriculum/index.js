@@ -15,12 +15,10 @@ const routes = Router()
 routes.get('/:curriculum_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  const api_type = req.params.api_type
-  const api_key = req.params.api_key
-  output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, group_auth, api_type, api_key))
-  output.add('curriculum_education', await CurriculumService.getCurriculumEducation(DBMySQL, api_type, api_key))
-  output.add('curriculum_survey', await CurriculumService.getCurriculumSurvey(DBMySQL, req))
+  const curriculum_seq = req.params.curriculum_seq
+  output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, curriculum_seq))
+  output.add('curriculum_education', await CurriculumService.getCurriculumEducation(DBMySQL, curriculum_seq))
+  output.add('curriculum_survey', await CurriculumService.getCurriculumSurvey(DBMySQL, curriculum_seq))
   res.json(output)
 }))
 

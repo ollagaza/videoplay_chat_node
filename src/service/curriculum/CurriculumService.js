@@ -110,6 +110,8 @@ const CurriculumServiceClass = class {
     curriculum_info.group_explain = Util.trim(curriculum_info.group_explain)
     const group_search_keyword = Util.trim(curriculum_info.group_search_keyword)
     curriculum_info.group_search_keyword = group_search_keyword ? JSON.parse(curriculum_info.group_search_keyword) : null
+    const hashtag_list = Util.trim(curriculum_info.hashtag_list)
+    curriculum_info.hashtag_list = hashtag_list ? JSON.parse(curriculum_info.hashtag_list) : null
   }
 
   getCurriculum = async (database, curriculum_seq) => {
@@ -118,12 +120,12 @@ const CurriculumServiceClass = class {
     this.setCurriculumData(result)
     return result
   }
-  getCurriculumEducation = async (database, api_type, api_key) => {
+  getCurriculumEducation = async (database, curriculum_seq) => {
     const curriculum_model = this.getCurriculumEducationModel(database)
-    return await curriculum_model.getCurriculumEducation(api_key)
+    return await curriculum_model.getCurriculumEducation(curriculum_seq)
   }
-  getCurriculumSurvey = async (database, request) => {
-    return await QuestionService.getQuestionList(database, request)
+  getCurriculumSurvey = async (database, curriculum_seq) => {
+    return await QuestionService.getQuestionList(database, curriculum_seq)
   }
 }
 

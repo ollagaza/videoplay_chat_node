@@ -78,8 +78,7 @@ const QuestionServiceClass = class {
     return await question_model.updateQuestion(question_seq, question_data)
   }
 
-  getQuestionList = async (database, request) => {
-    const curriculum_seq = request.params.api_key
+  getQuestionList = async (database, curriculum_seq) => {
     const question_model = this.getQuestionModel(database)
     const question_info = await question_model.getQuestionList(curriculum_seq)
     if (question_info && question_info.question) {
