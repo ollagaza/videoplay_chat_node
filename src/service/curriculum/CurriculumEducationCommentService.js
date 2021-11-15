@@ -30,11 +30,23 @@ const CurriculumEducationCommentServiceClass = class {
     return comment_info[0];
   }
 
-  getCurriculumEducationCommentList = async (database, education_seq, paging_info, parent_seq = null) => {
+  getCurriculumEducationCommentList = async (database, education_seq, request, parent_seq = null) => {
     const edu_comment_model = this.getCurriculumEducationCommentModel(database);
-    const edu_comment_list = await edu_comment_model.getCurriculumEducationCommentList(education_seq, paging_info, parent_seq);
-    for (let cnt = 0; cnt < edu_comment_list.length; cnt++) {
-      edu_comment_list[cnt].profile_image_path = ServiceConfig.get('static_storage_prefix') + edu_comment_list[cnt].profile_image_path
+
+    const request_paging = request.paging ? JSON.parse(request.paging) : {}
+    const paging = {}
+    paging.list_count = request_paging.list_count ? request_paging.list_count : 20
+    paging.cur_page = request_paging.cur_page ? request_paging.cur_page : 1
+    paging.page_count = request_paging.page_count ? request_paging.page_count : 10
+    if (parent_seq) {
+      paging.no_paging = 'Y';
+    } else {
+      paging.no_paging = 'N'
+    }
+
+    const edu_comment_list = await edu_comment_model.getCurriculumEducationCommentList(education_seq, paging, parent_seq);
+    for (let cnt = 0; cnt < edu_comment_list.data.length; cnt++) {
+      edu_comment_list.data[cnt].profile_image_path = ServiceConfig.get('static_storage_prefix') + edu_comment_list.data[cnt].profile_image_path
     }
     return edu_comment_list;
   }

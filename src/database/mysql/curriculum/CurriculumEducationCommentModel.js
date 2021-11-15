@@ -31,7 +31,7 @@ export default class CurriculumEducationCommentModel extends MySQLModel {
     }
   }
 
-  getCurriculumEducationCommentList = async (education_seq, paging_info, parent_seq = null) => {
+  getCurriculumEducationCommentList = async (education_seq, paging, parent_seq = null) => {
     const query = this.database.select(['curriculum_education_comment.*', 'member.profile_image_path'])
       .from(this.table_name)
       .leftJoin('member', 'member.seq', `${this.table_name}.member_seq`)
@@ -43,14 +43,9 @@ export default class CurriculumEducationCommentModel extends MySQLModel {
     } else {
       query.andWhere('is_reply', '0');
     }
-
-    if (paging_info.last_seq && Number(paging_info.last_seq) !== 0) {
-      query.andWhere(`${this.table_name}.seq`, '<', paging_info.last_seq)
-    }
-    query.orderBy(`${this.table_name}.seq`, 'desc')
-      .limit(paging_info.comment_limit);
-
-    return query;
+    query.orderBy(`${this.table_name}.seq`, 'desc');
+    const query_result = await this.queryPaginated(query, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging);
+    return query_result;
   }
 
   getCurriculumEducationCommentTotalCount = async (education_seq, comment_seq = null) => {
