@@ -31,39 +31,11 @@ routes.delete('/:api_key/:api_sub_key', Auth.isAuthenticated(Role.LOGIN_USER), W
   res.json(output)
 }))
 
-routes.post('/bank/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-
-  if (req.params.api_mode === 'new') {
-    output.add('result', await QuestionService.createQuestionBank(DBMySQL, group_auth, req))
-  } else {
-    output.add('result', await QuestionService.updateQuestionBank(DBMySQL, group_auth, req))
-  }
-  res.json(output)
-}))
-
 routes.get('/:api_key/:api_sub_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   output.add('result', await QuestionService.getQuestion(DBMySQL, group_auth, req))
-  res.json(output)
-}))
-
-routes.get('/bank/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const output = new StdObject()
-  output.add('result', await QuestionService.getQuestionBank(DBMySQL, req))
-  res.json(output)
-}))
-
-routes.get('/bank/list/:group_seq', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  output.adds(await QuestionService.getQuestionBankList(DBMySQL, group_auth, req))
   res.json(output)
 }))
 
