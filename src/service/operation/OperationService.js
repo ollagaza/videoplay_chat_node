@@ -650,7 +650,7 @@ const OperationServiceClass = class {
 
   getVideoIndexList = async (operation_seq) => {
     const video_index_info = await VideoIndexInfoModel.findOneByOperation(operation_seq)
-    return video_index_info.index_list ? video_index_info.index_list : []
+    return video_index_info && video_index_info.index_list ? video_index_info.index_list : []
   }
 
   uploadOperationFile = async (database, request, response, operation_info, file_type, field_name = null, file_name = null) => {
