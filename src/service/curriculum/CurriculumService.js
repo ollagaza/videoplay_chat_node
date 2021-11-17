@@ -130,7 +130,7 @@ const CurriculumServiceClass = class {
   }
   getCurriculumEducation = async (database, curriculum_seq) => {
     const curriculum_model = this.getCurriculumEducationModel(database)
-    return await curriculum_model.getCurriculumEducation(curriculum_seq)
+    return await curriculum_model.getCurriculumEducationList(curriculum_seq)
   }
   getCurriculumSurvey = async (database, curriculum_seq) => {
     return await QuestionService.getQuestionList(database, curriculum_seq)

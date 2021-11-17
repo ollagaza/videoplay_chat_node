@@ -53,7 +53,7 @@ routes.get('/:curriculum_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap
   req.accepts('application/json')
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq;
-  const result = await CurriculumEducationServiceClass.getCurriculumEducation(DBMySQL, curriculum_seq);
+  const result = await CurriculumEducationServiceClass.getCurriculumEducationList(DBMySQL, curriculum_seq);
 
   output.add('list', result);
   res.json(output);
@@ -159,6 +159,7 @@ routes.get('/:education_seq(\\d+)/:comment_seq(\\d+)/comment/reply/count', Auth.
 
   res.json(output);
 }))
+
 
 
 export default routes

@@ -9,7 +9,11 @@ export default class CurriculumEducationModel extends MySQLModel {
     this.log_prefix = '[CurriculumEducationModel]'
   }
 
-  getCurriculumEducation = async (curriculum_seq) => {
+  getCurriculumEducation = async (education_seq) => {
+    return await this.findOne({ curriculum_seq: education_seq })
+  }
+
+  getCurriculumEducationList = async (curriculum_seq) => {
     return await this.find({ curriculum_seq: curriculum_seq }, null, { name: 'sort', direction: 'asc' })
   }
 

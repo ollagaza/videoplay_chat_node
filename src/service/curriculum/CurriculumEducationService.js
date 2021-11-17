@@ -34,15 +34,20 @@ const CurriculumEducationServiceClass = class {
     return new OperationModel(DBMySQL)
   }
 
-  getCurriculumEducation = async (database, curriculum_seq) => {
+  getCurriculumEducation = async (database, education_seq) => {
     const edu_model = this.getCurriculumEducationModel(database)
-    return edu_model.getCurriculumEducation(curriculum_seq)
+    return edu_model.getCurriculumEducation(education_seq)
+  }
+
+  getCurriculumEducationList = async (database, curriculum_seq) => {
+    const edu_model = this.getCurriculumEducationModel(database)
+    return edu_model.getCurriculumEducationList(curriculum_seq)
   }
 
   getCurriculumEducationDetail = async (database, curriculum_seq, education_seq) => {
     const edu_model = this.getCurriculumEducationModel(database);
     const operation_model = this.getOperationModel(database);
-    const education_list = await edu_model.getCurriculumEducation(curriculum_seq);
+    const education_list = await edu_model.getCurriculumEducationList(curriculum_seq);
     const education_info = await education_list.find(item => item.seq === Number(education_seq));
     if (education_info) {
       const operation_info = await operation_model.getOperationInfo(education_info.operation_seq, true);
@@ -65,7 +70,7 @@ const CurriculumEducationServiceClass = class {
   deleteCurriculumEducation = async (database, curriculum_seq, education_seq) => {
     const edu_model = this.getCurriculumEducationModel(database);
     if (await edu_model.deleteCurriculumEducation(education_seq)) {
-      const edu_list = await edu_model.getCurriculumEducation(curriculum_seq);
+      const edu_list = await edu_model.getCurriculumEducationList(curriculum_seq);
       for (let i = 1; i <= edu_list.length; i++) {
         if (i !== edu_list[i-1].sort) {
           await edu_model.updateCurriculumSort(edu_list[i-1].seq, i);
@@ -79,7 +84,7 @@ const CurriculumEducationServiceClass = class {
 
   swapCurriculumEducationSort = async (database, curriculum_seq, current_seq, target_seq) => {
     const edu_model = this.getCurriculumEducationModel(database);
-    const edu_list = await edu_model.getCurriculumEducation(curriculum_seq);
+    const edu_list = await edu_model.getCurriculumEducationList(curriculum_seq);
     const current_info = await edu_list.find(item => Number(item.seq) === Number(current_seq));
     const target_info = await edu_list.find(item => Number(item.seq) === Number(target_seq));
     if (current_info && target_info) {
