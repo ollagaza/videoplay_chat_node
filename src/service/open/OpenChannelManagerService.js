@@ -89,20 +89,36 @@ const OpenChannelManagerServiceClass = class {
   }
 
   getOpenChannelContentInfo = async (group_seq) => {
+    const banner_list = await this.getOpenChannelBannerInfo(group_seq)
+    const category_list = await this.getOpenChannelCategoryInfo(group_seq)
+
+    const channel_content = {
+      banner_list: banner_list.get('banner_list'),
+      category_list: category_list.get('category_list')
+    }
+
+    const output = new StdObject()
+    output.add('channel_content', channel_content)
+    return output
+  }
+
+  getOpenChannelCategoryInfo = async (group_seq) => {
+    const output = new StdObject()
+
+    const category_model = this.getCategoryModel()
+    const category_list = await category_model.getOpenChannelCategoryList(group_seq)
+
+    output.add('category_list', category_list)
+    return output
+  }
+
+  getOpenChannelBannerInfo = async (group_seq) => {
     const output = new StdObject()
 
     const banner_model = this.getBannerModel()
-    const category_model = this.getCategoryModel()
-
     const banner_list = await banner_model.getOpenChannelBannerList(group_seq)
-    const category_list = await category_model.getOpenChannelCategoryList(group_seq)
 
-    const channel_info = {
-      'banner_list': banner_list,
-      'category_list': category_list
-    }
-
-    output.add('channel_content', channel_info)
+    output.add('banner_list', banner_list)
     return output
   }
 
