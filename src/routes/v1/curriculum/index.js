@@ -9,16 +9,22 @@ import DBMySQL from '../../../database/knex-mysql'
 import GroupService from "../../../service/group/GroupService";
 import QuestionService from "../../../service/curriculum/QuestionService";
 import CurriculumService from "../../../service/curriculum/CurriculumService";
+import group from "../../admin/group";
 
 const routes = Router()
 
 routes.get('/:curriculum_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq
   output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, curriculum_seq))
   output.add('curriculum_education', await CurriculumService.getCurriculumEducation(DBMySQL, curriculum_seq))
-  output.add('curriculum_survey', await CurriculumService.getCurriculumSurvey(DBMySQL, curriculum_seq))
+  const curriculum_survey = await CurriculumService.getCurriculumSurvey(DBMySQL, curriculum_seq)
+  output.add('curriculum_survey', curriculum_survey)
+  if (group_auth.is_group_admin || group_auth.is_group_manager) {
+    output.add('curriculum_survey_result', await CurriculumService.getCurriculumSurveyResult(DBMySQL, curriculum_seq, curriculum_survey))
+  }
   res.json(output)
 }))
 

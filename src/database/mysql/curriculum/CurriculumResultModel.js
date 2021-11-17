@@ -12,4 +12,8 @@ export default class CurriculumResultModel extends MySQLModel {
   getCurriculumResultCount = async (curriculum_seq) => {
     return await this.getTotalCount({ curriculum_seq })
   }
+
+  getCurriculumResultList = async (question_seq) => {
+    return await this.find({ question_seq })
+  }
 }

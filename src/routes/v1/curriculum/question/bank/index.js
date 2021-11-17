@@ -4,7 +4,7 @@ import Role from '../../../../../constants/roles'
 import Wrap from '../../../../../utils/express-async'
 import StdObject from "../../../../../wrapper/std-object";
 import Util from "../../../../../utils/Util";
-import DBMySQL from "../../../../../database/mysql-model";
+import DBMySQL from "../../../../../database/knex-mysql";
 import GroupService from "../../../../../service/group/GroupService";
 import QuestionService from "../../../../../service/curriculum/QuestionService";
 

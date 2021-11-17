@@ -8,6 +8,7 @@ import ServiceConfig from "../service-config";
 import CurriculumModel from "../../database/mysql/curriculum/CurriculumModel";
 import CurriculumEducationModel from "../../database/mysql/curriculum/CurriculumEducationModel";
 import QuestionService from "./QuestionService";
+import CurriculumResultModel from "../../database/mysql/curriculum/CurriculumResultModel";
 
 const CurriculumServiceClass = class {
   constructor() {
@@ -26,6 +27,13 @@ const CurriculumServiceClass = class {
       return new CurriculumEducationModel(database);
     }
     return new CurriculumEducationModel(DBMySQL);
+  }
+
+  getCurriculumSurveyResultModel(database) {
+    if (database) {
+      return new CurriculumResultModel(database);
+    }
+    return new CurriculumResultModel(DBMySQL);
   }
 
   createCurriculumIntro = async (database, group_auth, request_body) => {
@@ -126,6 +134,17 @@ const CurriculumServiceClass = class {
   }
   getCurriculumSurvey = async (database, curriculum_seq) => {
     return await QuestionService.getQuestionList(database, curriculum_seq)
+  }
+
+  getCurriculumSurveyResult = async (database, curriculum_seq, curriculum_survey) => {
+    const result_list = {}
+    const curriculum_survey_result_model = this.getCurriculumSurveyResultModel()
+    for (let cnt = 0; cnt < curriculum_survey.length; cnt++) {
+      const survey_seq = `result_${curriculum_survey[cnt].seq}`
+      const result_list = await curriculum_survey_result_model.getCurriculumResultList(survey_seq)
+      result_list[survey_seq] = result_list
+    }
+    return result_list
   }
 }
 
