@@ -63,6 +63,10 @@ const SurgboxUpdateServiceClass = class {
     return new SurgboxUpdateInfo(update_info)
   }
 
+  getUpdateFileUrl = () => {
+    return ServiceConfig.get('update_url') ? ServiceConfig.get('update_url') : ServiceConfig.get('cdn_url')
+  }
+
   getUpdateList = async (request) => {
     const update_model = this.getUpdateModel()
     const request_query = request.query ? request.query : {}
@@ -83,6 +87,7 @@ const SurgboxUpdateServiceClass = class {
   }
 
   getUpdateListForBox = async (type = null) => {
+    const update_file_url = this.getUpdateFileUrl()
     const result = {
       has_update: false,
       last_version: null,
@@ -146,7 +151,7 @@ const SurgboxUpdateServiceClass = class {
           }
         }
         if (update_info.file_name) {
-          version_info.file_list.push(ServiceConfig.get('cdn_url') + file_path + update_info.file_name)
+          version_info.file_list.push(update_file_url + file_path + update_info.file_name)
         }
       }
       if (!last_minor_version) last_minor_version = 0
@@ -159,6 +164,7 @@ const SurgboxUpdateServiceClass = class {
   }
 
   getUpdateInfoForView = async (update_seq) => {
+    const update_file_url = this.getUpdateFileUrl()
     const update_model = this.getUpdateModel()
     const update_info = await update_model.getUpdateInfoForView(update_seq)
     const update_file_model = this.getUpdateFileModel()
@@ -167,7 +173,7 @@ const SurgboxUpdateServiceClass = class {
     if (file_result) {
       for (let i = 0; i < file_result.length; i++) {
         const file_info = new SurgboxUpdateFileInfo(file_result[i])
-        file_info.url = ServiceConfig.get('cdn_url') + update_info.file_path + file_info.file_name
+        file_info.url = update_file_url + update_info.file_path + file_info.file_name
         update_file_list.push(file_info.toJSON())
       }
     }
