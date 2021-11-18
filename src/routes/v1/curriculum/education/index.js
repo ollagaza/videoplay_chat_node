@@ -12,6 +12,8 @@ import CurriculumEducationServiceClass from "../../../../service/curriculum/Curr
 import CurriculumEducationCommentService from "../../../../service/curriculum/CurriculumEducationCommentService";
 import MemberService from "../../../../service/member/MemberService";
 import CurriculumService from "../../../../service/curriculum/CurriculumService";
+import OperationService from "../../../../service/operation/OperationService";
+import OperationClipService from "../../../../service/operation/OperationClipService";
 const routes = Router()
 
 
@@ -25,7 +27,15 @@ routes.post('/', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) =>
   res.json(output)
 }))
 
+routes.put('/:education_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const education_seq = req.params.education_seq;
+  const result = await CurriculumEducationServiceClass.setCurriculumEducation(DBMySQL, education_seq, req.body);
 
+  output.add('result', result)
+  res.json(output)
+}))
 
 routes.delete('/:comment_seq(\\d+)/comment', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
@@ -49,7 +59,21 @@ routes.delete('/:curriculum_seq(\\d+)/:education_seq(\\d+)', Auth.isAuthenticate
   res.json(output)
 }))
 
-routes.get('/:curriculum_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/:education_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const education_seq = req.params.education_seq;
+  const education_info = await CurriculumEducationServiceClass.getCurriculumEducation(DBMySQL, education_seq);
+  const operation_info = await OperationService.getOperationInfo(DBMySQL, education_info.operation_seq, null, false, true)
+  const clip_list = await OperationClipService.findByOperationSeq(education_info.operation_seq)
+
+  output.add('education_info', education_info);
+  output.add('operation_info', operation_info);
+  output.add('clip_list', clip_list)
+  res.json(output);
+}))
+
+routes.get('/:curriculum_seq(\\d+)/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const curriculum_seq = req.params.curriculum_seq;

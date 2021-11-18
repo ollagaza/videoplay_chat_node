@@ -10,7 +10,12 @@ export default class CurriculumEducationModel extends MySQLModel {
   }
 
   getCurriculumEducation = async (education_seq) => {
-    return await this.findOne({ curriculum_seq: education_seq })
+    return await this.findOne({ seq: education_seq })
+  }
+
+  setCurriculumEducation = async (education_seq, education_data) => {
+    education_data.modify_date = this.database.raw('NOW()');
+    return await this.update({ seq: education_seq }, education_data);
   }
 
   getCurriculumEducationList = async (curriculum_seq) => {

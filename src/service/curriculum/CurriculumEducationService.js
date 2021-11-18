@@ -67,6 +67,11 @@ const CurriculumEducationServiceClass = class {
     return await edu_model.addCurriculumEducation(request);
   }
 
+  setCurriculumEducation = async (database, education_seq, request) => {
+    const edu_model = this.getCurriculumEducationModel(database);
+    return await edu_model.setCurriculumEducation(education_seq, request);
+  }
+
   deleteCurriculumEducation = async (database, curriculum_seq, education_seq) => {
     const edu_model = this.getCurriculumEducationModel(database);
     if (await edu_model.deleteCurriculumEducation(education_seq)) {
