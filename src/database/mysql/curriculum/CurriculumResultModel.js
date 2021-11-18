@@ -16,4 +16,8 @@ export default class CurriculumResultModel extends MySQLModel {
   getCurriculumResultList = async (question_seq) => {
     return await this.find({ question_seq })
   }
+
+  getResultOne = async (curriculum_seq, result_seq) => {
+    return await this.findOne({ seq: result_seq, curriculum_seq })
+  }
 }

@@ -100,6 +100,19 @@ const QuestionServiceClass = class {
     return question_info
   }
 
+  getQuestionResult = async (database, group_auth, request) => {
+    const curriculum_seq = request.params.api_key
+    const result_seq = request.params.api_sub_key
+    const curriculum_result_model = this.getCurriculumResultModel(database)
+    const result_info = await curriculum_result_model.getResultOne(curriculum_seq, result_seq)
+
+    return {
+      question: JSON.parse(result_info.question_json),
+      question_result: JSON.parse(result_info.result_json),
+      appraisal_result: JSON.parse(result_info.appraisal_result),
+    }
+  }
+
   getQuestionBank = async (database, request_body) => {
     const question_seq = request_body.params.api_key
     const question_model = this.getQuestionBankModel(database)

@@ -39,4 +39,12 @@ routes.get('/:api_key/:api_sub_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap
   res.json(output)
 }))
 
+routes.get('/result/:api_key/:api_sub_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+  output.adds(await QuestionService.getQuestionResult(DBMySQL, group_auth, req))
+  res.json(output)
+}))
+
 export default routes
