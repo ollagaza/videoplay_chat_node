@@ -24,6 +24,8 @@ routes.get('/:curriculum_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap
   output.add('curriculum_survey', curriculum_survey)
   if (group_auth.is_group_admin || group_auth.is_group_manager) {
     output.add('curriculum_survey_result', await CurriculumService.getCurriculumSurveyResult(DBMySQL, curriculum_seq, curriculum_survey))
+  } else {
+    output.add('curriculum_survey_result', await QuestionService.getResultWithCurriculumAndMember(DBMySQL, group_auth, req))
   }
   res.json(output)
 }))
@@ -37,7 +39,7 @@ routes.get('/group/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wra
   res.json(output)
 }))
 
-routes.post('/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/:api_mode/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
@@ -53,7 +55,7 @@ routes.post('/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(a
   res.json(output)
 }))
 
-routes.put('/thumbnail/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/thumbnail/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const api_key = req.params.api_key;
@@ -66,7 +68,7 @@ routes.put('/thumbnail/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(as
   }
 }))
 
-routes.put('/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.put('/:api_mode/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)

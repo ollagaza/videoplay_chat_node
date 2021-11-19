@@ -141,8 +141,8 @@ const CurriculumServiceClass = class {
     const curriculum_survey_result_model = this.getCurriculumSurveyResultModel()
     for (let cnt = 0; cnt < curriculum_survey.length; cnt++) {
       const survey_seq = `result_${curriculum_survey[cnt].seq}`
-      const result_list = await curriculum_survey_result_model.getCurriculumResultList(survey_seq)
-      result_list[survey_seq] = result_list
+      const result = await curriculum_survey_result_model.getCurriculumResultList(curriculum_survey[cnt].seq)
+      result_list[survey_seq] = result
     }
     return result_list
   }

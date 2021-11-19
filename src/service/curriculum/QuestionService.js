@@ -100,17 +100,21 @@ const QuestionServiceClass = class {
     return question_info
   }
 
+  getResultWithCurriculumAndMember = async (database, group_auth, request) => {
+    const curriculum_seq = request.params.api_key
+    const question_seq = request.params.api_sub_key
+    const question_result_model = this.getCurriculumResultModel(database)
+    const question_result = await question_result_model.getResultWithCurriculumAndMember(curriculum_seq, question_seq, group_auth.member_seq)
+    return question_result
+  }
+
   getQuestionResult = async (database, group_auth, request) => {
     const curriculum_seq = request.params.api_key
     const result_seq = request.params.api_sub_key
     const curriculum_result_model = this.getCurriculumResultModel(database)
     const result_info = await curriculum_result_model.getResultOne(curriculum_seq, result_seq)
 
-    return {
-      question: JSON.parse(result_info.question_json),
-      question_result: JSON.parse(result_info.result_json),
-      appraisal_result: JSON.parse(result_info.appraisal_result),
-    }
+    return result_info
   }
 
   getQuestionBank = async (database, request_body) => {
@@ -134,6 +138,49 @@ const QuestionServiceClass = class {
 
     const question_model = this.getQuestionBankModel(database)
     return await question_model.getQuestionBankList(filters, request_paging, request_order)
+  }
+
+  createQuestionResult = async (database, group_auto, request) => {
+    try {
+      const question_result_model = this.getCurriculumResultModel(database)
+      const result_data = request.body.params
+      return await question_result_model.createQuestionResult(result_data)
+    } catch (e) {
+      throw e
+    }
+  }
+  updateQuestionResult = async (database, group_auto, request) => {
+    try {
+      const question_result_model = this.getCurriculumResultModel(database)
+      const result_data = request.body.params
+      const question_result_seq = result_data.seq
+      delete result_data.seq
+      return await question_result_model.updateQuestionResult(question_result_seq, result_data)
+    } catch (e) {
+      throw e
+    }
+  }
+  deleteQuestionResult = async (database, group_auto, request) => {
+    try {
+      const question_result_model = this.getCurriculumResultModel(database)
+      const question_result_seq = request.params.api_key
+      return await question_result_model.deleteQuestionResult(question_result_seq)
+    } catch (e) {
+      throw e
+    }
+  }
+
+  createAppraisalResult = async (database, group_auto, request) => {
+    const question_result_model = this.getCurriculumResultModel(database)
+
+  }
+  updateAppraisalResult = async (database, group_auto, request) => {
+    const question_result_model = this.getCurriculumResultModel(database)
+
+  }
+  deleteAppraisalResult = async (database, group_auto, request) => {
+    const question_result_model = this.getCurriculumResultModel(database)
+
   }
 }
 
