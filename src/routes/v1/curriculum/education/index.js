@@ -14,6 +14,7 @@ import MemberService from "../../../../service/member/MemberService";
 import CurriculumService from "../../../../service/curriculum/CurriculumService";
 import OperationService from "../../../../service/operation/OperationService";
 import OperationClipService from "../../../../service/operation/OperationClipService";
+import CurriculumLogService from "../../../../service/curriculum/CurriculumLogService";
 const routes = Router()
 
 
@@ -184,6 +185,17 @@ routes.get('/:education_seq(\\d+)/:comment_seq(\\d+)/comment/reply/count', Auth.
   res.json(output);
 }))
 
+routes.post('/:curriculum_seq(\\d+)/:member_seq(\\d+)/save/log', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
 
+  const curriculum_seq = req.params.curriculum_seq;
+  const member_seq = req.params.member_seq;
+
+  const result = await CurriculumLogService.setCurriculumLog(DBMySQL, curriculum_seq, member_seq, 1, req.body);
+
+  output.add('result', [curriculum_seq, member_seq, result])
+  res.json(output)
+}))
 
 export default routes
