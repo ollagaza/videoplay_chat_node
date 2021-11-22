@@ -42,28 +42,46 @@ const CurriculumLogServiceClass = class {
       [key]: {
         total_play_time: log_data.total_play_time,
         last_current_time: log_data.last_current_time,
+        duration: log_data.duration,
       }
     };
-    const params = {
-      member_seq,
-      curriculum_seq,
-      log_type,
-      log_info: JSON.stringify(_log_data),
+    if (log_data.play_ended) {
+      _log_data[key].ended = true;
     }
     if (!log_info) {
       _log_data[key].first_play = true;
+      const params = {
+        member_seq,
+        curriculum_seq,
+        log_type,
+        total_play_time: log_data.total_play_time,
+        log_info: JSON.stringify(_log_data),
+      }
       return await curriculum_log_model.createCurriculumLog(params);
     } else {
       const _log_info = JSON.parse(log_info.log_info);
       const find_key = Object.keys(_log_info).find(item => item === key)
+      let all_total_time = 0;
+      for (const obj_key in _log_info) {
+        if (find_key && find_key === obj_key) continue;
+        all_total_time += _log_info[obj_key].total_play_time;
+      }
       if (find_key) {
-        return await curriculum_log_model.updateCurriculumLog(curriculum_seq, member_seq, _log_data);
+        if (_log_info[find_key].first_play && log_data.play_ended) {
+          _log_data[key].first_play = false;
+          all_total_time += _log_data[key].total_play_time;
+        } else if (!_log_info[find_key].first_play) {
+          delete _log_data[key].total_play_time;
+          all_total_time += _log_info[find_key].total_play_time;
+        } else {
+          all_total_time += _log_data[key].total_play_time;
+        }
       } else {
         _log_data[key].first_play = true;
-        return await curriculum_log_model.updateCurriculumLog(curriculum_seq, member_seq, _log_data);
+        all_total_time += _log_data[key].total_play_time;
       }
+      return await curriculum_log_model.updateCurriculumLog(curriculum_seq, member_seq, all_total_time, _log_data);
     }
-    return log_info;
   }
 }
 

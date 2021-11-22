@@ -198,4 +198,15 @@ routes.post('/:curriculum_seq(\\d+)/:member_seq(\\d+)/save/log', Auth.isAuthenti
   res.json(output)
 }))
 
+routes.get('/:curriculum_seq(\\d+)/:member_seq(\\d+)/load/log', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+
+  const curriculum_seq = req.params.curriculum_seq;
+  const member_seq = req.params.member_seq;
+
+  output.add('log', await CurriculumLogService.getCurriculumLog(DBMySQL, curriculum_seq, member_seq, 1));
+  res.json(output)
+}))
+
 export default routes

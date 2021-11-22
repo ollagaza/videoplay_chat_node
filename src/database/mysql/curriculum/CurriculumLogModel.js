@@ -25,8 +25,9 @@ export default class CurriculumLogModel extends MySQLModel {
     return await this.create(in_data, 'seq');
   }
 
-  updateCurriculumLog = async (curriculum_seq, member_seq, in_data) => {
+  updateCurriculumLog = async (curriculum_seq, member_seq, all_total_time = 0, in_data) => {
     const update_params = {
+      total_play_time: all_total_time,
       log_info: this.database.raw('JSON_MERGE_PATCH(log_info, ?)', JSON.stringify(in_data)),
       reg_date: this.database.raw('NOW()')
     }
