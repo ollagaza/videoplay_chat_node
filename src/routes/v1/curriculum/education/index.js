@@ -92,6 +92,7 @@ routes.get('/media/:curriculum_seq(\\d+)/:education_seq(\\d+)', Auth.isAuthentic
 
   output.add('curriculum', await CurriculumService.getCurriculum(DBMySQL, curriculum_seq))
   output.add('data', await CurriculumEducationServiceClass.getCurriculumEducationDetail(DBMySQL, curriculum_seq, education_seq));
+  output.add('recommend', await CurriculumService.getRecommendCurriculumList(DBMySQL, curriculum_seq));
   res.json(output);
 }))
 

@@ -146,6 +146,15 @@ const CurriculumServiceClass = class {
     }
     return result_list
   }
+
+  getRecommendCurriculumList = async (database, curriculum_seq = null) => {
+    const curriculum_model = this.getCurriculumModel(database);
+    const recommend_curriculum_list = await curriculum_model.getRecommendCurriculumList(curriculum_seq);
+    recommend_curriculum_list.forEach(curriculum => {
+      this.setCurriculumData(curriculum)
+    })
+    return recommend_curriculum_list;
+  }
 }
 
 const curriculum_service_class = new CurriculumServiceClass()

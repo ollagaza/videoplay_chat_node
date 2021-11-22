@@ -59,4 +59,16 @@ export default class CurriculumModel extends MySQLModel {
 
     return await this.queryPaginated(query, paging.list_count, paging.cur_page, paging.page_count, paging.no_paging)
   }
+
+  getRecommendCurriculumList = async (curriculum_seq = null) => {
+    const query = this.getCurriculumQuery();
+    if (curriculum_seq) {
+      query.where(`${this.table_name}.seq`, '!=', curriculum_seq);
+    }
+    query.orderBy(`${this.table_name}.seq`, 'desc');
+    query.limit(2);
+
+    return query;
+  }
+
 }
