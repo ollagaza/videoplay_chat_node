@@ -10,7 +10,7 @@ import QuestionService from "../../../../../service/curriculum/QuestionService";
 
 const routes = Router()
 
-routes.post('/:api_mode/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.post('/:api_mode/:api_key', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)

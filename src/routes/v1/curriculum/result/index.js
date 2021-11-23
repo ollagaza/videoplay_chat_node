@@ -40,26 +40,4 @@ routes.delete('/question/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER),
   res.json(output)
 }))
 
-routes.post('/appraisal/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  output.add('result', await QuestionService.createAppraisalResult(DBMySQL, group_auth, req))
-  res.json(output)
-}))
-routes.put('/appraisal/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  output.add('result', await QuestionService.updateAppraisalResult(DBMySQL, group_auth, req))
-  res.json(output)
-}))
-routes.delete('/appraisal/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
-  req.accepts('application/json')
-  const output = new StdObject()
-  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  output.add('result', await QuestionService.deleteAppraisalResult(DBMySQL, group_auth, req))
-  res.json(output)
-}))
-
 export default routes

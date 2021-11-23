@@ -101,10 +101,9 @@ const QuestionServiceClass = class {
   }
 
   getResultWithCurriculumAndMember = async (database, group_auth, request) => {
-    const curriculum_seq = request.params.api_key
-    const question_seq = request.params.api_sub_key
+    const curriculum_seq = request.params.curriculum_seq
     const question_result_model = this.getCurriculumResultModel(database)
-    const question_result = await question_result_model.getResultWithCurriculumAndMember(curriculum_seq, question_seq, group_auth.member_seq)
+    const question_result = await question_result_model.getResultWithCurriculumAndMember(curriculum_seq, group_auth.member_seq)
     return question_result
   }
 
@@ -168,19 +167,6 @@ const QuestionServiceClass = class {
     } catch (e) {
       throw e
     }
-  }
-
-  createAppraisalResult = async (database, group_auto, request) => {
-    const question_result_model = this.getCurriculumResultModel(database)
-
-  }
-  updateAppraisalResult = async (database, group_auto, request) => {
-    const question_result_model = this.getCurriculumResultModel(database)
-
-  }
-  deleteAppraisalResult = async (database, group_auto, request) => {
-    const question_result_model = this.getCurriculumResultModel(database)
-
   }
 }
 
