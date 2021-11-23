@@ -149,7 +149,8 @@ const CurriculumServiceClass = class {
 
   getRecommendCurriculumList = async (database, curriculum_seq = null) => {
     const curriculum_model = this.getCurriculumModel(database);
-    const recommend_curriculum_list = await curriculum_model.getRecommendCurriculumList(curriculum_seq);
+    const current_curriculum = await curriculum_model.getCurriculum(curriculum_seq);
+    const recommend_curriculum_list = await curriculum_model.getRecommendCurriculumList(curriculum_seq, current_curriculum.group_seq);
     recommend_curriculum_list.forEach(curriculum => {
       this.setCurriculumData(curriculum)
     })

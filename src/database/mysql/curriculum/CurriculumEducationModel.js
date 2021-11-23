@@ -22,6 +22,15 @@ export default class CurriculumEducationModel extends MySQLModel {
     return await this.find({ curriculum_seq: curriculum_seq }, null, { name: 'sort', direction: 'asc' })
   }
 
+  getCurriculumEducationListCount = async (curriculum_seq) => {
+    const query = this.database.select([ this.database.raw('COUNT(*) AS total_count') ])
+    query.from(this.table_name)
+    query.where('curriculum_seq', curriculum_seq)
+    query.first()
+    const result = await query
+    return result && result.total_count > 0 ? result.total_count : 0;
+  }
+
   getCurriculumEducationLastSort = async (curriculum_seq) => {
     return await this.findOne({ curriculum_seq: curriculum_seq }, ['sort'], { name: 'sort', direction: 'DESC' });
   }

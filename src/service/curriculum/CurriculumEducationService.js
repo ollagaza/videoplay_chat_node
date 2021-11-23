@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Util from '../../utils/Util'
 import log from '../../libs/logger'
 import DBMySQL from "../../database/knex-mysql";
+import CurriculumModel from "../../database/mysql/curriculum/CurriculumModel";
 import CurriculumEducationModel from "../../database/mysql/curriculum/CurriculumEducationModel";
 import OperationMediaModel from "../../database/mysql/operation/OperationMediaModel";
 import OperationModel from "../../database/mysql/operation/OperationModel";
@@ -20,6 +21,13 @@ const CurriculumEducationServiceClass = class {
     return new CurriculumEducationModel(DBMySQL);
   }
 
+  getCurriculumModel(database) {
+    if (database) {
+      return new CurriculumModel(database);
+    }
+    return new CurriculumModel(DBMySQL);
+  }
+
   getOperationMediaModel(database) {
     if (database) {
       return new OperationMediaModel(database);
@@ -36,12 +44,17 @@ const CurriculumEducationServiceClass = class {
 
   getCurriculumEducation = async (database, education_seq) => {
     const edu_model = this.getCurriculumEducationModel(database)
-    return edu_model.getCurriculumEducation(education_seq)
+    return await edu_model.getCurriculumEducation(education_seq)
   }
 
   getCurriculumEducationList = async (database, curriculum_seq) => {
     const edu_model = this.getCurriculumEducationModel(database)
-    return edu_model.getCurriculumEducationList(curriculum_seq)
+    return await edu_model.getCurriculumEducationList(curriculum_seq)
+  }
+
+  getCurriculumEducationListCount = async (database, curriculum_seq) => {
+    const edu_model = this.getCurriculumEducationModel(database);
+    return await edu_model.getCurriculumEducationListCount(curriculum_seq);
   }
 
   getCurriculumEducationDetail = async (database, curriculum_seq, education_seq) => {
@@ -64,7 +77,24 @@ const CurriculumEducationServiceClass = class {
     if (edu_list) {
       request.sort = Number(edu_list.sort) + 1;
     }
-    return await edu_model.addCurriculumEducation(request);
+    const result = await edu_model.addCurriculumEducation(request);
+    if (result) {
+      await this.setCurriculumEducationCountUpdate(database, request.curriculum_seq);
+    }
+    return result;
+  }
+
+  setCurriculumEducationCountUpdate = async (database, curriculum_seq) => {
+    const edu_model = this.getCurriculumEducationModel(database);
+    const curriculum_model = this.getCurriculumModel(database);
+    const education_count = await edu_model.getCurriculumEducationListCount(curriculum_seq);
+    const curriculum_update_filter = {
+      seq: curriculum_seq,
+    };
+    const curriculum_update_params = {
+      video_count: education_count,
+    };
+    return await curriculum_model.updateCurriculum(curriculum_update_filter, curriculum_update_params);
   }
 
   setCurriculumEducation = async (database, education_seq, request) => {
@@ -81,6 +111,7 @@ const CurriculumEducationServiceClass = class {
           await edu_model.updateCurriculumSort(edu_list[i-1].seq, i);
         }
       }
+      await this.setCurriculumEducationCountUpdate(database, curriculum_seq);
       return true;
     } else {
       return false;
