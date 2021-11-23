@@ -1714,6 +1714,7 @@ const OperationServiceClass = class {
               media_type: media_info.media_type,
               is_video: false
             })
+            video_file_name = file_name
             break
           }
           video_file_name = file_name
