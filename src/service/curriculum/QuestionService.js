@@ -6,6 +6,7 @@ import CurriculumQuestionModel from "../../database/mysql/curriculum/CurriculumQ
 import CurriculumQuestionBankModel from "../../database/mysql/curriculum/CurriculumQuestionBankModel";
 import CurriculumResultModel from "../../database/mysql/curriculum/CurriculumResultModel";
 import CurriculumService from "./CurriculumService";
+import group from "../../routes/admin/group";
 
 const QuestionServiceClass = class {
   constructor() {
@@ -104,7 +105,12 @@ const QuestionServiceClass = class {
     const curriculum_seq = request.params.curriculum_seq
     const question_result_model = this.getCurriculumResultModel(database)
     const question_result = await question_result_model.getResultWithCurriculumAndMember(curriculum_seq, group_auth.member_seq)
-    return question_result
+    let result_list = {}
+    for (let cnt = 0; cnt < question_result.length; cnt++) {
+      const survey_seq = `result_${question_result[cnt].question_seq}`
+      result_list[survey_seq] = _.filter(question_result, item => item.question_seq === question_result[cnt].question_seq)
+    }
+    return result_list
   }
 
   getQuestionResult = async (database, group_auth, request) => {
@@ -112,6 +118,16 @@ const QuestionServiceClass = class {
     const result_seq = request.params.api_sub_key
     const curriculum_result_model = this.getCurriculumResultModel(database)
     const result_info = await curriculum_result_model.getResultOne(curriculum_seq, result_seq)
+
+    return result_info
+  }
+
+  getQuestionResultList = async (database, group_auth, request) => {
+    const api_mode = request.params.api_mode
+    const curriculum_seq = request.params.api_key
+    const curriculum_result_model = this.getCurriculumResultModel(database)
+    let result_info = null
+    result_info = await curriculum_result_model.getCurriculumResultListWithCurriculum(api_mode, curriculum_seq, group_auth.member_seq)
 
     return result_info
   }

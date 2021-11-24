@@ -17,6 +17,20 @@ export default class CurriculumResultModel extends MySQLModel {
     return await this.find({ question_seq })
   }
 
+  getCurriculumResultListWithCurriculum = async (api_mode, curriculum_seq, member_seq) => {
+    const oKnex = this.database.select('*')
+      .from('curriculum')
+      .innerJoin(this.table_name, (builder) => {
+        builder.andOn('curriculum_result.curriculum_seq', 'curriculum.seq')
+        if (api_mode === 'private') {
+          oKnex.andWhere('curriculum_result.member_seq', member_seq)
+        }
+      })
+      .where('curriculum.seq', curriculum_seq)
+      .orderBy('reg_date', 'desc')
+    return await this.find({ curriculum_seq })
+  }
+
   getResultOne = async (curriculum_seq, result_seq) => {
     return await this.findOne({ seq: result_seq, curriculum_seq })
   }
