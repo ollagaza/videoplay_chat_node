@@ -124,12 +124,14 @@ const QuestionServiceClass = class {
 
   getQuestionResultList = async (database, group_auth, request) => {
     const api_mode = request.params.api_mode
-    const curriculum_seq = request.params.api_key
-    const curriculum_result_model = this.getCurriculumResultModel(database)
-    let result_info = null
-    result_info = await curriculum_result_model.getCurriculumResultListWithCurriculum(api_mode, curriculum_seq, group_auth.member_seq)
+    const group_seq = group_auth.group_seq
+    const request_body = request.query ? request.query : {}
+    const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
+    const request_order = request_body.order ? JSON.parse(request_body.order) : null
+    const search_keyword = request_body.search_keyword ? request_body.search_keyword : null
 
-    return result_info
+    const curriculum_result_model = this.getCurriculumResultModel(database)
+    return await curriculum_result_model.getCurriculumResultListWithCurriculum(api_mode, group_seq, group_auth.member_seq, search_keyword, request_paging, request_order)
   }
 
   getQuestionBank = async (database, request_body) => {
@@ -140,7 +142,6 @@ const QuestionServiceClass = class {
 
   getQuestionBankList = async (database, group_auth, req) => {
     const request_body = req.query ? req.query : {}
-    const page = request_body.page ? request_body.page : null
     const group_seq = request_body.group_seq ? request_body.group_seq : group_auth.group_seq
     const request_paging = request_body.paging ? JSON.parse(request_body.paging) : {}
     const request_order = request_body.order ? JSON.parse(request_body.order) : null

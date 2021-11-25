@@ -17,11 +17,11 @@ routes.get('/:api_key(\\d+)/:api_sub_key(\\d+)', Auth.isAuthenticated(Role.LOGIN
   output.adds(await QuestionService.getQuestionResult(DBMySQL, group_auth, req))
   res.json(output)
 }))
-routes.get('/:api_mode/:api_key(\\d+)/list', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+routes.get('/list/:api_mode', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
-  output.adds(await QuestionService.getQuestionResult(DBMySQL, group_auth, req))
+  output.adds(await QuestionService.getQuestionResultList(DBMySQL, group_auth, req))
   res.json(output)
 }))
 
