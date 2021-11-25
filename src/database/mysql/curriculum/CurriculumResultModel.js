@@ -28,9 +28,9 @@ export default class CurriculumResultModel extends MySQLModel {
       .from('curriculum')
       .innerJoin(this.table_name, (builder) => {
         builder.andOn('curriculum_result.curriculum_seq', 'curriculum.seq')
-        builder.andOnVal('curriculum_result.status', 2)
         if (api_mode === 'private') {
           builder.andOn('curriculum_result.member_seq', member_seq)
+          builder.andOnVal('curriculum_result.status', 2)
         }
         if (search_keyword) {
           builder.andOn(this.database.raw('JSON_EXTRACT(curriculum_result.questions, \'$.title\') like `%${search_keyword}%`'))
