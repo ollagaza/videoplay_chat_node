@@ -1692,14 +1692,19 @@ const OperationServiceClass = class {
     let smil_file_name = null
     const directory_info = this.getOperationDirectoryInfo(operation_info)
     const origin_file_list = await Util.getDirectoryFileList(directory_info.origin)
+    const log_prefix = `${this.log_prefix} [transcodingCompleteForce operation_seq: ${operation_info.seq}]`
+    log.debug(log_prefix, 'path:', directory_info.origin, ', origin_file_list:', origin_file_list)
     for (let i = 0; i < origin_file_list.length; i++) {
       const file_info = origin_file_list[i]
+      const file_name = file_info.name
+      const is_trans_file = trans_file_regex.test(file_name)
+      log.debug(log_prefix, 'index:', i, ', is_file:', file_info.isFile(), ', file_path:', directory_info.origin + file_name, ', is_trans_file:', is_trans_file)
       if (file_info.isFile()) {
-        const file_name = file_info.name
-        if (trans_file_regex.test(file_name)) {
+        if (is_trans_file) {
           const file_path = directory_info.origin + file_name
           const file_size = await Util.getFileSize(file_path)
           const media_info = await Util.getMediaInfo(file_path)
+          log.debug(log_prefix, i, 'file_path:', directory_info.origin + file_name, ', media_info:', media_info)
           if (file_size === 0 || media_info.media_type !== Constants.VIDEO) {
             encoding_info.is_error = true
             encoding_info.message = '인코딩 완료 된 파일이 정상적이 않습니다.'
@@ -1714,6 +1719,7 @@ const OperationServiceClass = class {
               media_type: media_info.media_type,
               is_video: false
             })
+            video_file_name = file_name
             break
           }
           video_file_name = file_name
