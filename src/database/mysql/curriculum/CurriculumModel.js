@@ -22,6 +22,10 @@ export default class CurriculumModel extends MySQLModel {
     return await this.update(filter, question_data)
   }
 
+  deleteCurriculum = async (curriculum_seq) => {
+    return await this.delete({ seq: curriculum_seq })
+  }
+
   updateCurriculumThumbnail = async (curriculum_seq, thumbnail_path) => {
     return await this.update({ seq: curriculum_seq }, { thumbnail: thumbnail_path })
   }

@@ -111,7 +111,7 @@ const CurriculumServiceClass = class {
     return result
   }
   setCurriculumData(curriculum_info) {
-    curriculum_info.thumbnail_url = ServiceConfig.get('static_storage_prefix') + curriculum_info.thumbnail
+    curriculum_info.thumbnail_url = curriculum_info.thumbnail ? ServiceConfig.get('static_storage_prefix') + curriculum_info.thumbnail : null
     curriculum_info.member_profile_image = ServiceConfig.get('static_storage_prefix') + curriculum_info.member_profile_image
     curriculum_info.group_profile_image = ServiceConfig.get('static_storage_prefix') + curriculum_info.group_profile_image
     curriculum_info.group_top_image = ServiceConfig.get('static_storage_prefix') + curriculum_info.group_top_image
@@ -155,6 +155,12 @@ const CurriculumServiceClass = class {
       this.setCurriculumData(curriculum)
     })
     return recommend_curriculum_list;
+  }
+
+  deleteCurriculum = async (database, group_auth, request) => {
+    const curriculum_model = this.getCurriculumModel(database);
+    const curriculum_seq = request.params.api_key
+    return await curriculum_model.deleteCurriculum(curriculum_seq)
   }
 }
 

@@ -39,19 +39,22 @@ routes.get('/group/:group_seq(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wra
   res.json(output)
 }))
 
+routes.delete('/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
+  req.accepts('application/json')
+  const output = new StdObject()
+  const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
+
+  output.add('result', await CurriculumService.deleteCurriculum(DBMySQL, group_auth, req))
+  res.json(output)
+}))
+
 routes.post('/:api_mode/:api_key(\\d+)', Auth.isAuthenticated(Role.LOGIN_USER), Wrap(async (req, res) => {
   req.accepts('application/json')
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
   const api_mode = req.params.api_mode;
 
-  if (api_mode === 'intro') {
-    output.add('result', await CurriculumService.createCurriculumIntro(DBMySQL, group_auth, req))
-  } else if (api_mode === 'video') {
-    output.add('result', await QuestionService.updateQuestion(DBMySQL, group_auth, req))
-  } else if (api_mode === 'last') {
-    output.add('result', await QuestionService.updateQuestion(DBMySQL, group_auth, req))
-  }
+  output.add('result', await CurriculumService.createCurriculumIntro(DBMySQL, group_auth, req))
   res.json(output)
 }))
 
