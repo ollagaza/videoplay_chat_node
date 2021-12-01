@@ -54,7 +54,7 @@ export default class CurriculumModel extends MySQLModel {
       query.where((builder) => {
         const search = `%${search_keyword}%`
         builder.where('curriculum.title', 'like', search)
-        builder.orWhere(this.database.raw('JSON_SEARCH(`curriculum.hashtag_list`, \'all\', \'?\', null, \'$.*\') IS NOT NULL', [search]))
+        builder.orWhere(this.database.raw('JSON_SEARCH(`curriculum`.`hashtag_list`, \'all\', ?, null, \'$.*\') IS NOT NULL', [search]))
       })
     }
     if (order) {
