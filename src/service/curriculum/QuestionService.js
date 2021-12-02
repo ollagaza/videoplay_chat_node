@@ -58,9 +58,9 @@ const QuestionServiceClass = class {
 
     if (question_results === 0) {
       await question_model.deleteQuestion(question_seq)
-      return await this.getQuestion(database, request_body)
     }
-    return null;
+    const question_list = await this.getQuestionList(database, curriculum_seq)
+    return { question_list, question_results }
   }
 
   createQuestionBank = async (database, group_auth, request_body) => {

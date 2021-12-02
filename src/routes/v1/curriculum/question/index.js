@@ -30,7 +30,7 @@ routes.delete('/:api_key(\\d+)/:api_sub_key(\\d+)', Auth.isAuthenticated(Role.LO
   const output = new StdObject()
   const group_auth = await GroupService.checkGroupAuth(DBMySQL, req, true, true, true)
 
-  output.add('result', await QuestionService.deleteQuestion(DBMySQL, group_auth, req))
+  output.add('curriculum_survey', await QuestionService.deleteQuestion(DBMySQL, group_auth, req))
   res.json(output)
 }))
 
