@@ -32,9 +32,6 @@ export default class CurriculumResultModel extends MySQLModel {
           builder.andOn('curriculum_result.member_seq', member_seq)
           builder.andOnVal('curriculum_result.status', 2)
         }
-        if (search_keyword) {
-          builder.andOn(this.database.raw('JSON_EXTRACT(curriculum_result.questions, \'$.title\') like `%${search_keyword}%`'))
-        }
       })
       .where('curriculum.group_seq', group_seq)
     if (api_mode === 'private') {
@@ -44,7 +41,10 @@ export default class CurriculumResultModel extends MySQLModel {
       })
     }
     if (search_keyword) {
-      oKnex.andWhere('curriculum.title', 'like', `%${search_keyword}%`)
+      oKnex.andWhere((query) => {
+        query.orWhere('curriculum.title', 'like', `%${search_keyword}%`)
+        query.orWhere(this.database.raw(`JSON_EXTRACT(curriculum_result.questions, '$.title') like '%${search_keyword}%'`))
+      })
     }
     oKnex.orderBy('curriculum_result.reg_date', 'desc')
     return await this.queryPaginated(oKnex, request_paging.list_count, request_paging.cur_page)
