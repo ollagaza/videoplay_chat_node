@@ -9,7 +9,7 @@ export default class CurriculumModel extends MySQLModel {
     this.log_prefix = '[CurriculumModel]'
     this.join_fields = [
       'curriculum.*',
-      'member.user_name', 'member.user_nickname', 'member.user_id', 'member.profile_image_path as member_profile_image',
+      'member.user_id', 'member.profile_image_path as member_profile_image',
       'group_info.group_name', 'group_info.profile_image_path as group_profile_image', 'group_info.channel_top_img_path as group_top_image', 'group_info.group_explain', 'group_info.search_keyword as group_search_keyword'
     ]
   }

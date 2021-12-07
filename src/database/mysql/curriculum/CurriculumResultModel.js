@@ -20,7 +20,7 @@ export default class CurriculumResultModel extends MySQLModel {
   getCurriculumResultListWithCurriculum = async (api_mode, group_seq, member_seq, search_keyword, request_paging, request_order) => {
     const select_fileld = [
       'curriculum.seq as curriculum_seq', 'curriculum.title', 'curriculum.group_seq',
-      'curriculum_result.seq as result_seq', 'curriculum_result.user_name', 'curriculum_result.user_nickname',
+      'curriculum_result.seq as result_seq', 'curriculum_result.member_seq', 'curriculum_result.user_name', 'curriculum_result.user_nickname',
       'curriculum_result.questions', 'curriculum_result.result', 'curriculum_result.appraisal', 'curriculum_result.score', 'curriculum_result.status',
       'curriculum_result.reg_date', 'curriculum_result.modify_date'
     ]
