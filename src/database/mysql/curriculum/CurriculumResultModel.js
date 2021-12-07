@@ -9,8 +9,8 @@ export default class CurriculumResultModel extends MySQLModel {
     this.log_prefix = '[CurriculumResultModel]'
   }
 
-  getCurriculumResultCount = async (curriculum_seq) => {
-    return await this.getTotalCount({curriculum_seq})
+  getCurriculumResultCount = async (filters) => {
+    return await this.getTotalCount(filters)
   }
 
   getCurriculumResultList = async (question_seq) => {

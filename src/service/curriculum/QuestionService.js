@@ -54,7 +54,11 @@ const QuestionServiceClass = class {
     const question_seq = request_body.params.api_sub_key
     const question_model = this.getQuestionModel(database)
     const question_result_model = this.getCurriculumResultModel(database)
-    const question_results = await question_result_model.getCurriculumResultCount(curriculum_seq)
+    const filters = {
+      curriculum_seq,
+      question_seq,
+    }
+    const question_results = await question_result_model.getCurriculumResultCount(filters)
 
     if (question_results === 0) {
       await question_model.deleteQuestion(question_seq)
