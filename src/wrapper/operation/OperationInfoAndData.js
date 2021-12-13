@@ -6,7 +6,7 @@ const default_key_list = [
   'seq', 'list_no', 'operation_type', 'operation_code', 'operation_name', 'operation_date', 'folder_seq', 'group_seq', 'member_seq', 'user_name', 'user_nickname', 'user_id'
   , 'patient_age', 'patient_sex', 'hour', 'minute', 'status', 'analysis_status', 'is_favorite', 'mode', 'export_from_project', 'encoding_info'
   , 'reg_date', 'reg_diff_hour', 'media_info', 'content_id', 'progress', 'has_link'
-  , 'total_file_size', 'total_file_count', 'clip_count', 'index2_file_count', 'origin_video_count', 'origin_video_size', 'trans_video_count', 'modify_date'
+  , 'total_file_size', 'total_file_count', 'clip_count', 'index2_file_count', 'origin_video_count', 'origin_video_size', 'origin_seq', 'trans_video_count', 'modify_date'
   , 'group_name', 'hospital', 'title', 'view_count', 'total_time', 'thumbnail', 'hashtag_list', 'category_list', 'doc_text', 'doc_html'
   , 'type', 'is_complete', 'mento_group_seq', 'is_mento_complete', 'is_open_refer_file', 'is_open_video'
   , 'is_delete_by_admin', 'delete_member_seq', 'delete_user_name', 'delete_user_nickname', 'is_video_download', 'is_file_download'
