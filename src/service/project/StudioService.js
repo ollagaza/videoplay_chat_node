@@ -154,7 +154,7 @@ const StudioServiceClass = class {
     if (!video_project_info || !video_project_info.sequence_list || video_project_info.sequence_list.length <= 0) {
       throw new StdObject(901, '등록된 동영상 정보가 없습니다.', 400)
     }
-    if (video_project_info.request_status !== 'N' && video_project_info.request_status !== 'Y') {
+    if (video_project_info.request_status !== 'N' && video_project_info.request_status !== 'Y' && video_project_info.request_status !== 'E') {
       throw new StdObject(902, '이전 편집영상의 내보내기가 진행중입니다.\n완료후 다음 내보내기를 진행할 수 있습니다.', 400)
     }
     if (extra_data && extra_data.export_to_drive === true) {
