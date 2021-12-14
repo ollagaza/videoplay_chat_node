@@ -60,7 +60,7 @@ const CurriculumEducationServiceClass = class {
   getCurriculumEducationDetail = async (database, curriculum_seq, education_seq) => {
     const edu_model = this.getCurriculumEducationModel(database);
     const operation_model = this.getOperationModel(database);
-    const education_list = await edu_model.getCurriculumEducationList(curriculum_seq);
+    const education_list = await edu_model.getCurriculumEducationList(curriculum_seq, true);
     const education_info = await education_list.find(item => item.seq === Number(education_seq));
     if (education_info) {
       const operation_info = await operation_model.getOperationInfo(education_info.operation_seq, true);

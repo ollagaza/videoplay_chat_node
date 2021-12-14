@@ -74,7 +74,7 @@ export default class CurriculumModel extends MySQLModel {
       query.andWhere(`${this.table_name}.group_seq`, group_seq);
     }
     query.orderBy(`${this.table_name}.seq`, 'desc');
-    query.limit(2);
+    query.limit(4);
 
     return query;
   }
