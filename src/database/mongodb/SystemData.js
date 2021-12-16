@@ -23,8 +23,11 @@ default_data[data_types.SITE_INFO] = {
   cookie_domain: "localhost",
   library_domain: "localhost:8000",
   main_bg_url: null,
-  navigation : {
-    studio : true
+  channel_left_menu: {
+    drive: { visible: true },
+    studio: { visible: true },
+    board: { visible: true },
+    curriculum: { visible: true },
   }
 }
 
