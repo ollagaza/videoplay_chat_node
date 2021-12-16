@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import _ from 'lodash'
+import logger from "../../libs/logger"
 
 const Schema = mongoose.Schema
 
@@ -20,8 +22,6 @@ default_data[data_types.SITE_INFO] = {
   main_logo_url: null,
   top_logo_url: null,
   site_name: null,
-  cookie_domain: "localhost",
-  library_domain: "localhost:8000",
   main_bg_url: null,
   channel_left_menu: {
     drive: { visible: true },
@@ -53,6 +53,18 @@ export const initSystemData = async () => {
     const stored_data = await system_data_model.findOne({ data_type })
     if (!stored_data) {
       const model = new system_data_model(default_data[data_type])
+      await model.save()
+    } else {
+      logger.debug('initSystemData', Object.keys(default_data[data_type]), stored_data)
+      for (let cnt = 0; cnt < Object.keys(default_data[data_type]).length; cnt++) {
+        const default_key = Object.keys(default_data[data_type])[cnt]
+        const stored_item = _.isEmpty(_.isBoolean(stored_data._doc[default_key]) ? stored_data._doc[default_key].toString() : stored_data._doc[default_key])
+        logger.debug('initSystemData', default_key, stored_item, stored_data)
+        if (stored_item) {
+          stored_data._doc[default_key] = default_data[data_type][default_key]
+        }
+      }
+      const model = new system_data_model(stored_data)
       await model.save()
     }
   }
