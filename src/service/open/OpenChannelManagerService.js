@@ -159,6 +159,7 @@ const OpenChannelManagerServiceClass = class {
       page_params.page_count = Util.parseInt(request_params.page_count, 10)
       page_params.no_paging = request_params.no_paging === 'n' ? 'n' : 'y'
       page_params.offset = Util.parseInt(request_params.offset, 0)
+      order_params.random = request_params.order_type === 'random'
       if (Util.trim(request_params.order_fields) && Util.trim(request_params.order_type)) {
         order_params.field = Util.trim(request_params.order_fields)
         order_params.type = Util.trim(request_params.order_type)

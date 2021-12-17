@@ -120,7 +120,11 @@ export default class OpenChannelDataModel extends MySQLModel {
       .from({ group: group_query })
       .leftOuterJoin('open_channel_data', { 'group.seq': 'open_channel_data.group_seq' })
 
-    query.orderBy([{ column: 'order', order: 'DESC' }, { column: 'recent_open_video_date', order: 'DESC' }, { column: 'channel_open_date', order: 'DESC' }])
+    if (order_params && order_params.random === true) {
+      query.orderByRaw('RAND()')
+    } else {
+      query.orderBy([{ column: 'order', order: 'DESC' }, { column: 'recent_open_video_date', order: 'DESC' }, { column: 'channel_open_date', order: 'DESC' }])
+    }
 
     return this.getPagingResult(query, page_params)
   }
