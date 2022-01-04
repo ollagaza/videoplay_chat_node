@@ -1,5 +1,5 @@
 {
-  "version": 0.7,
+  "version": 0.8,
   "kor": [
     {
       "code": "00",
@@ -522,7 +522,7 @@
         {
           "code": "04",
           "pCode": "04",
-          "text": "Colon and rectal surgery"
+          "text": "Gastrointestinal Surgery"
         },
         {
           "code": "04",
