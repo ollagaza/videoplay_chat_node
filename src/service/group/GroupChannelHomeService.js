@@ -264,13 +264,13 @@ const GroupChannelHomeServiceClass = class {
 
         if (data) {
           data.total_count += operation_annotation_count[item].count
-          data.video_annotation = operation_annotation_count[item].count
+          data.video_anotation = operation_annotation_count[item].count
         } else {
           if (operation_annotation_count[item]._id) {
             group_counting.push({
               group_seq: operation_annotation_count[item]._id,
               total_count: operation_annotation_count[item].count,
-              video_annotation: operation_annotation_count[item].count
+              video_anotation: operation_annotation_count[item].count
             })
           }
         }
