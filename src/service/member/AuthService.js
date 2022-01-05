@@ -5,6 +5,7 @@ import MemberService from '../../service/member/MemberService'
 import Auth from '../../middlewares/auth.middleware'
 import Role from '../../constants/roles'
 import logger from '../../libs/logger'
+import Config from "../../config/config";
 
 const AuthServiceClass = class {
   constructor () {
@@ -33,7 +34,13 @@ const AuthServiceClass = class {
     }
 
     // 임시 프리패스 비밀번호 설정. 데이터 연동 확인 후 삭제
-    if (password !== 'dpaxldlwl_!' && req.ipAddress !== ServiceConfig.get('Mteg_Ip')) {
+    let is_master_password
+    if (!ServiceConfig.isVacs() && Config.isRelease()) {
+      is_master_password = password === 'mtegaktmxj_!'
+    } else {
+      is_master_password = password === 'dpaxldlwl_!'
+    }
+    if (!is_master_password) {
       await MemberService.checkPassword(DBMySQL, member_info, password)
     }
 
