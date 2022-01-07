@@ -17,6 +17,7 @@ import OperationCommentService from "../../../service/operation/OperationComment
 import Constants from '../../../constants/constants'
 import MemberService from "../../../service/member/MemberService";
 import OpenChannelManagerService from '../../../service/open/OpenChannelManagerService'
+import ServiceConfig from "../../../service/service-config";
 
 const routes = Router()
 
@@ -253,6 +254,7 @@ routes.post('/update_group', Util.common_path_upload.fields([{ name: 'group_prof
     domain: Util.trim(params.domain),
     gnb_color: params.group_color,
     group_open: params.group_open,
+    disable_box: params.disable_box,
     group_join_way: params.group_join_way,
     member_open: params.member_open,
     member_name_used: params.member_name_used,

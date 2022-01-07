@@ -298,18 +298,21 @@ const GroupServiceClass = class {
   updateEnterpriseGroup = async (database, member_info, options, seq = {}) => {
     const modify_group_info = {
       group_type: this.GROUP_TYPE_ENTERPRISE,
-      group_name: options.group_name?options.group_name:member_info.user_name,
+      group_name: options.group_name ? options.group_name : member_info.user_name,
       domain: Util.trim(options.domain).toLowerCase(),
-      gnb_color: options.gnb_color?options.gnb_color:'1c3048',
-      group_open: options.group_open?options.group_open:0,
-      group_join_way: options.group_join_way?options.group_join_way:0,
-      member_open: options.member_open?options.member_open:0,
-      member_name_used: options.member_name_used?options.member_name_used:0,
-      search_keyword: options.search_keyword?JSON.stringify(options.search_keyword):null,
-      group_explain: options.group_explain?options.group_explain:null,
-      profile_image_path: options.profile_image_path?options.profile_image_path:null,
-      channel_top_img_path: options.channel_top_img_path?options.channel_top_img_path:null,
+      gnb_color: options.gnb_color ? options.gnb_color : '1c3048',
+      group_open: options.group_open ? options.group_open : 0,
+      group_join_way: options.group_join_way ? options.group_join_way : 0,
+      member_open: options.member_open ? options.member_open : 0,
+      member_name_used: options.member_name_used ? options.member_name_used : 0,
+      search_keyword: options.search_keyword ? JSON.stringify(options.search_keyword) : null,
+      group_explain: options.group_explain ? options.group_explain : null,
+      profile_image_path: options.profile_image_path ? options.profile_image_path : null,
+      channel_top_img_path: options.channel_top_img_path ? options.channel_top_img_path : null,
       is_set_group_name: 1,
+    }
+    if (ServiceConfig.isVacs()) {
+      modify_group_info.disable_box = options.disable_box;
     }
     if (options.delete_channel_top_img || options.delete_channel_profile_img || modify_group_info.profile_image_path || modify_group_info.channel_top_img_path) {
       const group_model = this.getGroupModel(database);
