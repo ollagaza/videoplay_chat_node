@@ -75,3 +75,5 @@ public/apidoc/*
 
 logs/
 logs/*
+
+.DS_Store
